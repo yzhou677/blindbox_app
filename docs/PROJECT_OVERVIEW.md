@@ -233,3 +233,38 @@ The app should prioritize:
 
 The app should feel like:
 "A beautiful digital shelf for collectors."
+
+# Development Priority
+
+Prioritize shipping a polished MVP quickly.
+
+Prefer:
+- simpler implementations
+- clean UI
+- maintainable code
+- fast iteration
+
+Avoid premature optimization and unnecessary abstractions.
+
+# Theme
+
+Support both light mode and dark mode.
+
+Default design direction should prioritize:
+- warm neutral backgrounds
+- soft shadows
+- collectible-focused visuals
+
+Avoid overly saturated colors.
+
+# Visual Priority
+
+Collectible images are the most important UI element.
+
+Layouts should prioritize:
+- large imagery
+- clean presentation
+- consistent aspect ratios
+- smooth image loading
+
+Text should support the visuals, not dominate the screen.
