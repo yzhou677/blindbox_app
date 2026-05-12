@@ -7,9 +7,12 @@ void main() {
     await tester.pumpWidget(
       const ProviderScope(child: BlindboxApp()),
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
 
     expect(find.text('Home'), findsWidgets);
-    expect(find.text('Latest drops and new releases will appear here.'), findsOneWidget);
+    expect(find.text('Discover'), findsWidgets);
+    expect(find.text('Latest drops'), findsOneWidget);
+    expect(find.text('Luna Astronaut'), findsOneWidget);
   });
 }
