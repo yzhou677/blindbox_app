@@ -1,10 +1,87 @@
 import 'package:blindbox_app/features/home/data/mock_latest_drops.dart';
 import 'package:blindbox_app/models/collectible.dart';
+import 'package:blindbox_app/models/market_demand_mood.dart';
 import 'package:blindbox_app/models/market_listing.dart';
 import 'package:flutter/material.dart';
 
 /// Local-only market rows (replace with eBay / marketplace API later).
 final List<MarketListing> mockMarketListings = [
+  MarketListing(
+    id: 'mkt-hirono-wander',
+    collectible: Collectible(
+      id: 'mkt-hirono-wander',
+      name: 'Hirono · Wanderer',
+      series: 'The Other One',
+      brand: 'POP MART',
+      releaseDate: DateTime(2026, 4, 2),
+      imageUrl: mockCollectibleArtUrl('hirono-wander-mock', 'ede7f6'),
+      shelfAccent: const Color(0xFFE8E0F0),
+    ),
+    currentPriceUsd: 94,
+    priceChangePercent: 6.4,
+    listingCount: 28,
+    isTrending: true,
+    watchingCount: 198,
+    isRareFind: true,
+    demandMood: MarketDemandMood.rising,
+  ),
+  MarketListing(
+    id: 'mkt-labubu-mac',
+    collectible: Collectible(
+      id: 'mkt-labubu-mac',
+      name: 'Labubu Macaron Rose',
+      series: 'Labubu Exciting Macaron',
+      brand: 'POP MART',
+      releaseDate: DateTime(2026, 3, 20),
+      imageUrl: mockCollectibleArtUrl('labubu-macaron-mock', 'fce4ec'),
+      shelfAccent: const Color(0xFFF5D8E4),
+    ),
+    currentPriceUsd: 78,
+    priceChangePercent: 4.1,
+    listingCount: 52,
+    isTrending: true,
+    watchingCount: 256,
+    isRareFind: false,
+    demandMood: MarketDemandMood.rising,
+  ),
+  MarketListing(
+    id: 'mkt-skull-bubble',
+    collectible: Collectible(
+      id: 'mkt-skull-bubble',
+      name: 'Skullpanda · Bubble Gum',
+      series: 'Skullpanda Everyday Wonderland',
+      brand: 'POP MART',
+      releaseDate: DateTime(2026, 2, 14),
+      imageUrl: mockCollectibleArtUrl('skull-bubble-mock', 'e8eaf6'),
+      shelfAccent: const Color(0xFFE4E7F5),
+    ),
+    currentPriceUsd: 124,
+    priceChangePercent: 3.2,
+    listingCount: 19,
+    isTrending: true,
+    watchingCount: 142,
+    isRareFind: true,
+    demandMood: MarketDemandMood.steady,
+  ),
+  MarketListing(
+    id: 'mkt-hirono-calm',
+    collectible: Collectible(
+      id: 'mkt-hirono-calm',
+      name: 'Hirono · Quiet Rain',
+      series: 'Little Mischief',
+      brand: 'POP MART',
+      releaseDate: DateTime(2025, 12, 8),
+      imageUrl: mockCollectibleArtUrl('hirono-rain-mock', 'e3f2fd'),
+      shelfAccent: const Color(0xFFDDE9F8),
+    ),
+    currentPriceUsd: 58,
+    priceChangePercent: 0.4,
+    listingCount: 36,
+    isTrending: false,
+    watchingCount: 64,
+    isRareFind: false,
+    demandMood: MarketDemandMood.steady,
+  ),
   MarketListing(
     id: 'mkt-luna',
     collectible: Collectible(
@@ -20,6 +97,9 @@ final List<MarketListing> mockMarketListings = [
     priceChangePercent: 4.2,
     listingCount: 24,
     isTrending: true,
+    watchingCount: 112,
+    isRareFind: false,
+    demandMood: MarketDemandMood.rising,
   ),
   MarketListing(
     id: 'mkt-miso',
@@ -36,6 +116,9 @@ final List<MarketListing> mockMarketListings = [
     priceChangePercent: -1.8,
     listingCount: 41,
     isTrending: true,
+    watchingCount: 74,
+    isRareFind: false,
+    demandMood: MarketDemandMood.steady,
   ),
   MarketListing(
     id: 'mkt-rio',
@@ -52,6 +135,9 @@ final List<MarketListing> mockMarketListings = [
     priceChangePercent: 0.6,
     listingCount: 18,
     isTrending: true,
+    watchingCount: 41,
+    isRareFind: false,
+    demandMood: MarketDemandMood.calm,
   ),
   MarketListing(
     id: 'mkt-nori',
@@ -68,6 +154,9 @@ final List<MarketListing> mockMarketListings = [
     priceChangePercent: 2.4,
     listingCount: 15,
     isTrending: true,
+    watchingCount: 58,
+    isRareFind: false,
+    demandMood: MarketDemandMood.steady,
   ),
   MarketListing(
     id: 'mkt-puff',
@@ -84,6 +173,9 @@ final List<MarketListing> mockMarketListings = [
     priceChangePercent: -0.9,
     listingCount: 33,
     isTrending: false,
+    watchingCount: 22,
+    isRareFind: false,
+    demandMood: MarketDemandMood.calm,
   ),
   MarketListing(
     id: 'mkt-zen',
@@ -100,6 +192,9 @@ final List<MarketListing> mockMarketListings = [
     priceChangePercent: 6.1,
     listingCount: 12,
     isTrending: false,
+    watchingCount: 0,
+    isRareFind: true,
+    demandMood: MarketDemandMood.rising,
   ),
   MarketListing(
     id: 'mkt-kumo',
@@ -116,6 +211,9 @@ final List<MarketListing> mockMarketListings = [
     priceChangePercent: -3.2,
     listingCount: 56,
     isTrending: false,
+    watchingCount: 14,
+    isRareFind: false,
+    demandMood: MarketDemandMood.calm,
   ),
 ];
 

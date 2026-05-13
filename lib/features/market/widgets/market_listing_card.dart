@@ -1,5 +1,6 @@
 import 'package:blindbox_app/features/home/widgets/collectible_network_image.dart';
 import 'package:blindbox_app/features/market/utils/market_format.dart';
+import 'package:blindbox_app/features/market/widgets/listing_market_signals.dart';
 import 'package:blindbox_app/models/market_listing.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -98,7 +99,7 @@ class MarketListingCard extends StatelessWidget {
                           height: 1.2,
                         ),
                       ),
-                      const SizedBox(height: 10),
+                      ListingMarketSignals(listing: listing),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [

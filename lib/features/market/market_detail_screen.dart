@@ -1,6 +1,7 @@
 import 'package:blindbox_app/features/home/widgets/collectible_network_image.dart';
 import 'package:blindbox_app/features/market/data/mock_market_listings.dart';
 import 'package:blindbox_app/features/market/utils/market_format.dart';
+import 'package:blindbox_app/features/market/widgets/listing_market_signals.dart';
 import 'package:blindbox_app/models/market_listing.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -205,6 +206,8 @@ class _MarketDetailBody extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 18),
+        ListingMarketSignals(listing: listing, dense: true),
+        const SizedBox(height: 14),
         Row(
           crossAxisAlignment: CrossAxisAlignment.baseline,
           textBaseline: TextBaseline.alphabetic,
@@ -241,6 +244,15 @@ class _MarketDetailBody extends StatelessWidget {
           value: c.brand,
           tint: accent.withValues(alpha: 0.2),
         ),
+        if (listing.watchingCount > 0) ...[
+          const SizedBox(height: 12),
+          _SoftMarketTile(
+            icon: Icons.visibility_outlined,
+            label: 'Shelf interest',
+            value: '${listing.watchingCount} collectors watching (mock)',
+            tint: accent.withValues(alpha: 0.12),
+          ),
+        ],
         const SizedBox(height: 12),
         _SoftMarketTile(
           icon: Icons.layers_outlined,

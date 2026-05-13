@@ -1,4 +1,6 @@
 import 'package:blindbox_app/features/market/data/mock_market_listings.dart';
+import 'package:blindbox_app/features/market/utils/market_filter_match.dart';
+import 'package:blindbox_app/features/market/widgets/market_discovery_chips.dart';
 import 'package:blindbox_app/features/market/widgets/market_listing_card.dart';
 import 'package:blindbox_app/features/market/widgets/market_search_bar.dart';
 import 'package:blindbox_app/features/market/widgets/trending_market_section.dart';
@@ -15,6 +17,7 @@ class MarketScreen extends StatefulWidget {
 class _MarketScreenState extends State<MarketScreen> {
   final TextEditingController _search = TextEditingController();
   String _query = '';
+  String _filterId = 'all';
 
   @override
   void dispose() {
@@ -22,10 +25,14 @@ class _MarketScreenState extends State<MarketScreen> {
     super.dispose();
   }
 
-  List<MarketListing> _filtered() {
+  List<MarketListing> _visibleListings() {
+    final byFilter = _filterId == 'all'
+        ? mockMarketListings
+        : mockMarketListings.where((m) => marketListingMatchesFilter(m, _filterId)).toList(growable: false);
+
     final t = _query.trim().toLowerCase();
-    if (t.isEmpty) return mockMarketListings;
-    return mockMarketListings.where((m) {
+    if (t.isEmpty) return byFilter;
+    return byFilter.where((m) {
       final c = m.collectible;
       return c.name.toLowerCase().contains(t) ||
           c.series.toLowerCase().contains(t) ||
@@ -37,7 +44,7 @@ class _MarketScreenState extends State<MarketScreen> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final filtered = _filtered();
+    final filtered = _visibleListings();
 
     return Scaffold(
       backgroundColor: scheme.surface,
@@ -78,6 +85,12 @@ class _MarketScreenState extends State<MarketScreen> {
             ),
           ),
           SliverToBoxAdapter(
+            child: MarketDiscoveryChips(
+              selectedId: _filterId,
+              onSelected: (id) => setState(() => _filterId = id),
+            ),
+          ),
+          SliverToBoxAdapter(
             child: MarketSearchBar(
               controller: _search,
               onChanged: (v) => setState(() => _query = v),
@@ -104,6 +117,7 @@ class _MarketScreenState extends State<MarketScreen> {
               hasScrollBody: false,
               child: _MarketEmptySearch(
                 query: _query.trim(),
+                filterActive: _filterId != 'all',
               ),
             )
           else
@@ -125,14 +139,29 @@ class _MarketScreenState extends State<MarketScreen> {
 }
 
 class _MarketEmptySearch extends StatelessWidget {
-  const _MarketEmptySearch({required this.query});
+  const _MarketEmptySearch({
+    required this.query,
+    this.filterActive = false,
+  });
 
   final String query;
+  final bool filterActive;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final hasQuery = query.isNotEmpty;
+    final title = hasQuery
+        ? 'No matches for “$query”'
+        : filterActive
+            ? 'Nothing here for that pick yet'
+            : 'No matches';
+    final subtitle = hasQuery
+        ? 'Try a figure name, series, or brand — or clear the search.'
+        : filterActive
+            ? 'Try another shelf filter or search the mock catalog.'
+            : 'Try another search.';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -146,13 +175,13 @@ class _MarketEmptySearch extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'No matches for “$query”',
+            title,
             textAlign: TextAlign.center,
             style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
           Text(
-            'Try a figure name, series, or brand from the mock catalog.',
+            subtitle,
             textAlign: TextAlign.center,
             style: textTheme.bodyMedium?.copyWith(
               color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
