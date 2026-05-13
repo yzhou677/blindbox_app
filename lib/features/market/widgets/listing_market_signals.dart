@@ -1,9 +1,7 @@
-import 'package:blindbox_app/features/market/utils/market_format.dart';
-import 'package:blindbox_app/models/market_demand_mood.dart';
 import 'package:blindbox_app/models/market_listing.dart';
 import 'package:flutter/material.dart';
 
-/// eBay-adjacent shelf signals — soft, capped count, never a ticker.
+/// Editorial shelf signals — calm, collectible-native (not a trading strip).
 class ListingMarketSignals extends StatelessWidget {
   const ListingMarketSignals({super.key, required this.listing, this.dense = false});
 
@@ -11,6 +9,7 @@ class ListingMarketSignals extends StatelessWidget {
   final bool dense;
 
   static const int _maxChips = 3;
+  static const int _watchingThreshold = 80;
 
   @override
   Widget build(BuildContext context) {
@@ -40,41 +39,26 @@ class ListingMarketSignals extends StatelessWidget {
 
   List<({String text, _SignalEmphasis emphasis})> _buildSignals() {
     final m = listing;
-    final pct = m.priceChangePercent;
-    final hot = m.isTrending && pct >= 3.0;
     final q = <({String text, _SignalEmphasis emphasis})>[];
 
-    if (m.isRareFind) {
-      q.add((text: 'Rare find', emphasis: _SignalEmphasis.warm));
+    if (m.hasSecretFigure) {
+      q.add((text: 'Secret', emphasis: _SignalEmphasis.soft));
     }
-    if (hot) {
-      q.add((text: '↑ Hot', emphasis: _SignalEmphasis.spark));
-    } else if (m.isTrending) {
+    if (m.isHardToFind) {
+      q.add((text: 'Hard to find', emphasis: _SignalEmphasis.warm));
+    }
+    if (m.isTrending) {
       q.add((text: 'Trending', emphasis: _SignalEmphasis.soft));
     }
-    if (m.watchingCount >= 10) {
+    if (m.watchingCount >= _watchingThreshold) {
       q.add((text: '${m.watchingCount} watching', emphasis: _SignalEmphasis.neutral));
-    }
-    if (q.length < _maxChips && m.demandMood == MarketDemandMood.rising) {
-      q.add((text: 'Demand rising', emphasis: _SignalEmphasis.soft));
-    } else if (q.length < _maxChips &&
-        m.demandMood == MarketDemandMood.steady &&
-        m.watchingCount > 0 &&
-        m.watchingCount < 10) {
-      q.add((text: 'Steady interest', emphasis: _SignalEmphasis.neutral));
-    }
-    if (q.length < _maxChips && !hot && pct.abs() >= 1.2) {
-      q.add((
-        text: 'Last sale ${formatPriceChangePercent(pct)}',
-        emphasis: _SignalEmphasis.neutral,
-      ));
     }
 
     return q.length > _maxChips ? q.sublist(0, _maxChips) : q;
   }
 }
 
-enum _SignalEmphasis { neutral, soft, warm, spark }
+enum _SignalEmphasis { neutral, soft, warm }
 
 class _SignalPill extends StatelessWidget {
   const _SignalPill({
@@ -92,24 +76,19 @@ class _SignalPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (Color bg, Color border, Color fg) = switch (emphasis) {
-      _SignalEmphasis.spark => (
-          scheme.tertiary.withValues(alpha: 0.14),
-          scheme.tertiary.withValues(alpha: 0.32),
-          scheme.onSurface.withValues(alpha: 0.88),
-        ),
       _SignalEmphasis.warm => (
-          scheme.secondaryContainer.withValues(alpha: 0.42),
-          scheme.secondary.withValues(alpha: 0.22),
+          scheme.secondaryContainer.withValues(alpha: 0.4),
+          scheme.secondary.withValues(alpha: 0.2),
           scheme.onSecondaryContainer.withValues(alpha: 0.88),
         ),
       _SignalEmphasis.soft => (
-          scheme.primary.withValues(alpha: 0.1),
-          scheme.primary.withValues(alpha: 0.22),
-          scheme.primary.withValues(alpha: 0.88),
+          scheme.primary.withValues(alpha: 0.09),
+          scheme.primary.withValues(alpha: 0.2),
+          scheme.primary.withValues(alpha: 0.86),
         ),
       _SignalEmphasis.neutral => (
-          scheme.surfaceContainerHighest.withValues(alpha: 0.55),
-          scheme.outlineVariant.withValues(alpha: 0.35),
+          scheme.surfaceContainerHighest.withValues(alpha: 0.52),
+          scheme.outlineVariant.withValues(alpha: 0.32),
           scheme.onSurfaceVariant.withValues(alpha: 0.88),
         ),
     };

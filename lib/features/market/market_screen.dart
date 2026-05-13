@@ -1,5 +1,6 @@
+import 'package:blindbox_app/features/market/catalog/market_listing_filters.dart';
+import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
 import 'package:blindbox_app/features/market/data/mock_market_listings.dart';
-import 'package:blindbox_app/features/market/utils/market_filter_match.dart';
 import 'package:blindbox_app/features/market/widgets/market_discovery_chips.dart';
 import 'package:blindbox_app/features/market/widgets/market_listing_card.dart';
 import 'package:blindbox_app/features/market/widgets/market_search_bar.dart';
@@ -17,7 +18,8 @@ class MarketScreen extends StatefulWidget {
 class _MarketScreenState extends State<MarketScreen> {
   final TextEditingController _search = TextEditingController();
   String _query = '';
-  String _filterId = 'all';
+  String _brandId = MarketTaxonomyIds.anyBrand;
+  String _ipId = MarketTaxonomyIds.anyIp;
 
   @override
   void dispose() {
@@ -25,19 +27,32 @@ class _MarketScreenState extends State<MarketScreen> {
     super.dispose();
   }
 
-  List<MarketListing> _visibleListings() {
-    final byFilter = _filterId == 'all'
-        ? mockMarketListings
-        : mockMarketListings.where((m) => marketListingMatchesFilter(m, _filterId)).toList(growable: false);
+  bool get _filtersActive =>
+      _brandId != MarketTaxonomyIds.anyBrand || _ipId != MarketTaxonomyIds.anyIp;
 
-    final t = _query.trim().toLowerCase();
-    if (t.isEmpty) return byFilter;
-    return byFilter.where((m) {
-      final c = m.collectible;
-      return c.name.toLowerCase().contains(t) ||
-          c.series.toLowerCase().contains(t) ||
-          c.brand.toLowerCase().contains(t);
-    }).toList(growable: false);
+  List<MarketListing> _visibleListings() {
+    final q = _query.trim().toLowerCase();
+    return mockMarketListings
+        .where(
+          (m) => marketListingVisible(
+            m,
+            brandId: _brandId,
+            ipId: _ipId,
+            queryLower: q,
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  void _setBrand(String id) {
+    setState(() {
+      _brandId = id;
+      _ipId = MarketTaxonomy.clampIpToBrand(_brandId, _ipId);
+    });
+  }
+
+  void _setIp(String id) {
+    setState(() => _ipId = id);
   }
 
   @override
@@ -72,7 +87,7 @@ class _MarketScreenState extends State<MarketScreen> {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 10),
               child: Text(
                 'Soft signals for what is moving — visual first, lightweight.',
                 style: textTheme.bodyMedium?.copyWith(
@@ -85,23 +100,60 @@ class _MarketScreenState extends State<MarketScreen> {
             ),
           ),
           SliverToBoxAdapter(
-            child: MarketDiscoveryChips(
-              selectedId: _filterId,
-              onSelected: (id) => setState(() => _filterId = id),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                MarketSearchBar(
+                  controller: _search,
+                  onChanged: (v) => setState(() => _query = v),
+                ),
+                const SizedBox(height: 16),
+                MarketDiscoveryChips(
+                  brandOptions: MarketTaxonomy.brandChipOptions(),
+                  ipOptions: MarketTaxonomy.ipChipOptionsForBrand(_brandId),
+                  brandId: _brandId,
+                  ipId: _ipId,
+                  onBrandSelected: _setBrand,
+                  onIpSelected: _setIp,
+                ),
+              ],
             ),
-          ),
-          SliverToBoxAdapter(
-            child: MarketSearchBar(
-              controller: _search,
-              onChanged: (v) => setState(() => _query = v),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: TrendingMarketSection(items: mockTrendingMarketListings()),
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+              padding: const EdgeInsets.fromLTRB(20, 6, 20, 2),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.public_rounded,
+                    size: 14,
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.42),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Market signals inspired by recent eBay activity',
+                      style: textTheme.labelMedium?.copyWith(
+                        color: scheme.onSurfaceVariant.withValues(alpha: 0.58),
+                        height: 1.38,
+                        letterSpacing: 0.12,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 14)),
+          SliverToBoxAdapter(
+            child: TrendingMarketSection(items: mockTrendingMarketListings()),
+          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 8)),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
               child: Text(
                 'Browse listings',
                 style: textTheme.titleMedium?.copyWith(
@@ -117,7 +169,7 @@ class _MarketScreenState extends State<MarketScreen> {
               hasScrollBody: false,
               child: _MarketEmptySearch(
                 query: _query.trim(),
-                filterActive: _filterId != 'all',
+                filterActive: _filtersActive,
               ),
             )
           else

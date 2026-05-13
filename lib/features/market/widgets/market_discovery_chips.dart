@@ -1,26 +1,23 @@
 import 'package:flutter/material.dart';
 
-/// Top-of-Market browse chips — horizontal, cozy, not enterprise filters.
+/// Two horizontal rails: brands vs IPs (collector taxonomy, still lightweight).
 class MarketDiscoveryChips extends StatelessWidget {
   const MarketDiscoveryChips({
     super.key,
-    required this.selectedId,
-    required this.onSelected,
+    required this.brandOptions,
+    required this.ipOptions,
+    required this.brandId,
+    required this.ipId,
+    required this.onBrandSelected,
+    required this.onIpSelected,
   });
 
-  final String selectedId;
-  final ValueChanged<String> onSelected;
-
-  static const List<({String id, String label})> options = [
-    (id: 'all', label: 'All'),
-    (id: 'pop_mart', label: 'POP MART'),
-    (id: 'hirono', label: 'Hirono'),
-    (id: 'labubu', label: 'Labubu'),
-    (id: 'skullpanda', label: 'Skullpanda'),
-    (id: 'under_100', label: 'Under \$100'),
-    (id: 'rare', label: 'Rare'),
-    (id: 'trending', label: 'Trending'),
-  ];
+  final List<({String id, String label})> brandOptions;
+  final List<({String id, String label})> ipOptions;
+  final String brandId;
+  final String ipId;
+  final ValueChanged<String> onBrandSelected;
+  final ValueChanged<String> onIpSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -28,27 +25,98 @@ class MarketDiscoveryChips extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Padding(
-      padding: const EdgeInsets.only(top: 4, bottom: 2),
-      child: SizedBox(
-        height: 40,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          itemCount: options.length,
-          separatorBuilder: (context, index) => const SizedBox(width: 8),
-          itemBuilder: (context, i) {
-            final o = options[i];
-            final selected = selectedId == o.id;
-            return _DiscoveryChip(
-              label: o.label,
-              selected: selected,
-              scheme: scheme,
-              textTheme: textTheme,
-              onTap: () => onSelected(o.id),
-            );
-          },
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SectionLabel(text: 'Brand', scheme: scheme, textTheme: textTheme),
+          const SizedBox(height: 6),
+          _ChipRail(
+            options: brandOptions,
+            selectedId: brandId,
+            scheme: scheme,
+            textTheme: textTheme,
+            onSelected: onBrandSelected,
+          ),
+          const SizedBox(height: 14),
+          _SectionLabel(text: 'IP', scheme: scheme, textTheme: textTheme),
+          const SizedBox(height: 6),
+          _ChipRail(
+            options: ipOptions,
+            selectedId: ipId,
+            scheme: scheme,
+            textTheme: textTheme,
+            onSelected: onIpSelected,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel({
+    required this.text,
+    required this.scheme,
+    required this.textTheme,
+  });
+
+  final String text;
+  final ColorScheme scheme;
+  final TextTheme textTheme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Text(
+        text,
+        style: textTheme.labelSmall?.copyWith(
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.35,
+          color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
         ),
+      ),
+    );
+  }
+}
+
+class _ChipRail extends StatelessWidget {
+  const _ChipRail({
+    required this.options,
+    required this.selectedId,
+    required this.scheme,
+    required this.textTheme,
+    required this.onSelected,
+  });
+
+  final List<({String id, String label})> options;
+  final String selectedId;
+  final ColorScheme scheme;
+  final TextTheme textTheme;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 40,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        itemCount: options.length,
+        separatorBuilder: (context, index) => const SizedBox(width: 8),
+        itemBuilder: (context, i) {
+          final o = options[i];
+          final selected = selectedId == o.id;
+          return _DiscoveryChip(
+            label: o.label,
+            selected: selected,
+            scheme: scheme,
+            textTheme: textTheme,
+            onTap: () => onSelected(o.id),
+          );
+        },
       ),
     );
   }

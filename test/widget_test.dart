@@ -58,8 +58,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 600));
 
     expect(find.text('Trending'), findsOneWidget);
-    expect(find.text('Browse listings'), findsOneWidget);
-    expect(find.text('Luna Astronaut'), findsWidgets);
+    expect(find.text('Brand'), findsOneWidget);
+    expect(find.text('IP'), findsOneWidget);
+    expect(find.text('Labubu'), findsWidgets);
   });
 
   testWidgets('Collection empty state is polished', (WidgetTester tester) async {
