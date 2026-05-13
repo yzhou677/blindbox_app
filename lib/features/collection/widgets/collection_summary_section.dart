@@ -1,24 +1,33 @@
+import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:flutter/material.dart';
 
-/// Aggregates for the summary strip (derived from mock data in the screen).
+/// Aggregates for the summary strip (derived from [CollectionSnapshot]).
 @immutable
-class CollectionShelfStats {
-  const CollectionShelfStats({
-    required this.totalPieces,
-    required this.uniqueFigures,
-    required this.seriesCount,
+class CollectionAggregateStats {
+  const CollectionAggregateStats({
+    required this.ownedSlots,
+    required this.wishlistSlots,
+    required this.avgCompletionPercent,
   });
 
-  final int totalPieces;
-  final int uniqueFigures;
-  final int seriesCount;
+  final int ownedSlots;
+  final int wishlistSlots;
+  final int avgCompletionPercent;
+
+  factory CollectionAggregateStats.fromSnapshot(CollectionSnapshot s) {
+    return CollectionAggregateStats(
+      ownedSlots: s.totalOwnedFigures,
+      wishlistSlots: s.totalWishlistFigures,
+      avgCompletionPercent: s.averageCompletionPercent,
+    );
+  }
 }
 
 /// Soft, premium shelf stats — not a dashboard table.
 class CollectionSummarySection extends StatelessWidget {
   const CollectionSummarySection({super.key, required this.stats});
 
-  final CollectionShelfStats stats;
+  final CollectionAggregateStats stats;
 
   @override
   Widget build(BuildContext context) {
@@ -41,25 +50,25 @@ class CollectionSummarySection extends StatelessWidget {
             children: [
               Expanded(
                 child: _SummaryPill(
-                  label: 'Pieces',
-                  value: '${stats.totalPieces}',
-                  hint: 'on shelf',
+                  label: 'Owned',
+                  value: '${stats.ownedSlots}',
+                  hint: 'logged pulls',
                 ),
               ),
               _Dot(scheme: scheme),
               Expanded(
                 child: _SummaryPill(
-                  label: 'Figures',
-                  value: '${stats.uniqueFigures}',
-                  hint: 'unique',
+                  label: 'Wishlist',
+                  value: '${stats.wishlistSlots}',
+                  hint: 'to hunt',
                 ),
               ),
               _Dot(scheme: scheme),
               Expanded(
                 child: _SummaryPill(
-                  label: 'Series',
-                  value: '${stats.seriesCount}',
-                  hint: 'represented',
+                  label: 'Avg',
+                  value: '${stats.avgCompletionPercent}%',
+                  hint: 'completion',
                 ),
               ),
             ],
@@ -131,6 +140,7 @@ class _SummaryPill extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           hint,
+          textAlign: TextAlign.center,
           style: textTheme.bodySmall?.copyWith(
             color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
             height: 1.2,

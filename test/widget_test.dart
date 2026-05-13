@@ -1,9 +1,16 @@
 import 'package:blindbox_app/core/theme/app_theme.dart';
+import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/collection_screen.dart';
+import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+final class EmptyTestCollectionNotifier extends CollectionNotifier {
+  @override
+  CollectionSnapshot build() => CollectionSnapshot.emptyTest();
+}
 
 void main() {
   testWidgets('App shell shows Home tab', (WidgetTester tester) async {
@@ -21,7 +28,7 @@ void main() {
     expect(find.text('Skullpanda'), findsOneWidget);
   });
 
-  testWidgets('Collection tab shows shelf grid and summary', (WidgetTester tester) async {
+  testWidgets('Collection tab shows series-first shelf and summary', (WidgetTester tester) async {
     await tester.pumpWidget(
       const ProviderScope(child: BlindboxApp()),
     );
@@ -33,9 +40,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 600));
 
     expect(find.text('My shelf'), findsWidgets);
-    expect(find.text('PIECES'), findsOneWidget);
-    expect(find.text('8'), findsOneWidget);
-    expect(find.text('Moon Mischief'), findsWidgets);
+    expect(find.text('OWNED'), findsOneWidget);
+    expect(find.text('5'), findsOneWidget);
+    expect(find.text('Official series'), findsOneWidget);
+    expect(find.text('The Other One'), findsOneWidget);
   });
 
   testWidgets('Market tab shows search and trending', (WidgetTester tester) async {
@@ -57,9 +65,12 @@ void main() {
   testWidgets('Collection empty state is polished', (WidgetTester tester) async {
     await tester.pumpWidget(
       ProviderScope(
+        overrides: [
+          collectionNotifierProvider.overrideWith(EmptyTestCollectionNotifier.new),
+        ],
         child: MaterialApp(
           theme: AppTheme.light(),
-          home: const CollectionScreen(items: []),
+          home: const CollectionScreen(),
         ),
       ),
     );

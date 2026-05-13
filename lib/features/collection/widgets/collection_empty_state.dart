@@ -57,7 +57,7 @@ class CollectionEmptyState extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Add figures from the latest drops and build a cozy digital collection.',
+                    'Start with official lines or add your own — tracking stays on your device for now.',
                     textAlign: TextAlign.center,
                     style: textTheme.bodyLarge?.copyWith(
                       color: scheme.onSurfaceVariant.withValues(alpha: 0.92),
