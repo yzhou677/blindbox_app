@@ -2,6 +2,7 @@ import 'package:blindbox_app/features/collection/application/collection_notifier
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/widgets/add_custom_series_sheet.dart';
 import 'package:blindbox_app/features/collection/widgets/add_to_collection_sheet.dart';
+import 'package:blindbox_app/features/collection/widgets/collection_progress_voice.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_empty_state.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_summary_section.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_warm_start_banner.dart';
@@ -183,7 +184,10 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
           if (snap.isWarmStart)
             const SliverToBoxAdapter(child: CollectionWarmStartBanner()),
           SliverToBoxAdapter(
-            child: CollectionSummarySection(stats: CollectionAggregateStats.fromSnapshot(snap)),
+            child: CollectionSummarySection(
+              stats: CollectionAggregateStats.fromSnapshot(snap),
+              shelfMoodLine: CollectionProgressVoice.shelfMoodLine(snap),
+            ),
           ),
           SliverToBoxAdapter(
             child: Padding(
@@ -216,6 +220,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                     SeriesShelfCard(
                       series: s,
                       progress: progressForSeries(s, snap.figureStates),
+                      figureStates: snap.figureStates,
                       onOpen: () => _openFiguresSheet(context, s.id),
                       onRemove: () => _confirmRemoveSeries(context, s.id, s.name),
                     ),

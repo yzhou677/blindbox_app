@@ -23,57 +23,80 @@ class CollectionAggregateStats {
   }
 }
 
-/// Soft, premium shelf stats — not a dashboard table.
+/// Soft, premium shelf stats — calm language, not a dashboard.
 class CollectionSummarySection extends StatelessWidget {
-  const CollectionSummarySection({super.key, required this.stats});
+  const CollectionSummarySection({
+    super.key,
+    required this.stats,
+    this.shelfMoodLine,
+  });
 
   final CollectionAggregateStats stats;
+  final String? shelfMoodLine;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textTheme = Theme.of(context).textTheme;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          color: scheme.surfaceContainerLow.withValues(alpha: isDark ? 0.92 : 1),
-          border: Border.all(
-            color: scheme.outlineVariant.withValues(alpha: isDark ? 0.35 : 0.45),
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 22),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              color: scheme.surfaceContainerLow.withValues(alpha: isDark ? 0.92 : 1),
+              border: Border.all(
+                color: scheme.outlineVariant.withValues(alpha: isDark ? 0.35 : 0.45),
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _SummaryPill(
+                      label: 'On shelf',
+                      value: '${stats.ownedSlots}',
+                      hint: 'figures home',
+                    ),
+                  ),
+                  _Dot(scheme: scheme),
+                  Expanded(
+                    child: _SummaryPill(
+                      label: 'Hunt list',
+                      value: '${stats.wishlistSlots}',
+                      hint: 'still searching',
+                    ),
+                  ),
+                  _Dot(scheme: scheme),
+                  Expanded(
+                    child: _SummaryPill(
+                      label: 'Harmony',
+                      value: '${stats.avgCompletionPercent}%',
+                      hint: 'avg line fullness',
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-          child: Row(
-            children: [
-              Expanded(
-                child: _SummaryPill(
-                  label: 'Owned',
-                  value: '${stats.ownedSlots}',
-                  hint: 'logged pulls',
-                ),
+          if (shelfMoodLine != null && shelfMoodLine!.trim().isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              shelfMoodLine!,
+              textAlign: TextAlign.center,
+              style: textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
+                height: 1.4,
+                fontStyle: FontStyle.italic,
               ),
-              _Dot(scheme: scheme),
-              Expanded(
-                child: _SummaryPill(
-                  label: 'Wishlist',
-                  value: '${stats.wishlistSlots}',
-                  hint: 'to hunt',
-                ),
-              ),
-              _Dot(scheme: scheme),
-              Expanded(
-                child: _SummaryPill(
-                  label: 'Avg',
-                  value: '${stats.avgCompletionPercent}%',
-                  hint: 'completion',
-                ),
-              ),
-            ],
-          ),
-        ),
+            ),
+          ],
+        ],
       ),
     );
   }

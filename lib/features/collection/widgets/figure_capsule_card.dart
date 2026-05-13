@@ -432,9 +432,9 @@ class _SecretSheenPainter extends CustomPainter {
         end: Alignment(0.2 + shift, 1.1),
         colors: [
           Colors.transparent,
-          Colors.white.withValues(alpha: 0.07),
-          const Color(0xFFE8D5FF).withValues(alpha: 0.12),
-          Colors.white.withValues(alpha: 0.06),
+          Colors.white.withValues(alpha: 0.09),
+          const Color(0xFFE8D5FF).withValues(alpha: 0.15),
+          Colors.white.withValues(alpha: 0.075),
           Colors.transparent,
         ],
         stops: const [0.0, 0.38, 0.5, 0.62, 1.0],
