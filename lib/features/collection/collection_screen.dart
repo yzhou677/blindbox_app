@@ -9,6 +9,7 @@ import 'package:blindbox_app/features/collection/widgets/collection_summary_sect
 import 'package:blindbox_app/features/collection/widgets/collection_warm_start_banner.dart';
 import 'package:blindbox_app/features/collection/widgets/series_figures_sheet.dart';
 import 'package:blindbox_app/features/collection/widgets/series_shelf_cards.dart';
+import 'package:blindbox_app/shared/widgets/collectible_deck_text.dart';
 import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -123,7 +124,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
 
     if (snap.trackedSeriesCount == 0) {
       return Scaffold(
-        backgroundColor: scheme.surface,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
@@ -134,17 +135,9 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               scrolledUnderElevation: 0,
               toolbarHeight: FeedRhythm.mainTabAppBarToolbarHeight,
               backgroundColor: scheme.surface,
-              surfaceTintColor: scheme.surfaceTint.withValues(alpha: 0.32),
               centerTitle: false,
               titleSpacing: 20,
-              title: Text(
-                'My collection',
-                style: textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: -0.22,
-                  height: 1.18,
-                ),
-              ),
+              title: Text('My collection', style: textTheme.titleLarge),
             ),
             SliverToBoxAdapter(
               child: SizedBox(height: FeedRhythm.belowMainTabAppBar),
@@ -161,7 +154,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     }
 
     return Scaffold(
-      backgroundColor: scheme.surface,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
@@ -172,29 +165,15 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
             scrolledUnderElevation: 0,
             toolbarHeight: FeedRhythm.mainTabAppBarToolbarHeight,
             backgroundColor: scheme.surface,
-            surfaceTintColor: scheme.surfaceTint.withValues(alpha: 0.32),
             centerTitle: false,
             titleSpacing: 20,
-            title: Text(
-              'My collection',
-              style: textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w500,
-                letterSpacing: -0.22,
-                height: 1.18,
-              ),
-            ),
+            title: Text('My collection', style: textTheme.titleLarge),
           ),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, FeedRhythm.belowMainTabAppBar, 20, 6),
-              child: Text(
+              child: CollectibleDeckText(
                 'Your shelf brings together series, customs, and artist pieces. Tap a row to log pulls and wishes.',
-                style: textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurfaceVariant.withValues(alpha: 0.76),
-                  height: 1.42,
-                  letterSpacing: 0.02,
-                  fontWeight: FontWeight.w400,
-                ),
               ),
             ),
           ),
@@ -218,7 +197,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 36),
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, FeedRhythm.tabScrollTailPadding),
               child: Column(
                 children: [
                   for (final s in snap.shelfSeries)

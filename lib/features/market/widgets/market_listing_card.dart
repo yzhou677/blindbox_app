@@ -1,3 +1,5 @@
+import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/theme/collectible_shelf_shadow.dart';
 import 'package:blindbox_app/core/theme/collectible_shape.dart';
 import 'package:blindbox_app/features/home/widgets/collectible_network_image.dart';
 import 'package:blindbox_app/features/market/utils/market_format.dart';
@@ -23,22 +25,14 @@ class MarketListingCard extends StatelessWidget {
     final outerRadius = CollectibleShape.shellRadius;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: FeedRhythm.listingCardVerticalGap),
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: outerRadius,
-          boxShadow: [
-            BoxShadow(
-              color: Color.lerp(scheme.shadow, accent, 0.1)!
-                  .withValues(alpha: isDark ? 0.34 : 0.09),
-              blurRadius: 22,
-              offset: const Offset(0, 12),
-              spreadRadius: -5,
-            ),
-          ],
+          boxShadow: CollectibleShelfShadow.productShell(context, accent: accent),
         ),
         child: Material(
-          color: scheme.surfaceContainerLow,
+          color: scheme.surface,
           shape: RoundedRectangleBorder(
             borderRadius: outerRadius,
             side: BorderSide(

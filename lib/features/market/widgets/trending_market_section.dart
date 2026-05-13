@@ -1,4 +1,5 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/theme/collectible_shelf_shadow.dart';
 import 'package:blindbox_app/core/theme/collectible_shape.dart';
 import 'package:blindbox_app/features/home/widgets/collectible_network_image.dart';
 import 'package:blindbox_app/features/market/utils/market_format.dart';
@@ -41,7 +42,7 @@ class TrendingMarketSection extends StatelessWidget {
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             itemCount: items.length,
-            separatorBuilder: (context, index) => const SizedBox(width: 14),
+            separatorBuilder: (context, index) => SizedBox(width: FeedRhythm.horizontalRailCardGap),
             itemBuilder: (context, index) {
               return _TrendingMiniCard(listing: items[index]);
             },
@@ -73,18 +74,10 @@ class _TrendingMiniCard extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: outerRadius,
-          boxShadow: [
-            BoxShadow(
-              color: Color.lerp(scheme.shadow, accent, 0.08)!
-                  .withValues(alpha: isDark ? 0.32 : 0.08),
-              blurRadius: 18,
-              offset: const Offset(0, 10),
-              spreadRadius: -4,
-            ),
-          ],
+          boxShadow: CollectibleShelfShadow.productShell(context, accent: accent),
         ),
         child: Material(
-          color: scheme.surfaceContainerLow,
+          color: scheme.surface,
           shape: RoundedRectangleBorder(
             borderRadius: outerRadius,
             side: BorderSide(

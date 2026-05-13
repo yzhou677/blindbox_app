@@ -10,6 +10,7 @@ class Collectible {
     required this.releaseDate,
     required this.imageUrl,
     this.shelfAccent,
+    this.ipLine,
   });
 
   final String id;
@@ -18,6 +19,9 @@ class Collectible {
   final String brand;
   final DateTime releaseDate;
   final String imageUrl;
+
+  /// Studio / IP line shown under the series (e.g. “Pop Mart · Hirono”).
+  final String? ipLine;
 
   /// Pastel accent for card mat / chips (packaging-adjacent, not harsh primaries).
   final Color? shelfAccent;

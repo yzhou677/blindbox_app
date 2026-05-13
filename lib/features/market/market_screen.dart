@@ -1,5 +1,6 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/features/market/catalog/market_listing_filters.dart';
+import 'package:blindbox_app/shared/widgets/collectible_deck_text.dart';
 import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
 import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
 import 'package:blindbox_app/features/market/data/mock_market_listings.dart';
@@ -64,7 +65,7 @@ class _MarketScreenState extends State<MarketScreen> {
     final filtered = _visibleListings();
 
     return Scaffold(
-      backgroundColor: scheme.surface,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
@@ -75,29 +76,15 @@ class _MarketScreenState extends State<MarketScreen> {
             scrolledUnderElevation: 0,
             toolbarHeight: FeedRhythm.mainTabAppBarToolbarHeight,
             backgroundColor: scheme.surface,
-            surfaceTintColor: scheme.surfaceTint.withValues(alpha: 0.32),
             centerTitle: false,
             titleSpacing: 20,
-            title: Text(
-              'Market',
-              style: textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w500,
-                letterSpacing: -0.22,
-                height: 1.18,
-              ),
-            ),
+            title: Text('Market', style: textTheme.titleLarge),
           ),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, FeedRhythm.belowMainTabAppBar, 20, 10),
-              child: Text(
+              child: CollectibleDeckText(
                 'Soft signals for what is moving — visual first, lightweight.',
-                style: textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
-                  height: 1.42,
-                  letterSpacing: 0.02,
-                  fontWeight: FontWeight.w400,
-                ),
               ),
             ),
           ),
@@ -109,7 +96,7 @@ class _MarketScreenState extends State<MarketScreen> {
                   controller: _search,
                   onChanged: (v) => setState(() => _query = v),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: FeedRhythm.blockGapMedium),
                 MarketDiscoveryChips(
                   brandOptions: MarketTaxonomy.brandChipOptions(),
                   ipOptions: MarketTaxonomy.ipChipOptionsForBrand(_brandId),
@@ -134,25 +121,19 @@ class _MarketScreenState extends State<MarketScreen> {
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text(
+                    child: CollectibleDeckText.meta(
                       'Market signals inspired by recent eBay activity',
-                      style: textTheme.labelMedium?.copyWith(
-                        color: scheme.onSurfaceVariant.withValues(alpha: 0.54),
-                        height: 1.42,
-                        letterSpacing: 0.04,
-                        fontWeight: FontWeight.w400,
-                      ),
                     ),
                   ),
                 ],
               ),
             ),
           ),
-          const SliverToBoxAdapter(child: SizedBox(height: 14)),
+          const SliverToBoxAdapter(child: SizedBox(height: FeedRhythm.blockGapMedium)),
           SliverToBoxAdapter(
             child: TrendingMarketSection(items: mockTrendingMarketListings()),
           ),
-          const SliverToBoxAdapter(child: SizedBox(height: 8)),
+          const SliverToBoxAdapter(child: SizedBox(height: FeedRhythm.sectionHeaderToRail)),
           SliverToBoxAdapter(
             child: CollectibleSectionHeader(
               title: 'Browse listings',
@@ -170,7 +151,7 @@ class _MarketScreenState extends State<MarketScreen> {
             )
           else
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 36),
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, FeedRhythm.tabScrollTailPadding),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {

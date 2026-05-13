@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 
+import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/collectible_shape.dart';
+import 'package:blindbox_app/core/theme/collectible_shelf_shadow.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_progress_voice.dart';
 import 'package:flutter/material.dart';
@@ -85,16 +87,19 @@ class _SeriesShelfCardState extends State<SeriesShelfCard> with SingleTickerProv
           child: DecoratedBox(
             decoration: BoxDecoration(
               borderRadius: CollectibleShape.shellRadius,
-              boxShadow: hump > 0.02
-                  ? [
-                      BoxShadow(
-                        color: glow,
-                        blurRadius: 22 + 18 * hump,
-                        spreadRadius: -6,
-                        offset: const Offset(0, 8),
-                      ),
-                    ]
-                  : const [],
+              boxShadow: [
+                ...CollectibleShelfShadow.productShell(
+                  context,
+                  accent: widget.series.shelfAccent,
+                ),
+                if (hump > 0.02)
+                  BoxShadow(
+                    color: glow,
+                    blurRadius: 22 + 18 * hump,
+                    spreadRadius: -6,
+                    offset: const Offset(0, 8),
+                  ),
+              ],
             ),
             child: child,
           ),
@@ -144,22 +149,14 @@ class _SeriesMatShell extends StatelessWidget {
     final radius = CollectibleShape.shellRadius;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 18),
+      padding: const EdgeInsets.only(bottom: FeedRhythm.listingCardVerticalGap),
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: radius,
-          boxShadow: [
-            BoxShadow(
-              color: Color.lerp(scheme.shadow, accent, 0.08)!
-                  .withValues(alpha: isDark ? 0.32 : 0.08),
-              blurRadius: 22,
-              offset: const Offset(0, 11),
-              spreadRadius: -4,
-            ),
-          ],
+          boxShadow: CollectibleShelfShadow.productShell(context, accent: accent),
         ),
         child: Material(
-          color: scheme.surfaceContainerLow,
+          color: scheme.surface,
           shape: RoundedRectangleBorder(
             borderRadius: radius,
             side: BorderSide(

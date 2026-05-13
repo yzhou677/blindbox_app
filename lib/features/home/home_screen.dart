@@ -13,7 +13,7 @@ class HomeScreen extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: scheme.surface,
+      backgroundColor: scheme.surfaceContainerLow,
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
@@ -24,23 +24,15 @@ class HomeScreen extends StatelessWidget {
             scrolledUnderElevation: 0,
             toolbarHeight: FeedRhythm.mainTabAppBarToolbarHeight,
             backgroundColor: scheme.surface,
-            surfaceTintColor: scheme.surfaceTint.withValues(alpha: 0.32),
             centerTitle: false,
             titleSpacing: 20,
-            title: Text(
-              'Discover',
-              style: textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w500,
-                letterSpacing: -0.22,
-                height: 1.18,
-              ),
-            ),
+            title: Text('Discover', style: textTheme.titleLarge),
           ),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.only(
                 top: FeedRhythm.belowMainTabAppBar,
-                bottom: 30,
+                bottom: FeedRhythm.tabScrollTailPadding,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,

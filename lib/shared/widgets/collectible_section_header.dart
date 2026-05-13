@@ -1,4 +1,5 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/theme/collectible_tokens.dart';
 import 'package:flutter/material.dart';
 
 /// Editorial section rhythm: soft lead, title row, optional deck, packaging hairline.
@@ -51,26 +52,26 @@ class CollectibleSectionHeader extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: -0.18,
-                    height: 1.24,
-                  ),
+                  style: textTheme.titleMedium,
                 ),
               ),
-              trailing ?? const SizedBox.shrink(),
+              if (trailing case final t?) ...[
+                const SizedBox(width: 8),
+                Flexible(
+                  fit: FlexFit.loose,
+                  child: Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: t,
+                  ),
+                ),
+              ],
             ],
           ),
           if (deck case final d? when d.isNotEmpty) ...[
             const SizedBox(height: FeedRhythm.sectionTitleToSubtitle),
             Text(
               d,
-              style: textTheme.bodyMedium?.copyWith(
-                color: scheme.onSurfaceVariant.withValues(alpha: 0.76),
-                height: 1.44,
-                letterSpacing: 0.02,
-                fontWeight: FontWeight.w400,
-              ),
+              style: CollectibleTokens.of(context).supportiveBody(textTheme, scheme),
             ),
           ],
           if (showPackagingMark) ...[

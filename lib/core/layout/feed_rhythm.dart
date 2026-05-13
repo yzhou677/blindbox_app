@@ -7,7 +7,7 @@ abstract final class FeedRhythm {
   static const double belowMainTabAppBar = 10;
 
   /// Default gap between major Home feed sections (Latest drops ↔ Trending).
-  static const double homeMajorSectionGap = 28;
+  static const double homeMajorSectionGap = 32;
 
   /// Space from section title row to subtitle / deck copy.
   static const double sectionTitleToSubtitle = 8;
@@ -20,4 +20,16 @@ abstract final class FeedRhythm {
 
   /// Space from section header block (including hairline) to horizontal rails / lists.
   static const double sectionHeaderToRail = 14;
+
+  /// Vertical gap between full-width listing cards (shelf separation).
+  static const double listingCardVerticalGap = 22;
+
+  /// Horizontal gap between cards in home/market rails.
+  static const double horizontalRailCardGap = 24;
+
+  /// Vertical gap between stacked blocks inside a tab (e.g. search vs chips).
+  static const double blockGapMedium = 18;
+
+  /// Extra air below the last block inside main-tab scroll bodies.
+  static const double tabScrollTailPadding = 36;
 }

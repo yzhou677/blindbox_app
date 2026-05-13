@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/theme/collectible_shelf_shadow.dart';
 import 'package:blindbox_app/core/theme/collectible_shape.dart';
 import 'package:blindbox_app/models/toy_series_highlight.dart';
 import 'package:flutter/material.dart';
@@ -32,15 +33,7 @@ class TrendingSeriesCapsule extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: radius,
-          boxShadow: [
-            BoxShadow(
-              color: Color.lerp(scheme.shadow, series.accent, 0.06)!
-                  .withValues(alpha: isDark ? 0.28 : 0.07),
-              blurRadius: 16,
-              offset: const Offset(0, 8),
-              spreadRadius: -4,
-            ),
-          ],
+          boxShadow: CollectibleShelfShadow.productShell(context, accent: series.accent),
         ),
         child: Material(
           color: Colors.transparent,

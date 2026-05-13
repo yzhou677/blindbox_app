@@ -1,6 +1,7 @@
 import 'package:blindbox_app/features/collection/data/collection_seed_data.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/home/data/mock_latest_drops.dart';
+import 'package:blindbox_app/models/collectible.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -52,6 +53,37 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
   }
 
   /// Adds a cloned row from a catalog template (suggestions / browse). No-op if that template is already on shelf.
+  /// Adds a one-row series built from a Latest Drops [Collectible] (mock “discovery → shelf”).
+  void addSeriesFromDrop(Collectible c) {
+    final catalogKey = 'drop-${c.id}';
+    if (state.hasTemplateOnShelf(catalogKey)) return;
+    final seriesId = 'shelf-$catalogKey-${DateTime.now().microsecondsSinceEpoch}';
+    final fid = '$seriesId-fig-0';
+    final figure = FigureDefinition(
+      id: fid,
+      seriesId: seriesId,
+      ipId: seriesId,
+      name: c.name,
+      imageUrl: c.imageUrl,
+      rarity: 'Regular',
+      isSecret: false,
+    );
+    final series = SeriesDefinition(
+      id: seriesId,
+      name: c.series,
+      brand: c.brand,
+      ipName: (c.ipLine?.trim().isNotEmpty ?? false) ? c.ipLine!.trim() : c.series,
+      figures: [figure],
+      shelfAccent: c.shelfAccent ?? const Color(0xFFE8DEF5),
+      notes: null,
+      catalogTemplateId: catalogKey,
+    );
+    state = CollectionSnapshot(
+      shelfSeries: [...state.shelfSeries, series],
+      figureStates: state.figureStates,
+    );
+  }
+
   void addSeriesFromTemplate(SeriesDefinition template) {
     final catalogKey = template.catalogTemplateId ?? template.id;
     if (state.hasTemplateOnShelf(catalogKey)) return;
