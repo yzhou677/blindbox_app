@@ -1,7 +1,6 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/features/market/application/market_browse_notifier.dart';
 import 'package:blindbox_app/features/market/catalog/market_listing_filters.dart';
-import 'package:blindbox_app/shared/widgets/collectible_deck_text.dart';
-import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
 import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
 import 'package:blindbox_app/features/market/data/mock_market_listings.dart';
 import 'package:blindbox_app/features/market/widgets/market_discovery_chips.dart';
@@ -9,20 +8,19 @@ import 'package:blindbox_app/features/market/widgets/market_listing_card.dart';
 import 'package:blindbox_app/features/market/widgets/market_search_bar.dart';
 import 'package:blindbox_app/features/market/widgets/trending_market_section.dart';
 import 'package:blindbox_app/models/market_listing.dart';
+import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class MarketScreen extends StatefulWidget {
+class MarketScreen extends ConsumerStatefulWidget {
   const MarketScreen({super.key});
 
   @override
-  State<MarketScreen> createState() => _MarketScreenState();
+  ConsumerState<MarketScreen> createState() => _MarketScreenState();
 }
 
-class _MarketScreenState extends State<MarketScreen> {
+class _MarketScreenState extends ConsumerState<MarketScreen> {
   final TextEditingController _search = TextEditingController();
-  String _query = '';
-  String _brandId = MarketTaxonomyIds.anyBrand;
-  String _ipId = MarketTaxonomyIds.anyIp;
 
   @override
   void dispose() {
@@ -30,39 +28,39 @@ class _MarketScreenState extends State<MarketScreen> {
     super.dispose();
   }
 
-  bool get _filtersActive =>
-      _brandId != MarketTaxonomyIds.anyBrand || _ipId != MarketTaxonomyIds.anyIp;
+  void _clearDraft() {
+    _search.clear();
+    ref.read(marketBrowseNotifierProvider.notifier).setQuery('');
+  }
 
-  List<MarketListing> _visibleListings() {
-    final q = _query.trim().toLowerCase();
+  void _clearSearchSession() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    _search.clear();
+    ref.read(marketBrowseNotifierProvider.notifier).clearSearchSession();
+  }
+
+  List<MarketListing> _visibleListings(MarketBrowseState browse) {
+    final q = browse.query.trim().toLowerCase();
     return mockMarketListings
         .where(
           (m) => marketListingVisible(
             m,
-            brandId: _brandId,
-            ipId: _ipId,
+            brandId: browse.brandId,
+            ipId: browse.ipId,
             queryLower: q,
           ),
         )
         .toList(growable: false);
   }
 
-  void _setBrand(String id) {
-    setState(() {
-      _brandId = id;
-      _ipId = MarketTaxonomy.clampIpToBrand(_brandId, _ipId);
-    });
-  }
-
-  void _setIp(String id) {
-    setState(() => _ipId = id);
-  }
-
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final filtered = _visibleListings();
+    final browse = ref.watch(marketBrowseNotifierProvider);
+    final notifier = ref.read(marketBrowseNotifierProvider.notifier);
+    final filtered = _visibleListings(browse);
+    final immersive = browse.searchResultsActive;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -82,76 +80,66 @@ class _MarketScreenState extends State<MarketScreen> {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, FeedRhythm.belowMainTabAppBar, 20, 10),
-              child: CollectibleDeckText(
-                'Soft signals for what is moving — visual first, lightweight.',
-              ),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                MarketSearchBar(
-                  controller: _search,
-                  onChanged: (v) => setState(() => _query = v),
-                ),
-                const SizedBox(height: FeedRhythm.blockGapMedium),
-                MarketDiscoveryChips(
-                  brandOptions: MarketTaxonomy.brandChipOptions(),
-                  ipOptions: MarketTaxonomy.ipChipOptionsForBrand(_brandId),
-                  brandId: _brandId,
-                  ipId: _ipId,
-                  onBrandSelected: _setBrand,
-                  onIpSelected: _setIp,
-                ),
-              ],
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 6, 20, 2),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              padding: const EdgeInsets.only(top: FeedRhythm.belowMainTabAppBar),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Icon(
-                    Icons.public_rounded,
-                    size: 14,
-                    color: scheme.onSurfaceVariant.withValues(alpha: 0.42),
+                  MarketSearchBar(
+                    controller: _search,
+                    onChanged: notifier.setQuery,
+                    onSearchSubmitted: notifier.submitSearch,
+                    onClearSearchSession: _clearSearchSession,
+                    onClearDraft: _clearDraft,
+                    searchResultsActive: browse.searchResultsActive,
+                    showClearDraft: browse.query.trim().isNotEmpty && !browse.searchResultsActive,
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: CollectibleDeckText.meta(
-                      'Market signals inspired by recent eBay activity',
+                  if (!immersive) ...[
+                    const SizedBox(height: FeedRhythm.blockGapMedium),
+                    MarketDiscoveryChips(
+                      brandOptions: MarketTaxonomy.brandChipOptions(),
+                      ipOptions: MarketTaxonomy.ipChipOptionsForBrand(browse.brandId),
+                      brandId: browse.brandId,
+                      ipId: browse.ipId,
+                      showIpRail: browse.brandId != MarketTaxonomyIds.anyBrand,
+                      onBrandSelected: notifier.setBrand,
+                      onIpSelected: notifier.setIp,
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
           ),
-          const SliverToBoxAdapter(child: SizedBox(height: FeedRhythm.blockGapMedium)),
-          SliverToBoxAdapter(
-            child: TrendingMarketSection(items: mockTrendingMarketListings()),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: FeedRhythm.sectionHeaderToRail)),
-          SliverToBoxAdapter(
-            child: CollectibleSectionHeader(
-              title: 'Browse listings',
-              showPackagingMark: true,
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 6),
+          if (!immersive) ...[
+            const SliverToBoxAdapter(child: SizedBox(height: FeedRhythm.blockGapMedium)),
+            SliverToBoxAdapter(
+              child: TrendingMarketSection(items: mockTrendingMarketListings()),
             ),
-          ),
+            const SliverToBoxAdapter(child: SizedBox(height: FeedRhythm.marketTrendingToBrowseHeaderGap)),
+            SliverToBoxAdapter(
+              child: CollectibleSectionHeader(
+                title: 'Browse listings',
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+              ),
+            ),
+          ],
           if (filtered.isEmpty)
             SliverFillRemaining(
               hasScrollBody: false,
               child: _MarketEmptySearch(
-                query: _query.trim(),
-                filterActive: _filtersActive,
+                query: browse.query.trim(),
+                filterActive: browse.filtersActive,
               ),
             )
           else
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, FeedRhythm.tabScrollTailPadding),
+              padding: EdgeInsets.fromLTRB(
+                20,
+                immersive
+                    ? FeedRhythm.blockGapMedium
+                    : FeedRhythm.marketBrowseHeaderToFeedGap,
+                20,
+                FeedRhythm.tabScrollTailPadding,
+              ),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
@@ -187,9 +175,9 @@ class _MarketEmptySearch extends StatelessWidget {
             ? 'Nothing here for that pick yet'
             : 'No matches';
     final subtitle = hasQuery
-        ? 'Try a figure name, series, or brand — or clear the search.'
+        ? 'Try another search or clear filters.'
         : filterActive
-            ? 'Try another shelf filter or search the mock catalog.'
+            ? 'Try another brand or IP filter.'
             : 'Try another search.';
 
     return Padding(

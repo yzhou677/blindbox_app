@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Two horizontal rails: brands vs IPs (collector taxonomy, still lightweight).
+/// Brand taxonomy rail; optional IP rail when a brand is selected.
 class MarketDiscoveryChips extends StatelessWidget {
   const MarketDiscoveryChips({
     super.key,
@@ -8,6 +8,7 @@ class MarketDiscoveryChips extends StatelessWidget {
     required this.ipOptions,
     required this.brandId,
     required this.ipId,
+    required this.showIpRail,
     required this.onBrandSelected,
     required this.onIpSelected,
   });
@@ -16,6 +17,7 @@ class MarketDiscoveryChips extends StatelessWidget {
   final List<({String id, String label})> ipOptions;
   final String brandId;
   final String ipId;
+  final bool showIpRail;
   final ValueChanged<String> onBrandSelected;
   final ValueChanged<String> onIpSelected;
 
@@ -38,16 +40,18 @@ class MarketDiscoveryChips extends StatelessWidget {
             textTheme: textTheme,
             onSelected: onBrandSelected,
           ),
-          const SizedBox(height: 14),
-          _SectionLabel(text: 'IP', scheme: scheme, textTheme: textTheme),
-          const SizedBox(height: 6),
-          _ChipRail(
-            options: ipOptions,
-            selectedId: ipId,
-            scheme: scheme,
-            textTheme: textTheme,
-            onSelected: onIpSelected,
-          ),
+          if (showIpRail) ...[
+            const SizedBox(height: 14),
+            _SectionLabel(text: 'IP', scheme: scheme, textTheme: textTheme),
+            const SizedBox(height: 6),
+            _ChipRail(
+              options: ipOptions,
+              selectedId: ipId,
+              scheme: scheme,
+              textTheme: textTheme,
+              onSelected: onIpSelected,
+            ),
+          ],
         ],
       ),
     );

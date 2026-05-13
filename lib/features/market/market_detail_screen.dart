@@ -269,14 +269,6 @@ class _MarketDetailBody extends StatelessWidget {
           value: c.releaseDateLabel,
           tint: accent.withValues(alpha: 0.14),
         ),
-        const SizedBox(height: 24),
-        Text(
-          'Illustrative market snapshot for design preview. Real pricing and listings will connect later.',
-          style: textTheme.bodyMedium?.copyWith(
-            color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
-            height: 1.45,
-          ),
-        ),
       ],
     );
   }

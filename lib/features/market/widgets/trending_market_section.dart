@@ -1,5 +1,4 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
-import 'package:blindbox_app/core/theme/collectible_shelf_shadow.dart';
 import 'package:blindbox_app/core/theme/collectible_shape.dart';
 import 'package:blindbox_app/features/home/widgets/collectible_network_image.dart';
 import 'package:blindbox_app/features/market/utils/market_format.dart';
@@ -8,10 +7,9 @@ import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-const double _kTrendingCardWidth = 168;
+const double _kTrendingCardWidth = 156;
 
-/// Horizontal “what’s moving” rail — visual-first, not a ticker tape.
-/// Wrap with [SliverToBoxAdapter] inside scroll views.
+/// Lighter “discovery” rail — softer than browse feed rows.
 class TrendingMarketSection extends StatelessWidget {
   const TrendingMarketSection({super.key, required this.items});
 
@@ -36,7 +34,7 @@ class TrendingMarketSection extends StatelessWidget {
         ),
         const SizedBox(height: FeedRhythm.sectionHeaderToRail),
         SizedBox(
-          height: 214,
+          height: FeedRhythm.marketTrendingRailHeight,
           child: ListView.separated(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             scrollDirection: Axis.horizontal,
@@ -48,7 +46,7 @@ class TrendingMarketSection extends StatelessWidget {
             },
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: FeedRhythm.marketTrendingRailBottomClosure),
       ],
     );
   }
@@ -59,6 +57,8 @@ class _TrendingMiniCard extends StatelessWidget {
 
   final MarketListing listing;
 
+  static const double _radius = 14;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -66,93 +66,81 @@ class _TrendingMiniCard extends StatelessWidget {
     final textTheme = theme.textTheme;
     final c = listing.collectible;
     final accent = c.shelfAccent ?? scheme.tertiaryContainer;
-    final outerRadius = CollectibleShape.shellRadius;
     final isDark = theme.brightness == Brightness.dark;
 
     return SizedBox(
       width: _kTrendingCardWidth,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: outerRadius,
-          boxShadow: CollectibleShelfShadow.productShell(context, accent: accent),
+      child: Material(
+        color: Color.lerp(
+          scheme.surfaceContainerLow,
+          accent,
+          isDark ? 0.08 : 0.12,
         ),
-        child: Material(
-          color: scheme.surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: outerRadius,
-            side: BorderSide(
-              color: accent.withValues(alpha: isDark ? 0.18 : 0.32),
-            ),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(_radius),
+          side: BorderSide(
+            color: scheme.outlineVariant.withValues(alpha: isDark ? 0.38 : 0.48),
           ),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: () => context.push('/market/listing/${listing.id}'),
-            child: Padding(
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        borderRadius: CollectibleShape.matRadius,
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Color.lerp(scheme.surface, accent, 0.32)!
-                                .withValues(alpha: isDark ? 0.36 : 0.52),
-                            accent.withValues(alpha: 0.32),
-                            scheme.surface.withValues(alpha: 0.08),
-                          ],
-                          stops: const [0.0, 0.45, 1.0],
-                        ),
-                        border: Border.all(
-                          color: accent.withValues(alpha: isDark ? 0.12 : 0.2),
-                        ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => context.push('/market/listing/${listing.id}'),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      color: scheme.surface.withValues(alpha: isDark ? 0.22 : 0.55),
+                      border: Border.all(
+                        color: accent.withValues(alpha: isDark ? 0.12 : 0.18),
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(6),
-                        child: ClipRRect(
-                          borderRadius: CollectibleShape.insetRadius,
-                          child: ColoredBox(
-                            color: scheme.surface.withValues(alpha: 0.55),
-                            child: CollectibleNetworkImage(
-                              collectible: c,
-                              borderRadius: CollectibleShape.insetRadius,
-                              fit: BoxFit.contain,
-                            ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(5),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(7),
+                        child: ColoredBox(
+                          color: scheme.surface.withValues(alpha: 0.35),
+                          child: CollectibleNetworkImage(
+                            collectible: c,
+                            borderRadius: CollectibleShape.insetRadius,
+                            fit: BoxFit.contain,
                           ),
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    c.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: -0.08,
-                    ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  c.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.06,
                   ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Text(
-                        formatMarketUsd(listing.currentPriceUsd),
-                        style: textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.2,
-                        ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Text(
+                      formatMarketUsd(listing.currentPriceUsd),
+                      style: textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.18,
                       ),
-                      const SizedBox(width: 8),
-                      _MiniDelta(percent: listing.priceChangePercent),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                    const SizedBox(width: 8),
+                    _MiniDelta(percent: listing.priceChangePercent),
+                  ],
+                ),
+              ],
             ),
           ),
         ),
@@ -179,17 +167,17 @@ class _MiniDelta extends StatelessWidget {
             : scheme.onSurfaceVariant;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: up ? 0.14 : down ? 0.12 : 0.08),
+        color: color.withValues(alpha: up ? 0.12 : down ? 0.1 : 0.07),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         formatPriceChangePercent(percent),
         style: textTheme.labelSmall?.copyWith(
           fontWeight: FontWeight.w700,
-          color: color.withValues(alpha: 0.92),
-          letterSpacing: 0.1,
+          color: color.withValues(alpha: 0.9),
+          letterSpacing: 0.08,
         ),
       ),
     );

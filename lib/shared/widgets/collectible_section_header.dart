@@ -2,7 +2,7 @@ import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/collectible_tokens.dart';
 import 'package:flutter/material.dart';
 
-/// Editorial section rhythm: soft lead, title row, optional deck, packaging hairline.
+/// Section rhythm: soft lead, title row, optional subtitle deck.
 class CollectibleSectionHeader extends StatelessWidget {
   const CollectibleSectionHeader({
     super.key,
@@ -10,7 +10,6 @@ class CollectibleSectionHeader extends StatelessWidget {
     this.subtitle,
     this.trailing,
     this.titleAccessory,
-    this.showPackagingMark = true,
     this.padding = const EdgeInsets.fromLTRB(20, 0, 20, 0),
   });
 
@@ -20,7 +19,6 @@ class CollectibleSectionHeader extends StatelessWidget {
 
   /// Replaces the default tiny sparkle (e.g. fire icon for market rails).
   final Widget? titleAccessory;
-  final bool showPackagingMark;
   final EdgeInsetsGeometry padding;
 
   @override
@@ -74,41 +72,7 @@ class CollectibleSectionHeader extends StatelessWidget {
               style: CollectibleTokens.of(context).supportiveBody(textTheme, scheme),
             ),
           ],
-          if (showPackagingMark) ...[
-            SizedBox(
-              height: switch (deck) {
-                final d? when d.isNotEmpty => FeedRhythm.sectionSubtitleToMark,
-                _ => FeedRhythm.sectionTitleToMark,
-              },
-            ),
-            const _PackagingHairline(),
-          ],
         ],
-      ),
-    );
-  }
-}
-
-/// Soft shelf / blister-pack accent — gradient only (keeps motifs minimal).
-class _PackagingHairline extends StatelessWidget {
-  const _PackagingHairline();
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      height: 2,
-      width: 44,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(99),
-        gradient: LinearGradient(
-          colors: [
-            scheme.primary.withValues(alpha: 0.34),
-            scheme.tertiary.withValues(alpha: 0.22),
-            scheme.primary.withValues(alpha: 0),
-          ],
-          stops: const [0.0, 0.5, 1.0],
-        ),
       ),
     );
   }

@@ -21,6 +21,24 @@ abstract final class FeedRhythm {
   /// Space from section header block (including hairline) to horizontal rails / lists.
   static const double sectionHeaderToRail = 14;
 
+  /// Extra air between Market Trending rail and the Browse listings header (no hairline).
+  static const double marketTrendingToBrowseHeaderGap = 24;
+
+  /// Bottom closure after the Trending horizontal rail (section block end).
+  static const double marketTrendingRailBottomClosure = 34;
+
+  /// Space below the Browse listings section title before the first feed row.
+  static const double marketBrowseHeaderToFeedGap = 18;
+
+  /// Vertical gap between Market browse feed rows (lighter than shelf cards).
+  static const double marketListingFeedCardVerticalGap = 14;
+
+  /// Fixed square thumbnail for Market browse feed rows.
+  static const double marketListingThumbnailExtent = 92;
+
+  /// Trending rail height (preview cards); lower than browse for hierarchy.
+  static const double marketTrendingRailHeight = 180;
+
   /// Vertical gap between full-width listing cards (shelf separation).
   static const double listingCardVerticalGap = 22;
 

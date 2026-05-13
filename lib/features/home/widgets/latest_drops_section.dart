@@ -25,7 +25,6 @@ class LatestDropsSection extends StatelessWidget {
       children: [
         CollectibleSectionHeader(
           title: 'Latest drops',
-          showPackagingMark: false,
           trailing: caption == null
               ? null
               : CollectibleContextChip(

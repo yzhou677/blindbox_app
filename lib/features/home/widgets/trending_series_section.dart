@@ -21,7 +21,6 @@ class TrendingSeriesSection extends StatelessWidget {
       children: [
         const CollectibleSectionHeader(
           title: 'Trending series',
-          showPackagingMark: false,
           padding: EdgeInsets.fromLTRB(20, 2, 20, 0),
         ),
         const SizedBox(height: FeedRhythm.sectionHeaderToRail),

@@ -1,5 +1,4 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
-import 'package:blindbox_app/core/theme/collectible_shelf_shadow.dart';
 import 'package:blindbox_app/core/theme/collectible_shape.dart';
 import 'package:blindbox_app/features/home/widgets/collectible_network_image.dart';
 import 'package:blindbox_app/features/market/utils/market_format.dart';
@@ -8,11 +7,14 @@ import 'package:blindbox_app/models/market_listing.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-/// Full-width listing tile — imagery first, soft market cues (StockX-adjacent, not a terminal).
+/// Browse feed row — compact thumbnail + metadata (lighter than hero “shell” tiles).
 class MarketListingCard extends StatelessWidget {
   const MarketListingCard({super.key, required this.listing});
 
   final MarketListing listing;
+
+  static const double _thumbRadius = 12;
+  static const double _cardRadius = 14;
 
   @override
   Widget build(BuildContext context) {
@@ -22,71 +24,60 @@ class MarketListingCard extends StatelessWidget {
     final c = listing.collectible;
     final accent = c.shelfAccent ?? scheme.tertiaryContainer;
     final isDark = theme.brightness == Brightness.dark;
-    final outerRadius = CollectibleShape.shellRadius;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: FeedRhythm.listingCardVerticalGap),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: outerRadius,
-          boxShadow: CollectibleShelfShadow.productShell(context, accent: accent),
-        ),
-        child: Material(
-          color: scheme.surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: outerRadius,
-            side: BorderSide(
-              color: accent.withValues(alpha: isDark ? 0.2 : 0.34),
-            ),
+      padding: const EdgeInsets.only(bottom: FeedRhythm.marketListingFeedCardVerticalGap),
+      child: Material(
+        color: scheme.surface,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(_cardRadius),
+          side: BorderSide(
+            color: scheme.outlineVariant.withValues(alpha: isDark ? 0.42 : 0.55),
           ),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: () => context.push('/market/listing/${listing.id}'),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => context.push('/market/listing/${listing.id}'),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                AspectRatio(
-                  aspectRatio: 1.12,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        borderRadius: CollectibleShape.matRadius,
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Color.lerp(scheme.surface, accent, 0.34)!
-                                .withValues(alpha: isDark ? 0.38 : 0.58),
-                            accent.withValues(alpha: 0.34),
-                            scheme.surface.withValues(alpha: 0.08),
-                          ],
-                          stops: const [0.0, 0.45, 1.0],
-                        ),
-                        border: Border.all(
-                          color: accent.withValues(alpha: isDark ? 0.12 : 0.2),
-                        ),
+                SizedBox(
+                  width: FeedRhythm.marketListingThumbnailExtent,
+                  height: FeedRhythm.marketListingThumbnailExtent,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(_thumbRadius),
+                      color: Color.lerp(
+                        scheme.surfaceContainerHighest,
+                        accent,
+                        isDark ? 0.12 : 0.18,
+                      )!.withValues(alpha: isDark ? 0.55 : 0.72),
+                      border: Border.all(
+                        color: accent.withValues(alpha: isDark ? 0.14 : 0.22),
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: ClipRRect(
-                          borderRadius: CollectibleShape.insetRadius,
-                          child: ColoredBox(
-                            color: scheme.surface.withValues(alpha: 0.58),
-                            child: CollectibleNetworkImage(
-                              collectible: c,
-                              heroTag: listing.marketHeroTag,
-                              borderRadius: CollectibleShape.insetRadius,
-                              fit: BoxFit.contain,
-                            ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(6),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(_thumbRadius - 4),
+                        child: ColoredBox(
+                          color: scheme.surface.withValues(alpha: 0.5),
+                          child: CollectibleNetworkImage(
+                            collectible: c,
+                            heroTag: listing.marketHeroTag,
+                            borderRadius: CollectibleShape.insetRadius,
+                            fit: BoxFit.contain,
                           ),
                         ),
                       ),
                     ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                const SizedBox(width: 14),
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -94,60 +85,60 @@ class MarketListingCard extends StatelessWidget {
                         c.name,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: textTheme.titleMedium?.copyWith(
+                        style: textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w600,
-                          letterSpacing: -0.18,
-                          height: 1.2,
+                          letterSpacing: -0.12,
+                          height: 1.22,
                         ),
                       ),
-                      ListingMarketSignals(listing: listing),
+                      ListingMarketSignals(listing: listing, dense: true),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
                             formatMarketUsd(listing.currentPriceUsd),
-                            style: textTheme.headlineSmall?.copyWith(
+                            style: textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.w700,
-                              letterSpacing: -0.45,
-                              height: 1,
+                              letterSpacing: -0.35,
+                              height: 1.05,
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 10),
                           _PriceChangePill(percent: listing.priceChangePercent),
                           const Spacer(),
                         ],
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
                       Row(
                         children: [
                           Icon(
                             Icons.layers_outlined,
-                            size: 18,
-                            color: scheme.onSurfaceVariant.withValues(alpha: 0.65),
+                            size: 16,
+                            color: scheme.onSurfaceVariant.withValues(alpha: 0.6),
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 5),
                           Text(
                             '${listing.listingCount} listings',
-                            style: textTheme.labelLarge?.copyWith(
-                              color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
+                            style: textTheme.labelMedium?.copyWith(
+                              color: scheme.onSurfaceVariant.withValues(alpha: 0.86),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: 8),
                           Text(
                             '·',
                             style: textTheme.bodySmall?.copyWith(
-                              color: scheme.onSurfaceVariant.withValues(alpha: 0.45),
+                              color: scheme.onSurfaceVariant.withValues(alpha: 0.4),
                             ),
                           ),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               c.series,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: textTheme.bodySmall?.copyWith(
-                                color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
+                                color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -184,17 +175,17 @@ class _PriceChangePill extends StatelessWidget {
             : scheme.onSurfaceVariant;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: up ? 0.14 : down ? 0.12 : 0.08),
+        color: color.withValues(alpha: up ? 0.12 : down ? 0.1 : 0.07),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         formatPriceChangePercent(percent),
-        style: textTheme.labelLarge?.copyWith(
+        style: textTheme.labelMedium?.copyWith(
           fontWeight: FontWeight.w700,
-          color: color.withValues(alpha: 0.92),
-          letterSpacing: 0.12,
+          color: color.withValues(alpha: 0.9),
+          letterSpacing: 0.08,
         ),
       ),
     );
