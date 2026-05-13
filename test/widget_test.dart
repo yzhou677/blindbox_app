@@ -36,6 +36,22 @@ void main() {
     expect(find.text('Moon Mischief'), findsWidgets);
   });
 
+  testWidgets('Market tab shows search and trending', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(child: BlindboxApp()),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    await tester.tap(find.text('Market'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+
+    expect(find.text('Trending'), findsOneWidget);
+    expect(find.text('Browse listings'), findsOneWidget);
+    expect(find.text('Luna Astronaut'), findsWidgets);
+  });
+
   testWidgets('Collection empty state is polished', (WidgetTester tester) async {
     await tester.pumpWidget(
       ProviderScope(
