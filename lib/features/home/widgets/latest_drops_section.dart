@@ -8,7 +8,7 @@ class LatestDropsSection extends StatelessWidget {
   final List<Collectible> items;
 
   /// Card + polaroid mat + chip + date pill + breathing room.
-  static const double _railHeight = 502;
+  static const double _railHeight = 468;
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +20,7 @@ class LatestDropsSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(22, 6, 22, 0),
+          padding: const EdgeInsets.fromLTRB(20, 2, 20, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -30,43 +30,44 @@ class LatestDropsSection extends StatelessWidget {
                   Expanded(
                     child: Text(
                       'Latest drops',
-                      style: textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: -0.32,
-                        height: 1.05,
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: -0.12,
+                        height: 1.22,
                       ),
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
                     decoration: BoxDecoration(
-                      color: scheme.primaryContainer.withValues(alpha: 0.55),
+                      color: scheme.primaryContainer.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
                       'New',
-                      style: textTheme.labelMedium?.copyWith(
-                        color: scheme.onPrimaryContainer.withValues(alpha: 0.9),
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.2,
+                      style: textTheme.labelSmall?.copyWith(
+                        color: scheme.onPrimaryContainer.withValues(alpha: 0.88),
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.35,
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
                 'Fresh picks for your shelf — soft launches, big smiles.',
-                style: textTheme.bodySmall?.copyWith(
-                  color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
-                  height: 1.35,
-                  letterSpacing: 0.02,
+                style: textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
+                  height: 1.38,
+                  letterSpacing: 0.08,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 20),
         SizedBox(
           height: _railHeight,
           child: ListView.separated(
@@ -74,7 +75,7 @@ class LatestDropsSection extends StatelessWidget {
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             itemCount: items.length,
-            separatorBuilder: (context, index) => const SizedBox(width: 18),
+            separatorBuilder: (context, index) => const SizedBox(width: 20),
             itemBuilder: (context, index) => LatestDropCard(collectible: items[index]),
           ),
         ),

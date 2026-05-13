@@ -1,5 +1,6 @@
 import 'package:blindbox_app/features/home/data/mock_latest_drops.dart';
 import 'package:blindbox_app/features/home/widgets/latest_drops_section.dart';
+import 'package:blindbox_app/features/home/widgets/trending_series_section.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -15,24 +16,36 @@ class HomeScreen extends StatelessWidget {
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          SliverAppBar.large(
-            floating: false,
+          SliverAppBar(
             pinned: false,
+            floating: false,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            toolbarHeight: 52,
             backgroundColor: scheme.surface,
-            surfaceTintColor: scheme.surfaceTint.withValues(alpha: 0.5),
+            surfaceTintColor: scheme.surfaceTint.withValues(alpha: 0.32),
+            centerTitle: false,
+            titleSpacing: 20,
             title: Text(
               'Discover',
-              style: textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.5,
-                height: 1.12,
+              style: textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w500,
+                letterSpacing: -0.22,
+                height: 1.18,
               ),
             ),
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 36),
-              child: LatestDropsSection(items: mockLatestDrops),
+              padding: const EdgeInsets.only(top: 4, bottom: 36),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  LatestDropsSection(items: mockLatestDrops),
+                  const SizedBox(height: 36),
+                  const TrendingSeriesSection(),
+                ],
+              ),
             ),
           ),
         ],

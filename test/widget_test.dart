@@ -17,6 +17,8 @@ void main() {
     expect(find.text('Discover'), findsWidgets);
     expect(find.text('Latest drops'), findsOneWidget);
     expect(find.text('Luna Astronaut'), findsOneWidget);
+    expect(find.text('Trending series'), findsOneWidget);
+    expect(find.text('Skullpanda'), findsOneWidget);
   });
 
   testWidgets('Collection tab shows shelf grid and summary', (WidgetTester tester) async {

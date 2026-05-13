@@ -3,8 +3,9 @@ import 'package:blindbox_app/models/collectible.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-const double _kCardWidth = 276;
-const double _kImageAspect = 0.88;
+/// Slightly compact width + squatter image window = less “poster,” more shelf box.
+const double _kCardWidth = 264;
+const double _kImageAspect = 0.96;
 
 class LatestDropCard extends StatelessWidget {
   const LatestDropCard({super.key, required this.collectible});
@@ -16,7 +17,7 @@ class LatestDropCard extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final textTheme = theme.textTheme;
-    final outerRadius = BorderRadius.circular(26);
+    final outerRadius = BorderRadius.circular(24);
     final accent = collectible.shelfAccent ?? scheme.tertiaryContainer;
     final shadowAlpha = theme.brightness == Brightness.dark ? 0.38 : 0.11;
 
@@ -53,10 +54,10 @@ class LatestDropCard extends StatelessWidget {
                 AspectRatio(
                   aspectRatio: _kImageAspect,
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 11),
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(18),
+                        borderRadius: BorderRadius.circular(17),
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
@@ -65,17 +66,20 @@ class LatestDropCard extends StatelessWidget {
                             scheme.surface.withValues(alpha: 0.15),
                           ],
                         ),
+                        border: Border.all(
+                          color: accent.withValues(alpha: theme.brightness == Brightness.dark ? 0.14 : 0.22),
+                        ),
                       ),
                       child: Padding(
-                        padding: const EdgeInsets.all(10),
+                        padding: const EdgeInsets.all(14),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(11),
                           child: ColoredBox(
-                            color: scheme.surface.withValues(alpha: 0.65),
+                            color: scheme.surface.withValues(alpha: 0.72),
                             child: CollectibleNetworkImage(
                               collectible: collectible,
                               heroTag: collectible.heroImageTag,
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(11),
                               fit: BoxFit.contain,
                             ),
                           ),
@@ -85,7 +89,7 @@ class LatestDropCard extends StatelessWidget {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(18, 4, 18, 18),
+                  padding: const EdgeInsets.fromLTRB(17, 8, 17, 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -112,7 +116,7 @@ class LatestDropCard extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                         ),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
                       Text(
                         collectible.name,
                         maxLines: 2,
@@ -120,10 +124,10 @@ class LatestDropCard extends StatelessWidget {
                         style: textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w600,
                           letterSpacing: -0.16,
-                          height: 1.18,
+                          height: 1.2,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       Text(
                         collectible.brand,
                         maxLines: 1,
@@ -133,7 +137,7 @@ class LatestDropCard extends StatelessWidget {
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 10),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
