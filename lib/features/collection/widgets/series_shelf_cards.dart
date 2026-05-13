@@ -4,6 +4,7 @@ import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/collectible_shape.dart';
 import 'package:blindbox_app/core/theme/collectible_shelf_shadow.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_series_thumbnail.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_progress_voice.dart';
 import 'package:flutter/material.dart';
 
@@ -106,6 +107,7 @@ class _SeriesShelfCardState extends State<SeriesShelfCard> with SingleTickerProv
         );
       },
       child: _SeriesMatShell(
+        series: widget.series,
         accent: widget.series.shelfAccent,
         onTap: widget.onOpen,
         trailing: widget.onRemove == null
@@ -131,12 +133,14 @@ class _SeriesShelfCardState extends State<SeriesShelfCard> with SingleTickerProv
 
 class _SeriesMatShell extends StatelessWidget {
   const _SeriesMatShell({
+    required this.series,
     required this.accent,
     required this.onTap,
     required this.child,
     this.trailing,
   });
 
+  final SeriesDefinition series;
   final Color accent;
   final VoidCallback onTap;
   final Widget child;
@@ -171,26 +175,12 @@ class _SeriesMatShell extends StatelessWidget {
                 child: InkWell(
                   onTap: onTap,
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 15, 12, 15),
+                    padding: const EdgeInsets.fromLTRB(12, 12, 10, 12),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          width: 4,
-                          height: 54,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(999),
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                accent.withValues(alpha: 0.95),
-                                Color.lerp(accent, scheme.primary, 0.12)!.withValues(alpha: 0.45),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 14),
+                        CollectionSeriesThumbnail(series: series),
+                        const SizedBox(width: 12),
                         Expanded(child: child),
                       ],
                     ),

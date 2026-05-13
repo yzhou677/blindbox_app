@@ -161,11 +161,30 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
                         ),
                       ),
                       const SizedBox(height: 22),
+                      Text.rich(
+                        TextSpan(
+                          style: textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: scheme.onSurface.withValues(alpha: 0.9),
+                          ),
+                          children: [
+                            const TextSpan(text: 'Series name '),
+                            TextSpan(
+                              text: '*',
+                              style: TextStyle(
+                                color: scheme.error,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 6),
                       TextFormField(
                         controller: _seriesName,
                         textInputAction: TextInputAction.next,
                         decoration: InputDecoration(
-                          labelText: 'Series name',
+                          hintText: 'e.g. The Other One',
                           filled: true,
                           fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
@@ -180,7 +199,7 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
                         controller: _brand,
                         textInputAction: TextInputAction.next,
                         decoration: InputDecoration(
-                          labelText: 'Brand (optional)',
+                          hintText: 'Brand',
                           filled: true,
                           fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
@@ -191,7 +210,7 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
                         controller: _ip,
                         textInputAction: TextInputAction.next,
                         decoration: InputDecoration(
-                          labelText: 'Universe / IP label (optional)',
+                          hintText: 'Universe / IP',
                           filled: true,
                           fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
@@ -212,7 +231,7 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
                         maxLines: 2,
                         textInputAction: TextInputAction.done,
                         decoration: InputDecoration(
-                          labelText: 'Shelf note (optional)',
+                          hintText: 'Shelf note',
                           filled: true,
                           fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),

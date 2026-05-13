@@ -9,7 +9,6 @@ import 'package:blindbox_app/features/collection/widgets/collection_summary_sect
 import 'package:blindbox_app/features/collection/widgets/collection_warm_start_banner.dart';
 import 'package:blindbox_app/features/collection/widgets/series_figures_sheet.dart';
 import 'package:blindbox_app/features/collection/widgets/series_shelf_cards.dart';
-import 'package:blindbox_app/shared/widgets/collectible_deck_text.dart';
 import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -170,12 +169,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
             title: Text('My collection', style: textTheme.titleLarge),
           ),
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, FeedRhythm.belowMainTabAppBar, 20, 6),
-              child: CollectibleDeckText(
-                'Your shelf brings together series, customs, and artist pieces. Tap a row to log pulls and wishes.',
-              ),
-            ),
+            child: SizedBox(height: FeedRhythm.belowMainTabAppBar),
           ),
           if (snap.isWarmStart)
             const SliverToBoxAdapter(child: CollectionWarmStartBanner()),

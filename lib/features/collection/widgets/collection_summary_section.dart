@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/collectible_shape.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:flutter/material.dart';
@@ -24,7 +25,7 @@ class CollectionAggregateStats {
   }
 }
 
-/// Soft, premium shelf stats — calm language, not a dashboard.
+/// Collector dashboard strip — fixed rhythm so values and captions align.
 class CollectionSummarySection extends StatelessWidget {
   const CollectionSummarySection({
     super.key,
@@ -59,33 +60,37 @@ class CollectionSummarySection extends StatelessWidget {
               ),
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _SummaryPill(
-                      label: 'On shelf',
-                      value: '${stats.ownedSlots}',
-                      hint: 'figures home',
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+              child: SizedBox(
+                height: FeedRhythm.collectionSummaryMetricStripHeight,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: _MetricCell(
+                        label: 'On shelf',
+                        value: '${stats.ownedSlots}',
+                        hint: 'Owned',
+                      ),
                     ),
-                  ),
-                  _Dot(scheme: scheme),
-                  Expanded(
-                    child: _SummaryPill(
-                      label: 'Hunt list',
-                      value: '${stats.wishlistSlots}',
-                      hint: 'still searching',
+                    _Dot(scheme: scheme),
+                    Expanded(
+                      child: _MetricCell(
+                        label: 'Hunt list',
+                        value: '${stats.wishlistSlots}',
+                        hint: 'Wishlist',
+                      ),
                     ),
-                  ),
-                  _Dot(scheme: scheme),
-                  Expanded(
-                    child: _SummaryPill(
-                      label: 'Harmony',
-                      value: '${stats.avgCompletionPercent}%',
-                      hint: 'avg series completeness',
+                    _Dot(scheme: scheme),
+                    Expanded(
+                      child: _MetricCell(
+                        label: 'Avg shelf',
+                        value: '${stats.avgCompletionPercent}%',
+                        hint: 'Per series',
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -115,21 +120,23 @@ class _Dot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 6),
-      child: Container(
-        width: 4,
-        height: 4,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: scheme.primary.withValues(alpha: 0.22),
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Center(
+        child: Container(
+          width: 4,
+          height: 4,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: scheme.primary.withValues(alpha: 0.22),
+          ),
         ),
       ),
     );
   }
 }
 
-class _SummaryPill extends StatelessWidget {
-  const _SummaryPill({
+class _MetricCell extends StatelessWidget {
+  const _MetricCell({
     required this.label,
     required this.value,
     required this.hint,
@@ -145,33 +152,42 @@ class _SummaryPill extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
           label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
           style: textTheme.labelSmall?.copyWith(
-            letterSpacing: 0.12,
-            fontWeight: FontWeight.w500,
+            letterSpacing: 0.06,
+            fontWeight: FontWeight.w600,
             color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
-            height: 1.15,
+            height: 1.1,
           ),
         ),
         const SizedBox(height: 8),
         Text(
           value,
+          textAlign: TextAlign.center,
+          strutStyle: const StrutStyle(fontSize: 30, height: 1.05, forceStrutHeight: true),
           style: textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.w600,
-            letterSpacing: -0.5,
-            height: 1,
+            letterSpacing: -0.45,
+            height: 1.05,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         Text(
           hint,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           textAlign: TextAlign.center,
           style: textTheme.bodySmall?.copyWith(
-            color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
-            height: 1.2,
+            color: scheme.onSurfaceVariant.withValues(alpha: 0.8),
+            height: 1.15,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],

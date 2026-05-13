@@ -29,11 +29,22 @@ class FigureNameChipsEditor extends StatelessWidget {
       children: [
         Row(
           children: [
-            Text(
-              'Figures',
-              style: textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.08,
+            Text.rich(
+              TextSpan(
+                style: textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: -0.08,
+                ),
+                children: [
+                  const TextSpan(text: 'Figures '),
+                  TextSpan(
+                    text: '*',
+                    style: TextStyle(
+                      color: scheme.error,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(width: 8),

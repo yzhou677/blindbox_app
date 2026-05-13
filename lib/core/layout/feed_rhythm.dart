@@ -39,6 +39,12 @@ abstract final class FeedRhythm {
   /// Trending rail height (preview cards); lower than browse for hierarchy.
   static const double marketTrendingRailHeight = 180;
 
+  /// Square series thumb on shelf cards (browse / recognition).
+  static const double collectionShelfThumbnailExtent = 76;
+
+  /// Fixed height for the collection summary metric strip (aligned baselines).
+  static const double collectionSummaryMetricStripHeight = 92;
+
   /// Vertical gap between full-width listing cards (shelf separation).
   static const double listingCardVerticalGap = 22;
 
