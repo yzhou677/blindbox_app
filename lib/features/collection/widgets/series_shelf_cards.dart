@@ -1,7 +1,7 @@
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:flutter/material.dart';
 
-/// One series row on the shelf (official or custom).
+/// One series row on the collector shelf.
 class SeriesShelfCard extends StatelessWidget {
   const SeriesShelfCard({
     super.key,

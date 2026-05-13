@@ -1,6 +1,7 @@
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/widgets/add_custom_series_sheet.dart';
+import 'package:blindbox_app/features/collection/widgets/add_to_collection_sheet.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_empty_state.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_summary_section.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_warm_start_banner.dart';
@@ -37,7 +38,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     );
   }
 
-  Future<void> _confirmRemoveCustom(BuildContext context, String id, String name) async {
+  Future<void> _confirmRemoveSeries(BuildContext context, String id, String name) async {
     final go = await showDialog<bool>(
       context: context,
       builder: (ctx) {
@@ -52,7 +53,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       },
     );
     if (go == true && context.mounted) {
-      ref.read(collectionNotifierProvider.notifier).removeCustomSeries(id);
+      ref.read(collectionNotifierProvider.notifier).removeSeries(id);
     }
   }
 
@@ -84,6 +85,27 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     );
   }
 
+  void _openAddToCollection(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (ctx) => AddToCollectionSheet(
+        onCreateCustom: () {
+          Navigator.of(ctx).pop();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) {
+              _openAddCustom(context);
+            }
+          });
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -102,7 +124,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               backgroundColor: scheme.surface,
               surfaceTintColor: scheme.surfaceTint.withValues(alpha: 0.45),
               title: Text(
-                'My shelf',
+                'My collection',
                 style: textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                   letterSpacing: -0.48,
@@ -110,9 +132,11 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                 ),
               ),
             ),
-            const SliverFillRemaining(
+            SliverFillRemaining(
               hasScrollBody: false,
-              child: CollectionEmptyState(),
+              child: CollectionEmptyState(
+                onAddLine: () => _openAddToCollection(context),
+              ),
             ),
           ],
         ),
@@ -130,7 +154,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
             backgroundColor: scheme.surface,
             surfaceTintColor: scheme.surfaceTint.withValues(alpha: 0.45),
             title: Text(
-              'My shelf',
+              'My collection',
               style: textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.w600,
                 letterSpacing: -0.48,
@@ -142,7 +166,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 6),
               child: Text(
-                'IP → series → figures. Track pulls and wishes with real names.',
+                'Your shelf — lines, customs, and artist pieces together. Tap a row to log pulls and wishes.',
                 style: textTheme.bodyMedium?.copyWith(
                   color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
                   height: 1.28,
@@ -157,39 +181,12 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-              child: Text(
-                'Official series',
-                style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: -0.12,
-                ),
-              ),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                children: [
-                  for (final s in snap.allOfficialSeries)
-                    SeriesShelfCard(
-                      series: s,
-                      progress: progressForSeries(s, snap.figureStates),
-                      onOpen: () => _openFiguresSheet(context, s.id),
-                    ),
-                ],
-              ),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
               child: Row(
                 children: [
                   Expanded(
                     child: Text(
-                      'Your lines',
+                      'My collection',
                       style: textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                         letterSpacing: -0.12,
@@ -197,7 +194,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                     ),
                   ),
                   FilledButton.tonal(
-                    onPressed: () => _openAddCustom(context),
+                    onPressed: () => _openAddToCollection(context),
                     child: const Text('Add line'),
                   ),
                 ],
@@ -209,12 +206,12 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 36),
               child: Column(
                 children: [
-                  for (final s in snap.customSeries)
+                  for (final s in snap.shelfSeries)
                     SeriesShelfCard(
                       series: s,
                       progress: progressForSeries(s, snap.figureStates),
                       onOpen: () => _openFiguresSheet(context, s.id),
-                      onRemove: () => _confirmRemoveCustom(context, s.id, s.name),
+                      onRemove: () => _confirmRemoveSeries(context, s.id, s.name),
                     ),
                 ],
               ),

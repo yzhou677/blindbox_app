@@ -7,10 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 SeriesDefinition? _findSeries(CollectionSnapshot snap, String seriesId) {
-  for (final s in snap.allOfficialSeries) {
-    if (s.id == seriesId) return s;
-  }
-  for (final s in snap.customSeries) {
+  for (final s in snap.shelfSeries) {
     if (s.id == seriesId) return s;
   }
   return null;

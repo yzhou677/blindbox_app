@@ -3,7 +3,10 @@ import 'package:go_router/go_router.dart';
 
 /// Polished empty shelf — cozy, visual-first, not an error state.
 class CollectionEmptyState extends StatelessWidget {
-  const CollectionEmptyState({super.key});
+  const CollectionEmptyState({super.key, this.onAddLine});
+
+  /// Opens add-from-catalog or custom line flow.
+  final VoidCallback? onAddLine;
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +60,7 @@ class CollectionEmptyState extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Start with official lines or add your own — tracking stays on your device for now.',
+                    'Add suggested lines or create your own — everything stays on your device for now.',
                     textAlign: TextAlign.center,
                     style: textTheme.bodyLarge?.copyWith(
                       color: scheme.onSurfaceVariant.withValues(alpha: 0.92),
@@ -65,6 +68,13 @@ class CollectionEmptyState extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 28),
+                  if (onAddLine != null) ...[
+                    FilledButton(
+                      onPressed: onAddLine,
+                      child: const Text('Add a line'),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   FilledButton.tonalIcon(
                     onPressed: () => context.go('/home'),
                     icon: const Icon(Icons.auto_awesome_rounded, size: 20),

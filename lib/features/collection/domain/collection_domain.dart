@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Published character universe (Hirono, Dimoo, …).
+/// Published character universe (catalog / suggestions only — not shelf truth).
 @immutable
 class IPDefinition {
   const IPDefinition({
@@ -25,6 +25,7 @@ class SeriesDefinition {
     required this.figures,
     required this.shelfAccent,
     this.notes,
+    this.catalogTemplateId,
   });
 
   final String id;
@@ -39,6 +40,9 @@ class SeriesDefinition {
 
   /// Optional shelf note (common on custom lines).
   final String? notes;
+
+  /// When this row came from a catalog template, used for suggestions dedup.
+  final String? catalogTemplateId;
 
   int get figureCount => figures.length;
 }
@@ -125,40 +129,57 @@ SeriesProgressCounts progressForSeries(SeriesDefinition series, Map<String, Trac
   return SeriesProgressCounts(owned: o, wishlist: w, missing: m);
 }
 
-/// Immutable library + figure states (Notifier state).
+/// Deep copy a catalog [template] onto the shelf with fresh ids (for add-from-suggestion).
+SeriesDefinition cloneSeriesOntoShelf(
+  SeriesDefinition template,
+  String newSeriesId, {
+  required String catalogTemplateKey,
+}) {
+  final newFigures = <FigureDefinition>[];
+  for (var i = 0; i < template.figures.length; i++) {
+    final f = template.figures[i];
+    final newFid = '$newSeriesId-fig-$i';
+    newFigures.add(
+      FigureDefinition(
+        id: newFid,
+        seriesId: newSeriesId,
+        ipId: newSeriesId,
+        name: f.name,
+        imageUrl: f.imageUrl,
+        rarity: f.rarity,
+        isSecret: f.isSecret,
+      ),
+    );
+  }
+  return SeriesDefinition(
+    id: newSeriesId,
+    name: template.name,
+    brand: template.brand,
+    ipName: template.ipName,
+    figures: newFigures,
+    shelfAccent: template.shelfAccent,
+    notes: template.notes,
+    catalogTemplateId: catalogTemplateKey,
+  );
+}
+
+/// User shelf is the source of truth — catalog is suggestions only.
 @immutable
 class CollectionSnapshot {
   const CollectionSnapshot({
-    required this.officialIps,
-    required this.customSeries,
+    required this.shelfSeries,
     required this.figureStates,
   });
 
-  final List<IPDefinition> officialIps;
-  final List<SeriesDefinition> customSeries;
+  final List<SeriesDefinition> shelfSeries;
   final Map<String, TrackedFigure> figureStates;
 
   static CollectionSnapshot emptyTest() => const CollectionSnapshot(
-        officialIps: [],
-        customSeries: [],
+        shelfSeries: [],
         figureStates: {},
       );
 
-  Iterable<SeriesDefinition> get allOfficialSeries sync* {
-    for (final ip in officialIps) {
-      for (final s in ip.series) {
-        yield s;
-      }
-    }
-  }
-
-  int get trackedSeriesCount {
-    var n = 0;
-    for (final _ in allOfficialSeries) {
-      n++;
-    }
-    return n + customSeries.length;
-  }
+  int get trackedSeriesCount => shelfSeries.length;
 
   int get totalOwnedFigures {
     var c = 0;
@@ -176,31 +197,37 @@ class CollectionSnapshot {
     return c;
   }
 
-  int get totalCatalogFigures {
+  int get totalShelfFigures {
     var n = 0;
-    for (final s in allOfficialSeries) {
-      n += s.figureCount;
-    }
-    for (final s in customSeries) {
+    for (final s in shelfSeries) {
       n += s.figureCount;
     }
     return n;
   }
 
   int get averageCompletionPercent {
-    final series = [...allOfficialSeries, ...customSeries];
-    if (series.isEmpty) return 0;
+    if (shelfSeries.isEmpty) return 0;
     var sum = 0.0;
-    for (final s in series) {
+    for (final s in shelfSeries) {
       final p = progressForSeries(s, figureStates);
       sum += p.completion(s.figureCount);
     }
-    return ((sum / series.length) * 100).round().clamp(0, 100);
+    return ((sum / shelfSeries.length) * 100).round().clamp(0, 100);
   }
 
   bool get isWarmStart => totalOwnedFigures == 0 && totalWishlistFigures == 0;
 
   TrackedFigure trackedOrDefault(String figureId) {
     return figureStates[figureId] ?? TrackedFigure(figureId: figureId, owned: false, wishlist: false);
+  }
+
+  /// True if this template (by stable catalog id) already lives on the shelf.
+  bool hasTemplateOnShelf(String catalogSeriesTemplateId) {
+    for (final s in shelfSeries) {
+      if (s.catalogTemplateId == catalogSeriesTemplateId || s.id == catalogSeriesTemplateId) {
+        return true;
+      }
+    }
+    return false;
   }
 }

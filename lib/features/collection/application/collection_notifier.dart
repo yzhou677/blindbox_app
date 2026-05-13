@@ -13,7 +13,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
   CollectionSnapshot build() => CollectionSeedData.initialSnapshot();
 
   void cycleFigure(String figureId) {
-    if (!_figureExistsInCatalog(figureId)) return;
+    if (!_figureOnShelf(figureId)) return;
     final cur = state.trackedOrDefault(figureId);
     final TrackedFigure next;
     if (cur.owned) {
@@ -30,19 +30,13 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       m[figureId] = next;
     }
     state = CollectionSnapshot(
-      officialIps: state.officialIps,
-      customSeries: state.customSeries,
+      shelfSeries: state.shelfSeries,
       figureStates: m,
     );
   }
 
-  bool _figureExistsInCatalog(String figureId) {
-    for (final s in state.allOfficialSeries) {
-      for (final f in s.figures) {
-        if (f.id == figureId) return true;
-      }
-    }
-    for (final s in state.customSeries) {
+  bool _figureOnShelf(String figureId) {
+    for (final s in state.shelfSeries) {
       for (final f in s.figures) {
         if (f.id == figureId) return true;
       }
@@ -51,13 +45,26 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
   }
 
   SeriesDefinition? _findSeries(String seriesId) {
-    for (final s in state.allOfficialSeries) {
-      if (s.id == seriesId) return s;
-    }
-    for (final s in state.customSeries) {
+    for (final s in state.shelfSeries) {
       if (s.id == seriesId) return s;
     }
     return null;
+  }
+
+  /// Adds a cloned row from a catalog template (suggestions / browse). No-op if that template is already on shelf.
+  void addSeriesFromTemplate(SeriesDefinition template) {
+    final catalogKey = template.catalogTemplateId ?? template.id;
+    if (state.hasTemplateOnShelf(catalogKey)) return;
+    final newSeriesId = 'shelf-$catalogKey-${DateTime.now().microsecondsSinceEpoch}';
+    final cloned = cloneSeriesOntoShelf(
+      template,
+      newSeriesId,
+      catalogTemplateKey: catalogKey,
+    );
+    state = CollectionSnapshot(
+      shelfSeries: [...state.shelfSeries, cloned],
+      figureStates: state.figureStates,
+    );
   }
 
   void addCustomSeries({
@@ -111,26 +118,23 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       figures: figures,
       shelfAccent: accent,
       notes: (trimmedNotes == null || trimmedNotes.isEmpty) ? null : trimmedNotes,
+      catalogTemplateId: null,
     );
     state = CollectionSnapshot(
-      officialIps: state.officialIps,
-      customSeries: [...state.customSeries, series],
+      shelfSeries: [...state.shelfSeries, series],
       figureStates: state.figureStates,
     );
   }
 
-  void removeCustomSeries(String seriesId) {
+  void removeSeries(String seriesId) {
     final series = _findSeries(seriesId);
     if (series == null) return;
-    final isCustom = state.customSeries.any((s) => s.id == seriesId);
-    if (!isCustom) return;
     final m = Map<String, TrackedFigure>.from(state.figureStates);
     for (final f in series.figures) {
       m.remove(f.id);
     }
     state = CollectionSnapshot(
-      officialIps: state.officialIps,
-      customSeries: state.customSeries.where((s) => s.id != seriesId).toList(growable: false),
+      shelfSeries: state.shelfSeries.where((s) => s.id != seriesId).toList(growable: false),
       figureStates: m,
     );
   }

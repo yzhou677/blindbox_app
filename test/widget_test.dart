@@ -39,10 +39,10 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 600));
 
-    expect(find.text('My shelf'), findsWidgets);
+    expect(find.text('My collection'), findsWidgets);
     expect(find.text('OWNED'), findsOneWidget);
     expect(find.text('5'), findsOneWidget);
-    expect(find.text('Official series'), findsOneWidget);
+    expect(find.text('Add line'), findsOneWidget);
     expect(find.text('The Other One'), findsOneWidget);
   });
 
