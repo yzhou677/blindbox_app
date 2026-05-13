@@ -77,8 +77,13 @@ class _SignalPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final (Color bg, Color border, Color fg) = switch (emphasis) {
       _SignalEmphasis.warm => (
-          scheme.secondaryContainer.withValues(alpha: 0.4),
-          scheme.secondary.withValues(alpha: 0.2),
+          Color.lerp(
+                scheme.secondaryContainer,
+                scheme.primaryContainer,
+                0.35,
+              )!
+              .withValues(alpha: 0.44),
+          Color.lerp(scheme.secondary, scheme.primary, 0.25)!.withValues(alpha: 0.22),
           scheme.onSecondaryContainer.withValues(alpha: 0.88),
         ),
       _SignalEmphasis.soft => (

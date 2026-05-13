@@ -1,0 +1,114 @@
+import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:flutter/material.dart';
+
+/// Editorial section rhythm: soft lead, title row, optional deck, packaging hairline.
+class CollectibleSectionHeader extends StatelessWidget {
+  const CollectibleSectionHeader({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.trailing,
+    this.titleAccessory,
+    this.showPackagingMark = true,
+    this.padding = const EdgeInsets.fromLTRB(20, 0, 20, 0),
+  });
+
+  final String title;
+  final String? subtitle;
+  final Widget? trailing;
+
+  /// Replaces the default tiny sparkle (e.g. fire icon for market rails).
+  final Widget? titleAccessory;
+  final bool showPackagingMark;
+  final EdgeInsetsGeometry padding;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    final lead = titleAccessory ??
+        Icon(
+          Icons.auto_awesome_rounded,
+          size: 15,
+          color: scheme.primary.withValues(alpha: 0.3),
+        );
+
+    final deck = subtitle?.trim();
+
+    return Padding(
+      padding: padding,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: lead,
+              ),
+              Expanded(
+                child: Text(
+                  title,
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: -0.18,
+                    height: 1.24,
+                  ),
+                ),
+              ),
+              trailing ?? const SizedBox.shrink(),
+            ],
+          ),
+          if (deck case final d? when d.isNotEmpty) ...[
+            const SizedBox(height: FeedRhythm.sectionTitleToSubtitle),
+            Text(
+              d,
+              style: textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurfaceVariant.withValues(alpha: 0.76),
+                height: 1.44,
+                letterSpacing: 0.02,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
+          if (showPackagingMark) ...[
+            SizedBox(
+              height: switch (deck) {
+                final d? when d.isNotEmpty => FeedRhythm.sectionSubtitleToMark,
+                _ => FeedRhythm.sectionTitleToMark,
+              },
+            ),
+            const _PackagingHairline(),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Soft shelf / blister-pack accent — gradient only (keeps motifs minimal).
+class _PackagingHairline extends StatelessWidget {
+  const _PackagingHairline();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      height: 2,
+      width: 44,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(99),
+        gradient: LinearGradient(
+          colors: [
+            scheme.primary.withValues(alpha: 0.34),
+            scheme.tertiary.withValues(alpha: 0.22),
+            scheme.primary.withValues(alpha: 0),
+          ],
+          stops: const [0.0, 0.5, 1.0],
+        ),
+      ),
+    );
+  }
+}

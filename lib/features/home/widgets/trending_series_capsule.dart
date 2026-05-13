@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/theme/collectible_shape.dart';
 import 'package:blindbox_app/models/toy_series_highlight.dart';
 import 'package:flutter/material.dart';
 
@@ -23,7 +24,7 @@ class TrendingSeriesCapsule extends StatelessWidget {
     final scheme = theme.colorScheme;
     final textTheme = theme.textTheme;
     final isDark = theme.brightness == Brightness.dark;
-    final radius = BorderRadius.circular(22);
+    final radius = CollectibleShape.shellRadius;
 
     return SizedBox(
       width: kTrendingSeriesCapsuleWidth,
@@ -104,12 +105,12 @@ class TrendingSeriesCapsule extends StatelessWidget {
                               borderRadius: BorderRadius.circular(999),
                             ),
                             child: Text(
-                              series.brand!.toUpperCase(),
+                              series.brand!,
                               style: textTheme.labelSmall?.copyWith(
-                                letterSpacing: 0.45,
+                                letterSpacing: 0.12,
                                 fontWeight: FontWeight.w600,
                                 color: scheme.onSecondaryContainer.withValues(alpha: 0.82),
-                                height: 1,
+                                height: 1.12,
                               ),
                             ),
                           ),

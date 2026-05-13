@@ -124,13 +124,13 @@ class _SeriesCompleteBanner extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         gradient: LinearGradient(
           colors: [
-            Color.lerp(scheme.tertiaryContainer, const Color(0xFFFFF6E8), isDark ? 0.15 : 0.45)!
+            Color.lerp(scheme.primaryContainer, const Color(0xFFFFF6E8), isDark ? 0.15 : 0.45)!
                 .withValues(alpha: isDark ? 0.5 : 0.72),
             scheme.surfaceContainerHighest.withValues(alpha: 0.35),
           ],
         ),
         border: Border.all(
-          color: Color.lerp(scheme.tertiary, const Color(0xFFE8C547), 0.3)!.withValues(alpha: 0.45),
+          color: Color.lerp(scheme.primary, const Color(0xFFE8C547), 0.3)!.withValues(alpha: 0.45),
         ),
         boxShadow: [
           BoxShadow(
@@ -147,7 +147,7 @@ class _SeriesCompleteBanner extends StatelessWidget {
             Icon(
               Icons.check_circle_outline_rounded,
               size: 22,
-              color: scheme.tertiary.withValues(alpha: 0.85),
+              color: scheme.primary.withValues(alpha: 0.85),
             ),
             const SizedBox(width: 10),
             Expanded(

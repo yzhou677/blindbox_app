@@ -1,3 +1,4 @@
+import 'package:blindbox_app/shared/widgets/collectible_floating_navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -10,7 +11,7 @@ class MainShellScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: shell,
-      bottomNavigationBar: NavigationBar(
+      bottomNavigationBar: CollectibleFloatingNavigationBar(
         selectedIndex: shell.currentIndex,
         onDestinationSelected: shell.goBranch,
         destinations: const [

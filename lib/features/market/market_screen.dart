@@ -1,5 +1,6 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/features/market/catalog/market_listing_filters.dart';
+import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
 import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
 import 'package:blindbox_app/features/market/data/mock_market_listings.dart';
 import 'package:blindbox_app/features/market/widgets/market_discovery_chips.dart';
@@ -92,9 +93,9 @@ class _MarketScreenState extends State<MarketScreen> {
               child: Text(
                 'Soft signals for what is moving — visual first, lightweight.',
                 style: textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
-                  height: 1.38,
-                  letterSpacing: 0.08,
+                  color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
+                  height: 1.42,
+                  letterSpacing: 0.02,
                   fontWeight: FontWeight.w400,
                 ),
               ),
@@ -136,9 +137,9 @@ class _MarketScreenState extends State<MarketScreen> {
                     child: Text(
                       'Market signals inspired by recent eBay activity',
                       style: textTheme.labelMedium?.copyWith(
-                        color: scheme.onSurfaceVariant.withValues(alpha: 0.58),
-                        height: 1.38,
-                        letterSpacing: 0.12,
+                        color: scheme.onSurfaceVariant.withValues(alpha: 0.54),
+                        height: 1.42,
+                        letterSpacing: 0.04,
                         fontWeight: FontWeight.w400,
                       ),
                     ),
@@ -153,16 +154,10 @@ class _MarketScreenState extends State<MarketScreen> {
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 8)),
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
-              child: Text(
-                'Browse listings',
-                style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: -0.12,
-                  height: 1.22,
-                ),
-              ),
+            child: CollectibleSectionHeader(
+              title: 'Browse listings',
+              showPackagingMark: true,
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 6),
             ),
           ),
           if (filtered.isEmpty)

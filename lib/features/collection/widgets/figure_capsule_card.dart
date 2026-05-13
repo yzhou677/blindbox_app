@@ -84,12 +84,12 @@ class _FigureCapsuleCardState extends State<FigureCapsuleCard> with TickerProvid
 
     if (owned) {
       matTint = Color.lerp(
-            scheme.tertiaryContainer,
+            scheme.primaryContainer,
             const Color(0xFFFFF6E5),
             isDark ? 0.14 : 0.42,
           )!
           .withValues(alpha: isDark ? 0.42 : 0.58);
-      borderColor = Color.lerp(scheme.tertiary, const Color(0xFFC9A227), 0.28)!
+      borderColor = Color.lerp(scheme.primary, const Color(0xFFC9A227), 0.28)!
           .withValues(alpha: isDark ? 0.58 : 0.68);
       borderWidth = 1.45;
       shadows = [
@@ -100,7 +100,7 @@ class _FigureCapsuleCardState extends State<FigureCapsuleCard> with TickerProvid
           offset: const Offset(0, 8),
         ),
         BoxShadow(
-          color: scheme.tertiary.withValues(alpha: isDark ? 0.2 : 0.1),
+          color: scheme.primary.withValues(alpha: isDark ? 0.2 : 0.1),
           blurRadius: 10,
           offset: const Offset(0, 4),
         ),
@@ -376,7 +376,7 @@ class _ArtWindow extends StatelessWidget {
                   borderRadius: BorderRadius.circular(15),
                   border: Border.all(
                     width: 1.25,
-                    color: Color.lerp(const Color(0xFFE8C547), scheme.tertiary, 0.4)!
+                    color: Color.lerp(const Color(0xFFE8C547), scheme.primary, 0.45)!
                         .withValues(alpha: 0.55),
                   ),
                 ),
@@ -570,8 +570,8 @@ class _OwnedSeal extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Color.lerp(scheme.tertiary, const Color(0xFFE8C547), 0.35)!,
-            Color.lerp(scheme.tertiary, const Color(0xFFB8860B), 0.2)!,
+            Color.lerp(scheme.primary, const Color(0xFFE8C547), 0.38)!,
+            Color.lerp(scheme.primary, const Color(0xFFB8860B), 0.22)!,
           ],
         ),
         shape: BoxShape.circle,

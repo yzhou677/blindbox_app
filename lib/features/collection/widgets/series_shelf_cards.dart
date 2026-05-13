@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:blindbox_app/core/theme/collectible_shape.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_progress_voice.dart';
 import 'package:flutter/material.dart';
@@ -83,7 +84,7 @@ class _SeriesShelfCardState extends State<SeriesShelfCard> with SingleTickerProv
           alignment: Alignment.centerLeft,
           child: DecoratedBox(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: CollectibleShape.shellRadius,
               boxShadow: hump > 0.02
                   ? [
                       BoxShadow(
@@ -140,7 +141,7 @@ class _SeriesMatShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final radius = BorderRadius.circular(22);
+    final radius = CollectibleShape.shellRadius;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 18),
@@ -290,7 +291,7 @@ class _SeriesMatContent extends StatelessWidget {
             minHeight: 6,
             backgroundColor: scheme.surfaceContainerHighest.withValues(alpha: 0.45),
             color: isComplete
-                ? Color.lerp(scheme.tertiary, const Color(0xFFE8C547), 0.35)!.withValues(alpha: 0.75)
+                ? Color.lerp(scheme.primary, const Color(0xFFE8C547), 0.38)!.withValues(alpha: 0.78)
                 : scheme.primary.withValues(alpha: 0.48),
           ),
         ),
@@ -302,7 +303,7 @@ class _SeriesMatContent extends StatelessWidget {
             letterSpacing: -0.12,
             height: 1.25,
             color: isComplete
-                ? Color.lerp(scheme.onTertiaryContainer, scheme.onSurface, 0.15)
+                ? Color.lerp(scheme.onPrimaryContainer, scheme.onSurface, 0.15)
                 : scheme.onSurface.withValues(alpha: 0.92),
           ),
         ),

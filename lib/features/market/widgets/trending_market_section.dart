@@ -1,6 +1,9 @@
+import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/theme/collectible_shape.dart';
 import 'package:blindbox_app/features/home/widgets/collectible_network_image.dart';
 import 'package:blindbox_app/features/market/utils/market_format.dart';
 import 'package:blindbox_app/models/market_listing.dart';
+import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -15,35 +18,22 @@ class TrendingMarketSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
     if (items.isEmpty) return const SizedBox.shrink();
+    final scheme = Theme.of(context).colorScheme;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
-          child: Row(
-            children: [
-              Icon(
-                Icons.local_fire_department_rounded,
-                size: 22,
-                color: scheme.primary.withValues(alpha: 0.65),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Trending',
-                style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: -0.12,
-                  height: 1.22,
-                ),
-              ),
-            ],
+        CollectibleSectionHeader(
+          title: 'Trending',
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+          titleAccessory: Icon(
+            Icons.local_fire_department_rounded,
+            size: 17,
+            color: Color.lerp(scheme.secondary, scheme.primary, 0.42)!.withValues(alpha: 0.62),
           ),
         ),
+        const SizedBox(height: FeedRhythm.sectionHeaderToRail),
         SizedBox(
           height: 214,
           child: ListView.separated(
@@ -75,7 +65,7 @@ class _TrendingMiniCard extends StatelessWidget {
     final textTheme = theme.textTheme;
     final c = listing.collectible;
     final accent = c.shelfAccent ?? scheme.tertiaryContainer;
-    final outerRadius = BorderRadius.circular(20);
+    final outerRadius = CollectibleShape.shellRadius;
     final isDark = theme.brightness == Brightness.dark;
 
     return SizedBox(
@@ -112,25 +102,31 @@ class _TrendingMiniCard extends StatelessWidget {
                   Expanded(
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: CollectibleShape.matRadius,
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            accent.withValues(alpha: 0.35),
-                            scheme.surface.withValues(alpha: 0.1),
+                            Color.lerp(scheme.surface, accent, 0.32)!
+                                .withValues(alpha: isDark ? 0.36 : 0.52),
+                            accent.withValues(alpha: 0.32),
+                            scheme.surface.withValues(alpha: 0.08),
                           ],
+                          stops: const [0.0, 0.45, 1.0],
+                        ),
+                        border: Border.all(
+                          color: accent.withValues(alpha: isDark ? 0.12 : 0.2),
                         ),
                       ),
                       child: Padding(
                         padding: const EdgeInsets.all(6),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: CollectibleShape.insetRadius,
                           child: ColoredBox(
                             color: scheme.surface.withValues(alpha: 0.55),
                             child: CollectibleNetworkImage(
                               collectible: c,
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: CollectibleShape.insetRadius,
                               fit: BoxFit.contain,
                             ),
                           ),
@@ -184,7 +180,7 @@ class _MiniDelta extends StatelessWidget {
     final up = percent > 0;
     final down = percent < 0;
     final color = up
-        ? scheme.tertiary
+        ? scheme.primary
         : down
             ? scheme.error
             : scheme.onSurfaceVariant;

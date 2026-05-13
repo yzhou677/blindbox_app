@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/theme/collectible_shape.dart';
 import 'package:flutter/material.dart';
 
 /// Cozy M3 search field — filters local mock listings only.
@@ -32,17 +33,17 @@ class MarketSearchBar extends StatelessWidget {
           filled: true,
           fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.45),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: CollectibleShape.fieldRadius,
             borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: CollectibleShape.fieldRadius,
             borderSide: BorderSide(
               color: scheme.outlineVariant.withValues(alpha: 0.35),
             ),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: CollectibleShape.fieldRadius,
             borderSide: BorderSide(
               color: scheme.primary.withValues(alpha: 0.35),
               width: 1.5,

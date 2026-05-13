@@ -9,6 +9,7 @@ import 'package:blindbox_app/features/collection/widgets/collection_summary_sect
 import 'package:blindbox_app/features/collection/widgets/collection_warm_start_banner.dart';
 import 'package:blindbox_app/features/collection/widgets/series_figures_sheet.dart';
 import 'package:blindbox_app/features/collection/widgets/series_shelf_cards.dart';
+import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -189,9 +190,9 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               child: Text(
                 'Your shelf brings together series, customs, and artist pieces. Tap a row to log pulls and wishes.',
                 style: textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
-                  height: 1.38,
-                  letterSpacing: 0.08,
+                  color: scheme.onSurfaceVariant.withValues(alpha: 0.76),
+                  height: 1.42,
+                  letterSpacing: 0.02,
                   fontWeight: FontWeight.w400,
                 ),
               ),
@@ -206,25 +207,12 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
             ),
           ),
           SliverToBoxAdapter(
-            child: Padding(
+            child: CollectibleSectionHeader(
+              title: 'My collection',
               padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'My collection',
-                      style: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: -0.12,
-                        height: 1.22,
-                      ),
-                    ),
-                  ),
-                  FilledButton.tonal(
-                    onPressed: () => _openAddToCollection(context),
-                    child: const Text('Add series'),
-                  ),
-                ],
+              trailing: FilledButton.tonal(
+                onPressed: () => _openAddToCollection(context),
+                child: const Text('Add series'),
               ),
             ),
           ),

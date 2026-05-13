@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/theme/collectible_shape.dart';
 import 'package:blindbox_app/features/home/widgets/collectible_network_image.dart';
 import 'package:blindbox_app/features/market/utils/market_format.dart';
 import 'package:blindbox_app/features/market/widgets/listing_market_signals.dart';
@@ -19,7 +20,7 @@ class MarketListingCard extends StatelessWidget {
     final c = listing.collectible;
     final accent = c.shelfAccent ?? scheme.tertiaryContainer;
     final isDark = theme.brightness == Brightness.dark;
-    final outerRadius = BorderRadius.circular(22);
+    final outerRadius = CollectibleShape.shellRadius;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -56,26 +57,32 @@ class MarketListingCard extends StatelessWidget {
                     padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: CollectibleShape.matRadius,
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            accent.withValues(alpha: 0.36),
-                            scheme.surface.withValues(alpha: 0.1),
+                            Color.lerp(scheme.surface, accent, 0.34)!
+                                .withValues(alpha: isDark ? 0.38 : 0.58),
+                            accent.withValues(alpha: 0.34),
+                            scheme.surface.withValues(alpha: 0.08),
                           ],
+                          stops: const [0.0, 0.45, 1.0],
+                        ),
+                        border: Border.all(
+                          color: accent.withValues(alpha: isDark ? 0.12 : 0.2),
                         ),
                       ),
                       child: Padding(
                         padding: const EdgeInsets.all(8),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: CollectibleShape.insetRadius,
                           child: ColoredBox(
                             color: scheme.surface.withValues(alpha: 0.58),
                             child: CollectibleNetworkImage(
                               collectible: c,
                               heroTag: listing.marketHeroTag,
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: CollectibleShape.insetRadius,
                               fit: BoxFit.contain,
                             ),
                           ),
@@ -177,7 +184,7 @@ class _PriceChangePill extends StatelessWidget {
     final up = percent > 0;
     final down = percent < 0;
     final color = up
-        ? scheme.tertiary
+        ? scheme.primary
         : down
             ? scheme.error
             : scheme.onSurfaceVariant;

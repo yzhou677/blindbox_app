@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/theme/collectible_shape.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:flutter/material.dart';
 
@@ -47,10 +48,14 @@ class CollectionSummarySection extends StatelessWidget {
         children: [
           DecoratedBox(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: CollectibleShape.shellRadius,
               color: scheme.surfaceContainerLow.withValues(alpha: isDark ? 0.92 : 1),
               border: Border.all(
-                color: scheme.outlineVariant.withValues(alpha: isDark ? 0.35 : 0.45),
+                color: Color.lerp(
+                  scheme.outlineVariant,
+                  scheme.primary,
+                  isDark ? 0.12 : 0.18,
+                )!.withValues(alpha: isDark ? 0.38 : 0.48),
               ),
             ),
             child: Padding(
@@ -143,12 +148,12 @@ class _SummaryPill extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
-          label.toUpperCase(),
+          label,
           style: textTheme.labelSmall?.copyWith(
-            letterSpacing: 0.65,
-            fontWeight: FontWeight.w600,
-            color: scheme.onSurfaceVariant.withValues(alpha: 0.75),
-            height: 1,
+            letterSpacing: 0.12,
+            fontWeight: FontWeight.w500,
+            color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
+            height: 1.15,
           ),
         ),
         const SizedBox(height: 8),

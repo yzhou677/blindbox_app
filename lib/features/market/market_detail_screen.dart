@@ -173,7 +173,7 @@ class _MarketDetailBody extends StatelessWidget {
     final up = listing.priceChangePercent > 0;
     final down = listing.priceChangePercent < 0;
     final deltaColor = up
-        ? scheme.tertiary
+        ? scheme.primary
         : down
             ? scheme.error
             : scheme.onSurfaceVariant;
@@ -184,15 +184,17 @@ class _MarketDetailBody extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: scheme.secondaryContainer.withValues(alpha: 0.45),
+            color: scheme.primaryContainer.withValues(alpha: 0.52),
             borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: scheme.primary.withValues(alpha: 0.16)),
           ),
           child: Text(
-            c.series.toUpperCase(),
+            c.series,
             style: textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.5,
-              color: scheme.onSecondaryContainer.withValues(alpha: 0.9),
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.14,
+              height: 1.12,
+              color: scheme.onPrimaryContainer.withValues(alpha: 0.9),
             ),
           ),
         ),

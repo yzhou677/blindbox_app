@@ -1,5 +1,7 @@
+import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/features/home/widgets/latest_drop_card.dart';
 import 'package:blindbox_app/models/collectible.dart';
+import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
 import 'package:flutter/material.dart';
 
 class LatestDropsSection extends StatelessWidget {
@@ -19,55 +21,30 @@ class LatestDropsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Latest drops',
-                      style: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: -0.12,
-                        height: 1.22,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: scheme.primaryContainer.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      'New',
-                      style: textTheme.labelSmall?.copyWith(
-                        color: scheme.onPrimaryContainer.withValues(alpha: 0.88),
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.35,
-                      ),
-                    ),
-                  ),
-                ],
+        CollectibleSectionHeader(
+          title: 'Latest drops',
+          subtitle: 'Fresh picks for your shelf — soft launches, big smiles.',
+          trailing: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+            decoration: BoxDecoration(
+              color: scheme.primaryContainer.withValues(alpha: 0.48),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: scheme.primary.withValues(alpha: 0.12),
               ),
-              const SizedBox(height: 6),
-              Text(
-                'Fresh picks for your shelf — soft launches, big smiles.',
-                style: textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
-                  height: 1.38,
-                  letterSpacing: 0.08,
-                  fontWeight: FontWeight.w400,
-                ),
+            ),
+            child: Text(
+              'New',
+              style: textTheme.labelSmall?.copyWith(
+                color: scheme.onPrimaryContainer.withValues(alpha: 0.84),
+                fontWeight: FontWeight.w500,
+                letterSpacing: 0.08,
+                height: 1.1,
               ),
-            ],
+            ),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: FeedRhythm.sectionHeaderToRail),
         SizedBox(
           height: _railHeight,
           child: ListView.separated(

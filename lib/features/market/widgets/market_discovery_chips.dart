@@ -165,7 +165,7 @@ class _DiscoveryChip extends StatelessWidget {
             boxShadow: selected
                 ? [
                     BoxShadow(
-                      color: scheme.primary.withValues(alpha: 0.08),
+                      color: scheme.primary.withValues(alpha: 0.1),
                       blurRadius: 10,
                       offset: const Offset(0, 3),
                     ),
