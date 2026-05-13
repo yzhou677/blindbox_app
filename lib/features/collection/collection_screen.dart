@@ -44,7 +44,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: const Text('Remove line?'),
+          title: const Text('Remove series?'),
           content: Text('“$name” will leave your shelf (mock data only).'),
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
@@ -125,24 +125,29 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
         body: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
-            SliverAppBar.large(
-              floating: false,
+            SliverAppBar(
               pinned: false,
+              floating: false,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              toolbarHeight: 52,
               backgroundColor: scheme.surface,
-              surfaceTintColor: scheme.surfaceTint.withValues(alpha: 0.45),
+              surfaceTintColor: scheme.surfaceTint.withValues(alpha: 0.32),
+              centerTitle: false,
+              titleSpacing: 20,
               title: Text(
                 'My collection',
-                style: textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: -0.48,
-                  height: 1.12,
+                style: textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: -0.22,
+                  height: 1.18,
                 ),
               ),
             ),
             SliverFillRemaining(
               hasScrollBody: false,
               child: CollectionEmptyState(
-                onAddLine: () => _openAddToCollection(context),
+                onAddSeries: () => _openAddToCollection(context),
               ),
             ),
           ],
@@ -155,28 +160,35 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          SliverAppBar.large(
-            floating: false,
+          SliverAppBar(
             pinned: false,
+            floating: false,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            toolbarHeight: 52,
             backgroundColor: scheme.surface,
-            surfaceTintColor: scheme.surfaceTint.withValues(alpha: 0.45),
+            surfaceTintColor: scheme.surfaceTint.withValues(alpha: 0.32),
+            centerTitle: false,
+            titleSpacing: 20,
             title: Text(
               'My collection',
-              style: textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.48,
-                height: 1.12,
+              style: textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w500,
+                letterSpacing: -0.22,
+                height: 1.18,
               ),
             ),
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 6),
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 6),
               child: Text(
-                'Your shelf — lines, customs, and artist pieces together. Tap a row to log pulls and wishes.',
+                'Your shelf brings together series, customs, and artist pieces. Tap a row to log pulls and wishes.',
                 style: textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
-                  height: 1.28,
+                  color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
+                  height: 1.38,
+                  letterSpacing: 0.08,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
             ),
@@ -191,21 +203,22 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
               child: Row(
                 children: [
                   Expanded(
                     child: Text(
                       'My collection',
                       style: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w500,
                         letterSpacing: -0.12,
+                        height: 1.22,
                       ),
                     ),
                   ),
                   FilledButton.tonal(
                     onPressed: () => _openAddToCollection(context),
-                    child: const Text('Add line'),
+                    child: const Text('Add series'),
                   ),
                 ],
               ),

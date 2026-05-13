@@ -9,7 +9,7 @@ typedef CustomSeriesFormSubmit = void Function({
   String? notes,
 });
 
-/// Shelf-first “new line” — chips for figures, light fields for the rest.
+/// Shelf-first custom series — chips for figures, light fields for the rest.
 class AddCustomSeriesSheet extends StatefulWidget {
   const AddCustomSeriesSheet({super.key, required this.onSubmit});
 
@@ -146,7 +146,7 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        'Your own line',
+                        'Your own series',
                         style: textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w600,
                           letterSpacing: -0.2,
@@ -154,7 +154,7 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Give the line a name, tag your pulls, and they’ll land on your shelf like the rest.',
+                        'Give the series a name, tag your pulls, and they’ll land on your shelf like the rest.',
                         style: textTheme.bodySmall?.copyWith(
                           color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
                           height: 1.35,
@@ -165,13 +165,13 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
                         controller: _seriesName,
                         textInputAction: TextInputAction.next,
                         decoration: InputDecoration(
-                          labelText: 'Line name',
+                          labelText: 'Series name',
                           filled: true,
                           fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                         ),
                         validator: (v) {
-                          if (v == null || v.trim().isEmpty) return 'Add a line name';
+                          if (v == null || v.trim().isEmpty) return 'Add a series name';
                           return null;
                         },
                       ),

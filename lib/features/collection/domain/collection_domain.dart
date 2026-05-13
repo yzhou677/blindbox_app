@@ -14,7 +14,7 @@ class IPDefinition {
   final List<SeriesDefinition> series;
 }
 
-/// A retail / story line under an IP (e.g. “The Other One”).
+/// A collectible series under an IP (e.g. “The Other One”).
 @immutable
 class SeriesDefinition {
   const SeriesDefinition({
@@ -38,7 +38,7 @@ class SeriesDefinition {
   final List<FigureDefinition> figures;
   final Color shelfAccent;
 
-  /// Optional shelf note (common on custom lines).
+  /// Optional shelf note (common on custom series).
   final String? notes;
 
   /// When this row came from a catalog template, used for suggestions dedup.

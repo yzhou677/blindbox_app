@@ -24,7 +24,7 @@ class TrendingMarketSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
           child: Row(
             children: [
               Icon(
@@ -36,8 +36,9 @@ class TrendingMarketSection extends StatelessWidget {
               Text(
                 'Trending',
                 style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: -0.2,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: -0.12,
+                  height: 1.22,
                 ),
               ),
             ],

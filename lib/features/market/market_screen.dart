@@ -44,28 +44,35 @@ class _MarketScreenState extends State<MarketScreen> {
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          SliverAppBar.large(
-            floating: false,
+          SliverAppBar(
             pinned: false,
+            floating: false,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            toolbarHeight: 52,
             backgroundColor: scheme.surface,
-            surfaceTintColor: scheme.surfaceTint.withValues(alpha: 0.45),
+            surfaceTintColor: scheme.surfaceTint.withValues(alpha: 0.32),
+            centerTitle: false,
+            titleSpacing: 20,
             title: Text(
               'Market',
-              style: textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.48,
-                height: 1.12,
+              style: textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w500,
+                letterSpacing: -0.22,
+                height: 1.18,
               ),
             ),
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
               child: Text(
                 'Soft signals for what is moving — visual first, lightweight.',
                 style: textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
-                  height: 1.28,
+                  color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
+                  height: 1.38,
+                  letterSpacing: 0.08,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
             ),
@@ -81,12 +88,13 @@ class _MarketScreenState extends State<MarketScreen> {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
               child: Text(
                 'Browse listings',
                 style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: -0.15,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: -0.12,
+                  height: 1.22,
                 ),
               ),
             ),

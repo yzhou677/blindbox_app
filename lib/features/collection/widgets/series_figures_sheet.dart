@@ -78,7 +78,7 @@ class SeriesFiguresSheet extends ConsumerWidget {
             ),
             if (isComplete) ...[
               const SizedBox(height: 14),
-              _LineCompleteBanner(
+              _SeriesCompleteBanner(
                 chasesHome: chasesHome && secrets.isNotEmpty,
               ),
             ],
@@ -108,8 +108,8 @@ class SeriesFiguresSheet extends ConsumerWidget {
   }
 }
 
-class _LineCompleteBanner extends StatelessWidget {
-  const _LineCompleteBanner({required this.chasesHome});
+class _SeriesCompleteBanner extends StatelessWidget {
+  const _SeriesCompleteBanner({required this.chasesHome});
 
   final bool chasesHome;
 
@@ -155,7 +155,7 @@ class _LineCompleteBanner extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    chasesHome ? 'Whole line — chase home' : 'This line feels whole',
+                    chasesHome ? 'Whole series — chase home' : 'This series feels complete',
                     style: textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                       letterSpacing: -0.1,

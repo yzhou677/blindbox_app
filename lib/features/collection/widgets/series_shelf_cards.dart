@@ -36,16 +36,16 @@ class _SeriesShelfCardState extends State<SeriesShelfCard> with SingleTickerProv
       vsync: this,
       duration: const Duration(milliseconds: 920),
     );
-    _wasComplete = _isLineComplete;
+    _wasComplete = _isSeriesComplete;
   }
 
-  bool get _isLineComplete =>
+  bool get _isSeriesComplete =>
       widget.series.figureCount > 0 && widget.progress.owned >= widget.series.figureCount;
 
   @override
   void didUpdateWidget(SeriesShelfCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final now = _isLineComplete;
+    final now = _isSeriesComplete;
     if (now && !_wasComplete) {
       _completeGlow.forward(from: 0).then((_) {
         if (mounted) _completeGlow.reset();
@@ -106,7 +106,7 @@ class _SeriesShelfCardState extends State<SeriesShelfCard> with SingleTickerProv
             ? null
             : IconButton(
                 icon: const Icon(Icons.delete_outline_rounded),
-                tooltip: 'Remove line',
+                tooltip: 'Remove series',
                 onPressed: widget.onRemove,
               ),
         child: _SeriesMatContent(

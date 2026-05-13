@@ -2,7 +2,7 @@ import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 
 /// Human, shelf-first language for progress — not spreadsheet rows.
 abstract final class CollectionProgressVoice {
-  /// Primary emotional line for a series row (replaces raw tallies as the hero read).
+  /// Primary emotional headline for a series row (replaces raw tallies as the hero read).
   static String seriesHeadline({
     required SeriesDefinition series,
     required SeriesProgressCounts progress,
@@ -42,10 +42,10 @@ abstract final class CollectionProgressVoice {
       return '$missing figures still to find';
     }
 
-    return 'Growing this line';
+    return 'Growing this series';
   }
 
-  /// Softer second line — light facts, calm tone.
+  /// Softer supporting copy — light facts, calm tone.
   static String seriesSubline({
     required SeriesDefinition series,
     required SeriesProgressCounts progress,
@@ -61,7 +61,7 @@ abstract final class CollectionProgressVoice {
     final ownedSecrets = secrets.where((f) => figureStates[f.id]?.owned == true).length;
 
     if (owned >= total) {
-      return 'Every slot in this line is filled.';
+      return 'Every slot in this series is filled.';
     }
 
     final parts = <String>[];
@@ -80,18 +80,18 @@ abstract final class CollectionProgressVoice {
     if (snap.shelfSeries.isEmpty) return '';
 
     final avg = snap.averageCompletionPercent;
-    final lines = snap.shelfSeries.length;
+    final seriesCount = snap.shelfSeries.length;
     final allComplete = snap.shelfSeries.every((s) {
       final p = progressForSeries(s, snap.figureStates);
       return s.figureCount > 0 && p.owned >= s.figureCount;
     });
 
-    if (allComplete && lines > 0) {
-      return lines == 1
-          ? 'This line is whole — a quiet little win.'
-          : 'Every line is whole — your shelf feels settled.';
+    if (allComplete && seriesCount > 0) {
+      return seriesCount == 1
+          ? 'This series feels complete — a quiet little win.'
+          : 'Every series feels complete — your shelf feels settled.';
     }
-    if (avg >= 90) return 'Almost every line feels whole — satisfying.';
+    if (avg >= 90) return 'Almost every series feels complete — satisfying.';
     if (avg >= 70) return 'Your shelf is coming together beautifully.';
     if (avg >= 40) return 'Room to grow — each pull adds character.';
     return 'A cozy shelf in progress — enjoy the hunt.';

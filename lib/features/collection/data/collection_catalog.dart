@@ -147,7 +147,7 @@ abstract final class CollectionCatalog {
         ),
       ];
 
-  /// Full IP tree for browse / suggestions (includes lines not on the default shelf).
+  /// Full IP tree for browse / suggestions (includes series not on the default shelf).
   static List<IPDefinition> allTemplateIps() {
     return [
       IPDefinition(
@@ -243,7 +243,7 @@ abstract final class CollectionCatalog {
         .toList(growable: false);
   }
 
-  /// Default demo shelf: user line first, then catalog-backed lines (same ids as catalog for progress keys).
+  /// Default demo shelf: user series first, then catalog-backed series (same ids as catalog for progress keys).
   static List<SeriesDefinition> defaultShelfSeries() {
     const customSpring = 'custom-spring-picnic';
     final customFigures = [

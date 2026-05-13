@@ -77,7 +77,7 @@ class CollectionSummarySection extends StatelessWidget {
                     child: _SummaryPill(
                       label: 'Harmony',
                       value: '${stats.avgCompletionPercent}%',
-                      hint: 'avg line fullness',
+                      hint: 'avg series completeness',
                     ),
                   ),
                 ],

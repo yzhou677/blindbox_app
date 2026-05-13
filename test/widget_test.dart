@@ -42,7 +42,7 @@ void main() {
     expect(find.text('My collection'), findsWidgets);
     expect(find.text('ON SHELF'), findsOneWidget);
     expect(find.text('5'), findsOneWidget);
-    expect(find.text('Add line'), findsOneWidget);
+    expect(find.text('Add series'), findsOneWidget);
     expect(find.text('The Other One'), findsOneWidget);
   });
 

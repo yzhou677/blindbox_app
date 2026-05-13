@@ -6,7 +6,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Add from catalog suggestions (searchable) or create a custom line.
+/// Add from catalog suggestions (searchable) or create a custom series.
 class AddToCollectionSheet extends ConsumerStatefulWidget {
   const AddToCollectionSheet({super.key, required this.onCreateCustom});
 
@@ -76,7 +76,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
             ),
             const SizedBox(height: 18),
             Text(
-              'Add a line',
+              'Add a series',
               style: textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w600,
                 letterSpacing: -0.35,
@@ -95,7 +95,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
               controller: _search,
               textInputAction: TextInputAction.search,
               decoration: InputDecoration(
-                hintText: 'Search by line, IP, or brand…',
+                hintText: 'Search by series, IP, or brand…',
                 prefixIcon: Icon(Icons.search_rounded, color: scheme.onSurfaceVariant.withValues(alpha: 0.75)),
                 suffixIcon: _query.isEmpty
                     ? null
@@ -155,7 +155,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         child: Text(
-                          'Every catalog line here is already on your shelf. Nice.',
+                          'Every catalog series here is already on your shelf. Nice.',
                           textAlign: TextAlign.center,
                           style: textTheme.bodyMedium?.copyWith(
                             color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
@@ -201,7 +201,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
                 children: [
                   Icon(Icons.draw_rounded, size: 20),
                   SizedBox(width: 8),
-                  Text('Create my own line'),
+                  Text('Create my own series'),
                 ],
               ),
             ),
