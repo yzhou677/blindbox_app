@@ -65,7 +65,7 @@ class SeriesFiguresSheet extends ConsumerWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              '${series.brand} · tap a figure: wish → own → clear',
+              'Tap a figure: hunt list → on shelf → open slot',
               style: textTheme.bodySmall?.copyWith(
                 color: scheme.onSurfaceVariant.withValues(alpha: 0.86),
                 height: 1.35,

@@ -65,22 +65,25 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
-      builder: (ctx) => AddCustomSeriesSheet(
-        onSubmit: ({
-          required String seriesName,
-          String? brand,
-          String? ipDisplayName,
-          required List<String> figureNames,
-          String? notes,
-        }) {
-          ref.read(collectionNotifierProvider.notifier).addCustomSeries(
-                seriesName: seriesName,
-                brand: brand,
-                ipDisplayName: ipDisplayName,
-                figureNames: figureNames,
-                notes: notes,
-              );
-        },
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
+        child: AddCustomSeriesSheet(
+          onSubmit: ({
+            required String seriesName,
+            String? brand,
+            String? ipDisplayName,
+            required List<String> figureNames,
+            String? notes,
+          }) {
+            ref.read(collectionNotifierProvider.notifier).addCustomSeries(
+                  seriesName: seriesName,
+                  brand: brand,
+                  ipDisplayName: ipDisplayName,
+                  figureNames: figureNames,
+                  notes: notes,
+                );
+          },
+        ),
       ),
     );
   }
@@ -93,15 +96,18 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
-      builder: (ctx) => AddToCollectionSheet(
-        onCreateCustom: () {
-          Navigator.of(ctx).pop();
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (context.mounted) {
-              _openAddCustom(context);
-            }
-          });
-        },
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
+        child: AddToCollectionSheet(
+          onCreateCustom: () {
+            Navigator.of(ctx).pop();
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (context.mounted) {
+                _openAddCustom(context);
+              }
+            });
+          },
+        ),
       ),
     );
   }

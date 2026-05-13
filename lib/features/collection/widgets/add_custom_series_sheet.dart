@@ -1,3 +1,4 @@
+import 'package:blindbox_app/features/collection/widgets/figure_name_chips_editor.dart';
 import 'package:flutter/material.dart';
 
 typedef CustomSeriesFormSubmit = void Function({
@@ -8,7 +9,7 @@ typedef CustomSeriesFormSubmit = void Function({
   String? notes,
 });
 
-/// Minimal “new line” form — one figure per line (or comma-separated).
+/// Shelf-first “new line” — chips for figures, light fields for the rest.
 class AddCustomSeriesSheet extends StatefulWidget {
   const AddCustomSeriesSheet({super.key, required this.onSubmit});
 
@@ -22,38 +23,86 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
   final _seriesName = TextEditingController();
   final _brand = TextEditingController();
   final _ip = TextEditingController();
-  final _figures = TextEditingController();
   final _notes = TextEditingController();
+  final _newFigure = TextEditingController();
+  final _newFigureFocus = FocusNode();
   final _formKey = GlobalKey<FormState>();
+
+  final List<String> _figureNames = [];
 
   @override
   void dispose() {
     _seriesName.dispose();
     _brand.dispose();
     _ip.dispose();
-    _figures.dispose();
     _notes.dispose();
+    _newFigure.dispose();
+    _newFigureFocus.dispose();
     super.dispose();
   }
 
-  List<String> _parseFigures() {
-    final raw = _figures.text.replaceAll(',', '\n');
-    return raw
-        .split(RegExp(r'[\r\n]+'))
-        .map((e) => e.trim())
-        .where((e) => e.isNotEmpty)
-        .toList(growable: false);
+  void _addFigureFromField() {
+    final raw = _newFigure.text.trim();
+    if (raw.isEmpty) return;
+    setState(() {
+      _figureNames.add(raw);
+      _newFigure.clear();
+    });
+  }
+
+  Future<void> _editAt(int index) async {
+    final current = _figureNames[index];
+    final editController = TextEditingController(text: current);
+    final next = await showDialog<String>(
+      context: context,
+      builder: (ctx) {
+        final scheme = Theme.of(ctx).colorScheme;
+        return AlertDialog(
+          title: const Text('Rename figure'),
+          content: TextField(
+            controller: editController,
+            autofocus: true,
+            textInputAction: TextInputAction.done,
+            decoration: InputDecoration(
+              hintText: 'Name',
+              filled: true,
+              fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+            ),
+            onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, editController.text.trim()),
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+    editController.dispose();
+    if (!mounted || next == null || next.isEmpty) return;
+    setState(() => _figureNames[index] = next);
+  }
+
+  void _removeAt(int i) {
+    setState(() => _figureNames.removeAt(i));
   }
 
   void _save() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    final names = _parseFigures();
-    if (names.isEmpty) return;
+    if (_figureNames.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Add at least one figure')),
+      );
+      return;
+    }
     widget.onSubmit(
       seriesName: _seriesName.text.trim(),
       brand: _brand.text.trim().isEmpty ? null : _brand.text.trim(),
       ipDisplayName: _ip.text.trim().isEmpty ? null : _ip.text.trim(),
-      figureNames: names,
+      figureNames: List<String>.from(_figureNames),
       notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
     );
     Navigator.of(context).pop();
@@ -64,20 +113,21 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final bottom = MediaQuery.paddingOf(context).bottom;
+    final maxH = MediaQuery.sizeOf(context).height * 0.88;
 
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 20,
-        right: 20,
-        top: 12,
-        bottom: bottom + 16,
-      ),
-      child: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
+    return SizedBox(
+      height: maxH,
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 20,
+          right: 20,
+          top: 12,
+          bottom: bottom + 16,
+        ),
+        child: Form(
+          key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
             children: [
               Center(
                 child: Container(
@@ -90,84 +140,96 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
                 ),
               ),
               const SizedBox(height: 16),
-              Text(
-                'New custom line',
-                style: textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: -0.2,
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'Your own line',
+                        style: textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Give the line a name, tag your pulls, and they’ll land on your shelf like the rest.',
+                        style: textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
+                          height: 1.35,
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+                      TextFormField(
+                        controller: _seriesName,
+                        textInputAction: TextInputAction.next,
+                        decoration: InputDecoration(
+                          labelText: 'Line name',
+                          filled: true,
+                          fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) return 'Add a line name';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _brand,
+                        textInputAction: TextInputAction.next,
+                        decoration: InputDecoration(
+                          labelText: 'Brand (optional)',
+                          filled: true,
+                          fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _ip,
+                        textInputAction: TextInputAction.next,
+                        decoration: InputDecoration(
+                          labelText: 'Universe / IP label (optional)',
+                          filled: true,
+                          fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+                      FigureNameChipsEditor(
+                        names: _figureNames,
+                        onRemoveAt: _removeAt,
+                        onEditAt: _editAt,
+                        addFieldController: _newFigure,
+                        addFieldFocusNode: _newFigureFocus,
+                        onAddSubmitted: _addFigureFromField,
+                      ),
+                      const SizedBox(height: 18),
+                      TextFormField(
+                        controller: _notes,
+                        maxLines: 2,
+                        textInputAction: TextInputAction.done,
+                        decoration: InputDecoration(
+                          labelText: 'Shelf note (optional)',
+                          filled: true,
+                          fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 6),
-              Text(
-                'Name each figure on its own line (or separate with commas).',
-                style: textTheme.bodySmall?.copyWith(
-                  color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
-                  height: 1.35,
-                ),
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _seriesName,
-                textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: 'Series name',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Add a series name';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _brand,
-                textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: 'Brand (optional)',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _ip,
-                textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: 'IP / universe label (optional)',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _figures,
-                minLines: 4,
-                maxLines: 8,
-                textInputAction: TextInputAction.newline,
-                decoration: const InputDecoration(
-                  labelText: 'Figure names',
-                  hintText: 'The Fox\nThe Bird\nThe Ghost',
-                  alignLabelWithHint: true,
-                  border: OutlineInputBorder(),
-                ),
-                validator: (_) {
-                  if (_parseFigures().isEmpty) return 'Add at least one figure name';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _notes,
-                maxLines: 3,
-                textInputAction: TextInputAction.done,
-                decoration: const InputDecoration(
-                  labelText: 'Notes (optional)',
-                  alignLabelWithHint: true,
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 22),
+              const SizedBox(height: 18),
               FilledButton(
                 onPressed: _save,
-                child: const Text('Add to shelf'),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                child: const Text('Place on shelf'),
               ),
             ],
           ),
