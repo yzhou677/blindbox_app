@@ -3,9 +3,9 @@ import 'package:blindbox_app/models/collectible.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-/// Slightly compact width + squatter image window = less “poster,” more shelf box.
-const double _kCardWidth = 264;
-const double _kImageAspect = 0.96;
+/// Slightly narrower + squatter image window = calmer first-feed beat.
+const double _kCardWidth = 246;
+const double _kImageAspect = 1.08;
 
 class LatestDropCard extends StatelessWidget {
   const LatestDropCard({super.key, required this.collectible});
@@ -29,10 +29,10 @@ class LatestDropCard extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               color: Color.lerp(scheme.shadow, accent, 0.12)!
-                  .withValues(alpha: shadowAlpha + 0.04),
-              blurRadius: 28,
-              offset: const Offset(0, 14),
-              spreadRadius: -6,
+                  .withValues(alpha: shadowAlpha + 0.03),
+              blurRadius: 22,
+              offset: const Offset(0, 11),
+              spreadRadius: -5,
             ),
           ],
         ),
@@ -54,10 +54,10 @@ class LatestDropCard extends StatelessWidget {
                 AspectRatio(
                   aspectRatio: _kImageAspect,
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 11),
+                    padding: const EdgeInsets.fromLTRB(14, 11, 14, 9),
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(17),
+                        borderRadius: BorderRadius.circular(16),
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
@@ -71,15 +71,15 @@ class LatestDropCard extends StatelessWidget {
                         ),
                       ),
                       child: Padding(
-                        padding: const EdgeInsets.all(14),
+                        padding: const EdgeInsets.all(11),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(11),
+                          borderRadius: BorderRadius.circular(10),
                           child: ColoredBox(
                             color: scheme.surface.withValues(alpha: 0.72),
                             child: CollectibleNetworkImage(
                               collectible: collectible,
                               heroTag: collectible.heroImageTag,
-                              borderRadius: BorderRadius.circular(11),
+                              borderRadius: BorderRadius.circular(10),
                               fit: BoxFit.contain,
                             ),
                           ),
@@ -89,7 +89,7 @@ class LatestDropCard extends StatelessWidget {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(17, 8, 17, 16),
+                  padding: const EdgeInsets.fromLTRB(15, 6, 15, 13),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -100,23 +100,23 @@ class LatestDropCard extends StatelessWidget {
                           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           avatar: Icon(
                             Icons.auto_awesome_rounded,
-                            size: 16,
+                            size: 15,
                             color: scheme.onSecondaryContainer.withValues(alpha: 0.85),
                           ),
                           label: Text(
                             collectible.series.toUpperCase(),
                             style: textTheme.labelSmall?.copyWith(
-                              letterSpacing: 0.55,
+                              letterSpacing: 0.5,
                               fontWeight: FontWeight.w700,
                               height: 1,
                             ),
                           ),
                           backgroundColor: scheme.secondaryContainer.withValues(alpha: 0.55),
                           side: BorderSide.none,
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 3),
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       Text(
                         collectible.name,
                         maxLines: 2,
@@ -124,10 +124,10 @@ class LatestDropCard extends StatelessWidget {
                         style: textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w600,
                           letterSpacing: -0.16,
-                          height: 1.2,
+                          height: 1.18,
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 4),
                       Text(
                         collectible.brand,
                         maxLines: 1,
@@ -137,9 +137,9 @@ class LatestDropCard extends StatelessWidget {
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
                         decoration: BoxDecoration(
                           color: accent.withValues(alpha: theme.brightness == Brightness.dark ? 0.28 : 0.5),
                           borderRadius: BorderRadius.circular(999),
@@ -149,7 +149,7 @@ class LatestDropCard extends StatelessWidget {
                           style: textTheme.labelSmall?.copyWith(
                             color: scheme.onSurface.withValues(alpha: 0.88),
                             fontWeight: FontWeight.w700,
-                            letterSpacing: 0.15,
+                            letterSpacing: 0.12,
                           ),
                         ),
                       ),

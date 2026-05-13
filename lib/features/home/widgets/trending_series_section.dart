@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 class TrendingSeriesSection extends StatelessWidget {
   const TrendingSeriesSection({super.key});
 
-  static const double _railHeight = kTrendingSeriesCapsuleHeight + 10;
+  static const double _railHeight = kTrendingSeriesCapsuleHeight + 12;
 
   @override
   Widget build(BuildContext context) {
@@ -17,16 +17,16 @@ class TrendingSeriesSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+          padding: const EdgeInsets.fromLTRB(20, 2, 20, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Trending series',
                 style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: -0.12,
-                  height: 1.22,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: -0.14,
+                  height: 1.2,
                 ),
               ),
               const SizedBox(height: 6),
@@ -42,7 +42,7 @@ class TrendingSeriesSection extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
         SizedBox(
           height: _railHeight,
           child: ListView.separated(

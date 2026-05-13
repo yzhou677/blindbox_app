@@ -17,7 +17,7 @@ class MarketSearchBar extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
       child: TextField(
         controller: controller,
         onChanged: onChanged,

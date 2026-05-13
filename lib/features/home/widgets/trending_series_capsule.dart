@@ -1,8 +1,8 @@
 import 'package:blindbox_app/models/toy_series_highlight.dart';
 import 'package:flutter/material.dart';
 
-const double kTrendingSeriesCapsuleWidth = 158;
-const double kTrendingSeriesCapsuleHeight = 122;
+const double kTrendingSeriesCapsuleWidth = 164;
+const double kTrendingSeriesCapsuleHeight = 128;
 
 /// Compact universe capsule — distinct from [LatestDropCard] (no hero SKU photography).
 class TrendingSeriesCapsule extends StatelessWidget {

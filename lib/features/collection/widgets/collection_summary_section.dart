@@ -41,7 +41,7 @@ class CollectionSummarySection extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 22),
+      padding: const EdgeInsets.fromLTRB(20, 6, 20, 22),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

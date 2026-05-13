@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/widgets/add_custom_series_sheet.dart';
@@ -130,7 +131,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               floating: false,
               elevation: 0,
               scrolledUnderElevation: 0,
-              toolbarHeight: 52,
+              toolbarHeight: FeedRhythm.mainTabAppBarToolbarHeight,
               backgroundColor: scheme.surface,
               surfaceTintColor: scheme.surfaceTint.withValues(alpha: 0.32),
               centerTitle: false,
@@ -143,6 +144,9 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                   height: 1.18,
                 ),
               ),
+            ),
+            SliverToBoxAdapter(
+              child: SizedBox(height: FeedRhythm.belowMainTabAppBar),
             ),
             SliverFillRemaining(
               hasScrollBody: false,
@@ -165,7 +169,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
             floating: false,
             elevation: 0,
             scrolledUnderElevation: 0,
-            toolbarHeight: 52,
+            toolbarHeight: FeedRhythm.mainTabAppBarToolbarHeight,
             backgroundColor: scheme.surface,
             surfaceTintColor: scheme.surfaceTint.withValues(alpha: 0.32),
             centerTitle: false,
@@ -181,7 +185,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 6),
+              padding: const EdgeInsets.fromLTRB(20, FeedRhythm.belowMainTabAppBar, 20, 6),
               child: Text(
                 'Your shelf brings together series, customs, and artist pieces. Tap a row to log pulls and wishes.',
                 style: textTheme.bodyMedium?.copyWith(
@@ -203,7 +207,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
               child: Row(
                 children: [
                   Expanded(

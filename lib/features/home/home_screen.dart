@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/features/home/data/mock_latest_drops.dart';
 import 'package:blindbox_app/features/home/widgets/latest_drops_section.dart';
 import 'package:blindbox_app/features/home/widgets/trending_series_section.dart';
@@ -21,7 +22,7 @@ class HomeScreen extends StatelessWidget {
             floating: false,
             elevation: 0,
             scrolledUnderElevation: 0,
-            toolbarHeight: 52,
+            toolbarHeight: FeedRhythm.mainTabAppBarToolbarHeight,
             backgroundColor: scheme.surface,
             surfaceTintColor: scheme.surfaceTint.withValues(alpha: 0.32),
             centerTitle: false,
@@ -37,12 +38,15 @@ class HomeScreen extends StatelessWidget {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.only(top: 4, bottom: 36),
+              padding: const EdgeInsets.only(
+                top: FeedRhythm.belowMainTabAppBar,
+                bottom: 30,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   LatestDropsSection(items: mockLatestDrops),
-                  const SizedBox(height: 36),
+                  const SizedBox(height: FeedRhythm.homeMajorSectionGap),
                   const TrendingSeriesSection(),
                 ],
               ),

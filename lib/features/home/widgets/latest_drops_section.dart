@@ -7,8 +7,8 @@ class LatestDropsSection extends StatelessWidget {
 
   final List<Collectible> items;
 
-  /// Card + polaroid mat + chip + date pill + breathing room.
-  static const double _railHeight = 468;
+  /// Card + polaroid mat + chip + date pill — tuned for feed balance (not a full-bleed hero).
+  static const double _railHeight = 396;
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +20,7 @@ class LatestDropsSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 2, 20, 0),
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -67,7 +67,7 @@ class LatestDropsSection extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
         SizedBox(
           height: _railHeight,
           child: ListView.separated(

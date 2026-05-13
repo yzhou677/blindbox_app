@@ -24,7 +24,7 @@ class TrendingMarketSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
           child: Row(
             children: [
               Icon(

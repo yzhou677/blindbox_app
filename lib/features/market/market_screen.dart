@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/features/market/catalog/market_listing_filters.dart';
 import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
 import 'package:blindbox_app/features/market/data/mock_market_listings.dart';
@@ -71,7 +72,7 @@ class _MarketScreenState extends State<MarketScreen> {
             floating: false,
             elevation: 0,
             scrolledUnderElevation: 0,
-            toolbarHeight: 52,
+            toolbarHeight: FeedRhythm.mainTabAppBarToolbarHeight,
             backgroundColor: scheme.surface,
             surfaceTintColor: scheme.surfaceTint.withValues(alpha: 0.32),
             centerTitle: false,
@@ -87,7 +88,7 @@ class _MarketScreenState extends State<MarketScreen> {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 10),
+              padding: const EdgeInsets.fromLTRB(20, FeedRhythm.belowMainTabAppBar, 20, 10),
               child: Text(
                 'Soft signals for what is moving — visual first, lightweight.',
                 style: textTheme.bodyMedium?.copyWith(
