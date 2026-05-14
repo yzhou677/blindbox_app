@@ -25,7 +25,7 @@ abstract final class CollectionProgressVoice {
     }
 
     if (missing == 0 && wish > 0 && owned < total) {
-      return wish == 1 ? 'One on want list' : 'Several on want list';
+      return wish == 1 ? 'One on wish list' : 'Several on wish list';
     }
 
     if (missing == 1) return 'One figure left';
@@ -66,12 +66,12 @@ abstract final class CollectionProgressVoice {
 
     final parts = <String>[];
     if (owned > 0) parts.add('$owned collected');
-    if (wish > 0) parts.add('$wish on want list');
+    if (wish > 0) parts.add('$wish on wish list');
     if (missing > 0 && secrets.isNotEmpty && ownedSecrets < secrets.length) {
       final openChase = secrets.length - ownedSecrets;
       if (openChase > 0) parts.add('chase still hiding');
     }
-    if (parts.isEmpty) return 'Tap a figure: collected → want list → open slot.';
+    if (parts.isEmpty) return 'Tap a figure: collected → wish list → open slot.';
     return parts.join(' · ');
   }
 

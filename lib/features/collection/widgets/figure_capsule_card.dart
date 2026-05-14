@@ -3,7 +3,7 @@ import 'package:blindbox_app/features/collection/widgets/collectible_figure_plac
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
-/// Mini blind-box / shelf card — collected, want list, and open-slot states.
+/// Mini blind-box / shelf card — collected, wish list, and open-slot states.
 class FigureCapsuleCard extends StatefulWidget {
   const FigureCapsuleCard({
     super.key,
@@ -544,11 +544,12 @@ class _WishRibbon extends StatelessWidget {
             const Icon(Icons.auto_fix_high_rounded, size: 13, color: Colors.white),
             const SizedBox(width: 4),
             Text(
-              'Looking',
+              'Wish list',
               style: textTheme.labelSmall?.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.w800,
-                letterSpacing: 0.4,
+                fontSize: 10,
+                letterSpacing: 0.12,
                 height: 1,
               ),
             ),
