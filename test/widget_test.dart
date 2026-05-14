@@ -58,7 +58,7 @@ void main() {
     expect(find.text('All'), findsOneWidget);
     expect(find.text('The Other One'), findsOneWidget);
 
-    await tester.tap(find.text('TOPTOY'));
+    await tester.tap(find.text('Dreams Inc.'));
     await tester.pump(const Duration(milliseconds: 200));
     expect(find.text('Nothing on your shelf for this brand yet.'), findsOneWidget);
 

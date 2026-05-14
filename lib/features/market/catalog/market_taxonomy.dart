@@ -1,3 +1,4 @@
+import 'package:blindbox_app/features/market/taxonomy/market_taxonomy_adapter.dart';
 import 'package:blindbox_app/models/market_listing.dart';
 import 'package:flutter/foundation.dart';
 
@@ -36,33 +37,22 @@ class MarketBrandTaxon {
 }
 
 /// Central catalog: brands ↔ IPs, chip rows, and listing filter predicates.
-/// Replace const data with API-driven models when persistence lands.
+///
+/// Rows are derived from curated registries via [MarketTaxonomyAdapter]; keep ids aligned
+/// with [MarketListing] taxonomy fields and the title resolver.
 abstract final class MarketTaxonomy {
-  static const List<MarketIpTaxon> allIps = [
-    MarketIpTaxon(id: 'hirono', displayLabel: 'Hirono'),
-    MarketIpTaxon(id: 'labubu', displayLabel: 'Labubu'),
-    MarketIpTaxon(id: 'skullpanda', displayLabel: 'Skullpanda'),
-    MarketIpTaxon(id: 'liila', displayLabel: 'Liila'),
-    MarketIpTaxon(id: 'nommi', displayLabel: 'Nommi'),
-    MarketIpTaxon(id: 'maymei', displayLabel: 'Maymei'),
+  static final List<MarketIpTaxon> allIps = [
+    for (final row in MarketTaxonomyAdapter.buildIpRows())
+      MarketIpTaxon(id: row.id, displayLabel: row.displayLabel),
   ];
 
-  static const List<MarketBrandTaxon> brands = [
-    MarketBrandTaxon(
-      id: 'pop_mart',
-      displayLabel: 'POP MART',
-      supportedIpIds: ['hirono', 'labubu', 'skullpanda'],
-    ),
-    MarketBrandTaxon(
-      id: 'toptoy',
-      displayLabel: 'TOPTOY',
-      supportedIpIds: ['nommi', 'maymei'],
-    ),
-    MarketBrandTaxon(
-      id: 'tntspace',
-      displayLabel: 'TNTSPACE',
-      supportedIpIds: ['liila'],
-    ),
+  static final List<MarketBrandTaxon> brands = [
+    for (final row in MarketTaxonomyAdapter.buildBrandRows())
+      MarketBrandTaxon(
+        id: row.id,
+        displayLabel: row.displayLabel,
+        supportedIpIds: row.supportedIpIds,
+      ),
   ];
 
   static MarketIpTaxon? ipById(String id) {
