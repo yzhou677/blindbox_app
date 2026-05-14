@@ -3,6 +3,7 @@ import 'package:blindbox_app/features/market/application/market_browse_notifier.
 import 'package:blindbox_app/features/market/catalog/market_listing_filters.dart';
 import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
 import 'package:blindbox_app/features/market/data/mock_market_listings.dart';
+import 'package:blindbox_app/features/market/presentation/market_price_sort.dart';
 import 'package:blindbox_app/features/market/widgets/market_discovery_chips.dart';
 import 'package:blindbox_app/features/market/widgets/market_listing_card.dart';
 import 'package:blindbox_app/features/market/widgets/market_search_bar.dart';
@@ -21,6 +22,9 @@ class MarketScreen extends ConsumerStatefulWidget {
 
 class _MarketScreenState extends ConsumerState<MarketScreen> {
   final TextEditingController _search = TextEditingController();
+
+  /// Presentation-only; browse list is derived from filters + this order.
+  MarketPriceSort _priceSort = MarketPriceSort.lowToHigh;
 
   @override
   void dispose() {
@@ -60,6 +64,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
     final browse = ref.watch(marketBrowseNotifierProvider);
     final notifier = ref.read(marketBrowseNotifierProvider.notifier);
     final filtered = _visibleListings(browse);
+    final sorted = marketListingsSortedByPrice(filtered, _priceSort);
     final immersive = browse.searchResultsActive;
 
     return Scaffold(
@@ -119,10 +124,46 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
               child: CollectibleSectionHeader(
                 title: 'Browse listings',
                 padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+                trailing: TextButton(
+                  key: const Key('market_browse_price_sort'),
+                  onPressed: () {
+                    setState(() {
+                      _priceSort = _priceSort == MarketPriceSort.lowToHigh
+                          ? MarketPriceSort.highToLow
+                          : MarketPriceSort.lowToHigh;
+                    });
+                  },
+                  style: TextButton.styleFrom(
+                    backgroundColor: Color.lerp(
+                      scheme.surface,
+                      scheme.primaryContainer,
+                      0.32,
+                    )!.withValues(alpha: 0.92),
+                    foregroundColor: scheme.primary.withValues(alpha: 0.78),
+                    shadowColor: Colors.transparent,
+                    surfaceTintColor: Colors.transparent,
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    minimumSize: const Size(48, 40),
+                    tapTargetSize: MaterialTapTargetSize.padded,
+                    visualDensity: VisualDensity.compact,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    _priceSort.browseHeaderLabel,
+                    style: textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.02,
+                      height: 1.1,
+                      color: scheme.primary.withValues(alpha: 0.78),
+                    ),
+                  ),
+                ),
               ),
             ),
           ],
-          if (filtered.isEmpty)
+          if (sorted.isEmpty)
             SliverFillRemaining(
               hasScrollBody: false,
               child: _MarketEmptySearch(
@@ -143,9 +184,9 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
-                    return MarketListingCard(listing: filtered[index]);
+                    return MarketListingCard(listing: sorted[index]);
                   },
-                  childCount: filtered.length,
+                  childCount: sorted.length,
                 ),
               ),
             ),

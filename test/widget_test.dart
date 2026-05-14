@@ -54,7 +54,16 @@ void main() {
     expect(find.text('My collection'), findsWidgets);
     expect(find.text('In collection'), findsOneWidget);
     expect(find.text('5'), findsOneWidget);
-    expect(find.text('Add series'), findsOneWidget);
+    expect(find.byKey(const Key('collection_header_add_series')), findsOneWidget);
+    expect(find.text('All'), findsOneWidget);
+    expect(find.text('The Other One'), findsOneWidget);
+
+    await tester.tap(find.text('TOPTOY'));
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.text('Nothing on your shelf for this brand yet.'), findsOneWidget);
+
+    await tester.tap(find.text('All'));
+    await tester.pump(const Duration(milliseconds: 200));
     expect(find.text('The Other One'), findsOneWidget);
   });
 

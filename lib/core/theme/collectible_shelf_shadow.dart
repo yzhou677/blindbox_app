@@ -9,13 +9,20 @@ abstract final class CollectibleShelfShadow {
     final tokens = CollectibleTokens.of(context);
     final isDark = brightness == Brightness.dark;
     final alpha = isDark ? tokens.shellShadowDarkAlpha : tokens.shellShadowLightAlpha;
+    final core = Color.lerp(scheme.shadow, accent, tokens.shellShadowAccentMix)!;
     return [
       BoxShadow(
-        color: Color.lerp(scheme.shadow, accent, tokens.shellShadowAccentMix)!
-            .withValues(alpha: alpha),
+        color: core.withValues(alpha: alpha),
         blurRadius: tokens.shellShadowBlur,
         offset: Offset(0, tokens.shellShadowDy),
         spreadRadius: tokens.shellShadowSpread,
+      ),
+      BoxShadow(
+        color: Color.lerp(scheme.primary, scheme.surface, isDark ? 0.82 : 0.88)!
+            .withValues(alpha: isDark ? 0.055 : 0.032),
+        blurRadius: tokens.shellShadowBlur * 1.65,
+        offset: Offset(0, tokens.shellShadowDy * 0.45),
+        spreadRadius: 0,
       ),
     ];
   }
@@ -23,6 +30,8 @@ abstract final class CollectibleShelfShadow {
   /// Extra height a horizontal rail viewport needs below a product shell so
   /// [productShell] is not clipped. Uses the same [CollectibleTokens] fields as the shadow.
   static double horizontalRailShellBottomSlack(CollectibleTokens tokens) {
-    return tokens.shellShadowDy + tokens.shellShadowBlur;
+    final primaryReach = tokens.shellShadowDy + tokens.shellShadowBlur;
+    final ambientReach = tokens.shellShadowDy * 0.45 + tokens.shellShadowBlur * 1.65;
+    return primaryReach > ambientReach ? primaryReach : ambientReach;
   }
 }

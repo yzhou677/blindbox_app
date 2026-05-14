@@ -36,7 +36,7 @@ class LatestDropCard extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: outerRadius,
             side: BorderSide(
-              color: accent.withValues(alpha: theme.brightness == Brightness.dark ? 0.22 : 0.38),
+              color: accent.withValues(alpha: theme.brightness == Brightness.dark ? 0.16 : 0.34),
               width: 1,
             ),
           ),
@@ -58,14 +58,14 @@ class LatestDropCard extends StatelessWidget {
                           end: Alignment.bottomRight,
                           colors: [
                             Color.lerp(scheme.surface, accent, 0.38)!
-                                .withValues(alpha: theme.brightness == Brightness.dark ? 0.42 : 0.62),
-                            accent.withValues(alpha: 0.4),
-                            scheme.surface.withValues(alpha: 0.12),
+                                .withValues(alpha: theme.brightness == Brightness.dark ? 0.32 : 0.58),
+                            accent.withValues(alpha: theme.brightness == Brightness.dark ? 0.32 : 0.4),
+                            scheme.surface.withValues(alpha: theme.brightness == Brightness.dark ? 0.18 : 0.12),
                           ],
                           stops: const [0.0, 0.42, 1.0],
                         ),
                         border: Border.all(
-                          color: accent.withValues(alpha: theme.brightness == Brightness.dark ? 0.14 : 0.22),
+                          color: accent.withValues(alpha: theme.brightness == Brightness.dark ? 0.11 : 0.2),
                         ),
                       ),
                       child: Padding(
@@ -73,7 +73,9 @@ class LatestDropCard extends StatelessWidget {
                         child: ClipRRect(
                           borderRadius: CollectibleShape.insetRadius,
                           child: ColoredBox(
-                            color: scheme.surface.withValues(alpha: 0.72),
+                            color: scheme.surface.withValues(
+                              alpha: theme.brightness == Brightness.dark ? 0.82 : 0.72,
+                            ),
                             child: CollectibleNetworkImage(
                               collectible: hero,
                               heroTag: hero.heroImageTag,
