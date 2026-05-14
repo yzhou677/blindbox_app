@@ -1,14 +1,11 @@
+import 'package:blindbox_app/core/data/collectible_placeholder_art.dart';
 import 'package:blindbox_app/features/home/domain/series_release.dart';
 import 'package:blindbox_app/models/collectible.dart';
 import 'package:flutter/material.dart';
 
 /// Illustration-style mock art (DiceBear `thumbs`) — toy-adjacent, soft pastels, not stock photography.
-String mockCollectibleArtUrl(String seed, String backgroundHex) {
-  return 'https://api.dicebear.com/9.x/thumbs/png'
-      '?seed=${Uri.encodeComponent(seed)}'
-      '&size=256'
-      '&backgroundColor=$backgroundHex';
-}
+String mockCollectibleArtUrl(String seed, String backgroundHex) =>
+    placeholderCollectibleArtUrl(seed, backgroundHex);
 
 /// Series launches for the Latest Drops rail (replace with API later).
 final List<SeriesRelease> mockSeriesReleases = [
@@ -66,6 +63,8 @@ final List<SeriesRelease> mockSeriesReleases = [
         isSecret: true,
       ),
     ],
+    taxonomyBrandId: 'toptoy',
+    taxonomyIpId: null,
   ),
   SeriesRelease(
     dropId: 'drop-miso',
@@ -115,6 +114,8 @@ final List<SeriesRelease> mockSeriesReleases = [
         isSecret: true,
       ),
     ],
+    taxonomyBrandId: 'toptoy',
+    taxonomyIpId: null,
   ),
   SeriesRelease(
     dropId: 'drop-rio',
@@ -164,6 +165,8 @@ final List<SeriesRelease> mockSeriesReleases = [
         isSecret: false,
       ),
     ],
+    taxonomyBrandId: 'tntspace',
+    taxonomyIpId: null,
   ),
   SeriesRelease(
     dropId: 'drop-nori',
@@ -219,6 +222,8 @@ final List<SeriesRelease> mockSeriesReleases = [
         isSecret: true,
       ),
     ],
+    taxonomyBrandId: 'pop_mart',
+    taxonomyIpId: null,
   ),
   SeriesRelease(
     dropId: 'drop-puff',
@@ -268,6 +273,8 @@ final List<SeriesRelease> mockSeriesReleases = [
         isSecret: true,
       ),
     ],
+    taxonomyBrandId: 'toptoy',
+    taxonomyIpId: null,
   ),
 ];
 

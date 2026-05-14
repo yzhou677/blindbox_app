@@ -1,11 +1,17 @@
 import 'package:blindbox_app/core/theme/app_theme.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/collection_screen.dart';
+import 'package:blindbox_app/features/collection/data/series_release_lookup.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/home/data/mock_latest_drops.dart';
 import 'package:blindbox_app/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+List<Override> _blindboxTestOverrides() => [
+      seriesReleaseLookupProvider.overrideWithValue(mockSeriesReleaseByDropId),
+    ];
 
 final class EmptyTestCollectionNotifier extends CollectionNotifier {
   @override
@@ -15,7 +21,10 @@ final class EmptyTestCollectionNotifier extends CollectionNotifier {
 void main() {
   testWidgets('App shell shows Home tab', (WidgetTester tester) async {
     await tester.pumpWidget(
-      const ProviderScope(child: BlindboxApp()),
+      ProviderScope(
+        overrides: _blindboxTestOverrides(),
+        child: const BlindboxApp(),
+      ),
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
@@ -30,7 +39,10 @@ void main() {
 
   testWidgets('Collection tab shows series-first shelf and summary', (WidgetTester tester) async {
     await tester.pumpWidget(
-      const ProviderScope(child: BlindboxApp()),
+      ProviderScope(
+        overrides: _blindboxTestOverrides(),
+        child: const BlindboxApp(),
+      ),
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
@@ -48,7 +60,10 @@ void main() {
 
   testWidgets('Market tab shows search and trending', (WidgetTester tester) async {
     await tester.pumpWidget(
-      const ProviderScope(child: BlindboxApp()),
+      ProviderScope(
+        overrides: _blindboxTestOverrides(),
+        child: const BlindboxApp(),
+      ),
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));

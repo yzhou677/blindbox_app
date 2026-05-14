@@ -30,6 +30,8 @@ class SeriesRelease {
     required this.releaseDate,
     required this.heroCollectible,
     required this.lineup,
+    this.taxonomyBrandId,
+    this.taxonomyIpId,
   });
 
   final String dropId;
@@ -39,6 +41,12 @@ class SeriesRelease {
   final DateTime releaseDate;
   final Collectible heroCollectible;
   final List<ReleaseLineupSlot> lineup;
+
+  /// When set, copied onto shelf rows on import (aligned with [MarketListing.taxonomyBrandId]).
+  final String? taxonomyBrandId;
+
+  /// When set, copied onto shelf rows on import (aligned with [MarketListing.taxonomyIpId]).
+  final String? taxonomyIpId;
 
   bool get hasSecretInLineup => lineup.any((s) => s.isSecret);
 }

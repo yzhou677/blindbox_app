@@ -1,6 +1,7 @@
+import 'package:blindbox_app/core/data/collectible_placeholder_art.dart';
 import 'package:blindbox_app/features/collection/data/collection_seed_data.dart';
+import 'package:blindbox_app/features/collection/data/series_release_lookup.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
-import 'package:blindbox_app/features/home/data/mock_latest_drops.dart';
 import 'package:blindbox_app/features/home/domain/series_release.dart';
 import 'package:blindbox_app/models/collectible.dart';
 import 'package:flutter/material.dart';
@@ -57,7 +58,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
   ///
   /// When [c.id] matches a Home [SeriesRelease], adds the **full lineup** as one shelf series.
   void addSeriesFromDrop(Collectible c) {
-    final fromRelease = mockSeriesReleaseByDropId(c.id);
+    final fromRelease = ref.read(seriesReleaseLookupProvider)(c.id);
     if (fromRelease != null) {
       addSeriesFromRelease(fromRelease);
       return;
@@ -106,6 +107,8 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
           imageUrl: slot.imageUrl,
           rarity: slot.isSecret ? 'Secret' : 'Regular',
           isSecret: slot.isSecret,
+          taxonomyBrandId: release.taxonomyBrandId,
+          taxonomyIpId: release.taxonomyIpId,
         ),
       );
     }
@@ -118,6 +121,8 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       shelfAccent: hero.shelfAccent ?? const Color(0xFFE8DEF5),
       notes: null,
       catalogTemplateId: catalogKey,
+      taxonomyBrandId: release.taxonomyBrandId,
+      taxonomyIpId: release.taxonomyIpId,
     );
     state = CollectionSnapshot(
       shelfSeries: [series, ...state.shelfSeries],
@@ -173,7 +178,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
           id: fid,
           seriesId: seriesId,
           name: name,
-          imageUrl: mockCollectibleArtUrl('$seriesId-$i', 'f5f5f5'),
+          imageUrl: placeholderCollectibleArtUrl('$seriesId-$i', 'f5f5f5'),
           rarity: 'Custom',
           isSecret: false,
         ),
