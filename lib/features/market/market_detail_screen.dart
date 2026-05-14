@@ -1,22 +1,30 @@
 import 'package:blindbox_app/features/home/widgets/collectible_network_image.dart';
-import 'package:blindbox_app/features/market/data/mock_market_listings.dart';
+import 'package:blindbox_app/features/market/application/market_listings_providers.dart';
 import 'package:blindbox_app/features/market/utils/market_format.dart';
 import 'package:blindbox_app/features/market/widgets/listing_market_signals.dart';
 import 'package:blindbox_app/models/market_listing.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class MarketDetailScreen extends StatelessWidget {
+class MarketDetailScreen extends ConsumerWidget {
   const MarketDetailScreen({super.key, required this.listingId});
 
   final String listingId;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final textTheme = theme.textTheme;
-    final listing = mockMarketListingById(listingId);
+    final all = ref.watch(marketBrowseListingsProvider);
+    MarketListing? listing;
+    for (final m in all) {
+      if (m.id == listingId) {
+        listing = m;
+        break;
+      }
+    }
 
     if (listing == null) {
       return Scaffold(

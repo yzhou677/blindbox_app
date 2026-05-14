@@ -1,0 +1,44 @@
+import 'package:blindbox_app/features/home/data/mock_latest_drops.dart';
+import 'package:blindbox_app/features/market/data/dto/ebay_item_summary_dto.dart';
+import 'package:blindbox_app/models/collectible.dart';
+import 'package:blindbox_app/models/market_listing.dart';
+import 'package:flutter/material.dart';
+
+extension EbayItemSummaryDtoMapper on EbayItemSummaryDto {
+  MarketListing toMarketListing() {
+    final priceUsd = double.tryParse(priceValue) ?? 0;
+    final release = DateTime.tryParse(appReleaseDateIso) ?? DateTime.utc(2026);
+    final image = imageUrl.trim().isNotEmpty
+        ? imageUrl
+        : mockCollectibleArtUrl(appImageSeed, appImageTintHex);
+    return MarketListing(
+      id: appListingId,
+      taxonomyBrandId: appTaxonomyBrandId,
+      taxonomyIpId: appTaxonomyIpId,
+      collectible: Collectible(
+        id: appListingId,
+        name: title,
+        series: appCollectibleSeries,
+        brand: appCollectibleBrand,
+        releaseDate: release,
+        imageUrl: image,
+        shelfAccent: _colorFromHex(appShelfAccentHex),
+      ),
+      currentPriceUsd: priceUsd,
+      priceChangePercent: appPriceChangePercent,
+      listingCount: appListingCount,
+      isTrending: appIsTrending,
+      watchingCount: appWatchingCount,
+      hasSecretFigure: appHasSecretFigure,
+      isHardToFind: appIsHardToFind,
+    );
+  }
+}
+
+Color _colorFromHex(String hex) {
+  var h = hex.replaceFirst('#', '');
+  if (h.length == 6) {
+    h = 'FF$h';
+  }
+  return Color(int.parse(h, radix: 16));
+}

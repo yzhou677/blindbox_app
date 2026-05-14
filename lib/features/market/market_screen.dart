@@ -1,5 +1,6 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/features/market/application/market_browse_notifier.dart';
+import 'package:blindbox_app/features/market/application/market_listings_providers.dart';
 import 'package:blindbox_app/features/market/catalog/market_listing_filters.dart';
 import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
 import 'package:blindbox_app/features/market/data/mock_market_listings.dart';
@@ -43,9 +44,9 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
     ref.read(marketBrowseNotifierProvider.notifier).clearSearchSession();
   }
 
-  List<MarketListing> _visibleListings(MarketBrowseState browse) {
+  List<MarketListing> _visibleListings(MarketBrowseState browse, List<MarketListing> all) {
     final q = browse.query.trim().toLowerCase();
-    return mockMarketListings
+    return all
         .where(
           (m) => marketListingVisible(
             m,
@@ -63,7 +64,8 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
     final textTheme = Theme.of(context).textTheme;
     final browse = ref.watch(marketBrowseNotifierProvider);
     final notifier = ref.read(marketBrowseNotifierProvider.notifier);
-    final filtered = _visibleListings(browse);
+    final allListings = ref.watch(marketBrowseListingsProvider);
+    final filtered = _visibleListings(browse, allListings);
     final sorted = marketListingsSortedByPrice(filtered, _priceSort);
     final immersive = browse.searchResultsActive;
 

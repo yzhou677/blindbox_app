@@ -37,6 +37,7 @@ dependencies:
   cached_network_image: ^3.4.1
   flutter_riverpod: ^2.6.1
   go_router: ^14.6.2
+  http: ^1.2.2
 
 dev_dependencies:
   flutter_test:
@@ -64,6 +65,7 @@ flutter:
 
   assets:
     - assets/images/app_icon.png
+    - assets/market/fake_ebay_browse_items.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

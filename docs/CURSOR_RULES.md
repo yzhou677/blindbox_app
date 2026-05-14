@@ -38,3 +38,8 @@ For MVP:
 - Avoid coupling UI to eBay response models
 - Create app-specific domain models/adapters
 - Keep mock data available for preview/testing
+- Do not add new API/transport-layer models into lib/models/.
+- New backend-related models should live inside feature-scoped data layers.
+- Keep DTOs feature-local.
+- UI should consume app-owned domain models, not raw API response models.
+- Prefer mapper layers between API DTOs and domain models.
