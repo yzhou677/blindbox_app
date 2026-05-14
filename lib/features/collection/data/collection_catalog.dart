@@ -4,146 +4,161 @@ import 'package:flutter/material.dart';
 
 /// Read-only catalog for “add to shelf” suggestions — not the shelf source of truth.
 abstract final class CollectionCatalog {
-  static const String _ipHirono = 'ip-hirono';
+  static const String _taxonomyBrandPopMart = 'pop_mart';
+
+  static const String _ipHirono = 'hirono';
   static const String _seriesHironoOther = 'series-hirono-other-one';
-  static const String _ipSkull = 'ip-skullpanda';
+  static const String _ipSkull = 'skullpanda';
   static const String _seriesSkull = 'series-skull-everyday';
-  static const String _ipLabubu = 'ip-labubu';
+  static const String _ipLabubu = 'labubu';
   static const String _seriesLabubu = 'series-labubu-mini';
-  static const String _ipDimoo = 'ip-dimoo';
+  static const String _ipDimoo = 'dimoo';
   static const String _seriesDimoo = 'series-dimoo-dino';
-  static const String _ipMolly = 'ip-molly';
+  static const String _ipMolly = 'molly';
   static const String _seriesMolly = 'series-molly-childhood';
 
-  static List<FigureDefinition> _hironoFigures(String seriesId, String ipId) => [
-        FigureDefinition(
-          id: 'fig-hirono-fox',
-          seriesId: seriesId,
-          ipId: ipId,
+  static List<CatalogFigure> _hironoFigures(String seriesTemplateId) => [
+        CatalogFigure(
+          templateFigureId: 'fig-hirono-fox',
+          catalogSeriesTemplateId: seriesTemplateId,
           name: 'The Fox',
           imageUrl: mockCollectibleArtUrl('hirono-fox-soft', 'f3e5f5'),
           rarity: 'Regular',
           isSecret: false,
+          taxonomyBrandId: _taxonomyBrandPopMart,
+          taxonomyIpId: _ipHirono,
         ),
-        FigureDefinition(
-          id: 'fig-hirono-bird',
-          seriesId: seriesId,
-          ipId: ipId,
+        CatalogFigure(
+          templateFigureId: 'fig-hirono-bird',
+          catalogSeriesTemplateId: seriesTemplateId,
           name: 'The Bird',
           imageUrl: mockCollectibleArtUrl('hirono-bird-soft', 'ede7f6'),
           rarity: 'Regular',
           isSecret: false,
+          taxonomyBrandId: _taxonomyBrandPopMart,
+          taxonomyIpId: _ipHirono,
         ),
-        FigureDefinition(
-          id: 'fig-hirono-ghost',
-          seriesId: seriesId,
-          ipId: ipId,
+        CatalogFigure(
+          templateFigureId: 'fig-hirono-ghost',
+          catalogSeriesTemplateId: seriesTemplateId,
           name: 'The Ghost',
           imageUrl: mockCollectibleArtUrl('hirono-ghost-soft', 'e8eaf6'),
           rarity: 'Secret',
           isSecret: true,
+          taxonomyBrandId: _taxonomyBrandPopMart,
+          taxonomyIpId: _ipHirono,
         ),
       ];
 
-  static List<FigureDefinition> _skullFigures(String seriesId, String ipId) => [
-        FigureDefinition(
-          id: 'fig-skull-milk',
-          seriesId: seriesId,
-          ipId: ipId,
+  static List<CatalogFigure> _skullFigures(String seriesTemplateId) => [
+        CatalogFigure(
+          templateFigureId: 'fig-skull-milk',
+          catalogSeriesTemplateId: seriesTemplateId,
           name: 'Milk Baby',
           imageUrl: mockCollectibleArtUrl('skullpanda-milk', 'fce4ec'),
           rarity: 'Regular',
           isSecret: false,
+          taxonomyBrandId: _taxonomyBrandPopMart,
+          taxonomyIpId: _ipSkull,
         ),
-        FigureDefinition(
-          id: 'fig-skull-panda',
-          seriesId: seriesId,
-          ipId: ipId,
+        CatalogFigure(
+          templateFigureId: 'fig-skull-panda',
+          catalogSeriesTemplateId: seriesTemplateId,
           name: 'Pink Panda',
           imageUrl: mockCollectibleArtUrl('skullpanda-pink', 'f8e7f0'),
           rarity: 'Regular',
           isSecret: false,
+          taxonomyBrandId: _taxonomyBrandPopMart,
+          taxonomyIpId: _ipSkull,
         ),
-        FigureDefinition(
-          id: 'fig-skull-chase',
-          seriesId: seriesId,
-          ipId: ipId,
+        CatalogFigure(
+          templateFigureId: 'fig-skull-chase',
+          catalogSeriesTemplateId: seriesTemplateId,
           name: 'Midnight Visitor',
           imageUrl: mockCollectibleArtUrl('skullpanda-chase', 'e1bee7'),
           rarity: 'Chase',
           isSecret: true,
+          taxonomyBrandId: _taxonomyBrandPopMart,
+          taxonomyIpId: _ipSkull,
         ),
       ];
 
-  static List<FigureDefinition> _labubuFigures(String seriesId, String ipId) => [
-        FigureDefinition(
-          id: 'fig-labubu-vinyl',
-          seriesId: seriesId,
-          ipId: ipId,
+  static List<CatalogFigure> _labubuFigures(String seriesTemplateId) => [
+        CatalogFigure(
+          templateFigureId: 'fig-labubu-vinyl',
+          catalogSeriesTemplateId: seriesTemplateId,
           name: 'Exciting Macaron',
           imageUrl: mockCollectibleArtUrl('labubu-macaron', 'e8f5e9'),
           rarity: 'Regular',
           isSecret: false,
+          taxonomyBrandId: _taxonomyBrandPopMart,
+          taxonomyIpId: _ipLabubu,
         ),
-        FigureDefinition(
-          id: 'fig-labubu-heart',
-          seriesId: seriesId,
-          ipId: ipId,
+        CatalogFigure(
+          templateFigureId: 'fig-labubu-heart',
+          catalogSeriesTemplateId: seriesTemplateId,
           name: 'Heart Robber',
           imageUrl: mockCollectibleArtUrl('labubu-heart', 'fff9c4'),
           rarity: 'Regular',
           isSecret: false,
+          taxonomyBrandId: _taxonomyBrandPopMart,
+          taxonomyIpId: _ipLabubu,
         ),
-        FigureDefinition(
-          id: 'fig-labubu-hidden',
-          seriesId: seriesId,
-          ipId: ipId,
+        CatalogFigure(
+          templateFigureId: 'fig-labubu-hidden',
+          catalogSeriesTemplateId: seriesTemplateId,
           name: 'Zimomo Guest',
           imageUrl: mockCollectibleArtUrl('labubu-zimomo', 'dcedc8'),
           rarity: 'Secret',
           isSecret: true,
+          taxonomyBrandId: _taxonomyBrandPopMart,
+          taxonomyIpId: _ipLabubu,
         ),
       ];
 
-  static List<FigureDefinition> _dimooFigures(String seriesId, String ipId) => [
-        FigureDefinition(
-          id: 'fig-dimoo-rex',
-          seriesId: seriesId,
-          ipId: ipId,
+  static List<CatalogFigure> _dimooFigures(String seriesTemplateId) => [
+        CatalogFigure(
+          templateFigureId: 'fig-dimoo-rex',
+          catalogSeriesTemplateId: seriesTemplateId,
           name: 'Baby Rex',
           imageUrl: mockCollectibleArtUrl('dimoo-rex', 'e3f2fd'),
           rarity: 'Regular',
           isSecret: false,
+          taxonomyBrandId: _taxonomyBrandPopMart,
+          taxonomyIpId: null,
         ),
-        FigureDefinition(
-          id: 'fig-dimoo-egg',
-          seriesId: seriesId,
-          ipId: ipId,
+        CatalogFigure(
+          templateFigureId: 'fig-dimoo-egg',
+          catalogSeriesTemplateId: seriesTemplateId,
           name: 'Egg Explorer',
           imageUrl: mockCollectibleArtUrl('dimoo-egg', 'fff3e0'),
           rarity: 'Regular',
           isSecret: false,
+          taxonomyBrandId: _taxonomyBrandPopMart,
+          taxonomyIpId: null,
         ),
       ];
 
-  static List<FigureDefinition> _mollyFigures(String seriesId, String ipId) => [
-        FigureDefinition(
-          id: 'fig-molly-painter',
-          seriesId: seriesId,
-          ipId: ipId,
+  static List<CatalogFigure> _mollyFigures(String seriesTemplateId) => [
+        CatalogFigure(
+          templateFigureId: 'fig-molly-painter',
+          catalogSeriesTemplateId: seriesTemplateId,
           name: 'Little Painter',
           imageUrl: mockCollectibleArtUrl('molly-painter', 'fff8e1'),
           rarity: 'Regular',
           isSecret: false,
+          taxonomyBrandId: _taxonomyBrandPopMart,
+          taxonomyIpId: null,
         ),
-        FigureDefinition(
-          id: 'fig-molly-astronaut',
-          seriesId: seriesId,
-          ipId: ipId,
+        CatalogFigure(
+          templateFigureId: 'fig-molly-astronaut',
+          catalogSeriesTemplateId: seriesTemplateId,
           name: 'Tiny Astronaut',
           imageUrl: mockCollectibleArtUrl('molly-astro', 'e1f5fe'),
           rarity: 'Regular',
           isSecret: false,
+          taxonomyBrandId: _taxonomyBrandPopMart,
+          taxonomyIpId: null,
         ),
       ];
 
@@ -153,122 +168,124 @@ abstract final class CollectionCatalog {
       IPDefinition(
         id: _ipHirono,
         name: 'Hirono',
-        series: [
-          SeriesDefinition(
-            id: _seriesHironoOther,
+        catalogSeries: [
+          CatalogSeries(
+            templateId: _seriesHironoOther,
             name: 'The Other One',
             brand: 'POP MART',
             ipName: 'Hirono',
             shelfAccent: const Color(0xFFF2E8DC),
-            figures: _hironoFigures(_seriesHironoOther, _ipHirono),
-            catalogTemplateId: _seriesHironoOther,
+            figures: _hironoFigures(_seriesHironoOther),
+            taxonomyBrandId: _taxonomyBrandPopMart,
+            taxonomyIpId: _ipHirono,
           ),
         ],
       ),
       IPDefinition(
         id: _ipSkull,
         name: 'Skullpanda',
-        series: [
-          SeriesDefinition(
-            id: _seriesSkull,
+        catalogSeries: [
+          CatalogSeries(
+            templateId: _seriesSkull,
             name: 'Everyday Wonderland',
             brand: 'POP MART',
             ipName: 'Skullpanda',
             shelfAccent: const Color(0xFFE8E4F8),
-            figures: _skullFigures(_seriesSkull, _ipSkull),
-            catalogTemplateId: _seriesSkull,
+            figures: _skullFigures(_seriesSkull),
+            taxonomyBrandId: _taxonomyBrandPopMart,
+            taxonomyIpId: _ipSkull,
           ),
         ],
       ),
       IPDefinition(
         id: _ipLabubu,
         name: 'The Monsters',
-        series: [
-          SeriesDefinition(
-            id: _seriesLabubu,
+        catalogSeries: [
+          CatalogSeries(
+            templateId: _seriesLabubu,
             name: 'Labubu Exciting Macaron',
             brand: 'POP MART',
             ipName: 'The Monsters',
             shelfAccent: const Color(0xFFE4F2EA),
-            figures: _labubuFigures(_seriesLabubu, _ipLabubu),
-            catalogTemplateId: _seriesLabubu,
+            figures: _labubuFigures(_seriesLabubu),
+            taxonomyBrandId: _taxonomyBrandPopMart,
+            taxonomyIpId: _ipLabubu,
           ),
         ],
       ),
       IPDefinition(
         id: _ipDimoo,
         name: 'Dimoo',
-        series: [
-          SeriesDefinition(
-            id: _seriesDimoo,
+        catalogSeries: [
+          CatalogSeries(
+            templateId: _seriesDimoo,
             name: 'Jurassic World',
             brand: 'POP MART',
             ipName: 'Dimoo',
             shelfAccent: const Color(0xFFE4EDFA),
-            figures: _dimooFigures(_seriesDimoo, _ipDimoo),
-            catalogTemplateId: _seriesDimoo,
+            figures: _dimooFigures(_seriesDimoo),
+            taxonomyBrandId: _taxonomyBrandPopMart,
+            taxonomyIpId: null,
           ),
         ],
       ),
       IPDefinition(
         id: _ipMolly,
         name: 'Molly',
-        series: [
-          SeriesDefinition(
-            id: _seriesMolly,
+        catalogSeries: [
+          CatalogSeries(
+            templateId: _seriesMolly,
             name: 'My Childhood',
             brand: 'POP MART',
             ipName: 'Molly',
             shelfAccent: const Color(0xFFFFF3E0),
-            figures: _mollyFigures(_seriesMolly, _ipMolly),
-            catalogTemplateId: _seriesMolly,
+            figures: _mollyFigures(_seriesMolly),
+            taxonomyBrandId: _taxonomyBrandPopMart,
+            taxonomyIpId: null,
           ),
         ],
       ),
     ];
   }
 
-  static Iterable<SeriesDefinition> _flattenIps(List<IPDefinition> ips) sync* {
+  static Iterable<CatalogSeries> _flattenIps(List<IPDefinition> ips) sync* {
     for (final ip in ips) {
-      for (final s in ip.series) {
+      for (final s in ip.catalogSeries) {
         yield s;
       }
     }
   }
 
   /// Series templates the user does not already have on shelf (for add UI).
-  static List<SeriesDefinition> suggestedSeries(CollectionSnapshot snap) {
+  static List<CatalogSeries> suggestedSeries(CollectionSnapshot snap) {
     return _flattenIps(allTemplateIps())
-        .where((t) => !snap.hasTemplateOnShelf(t.catalogTemplateId ?? t.id))
+        .where((t) => !snap.hasTemplateOnShelf(t.templateId))
         .toList(growable: false);
   }
 
   /// Default demo shelf: user series first, then catalog-backed series (same ids as catalog for progress keys).
-  static List<SeriesDefinition> defaultShelfSeries() {
+  static List<ShelfSeries> defaultShelfSeries() {
     const customSpring = 'custom-spring-picnic';
     final customFigures = [
-      FigureDefinition(
+      ShelfFigure(
         id: 'fig-custom-spring-1',
         seriesId: customSpring,
-        ipId: customSpring,
         name: 'Berry Bunny',
         imageUrl: mockCollectibleArtUrl('custom-berry', 'fce4ec'),
         rarity: 'Custom',
         isSecret: false,
       ),
-      FigureDefinition(
+      ShelfFigure(
         id: 'fig-custom-spring-2',
         seriesId: customSpring,
-        ipId: customSpring,
         name: 'Tea Cup Mouse',
         imageUrl: mockCollectibleArtUrl('custom-tea', 'e0f7fa'),
         rarity: 'Custom',
         isSecret: false,
       ),
-      FigureDefinition(
+      ShelfFigure(
         id: 'fig-custom-spring-3',
         seriesId: customSpring,
-        ipId: customSpring,
         name: 'Rainbow Snail',
         imageUrl: mockCollectibleArtUrl('custom-snail', 'f3e5f5'),
         rarity: 'Custom',
@@ -276,7 +293,7 @@ abstract final class CollectionCatalog {
       ),
     ];
 
-    final custom = SeriesDefinition(
+    final custom = ShelfSeries(
       id: customSpring,
       name: 'Spring Picnic customs',
       brand: 'Independent',
@@ -289,19 +306,8 @@ abstract final class CollectionCatalog {
 
     final catalog = allTemplateIps();
     final official = _flattenIps(catalog)
-        .where((s) => s.id != _seriesMolly)
-        .map(
-          (s) => SeriesDefinition(
-            id: s.id,
-            name: s.name,
-            brand: s.brand,
-            ipName: s.ipName,
-            figures: s.figures,
-            shelfAccent: s.shelfAccent,
-            notes: s.notes,
-            catalogTemplateId: s.catalogTemplateId ?? s.id,
-          ),
-        )
+        .where((s) => s.templateId != _seriesMolly)
+        .map(shelfSeriesMirrorCatalogTemplate)
         .toList(growable: false);
 
     return [custom, ...official];

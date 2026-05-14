@@ -19,7 +19,7 @@ class SeriesShelfCard extends StatefulWidget {
     this.onRemove,
   });
 
-  final SeriesDefinition series;
+  final ShelfSeries series;
   final SeriesProgressCounts progress;
   final Map<String, TrackedFigure> figureStates;
   final VoidCallback onOpen;
@@ -140,7 +140,7 @@ class _SeriesMatShell extends StatelessWidget {
     this.trailing,
   });
 
-  final SeriesDefinition series;
+  final ShelfSeries series;
   final Color accent;
   final VoidCallback onTap;
   final Widget child;
@@ -217,7 +217,7 @@ class _SeriesMatContent extends StatelessWidget {
   final int totalFigures;
   final SeriesProgressCounts progress;
   final Map<String, TrackedFigure> figureStates;
-  final SeriesDefinition series;
+  final ShelfSeries series;
 
   @override
   Widget build(BuildContext context) {

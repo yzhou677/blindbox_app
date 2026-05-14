@@ -21,11 +21,11 @@ abstract final class FeedRhythm {
   /// Space from section header block (including hairline) to horizontal rails / lists.
   static const double sectionHeaderToRail = 14;
 
-  /// Extra air between Market Trending rail and the Browse listings header (no hairline).
-  static const double marketTrendingToBrowseHeaderGap = 24;
+  /// Space between Market Trending block and Browse listings header.
+  static const double marketTrendingToBrowseHeaderGap = 16;
 
-  /// Bottom closure after the Trending horizontal rail (section block end).
-  static const double marketTrendingRailBottomClosure = 34;
+  /// Bottom closure after the Trending horizontal rail (before [marketTrendingToBrowseHeaderGap]).
+  static const double marketTrendingRailBottomClosure = 22;
 
   /// Space below the Browse listings section title before the first feed row.
   static const double marketBrowseHeaderToFeedGap = 18;

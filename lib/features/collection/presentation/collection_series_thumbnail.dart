@@ -13,7 +13,7 @@ class CollectionSeriesThumbnail extends StatelessWidget {
     this.extent,
   });
 
-  final SeriesDefinition series;
+  final ShelfSeries series;
   final double? extent;
 
   @override

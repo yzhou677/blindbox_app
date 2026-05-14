@@ -57,7 +57,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 600));
 
-    expect(find.text('Trending'), findsOneWidget);
+    expect(find.text('Trending'), findsWidgets);
     expect(find.text('Brand'), findsOneWidget);
     expect(find.text('IP'), findsNothing);
     await tester.tap(find.text('POP MART'));

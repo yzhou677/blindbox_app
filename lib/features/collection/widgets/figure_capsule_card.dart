@@ -12,7 +12,7 @@ class FigureCapsuleCard extends StatefulWidget {
     required this.onTap,
   });
 
-  final FigureDefinition figure;
+  final ShelfFigure figure;
   final TrackedFigure tracked;
   final VoidCallback onTap;
 
@@ -313,7 +313,7 @@ class _ArtWindow extends StatelessWidget {
 
   final bool missing;
   final ColorScheme scheme;
-  final FigureDefinition figure;
+  final ShelfFigure figure;
   final AnimationController? sheen;
 
   @override
@@ -484,7 +484,7 @@ class _DashedSlotBorderPainter extends CustomPainter {
 class _FigureThumb extends StatelessWidget {
   const _FigureThumb({required this.figure, required this.scheme});
 
-  final FigureDefinition figure;
+  final ShelfFigure figure;
   final ColorScheme scheme;
 
   @override

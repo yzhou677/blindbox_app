@@ -6,7 +6,7 @@ import 'package:blindbox_app/features/collection/widgets/figure_capsule_card.dar
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-SeriesDefinition? _findSeries(CollectionSnapshot snap, String seriesId) {
+ShelfSeries? _findSeries(CollectionSnapshot snap, String seriesId) {
   for (final s in snap.shelfSeries) {
     if (s.id == seriesId) return s;
   }

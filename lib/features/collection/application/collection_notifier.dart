@@ -45,7 +45,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
     return false;
   }
 
-  SeriesDefinition? _findSeries(String seriesId) {
+  ShelfSeries? _findSeries(String seriesId) {
     for (final s in state.shelfSeries) {
       if (s.id == seriesId) return s;
     }
@@ -59,16 +59,15 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
     if (state.hasTemplateOnShelf(catalogKey)) return;
     final seriesId = 'shelf-$catalogKey-${DateTime.now().microsecondsSinceEpoch}';
     final fid = '$seriesId-fig-0';
-    final figure = FigureDefinition(
+    final figure = ShelfFigure(
       id: fid,
       seriesId: seriesId,
-      ipId: seriesId,
       name: c.name,
       imageUrl: c.imageUrl,
       rarity: 'Regular',
       isSecret: false,
     );
-    final series = SeriesDefinition(
+    final series = ShelfSeries(
       id: seriesId,
       name: c.series,
       brand: c.brand,
@@ -84,11 +83,11 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
     );
   }
 
-  void addSeriesFromTemplate(SeriesDefinition template) {
-    final catalogKey = template.catalogTemplateId ?? template.id;
+  void addSeriesFromTemplate(CatalogSeries template) {
+    final catalogKey = template.templateId;
     if (state.hasTemplateOnShelf(catalogKey)) return;
     final newSeriesId = 'shelf-$catalogKey-${DateTime.now().microsecondsSinceEpoch}';
-    final cloned = cloneSeriesOntoShelf(
+    final cloned = cloneCatalogSeriesOntoShelf(
       template,
       newSeriesId,
       catalogTemplateKey: catalogKey,
@@ -121,17 +120,16 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
     final ipLine = (ipDisplayName?.trim().isEmpty ?? true)
         ? seriesName.trim()
         : ipDisplayName!.trim();
-    final figures = <FigureDefinition>[];
+    final figures = <ShelfFigure>[];
     var i = 0;
     for (final raw in figureNames) {
       final name = raw.trim();
       if (name.isEmpty) continue;
       final fid = '$seriesId-f-$i';
       figures.add(
-        FigureDefinition(
+        ShelfFigure(
           id: fid,
           seriesId: seriesId,
-          ipId: seriesId,
           name: name,
           imageUrl: mockCollectibleArtUrl('$seriesId-$i', 'f5f5f5'),
           rarity: 'Custom',
@@ -142,7 +140,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
     }
     if (figures.isEmpty) return;
     final trimmedNotes = notes?.trim();
-    final series = SeriesDefinition(
+    final series = ShelfSeries(
       id: seriesId,
       name: seriesName.trim(),
       brand: brandLine,

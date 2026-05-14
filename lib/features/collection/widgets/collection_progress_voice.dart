@@ -4,7 +4,7 @@ import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 abstract final class CollectionProgressVoice {
   /// Primary emotional headline for a series row (replaces raw tallies as the hero read).
   static String seriesHeadline({
-    required SeriesDefinition series,
+    required ShelfSeries series,
     required SeriesProgressCounts progress,
     required Map<String, TrackedFigure> figureStates,
   }) {
@@ -47,7 +47,7 @@ abstract final class CollectionProgressVoice {
 
   /// Softer supporting copy — light facts, calm tone.
   static String seriesSubline({
-    required SeriesDefinition series,
+    required ShelfSeries series,
     required SeriesProgressCounts progress,
     required Map<String, TrackedFigure> figureStates,
   }) {

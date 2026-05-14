@@ -1,6 +1,7 @@
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/data/collection_catalog.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/presentation/add_series_catalog_copy.dart';
 import 'package:blindbox_app/features/collection/widgets/collectible_figure_placeholder.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -32,7 +33,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     super.dispose();
   }
 
-  List<SeriesDefinition> _filtered(List<SeriesDefinition> suggestions) {
+  List<CatalogSeries> _filtered(List<CatalogSeries> suggestions) {
     if (_query.isEmpty) return suggestions;
     return suggestions.where((s) {
       final hay = '${s.name} ${s.ipName} ${s.brand}'.toLowerCase();
@@ -84,7 +85,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Search suggestions from the catalog — they’re just shortcuts; your shelf stays yours.',
+              AddSeriesCatalogCopy.sheetSubtitle,
               style: textTheme.bodySmall?.copyWith(
                 color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
                 height: 1.38,
@@ -129,24 +130,13 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
             if (suggestions.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
-                  children: [
-                    Text(
-                      'Suggestions',
-                      style: textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.2,
-                        color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${filtered.length}/${suggestions.length}',
-                      style: textTheme.labelMedium?.copyWith(
-                        color: scheme.onSurfaceVariant.withValues(alpha: 0.65),
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  AddSeriesCatalogCopy.catalogListHeading(searchActive: _query.isNotEmpty),
+                  style: textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.12,
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
+                  ),
                 ),
               ),
             Expanded(
@@ -167,7 +157,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
                   : filtered.isEmpty
                       ? Center(
                           child: Text(
-                            'No matches — try another word.',
+                            AddSeriesCatalogCopy.noSearchMatches,
                             style: textTheme.bodyMedium?.copyWith(
                               color: scheme.onSurfaceVariant.withValues(alpha: 0.8),
                             ),
@@ -215,7 +205,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
 class _SuggestionCard extends StatelessWidget {
   const _SuggestionCard({required this.series, required this.onAdd});
 
-  final SeriesDefinition series;
+  final CatalogSeries series;
   final VoidCallback onAdd;
 
   @override
@@ -345,7 +335,7 @@ class _SuggestionCard extends StatelessWidget {
 class _MiniFigurePreview extends StatelessWidget {
   const _MiniFigurePreview({required this.figure});
 
-  final FigureDefinition figure;
+  final CatalogFigure figure;
 
   @override
   Widget build(BuildContext context) {
@@ -356,7 +346,7 @@ class _MiniFigurePreview extends StatelessWidget {
         fadeInDuration: const Duration(milliseconds: 180),
         errorWidget: (context, url, error) => CollectibleFigurePlaceholder(
           name: figure.name,
-          seedKey: figure.id,
+          seedKey: figure.templateFigureId,
           isSecret: figure.isSecret,
           compact: true,
         ),
@@ -364,7 +354,7 @@ class _MiniFigurePreview extends StatelessWidget {
     }
     return CollectibleFigurePlaceholder(
       name: figure.name,
-      seedKey: figure.id,
+      seedKey: figure.templateFigureId,
       isSecret: figure.isSecret,
       compact: true,
     );
