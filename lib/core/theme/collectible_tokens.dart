@@ -53,12 +53,12 @@ class CollectibleTokens extends ThemeExtension<CollectibleTokens> {
       supportiveBodyAlpha: isLight ? 0.68 : 0.72,
       supportiveMetaAlpha: isLight ? 0.5 : 0.58,
       supportiveBodyHeight: 1.5,
-      shellShadowLightAlpha: isLight ? 0.16 : 0.4,
-      shellShadowDarkAlpha: isLight ? 0.14 : 0.42,
-      shellShadowAccentMix: 0.12,
-      shellShadowBlur: 24,
-      shellShadowDy: 12,
-      shellShadowSpread: -5,
+      shellShadowLightAlpha: isLight ? 0.12 : 0.24,
+      shellShadowDarkAlpha: isLight ? 0.1 : 0.24,
+      shellShadowAccentMix: isLight ? 0.11 : 0.16,
+      shellShadowBlur: isLight ? 32 : 36,
+      shellShadowDy: isLight ? 11 : 10,
+      shellShadowSpread: -4,
     );
   }
 

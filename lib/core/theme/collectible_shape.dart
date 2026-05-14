@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 /// Shared rounded geometry — packaging / shelf mats (keep in sync with [AppTheme] card & chips).
 abstract final class CollectibleShape {
   /// Outer product shells (drop cards, listing tiles, shelf rows).
-  static const double shell = 26;
+  static const double shell = 28;
 
   /// Mats, sheets, image wells.
   static const double mat = 18;

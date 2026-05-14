@@ -5,33 +5,58 @@ import 'collectible_tokens.dart';
 
 /// Pastel, cozy Material 3 — designer toy shelf / blind-box companion (not generic MD).
 abstract final class AppTheme {
-  /// Lavender–lilac seed; secondary accents nudge peach & cream in [_tunedScheme].
-  static const Color _seed = Color(0xFFB8A0D4);
+  /// Deeper lavender seed — premium packaging / soft cyber-y2k without neon.
+  static const Color _seed = Color(0xFFA892CC);
 
   static ColorScheme _tunedScheme(ColorScheme base, Brightness brightness) {
-    final isLight = brightness == Brightness.light;
+    if (brightness == Brightness.light) {
+      return base.copyWith(
+        // Candy-wisteria primary — packaging jelly, still office-readable.
+        primary: const Color(0xFF6652A5),
+        onPrimary: const Color(0xFFFFFBFE),
+        primaryContainer: const Color(0xFFE4D6F8),
+        onPrimaryContainer: const Color(0xFF2A1F3D),
+        secondary: const Color(0xFFE59878),
+        onSecondary: const Color(0xFF3D291F),
+        secondaryContainer: const Color(0xFFFFF0E8),
+        onSecondaryContainer: const Color(0xFF4A3028),
+        tertiary: const Color(0xFFB49AE0),
+        onTertiary: const Color(0xFF2A2438),
+        tertiaryContainer: const Color(0xFFF0E9FA),
+        onTertiaryContainer: const Color(0xFF38304A),
+        // Airy shelf — card [surface] and floor stay close for soft hierarchy.
+        surface: const Color(0xFFFFFAFC),
+        surfaceContainerLow: const Color(0xFFF5F0FA),
+        surfaceContainer: const Color(0xFFEBE4F3),
+        surfaceContainerHigh: const Color(0xFFE0D7EE),
+        outlineVariant: const Color(0xFFC8B8D8),
+        shadow: Color.lerp(base.shadow, const Color(0xFF6B5A8A), 0.35)!,
+      );
+    }
+    // Dark: plum–blackberry charcoal (never AMOLED void); purple reads candy-lit.
     return base.copyWith(
-      // Signature lavender — slightly punchier for visual-first collectors (still premium).
-      primary: isLight ? const Color(0xFF5F4A7A) : const Color(0xFFDECAEF),
-      onPrimary: isLight ? const Color(0xFFFFFBFA) : const Color(0xFF1C1524),
-      primaryContainer: isLight ? const Color(0xFFD9CEEB) : const Color(0xFF4A3D62),
-      onPrimaryContainer: isLight ? const Color(0xFF2A2134) : const Color(0xFFF0E8FA),
-      // Creamy peach — warmth & shelf nostalgia (secondary to lavender).
-      secondary: isLight ? const Color(0xFFE7A088) : const Color(0xFFFFCAB0),
-      onSecondary: isLight ? const Color(0xFF3D291F) : const Color(0xFF3D2418),
-      secondaryContainer: isLight ? const Color(0xFFFFF0E8) : const Color(0xFF4A3428),
-      onSecondaryContainer: isLight ? const Color(0xFF4A3028) : const Color(0xFFFFE1D4),
-      // Lilac highlights — companions to primary for depth & completion sparkle.
-      tertiary: isLight ? const Color(0xFFB39FD4) : const Color(0xFFC4B2E0),
-      onTertiary: isLight ? const Color(0xFF2A2438) : const Color(0xFF1E1828),
-      tertiaryContainer: isLight ? const Color(0xFFF2EDFA) : const Color(0xFF3F384F),
-      onTertiaryContainer: isLight ? const Color(0xFF3A3248) : const Color(0xFFE8E0F4),
-      // Warm shelf neutrals — stronger floor vs cards (less “blank white”).
-      surface: isLight ? const Color(0xFFFFF6F4) : base.surface,
-      surfaceContainerLow: isLight ? const Color(0xFFF4EDF2) : base.surfaceContainerLow,
-      surfaceContainer: isLight ? const Color(0xFFEAE4F0) : base.surfaceContainer,
-      surfaceContainerHigh: isLight ? const Color(0xFFE3DBEC) : base.surfaceContainerHigh,
-      outlineVariant: isLight ? const Color(0xFFCFC3D8) : base.outlineVariant,
+      primary: const Color(0xFFDCC2FC),
+      onPrimary: const Color(0xFF261C34),
+      primaryContainer: const Color(0xFF54446F),
+      onPrimaryContainer: const Color(0xFFEEE6FB),
+      secondary: const Color(0xFFFFCDB5),
+      onSecondary: const Color(0xFF301F18),
+      secondaryContainer: const Color(0xFF5A4034),
+      onSecondaryContainer: const Color(0xFFFFE2D6),
+      tertiary: const Color(0xFFCDB8EC),
+      onTertiary: const Color(0xFF1E1828),
+      tertiaryContainer: const Color(0xFF453D58),
+      onTertiaryContainer: const Color(0xFFEAE2FA),
+      surface: const Color(0xFF2F293C),
+      surfaceContainerLow: const Color(0xFF252030),
+      surfaceContainer: const Color(0xFF322B3E),
+      surfaceContainerHigh: const Color(0xFF3B3348),
+      onSurface: const Color(0xFFF2EAF9),
+      onSurfaceVariant: const Color(0xFFC9BDD6),
+      outline: const Color(0xFF9488A8),
+      outlineVariant: const Color(0xFF534A64),
+      shadow: const Color(0xFF181224),
+      scrim: const Color(0xFF120C18),
     );
   }
 
@@ -45,8 +70,8 @@ abstract final class AppTheme {
     return _base(colorScheme, Brightness.light).copyWith(
       scaffoldBackgroundColor: Color.lerp(
         colorScheme.surfaceContainerLow,
-        const Color(0xFFFFF0EB),
-        0.55,
+        colorScheme.surface,
+        0.42,
       ),
     );
   }
@@ -58,7 +83,13 @@ abstract final class AppTheme {
       dynamicSchemeVariant: DynamicSchemeVariant.fidelity,
     );
     final colorScheme = _tunedScheme(raw, Brightness.dark);
-    return _base(colorScheme, Brightness.dark);
+    return _base(colorScheme, Brightness.dark).copyWith(
+      scaffoldBackgroundColor: Color.lerp(
+        colorScheme.surfaceContainerLow,
+        colorScheme.primaryContainer,
+        0.06,
+      ),
+    );
   }
 
   static ThemeData _base(ColorScheme colorScheme, Brightness brightness) {
@@ -129,14 +160,14 @@ abstract final class AppTheme {
         ),
       ),
       splashFactory: InkRipple.splashFactory,
-      highlightColor: colorScheme.primary.withValues(alpha: 0.06),
+      highlightColor: colorScheme.primary.withValues(alpha: isLight ? 0.07 : 0.055),
       appBarTheme: AppBarTheme(
         centerTitle: false,
         scrolledUnderElevation: 0,
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
         elevation: 0,
-        surfaceTintColor: colorScheme.primary.withValues(alpha: isLight ? 0.12 : 0.16),
+        surfaceTintColor: colorScheme.primary.withValues(alpha: isLight ? 0.1 : 0.12),
         titleTextStyle: t.titleLarge?.copyWith(
           fontWeight: FontWeight.w600,
           letterSpacing: -0.24,
@@ -146,12 +177,12 @@ abstract final class AppTheme {
         elevation: 0,
         height: 64,
         backgroundColor: Colors.transparent,
-        surfaceTintColor: colorScheme.primary.withValues(alpha: isLight ? 0.1 : 0.14),
+        surfaceTintColor: colorScheme.primary.withValues(alpha: isLight ? 0.1 : 0.11),
         indicatorColor: Color.lerp(
           colorScheme.primaryContainer,
           colorScheme.primary,
-          isLight ? 0.26 : 0.32,
-        )!.withValues(alpha: isLight ? 0.68 : 0.52),
+          isLight ? 0.34 : 0.3,
+        )!.withValues(alpha: isLight ? 0.78 : 0.48),
         indicatorShape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
         ),
@@ -183,12 +214,20 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.circular(CollectibleShape.mat),
         ),
         side: BorderSide(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.35),
+          color: Color.lerp(
+            colorScheme.outlineVariant,
+            colorScheme.primary,
+            isLight ? 0.1 : 0.14,
+          )!.withValues(alpha: isLight ? 0.42 : 0.35),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
         elevation: 0,
         pressElevation: 0,
-        selectedColor: colorScheme.primaryContainer.withValues(alpha: isLight ? 0.95 : 0.62),
+        selectedColor: Color.lerp(
+          colorScheme.primaryContainer,
+          colorScheme.tertiaryContainer,
+          isLight ? 0.12 : 0.08,
+        )!.withValues(alpha: isLight ? 0.98 : 0.62),
         checkmarkColor: colorScheme.primary,
         labelStyle: t.labelSmall?.copyWith(
           fontWeight: FontWeight.w600,
@@ -196,9 +235,13 @@ abstract final class AppTheme {
         ),
       ),
       cardTheme: CardThemeData(
-        elevation: 2,
-        shadowColor: colorScheme.shadow.withValues(alpha: isLight ? 0.14 : 0.4),
-        surfaceTintColor: colorScheme.primary.withValues(alpha: isLight ? 0.08 : 0.14),
+        elevation: isLight ? 2 : 1,
+        shadowColor: Color.lerp(
+          colorScheme.shadow,
+          colorScheme.primary,
+          isLight ? 0.12 : 0.14,
+        )!.withValues(alpha: isLight ? 0.11 : 0.22),
+        surfaceTintColor: colorScheme.primary.withValues(alpha: isLight ? 0.085 : 0.1),
         color: colorScheme.surface,
         shape: RoundedRectangleBorder(
           borderRadius: CollectibleShape.shellRadius,
@@ -206,8 +249,8 @@ abstract final class AppTheme {
             color: Color.lerp(
               colorScheme.outlineVariant,
               colorScheme.primary,
-              isLight ? 0.14 : 0.18,
-            )!.withValues(alpha: isLight ? 0.55 : 0.48),
+              isLight ? 0.14 : 0.2,
+            )!.withValues(alpha: isLight ? 0.45 : 0.38),
           ),
         ),
         margin: EdgeInsets.zero,
@@ -215,7 +258,7 @@ abstract final class AppTheme {
       dialogTheme: DialogThemeData(
         elevation: 0,
         backgroundColor: colorScheme.surfaceContainerHigh,
-        surfaceTintColor: colorScheme.surfaceTint.withValues(alpha: 0.2),
+        surfaceTintColor: colorScheme.surfaceTint.withValues(alpha: isLight ? 0.2 : 0.16),
         shape: RoundedRectangleBorder(
           borderRadius: CollectibleShape.shellRadius,
         ),
@@ -223,7 +266,7 @@ abstract final class AppTheme {
       bottomSheetTheme: BottomSheetThemeData(
         elevation: 0,
         backgroundColor: colorScheme.surface,
-        surfaceTintColor: colorScheme.surfaceTint.withValues(alpha: 0.25),
+        surfaceTintColor: colorScheme.surfaceTint.withValues(alpha: isLight ? 0.22 : 0.18),
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
         ),
@@ -231,7 +274,7 @@ abstract final class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: isLight ? 0.55 : 0.42),
+        fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: isLight ? 0.5 : 0.38),
         border: OutlineInputBorder(
           borderRadius: CollectibleShape.fieldRadius,
           borderSide: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.4)),
@@ -242,13 +285,18 @@ abstract final class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: CollectibleShape.fieldRadius,
-          borderSide: BorderSide(color: colorScheme.primary.withValues(alpha: 0.45), width: 1.4),
+          borderSide: BorderSide(color: colorScheme.primary.withValues(alpha: 0.44), width: 1.35),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          elevation: 0,
+          elevation: isLight ? 1 : 0,
+          shadowColor: isLight
+              ? Color.lerp(colorScheme.shadow, colorScheme.primary, 0.14)!
+                  .withValues(alpha: 0.14)
+              : Color.lerp(colorScheme.shadow, colorScheme.primary, 0.2)!
+                  .withValues(alpha: 0.2),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(CollectibleShape.mat),

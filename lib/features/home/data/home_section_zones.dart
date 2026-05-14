@@ -10,8 +10,8 @@ abstract final class HomeSectionZones {
       scheme.primaryContainer,
       scheme.secondaryContainer,
       isLight ? 0.42 : 0.28,
-    )!.withValues(alpha: isLight ? 0.72 : 0.5);
-    return Color.lerp(scheme.surface, wash, isLight ? 0.82 : 0.68)!;
+    )!.withValues(alpha: isLight ? 0.48 : 0.36);
+    return Color.lerp(scheme.surface, wash, isLight ? 0.38 : 0.36)!;
   }
 
   /// Cool mint–lilac wash behind Trending series.
@@ -21,7 +21,7 @@ abstract final class HomeSectionZones {
       scheme.tertiaryContainer,
       scheme.secondaryContainer,
       isLight ? 0.32 : 0.22,
-    )!.withValues(alpha: isLight ? 0.78 : 0.55);
-    return Color.lerp(scheme.surface, wash, isLight ? 0.84 : 0.7)!;
+    )!.withValues(alpha: isLight ? 0.5 : 0.38);
+    return Color.lerp(scheme.surface, wash, isLight ? 0.36 : 0.34)!;
   }
 }

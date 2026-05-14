@@ -36,11 +36,15 @@ class MainShellScaffold extends StatelessWidget {
         color: Color.lerp(
           scheme.surfaceContainerLow,
           scheme.primaryContainer,
-          isLight ? 0.12 : 0.08,
+          isLight ? 0.14 : 0.11,
         ),
-        elevation: isLight ? 6 : 10,
-        shadowColor: scheme.shadow.withValues(alpha: isLight ? 0.12 : 0.35),
-        surfaceTintColor: scheme.primary.withValues(alpha: isLight ? 0.06 : 0.1),
+        elevation: isLight ? 5 : 7,
+        shadowColor: Color.lerp(
+          scheme.shadow,
+          scheme.primary,
+          isLight ? 0.06 : 0.12,
+        )!.withValues(alpha: isLight ? 0.11 : 0.22),
+        surfaceTintColor: scheme.primary.withValues(alpha: isLight ? 0.07 : 0.09),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -50,8 +54,8 @@ class MainShellScaffold extends StatelessWidget {
               color: Color.lerp(
                 scheme.outlineVariant,
                 scheme.primary,
-                isLight ? 0.12 : 0.16,
-              )!.withValues(alpha: isLight ? 0.55 : 0.45),
+                isLight ? 0.16 : 0.16,
+              )!.withValues(alpha: isLight ? 0.5 : 0.38),
             ),
             NavigationBar(
               selectedIndex: shell.currentIndex,
