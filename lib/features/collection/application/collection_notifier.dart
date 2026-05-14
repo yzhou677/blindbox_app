@@ -1,6 +1,7 @@
 import 'package:blindbox_app/features/collection/data/collection_seed_data.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/home/data/mock_latest_drops.dart';
+import 'package:blindbox_app/features/home/domain/series_release.dart';
 import 'package:blindbox_app/models/collectible.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -53,8 +54,14 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
   }
 
   /// Adds a cloned row from a catalog template (suggestions / browse). No-op if that template is already on shelf.
-  /// Adds a one-row series built from a Latest Drops [Collectible] (mock “discovery → shelf”).
+  ///
+  /// When [c.id] matches a Home [SeriesRelease], adds the **full lineup** as one shelf series.
   void addSeriesFromDrop(Collectible c) {
+    final fromRelease = mockSeriesReleaseByDropId(c.id);
+    if (fromRelease != null) {
+      addSeriesFromRelease(fromRelease);
+      return;
+    }
     final catalogKey = 'drop-${c.id}';
     if (state.hasTemplateOnShelf(catalogKey)) return;
     final seriesId = 'shelf-$catalogKey-${DateTime.now().microsecondsSinceEpoch}';
@@ -78,7 +85,42 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       catalogTemplateId: catalogKey,
     );
     state = CollectionSnapshot(
-      shelfSeries: [...state.shelfSeries, series],
+      shelfSeries: [series, ...state.shelfSeries],
+      figureStates: state.figureStates,
+    );
+  }
+
+  /// Adds a Home **series release** (full lineup) to the shelf under `drop-{dropId}`.
+  void addSeriesFromRelease(SeriesRelease release) {
+    final catalogKey = 'drop-${release.dropId}';
+    if (state.hasTemplateOnShelf(catalogKey)) return;
+    final seriesId = 'shelf-$catalogKey-${DateTime.now().microsecondsSinceEpoch}';
+    final hero = release.heroCollectible;
+    final figures = <ShelfFigure>[];
+    for (final slot in release.lineup) {
+      figures.add(
+        ShelfFigure(
+          id: '$seriesId-slot-${slot.slotId}',
+          seriesId: seriesId,
+          name: slot.name,
+          imageUrl: slot.imageUrl,
+          rarity: slot.isSecret ? 'Secret' : 'Regular',
+          isSecret: slot.isSecret,
+        ),
+      );
+    }
+    final series = ShelfSeries(
+      id: seriesId,
+      name: release.seriesName,
+      brand: release.brand,
+      ipName: (release.ipLine?.trim().isNotEmpty ?? false) ? release.ipLine!.trim() : release.seriesName,
+      figures: figures,
+      shelfAccent: hero.shelfAccent ?? const Color(0xFFE8DEF5),
+      notes: null,
+      catalogTemplateId: catalogKey,
+    );
+    state = CollectionSnapshot(
+      shelfSeries: [series, ...state.shelfSeries],
       figureStates: state.figureStates,
     );
   }
@@ -93,7 +135,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       catalogTemplateKey: catalogKey,
     );
     state = CollectionSnapshot(
-      shelfSeries: [...state.shelfSeries, cloned],
+      shelfSeries: [cloned, ...state.shelfSeries],
       figureStates: state.figureStates,
     );
   }
@@ -151,7 +193,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       catalogTemplateId: null,
     );
     state = CollectionSnapshot(
-      shelfSeries: [...state.shelfSeries, series],
+      shelfSeries: [series, ...state.shelfSeries],
       figureStates: state.figureStates,
     );
   }

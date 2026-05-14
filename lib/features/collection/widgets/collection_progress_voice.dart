@@ -25,7 +25,7 @@ abstract final class CollectionProgressVoice {
     }
 
     if (missing == 0 && wish > 0 && owned < total) {
-      return wish == 1 ? 'One wish still out there' : 'A few wishes still out there';
+      return wish == 1 ? 'One on want list' : 'Several on want list';
     }
 
     if (missing == 1) return 'One figure left';
@@ -35,7 +35,7 @@ abstract final class CollectionProgressVoice {
     if (missing > 0 && ratio >= 0.85) return 'Almost complete';
 
     if (wish > 0 && missing > 0) {
-      return wish == 1 ? 'Still hunting one wish' : 'Still hunting a few wishes';
+      return wish == 1 ? 'Still need one' : 'Still need a few';
     }
 
     if (missing > 0) {
@@ -65,13 +65,13 @@ abstract final class CollectionProgressVoice {
     }
 
     final parts = <String>[];
-    if (owned > 0) parts.add('$owned on shelf');
-    if (wish > 0) parts.add('$wish on the hunt list');
+    if (owned > 0) parts.add('$owned collected');
+    if (wish > 0) parts.add('$wish on want list');
     if (missing > 0 && secrets.isNotEmpty && ownedSecrets < secrets.length) {
       final openChase = secrets.length - ownedSecrets;
       if (openChase > 0) parts.add('chase still hiding');
     }
-    if (parts.isEmpty) return 'Tap in to log pulls and wishes.';
+    if (parts.isEmpty) return 'Tap a figure: collected → want list → open slot.';
     return parts.join(' · ');
   }
 
@@ -94,6 +94,6 @@ abstract final class CollectionProgressVoice {
     if (avg >= 90) return 'Almost every series feels complete — satisfying.';
     if (avg >= 70) return 'Your shelf is coming together beautifully.';
     if (avg >= 40) return 'Room to grow — each pull adds character.';
-    return 'A cozy shelf in progress — enjoy the hunt.';
+    return 'A cozy shelf in progress — enjoy the browse.';
   }
 }

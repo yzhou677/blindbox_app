@@ -66,9 +66,7 @@ class _SeriesShelfCardState extends State<SeriesShelfCard> with SingleTickerProv
 
   @override
   Widget build(BuildContext context) {
-    final chaseCount = widget.series.figures.where((f) => f.isSecret).length;
-    final chaseLabel = chaseCount > 0 ? '$chaseCount chase in set' : null;
-    final extra = widget.series.notes ?? chaseLabel;
+    final extra = widget.series.notes;
 
     return AnimatedBuilder(
       animation: _completeGlow,
@@ -119,7 +117,7 @@ class _SeriesShelfCardState extends State<SeriesShelfCard> with SingleTickerProv
               ),
         child: _SeriesMatContent(
           title: widget.series.name,
-          subtitle: '${widget.series.ipName} · ${widget.series.brand}',
+          subtitle: widget.series.ipName,
           extraLine: extra,
           totalFigures: widget.series.figureCount,
           progress: widget.progress,

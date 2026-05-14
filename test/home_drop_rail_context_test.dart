@@ -4,12 +4,12 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('HomeDropRailContext.homeReleaseWindowLabel', () {
-    test('past within 21 days → Recently released', () {
+    test('past within 21 days → Recently added', () {
       final clock = DateTime(2026, 5, 13);
       final r = DateTime(2026, 5, 1);
       expect(
         HomeDropRailContext.homeReleaseWindowLabel(r, clock: clock),
-        'Recently released',
+        'Recently added',
       );
     });
 
@@ -22,16 +22,16 @@ void main() {
       );
     });
 
-    test('past different month, same season → season drops', () {
+    test('past earlier month same year → month releases (no seasonal label)', () {
       final clock = DateTime(2026, 4, 15);
       final r = DateTime(2026, 3, 10);
       expect(
         HomeDropRailContext.homeReleaseWindowLabel(r, clock: clock),
-        'Spring drops',
+        'March releases',
       );
     });
 
-    test('past different season same year → month releases', () {
+    test('past different month same year → month releases', () {
       final clock = DateTime(2026, 4, 15);
       final r = DateTime(2026, 2, 20);
       expect(
@@ -69,7 +69,7 @@ void main() {
   });
 
   group('HomeDropRailContext.latestDropsRailCaption', () {
-    test('maps Recently released on newest to Recently added', () {
+    test('newest in current month (past) → New this month', () {
       final clock = DateTime(2026, 5, 13);
       final items = [
         Collectible(
@@ -83,11 +83,11 @@ void main() {
       ];
       expect(
         HomeDropRailContext.latestDropsRailCaption(items, clock: clock),
-        'Recently added',
+        'New this month',
       );
     });
 
-    test('uses fuzzy label of newest item', () {
+    test('uses month label of newest item when not current month', () {
       final clock = DateTime(2026, 5, 13);
       final items = [
         Collectible(
@@ -109,7 +109,7 @@ void main() {
       ];
       expect(
         HomeDropRailContext.latestDropsRailCaption(items, clock: clock),
-        'Spring drops',
+        'April releases',
       );
     });
   });

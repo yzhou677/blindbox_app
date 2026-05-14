@@ -1,16 +1,15 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/features/home/data/home_drop_rail_context.dart';
 import 'package:blindbox_app/features/home/data/home_section_zones.dart';
+import 'package:blindbox_app/features/home/domain/series_release.dart';
 import 'package:blindbox_app/features/home/widgets/latest_drop_card.dart';
-import 'package:blindbox_app/models/collectible.dart';
-import 'package:blindbox_app/shared/widgets/collectible_context_chip.dart';
-import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
 import 'package:flutter/material.dart';
+import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
 
 class LatestDropsSection extends StatelessWidget {
-  const LatestDropsSection({super.key, required this.items});
+  const LatestDropsSection({super.key, required this.releases});
 
-  final List<Collectible> items;
+  final List<SeriesRelease> releases;
 
   static const double _railHeight = 428;
 
@@ -18,7 +17,9 @@ class LatestDropsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final brightness = Theme.of(context).brightness;
-    final caption = HomeDropRailContext.latestDropsRailCaption(items);
+    final textTheme = Theme.of(context).textTheme;
+    final heroes = releases.map((r) => r.heroCollectible);
+    final caption = HomeDropRailContext.latestDropsRailCaption(heroes);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -27,10 +28,33 @@ class LatestDropsSection extends StatelessWidget {
           title: 'Latest drops',
           trailing: caption == null
               ? null
-              : CollectibleContextChip(
-                  icon: Icons.schedule_rounded,
-                  label: caption,
-                  presentation: CollectibleContextPresentation.inlineMeta,
+              : Semantics(
+                  label: 'Release window: $caption',
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.calendar_month_rounded,
+                        size: 15,
+                        color: scheme.onSurfaceVariant.withValues(alpha: 0.52),
+                      ),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          caption,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.end,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant.withValues(alpha: 0.68),
+                            fontWeight: FontWeight.w400,
+                            letterSpacing: 0.01,
+                            height: 1.2,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
         ),
         const SizedBox(height: FeedRhythm.sectionHeaderToRail),
@@ -44,10 +68,10 @@ class LatestDropsSection extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
-                itemCount: items.length,
+                itemCount: releases.length,
                 separatorBuilder: (context, index) =>
                     SizedBox(width: FeedRhythm.horizontalRailCardGap),
-                itemBuilder: (context, index) => LatestDropCard(collectible: items[index]),
+                itemBuilder: (context, index) => LatestDropCard(release: releases[index]),
               ),
             ),
           ),

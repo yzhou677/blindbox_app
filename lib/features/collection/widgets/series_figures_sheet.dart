@@ -70,7 +70,7 @@ class SeriesFiguresSheet extends ConsumerWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              'Tap a figure: hunt list → on shelf → open slot',
+              'Tap a figure: want list → collected → open slot',
               style: textTheme.bodySmall?.copyWith(
                 color: scheme.onSurfaceVariant.withValues(alpha: 0.86),
                 height: 1.35,

@@ -32,7 +32,7 @@ final GoRouter appRouter = GoRouter(
                     final id = state.pathParameters['id']!;
                     return CustomTransitionPage<void>(
                       key: state.pageKey,
-                      child: DropDetailScreen(collectibleId: id),
+                      child: DropDetailScreen(releaseId: id),
                       transitionDuration: const Duration(milliseconds: 420),
                       transitionsBuilder: (context, animation, secondaryAnimation, child) {
                         final curved = CurvedAnimation(

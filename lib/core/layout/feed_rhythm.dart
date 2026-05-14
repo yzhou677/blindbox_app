@@ -40,10 +40,10 @@ abstract final class FeedRhythm {
   static const double marketTrendingRailHeight = 180;
 
   /// Square series thumb on shelf cards (browse / recognition).
-  static const double collectionShelfThumbnailExtent = 76;
+  static const double collectionShelfThumbnailExtent = 88;
 
   /// Fixed height for the collection summary metric strip (aligned baselines).
-  static const double collectionSummaryMetricStripHeight = 92;
+  static const double collectionSummaryMetricStripHeight = 52;
 
   /// Vertical gap between full-width listing cards (shelf separation).
   static const double listingCardVerticalGap = 22;

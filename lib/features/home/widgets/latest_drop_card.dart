@@ -1,27 +1,19 @@
 import 'package:blindbox_app/core/theme/collectible_shelf_shadow.dart';
 import 'package:blindbox_app/core/theme/collectible_shape.dart';
-import 'package:blindbox_app/features/home/data/home_drop_rail_context.dart';
+import 'package:blindbox_app/features/home/domain/series_release.dart';
 import 'package:blindbox_app/features/home/widgets/collectible_network_image.dart';
-import 'package:blindbox_app/features/home/widgets/save_drop_to_shelf_button.dart';
-import 'package:blindbox_app/models/collectible.dart';
-import 'package:blindbox_app/shared/widgets/collectible_scan_badge.dart';
+import 'package:blindbox_app/features/home/widgets/save_series_release_button.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-/// Series-first drop tile — packaging window, hierarchy, shelf save.
+/// Series launch tile — hero figure art, series title, figure count (no repeated month).
 const double _kCardWidth = 252;
 const double _kImageAspect = 1.02;
 
 class LatestDropCard extends StatelessWidget {
-  const LatestDropCard({super.key, required this.collectible});
+  const LatestDropCard({super.key, required this.release});
 
-  final Collectible collectible;
-
-  String get _brandIpLine {
-    final ip = collectible.ipLine?.trim();
-    if (ip == null || ip.isEmpty) return collectible.brand;
-    return '${collectible.brand} · $ip';
-  }
+  final SeriesRelease release;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +21,8 @@ class LatestDropCard extends StatelessWidget {
     final scheme = theme.colorScheme;
     final textTheme = theme.textTheme;
     final outerRadius = CollectibleShape.shellRadius;
-    final accent = collectible.shelfAccent ?? scheme.tertiaryContainer;
+    final hero = release.heroCollectible;
+    final accent = hero.shelfAccent ?? scheme.tertiaryContainer;
 
     return SizedBox(
       width: _kCardWidth,
@@ -49,7 +42,7 @@ class LatestDropCard extends StatelessWidget {
           ),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
-            onTap: () => context.push('/home/detail/${collectible.id}'),
+            onTap: () => context.push('/home/detail/${release.dropId}'),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -82,8 +75,8 @@ class LatestDropCard extends StatelessWidget {
                           child: ColoredBox(
                             color: scheme.surface.withValues(alpha: 0.72),
                             child: CollectibleNetworkImage(
-                              collectible: collectible,
-                              heroTag: collectible.heroImageTag,
+                              collectible: hero,
+                              heroTag: hero.heroImageTag,
                               borderRadius: CollectibleShape.insetRadius,
                               fit: BoxFit.contain,
                             ),
@@ -94,17 +87,12 @@ class LatestDropCard extends StatelessWidget {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 6, 10, 12),
+                  padding: const EdgeInsets.fromLTRB(14, 4, 10, 12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      CollectibleScanBadge(
-                        icon: Icons.layers_outlined,
-                        label: 'Blind-box series',
-                      ),
-                      const SizedBox(height: 6),
                       Text(
-                        collectible.series,
+                        release.seriesName,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: textTheme.titleMedium?.copyWith(
@@ -116,61 +104,28 @@ class LatestDropCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        collectible.name,
+                        hero.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: textTheme.labelLarge?.copyWith(
-                          color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
+                          color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
                           fontWeight: FontWeight.w500,
                           letterSpacing: 0.02,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        _brandIpLine,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
-                          fontWeight: FontWeight.w400,
-                          letterSpacing: 0.02,
-                          height: 1.32,
                         ),
                       ),
                       const SizedBox(height: 10),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Expanded(
-                            child: Tooltip(
-                              message: HomeDropRailContext.homeReleaseTooltip(collectible.releaseDate),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.schedule_rounded,
-                                    size: 16,
-                                    color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Expanded(
-                                    child: Text(
-                                      HomeDropRailContext.homeReleaseWindowLabel(
-                                        collectible.releaseDate,
-                                      ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: textTheme.bodySmall?.copyWith(
-                                        color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
-                                        fontWeight: FontWeight.w500,
-                                        height: 1.25,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                          Text(
+                            '${release.lineup.length} figures',
+                            style: textTheme.bodySmall?.copyWith(
+                              color: scheme.onSurfaceVariant.withValues(alpha: 0.68),
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
-                          SaveDropToShelfButton(collectible: collectible),
+                          const Spacer(),
+                          SaveSeriesReleaseButton(release: release),
                         ],
                       ),
                     ],

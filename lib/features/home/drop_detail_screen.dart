@@ -1,25 +1,28 @@
 import 'package:blindbox_app/features/home/data/mock_latest_drops.dart';
 import 'package:blindbox_app/features/home/widgets/collectible_network_image.dart';
+import 'package:blindbox_app/features/home/widgets/release_lineup_strip.dart';
+import 'package:blindbox_app/features/home/widgets/save_series_release_button.dart';
 import 'package:blindbox_app/models/collectible.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+/// Series release detail — image-first lineup browse and a single clear add CTA.
 class DropDetailScreen extends StatelessWidget {
-  const DropDetailScreen({super.key, required this.collectibleId});
+  const DropDetailScreen({super.key, required this.releaseId});
 
-  final String collectibleId;
+  final String releaseId;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final textTheme = theme.textTheme;
-    final collectible = mockCollectibleById(collectibleId);
+    final release = mockSeriesReleaseByDropId(releaseId);
 
-    if (collectible == null) {
+    if (release == null) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Drop'),
+          title: const Text('Release'),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_rounded),
             onPressed: () => context.pop(),
@@ -29,7 +32,7 @@ class DropDetailScreen extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              'This drop could not be found.',
+              'This release could not be found.',
               textAlign: TextAlign.center,
               style: textTheme.bodyLarge?.copyWith(color: scheme.onSurfaceVariant),
             ),
@@ -37,6 +40,9 @@ class DropDetailScreen extends StatelessWidget {
         ),
       );
     }
+
+    final hero = release.heroCollectible;
+    final accent = hero.shelfAccent ?? scheme.tertiaryContainer;
 
     return Scaffold(
       backgroundColor: scheme.surface,
@@ -53,7 +59,7 @@ class DropDetailScreen extends StatelessWidget {
               onPressed: () => context.pop(),
             ),
             title: Text(
-              collectible.name,
+              release.seriesName,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: textTheme.titleMedium?.copyWith(
@@ -65,13 +71,57 @@ class DropDetailScreen extends StatelessWidget {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-              child: _DetailHero(collectible: collectible),
+              child: _DetailHero(collectible: hero, accent: accent),
             ),
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(22, 32, 22, 44),
-              child: _DetailMeta(collectible: collectible),
+              padding: const EdgeInsets.fromLTRB(22, 20, 22, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    hero.name,
+                    style: textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.28,
+                      height: 1.12,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    release.seriesName,
+                    style: textTheme.titleSmall?.copyWith(
+                      color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    release.brand,
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${release.lineup.length} figures',
+                    style: textTheme.labelMedium?.copyWith(
+                      color: scheme.onSurfaceVariant.withValues(alpha: 0.55),
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.02,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  ReleaseLineupStrip(slots: release.lineup, accent: accent),
+                  const SizedBox(height: 16),
+                  SaveSeriesReleaseButton(
+                    release: release,
+                    variant: SeriesReleaseShelfCtaVariant.filled,
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -81,16 +131,19 @@ class DropDetailScreen extends StatelessWidget {
 }
 
 class _DetailHero extends StatelessWidget {
-  const _DetailHero({required this.collectible});
+  const _DetailHero({
+    required this.collectible,
+    required this.accent,
+  });
 
   final Collectible collectible;
+  final Color accent;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final brightness = Theme.of(context).brightness;
     final outerRadius = BorderRadius.circular(26);
-    final accent = collectible.shelfAccent ?? scheme.tertiaryContainer;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -147,128 +200,6 @@ class _DetailHero extends StatelessWidget {
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _DetailMeta extends StatelessWidget {
-  const _DetailMeta({required this.collectible});
-
-  final Collectible collectible;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    final accent = collectible.shelfAccent ?? scheme.tertiaryContainer;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: scheme.primaryContainer.withValues(alpha: 0.52),
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: scheme.primary.withValues(alpha: 0.16)),
-          ),
-          child: Text(
-            collectible.series,
-            style: textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.14,
-              height: 1.12,
-              color: scheme.onPrimaryContainer.withValues(alpha: 0.9),
-            ),
-          ),
-        ),
-        const SizedBox(height: 14),
-        Text(
-          collectible.name,
-          style: textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w600,
-            letterSpacing: -0.38,
-            height: 1.12,
-          ),
-        ),
-        const SizedBox(height: 22),
-        _SoftMetaTile(
-          icon: Icons.storefront_outlined,
-          label: 'Brand',
-          value: collectible.brand,
-          tint: accent.withValues(alpha: 0.22),
-        ),
-        const SizedBox(height: 12),
-        _SoftMetaTile(
-          icon: Icons.event_rounded,
-          label: 'Release',
-          value: collectible.releaseDateLabel,
-          tint: accent.withValues(alpha: 0.18),
-        ),
-      ],
-    );
-  }
-}
-
-class _SoftMetaTile extends StatelessWidget {
-  const _SoftMetaTile({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.tint,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color tint;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Color.alphaBlend(
-          tint,
-          scheme.surfaceContainerHigh.withValues(alpha: 0.35),
-        ),
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, size: 22, color: scheme.onSurfaceVariant.withValues(alpha: 0.75)),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: textTheme.labelMedium?.copyWith(
-                      color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.15,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    value,
-                    style: textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w500,
-                      height: 1.28,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
         ),
       ),
     );

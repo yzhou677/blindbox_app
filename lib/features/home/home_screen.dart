@@ -37,7 +37,7 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  LatestDropsSection(items: mockLatestDrops),
+                  LatestDropsSection(releases: mockSeriesReleases),
                   const SizedBox(height: FeedRhythm.homeMajorSectionGap),
                   const TrendingSeriesSection(),
                 ],

@@ -1,11 +1,9 @@
 import 'package:blindbox_app/models/collectible.dart';
 
-/// Honest, fuzzy release copy for the Home rail — derived only from calendar
+/// Month-first release copy for the Home rail — derived only from calendar
 /// math on [release] vs [clock] (defaults to `DateTime.now()`). No day-level
-/// precision in UI labels.
-///
-/// Northern-hemisphere season groupings are conventional copy buckets only,
-/// not geography or street-date claims.
+/// precision in UI labels. Seasonal marketing buckets are intentionally avoided
+/// so the time model stays consistent (month-based).
 abstract final class HomeDropRailContext {
   static const _monthsLong = <String>[
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -18,32 +16,10 @@ abstract final class HomeDropRailContext {
 
   static DateTime _clock(DateTime? clock) => clock ?? DateTime.now();
 
-  /// 0 winter (Dec–Feb), 1 spring (Mar–May), 2 summer, 3 fall.
-  static int _seasonBucket(DateTime d) {
-    final m = d.month;
-    if (m == 12 || m <= 2) return 0;
-    if (m <= 5) return 1;
-    if (m <= 8) return 2;
-    return 3;
-  }
-
-  static String _seasonDropsLabel(DateTime d) {
-    switch (_seasonBucket(d)) {
-      case 0:
-        return 'Winter drops';
-      case 1:
-        return 'Spring drops';
-      case 2:
-        return 'Summer drops';
-      default:
-        return 'Fall drops';
-    }
-  }
-
   /// Disclosure paired with fuzzy labels (tooltips / a11y).
   static const String retailTimingDisclosure = 'Retail dates vary by region and shop.';
 
-  /// Fuzzy window for one drop — no calendar day.
+  /// Fuzzy window for one drop — month-based, no season names.
   static String homeReleaseWindowLabel(DateTime release, {DateTime? clock}) {
     final n = _day(_clock(clock));
     final r = _day(release);
@@ -55,15 +31,24 @@ abstract final class HomeDropRailContext {
     }
 
     final days = n.difference(r).inDays;
-    if (days <= _recentPastDays) return 'Recently released';
+    if (days <= _recentPastDays) return 'Recently added';
     if (r.year == n.year && r.month == n.month) {
       return '${_monthsLong[r.month - 1]} releases';
     }
-    if (r.year == n.year && _seasonBucket(r) == _seasonBucket(n)) {
-      return _seasonDropsLabel(r);
+    if (r.year == n.year) {
+      return '${_monthsLong[r.month - 1]} releases';
     }
-    if (r.year == n.year) return '${_monthsLong[r.month - 1]} releases';
     return '${_monthsLong[r.month - 1]} ${r.year} releases';
+  }
+
+  /// Compact status for detail/meta rows when the rail already shows the calendar window.
+  static String releaseStatusTag(DateTime release, {DateTime? clock}) {
+    final n = _day(_clock(clock));
+    final r = _day(release);
+    if (r.isAfter(n)) return 'Upcoming';
+    final days = n.difference(r).inDays;
+    if (days <= _recentPastDays) return 'New';
+    return 'Available';
   }
 
   /// Tooltip / long-press: fuzzy window only, plus honesty line (no exact day).
@@ -79,8 +64,13 @@ abstract final class HomeDropRailContext {
     for (final c in items.skip(1)) {
       if (c.releaseDate.isAfter(latest)) latest = c.releaseDate;
     }
-    final w = homeReleaseWindowLabel(latest, clock: clock);
-    if (w == 'Recently released') return 'Recently added';
-    return w;
+    final n = _day(_clock(clock));
+    final l = _day(latest);
+
+    if (l.year == n.year && l.month == n.month) {
+      return l.isAfter(n) ? 'Coming this month' : 'New this month';
+    }
+
+    return homeReleaseWindowLabel(latest, clock: clock);
   }
 }

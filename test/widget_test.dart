@@ -40,7 +40,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 600));
 
     expect(find.text('My collection'), findsWidgets);
-    expect(find.text('On shelf'), findsOneWidget);
+    expect(find.text('In collection'), findsOneWidget);
     expect(find.text('5'), findsOneWidget);
     expect(find.text('Add series'), findsOneWidget);
     expect(find.text('The Other One'), findsOneWidget);
