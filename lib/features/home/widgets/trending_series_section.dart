@@ -1,4 +1,6 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/theme/collectible_shelf_shadow.dart';
+import 'package:blindbox_app/core/theme/collectible_tokens.dart';
 import 'package:blindbox_app/features/home/data/home_section_zones.dart';
 import 'package:blindbox_app/features/home/data/mock_trending_series.dart';
 import 'package:blindbox_app/features/home/widgets/trending_series_capsule.dart';
@@ -9,12 +11,13 @@ import 'package:flutter/material.dart';
 class TrendingSeriesSection extends StatelessWidget {
   const TrendingSeriesSection({super.key});
 
-  static const double _railHeight = kTrendingSeriesCapsuleHeight + 12;
-
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final brightness = Theme.of(context).brightness;
+    final tokens = CollectibleTokens.of(context);
+    final railHeight =
+        kTrendingSeriesCapsuleHeight + CollectibleShelfShadow.horizontalRailShellBottomSlack(tokens);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -29,8 +32,9 @@ class TrendingSeriesSection extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 14),
             child: SizedBox(
-              height: _railHeight,
+              height: railHeight,
               child: ListView.separated(
+                clipBehavior: Clip.none,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
@@ -38,7 +42,10 @@ class TrendingSeriesSection extends StatelessWidget {
                 separatorBuilder: (context, index) =>
                     SizedBox(width: FeedRhythm.horizontalRailCardGap),
                 itemBuilder: (context, index) {
-                  return TrendingSeriesCapsule(series: mockTrendingSeries[index]);
+                  return Align(
+                    alignment: Alignment.topCenter,
+                    child: TrendingSeriesCapsule(series: mockTrendingSeries[index]),
+                  );
                 },
               ),
             ),

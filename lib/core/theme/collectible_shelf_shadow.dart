@@ -19,4 +19,10 @@ abstract final class CollectibleShelfShadow {
       ),
     ];
   }
+
+  /// Extra height a horizontal rail viewport needs below a product shell so
+  /// [productShell] is not clipped. Uses the same [CollectibleTokens] fields as the shadow.
+  static double horizontalRailShellBottomSlack(CollectibleTokens tokens) {
+    return tokens.shellShadowDy + tokens.shellShadowBlur;
+  }
 }
