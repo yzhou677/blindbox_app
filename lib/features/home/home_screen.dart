@@ -1,0 +1,51 @@
+import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/features/home/data/mock_latest_drops.dart';
+import 'package:blindbox_app/features/home/widgets/latest_drops_section.dart';
+import 'package:blindbox_app/features/home/widgets/trending_series_section.dart';
+import 'package:flutter/material.dart';
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Scaffold(
+      backgroundColor: scheme.surfaceContainerLow,
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          SliverAppBar(
+            pinned: false,
+            floating: false,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            toolbarHeight: FeedRhythm.mainTabAppBarToolbarHeight,
+            backgroundColor: scheme.surface,
+            centerTitle: false,
+            titleSpacing: 20,
+            title: Text('Discover', style: textTheme.titleLarge),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(
+                top: FeedRhythm.belowMainTabAppBar,
+                bottom: FeedRhythm.tabScrollTailPadding,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  LatestDropsSection(releases: mockSeriesReleases),
+                  const SizedBox(height: FeedRhythm.homeMajorSectionGap),
+                  const TrendingSeriesSection(),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

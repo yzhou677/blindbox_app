@@ -1,30 +1,103 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
+import 'package:blindbox_app/core/theme/app_theme.dart';
+import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
+import 'package:blindbox_app/features/collection/collection_screen.dart';
+import 'package:blindbox_app/features/collection/data/series_release_lookup.dart';
+import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/home/data/mock_latest_drops.dart';
+import 'package:blindbox_app/main.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:blindbox_app/main.dart';
+List<Override> _blindboxTestOverrides() => [
+      seriesReleaseLookupProvider.overrideWithValue(mockSeriesReleaseByDropId),
+    ];
+
+final class EmptyTestCollectionNotifier extends CollectionNotifier {
+  @override
+  CollectionSnapshot build() => CollectionSnapshot.emptyTest();
+}
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
-
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+  testWidgets('App shell shows Home tab', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: _blindboxTestOverrides(),
+        child: const BlindboxApp(),
+      ),
+    );
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('Home'), findsWidgets);
+    expect(find.text('Discover'), findsWidgets);
+    expect(find.text('Latest drops'), findsOneWidget);
+    expect(find.text('Luna Astronaut'), findsOneWidget);
+    expect(find.text('Trending series'), findsOneWidget);
+    expect(find.text('Skullpanda'), findsOneWidget);
+  });
+
+  testWidgets('Collection tab shows series-first shelf and summary', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: _blindboxTestOverrides(),
+        child: const BlindboxApp(),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    await tester.tap(find.text('Collection'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+
+    expect(find.text('My collection'), findsWidgets);
+    expect(find.text('In collection'), findsOneWidget);
+    expect(find.text('5'), findsOneWidget);
+    expect(find.text('Add series'), findsOneWidget);
+    expect(find.text('The Other One'), findsOneWidget);
+  });
+
+  testWidgets('Market tab shows search and trending', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: _blindboxTestOverrides(),
+        child: const BlindboxApp(),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    await tester.tap(find.text('Market'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+
+    expect(find.text('Trending'), findsWidgets);
+    expect(find.text('Brand'), findsOneWidget);
+    expect(find.text('IP'), findsNothing);
+    await tester.tap(find.text('POP MART'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.text('IP'), findsOneWidget);
+    expect(find.text('Labubu'), findsWidgets);
+  });
+
+  testWidgets('Collection empty state is polished', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          collectionNotifierProvider.overrideWith(EmptyTestCollectionNotifier.new),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: const CollectionScreen(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    expect(find.text('Your shelf is waiting'), findsOneWidget);
+    expect(find.text('Browse drops'), findsOneWidget);
   });
 }

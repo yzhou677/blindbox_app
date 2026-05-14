@@ -1,0 +1,259 @@
+import 'package:blindbox_app/features/collection/widgets/figure_name_chips_editor.dart';
+import 'package:flutter/material.dart';
+
+typedef CustomSeriesFormSubmit = void Function({
+  required String seriesName,
+  String? brand,
+  String? ipDisplayName,
+  required List<String> figureNames,
+  String? notes,
+});
+
+/// Shelf-first custom series — chips for figures, light fields for the rest.
+class AddCustomSeriesSheet extends StatefulWidget {
+  const AddCustomSeriesSheet({super.key, required this.onSubmit});
+
+  final CustomSeriesFormSubmit onSubmit;
+
+  @override
+  State<AddCustomSeriesSheet> createState() => _AddCustomSeriesSheetState();
+}
+
+class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
+  final _seriesName = TextEditingController();
+  final _brand = TextEditingController();
+  final _ip = TextEditingController();
+  final _notes = TextEditingController();
+  final _newFigure = TextEditingController();
+  final _newFigureFocus = FocusNode();
+  final _formKey = GlobalKey<FormState>();
+
+  final List<String> _figureNames = [];
+
+  @override
+  void dispose() {
+    _seriesName.dispose();
+    _brand.dispose();
+    _ip.dispose();
+    _notes.dispose();
+    _newFigure.dispose();
+    _newFigureFocus.dispose();
+    super.dispose();
+  }
+
+  void _addFigureFromField() {
+    final raw = _newFigure.text.trim();
+    if (raw.isEmpty) return;
+    setState(() {
+      _figureNames.add(raw);
+      _newFigure.clear();
+    });
+  }
+
+  Future<void> _editAt(int index) async {
+    final current = _figureNames[index];
+    final editController = TextEditingController(text: current);
+    final next = await showDialog<String>(
+      context: context,
+      builder: (ctx) {
+        final scheme = Theme.of(ctx).colorScheme;
+        return AlertDialog(
+          title: const Text('Rename figure'),
+          content: TextField(
+            controller: editController,
+            autofocus: true,
+            textInputAction: TextInputAction.done,
+            decoration: InputDecoration(
+              hintText: 'Name',
+              filled: true,
+              fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+            ),
+            onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, editController.text.trim()),
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+    editController.dispose();
+    if (!mounted || next == null || next.isEmpty) return;
+    setState(() => _figureNames[index] = next);
+  }
+
+  void _removeAt(int i) {
+    setState(() => _figureNames.removeAt(i));
+  }
+
+  void _save() {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (_figureNames.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Add at least one figure')),
+      );
+      return;
+    }
+    widget.onSubmit(
+      seriesName: _seriesName.text.trim(),
+      brand: _brand.text.trim().isEmpty ? null : _brand.text.trim(),
+      ipDisplayName: _ip.text.trim().isEmpty ? null : _ip.text.trim(),
+      figureNames: List<String>.from(_figureNames),
+      notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
+    );
+    Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final bottom = MediaQuery.paddingOf(context).bottom;
+    final maxH = MediaQuery.sizeOf(context).height * 0.88;
+
+    return SizedBox(
+      height: maxH,
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 20,
+          right: 20,
+          top: 12,
+          bottom: bottom + 16,
+        ),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: scheme.outlineVariant.withValues(alpha: 0.55),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'Your own series',
+                        style: textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Give the series a name, tag your pulls, and they’ll land on your shelf like the rest.',
+                        style: textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
+                          height: 1.35,
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+                      Text.rich(
+                        TextSpan(
+                          style: textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: scheme.onSurface.withValues(alpha: 0.9),
+                          ),
+                          children: [
+                            const TextSpan(text: 'Series name '),
+                            TextSpan(
+                              text: '*',
+                              style: TextStyle(
+                                color: scheme.error,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: _seriesName,
+                        textInputAction: TextInputAction.next,
+                        decoration: InputDecoration(
+                          hintText: 'e.g. The Other One',
+                          filled: true,
+                          fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) return 'Add a series name';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _brand,
+                        textInputAction: TextInputAction.next,
+                        decoration: InputDecoration(
+                          hintText: 'Brand',
+                          filled: true,
+                          fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _ip,
+                        textInputAction: TextInputAction.next,
+                        decoration: InputDecoration(
+                          hintText: 'Universe / IP',
+                          filled: true,
+                          fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+                      FigureNameChipsEditor(
+                        names: _figureNames,
+                        onRemoveAt: _removeAt,
+                        onEditAt: _editAt,
+                        addFieldController: _newFigure,
+                        addFieldFocusNode: _newFigureFocus,
+                        onAddSubmitted: _addFigureFromField,
+                      ),
+                      const SizedBox(height: 18),
+                      TextFormField(
+                        controller: _notes,
+                        maxLines: 2,
+                        textInputAction: TextInputAction.done,
+                        decoration: InputDecoration(
+                          hintText: 'Shelf note',
+                          filled: true,
+                          fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              FilledButton(
+                onPressed: _save,
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                child: const Text('Place on shelf'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
