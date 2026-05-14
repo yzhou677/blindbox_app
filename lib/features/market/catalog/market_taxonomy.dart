@@ -44,7 +44,7 @@ abstract final class MarketTaxonomy {
     MarketIpTaxon(id: 'skullpanda', displayLabel: 'Skullpanda'),
     MarketIpTaxon(id: 'liila', displayLabel: 'Liila'),
     MarketIpTaxon(id: 'nommi', displayLabel: 'Nommi'),
-    MarketIpTaxon(id: 'lulu_piggy', displayLabel: 'LuLu the Piggy'),
+    MarketIpTaxon(id: 'maymei', displayLabel: 'Maymei'),
   ];
 
   static const List<MarketBrandTaxon> brands = [
@@ -56,7 +56,7 @@ abstract final class MarketTaxonomy {
     MarketBrandTaxon(
       id: 'toptoy',
       displayLabel: 'TOPTOY',
-      supportedIpIds: ['nommi', 'lulu_piggy'],
+      supportedIpIds: ['nommi', 'maymei'],
     ),
     MarketBrandTaxon(
       id: 'tntspace',
@@ -121,7 +121,8 @@ abstract final class MarketTaxonomy {
     required String brandId,
     required String ipId,
   }) {
-    if (brandId != MarketTaxonomyIds.anyBrand && m.taxonomyBrandId != brandId) {
+    if (brandId != MarketTaxonomyIds.anyBrand &&
+        (m.taxonomyBrandId == null || m.taxonomyBrandId != brandId)) {
       return false;
     }
     if (ipId == MarketTaxonomyIds.anyIp) return true;

@@ -20,7 +20,8 @@ bool marketListingMatchesFreeText(MarketListing m, String queryLower) {
 
   final c = m.collectible;
   final ipLine = c.ipLine?.trim();
-  final brandTaxon = MarketTaxonomy.brandById(m.taxonomyBrandId);
+  final brandTaxon =
+      m.taxonomyBrandId != null ? MarketTaxonomy.brandById(m.taxonomyBrandId!) : null;
   final ipTaxon =
       m.taxonomyIpId != null ? MarketTaxonomy.ipById(m.taxonomyIpId!) : null;
 
@@ -31,7 +32,7 @@ bool marketListingMatchesFreeText(MarketListing m, String queryLower) {
     if (ipLine != null && ipLine.isNotEmpty) ipLine,
     if (brandTaxon != null) brandTaxon.displayLabel,
     if (ipTaxon != null) ipTaxon.displayLabel,
-    m.taxonomyBrandId.replaceAll('_', ' '),
+    if (m.taxonomyBrandId != null) m.taxonomyBrandId!.replaceAll('_', ' '),
     if (m.taxonomyIpId != null) m.taxonomyIpId!.replaceAll('_', ' '),
   ];
 

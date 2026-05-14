@@ -18,13 +18,13 @@ void main() {
   });
 
   test('slug-style query matches taxonomy id underscores', () {
-    final m = mockMarketListings.firstWhere((e) => e.id == 'mkt-lulu-picnic');
+    final m = mockMarketListings.firstWhere((e) => e.id == 'mkt-nommi-metro');
     expect(
       marketListingVisible(
         m,
         brandId: MarketTaxonomyIds.anyBrand,
         ipId: MarketTaxonomyIds.anyIp,
-        queryLower: 'lulu piggy',
+        queryLower: 'nommi',
       ),
       true,
     );

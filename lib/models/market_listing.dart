@@ -11,7 +11,7 @@ class MarketListing {
     required this.currentPriceUsd,
     required this.priceChangePercent,
     required this.listingCount,
-    required this.taxonomyBrandId,
+    this.taxonomyBrandId,
     this.taxonomyIpId,
     this.isTrending = false,
     this.watchingCount = 0,
@@ -30,8 +30,8 @@ class MarketListing {
 
   final int listingCount;
 
-  /// Canonical brand key from app taxonomy (e.g. `pop_mart`).
-  final String taxonomyBrandId;
+  /// Canonical brand key from app taxonomy (e.g. `pop_mart`); null when unknown from title.
+  final String? taxonomyBrandId;
 
   /// Canonical IP key when this row sits under a character universe; null = no IP facet.
   final String? taxonomyIpId;
