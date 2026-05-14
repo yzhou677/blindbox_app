@@ -268,3 +268,32 @@ Layouts should prioritize:
 - smooth image loading
 
 Text should support the visuals, not dominate the screen.
+
+## Current Backend Status
+
+The app currently runs on local mock/demo data.
+
+Architecture has been prepared for backend integration:
+- feature-based structure
+- Riverpod state management
+- separation between presentation / domain / data
+- reusable filtering and taxonomy models
+
+Next integration target:
+- eBay Browse API
+- search listings
+- pricing
+- sorting
+- market trend data
+
+## Planned API Integration
+
+First external integration:
+- eBay Browse API
+
+Planned capabilities:
+- keyword search
+- brand/IP filtering
+- listing price sorting
+- trending market feed
+- sold/completed price research (future)

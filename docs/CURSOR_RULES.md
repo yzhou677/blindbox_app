@@ -28,3 +28,13 @@ Before generating new architecture patterns:
 For MVP:
 - prioritize shipping features quickly
 - avoid premature optimization
+
+## Backend Integration Rules
+
+- Keep API clients inside feature/data or core/network layers
+- Do not call HTTP clients directly from widgets
+- Prefer repository abstractions
+- Preserve Riverpod boundaries
+- Avoid coupling UI to eBay response models
+- Create app-specific domain models/adapters
+- Keep mock data available for preview/testing
