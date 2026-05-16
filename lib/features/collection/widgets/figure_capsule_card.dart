@@ -1,6 +1,5 @@
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
-import 'package:blindbox_app/features/collection/widgets/collectible_figure_placeholder.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
 import 'package:flutter/material.dart';
 
 /// Mini blind-box / shelf card — collected, wish list, and open-slot states.
@@ -489,25 +488,13 @@ class _FigureThumb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (figure.imageUrl != null) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(11),
-        child: CachedNetworkImage(
-          imageUrl: figure.imageUrl!,
-          fit: BoxFit.contain,
-          fadeInDuration: const Duration(milliseconds: 280),
-          errorWidget: (context, url, error) => CollectibleFigurePlaceholder(
-            name: figure.name,
-            seedKey: figure.id,
-            isSecret: figure.isSecret,
-          ),
-        ),
-      );
-    }
-    return CollectibleFigurePlaceholder(
+    return CollectibleThumbImage(
+      imageRef: figure.imageUrl,
       name: figure.name,
       seedKey: figure.id,
       isSecret: figure.isSecret,
+      fit: BoxFit.contain,
+      borderRadius: BorderRadius.circular(11),
     );
   }
 }

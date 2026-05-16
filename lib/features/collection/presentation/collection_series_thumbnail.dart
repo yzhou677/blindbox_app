@@ -2,7 +2,7 @@ import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_series_art.dart';
 import 'package:blindbox_app/features/collection/widgets/collectible_figure_placeholder.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
 import 'package:flutter/material.dart';
 
 /// Compact shelf thumbnail — representative figure art or [CollectibleFigurePlaceholder].
@@ -41,16 +41,13 @@ class CollectionSeriesThumbnail extends StatelessWidget {
         child: ClipRRect(
           borderRadius: r,
           child: url != null
-              ? CachedNetworkImage(
-                  imageUrl: url,
+              ? CollectibleThumbImage(
+                  imageRef: url,
+                  name: name,
+                  seedKey: seed,
+                  isSecret: secret,
                   fit: BoxFit.cover,
-                  fadeInDuration: const Duration(milliseconds: 200),
-                  errorWidget: (context, url, error) => CollectibleFigurePlaceholder(
-                    name: name,
-                    seedKey: seed,
-                    isSecret: secret,
-                    compact: true,
-                  ),
+                  borderRadius: BorderRadius.zero,
                 )
               : CollectibleFigurePlaceholder(
                   name: name,
