@@ -48,6 +48,9 @@ List<CatalogFigure> parseCatalogFiguresJson(String json) {
 }
 
 /// Loads all seed catalogs from the app bundle (`pubspec` must list `tools/seed/`).
+///
+/// For a remote Firestore catalog (same [CatalogSeedBundle] shape), use
+/// [loadFirestoreCatalogBundle] from `features/catalog/firestore/firestore_catalog_loader.dart`.
 Future<CatalogSeedBundle> loadCatalogSeedBundle() async {
   final brandsRaw = await rootBundle.loadString('tools/seed/brands.json');
   final ipsRaw = await rootBundle.loadString('tools/seed/ips.json');
