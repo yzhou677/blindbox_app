@@ -18,6 +18,8 @@ Map<String, dynamic> firestoreCatalogDocToJsonMap(String docId, Map<String, dyna
   final rd = out['releaseDate'];
   if (rd is Timestamp) {
     out['releaseDate'] = _timestampToCatalogDate(rd);
+  } else if (rd == null) {
+    out['releaseDate'] = null;
   }
 
   // Firestore may store numbers as [double].

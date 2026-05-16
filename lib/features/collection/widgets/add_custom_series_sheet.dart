@@ -1,4 +1,6 @@
+import 'package:blindbox_app/features/collection/widgets/custom_series_cover_slot.dart';
 import 'package:blindbox_app/features/collection/widgets/figure_name_chips_editor.dart';
+import 'package:blindbox_app/features/collection/widgets/shelf_gallery_pick.dart';
 import 'package:flutter/material.dart';
 
 typedef CustomSeriesFormSubmit = void Function({
@@ -6,6 +8,8 @@ typedef CustomSeriesFormSubmit = void Function({
   String? brand,
   String? ipDisplayName,
   required List<String> figureNames,
+  required List<String?> figureLocalImageUris,
+  String? customCoverImageUri,
   String? notes,
 });
 
@@ -29,6 +33,8 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
   final _formKey = GlobalKey<FormState>();
 
   final List<String> _figureNames = [];
+  final List<String?> _figureLocalUris = [];
+  String? _coverUri;
 
   @override
   void dispose() {
@@ -46,6 +52,7 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
     if (raw.isEmpty) return;
     setState(() {
       _figureNames.add(raw);
+      _figureLocalUris.add(null);
       _newFigure.clear();
     });
   }
@@ -87,7 +94,39 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
   }
 
   void _removeAt(int i) {
-    setState(() => _figureNames.removeAt(i));
+    setState(() {
+      _figureNames.removeAt(i);
+      if (i < _figureLocalUris.length) {
+        _figureLocalUris.removeAt(i);
+      }
+    });
+  }
+
+  Future<void> _pickCover() async {
+    final path = await pickShelfGalleryImage(context);
+    if (!mounted || path == null) return;
+    setState(() => _coverUri = path);
+  }
+
+  void _clearCover() => setState(() => _coverUri = null);
+
+  Future<void> _pickFigurePhoto(int i) async {
+    final path = await pickShelfGalleryImage(context);
+    if (!mounted || path == null) return;
+    setState(() {
+      while (_figureLocalUris.length <= i) {
+        _figureLocalUris.add(null);
+      }
+      _figureLocalUris[i] = path;
+    });
+  }
+
+  void _clearFigurePhoto(int i) {
+    setState(() {
+      if (i < _figureLocalUris.length) {
+        _figureLocalUris[i] = null;
+      }
+    });
   }
 
   void _save() {
@@ -103,6 +142,12 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
       brand: _brand.text.trim().isEmpty ? null : _brand.text.trim(),
       ipDisplayName: _ip.text.trim().isEmpty ? null : _ip.text.trim(),
       figureNames: List<String>.from(_figureNames),
+      figureLocalImageUris: List<String?>.generate(
+        _figureNames.length,
+        (i) => i < _figureLocalUris.length ? _figureLocalUris[i] : null,
+        growable: false,
+      ),
+      customCoverImageUri: _coverUri,
       notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
     );
     Navigator.of(context).pop();
@@ -159,6 +204,12 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
                           color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
                           height: 1.35,
                         ),
+                      ),
+                      const SizedBox(height: 22),
+                      CustomSeriesCoverSlot(
+                        imagePath: _coverUri,
+                        onReplaceTap: _pickCover,
+                        onClearTap: _clearCover,
                       ),
                       const SizedBox(height: 22),
                       Text.rich(
@@ -219,11 +270,14 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
                       const SizedBox(height: 22),
                       FigureNameChipsEditor(
                         names: _figureNames,
+                        figureLocalUris: _figureLocalUris,
                         onRemoveAt: _removeAt,
                         onEditAt: _editAt,
                         addFieldController: _newFigure,
                         addFieldFocusNode: _newFigureFocus,
                         onAddSubmitted: _addFigureFromField,
+                        onPickFigurePhoto: _pickFigurePhoto,
+                        onClearFigurePhoto: _clearFigurePhoto,
                       ),
                       const SizedBox(height: 18),
                       TextFormField(

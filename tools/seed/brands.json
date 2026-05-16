@@ -3,7 +3,15 @@
     "id": "pop_mart",
     "displayName": "POP MART",
     "aliases": [
-      "POPMART"
+      "Pop Mart"
+    ]
+  },
+  {
+    "id": "dreams_inc",
+    "displayName": "Dreams Inc.",
+    "aliases": [
+      "Dreams",
+      "Dreams Japan"
     ]
   }
 ]

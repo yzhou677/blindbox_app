@@ -87,6 +87,7 @@ class ShelfSeries {
     this.catalogTemplateId,
     this.taxonomyBrandId,
     this.taxonomyIpId,
+    this.customCoverImageUri,
   });
 
   /// Unique shelf instance id (per user after persistence).
@@ -105,6 +106,10 @@ class ShelfSeries {
   final Color shelfAccent;
   final String? notes;
 
+  /// Local device path or `file:` URI for a user-authored series cover only.
+  /// Catalog-backed rows should leave this null.
+  final String? customCoverImageUri;
+
   int get figureCount => figures.length;
 
   /// User-authored local shelf row (no catalog/drop template key).
@@ -122,6 +127,7 @@ class ShelfFigure {
     required this.seriesId,
     required this.name,
     this.imageUrl,
+    this.localImageUri,
     required this.rarity,
     required this.isSecret,
     this.taxonomyBrandId,
@@ -134,7 +140,12 @@ class ShelfFigure {
   /// Parent [ShelfSeries.id] (series instance, never an IP taxonomy id).
   final String seriesId;
   final String name;
+
+  /// Catalog-resolved asset path, remote art, or legacy placeholder URLs — not [imageKey].
   final String? imageUrl;
+
+  /// User private shelf: local path / `file:` URI only. Never a catalog image key.
+  final String? localImageUri;
   final String rarity;
   final bool isSecret;
 
@@ -223,6 +234,7 @@ ShelfSeries cloneCatalogSeriesOntoShelf(
         seriesId: newShelfSeriesId,
         name: f.name,
         imageUrl: f.imageUrl,
+        localImageUri: null,
         rarity: f.rarity,
         isSecret: f.isSecret,
         taxonomyBrandId: f.taxonomyBrandId ?? template.taxonomyBrandId,
@@ -264,6 +276,7 @@ ShelfSeries shelfSeriesMirrorCatalogTemplate(CatalogSeries template) {
           seriesId: template.templateId,
           name: f.name,
           imageUrl: f.imageUrl,
+          localImageUri: null,
           rarity: f.rarity,
           isSecret: f.isSecret,
           taxonomyBrandId: f.taxonomyBrandId ?? template.taxonomyBrandId,

@@ -1,4 +1,7 @@
+import 'package:blindbox_app/core/media/device_local_ref.dart';
 import 'package:blindbox_app/features/collection/widgets/collectible_figure_placeholder.dart';
+import 'collectible_local_file_image_stub.dart'
+    if (dart.library.io) 'collectible_local_file_image.dart' as shelf_local_image;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
@@ -37,6 +40,19 @@ class CollectibleThumbImage extends StatelessWidget {
         seedKey: seedKey,
         isSecret: isSecret,
         compact: compact,
+      );
+    }
+
+    if (DeviceLocalImageRef.looksLikeDevicePath(ref)) {
+      final path = DeviceLocalImageRef.normalizeToFilePath(ref);
+      return shelf_local_image.buildCollectibleLocalFileImage(
+        filePath: path,
+        name: name,
+        seedKey: seedKey,
+        isSecret: isSecret,
+        compact: compact,
+        fit: fit,
+        borderRadius: borderRadius,
       );
     }
 

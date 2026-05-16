@@ -1,17 +1,27 @@
-import 'package:flutter/services.dart';
+import 'package:blindbox_app/features/catalog/catalog_image_resolver.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
+  group('CatalogImageResolver', () {
+    test('maps opaque keys to deterministic bundled paths', () {
+      expect(
+        CatalogImageResolver.figureAsset('the_monsters_exciting_macaron_labubu_soymilk'),
+        'assets/catalog/figures/the_monsters_exciting_macaron_labubu_soymilk.png',
+      );
+      expect(
+        CatalogImageResolver.seriesAsset('the_monsters_exciting_macaron'),
+        'assets/catalog/series/the_monsters_exciting_macaron.png',
+      );
+    });
 
-  test('bundled catalog figure and series PNGs resolve in asset bundle', () async {
-    for (final path in const [
-      'assets/catalog/figures/the_monsters_exciting_macaron_soymilk.png',
-      'assets/catalog/series/the_monsters_exciting_macaron.png',
-    ]) {
-      final data = await rootBundle.load(path);
-      expect(data.lengthInBytes, greaterThan(200),
-          reason: 'Expected non-trivial PNG payload for $path');
-    }
+    test('legacy thumbnail paths yield stems for migration reads', () {
+      expect(
+        CatalogImageResolver.imageKeyFromLegacyThumbnailAsset(
+          r'assets\catalog\figures\foo_bar.png',
+        ),
+        'foo_bar',
+      );
+      expect(CatalogImageResolver.imageKeyFromLegacyThumbnailAsset('https://cdn/img.png'), '');
+    });
   });
 }

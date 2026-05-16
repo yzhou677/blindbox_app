@@ -1,3 +1,4 @@
+import 'package:blindbox_app/features/catalog/catalog_image_resolver.dart';
 import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_brand.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_figure.dart';
@@ -75,7 +76,8 @@ domain.CatalogSeries? catalogTemplateFromSeedSeries(
           templateFigureId: f.id,
           catalogSeriesTemplateId: series.id,
           name: f.displayName,
-          imageUrl: f.thumbnailAsset.trim().isEmpty ? null : f.thumbnailAsset.trim(),
+          imageUrl:
+              f.imageKey.trim().isEmpty ? null : CatalogImageResolver.figureAsset(f.imageKey),
           rarity: f.rarityLabel?.trim().isNotEmpty == true
               ? f.rarityLabel!.trim()
               : (f.isSecret ? 'Secret' : 'Regular'),

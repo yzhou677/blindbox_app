@@ -3,21 +3,36 @@
     "id": "the_monsters_exciting_macaron",
     "brandId": "pop_mart",
     "ipId": "the_monsters",
-    "displayName": "THE MONSTERS - Exciting Macaron Vinyl Face Blind Box",
-    "releaseDate": "2023-10-27",
+    "displayName": "THE MONSTERS Exciting Macaron Vinyl Face Blind Box",
+    "releaseDate": "2023-10-26",
     "isBlindBox": true,
-    "thumbnailAsset":
-      "assets/catalog/series/the_monsters_exciting_macaron.png"
+    "imageKey": "the_monsters_exciting_macaron"
   },
-
   {
-    "id": "hirono_tamed_wildgrass",
+    "id": "hirono_reshape_series",
     "brandId": "pop_mart",
     "ipId": "hirono",
-    "displayName": "Hirono Tamed Wildgrass Series Figures",
-    "releaseDate": "2026-04-02",
+    "displayName": "HIRONO Reshape Series Figures",
+    "releaseDate": "2023-11-17",
     "isBlindBox": true,
-    "thumbnailAsset":
-      "assets/catalog/series/hirono_tamed_wildgrass.png"
+    "imageKey": "hirono_reshape_series"
+  },
+  {
+    "id": "sonny_angel_animal_series_1",
+    "brandId": "dreams_inc",
+    "ipId": "sonny_angel",
+    "displayName": "Sonny Angel Animal Series Version 1",
+    "releaseDate": null,
+    "isBlindBox": true,
+    "imageKey": "sonny_angel_animal_series_1"
+  },
+  {
+    "id": "smiski_series_1",
+    "brandId": "dreams_inc",
+    "ipId": "smiski",
+    "displayName": "Smiski Series 1",
+    "releaseDate": null,
+    "isBlindBox": true,
+    "imageKey": "smiski_series_1"
   }
 ]

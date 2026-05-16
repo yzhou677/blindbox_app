@@ -22,9 +22,10 @@ void main() {
         'displayName': 'Series',
         'releaseDate': ts,
         'isBlindBox': true,
-        'thumbnailAsset': 'assets/x.png',
+        'imageKey': 's1',
       });
       expect(m['releaseDate'], '2023-10-27');
+      expect(m['imageKey'], 's1');
     });
   });
 
@@ -48,10 +49,11 @@ void main() {
         'displayName': 'Name',
         'isSecret': false,
         'sortOrder': 2.0,
-        'thumbnailAsset': 'assets/f.png',
+        'imageKey': 'fig_1',
       });
       expect(f, isA<CatalogFigure>());
       expect(f!.sortOrder, 2);
+      expect(f.imageKey, 'fig_1');
     });
 
     test('mapFirestoreIp and mapFirestoreSeries', () {
@@ -68,9 +70,10 @@ void main() {
         'displayName': 'Exciting Macaron',
         'releaseDate': '2023-10-27',
         'isBlindBox': true,
-        'thumbnailAsset': 'assets/catalog/series/x.png',
+        'imageKey': 'the_monsters_exciting_macaron',
       });
       expect(s!.displayName, 'Exciting Macaron');
+      expect(s.imageKey, 'the_monsters_exciting_macaron');
     });
 
     test('mapFirestoreBrand fills id from document id when fields sparse', () {

@@ -33,7 +33,7 @@ class BlindboxApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'Blind Box',
-      debugShowCheckedModeBanner: false,
+      debugShowCheckedModeBanner: false, 
       themeMode: ThemeMode.system,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),

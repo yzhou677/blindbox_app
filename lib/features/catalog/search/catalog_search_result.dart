@@ -9,7 +9,7 @@ class CatalogSearchResult {
     required this.seriesName,
     required this.brandId,
     required this.ipId,
-    required this.thumbnailAsset,
+    required this.imageKey,
     required this.isSecret,
   });
 
@@ -18,6 +18,8 @@ class CatalogSearchResult {
   final String seriesName;
   final String brandId;
   final String ipId;
-  final String thumbnailAsset;
+
+  /// Opaque image identity; expand to a display path via `CatalogImageResolver.figureAsset`.
+  final String imageKey;
   final bool isSecret;
 }

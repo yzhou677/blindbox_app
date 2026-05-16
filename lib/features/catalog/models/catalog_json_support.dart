@@ -1,4 +1,6 @@
-// Shared defensive reads for seed JSON / future cache payloads. No Flutter.
+// Shared defensive reads for seed JSON / future cache payloads. No Flutter widgets.
+
+import 'package:blindbox_app/features/catalog/catalog_image_resolver.dart';
 
 List<String> catalogReadStringList(dynamic value) {
   if (value is! List) return const [];
@@ -47,4 +49,28 @@ List<Map<String, dynamic>> catalogReadObjectList(dynamic value) {
     if (m != null) out.add(m);
   }
   return out;
+}
+
+String? catalogReadIsoDateMaybe(Map<String, dynamic> json, String key) {
+  final v = json[key];
+  if (v == null) return null;
+  if (v is String) {
+    final t = v.trim();
+    return t.isEmpty ? null : t;
+  }
+  return v.toString();
+}
+
+/// Prefer explicit `imageKey`, else stem from bundled `thumbnailAsset`, else canonical [fallbackId].
+String catalogReadCatalogImageKey(
+  Map<String, dynamic> json, {
+  required String fallbackId,
+  required String legacyThumbField,
+}) {
+  final k = catalogReadString(json, 'imageKey').trim();
+  if (k.isNotEmpty) return k;
+  final fromThumb = CatalogImageResolver.imageKeyFromLegacyThumbnailAsset(legacyThumbField);
+  if (fromThumb.isNotEmpty) return fromThumb;
+  final fb = fallbackId.trim();
+  return fb;
 }

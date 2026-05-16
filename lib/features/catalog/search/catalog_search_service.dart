@@ -48,7 +48,7 @@ final class CatalogSearchService {
             seriesName: series.displayName,
             brandId: fig.brandId,
             ipId: fig.ipId,
-            thumbnailAsset: fig.thumbnailAsset,
+            imageKey: fig.imageKey,
             isSecret: fig.isSecret,
           ),
           sortOrder: fig.sortOrder,

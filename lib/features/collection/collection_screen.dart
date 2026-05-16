@@ -82,6 +82,8 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
             String? brand,
             String? ipDisplayName,
             required List<String> figureNames,
+            required List<String?> figureLocalImageUris,
+            String? customCoverImageUri,
             String? notes,
           }) {
             ref.read(collectionNotifierProvider.notifier).addCustomSeries(
@@ -89,6 +91,8 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                   brand: brand,
                   ipDisplayName: ipDisplayName,
                   figureNames: figureNames,
+                  figureLocalImageUris: figureLocalImageUris,
+                  customCoverImageUri: customCoverImageUri,
                   notes: notes,
                 );
           },

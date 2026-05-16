@@ -20,6 +20,7 @@ void main() {
               id: 'fig-1',
               seriesId: 'series-a',
               name: 'One',
+              localImageUri: '/tmp/fig.png',
               rarity: 'Regular',
               isSecret: false,
               catalogFigureTemplateId: 'tpl-1',
@@ -29,6 +30,7 @@ void main() {
           catalogTemplateId: 'catalog-series-x',
           taxonomyBrandId: 'pop_mart',
           taxonomyIpId: 'labubu',
+          customCoverImageUri: '/tmp/cover.jpg',
         ),
       ],
       figureStates: {
@@ -37,12 +39,15 @@ void main() {
     );
 
     final json = CollectionSnapshotCodec.encode(snap);
+    expect(json, contains('"v":2'));
     final back = CollectionSnapshotCodec.tryDecode(json);
     expect(back, isNotNull);
     expect(back!.shelfSeries, hasLength(1));
     expect(back.shelfSeries.single.catalogTemplateId, 'catalog-series-x');
     expect(back.shelfSeries.single.shelfAccent, accent);
+    expect(back.shelfSeries.single.customCoverImageUri, '/tmp/cover.jpg');
     expect(back.shelfSeries.single.figures.single.catalogFigureTemplateId, 'tpl-1');
+    expect(back.shelfSeries.single.figures.single.localImageUri, '/tmp/fig.png');
     expect(back.figureStates['fig-1']?.state, FigureCollectionState.wishlist);
   });
 

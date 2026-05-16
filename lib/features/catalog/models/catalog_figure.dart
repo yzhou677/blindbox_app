@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-import 'catalog_json_support.dart';
+import 'package:blindbox_app/features/catalog/models/catalog_json_support.dart';
 
 @immutable
 class CatalogFigure {
@@ -13,7 +13,7 @@ class CatalogFigure {
     required this.isSecret,
     this.rarityLabel,
     required this.sortOrder,
-    required this.thumbnailAsset,
+    required this.imageKey,
   });
 
   final String id;
@@ -24,12 +24,15 @@ class CatalogFigure {
   final bool isSecret;
   final String? rarityLabel;
   final int sortOrder;
-  final String thumbnailAsset;
+
+  /// Opaque illustration id (matches canonical figure [id]); resolves via [CatalogImageResolver].
+  final String imageKey;
 
   factory CatalogFigure.fromJson(Map<String, dynamic> json) {
     final rarityStr = catalogReadString(json, 'rarityLabel');
+    final id = catalogReadString(json, 'id');
     return CatalogFigure(
-      id: catalogReadString(json, 'id'),
+      id: id,
       seriesId: catalogReadString(json, 'seriesId'),
       brandId: catalogReadString(json, 'brandId'),
       ipId: catalogReadString(json, 'ipId'),
@@ -37,7 +40,11 @@ class CatalogFigure {
       isSecret: catalogReadBool(json, 'isSecret'),
       rarityLabel: rarityStr.isEmpty ? null : rarityStr,
       sortOrder: catalogReadInt(json, 'sortOrder'),
-      thumbnailAsset: catalogReadString(json, 'thumbnailAsset').trim(),
+      imageKey: catalogReadCatalogImageKey(
+        json,
+        fallbackId: id,
+        legacyThumbField: catalogReadString(json, 'thumbnailAsset'),
+      ),
     );
   }
 }

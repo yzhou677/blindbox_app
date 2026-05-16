@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:blindbox_app/core/data/collectible_placeholder_art.dart';
 import 'package:blindbox_app/features/collection/bootstrap/collection_app_bootstrap.dart';
 import 'package:blindbox_app/features/collection/data/series_release_lookup.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
@@ -83,6 +82,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       seriesId: seriesId,
       name: c.name,
       imageUrl: c.imageUrl,
+      localImageUri: null,
       rarity: 'Regular',
       isSecret: false,
     );
@@ -118,6 +118,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
           seriesId: seriesId,
           name: slot.name,
           imageUrl: slot.imageUrl,
+          localImageUri: null,
           rarity: slot.isSecret ? 'Secret' : 'Regular',
           isSecret: slot.isSecret,
           taxonomyBrandId: release.taxonomyBrandId,
@@ -167,6 +168,8 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
     String? brand,
     String? ipDisplayName,
     required List<String> figureNames,
+    List<String?>? figureLocalImageUris,
+    String? customCoverImageUri,
     String? notes,
   }) {
     final seriesId = 'custom-${DateTime.now().microsecondsSinceEpoch}';
@@ -185,17 +188,21 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
         ? seriesName.trim()
         : ipDisplayName!.trim();
     final figures = <ShelfFigure>[];
+    final perFigUris = figureLocalImageUris ?? const <String?>[];
     var i = 0;
     for (final raw in figureNames) {
       final name = raw.trim();
       if (name.isEmpty) continue;
       final fid = '$seriesId-f-$i';
+      final rawUri = i < perFigUris.length ? perFigUris[i] : null;
+      final local = rawUri?.trim();
       figures.add(
         ShelfFigure(
           id: fid,
           seriesId: seriesId,
           name: name,
-          imageUrl: placeholderCollectibleArtUrl('$seriesId-$i', 'f5f5f5'),
+          imageUrl: null,
+          localImageUri: (local != null && local.isNotEmpty) ? local : null,
           rarity: 'Custom',
           isSecret: false,
         ),
@@ -204,6 +211,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
     }
     if (figures.isEmpty) return;
     final trimmedNotes = notes?.trim();
+    final trimmedCover = customCoverImageUri?.trim();
     final series = ShelfSeries(
       id: seriesId,
       name: seriesName.trim(),
@@ -213,6 +221,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       shelfAccent: accent,
       notes: (trimmedNotes == null || trimmedNotes.isEmpty) ? null : trimmedNotes,
       catalogTemplateId: null,
+      customCoverImageUri: (trimmedCover != null && trimmedCover.isNotEmpty) ? trimmedCover : null,
     );
     _commit(
       CollectionSnapshot(

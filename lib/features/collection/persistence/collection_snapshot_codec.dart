@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:flutter/material.dart';
 
-const _schemaVersion = 1;
+const _schemaVersion = 2;
 
 /// JSON payload for [CollectionSnapshot] — no [Color] in wire shape (ARGB int only).
 abstract final class CollectionSnapshotCodec {
@@ -60,6 +60,7 @@ abstract final class CollectionSnapshotCodec {
       'catalogTemplateId': s.catalogTemplateId,
       'taxonomyBrandId': s.taxonomyBrandId,
       'taxonomyIpId': s.taxonomyIpId,
+      'customCoverImageUri': s.customCoverImageUri,
       'shelfAccentArgb': _colorToArgb(s.shelfAccent),
       'figures': [for (final f in s.figures) _figureToJson(f)],
     };
@@ -94,6 +95,7 @@ abstract final class CollectionSnapshotCodec {
       catalogTemplateId: m['catalogTemplateId'] as String?,
       taxonomyBrandId: m['taxonomyBrandId'] as String?,
       taxonomyIpId: m['taxonomyIpId'] as String?,
+      customCoverImageUri: m['customCoverImageUri'] as String?,
     );
   }
 
@@ -103,6 +105,7 @@ abstract final class CollectionSnapshotCodec {
       'seriesId': f.seriesId,
       'name': f.name,
       'imageUrl': f.imageUrl,
+      'localImageUri': f.localImageUri,
       'rarity': f.rarity,
       'isSecret': f.isSecret,
       'taxonomyBrandId': f.taxonomyBrandId,
@@ -125,6 +128,7 @@ abstract final class CollectionSnapshotCodec {
       seriesId: seriesId,
       name: name,
       imageUrl: m['imageUrl'] as String?,
+      localImageUri: m['localImageUri'] as String?,
       rarity: rarity,
       isSecret: isSecret,
       taxonomyBrandId: m['taxonomyBrandId'] as String?,

@@ -29,12 +29,14 @@ void main() {
           "displayName": "Series A",
           "releaseDate": "2026-04-02",
           "isBlindBox": true,
-          "thumbnailAsset": "assets/catalog/series/a.png"
+          "imageKey": "s1",
+          "thumbnailAsset": "assets/catalog/series/legacy-can-be-ignored.png"
         }
       ]''';
       final series = parseCatalogSeriesJson(seriesJson);
       expect(series.single.releaseDate, '2026-04-02');
       expect(series.single.isBlindBox, true);
+      expect(series.single.imageKey, 's1');
 
       const figuresJson = r'''[
         {
@@ -45,7 +47,7 @@ void main() {
           "displayName": "Fig",
           "isSecret": false,
           "sortOrder": 2,
-          "thumbnailAsset": "assets/catalog/figures/f.png"
+          "thumbnailAsset": "assets/catalog/figures/f1.png"
         },
         {
           "id": "f2",
@@ -56,13 +58,15 @@ void main() {
           "isSecret": true,
           "rarityLabel": "1/72",
           "sortOrder": 999,
-          "thumbnailAsset": "assets/catalog/figures/c.png"
+          "thumbnailAsset": "assets/catalog/figures/f2.png"
         }
       ]''';
       final figures = parseCatalogFiguresJson(figuresJson);
       expect(figures.first.rarityLabel, isNull);
       expect(figures.last.rarityLabel, '1/72');
       expect(figures.last.sortOrder, 999);
+      expect(figures.first.imageKey, 'f1');
+      expect(figures.last.imageKey, 'f2');
     });
 
     test('non-array JSON yields empty lists', () {

@@ -1,38 +1,310 @@
 [
   {
-    "id": "the_monsters_exciting_macaron_soymilk",
+    "id": "the_monsters_exciting_macaron_labubu_soymilk",
     "seriesId": "the_monsters_exciting_macaron",
     "brandId": "pop_mart",
     "ipId": "the_monsters",
     "displayName": "Soymilk",
     "isSecret": false,
+    "rarityLabel": null,
     "sortOrder": 1,
-    "thumbnailAsset":
-      "assets/catalog/figures/the_monsters_exciting_macaron_soymilk.png"
+    "imageKey": "the_monsters_exciting_macaron_labubu_soymilk"
   },
-
   {
-    "id": "the_monsters_exciting_macaron_lychee_berry",
+    "id": "the_monsters_exciting_macaron_labubu_lychee_berry",
     "seriesId": "the_monsters_exciting_macaron",
     "brandId": "pop_mart",
     "ipId": "the_monsters",
     "displayName": "Lychee Berry",
     "isSecret": false,
+    "rarityLabel": null,
     "sortOrder": 2,
-    "thumbnailAsset":
-      "assets/catalog/figures/the_monsters_exciting_macaron_lychee_berry.png"
+    "imageKey": "the_monsters_exciting_macaron_labubu_lychee_berry"
   },
-
   {
-    "id": "the_monsters_exciting_macaron_chestnut_cocoa",
+    "id": "the_monsters_exciting_macaron_labubu_green_grape",
+    "seriesId": "the_monsters_exciting_macaron",
+    "brandId": "pop_mart",
+    "ipId": "the_monsters",
+    "displayName": "Green Grape",
+    "isSecret": false,
+    "rarityLabel": null,
+    "sortOrder": 3,
+    "imageKey": "the_monsters_exciting_macaron_labubu_green_grape"
+  },
+  {
+    "id": "the_monsters_exciting_macaron_labubu_sea_salt_coconut",
+    "seriesId": "the_monsters_exciting_macaron",
+    "brandId": "pop_mart",
+    "ipId": "the_monsters",
+    "displayName": "Sea Salt Coconut",
+    "isSecret": false,
+    "rarityLabel": null,
+    "sortOrder": 4,
+    "imageKey": "the_monsters_exciting_macaron_labubu_sea_salt_coconut"
+  },
+  {
+    "id": "the_monsters_exciting_macaron_labubu_toffee",
+    "seriesId": "the_monsters_exciting_macaron",
+    "brandId": "pop_mart",
+    "ipId": "the_monsters",
+    "displayName": "Toffee",
+    "isSecret": false,
+    "rarityLabel": null,
+    "sortOrder": 5,
+    "imageKey": "the_monsters_exciting_macaron_labubu_toffee"
+  },
+  {
+    "id": "the_monsters_exciting_macaron_labubu_sesame_bean",
+    "seriesId": "the_monsters_exciting_macaron",
+    "brandId": "pop_mart",
+    "ipId": "the_monsters",
+    "displayName": "Sesame Bean",
+    "isSecret": false,
+    "rarityLabel": null,
+    "sortOrder": 6,
+    "imageKey": "the_monsters_exciting_macaron_labubu_sesame_bean"
+  },
+  {
+    "id": "the_monsters_exciting_macaron_labubu_chestnut_cocoa_secret",
     "seriesId": "the_monsters_exciting_macaron",
     "brandId": "pop_mart",
     "ipId": "the_monsters",
     "displayName": "Chestnut Cocoa",
     "isSecret": true,
     "rarityLabel": "1/72",
-    "sortOrder": 999,
-    "thumbnailAsset":
-      "assets/catalog/figures/the_monsters_exciting_macaron_chestnut_cocoa.png"
+    "sortOrder": 7,
+    "imageKey": "the_monsters_exciting_macaron_labubu_chestnut_cocoa_secret"
+  },
+  {
+    "id": "hirono_reshape_series_hirono_paradise_lost",
+    "seriesId": "hirono_reshape_series",
+    "brandId": "pop_mart",
+    "ipId": "hirono",
+    "displayName": "Paradise Lost",
+    "isSecret": false,
+    "rarityLabel": null,
+    "sortOrder": 1,
+    "imageKey": "hirono_reshape_series_hirono_paradise_lost"
+  },
+  {
+    "id": "hirono_reshape_series_hirono_burst",
+    "seriesId": "hirono_reshape_series",
+    "brandId": "pop_mart",
+    "ipId": "hirono",
+    "displayName": "Burst",
+    "isSecret": false,
+    "rarityLabel": null,
+    "sortOrder": 2,
+    "imageKey": "hirono_reshape_series_hirono_burst"
+  },
+  {
+    "id": "hirono_reshape_series_hirono_healing",
+    "seriesId": "hirono_reshape_series",
+    "brandId": "pop_mart",
+    "ipId": "hirono",
+    "displayName": "Healing",
+    "isSecret": false,
+    "rarityLabel": null,
+    "sortOrder": 3,
+    "imageKey": "hirono_reshape_series_hirono_healing"
+  },
+  {
+    "id": "hirono_reshape_series_hirono_drifter",
+    "seriesId": "hirono_reshape_series",
+    "brandId": "pop_mart",
+    "ipId": "hirono",
+    "displayName": "Drifter",
+    "isSecret": false,
+    "rarityLabel": null,
+    "sortOrder": 4,
+    "imageKey": "hirono_reshape_series_hirono_drifter"
+  },
+  {
+    "id": "hirono_reshape_series_hirono_woodcarving",
+    "seriesId": "hirono_reshape_series",
+    "brandId": "pop_mart",
+    "ipId": "hirono",
+    "displayName": "Woodcarving",
+    "isSecret": false,
+    "rarityLabel": null,
+    "sortOrder": 5,
+    "imageKey": "hirono_reshape_series_hirono_woodcarving"
+  },
+  {
+    "id": "hirono_reshape_series_hirono_being_alive",
+    "seriesId": "hirono_reshape_series",
+    "brandId": "pop_mart",
+    "ipId": "hirono",
+    "displayName": "Being Alive",
+    "isSecret": false,
+    "rarityLabel": null,
+    "sortOrder": 6,
+    "imageKey": "hirono_reshape_series_hirono_being_alive"
+  },
+  {
+    "id": "hirono_reshape_series_hirono_traffic_cone",
+    "seriesId": "hirono_reshape_series",
+    "brandId": "pop_mart",
+    "ipId": "hirono",
+    "displayName": "Traffic Cone",
+    "isSecret": false,
+    "rarityLabel": null,
+    "sortOrder": 7,
+    "imageKey": "hirono_reshape_series_hirono_traffic_cone"
+  },
+  {
+    "id": "hirono_reshape_series_hirono_puppet",
+    "seriesId": "hirono_reshape_series",
+    "brandId": "pop_mart",
+    "ipId": "hirono",
+    "displayName": "Puppet",
+    "isSecret": false,
+    "rarityLabel": null,
+    "sortOrder": 8,
+    "imageKey": "hirono_reshape_series_hirono_puppet"
+  },
+  {
+    "id": "hirono_reshape_series_hirono_unknown_journey_secret",
+    "seriesId": "hirono_reshape_series",
+    "brandId": "pop_mart",
+    "ipId": "hirono",
+    "displayName": "Unknown Journey",
+    "isSecret": true,
+    "rarityLabel": "1/72",
+    "sortOrder": 9,
+    "imageKey": "hirono_reshape_series_hirono_unknown_journey_secret"
+  },
+  {
+    "id": "sonny_angel_animal_series_1_sonny_angel_rabbit",
+    "seriesId": "sonny_angel_animal_series_1",
+    "brandId": "dreams_inc",
+    "ipId": "sonny_angel",
+    "displayName": "Rabbit",
+    "isSecret": false,
+    "rarityLabel": null,
+    "sortOrder": 1,
+    "imageKey": "sonny_angel_animal_series_1_sonny_angel_rabbit"
+  },
+  {
+    "id": "sonny_angel_animal_series_1_sonny_angel_frog",
+    "seriesId": "sonny_angel_animal_series_1",
+    "brandId": "dreams_inc",
+    "ipId": "sonny_angel",
+    "displayName": "Frog",
+    "isSecret": false,
+    "rarityLabel": null,
+    "sortOrder": 2,
+    "imageKey": "sonny_angel_animal_series_1_sonny_angel_frog"
+  },
+  {
+    "id": "sonny_angel_animal_series_1_sonny_angel_elephant",
+    "seriesId": "sonny_angel_animal_series_1",
+    "brandId": "dreams_inc",
+    "ipId": "sonny_angel",
+    "displayName": "Elephant",
+    "isSecret": false,
+    "rarityLabel": null,
+    "sortOrder": 3,
+    "imageKey": "sonny_angel_animal_series_1_sonny_angel_elephant"
+  },
+  {
+    "id": "sonny_angel_animal_series_1_sonny_angel_lion",
+    "seriesId": "sonny_angel_animal_series_1",
+    "brandId": "dreams_inc",
+    "ipId": "sonny_angel",
+    "displayName": "Lion",
+    "isSecret": false,
+    "rarityLabel": null,
+    "sortOrder": 4,
+    "imageKey": "sonny_angel_animal_series_1_sonny_angel_lion"
+  },
+  {
+    "id": "sonny_angel_animal_series_1_sonny_angel_panda",
+    "seriesId": "sonny_angel_animal_series_1",
+    "brandId": "dreams_inc",
+    "ipId": "sonny_angel",
+    "displayName": "Panda",
+    "isSecret": false,
+    "rarityLabel": null,
+    "sortOrder": 5,
+    "imageKey": "sonny_angel_animal_series_1_sonny_angel_panda"
+  },
+  {
+    "id": "sonny_angel_animal_series_1_sonny_angel_secret_robby",
+    "seriesId": "sonny_angel_animal_series_1",
+    "brandId": "dreams_inc",
+    "ipId": "sonny_angel",
+    "displayName": "Robby Angel",
+    "isSecret": true,
+    "rarityLabel": "1/144",
+    "sortOrder": 6,
+    "imageKey": "sonny_angel_animal_series_1_sonny_angel_secret_robby"
+  },
+  {
+    "id": "smiski_series_1_smiski_hiding",
+    "seriesId": "smiski_series_1",
+    "brandId": "dreams_inc",
+    "ipId": "smiski",
+    "displayName": "Hiding",
+    "isSecret": false,
+    "rarityLabel": null,
+    "sortOrder": 1,
+    "imageKey": "smiski_series_1_smiski_hiding"
+  },
+  {
+    "id": "smiski_series_1_smiski_peeking",
+    "seriesId": "smiski_series_1",
+    "brandId": "dreams_inc",
+    "ipId": "smiski",
+    "displayName": "Peeking",
+    "isSecret": false,
+    "rarityLabel": null,
+    "sortOrder": 2,
+    "imageKey": "smiski_series_1_smiski_peeking"
+  },
+  {
+    "id": "smiski_series_1_smiski_hugging_knees",
+    "seriesId": "smiski_series_1",
+    "brandId": "dreams_inc",
+    "ipId": "smiski",
+    "displayName": "Hugging Knees",
+    "isSecret": false,
+    "rarityLabel": null,
+    "sortOrder": 3,
+    "imageKey": "smiski_series_1_smiski_hugging_knees"
+  },
+  {
+    "id": "smiski_series_1_smiski_looking_back",
+    "seriesId": "smiski_series_1",
+    "brandId": "dreams_inc",
+    "ipId": "smiski",
+    "displayName": "Looking Back",
+    "isSecret": false,
+    "rarityLabel": null,
+    "sortOrder": 4,
+    "imageKey": "smiski_series_1_smiski_looking_back"
+  },
+  {
+    "id": "smiski_series_1_smiski_sleeping",
+    "seriesId": "smiski_series_1",
+    "brandId": "dreams_inc",
+    "ipId": "smiski",
+    "displayName": "Sleeping",
+    "isSecret": false,
+    "rarityLabel": null,
+    "sortOrder": 5,
+    "imageKey": "smiski_series_1_smiski_sleeping"
+  },
+  {
+    "id": "smiski_series_1_smiski_secret_series_1",
+    "seriesId": "smiski_series_1",
+    "brandId": "dreams_inc",
+    "ipId": "smiski",
+    "displayName": "Secret Smiski",
+    "isSecret": true,
+    "rarityLabel": "1/144",
+    "sortOrder": 6,
+    "imageKey": "smiski_series_1_smiski_secret_series_1"
   }
 ]

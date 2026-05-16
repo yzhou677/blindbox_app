@@ -1,3 +1,4 @@
+import 'package:blindbox_app/features/catalog/catalog_image_resolver.dart';
 import 'package:blindbox_app/features/catalog/adapters/catalog_seed_to_collection_template.dart';
 import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_series.dart' as seed_catalog;
@@ -105,9 +106,12 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
       if (series == null) {
         throw StateError('Catalog seed missing series $sid');
       }
-      final seriesCover = series.thumbnailAsset.trim();
-      final fallbackFig = agg.firstHit.thumbnailAsset.trim();
-      final cover = seriesCover.isNotEmpty ? seriesCover : fallbackFig;
+      final seriesPath =
+          series.imageKey.trim().isEmpty ? '' : CatalogImageResolver.seriesAsset(series.imageKey);
+      final figurePath = agg.firstHit.imageKey.trim().isEmpty
+          ? ''
+          : CatalogImageResolver.figureAsset(agg.firstHit.imageKey);
+      final cover = seriesPath.isNotEmpty ? seriesPath : figurePath;
 
       final names = agg.matchedFigureNames.toList()..sort();
       final matchLine =
