@@ -67,7 +67,8 @@ flutter:
   assets:
     - assets/images/app_icon.png
     - assets/market/fake_ebay_browse_items.json
-    - assets/catalog/
+    - assets/catalog/figures/
+    - assets/catalog/series/
     - tools/seed/
 
   # An image asset can refer to one or more resolution-specific "variants", see

@@ -1,5 +1,6 @@
 import 'package:blindbox_app/features/catalog/adapters/catalog_seed_to_collection_template.dart';
 import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+import 'package:blindbox_app/features/catalog/models/catalog_series.dart' as seed_catalog;
 import 'package:blindbox_app/features/catalog/search/catalog_search_result.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_service.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
@@ -46,24 +47,17 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
 
   bool get _hasSearchText => _trimmedQuery.isNotEmpty;
 
-  String? _seriesIdForFigure(CatalogSeedBundle bundle, String figureId) {
-    for (final f in bundle.figures) {
-      if (f.id == figureId) return f.seriesId;
-    }
-    return null;
-  }
-
-  String _brandIpLine(CatalogSeedBundle bundle, CatalogSearchResult r) {
-    var brandName = r.brandId;
+  String _brandIpLineForSeries(CatalogSeedBundle bundle, seed_catalog.CatalogSeries series) {
+    var brandName = series.brandId;
     for (final b in bundle.brands) {
-      if (b.id == r.brandId) {
+      if (b.id == series.brandId) {
         brandName = b.displayName;
         break;
       }
     }
-    var ipName = r.ipId;
+    var ipName = series.ipId;
     for (final i in bundle.ips) {
-      if (i.id == r.ipId) {
+      if (i.id == series.ipId) {
         ipName = i.displayName;
         break;
       }
@@ -71,21 +65,63 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     return '$brandName · $ipName';
   }
 
-  List<CatalogSearchResult> _catalogMatches({
+  /// One row per series; order follows [CatalogSearchService] ranking (first hit
+  /// per series defines list position and cover / match copy).
+  List<_SeriesSearchRow> _seriesSearchRows({
     required CatalogSeedBundle bundle,
     required CollectionSnapshot snap,
     required String query,
   }) {
     final svc = CatalogSearchService(bundle);
     final raw = svc.search(query);
-    final out = <CatalogSearchResult>[];
+    final figureSeriesId = {for (final f in bundle.figures) f.id: f.seriesId};
+    final seriesById = {for (final s in bundle.series) s.id: s};
+
+    final order = <String>[];
+    final groups = <String, _SeriesSearchAgg>{};
+
     for (final r in raw) {
-      final sid = _seriesIdForFigure(bundle, r.figureId);
-      if (sid != null && !snap.hasTemplateOnShelf(sid)) {
-        out.add(r);
+      final sid = figureSeriesId[r.figureId];
+      if (sid == null) continue;
+      if (snap.hasTemplateOnShelf(sid)) continue;
+
+      final existing = groups[sid];
+      if (existing == null) {
+        order.add(sid);
+        groups[sid] = _SeriesSearchAgg(
+          firstHit: r,
+          matchedFigureNames: {r.figureName},
+          hasAnySecret: r.isSecret,
+        );
+      } else {
+        existing.matchedFigureNames.add(r.figureName);
+        existing.hasAnySecret = existing.hasAnySecret || r.isSecret;
       }
     }
-    return out;
+
+    return order.map((sid) {
+      final agg = groups[sid]!;
+      final series = seriesById[sid];
+      if (series == null) {
+        throw StateError('Catalog seed missing series $sid');
+      }
+      final seriesCover = series.thumbnailAsset.trim();
+      final fallbackFig = agg.firstHit.thumbnailAsset.trim();
+      final cover = seriesCover.isNotEmpty ? seriesCover : fallbackFig;
+
+      final names = agg.matchedFigureNames.toList()..sort();
+      final matchLine =
+          names.length == 1 ? 'Includes ${names.first}' : 'Matched: ${names.join(', ')}';
+
+      return _SeriesSearchRow(
+        seriesId: sid,
+        seriesTitle: series.displayName,
+        coverImageRef: cover,
+        matchLine: matchLine,
+        brandIpLine: _brandIpLineForSeries(bundle, series),
+        hasAnySecret: agg.hasAnySecret,
+      );
+    }).toList(growable: false);
   }
 
   @override
@@ -189,7 +225,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
-                  'Catalog matches',
+                  'Matching series',
                   style: textTheme.labelLarge?.copyWith(
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.12,
@@ -327,7 +363,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
       );
     }
 
-    final matches = _catalogMatches(bundle: bundle, snap: snap, query: _trimmedQuery);
+    final matches = _seriesSearchRows(bundle: bundle, snap: snap, query: _trimmedQuery);
     if (matches.isEmpty) {
       return Center(
         child: Text(
@@ -344,14 +380,11 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
       itemCount: matches.length,
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (ctx, i) {
-        final r = matches[i];
-        return _SeedCatalogSearchResultCard(
-          result: r,
-          brandIpLine: _brandIpLine(bundle, r),
+        final row = matches[i];
+        return _SeriesCatalogSearchRowCard(
+          row: row,
           onAdd: () {
-            final sid = _seriesIdForFigure(bundle, r.figureId);
-            if (sid == null) return;
-            final template = catalogTemplateFromSeedSeries(bundle, sid);
+            final template = catalogTemplateFromSeedSeries(bundle, row.seriesId);
             if (template != null) notifier.addSeriesFromTemplate(template);
             Navigator.of(ctx).pop();
           },
@@ -361,15 +394,43 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
   }
 }
 
-class _SeedCatalogSearchResultCard extends StatelessWidget {
-  const _SeedCatalogSearchResultCard({
-    required this.result,
+class _SeriesSearchAgg {
+  _SeriesSearchAgg({
+    required this.firstHit,
+    required this.matchedFigureNames,
+    required this.hasAnySecret,
+  });
+
+  final CatalogSearchResult firstHit;
+  final Set<String> matchedFigureNames;
+  bool hasAnySecret;
+}
+
+class _SeriesSearchRow {
+  const _SeriesSearchRow({
+    required this.seriesId,
+    required this.seriesTitle,
+    required this.coverImageRef,
+    required this.matchLine,
     required this.brandIpLine,
+    required this.hasAnySecret,
+  });
+
+  final String seriesId;
+  final String seriesTitle;
+  final String coverImageRef;
+  final String matchLine;
+  final String brandIpLine;
+  final bool hasAnySecret;
+}
+
+class _SeriesCatalogSearchRowCard extends StatelessWidget {
+  const _SeriesCatalogSearchRowCard({
+    required this.row,
     required this.onAdd,
   });
 
-  final CatalogSearchResult result;
-  final String brandIpLine;
+  final _SeriesSearchRow row;
   final VoidCallback onAdd;
 
   @override
@@ -390,11 +451,11 @@ class _SeedCatalogSearchResultCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(22),
             border: Border.all(
-              color: result.isSecret
+              color: row.hasAnySecret
                   ? secretTint.withValues(alpha: 0.38)
                   : scheme.outlineVariant.withValues(alpha: 0.35),
             ),
-            color: result.isSecret
+            color: row.hasAnySecret
                 ? Color.lerp(scheme.surfaceContainerLow, secretTint, 0.07)
                 : scheme.surfaceContainerLow,
           ),
@@ -407,10 +468,10 @@ class _SeedCatalogSearchResultCard extends StatelessWidget {
                   width: 56,
                   height: 56,
                   child: CollectibleThumbImage(
-                    imageRef: result.thumbnailAsset,
-                    name: result.figureName,
-                    seedKey: result.figureId,
-                    isSecret: result.isSecret,
+                    imageRef: row.coverImageRef,
+                    name: row.seriesTitle,
+                    seedKey: row.seriesId,
+                    isSecret: row.hasAnySecret,
                     compact: true,
                     fit: BoxFit.cover,
                     borderRadius: BorderRadius.circular(14),
@@ -425,14 +486,14 @@ class _SeedCatalogSearchResultCard extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              result.figureName,
+                              row.seriesTitle,
                               style: textTheme.titleSmall?.copyWith(
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: -0.14,
                               ),
                             ),
                           ),
-                          if (result.isSecret)
+                          if (row.hasAnySecret)
                             Padding(
                               padding: const EdgeInsets.only(left: 6),
                               child: Icon(
@@ -445,7 +506,7 @@ class _SeedCatalogSearchResultCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        result.seriesName,
+                        row.matchLine,
                         style: textTheme.bodySmall?.copyWith(
                           color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
                           fontWeight: FontWeight.w500,
@@ -454,7 +515,7 @@ class _SeedCatalogSearchResultCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        brandIpLine,
+                        row.brandIpLine,
                         style: textTheme.labelMedium?.copyWith(
                           color: scheme.onSurfaceVariant.withValues(alpha: 0.68),
                         ),

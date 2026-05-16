@@ -37,7 +37,7 @@ class CatalogFigure {
       isSecret: catalogReadBool(json, 'isSecret'),
       rarityLabel: rarityStr.isEmpty ? null : rarityStr,
       sortOrder: catalogReadInt(json, 'sortOrder'),
-      thumbnailAsset: catalogReadString(json, 'thumbnailAsset'),
+      thumbnailAsset: catalogReadString(json, 'thumbnailAsset').trim(),
     );
   }
 }

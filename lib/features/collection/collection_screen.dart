@@ -53,7 +53,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       builder: (ctx) {
         return AlertDialog(
           title: const Text('Remove series?'),
-          content: Text('“$name” will leave your shelf (mock data only).'),
+          content: Text('“$name” will leave your shelf.'),
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
             FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Remove')),

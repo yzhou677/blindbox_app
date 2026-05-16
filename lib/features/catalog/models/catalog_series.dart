@@ -34,7 +34,7 @@ class CatalogSeries {
       displayName: catalogReadString(json, 'displayName'),
       releaseDate: catalogReadString(json, 'releaseDate'),
       isBlindBox: catalogReadBool(json, 'isBlindBox'),
-      thumbnailAsset: catalogReadString(json, 'thumbnailAsset'),
+      thumbnailAsset: catalogReadString(json, 'thumbnailAsset').trim(),
     );
   }
 }

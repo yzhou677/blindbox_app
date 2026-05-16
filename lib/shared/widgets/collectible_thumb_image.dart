@@ -46,12 +46,15 @@ class CollectibleThumbImage extends StatelessWidget {
         child: Image.asset(
           ref,
           fit: fit,
-          errorBuilder: (context, error, stackTrace) => CollectibleFigurePlaceholder(
-            name: name,
-            seedKey: seedKey,
-            isSecret: isSecret,
-            compact: compact,
-          ),
+          errorBuilder: (context, error, stackTrace) {
+            debugPrint('CollectibleThumbImage: failed to load asset "$ref": $error');
+            return CollectibleFigurePlaceholder(
+              name: name,
+              seedKey: seedKey,
+              isSecret: isSecret,
+              compact: compact,
+            );
+          },
         ),
       );
     }
