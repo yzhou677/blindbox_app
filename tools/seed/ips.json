@@ -1,0 +1,16 @@
+[
+  {
+    "id": "the_monsters",
+    "brandId": "pop_mart",
+    "displayName": "The Monsters",
+    "aliases": [
+      "LABUBU"
+    ]
+  },
+  {
+    "id": "hirono",
+    "brandId": "pop_mart",
+    "displayName": "Hirono",
+    "aliases": []
+  }
+]

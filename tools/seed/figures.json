@@ -1,0 +1,38 @@
+[
+  {
+    "id": "the_monsters_exciting_macaron_soymilk",
+    "seriesId": "the_monsters_exciting_macaron",
+    "brandId": "pop_mart",
+    "ipId": "the_monsters",
+    "displayName": "Soymilk",
+    "isSecret": false,
+    "sortOrder": 1,
+    "thumbnailAsset":
+      "assets/catalog/figures/the_monsters_exciting_macaron_soymilk.png"
+  },
+
+  {
+    "id": "the_monsters_exciting_macaron_lychee_berry",
+    "seriesId": "the_monsters_exciting_macaron",
+    "brandId": "pop_mart",
+    "ipId": "the_monsters",
+    "displayName": "Lychee Berry",
+    "isSecret": false,
+    "sortOrder": 2,
+    "thumbnailAsset":
+      "assets/catalog/figures/the_monsters_exciting_macaron_lychee_berry.png"
+  },
+
+  {
+    "id": "the_monsters_exciting_macaron_chestnut_cocoa",
+    "seriesId": "the_monsters_exciting_macaron",
+    "brandId": "pop_mart",
+    "ipId": "the_monsters",
+    "displayName": "Chestnut Cocoa",
+    "isSecret": true,
+    "rarityLabel": "1/72",
+    "sortOrder": 999,
+    "thumbnailAsset":
+      "assets/catalog/figures/the_monsters_exciting_macaron_chestnut_cocoa.png"
+  }
+]

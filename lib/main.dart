@@ -12,7 +12,9 @@ Future<void> main() async {
   runApp(
     ProviderScope(
       overrides: [
-        seriesReleaseLookupProvider.overrideWithValue(mockSeriesReleaseByDropId),
+        seriesReleaseLookupProvider.overrideWithValue(
+          mockSeriesReleaseByDropId,
+        ),
       ],
       child: const BlindboxApp(),
     ),
