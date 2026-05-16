@@ -8,6 +8,7 @@ import 'package:blindbox_app/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 List<Override> _blindboxTestOverrides() => [
       seriesReleaseLookupProvider.overrideWithValue(mockSeriesReleaseByDropId),
@@ -19,6 +20,9 @@ final class EmptyTestCollectionNotifier extends CollectionNotifier {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  SharedPreferences.setMockInitialValues({});
+
   testWidgets('App shell shows Home tab', (WidgetTester tester) async {
     await tester.pumpWidget(
       ProviderScope(

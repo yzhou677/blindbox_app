@@ -145,24 +145,31 @@ class ShelfFigure {
   final String? catalogFigureTemplateId;
 }
 
-/// Runtime ownership for one figure id.
+/// User progress for one figure slot (wishlist → owned → none); mutually exclusive.
+enum FigureCollectionState {
+  none,
+  wishlist,
+  owned,
+}
+
+/// Runtime ownership for one shelf figure id ([ShelfFigure.id] instance key).
 @immutable
 class TrackedFigure {
   const TrackedFigure({
     required this.figureId,
-    required this.owned,
-    required this.wishlist,
+    required this.state,
   });
 
   final String figureId;
-  final bool owned;
-  final bool wishlist;
+  final FigureCollectionState state;
 
-  TrackedFigure copyWith({bool? owned, bool? wishlist}) {
+  bool get owned => state == FigureCollectionState.owned;
+  bool get wishlist => state == FigureCollectionState.wishlist;
+
+  TrackedFigure copyWith({FigureCollectionState? state}) {
     return TrackedFigure(
       figureId: figureId,
-      owned: owned ?? this.owned,
-      wishlist: wishlist ?? this.wishlist,
+      state: state ?? this.state,
     );
   }
 }
@@ -189,9 +196,9 @@ SeriesProgressCounts progressForSeries(ShelfSeries series, Map<String, TrackedFi
   var m = 0;
   for (final f in series.figures) {
     final t = states[f.id];
-    if (t?.owned == true) {
+    if (t?.state == FigureCollectionState.owned) {
       o++;
-    } else if (t?.wishlist == true) {
+    } else if (t?.state == FigureCollectionState.wishlist) {
       w++;
     } else {
       m++;
@@ -288,7 +295,7 @@ class CollectionSnapshot {
   int get totalOwnedFigures {
     var c = 0;
     for (final t in figureStates.values) {
-      if (t.owned) c++;
+      if (t.state == FigureCollectionState.owned) c++;
     }
     return c;
   }
@@ -296,7 +303,7 @@ class CollectionSnapshot {
   int get totalWishlistFigures {
     var c = 0;
     for (final t in figureStates.values) {
-      if (t.wishlist) c++;
+      if (t.state == FigureCollectionState.wishlist) c++;
     }
     return c;
   }
@@ -322,7 +329,7 @@ class CollectionSnapshot {
   bool get isWarmStart => totalOwnedFigures == 0 && totalWishlistFigures == 0;
 
   TrackedFigure trackedOrDefault(String figureId) {
-    return figureStates[figureId] ?? TrackedFigure(figureId: figureId, owned: false, wishlist: false);
+    return figureStates[figureId] ?? TrackedFigure(figureId: figureId, state: FigureCollectionState.none);
   }
 
   /// True if this template (by stable catalog / drop id) already lives on the shelf.

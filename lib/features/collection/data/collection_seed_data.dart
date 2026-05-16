@@ -7,15 +7,15 @@ abstract final class CollectionSeedData {
     final shelfSeries = CollectionCatalog.defaultShelfSeries();
 
     final figureStates = <String, TrackedFigure>{
-      'fig-hirono-fox': const TrackedFigure(figureId: 'fig-hirono-fox', owned: true, wishlist: false),
-      'fig-hirono-bird': const TrackedFigure(figureId: 'fig-hirono-bird', owned: false, wishlist: true),
-      'fig-skull-milk': const TrackedFigure(figureId: 'fig-skull-milk', owned: true, wishlist: false),
-      'fig-skull-panda': const TrackedFigure(figureId: 'fig-skull-panda', owned: false, wishlist: true),
-      'fig-labubu-vinyl': const TrackedFigure(figureId: 'fig-labubu-vinyl', owned: true, wishlist: false),
-      'fig-labubu-heart': const TrackedFigure(figureId: 'fig-labubu-heart', owned: false, wishlist: true),
-      'fig-custom-spring-1': const TrackedFigure(figureId: 'fig-custom-spring-1', owned: true, wishlist: false),
-      'fig-custom-spring-2': const TrackedFigure(figureId: 'fig-custom-spring-2', owned: true, wishlist: false),
-      'fig-custom-spring-3': const TrackedFigure(figureId: 'fig-custom-spring-3', owned: false, wishlist: true),
+      'fig-hirono-fox': const TrackedFigure(figureId: 'fig-hirono-fox', state: FigureCollectionState.owned),
+      'fig-hirono-bird': const TrackedFigure(figureId: 'fig-hirono-bird', state: FigureCollectionState.wishlist),
+      'fig-skull-milk': const TrackedFigure(figureId: 'fig-skull-milk', state: FigureCollectionState.owned),
+      'fig-skull-panda': const TrackedFigure(figureId: 'fig-skull-panda', state: FigureCollectionState.wishlist),
+      'fig-labubu-vinyl': const TrackedFigure(figureId: 'fig-labubu-vinyl', state: FigureCollectionState.owned),
+      'fig-labubu-heart': const TrackedFigure(figureId: 'fig-labubu-heart', state: FigureCollectionState.wishlist),
+      'fig-custom-spring-1': const TrackedFigure(figureId: 'fig-custom-spring-1', state: FigureCollectionState.owned),
+      'fig-custom-spring-2': const TrackedFigure(figureId: 'fig-custom-spring-2', state: FigureCollectionState.owned),
+      'fig-custom-spring-3': const TrackedFigure(figureId: 'fig-custom-spring-3', state: FigureCollectionState.wishlist),
     };
 
     return CollectionSnapshot(
