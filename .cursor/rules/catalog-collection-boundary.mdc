@@ -1,0 +1,35 @@
+---
+description: Catalog vs collection media keys, loaders, and persistence boundaries
+globs: lib/features/catalog/**,lib/features/collection/**
+alwaysApply: false
+---
+
+# Catalog ↔ Collection boundary
+
+## Catalog (`lib/features/catalog/`)
+
+- Read-only universe: brands, IPs, series, figures
+- Models use **`imageKey`** (opaque); resolve with **`CatalogImageResolver`**
+- Load via `loadCatalogSeedBundle()` (bundled `tools/seed/`) unless task says to use Firestore
+- `loadFirestoreCatalogBundle()` returns the same `CatalogSeedBundle` — no streams, no shelf sync
+- `CatalogSearchService` is pure Dart; keep ranking/grouping logic out of widgets when possible
+- Clone onto shelf only through `catalogTemplateFromSeedSeries` + `CollectionNotifier`
+
+## Collection (`lib/features/collection/`)
+
+- **Source of truth:** `CollectionSnapshot` on disk (codec v2)
+- **`ShelfFigure`:** `localImageUri` (user photos), `imageUrl` (catalog asset path / URL) — **never `imageKey`**
+- **`ShelfSeries`:** `customCoverImageUri` for user series cover only
+- Display priority: `ShelfFigureMedia` (local → cover → imageUrl → placeholder)
+- Do not persist Firestore payloads or catalog `imageKey` on shelf rows
+
+## Naming trap
+
+- `features/catalog/models/CatalogSeries` ≠ `collection_domain.CatalogSeries` (shelf template)
+- `CollectionCatalog` in `collection/data/` is a **legacy hardcoded** suggestion list — separate from seed JSON catalog
+
+## Do not
+
+- Upload private shelf images to Firebase Storage in MVP tasks
+- Add Firestore listeners or collection cloud sync without explicit scope
+- Mix catalog search DTOs into `CollectionSnapshotCodec`

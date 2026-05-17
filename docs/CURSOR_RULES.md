@@ -1,5 +1,7 @@
 # Cursor Rules
 
+> **Canonical architecture and coding instructions** live in [`.cursor/ARCHITECTURE.md`](../.cursor/ARCHITECTURE.md) and [`.cursor/rules/`](../.cursor/rules/). Use those for agents and new work; this file is a short summary.
+
 Follow the existing project architecture strictly.
 
 Do not:

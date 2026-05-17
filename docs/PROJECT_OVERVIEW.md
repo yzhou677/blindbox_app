@@ -1,5 +1,8 @@
 # Blind Box Collection App
 
+> **Implementation architecture (current codebase):** see [`.cursor/ARCHITECTURE.md`](../.cursor/ARCHITECTURE.md).  
+> **Stack as built today:** collection persistence uses **SharedPreferences** (not Hive/Isar); market HTTP uses the **`http`** package (Dio is not in use).
+
 ## Project Goal
 
 Build a modern Flutter mobile app for designer toy and blind box collectors.
@@ -80,10 +83,9 @@ Users can:
 - mark owned items
 - add notes
 
-Local storage options:
-- Hive
-or
-- Isar
+Local persistence (implemented):
+- **SharedPreferences** — `CollectionSnapshot` encoded via `collection_snapshot_codec` (schema v2)
+- Local-first; no cloud sync in MVP
 
 Collection view should feel like:
 - Pinterest
@@ -140,10 +142,10 @@ Riverpod
 go_router
 
 ## Local Storage
-Hive or Isar
+SharedPreferences (collection snapshot codec)
 
 ## Networking
-Dio
+`http` package (eBay Browse API datasource in `features/market/data/`)
 
 ## Image Caching
 cached_network_image
@@ -152,14 +154,15 @@ cached_network_image
 
 # Architecture
 
-Use clean folder structure:
+Current folder structure:
 
 lib/
-  core/
-  features/
-  shared/
-  services/
-  models/
+  core/           # router, theme, layout, Firebase init
+  features/       # catalog, collection, home, market (primary slices)
+  models/         # legacy shared presentation models
+  shared/widgets/ # cross-feature UI only
+
+See [`.cursor/ARCHITECTURE.md`](../.cursor/ARCHITECTURE.md) for boundaries (catalog vs shelf vs market).
 
 Use:
 - repository pattern
