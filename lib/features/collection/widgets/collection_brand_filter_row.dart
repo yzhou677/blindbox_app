@@ -20,16 +20,13 @@ class CollectionBrandFilterRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: TaxonomyBrandChipRail(
-        options: chipOptions(),
-        selectedId: selectedBrandId,
-        onSelected: onBrandSelected,
-        horizontalPadding: 20,
-        height: 40,
-        separatorWidth: 8,
-      ),
+    return TaxonomyBrandChipRail(
+      options: chipOptions(),
+      selectedId: selectedBrandId,
+      onSelected: onBrandSelected,
+      horizontalPadding: 20,
+      height: 40,
+      separatorWidth: 8,
     );
   }
 }

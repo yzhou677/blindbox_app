@@ -241,7 +241,12 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, FeedRhythm.tabScrollTailPadding),
+              padding: const EdgeInsets.fromLTRB(
+                20,
+                FeedRhythm.collectionFilterToFirstCard,
+                20,
+                FeedRhythm.tabScrollTailPadding,
+              ),
               child: Builder(
                 builder: (context) {
                   final visible =

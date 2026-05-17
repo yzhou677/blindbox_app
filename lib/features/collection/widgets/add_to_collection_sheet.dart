@@ -8,6 +8,8 @@ import 'package:blindbox_app/features/collection/application/collection_notifier
 import 'package:blindbox_app/features/collection/data/collection_catalog.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/add_series_catalog_copy.dart';
+import 'package:blindbox_app/features/collection/presentation/catalog_search_row_summary.dart';
+import 'package:blindbox_app/features/collection/widgets/catalog_series_preview_sheet.dart';
 import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -47,6 +49,41 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
   String get _trimmedQuery => _search.text.trim();
 
   bool get _hasSearchText => _trimmedQuery.isNotEmpty;
+
+  int _figureCountInSeries(CatalogSeedBundle bundle, String seriesId) {
+    var n = 0;
+    for (final f in bundle.figures) {
+      if (f.seriesId == seriesId) n++;
+    }
+    return n;
+  }
+
+  void _openCatalogSeriesPreview(
+    BuildContext context, {
+    required CatalogSeries series,
+    required VoidCallback onAdd,
+  }) {
+    final h = MediaQuery.sizeOf(context).height * 0.74;
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: false,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
+        child: SizedBox(
+          height: h,
+          child: CatalogSeriesPreviewSheet(
+            series: series,
+            onAdd: onAdd,
+          ),
+        ),
+      ),
+    );
+  }
 
   String _brandIpLineForSeries(CatalogSeedBundle bundle, seed_catalog.CatalogSeries series) {
     var brandName = series.brandId;
@@ -113,15 +150,18 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
           : CatalogImageResolver.figureAsset(agg.firstHit.imageKey);
       final cover = seriesPath.isNotEmpty ? seriesPath : figurePath;
 
-      final names = agg.matchedFigureNames.toList()..sort();
-      final matchLine =
-          names.length == 1 ? 'Includes ${names.first}' : 'Matched: ${names.join(', ')}';
+      final figureCount = _figureCountInSeries(bundle, sid);
+      final summaryLine = catalogSearchRowSummary(
+        figureCount: figureCount,
+        hasChase: agg.hasAnySecret,
+        matchedFigureNames: agg.matchedFigureNames,
+      );
 
       return _SeriesSearchRow(
         seriesId: sid,
         seriesTitle: series.displayName,
         coverImageRef: cover,
-        matchLine: matchLine,
+        summaryLine: summaryLine,
         brandIpLine: _brandIpLineForSeries(bundle, series),
         hasAnySecret: agg.hasAnySecret,
       );
@@ -330,9 +370,19 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
         final s = filtered[i];
         return _SuggestionCard(
           series: s,
+          onOpenPreview: () {
+            _openCatalogSeriesPreview(
+              context,
+              series: s,
+              onAdd: () {
+                notifier.addSeriesFromTemplate(s);
+                Navigator.of(context).pop();
+              },
+            );
+          },
           onAdd: () {
             notifier.addSeriesFromTemplate(s);
-            Navigator.of(ctx).pop();
+            Navigator.of(context).pop();
           },
         );
       },
@@ -387,10 +437,22 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
         final row = matches[i];
         return _SeriesCatalogSearchRowCard(
           row: row,
+          onOpenPreview: () {
+            final template = catalogTemplateFromSeedSeries(bundle, row.seriesId);
+            if (template == null) return;
+            _openCatalogSeriesPreview(
+              context,
+              series: template,
+              onAdd: () {
+                notifier.addSeriesFromTemplate(template);
+                Navigator.of(context).pop();
+              },
+            );
+          },
           onAdd: () {
             final template = catalogTemplateFromSeedSeries(bundle, row.seriesId);
             if (template != null) notifier.addSeriesFromTemplate(template);
-            Navigator.of(ctx).pop();
+            Navigator.of(context).pop();
           },
         );
       },
@@ -415,7 +477,7 @@ class _SeriesSearchRow {
     required this.seriesId,
     required this.seriesTitle,
     required this.coverImageRef,
-    required this.matchLine,
+    required this.summaryLine,
     required this.brandIpLine,
     required this.hasAnySecret,
   });
@@ -423,7 +485,7 @@ class _SeriesSearchRow {
   final String seriesId;
   final String seriesTitle;
   final String coverImageRef;
-  final String matchLine;
+  final String summaryLine;
   final String brandIpLine;
   final bool hasAnySecret;
 }
@@ -431,10 +493,12 @@ class _SeriesSearchRow {
 class _SeriesCatalogSearchRowCard extends StatelessWidget {
   const _SeriesCatalogSearchRowCard({
     required this.row,
+    required this.onOpenPreview,
     required this.onAdd,
   });
 
   final _SeriesSearchRow row;
+  final VoidCallback onOpenPreview;
   final VoidCallback onAdd;
 
   @override
@@ -449,7 +513,7 @@ class _SeriesCatalogSearchRowCard extends StatelessWidget {
       shadowColor: scheme.shadow.withValues(alpha: 0.12),
       borderRadius: BorderRadius.circular(22),
       child: InkWell(
-        onTap: onAdd,
+        onTap: onOpenPreview,
         borderRadius: BorderRadius.circular(22),
         child: Ink(
           decoration: BoxDecoration(
@@ -510,7 +574,7 @@ class _SeriesCatalogSearchRowCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        row.matchLine,
+                        row.summaryLine,
                         style: textTheme.bodySmall?.copyWith(
                           color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
                           fontWeight: FontWeight.w500,
@@ -527,26 +591,28 @@ class _SeriesCatalogSearchRowCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: scheme.primary.withValues(alpha: 0.14),
+                Material(
+                  color: scheme.primary.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(14),
+                  child: InkWell(
+                    onTap: onAdd,
                     borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Add',
-                          style: textTheme.labelLarge?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: scheme.primary,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Add',
+                            style: textTheme.labelLarge?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: scheme.primary,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 4),
-                        Icon(Icons.add_rounded, size: 20, color: scheme.primary),
-                      ],
+                          const SizedBox(width: 4),
+                          Icon(Icons.add_rounded, size: 20, color: scheme.primary),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -560,9 +626,14 @@ class _SeriesCatalogSearchRowCard extends StatelessWidget {
 }
 
 class _SuggestionCard extends StatelessWidget {
-  const _SuggestionCard({required this.series, required this.onAdd});
+  const _SuggestionCard({
+    required this.series,
+    required this.onOpenPreview,
+    required this.onAdd,
+  });
 
   final CatalogSeries series;
+  final VoidCallback onOpenPreview;
   final VoidCallback onAdd;
 
   @override
@@ -577,7 +648,7 @@ class _SuggestionCard extends StatelessWidget {
       shadowColor: scheme.shadow.withValues(alpha: 0.12),
       borderRadius: BorderRadius.circular(22),
       child: InkWell(
-        onTap: onAdd,
+        onTap: onOpenPreview,
         borderRadius: BorderRadius.circular(22),
         child: Ink(
           decoration: BoxDecoration(
@@ -657,26 +728,28 @@ class _SuggestionCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: scheme.primary.withValues(alpha: 0.14),
+                Material(
+                  color: scheme.primary.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(14),
+                  child: InkWell(
+                    onTap: onAdd,
                     borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Add',
-                          style: textTheme.labelLarge?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: scheme.primary,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Add',
+                            style: textTheme.labelLarge?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: scheme.primary,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 4),
-                        Icon(Icons.add_rounded, size: 20, color: scheme.primary),
-                      ],
+                          const SizedBox(width: 4),
+                          Icon(Icons.add_rounded, size: 20, color: scheme.primary),
+                        ],
+                      ),
                     ),
                   ),
                 ),

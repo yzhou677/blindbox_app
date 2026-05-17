@@ -60,7 +60,7 @@ class CollectionEmptyState extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Add suggested series or create your own — everything stays on your device for now.',
+                    'Add your favorite pulls and make the shelf yours.',
                     textAlign: TextAlign.center,
                     style: textTheme.bodyLarge?.copyWith(
                       color: scheme.onSurfaceVariant.withValues(alpha: 0.92),
