@@ -38,16 +38,16 @@ class MarketBrandTaxon {
 
 /// Central catalog: brands ↔ IPs, chip rows, and listing filter predicates.
 ///
-/// Rows are derived from curated registries via [MarketTaxonomyAdapter]; keep ids aligned
-/// with [MarketListing] taxonomy fields and the title resolver.
+/// Filter chip rows use [MarketTaxonomyAdapter] filter builds; full-registry lookups
+/// power listing copy and title resolution.
 abstract final class MarketTaxonomy {
   static final List<MarketIpTaxon> allIps = [
-    for (final row in MarketTaxonomyAdapter.buildIpRows())
+    for (final row in MarketTaxonomyAdapter.buildFilterIpRows())
       MarketIpTaxon(id: row.id, displayLabel: row.displayLabel),
   ];
 
   static final List<MarketBrandTaxon> brands = [
-    for (final row in MarketTaxonomyAdapter.buildBrandRows())
+    for (final row in MarketTaxonomyAdapter.buildFilterBrandRows())
       MarketBrandTaxon(
         id: row.id,
         displayLabel: row.displayLabel,
@@ -56,15 +56,23 @@ abstract final class MarketTaxonomy {
   ];
 
   static MarketIpTaxon? ipById(String id) {
-    for (final i in allIps) {
-      if (i.id == id) return i;
+    for (final row in MarketTaxonomyAdapter.buildIpRows()) {
+      if (row.id == id) {
+        return MarketIpTaxon(id: row.id, displayLabel: row.displayLabel);
+      }
     }
     return null;
   }
 
   static MarketBrandTaxon? brandById(String id) {
-    for (final b in brands) {
-      if (b.id == id) return b;
+    for (final row in MarketTaxonomyAdapter.buildBrandRows()) {
+      if (row.id == id) {
+        return MarketBrandTaxon(
+          id: row.id,
+          displayLabel: row.displayLabel,
+          supportedIpIds: row.supportedIpIds,
+        );
+      }
     }
     return null;
   }
