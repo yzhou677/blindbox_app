@@ -17,13 +17,16 @@ Last reviewed against the repo structure and key files.
 - [x] `go_router` three-tab shell
 - [x] Bootstrap in `main.dart` for market + collection restore
 - [x] Legacy expansion guardrails documented (`lib/models/` frozen; feature-owned new models) in `ARCHITECTURE.md`
+- [x] Firebase integration boundaries documented (Firestore + Storage catalog-only; shelf local-first) in `ARCHITECTURE.md` + `firebase-catalog.mdc`
 
 ---
 
 ## Known drift / transitional (documented; fix only when tasked)
 
 - [ ] **Dual catalog in add flow:** Search uses seed JSON (`add_to_collection_sheet.dart`); idle suggestions use hardcoded `CollectionCatalog`; demo shelf seed uses `CollectionCatalog.defaultShelfSeries()` in `collection_seed_data.dart`
-- [ ] **Firestore catalog** implemented but UI still defaults to `loadCatalogSeedBundle()`
+- [ ] **Firestore catalog** loader exists; UI still defaults to `loadCatalogSeedBundle()` — switch only when explicitly tasked
+- [ ] **Firebase Storage** not wired in app yet (`firebase_storage` not in dependencies); docs define path convention and resolver order for when connected
+- [ ] **Collection** remains local-first — no Firestore/Storage sync for shelf (intentional until a future milestone)
 - [x] **`docs/PROJECT_OVERVIEW.md`** — updated to **SharedPreferences** and **`http`** (was Hive/Isar + Dio)
 - [ ] **`lib/models/`** still **in use** for grandfathered presentation types (`Collectible`, `MarketListing`, …) — **expansion frozen**; migrate call sites only when explicitly tasked, not as default agent work
 - [ ] **Market session singleton** alongside Riverpod (by design for bootstrap performance)
@@ -37,5 +40,6 @@ Last reviewed against the repo structure and key files.
 2. Avoid coupling UI to raw DTOs.
 3. Do **not** add new types under `lib/models/` or introduce `lib/services/` — use the owning feature folder.
 4. Preserve local-first collection persistence unless explicitly migrating storage.
-5. Skip cleanup refactors and mass legacy migrations unless the user asked for them.
-6. Run `flutter analyze` and `flutter test` before finishing.
+5. Firebase work stays in **catalog** (`features/catalog/`, `core/firebase/`) — no shelf uploads, no catalog listeners, unless the task says otherwise.
+6. Skip cleanup refactors and mass legacy migrations unless the user asked for them.
+7. Run `flutter analyze` and `flutter test` before finishing.

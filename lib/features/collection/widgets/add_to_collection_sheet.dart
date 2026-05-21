@@ -437,22 +437,22 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
         final row = matches[i];
         return _SeriesCatalogSearchRowCard(
           row: row,
-          onOpenPreview: () {
-            final template = catalogTemplateFromSeedSeries(bundle, row.seriesId);
-            if (template == null) return;
+          onOpenPreview: () async {
+            final template = await catalogTemplateFromSeedSeries(bundle, row.seriesId);
+            if (!ctx.mounted || template == null) return;
             _openCatalogSeriesPreview(
-              context,
+              ctx,
               series: template,
               onAdd: () {
                 notifier.addSeriesFromTemplate(template);
-                Navigator.of(context).pop();
+                Navigator.of(ctx).pop();
               },
             );
           },
-          onAdd: () {
-            final template = catalogTemplateFromSeedSeries(bundle, row.seriesId);
+          onAdd: () async {
+            final template = await catalogTemplateFromSeedSeries(bundle, row.seriesId);
             if (template != null) notifier.addSeriesFromTemplate(template);
-            Navigator.of(context).pop();
+            if (ctx.mounted) Navigator.of(ctx).pop();
           },
         );
       },

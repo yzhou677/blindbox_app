@@ -12,6 +12,7 @@ alwaysApply: false
 - Models use **`imageKey`** (opaque); resolve with **`CatalogImageResolver`**
 - Load via `loadCatalogSeedBundle()` (bundled `tools/seed/`) unless task says to use Firestore
 - `loadFirestoreCatalogBundle()` returns the same `CatalogSeedBundle` — no streams, no shelf sync
+- Firebase Storage = public catalog art by `imageKey` only — see `firebase-catalog.mdc` and `FIREBASE_STORAGE_CATALOG.md`
 - `CatalogSearchService` is pure Dart; keep ranking/grouping logic out of widgets when possible
 - Clone onto shelf only through `catalogTemplateFromSeedSeries` + `CollectionNotifier`
 

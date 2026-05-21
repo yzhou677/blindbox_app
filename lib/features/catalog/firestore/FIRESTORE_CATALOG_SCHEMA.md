@@ -4,6 +4,9 @@ Remote catalog data mirrors the shapes in `tools/seed/*.json` and maps into the
 same Dart models (`CatalogBrand`, `CatalogIp`, `CatalogSeries`, `CatalogFigure`)
 via `firestore_catalog_mapper.dart`.
 
+**Catalog images:** object paths and resolver behavior → [`FIREBASE_STORAGE_CATALOG.md`](FIREBASE_STORAGE_CATALOG.md).  
+**Agent rules:** [`.cursor/ARCHITECTURE.md`](../../../../.cursor/ARCHITECTURE.md) (Firebase section), [`.cursor/rules/firebase-catalog.mdc`](../../../../.cursor/rules/firebase-catalog.mdc).
+
 ## Collections (top-level)
 
 - **`brands`**
@@ -27,8 +30,10 @@ Field names use the same camelCase keys as the JSON seed.
 
 - `brandId` (string)
 - `displayName` (string)
-- `aliases` (array of strings, optional)
+- `aliases` (array of strings, optional) — e.g. `ips/the_monsters` with `displayName` **THE MONSTERS** and alias **Labubu** for search
 - `id` (optional)
+
+Canonical POP MART lineup IP id is **`the_monsters`** (not `labubu`; Labubu is a character alias).
 
 ### `series/{seriesId}`
 

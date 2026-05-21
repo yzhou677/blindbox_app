@@ -92,7 +92,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
     expect(find.text('IP'), findsOneWidget);
-    expect(find.text('Labubu'), findsWidgets);
+    expect(find.text('THE MONSTERS'), findsWidgets);
   });
 
   testWidgets('Collection empty state is polished', (WidgetTester tester) async {

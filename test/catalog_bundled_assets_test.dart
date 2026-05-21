@@ -3,14 +3,29 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('CatalogImageResolver', () {
-    test('maps opaque keys to deterministic bundled paths', () {
+    test('candidate paths follow format priority', () {
       expect(
-        CatalogImageResolver.figureAsset('the_monsters_exciting_macaron_labubu_soymilk'),
-        'assets/catalog/figures/the_monsters_exciting_macaron_labubu_soymilk.png',
+        CatalogImageResolver.candidatePaths(
+          CatalogImageResolver.figuresRoot,
+          'the_monsters_exciting_macaron_soymilk',
+        ).toList(),
+        [
+          'assets/catalog/figures/the_monsters_exciting_macaron_soymilk.avif',
+          'assets/catalog/figures/the_monsters_exciting_macaron_soymilk.webp',
+          'assets/catalog/figures/the_monsters_exciting_macaron_soymilk.png',
+          'assets/catalog/figures/the_monsters_exciting_macaron_soymilk.jpg',
+        ],
+      );
+    });
+
+    test('before ensureReady, sync paths prefer highest-priority extension', () {
+      expect(
+        CatalogImageResolver.figureAsset('foo'),
+        'assets/catalog/figures/foo.avif',
       );
       expect(
-        CatalogImageResolver.seriesAsset('the_monsters_exciting_macaron'),
-        'assets/catalog/series/the_monsters_exciting_macaron.png',
+        CatalogImageResolver.seriesAsset('bar'),
+        'assets/catalog/series/bar.avif',
       );
     });
 
@@ -18,6 +33,12 @@ void main() {
       expect(
         CatalogImageResolver.imageKeyFromLegacyThumbnailAsset(
           r'assets\catalog\figures\foo_bar.png',
+        ),
+        'foo_bar',
+      );
+      expect(
+        CatalogImageResolver.imageKeyFromLegacyThumbnailAsset(
+          'assets/catalog/figures/foo_bar.avif',
         ),
         'foo_bar',
       );

@@ -10,7 +10,7 @@ void main() {
         'POP MART THE MONSTERS LABUBU Exciting Macaron — sealed',
       );
       expect(m.brandId, 'pop_mart');
-      expect(m.ipId, 'labubu');
+      expect(m.ipId, 'the_monsters');
       expect(m.confidence, TitleTaxonomyResolver.confidenceIp);
     });
 
@@ -55,7 +55,7 @@ void main() {
 
     test('CJK Labubu alias still matches', () {
       final m = resolver.resolve('POPMART 拉布布 限定');
-      expect(m.ipId, 'labubu');
+      expect(m.ipId, 'the_monsters');
       expect(m.brandId, 'pop_mart');
     });
   });

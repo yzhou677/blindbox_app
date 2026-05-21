@@ -5,8 +5,8 @@ abstract final class IpTaxonomyRegistry {
   static const List<IpTaxonomy> all = [
     // POP MART
     IpTaxonomy(
-      id: 'labubu',
-      displayName: 'Labubu',
+      id: 'the_monsters',
+      displayName: 'THE MONSTERS',
       brandId: 'pop_mart',
       aliases: ['LABUBU', 'THE MONSTERS', '拉布布'],
     ),

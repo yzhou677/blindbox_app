@@ -1,0 +1,33 @@
+---
+description: Firebase Firestore and Storage — catalog universe only, local-first shelf
+globs: lib/features/catalog/**,lib/core/firebase/**,lib/firebase_options.dart
+alwaysApply: false
+---
+
+# Firebase (catalog only)
+
+Read [`.cursor/ARCHITECTURE.md`](../ARCHITECTURE.md) → **Firebase (Firestore + Storage)** and:
+
+- [`FIRESTORE_CATALOG_SCHEMA.md`](../../lib/features/catalog/firestore/FIRESTORE_CATALOG_SCHEMA.md)
+- [`FIREBASE_STORAGE_CATALOG.md`](../../lib/features/catalog/firestore/FIREBASE_STORAGE_CATALOG.md)
+
+## Firestore
+
+- Catalog reference only: `brands`, `ips`, `series`, `figures` → `CatalogSeedBundle`
+- Call `ensureFirebaseInitialized()` before reads
+- Prefer one-shot `.get()` via `loadFirestoreCatalogBundle()` — no catalog listeners unless explicitly tasked
+- Do **not** default the UI to Firestore unless the task says to switch off seed JSON
+- Keep `tools/seed/` valid for offline tests and dev
+
+## Storage
+
+- Public catalog art under `catalog/figures/` and `catalog/series/` keyed by `imageKey`
+- Resolver order: bundled asset → Storage URL → placeholder
+- **Never** upload or sync `localImageUri` / `customCoverImageUri` from `features/collection/` in MVP tasks
+
+## Boundaries
+
+- No Firestore documents or Storage paths for user shelf state
+- No `imageKey` on `ShelfFigure` / `ShelfSeries`; no Storage URLs in `CollectionSnapshotCodec`
+- No `lib/services/` — code stays in `features/catalog/` + `core/firebase/`
+- Canonical IP ids (e.g. `the_monsters`, not `labubu`)

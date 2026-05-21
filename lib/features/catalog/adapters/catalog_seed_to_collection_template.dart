@@ -10,10 +10,10 @@ import 'package:flutter/material.dart';
 /// Builds a collection add-sheet / clone template from curated seed JSON.
 ///
 /// Returns null if [seriesId] is unknown or has no figures in the bundle.
-domain.CatalogSeries? catalogTemplateFromSeedSeries(
+Future<domain.CatalogSeries?> catalogTemplateFromSeedSeries(
   CatalogSeedBundle bundle,
   String seriesId,
-) {
+) async {
   CatalogSeries? series;
   for (final s in bundle.series) {
     if (s.id == seriesId) {
@@ -62,6 +62,27 @@ domain.CatalogSeries? catalogTemplateFromSeedSeries(
   ];
   final accent = accents[seriesId.hashCode.abs() % accents.length];
 
+  final templateFigures = <domain.CatalogFigure>[];
+  for (final f in figs) {
+    final imageUrl = f.imageKey.trim().isEmpty
+        ? null
+        : await CatalogImageResolver.resolveFigureAsset(f.imageKey);
+    templateFigures.add(
+      domain.CatalogFigure(
+        templateFigureId: f.id,
+        catalogSeriesTemplateId: series.id,
+        name: f.displayName,
+        imageUrl: imageUrl,
+        rarity: f.rarityLabel?.trim().isNotEmpty == true
+            ? f.rarityLabel!.trim()
+            : (f.isSecret ? 'Secret' : 'Regular'),
+        isSecret: f.isSecret,
+        taxonomyBrandId: series.brandId,
+        taxonomyIpId: series.ipId,
+      ),
+    );
+  }
+
   return domain.CatalogSeries(
     templateId: series.id,
     name: series.displayName,
@@ -70,21 +91,6 @@ domain.CatalogSeries? catalogTemplateFromSeedSeries(
     shelfAccent: accent,
     taxonomyBrandId: series.brandId,
     taxonomyIpId: series.ipId,
-    figures: [
-      for (final f in figs)
-        domain.CatalogFigure(
-          templateFigureId: f.id,
-          catalogSeriesTemplateId: series.id,
-          name: f.displayName,
-          imageUrl:
-              f.imageKey.trim().isEmpty ? null : CatalogImageResolver.figureAsset(f.imageKey),
-          rarity: f.rarityLabel?.trim().isNotEmpty == true
-              ? f.rarityLabel!.trim()
-              : (f.isSecret ? 'Secret' : 'Regular'),
-          isSecret: f.isSecret,
-          taxonomyBrandId: series.brandId,
-          taxonomyIpId: series.ipId,
-        ),
-    ],
+    figures: templateFigures,
   );
 }

@@ -15,6 +15,8 @@ Read [`.cursor/ARCHITECTURE.md`](../ARCHITECTURE.md) for full detail. Enforce th
 
 3. **Market / Home** — discover + listings. Data under `features/market/data/` and `features/home/`. Save to shelf only via `collectionNotifier` methods.
 
+**Firebase:** Firestore + Storage = **catalog only** (not shelf). See ARCHITECTURE.md → Firebase; catalog Storage ≠ shelf media. Rule: `firebase-catalog.mdc` when editing catalog/firebase files.
+
 ## Folder layout
 
 - `lib/features/<feature>/` with `application/`, `data/`, `domain/`, `presentation/`, `widgets/`

@@ -11,8 +11,8 @@ void main() {
         {"id": "pop_mart", "displayName": "POP MART", "aliases": ["POPMART"]}
       ]'''),
       ips: parseCatalogIpsJson(r'''[
-        {"id": "the_monsters", "brandId": "pop_mart", "displayName": "The Monsters",
-         "aliases": ["LABUBU"]},
+        {"id": "the_monsters", "brandId": "pop_mart", "displayName": "THE MONSTERS",
+         "aliases": ["Labubu"]},
         {"id": "hirono", "brandId": "pop_mart", "displayName": "Hirono", "aliases": []}
       ]'''),
       series: parseCatalogSeriesJson(r'''[

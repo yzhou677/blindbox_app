@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import 'package:blindbox_app/features/catalog/catalog_image_resolver.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_brand.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_figure.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_ip.dart';
@@ -52,6 +53,7 @@ List<CatalogFigure> parseCatalogFiguresJson(String json) {
 /// For a remote Firestore catalog (same [CatalogSeedBundle] shape), use
 /// [loadFirestoreCatalogBundle] from `features/catalog/firestore/firestore_catalog_loader.dart`.
 Future<CatalogSeedBundle> loadCatalogSeedBundle() async {
+  await CatalogImageResolver.ensureReady();
   final brandsRaw = await rootBundle.loadString('tools/seed/brands.json');
   final ipsRaw = await rootBundle.loadString('tools/seed/ips.json');
   final seriesRaw = await rootBundle.loadString('tools/seed/series.json');

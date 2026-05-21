@@ -1,4 +1,5 @@
 import 'package:blindbox_app/core/firebase/ensure_firebase_initialized.dart';
+import 'package:blindbox_app/features/catalog/catalog_image_resolver.dart';
 import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
 import 'package:blindbox_app/features/catalog/firestore/firestore_catalog_mapper.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_brand.dart';
@@ -19,6 +20,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 Future<CatalogSeedBundle> loadFirestoreCatalogBundle({
   FirebaseFirestore? firestore,
 }) async {
+  await CatalogImageResolver.ensureReady();
   await ensureFirebaseInitialized();
   final db = firestore ?? FirebaseFirestore.instance;
 

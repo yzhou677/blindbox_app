@@ -29,7 +29,7 @@ void main() {
           shelfAccent: accent,
           catalogTemplateId: 'catalog-series-x',
           taxonomyBrandId: 'pop_mart',
-          taxonomyIpId: 'labubu',
+          taxonomyIpId: 'the_monsters',
           customCoverImageUri: '/tmp/cover.jpg',
         ),
       ],
