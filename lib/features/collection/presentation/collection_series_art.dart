@@ -5,6 +5,8 @@ abstract final class CollectionSeriesArt {
   /// Catalog series [imageKey] stem when this row was cloned from seed/Firestore.
   static String? catalogSeriesImageKey(ShelfSeries series) {
     if (series.isCustomLocal || series.isDropImport) return null;
+    final key = series.imageKey?.trim();
+    if (key != null && key.isNotEmpty) return key;
     final id = series.catalogTemplateId?.trim();
     if (id == null || id.isEmpty) return null;
     return id;

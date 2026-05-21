@@ -132,7 +132,7 @@ class _PreviewFigureRow extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final secretLook = FigureSecretRarityStyle.resolve(
       isSecret: figure.isSecret,
-      rarityLabel: figure.rarity,
+      rarityLabel: figure.isSecret ? figure.rarity : null,
       isDark: isDark,
     );
     final rowBase = scheme.surfaceContainerLow;

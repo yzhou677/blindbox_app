@@ -1,5 +1,6 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
+import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_series_filter.dart';
 import 'package:blindbox_app/features/collection/widgets/add_custom_series_sheet.dart';
@@ -81,8 +82,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
             required String seriesName,
             String? brand,
             String? ipDisplayName,
-            required List<String> figureNames,
-            required List<String?> figureLocalImageUris,
+            required List<CustomFigureDraft> figures,
             String? customCoverImageUri,
             String? notes,
           }) {
@@ -90,8 +90,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                   seriesName: seriesName,
                   brand: brand,
                   ipDisplayName: ipDisplayName,
-                  figureNames: figureNames,
-                  figureLocalImageUris: figureLocalImageUris,
+                  figures: figures,
                   customCoverImageUri: customCoverImageUri,
                   notes: notes,
                 );

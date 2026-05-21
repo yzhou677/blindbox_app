@@ -1,5 +1,6 @@
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/bootstrap/collection_app_bootstrap.dart';
+import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'helpers/collection_fixtures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -112,17 +113,31 @@ void main() {
 
     n.addCustomSeries(
       seriesName: 'My Set',
-      figureNames: ['  ', ''],
+      figures: const [
+        CustomFigureDraft(displayName: '  '),
+      ],
     );
     expect(container.read(collectionNotifierProvider).shelfSeries, isEmpty);
 
     n.addCustomSeries(
       seriesName: 'My Set',
-      figureNames: ['Alpha'],
+      figures: const [
+        CustomFigureDraft(
+          displayName: 'Alpha',
+          isSecret: true,
+          rarityLabel: '1:72',
+        ),
+      ],
     );
     final added = container.read(collectionNotifierProvider).shelfSeries.single;
     expect(added.isCustomLocal, isTrue);
-    expect(added.figures.single.name, 'Alpha');
-    expect(added.figures.single.rarity, 'Custom');
+    expect(added.taxonomyBrandId, 'independent');
+    expect(added.imageKey, added.id);
+    final fig = added.figures.single;
+    expect(fig.name, 'Alpha');
+    expect(fig.isSecret, isTrue);
+    expect(fig.rarityLabel, '1:72');
+    expect(fig.imageKey, '${added.id}-f-0');
+    expect(fig.rarity, '1:72');
   });
 }

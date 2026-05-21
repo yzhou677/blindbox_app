@@ -1,4 +1,6 @@
+import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
 import 'package:blindbox_app/features/collection/widgets/custom_series_cover_slot.dart';
+import 'package:blindbox_app/features/collection/widgets/edit_custom_figure_dialog.dart';
 import 'package:blindbox_app/features/collection/widgets/figure_name_chips_editor.dart';
 import 'package:blindbox_app/features/collection/widgets/shelf_gallery_pick.dart';
 import 'package:flutter/material.dart';
@@ -7,8 +9,7 @@ typedef CustomSeriesFormSubmit = void Function({
   required String seriesName,
   String? brand,
   String? ipDisplayName,
-  required List<String> figureNames,
-  required List<String?> figureLocalImageUris,
+  required List<CustomFigureDraft> figures,
   String? customCoverImageUri,
   String? notes,
 });
@@ -32,8 +33,7 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
   final _newFigureFocus = FocusNode();
   final _formKey = GlobalKey<FormState>();
 
-  final List<String> _figureNames = [];
-  final List<String?> _figureLocalUris = [];
+  final List<CustomFigureDraft> _figures = [];
   String? _coverUri;
 
   @override
@@ -51,54 +51,48 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
     final raw = _newFigure.text.trim();
     if (raw.isEmpty) return;
     setState(() {
-      _figureNames.add(raw);
-      _figureLocalUris.add(null);
+      _figures.add(CustomFigureDraft(displayName: raw));
       _newFigure.clear();
     });
   }
 
   Future<void> _editAt(int index) async {
-    final current = _figureNames[index];
-    final editController = TextEditingController(text: current);
-    final next = await showDialog<String>(
+    FocusManager.instance.primaryFocus?.unfocus();
+    final current = _figures[index];
+    final next = await showDialog<CustomFigureDraft>(
       context: context,
-      builder: (ctx) {
-        final scheme = Theme.of(ctx).colorScheme;
-        return AlertDialog(
-          title: const Text('Rename figure'),
-          content: TextField(
-            controller: editController,
-            autofocus: true,
-            textInputAction: TextInputAction.done,
-            decoration: InputDecoration(
-              hintText: 'Name',
-              filled: true,
-              fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-            ),
-            onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-            FilledButton(
-              onPressed: () => Navigator.pop(ctx, editController.text.trim()),
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
+      builder: (ctx) => EditCustomFigureDialog(initial: current),
     );
-    editController.dispose();
-    if (!mounted || next == null || next.isEmpty) return;
-    setState(() => _figureNames[index] = next);
+    if (!mounted || next == null) return;
+    setState(() => _figures[index] = next);
   }
 
   void _removeAt(int i) {
+    setState(() => _figures.removeAt(i));
+  }
+
+  void _setSecret(int i, bool isSecret) {
     setState(() {
-      _figureNames.removeAt(i);
-      if (i < _figureLocalUris.length) {
-        _figureLocalUris.removeAt(i);
-      }
+      final f = _figures[i];
+      _figures[i] = CustomFigureDraft(
+        displayName: f.displayName,
+        localImageUri: f.localImageUri,
+        isSecret: isSecret,
+        rarityLabel: isSecret ? f.rarityLabel : null,
+      );
+    });
+  }
+
+  void _setRarityLabel(int i, String? label) {
+    final trimmed = label?.trim();
+    setState(() {
+      final f = _figures[i];
+      _figures[i] = CustomFigureDraft(
+        displayName: f.displayName,
+        localImageUri: f.localImageUri,
+        isSecret: f.isSecret,
+        rarityLabel: (trimmed == null || trimmed.isEmpty) ? null : trimmed,
+      );
     });
   }
 
@@ -114,24 +108,30 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
     final path = await pickShelfGalleryImage(context);
     if (!mounted || path == null) return;
     setState(() {
-      while (_figureLocalUris.length <= i) {
-        _figureLocalUris.add(null);
-      }
-      _figureLocalUris[i] = path;
+      final f = _figures[i];
+      _figures[i] = CustomFigureDraft(
+        displayName: f.displayName,
+        localImageUri: path,
+        isSecret: f.isSecret,
+        rarityLabel: f.rarityLabel,
+      );
     });
   }
 
   void _clearFigurePhoto(int i) {
     setState(() {
-      if (i < _figureLocalUris.length) {
-        _figureLocalUris[i] = null;
-      }
+      final f = _figures[i];
+      _figures[i] = CustomFigureDraft(
+        displayName: f.displayName,
+        isSecret: f.isSecret,
+        rarityLabel: f.rarityLabel,
+      );
     });
   }
 
   void _save() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    if (_figureNames.isEmpty) {
+    if (_figures.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Add at least one figure')),
       );
@@ -141,12 +141,7 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
       seriesName: _seriesName.text.trim(),
       brand: _brand.text.trim().isEmpty ? null : _brand.text.trim(),
       ipDisplayName: _ip.text.trim().isEmpty ? null : _ip.text.trim(),
-      figureNames: List<String>.from(_figureNames),
-      figureLocalImageUris: List<String?>.generate(
-        _figureNames.length,
-        (i) => i < _figureLocalUris.length ? _figureLocalUris[i] : null,
-        growable: false,
-      ),
+      figures: List<CustomFigureDraft>.from(_figures),
       customCoverImageUri: _coverUri,
       notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
     );
@@ -250,7 +245,7 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
                         controller: _brand,
                         textInputAction: TextInputAction.next,
                         decoration: InputDecoration(
-                          hintText: 'Brand',
+                          hintText: 'Brand (optional)',
                           filled: true,
                           fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
@@ -261,7 +256,7 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
                         controller: _ip,
                         textInputAction: TextInputAction.next,
                         decoration: InputDecoration(
-                          hintText: 'Universe / IP',
+                          hintText: 'IP / universe (optional)',
                           filled: true,
                           fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
@@ -269,8 +264,7 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
                       ),
                       const SizedBox(height: 22),
                       FigureNameChipsEditor(
-                        names: _figureNames,
-                        figureLocalUris: _figureLocalUris,
+                        figures: _figures,
                         onRemoveAt: _removeAt,
                         onEditAt: _editAt,
                         addFieldController: _newFigure,
@@ -278,6 +272,8 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
                         onAddSubmitted: _addFigureFromField,
                         onPickFigurePhoto: _pickFigurePhoto,
                         onClearFigurePhoto: _clearFigurePhoto,
+                        onSecretChanged: _setSecret,
+                        onRarityLabelChanged: _setRarityLabel,
                       ),
                       const SizedBox(height: 18),
                       TextFormField(

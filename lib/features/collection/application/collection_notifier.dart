@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:blindbox_app/features/collection/bootstrap/collection_app_bootstrap.dart';
+import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
 import 'package:blindbox_app/features/collection/data/series_release_lookup.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/persistence/collection_snapshot_storage.dart';
@@ -167,8 +168,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
     required String seriesName,
     String? brand,
     String? ipDisplayName,
-    required List<String> figureNames,
-    List<String?>? figureLocalImageUris,
+    required List<CustomFigureDraft> figures,
     String? customCoverImageUri,
     String? notes,
   }) {
@@ -182,45 +182,59 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       Color(0xFFEAF6FB),
     ];
     final accent = accents[seriesId.hashCode.abs() % accents.length];
+    final displayName = seriesName.trim();
     final trimmedBrand = brand?.trim();
     final brandLine = (trimmedBrand == null || trimmedBrand.isEmpty) ? 'Independent' : trimmedBrand;
-    final ipLine = (ipDisplayName?.trim().isEmpty ?? true)
-        ? seriesName.trim()
-        : ipDisplayName!.trim();
-    final figures = <ShelfFigure>[];
-    final perFigUris = figureLocalImageUris ?? const <String?>[];
+    final ipLine = (ipDisplayName?.trim().isEmpty ?? true) ? displayName : ipDisplayName!.trim();
+    final brandId = CustomSeriesConventions.brandIdFromDisplay(trimmedBrand);
+    final ipId = CustomSeriesConventions.ipIdFromDisplay(
+      seriesDisplayName: displayName,
+      ipDisplayName: ipDisplayName,
+    );
+    final shelfFigures = <ShelfFigure>[];
     var i = 0;
-    for (final raw in figureNames) {
-      final name = raw.trim();
-      if (name.isEmpty) continue;
-      final fid = '$seriesId-f-$i';
-      final rawUri = i < perFigUris.length ? perFigUris[i] : null;
-      final local = rawUri?.trim();
-      figures.add(
+    for (final draft in figures) {
+      final figName = draft.displayName.trim();
+      if (figName.isEmpty) continue;
+      final figId = CustomSeriesConventions.figureImageKey(seriesId, i);
+      final imageKey = CustomSeriesConventions.figureImageKey(seriesId, i);
+      final local = draft.localImageUri?.trim();
+      final rarityLabel = draft.isSecret ? draft.rarityLabel?.trim() : null;
+      shelfFigures.add(
         ShelfFigure(
-          id: fid,
+          id: figId,
           seriesId: seriesId,
-          name: name,
+          name: figName,
           imageUrl: null,
           localImageUri: (local != null && local.isNotEmpty) ? local : null,
-          rarity: 'Custom',
-          isSecret: false,
+          imageKey: imageKey,
+          rarity: CustomSeriesConventions.rarityLine(
+            isSecret: draft.isSecret,
+            rarityLabel: rarityLabel,
+          ),
+          isSecret: draft.isSecret,
+          rarityLabel: (rarityLabel != null && rarityLabel.isNotEmpty) ? rarityLabel : null,
+          taxonomyBrandId: brandId,
+          taxonomyIpId: ipId,
         ),
       );
       i++;
     }
-    if (figures.isEmpty) return;
+    if (shelfFigures.isEmpty) return;
     final trimmedNotes = notes?.trim();
     final trimmedCover = customCoverImageUri?.trim();
     final series = ShelfSeries(
       id: seriesId,
-      name: seriesName.trim(),
+      name: displayName,
       brand: brandLine,
       ipName: ipLine,
-      figures: figures,
+      figures: shelfFigures,
       shelfAccent: accent,
       notes: (trimmedNotes == null || trimmedNotes.isEmpty) ? null : trimmedNotes,
       catalogTemplateId: null,
+      taxonomyBrandId: brandId,
+      taxonomyIpId: ipId,
+      imageKey: CustomSeriesConventions.seriesImageKey(seriesId),
       customCoverImageUri: (trimmedCover != null && trimmedCover.isNotEmpty) ? trimmedCover : null,
     );
     _commit(

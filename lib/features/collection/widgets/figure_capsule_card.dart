@@ -141,7 +141,7 @@ class _FigureCapsuleCardState extends State<FigureCapsuleCard> with SingleTicker
 
     final secretLook = FigureSecretRarityStyle.resolve(
       isSecret: widget.figure.isSecret,
-      rarityLabel: widget.figure.rarity,
+      rarityLabel: widget.figure.effectiveRarityLabel ?? widget.figure.rarity,
       isDark: isDark,
     );
     if (secretLook != null) {
@@ -274,7 +274,9 @@ class _FigureCapsuleCardState extends State<FigureCapsuleCard> with SingleTicker
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        widget.figure.isSecret ? '${widget.figure.rarity} · chase' : widget.figure.rarity,
+                        widget.figure.isSecret
+                            ? '${widget.figure.displayRarity} · chase'
+                            : widget.figure.displayRarity,
                         textAlign: TextAlign.center,
                         style: textTheme.labelSmall?.copyWith(
                           color: scheme.onSurfaceVariant.withValues(alpha: missing ? 0.52 : 0.78),

@@ -91,14 +91,20 @@ class ShelfSeries {
     this.catalogTemplateId,
     this.taxonomyBrandId,
     this.taxonomyIpId,
+    this.imageKey,
     this.customCoverImageUri,
   });
 
   /// Unique shelf instance id (per user after persistence).
   final String id;
+
+  /// Series display label (wire: `displayName`; same as catalog [displayName]).
   final String name;
   final String brand;
   final String ipName;
+
+  /// Catalog-aligned cover stem for custom rows (local file via [customCoverImageUri]).
+  final String? imageKey;
 
   /// When non-null, stable key for catalog/drop dedup ([CollectionSnapshot.hasTemplateOnShelf]).
   final String? catalogTemplateId;
@@ -123,6 +129,21 @@ class ShelfSeries {
   bool get isDropImport => catalogTemplateId != null && catalogTemplateId!.startsWith('drop-');
 }
 
+/// Display + styling helpers for [ShelfFigure] rarity fields.
+extension ShelfFigureRarityDisplay on ShelfFigure {
+  String get displayRarity {
+    final label = rarityLabel?.trim();
+    if (label != null && label.isNotEmpty) return label;
+    return rarity;
+  }
+
+  String? get effectiveRarityLabel {
+    final label = rarityLabel?.trim();
+    if (label != null && label.isNotEmpty) return label;
+    return null;
+  }
+}
+
 /// One owned figure slot on a [ShelfSeries] row.
 @immutable
 class ShelfFigure {
@@ -134,6 +155,8 @@ class ShelfFigure {
     this.localImageUri,
     required this.rarity,
     required this.isSecret,
+    this.rarityLabel,
+    this.imageKey,
     this.taxonomyBrandId,
     this.taxonomyIpId,
     this.catalogFigureTemplateId,
@@ -143,6 +166,8 @@ class ShelfFigure {
 
   /// Parent [ShelfSeries.id] (series instance, never an IP taxonomy id).
   final String seriesId;
+
+  /// Figure display label (wire: `displayName`).
   final String name;
 
   /// Catalog-resolved asset path, remote art, or legacy placeholder URLs — not [imageKey].
@@ -150,8 +175,16 @@ class ShelfFigure {
 
   /// User private shelf: local path / `file:` URI only. Never a catalog image key.
   final String? localImageUri;
+
+  /// Opaque art stem for custom rows (pairs with [localImageUri]; catalog uses Storage).
+  final String? imageKey;
+
+  /// Short rarity line for UI (Regular / Secret / legacy Custom).
   final String rarity;
   final bool isSecret;
+
+  /// Catalog ratio label when secret (e.g. `1:72`); null for regular custom figures.
+  final String? rarityLabel;
 
   final String? taxonomyBrandId;
   final String? taxonomyIpId;
@@ -241,6 +274,8 @@ ShelfSeries cloneCatalogSeriesOntoShelf(
         localImageUri: null,
         rarity: f.rarity,
         isSecret: f.isSecret,
+        rarityLabel: _rarityLabelFromLine(f.rarity, f.isSecret),
+        imageKey: f.catalogImageKey,
         taxonomyBrandId: f.taxonomyBrandId ?? template.taxonomyBrandId,
         taxonomyIpId: f.taxonomyIpId ?? template.taxonomyIpId,
         catalogFigureTemplateId: f.templateFigureId,
@@ -258,6 +293,7 @@ ShelfSeries cloneCatalogSeriesOntoShelf(
     catalogTemplateId: catalogTemplateKey,
     taxonomyBrandId: template.taxonomyBrandId,
     taxonomyIpId: template.taxonomyIpId,
+    imageKey: catalogTemplateKey,
   );
 }
 
@@ -283,12 +319,20 @@ ShelfSeries shelfSeriesMirrorCatalogTemplate(CatalogSeries template) {
           localImageUri: null,
           rarity: f.rarity,
           isSecret: f.isSecret,
+          rarityLabel: _rarityLabelFromLine(f.rarity, f.isSecret),
+          imageKey: f.catalogImageKey,
           taxonomyBrandId: f.taxonomyBrandId ?? template.taxonomyBrandId,
           taxonomyIpId: f.taxonomyIpId ?? template.taxonomyIpId,
           catalogFigureTemplateId: f.templateFigureId,
         ),
     ],
   );
+}
+
+String? _rarityLabelFromLine(String rarity, bool isSecret) {
+  final t = rarity.trim();
+  if (RegExp(r'^\d+\s*:\s*\d+\s*$').hasMatch(t)) return t;
+  return null;
 }
 
 /// User shelf is the source of truth — catalog is suggestions only.
