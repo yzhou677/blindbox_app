@@ -43,3 +43,25 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Firebase CLI (project root; not FlutterFire dart config)
+firebase.json
+.firebase/
+
+# Firebase — client config (use *.example templates; see docs/FIREBASE_LOCAL_SETUP.md)
+/android/app/google-services.json
+/ios/Runner/GoogleService-Info.plist
+/lib/firebase_options.dart
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+# Service account / admin SDK (never commit)
+**/google-services-account.json
+**/*-firebase-adminsdk-*.json
+**/serviceAccount*.json
+**/service-account*.json

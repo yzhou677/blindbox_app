@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/firebase/ensure_firebase_initialized.dart';
 import 'package:blindbox_app/core/router/app_router.dart';
 import 'package:blindbox_app/core/theme/app_theme.dart';
 import 'package:blindbox_app/features/collection/bootstrap/collection_app_bootstrap.dart';
@@ -11,6 +12,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await ensureFirebaseInitialized();
+  } catch (e, st) {
+    debugPrint('Firebase init skipped (offline/placeholder config): $e\n$st');
+  }
   await bootstrapMarketBrowseListings();
   final restored = await CollectionSnapshotStorage.load();
   CollectionAppBootstrap.prime(restored ?? CollectionSeedData.initialSnapshot());
