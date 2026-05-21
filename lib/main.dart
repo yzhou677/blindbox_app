@@ -1,4 +1,6 @@
 import 'package:blindbox_app/core/firebase/ensure_firebase_initialized.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle_loader.dart';
+import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
 import 'package:blindbox_app/core/router/app_router.dart';
 import 'package:blindbox_app/core/theme/app_theme.dart';
 import 'package:blindbox_app/features/collection/bootstrap/collection_app_bootstrap.dart';
@@ -14,8 +16,10 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     await ensureFirebaseInitialized();
+    final catalogBundle = await loadCatalogBundle();
+    MarketTaxonomy.applyCatalogBundle(catalogBundle);
   } catch (e, st) {
-    debugPrint('Firebase init skipped (offline/placeholder config): $e\n$st');
+    debugPrint('Firebase/catalog bootstrap skipped: $e\n$st');
   }
   await bootstrapMarketBrowseListings();
   final restored = await CollectionSnapshotStorage.load();

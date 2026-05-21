@@ -1,11 +1,13 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_series_art.dart';
+import 'package:blindbox_app/features/collection/presentation/shelf_figure_media.dart';
 import 'package:blindbox_app/features/collection/widgets/collectible_figure_placeholder.dart';
+import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
 import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
 import 'package:flutter/material.dart';
 
-/// Compact shelf thumbnail — representative figure art or [CollectibleFigurePlaceholder].
+/// Compact shelf thumbnail — canonical series cover or placeholder.
 class CollectionSeriesThumbnail extends StatelessWidget {
   const CollectionSeriesThumbnail({
     super.key,
@@ -20,7 +22,8 @@ class CollectionSeriesThumbnail extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final size = extent ?? FeedRhythm.collectionShelfThumbnailExtent;
-    final url = CollectionSeriesArt.representativeImageUrl(series);
+    final userCover = ShelfFigureMedia.seriesCoverRef(series);
+    final catalogSeriesKey = CollectionSeriesArt.catalogSeriesImageKey(series);
     final anchor = CollectionSeriesArt.anchorFigure(series);
     final name = anchor?.name ?? series.name;
     final seed = anchor?.id ?? series.id;
@@ -40,23 +43,54 @@ class CollectionSeriesThumbnail extends StatelessWidget {
         ),
         child: ClipRRect(
           borderRadius: r,
-          child: url != null
-              ? CollectibleThumbImage(
-                  imageRef: url,
-                  name: name,
-                  seedKey: seed,
-                  isSecret: secret,
-                  fit: BoxFit.cover,
-                  borderRadius: BorderRadius.zero,
-                )
-              : CollectibleFigurePlaceholder(
-                  name: name,
-                  seedKey: seed,
-                  isSecret: secret,
-                  compact: true,
-                ),
+          child: _seriesThumbContent(
+            userCover: userCover,
+            catalogSeriesKey: catalogSeriesKey,
+            name: name,
+            seed: seed,
+            secret: secret,
+          ),
         ),
       ),
     );
   }
+}
+
+Widget _seriesThumbContent({
+  required String? userCover,
+  required String? catalogSeriesKey,
+  required String name,
+  required String seed,
+  required bool secret,
+}) {
+  if (userCover != null && userCover.isNotEmpty) {
+    return CollectibleThumbImage(
+      imageRef: userCover,
+      name: name,
+      seedKey: seed,
+      isSecret: secret,
+      fit: BoxFit.cover,
+      borderRadius: BorderRadius.zero,
+    );
+  }
+
+  if (catalogSeriesKey != null && catalogSeriesKey.isNotEmpty) {
+    return CatalogImageFromKey(
+      imageKey: catalogSeriesKey,
+      name: name,
+      seedKey: seed,
+      isSecret: secret,
+      series: true,
+      compact: true,
+      fit: BoxFit.cover,
+      borderRadius: BorderRadius.zero,
+    );
+  }
+
+  return CollectibleFigurePlaceholder(
+    name: name,
+    seedKey: seed,
+    isSecret: secret,
+    compact: true,
+  );
 }

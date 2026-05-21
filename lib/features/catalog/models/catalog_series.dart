@@ -12,6 +12,7 @@ class CatalogSeries {
     required this.releaseDate,
     required this.isBlindBox,
     required this.imageKey,
+    this.aliases = const [],
   });
 
   final String id;
@@ -25,6 +26,9 @@ class CatalogSeries {
 
   /// Opaque illustration id (typically matches [id]); resolves via [CatalogImageResolver].
   final String imageKey;
+
+  /// Search aliases from Firestore (e.g. shortened series titles).
+  final List<String> aliases;
 
   factory CatalogSeries.fromJson(Map<String, dynamic> json) {
     final id = catalogReadString(json, 'id');
@@ -40,6 +44,7 @@ class CatalogSeries {
         fallbackId: id,
         legacyThumbField: catalogReadString(json, 'thumbnailAsset'),
       ),
+      aliases: catalogReadStringList(json['aliases']),
     );
   }
 }

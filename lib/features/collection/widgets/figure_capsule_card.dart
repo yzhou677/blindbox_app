@@ -1,6 +1,5 @@
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
-import 'package:blindbox_app/features/collection/presentation/shelf_figure_media.dart';
-import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
+import 'package:blindbox_app/features/collection/widgets/shelf_figure_thumb.dart';
 import 'package:flutter/material.dart';
 
 /// Mini blind-box / shelf card — collected, wish list, and open-slot states.
@@ -495,8 +494,9 @@ class _FigureThumb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CollectibleThumbImage(
-      imageRef: ShelfFigureMedia.figureDisplayRef(figure, series),
+    return ShelfFigureThumb(
+      figure: figure,
+      series: series,
       name: figure.name,
       seedKey: figure.id,
       isSecret: figure.isSecret,

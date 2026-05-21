@@ -1,5 +1,5 @@
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
-import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
+import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
 import 'package:flutter/material.dart';
 
 /// Read-only catalog lineup preview before adding a series to the shelf.
@@ -139,15 +139,19 @@ class _PreviewFigureRow extends StatelessWidget {
             SizedBox(
               width: 52,
               height: 52,
-              child: CollectibleThumbImage(
-                imageRef: figure.imageUrl,
-                name: figure.name,
-                seedKey: figure.templateFigureId,
-                isSecret: figure.isSecret,
-                compact: true,
-                fit: BoxFit.cover,
-                borderRadius: BorderRadius.circular(12),
-              ),
+              child: (figure.catalogImageKey?.trim().isNotEmpty ?? false)
+                  ? CatalogImageFromKey(
+                      imageKey: figure.catalogImageKey!,
+                      name: figure.name,
+                      seedKey: figure.templateFigureId,
+                      isSecret: figure.isSecret,
+                      compact: true,
+                      fit: BoxFit.cover,
+                      borderRadius: BorderRadius.circular(12),
+                    )
+                  : ColoredBox(
+                      color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                    ),
             ),
             const SizedBox(width: 12),
             Expanded(

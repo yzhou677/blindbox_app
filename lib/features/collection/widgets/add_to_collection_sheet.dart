@@ -1,16 +1,17 @@
-import 'package:blindbox_app/features/catalog/catalog_image_resolver.dart';
 import 'package:blindbox_app/features/catalog/adapters/catalog_seed_to_collection_template.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle_loader.dart';
+import 'package:blindbox_app/features/catalog/catalog_latest_series.dart';
 import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_series.dart' as seed_catalog;
 import 'package:blindbox_app/features/catalog/search/catalog_search_result.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_service.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
-import 'package:blindbox_app/features/collection/data/collection_catalog.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/add_series_catalog_copy.dart';
 import 'package:blindbox_app/features/collection/presentation/catalog_search_row_summary.dart';
 import 'package:blindbox_app/features/collection/widgets/catalog_series_preview_sheet.dart';
-import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
+import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -28,16 +29,51 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
   final _search = TextEditingController();
   CatalogSeedBundle? _catalogBundle;
   bool _catalogLoadFailed = false;
+  Future<List<CatalogSeries>>? _recommendationsFuture;
 
   @override
   void initState() {
     super.initState();
     _search.addListener(() => setState(() {}));
-    loadCatalogSeedBundle().then((b) {
-      if (mounted) setState(() => _catalogBundle = b);
+    _loadCatalog();
+  }
+
+  void _loadCatalog() {
+    loadCatalogBundle().then((b) {
+      if (!mounted) return;
+      final snap = ref.read(collectionNotifierProvider);
+      MarketTaxonomy.applyCatalogBundle(b);
+      setState(() {
+        _catalogBundle = b;
+        _catalogLoadFailed = false;
+        _recommendationsFuture = _loadRecommendationTemplates(b, snap);
+      });
     }).catchError((_) {
-      if (mounted) setState(() => _catalogLoadFailed = true);
+      if (mounted) {
+        setState(() {
+          _catalogLoadFailed = true;
+          _catalogBundle = null;
+          _recommendationsFuture = null;
+        });
+      }
     });
+  }
+
+  Future<List<CatalogSeries>> _loadRecommendationTemplates(
+    CatalogSeedBundle bundle,
+    CollectionSnapshot snap,
+  ) async {
+    final picks = pickLatestSeriesRecommendations(bundle, snap);
+    final out = <CatalogSeries>[];
+    for (final seedSeries in picks) {
+      final template = await catalogTemplateFromSeedSeries(
+        bundle,
+        seedSeries.id,
+        resolveFigureImages: false,
+      );
+      if (template != null) out.add(template);
+    }
+    return out;
   }
 
   @override
@@ -49,6 +85,37 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
   String get _trimmedQuery => _search.text.trim();
 
   bool get _hasSearchText => _trimmedQuery.isNotEmpty;
+
+  /// Commits a catalog template to the shelf, resolving Storage URLs when the template has no art yet.
+  Future<void> _addCatalogSeriesToShelf(
+    CollectionNotifier notifier,
+    CatalogSeries template,
+  ) async {
+    var toAdd = template;
+    final needsResolve = template.figures.any((f) {
+      final u = f.imageUrl?.trim();
+      return u == null || u.isEmpty;
+    });
+    if (needsResolve) {
+      final bundle = _catalogBundle;
+      if (bundle != null) {
+        final resolved = await catalogTemplateFromSeedSeries(
+          bundle,
+          template.templateId,
+          resolveFigureImages: true,
+        );
+        if (resolved != null) toAdd = resolved;
+      }
+    }
+    notifier.addSeriesFromTemplate(toAdd);
+  }
+
+  String _seriesCoverImageKey(CatalogSeedBundle bundle, String seriesId) {
+    for (final s in bundle.series) {
+      if (s.id == seriesId) return s.imageKey.trim();
+    }
+    return '';
+  }
 
   int _figureCountInSeries(CatalogSeedBundle bundle, String seriesId) {
     var n = 0;
@@ -143,12 +210,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
       if (series == null) {
         throw StateError('Catalog seed missing series $sid');
       }
-      final seriesPath =
-          series.imageKey.trim().isEmpty ? '' : CatalogImageResolver.seriesAsset(series.imageKey);
-      final figurePath = agg.firstHit.imageKey.trim().isEmpty
-          ? ''
-          : CatalogImageResolver.figureAsset(agg.firstHit.imageKey);
-      final cover = seriesPath.isNotEmpty ? seriesPath : figurePath;
+      final coverKey = series.imageKey.trim();
 
       final figureCount = _figureCountInSeries(bundle, sid);
       final summaryLine = catalogSearchRowSummary(
@@ -160,7 +222,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
       return _SeriesSearchRow(
         seriesId: sid,
         seriesTitle: series.displayName,
-        coverImageRef: cover,
+        coverImageKey: coverKey,
         summaryLine: summaryLine,
         brandIpLine: _brandIpLineForSeries(bundle, series),
         hasAnySecret: agg.hasAnySecret,
@@ -175,19 +237,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     final bottom = MediaQuery.paddingOf(context).bottom;
     final snap = ref.watch(collectionNotifierProvider);
     final notifier = ref.read(collectionNotifierProvider.notifier);
-    final suggestions = CollectionCatalog.suggestedSeries(snap);
     final catalogActive = _trimmedQuery.isNotEmpty;
-
-    List<CatalogSeries> legacyFiltered(List<CatalogSeries> list) {
-      if (_trimmedQuery.isEmpty) return list;
-      final q = _trimmedQuery.toLowerCase();
-      return list.where((s) {
-        final hay = '${s.name} ${s.ipName} ${s.brand}'.toLowerCase();
-        return hay.contains(q);
-      }).toList(growable: false);
-    }
-
-    final filteredSuggestions = legacyFiltered(suggestions);
 
     final sheetH = MediaQuery.sizeOf(context).height * 0.78;
 
@@ -277,11 +327,11 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
                   ),
                 ),
               )
-            else if (suggestions.isNotEmpty)
+            else if (!_catalogLoadFailed && _catalogBundle != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
-                  AddSeriesCatalogCopy.catalogListHeading(searchActive: false),
+                  'Latest releases',
                   style: textTheme.labelLarge?.copyWith(
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.12,
@@ -298,12 +348,10 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
                       snap,
                       notifier,
                     )
-                  : _buildLegacySuggestionsBody(
+                  : _buildRecommendationsBody(
                       context,
                       scheme,
                       textTheme,
-                      suggestions,
-                      filteredSuggestions,
                       notifier,
                     ),
             ),
@@ -329,60 +377,88 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     );
   }
 
-  Widget _buildLegacySuggestionsBody(
+  Widget _buildRecommendationsBody(
     BuildContext context,
     ColorScheme scheme,
     TextTheme textTheme,
-    List<CatalogSeries> suggestions,
-    List<CatalogSeries> filtered,
     CollectionNotifier notifier,
   ) {
-    if (suggestions.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Text(
-            'Every catalog series here is already on your shelf. Nice.',
-            textAlign: TextAlign.center,
-            style: textTheme.bodyMedium?.copyWith(
-              color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
-              height: 1.4,
-            ),
-          ),
-        ),
-      );
-    }
-    if (filtered.isEmpty) {
+    if (_catalogLoadFailed) {
       return Center(
         child: Text(
-          AddSeriesCatalogCopy.noSearchMatches,
+          'Couldn’t load the catalog. Check your connection and try again.',
+          textAlign: TextAlign.center,
           style: textTheme.bodyMedium?.copyWith(
-            color: scheme.onSurfaceVariant.withValues(alpha: 0.8),
+            color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
           ),
         ),
       );
     }
-    return ListView.separated(
-      padding: const EdgeInsets.only(bottom: 8),
-      itemCount: filtered.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 12),
-      itemBuilder: (ctx, i) {
-        final s = filtered[i];
-        return _SuggestionCard(
-          series: s,
-          onOpenPreview: () {
-            _openCatalogSeriesPreview(
-              context,
+    if (_catalogBundle == null || _recommendationsFuture == null) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+    return FutureBuilder<List<CatalogSeries>>(
+      future: _recommendationsFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Couldn’t load recommendations.',
+              style: textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
+              ),
+            ),
+          );
+        }
+        final recs = snapshot.data ?? const <CatalogSeries>[];
+        if (recs.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text(
+                'Every catalog series here is already on your shelf. Nice.',
+                textAlign: TextAlign.center,
+                style: textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
+                  height: 1.4,
+                ),
+              ),
+            ),
+          );
+        }
+        return ListView.separated(
+          padding: const EdgeInsets.only(bottom: 8),
+          itemCount: recs.length,
+          separatorBuilder: (context, index) => const SizedBox(height: 12),
+          itemBuilder: (ctx, i) {
+            final s = recs[i];
+            final coverKey = _seriesCoverImageKey(_catalogBundle!, s.templateId);
+            return _SuggestionCard(
               series: s,
-              onAdd: () {
-                notifier.addSeriesFromTemplate(s);
-                Navigator.of(context).pop();
+              coverImageKey: coverKey,
+              onOpenPreview: () {
+                _openCatalogSeriesPreview(
+                  ctx,
+                  series: s,
+                  onAdd: () async {
+                    await _addCatalogSeriesToShelf(notifier, s);
+                    if (ctx.mounted) Navigator.of(ctx).pop();
+                  },
+                );
+              },
+              onAdd: () async {
+                await _addCatalogSeriesToShelf(notifier, s);
+                if (ctx.mounted) Navigator.of(ctx).pop();
               },
             );
-          },
-          onAdd: () {
-            notifier.addSeriesFromTemplate(s);
-            Navigator.of(context).pop();
           },
         );
       },
@@ -399,7 +475,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     if (_catalogLoadFailed) {
       return Center(
         child: Text(
-          'Couldn’t load the local catalog. Try again later.',
+          'Couldn’t load the catalog. Check your connection and try again.',
           textAlign: TextAlign.center,
           style: textTheme.bodyMedium?.copyWith(
             color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
@@ -443,15 +519,15 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
             _openCatalogSeriesPreview(
               ctx,
               series: template,
-              onAdd: () {
-                notifier.addSeriesFromTemplate(template);
-                Navigator.of(ctx).pop();
+              onAdd: () async {
+                await _addCatalogSeriesToShelf(notifier, template);
+                if (ctx.mounted) Navigator.of(ctx).pop();
               },
             );
           },
           onAdd: () async {
             final template = await catalogTemplateFromSeedSeries(bundle, row.seriesId);
-            if (template != null) notifier.addSeriesFromTemplate(template);
+            if (template != null) await _addCatalogSeriesToShelf(notifier, template);
             if (ctx.mounted) Navigator.of(ctx).pop();
           },
         );
@@ -476,7 +552,7 @@ class _SeriesSearchRow {
   const _SeriesSearchRow({
     required this.seriesId,
     required this.seriesTitle,
-    required this.coverImageRef,
+    required this.coverImageKey,
     required this.summaryLine,
     required this.brandIpLine,
     required this.hasAnySecret,
@@ -484,7 +560,7 @@ class _SeriesSearchRow {
 
   final String seriesId;
   final String seriesTitle;
-  final String coverImageRef;
+  final String coverImageKey;
   final String summaryLine;
   final String brandIpLine;
   final bool hasAnySecret;
@@ -535,8 +611,9 @@ class _SeriesCatalogSearchRowCard extends StatelessWidget {
                 SizedBox(
                   width: 56,
                   height: 56,
-                  child: CollectibleThumbImage(
-                    imageRef: row.coverImageRef,
+                  child: CatalogImageFromKey(
+                    imageKey: row.coverImageKey,
+                    series: true,
                     name: row.seriesTitle,
                     seedKey: row.seriesId,
                     isSecret: row.hasAnySecret,
@@ -628,11 +705,13 @@ class _SeriesCatalogSearchRowCard extends StatelessWidget {
 class _SuggestionCard extends StatelessWidget {
   const _SuggestionCard({
     required this.series,
+    required this.coverImageKey,
     required this.onOpenPreview,
     required this.onAdd,
   });
 
   final CatalogSeries series;
+  final String coverImageKey;
   final VoidCallback onOpenPreview;
   final VoidCallback onAdd;
 
@@ -640,7 +719,6 @@ class _SuggestionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final previews = series.figures.take(3).toList(growable: false);
 
     return Material(
       color: scheme.surfaceContainerLow,
@@ -668,34 +746,26 @@ class _SuggestionCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Row(
-                  children: [
-                    for (var j = 0; j < 3; j++)
-                      Padding(
-                        padding: EdgeInsets.only(right: j < 2 ? 6 : 0),
-                        child: Transform.rotate(
-                          angle: (j - 1) * 0.06,
-                          child: Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: scheme.shadow.withValues(alpha: 0.06),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            clipBehavior: Clip.antiAlias,
-                            child: j < previews.length
-                                ? _MiniFigurePreview(figure: previews[j])
-                                : ColoredBox(color: scheme.surfaceContainerHighest.withValues(alpha: 0.5)),
+                SizedBox(
+                  width: 56,
+                  height: 56,
+                  child: coverImageKey.isNotEmpty
+                      ? CatalogImageFromKey(
+                          imageKey: coverImageKey,
+                          series: true,
+                          name: series.name,
+                          seedKey: series.templateId,
+                          compact: true,
+                          fit: BoxFit.cover,
+                          borderRadius: BorderRadius.circular(14),
+                        )
+                      : ColoredBox(
+                          color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                          child: Icon(
+                            Icons.auto_awesome_motion_rounded,
+                            color: scheme.onSurfaceVariant.withValues(alpha: 0.45),
                           ),
                         ),
-                      ),
-                  ],
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -762,21 +832,3 @@ class _SuggestionCard extends StatelessWidget {
   }
 }
 
-class _MiniFigurePreview extends StatelessWidget {
-  const _MiniFigurePreview({required this.figure});
-
-  final CatalogFigure figure;
-
-  @override
-  Widget build(BuildContext context) {
-    return CollectibleThumbImage(
-      imageRef: figure.imageUrl,
-      name: figure.name,
-      seedKey: figure.templateFigureId,
-      isSecret: figure.isSecret,
-      compact: true,
-      fit: BoxFit.cover,
-      borderRadius: BorderRadius.circular(12),
-    );
-  }
-}

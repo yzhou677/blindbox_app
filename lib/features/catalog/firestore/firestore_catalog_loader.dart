@@ -8,15 +8,16 @@ import 'package:blindbox_app/features/catalog/models/catalog_ip.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_series.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// Loads the collectible catalog universe from Firestore into [CatalogSeedBundle].
+/// Loads the catalog from canonical Firestore collections into [CatalogSeedBundle].
 ///
-/// Does **not** replace [loadCatalogSeedBundle] — local JSON remains the default
-/// for tests, offline seed, and dev fallback until you wire a source switch.
+/// **Collections (flat, top-level only):** `brands`, `ips`, `series`, `figures`.
+/// No subcollections, no alternate catalog trees, no image-metadata collections.
+/// Schema: [FIRESTORE_CATALOG_SCHEMA.md]. Storage paths: [FIREBASE_STORAGE_CATALOG.md].
 ///
-/// Schema: see [FIRESTORE_CATALOG_SCHEMA.md] in this directory.
+/// [loadCatalogBundle] tries this first, then falls back to [loadCatalogSeedBundle].
 ///
-/// - No realtime listeners, caching, or sync — one-shot reads per collection.
-/// - Injects [FirebaseFirestore] for tests; defaults to [FirebaseFirestore.instance].
+/// - One-shot `.get()` per collection (no listeners).
+/// - Document id = canonical id; see mapper for field normalization.
 Future<CatalogSeedBundle> loadFirestoreCatalogBundle({
   FirebaseFirestore? firestore,
 }) async {
@@ -38,7 +39,6 @@ Future<CatalogSeedBundle> loadFirestoreCatalogBundle({
 
   brands.sort((a, b) => a.id.compareTo(b.id));
   ips.sort((a, b) => a.id.compareTo(b.id));
-  series.sort((a, b) => a.id.compareTo(b.id));
   figures.sort((a, b) => a.id.compareTo(b.id));
 
   return CatalogSeedBundle(
@@ -68,12 +68,36 @@ List<CatalogIp> _mapIps(QuerySnapshot<Map<String, dynamic>> snap) {
 }
 
 List<CatalogSeries> _mapSeries(QuerySnapshot<Map<String, dynamic>> snap) {
-  final out = <CatalogSeries>[];
-  for (final doc in snap.docs) {
+  final out = <({int docOrder, CatalogSeries series})>[];
+  for (var i = 0; i < snap.docs.length; i++) {
+    final doc = snap.docs[i];
     final mapped = mapFirestoreSeries(doc.id, doc.data());
-    if (mapped != null) out.add(mapped);
+    if (mapped != null) out.add((docOrder: i, series: mapped));
   }
-  return out;
+  out.sort((a, b) => _compareSeriesSnapshotOrder(a.series, b.series, a.docOrder, b.docOrder));
+  return [for (final e in out) e.series];
+}
+
+int _compareSeriesSnapshotOrder(
+  CatalogSeries a,
+  CatalogSeries b, [
+  int? orderA,
+  int? orderB,
+]) {
+  final da = a.releaseDate;
+  final db = b.releaseDate;
+  if (da != null && db != null) {
+    final byDate = db.compareTo(da);
+    if (byDate != 0) return byDate;
+  } else if (da != null) {
+    return -1;
+  } else if (db != null) {
+    return 1;
+  }
+  if (orderA != null && orderB != null) {
+    return orderB.compareTo(orderA);
+  }
+  return b.id.compareTo(a.id);
 }
 
 List<CatalogFigure> _mapFigures(QuerySnapshot<Map<String, dynamic>> snap) {

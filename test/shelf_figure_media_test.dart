@@ -69,7 +69,7 @@ void main() {
     expect(ShelfFigureMedia.figureDisplayRef(fig, s), 'assets/catalog/figures/x.png');
   });
 
-  test('series representative prefers custom cover', () {
+  test('series cover ref returns custom cover only', () {
     final fig = ShelfFigure(
       id: 'f',
       seriesId: 's',
@@ -87,6 +87,27 @@ void main() {
       shelfAccent: const Color(0xFFE4F2EA),
       customCoverImageUri: '/me.jpg',
     );
-    expect(ShelfFigureMedia.seriesRepresentativeRef(s), '/me.jpg');
+    expect(ShelfFigureMedia.seriesCoverRef(s), '/me.jpg');
+  });
+
+  test('series cover ref ignores figure imageUrl', () {
+    final fig = ShelfFigure(
+      id: 'f',
+      seriesId: 's',
+      name: 'F',
+      imageUrl: 'assets/catalog/figures/x.png',
+      rarity: 'R',
+      isSecret: false,
+    );
+    final s = ShelfSeries(
+      id: 's',
+      name: 'S',
+      brand: 'B',
+      ipName: 'I',
+      figures: [fig],
+      shelfAccent: const Color(0xFFE4F2EA),
+      catalogTemplateId: 'some_series_id',
+    );
+    expect(ShelfFigureMedia.seriesCoverRef(s), isNull);
   });
 }

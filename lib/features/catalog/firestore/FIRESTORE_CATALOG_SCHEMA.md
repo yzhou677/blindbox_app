@@ -1,20 +1,41 @@
-# Firestore catalog schema (Phase 1)
+# Firestore catalog schema (canonical)
 
-Remote catalog data mirrors the shapes in `tools/seed/*.json` and maps into the
-same Dart models (`CatalogBrand`, `CatalogIp`, `CatalogSeries`, `CatalogFigure`)
-via `firestore_catalog_mapper.dart`.
+The live Firebase project uses **four top-level collections only**. The app reads them directly via `loadFirestoreCatalogBundle()` — no alternate layouts, nested hierarchies, duplicate catalog trees, or separate image-metadata collections.
 
-**Catalog images:** object paths and resolver behavior → [`FIREBASE_STORAGE_CATALOG.md`](FIREBASE_STORAGE_CATALOG.md).  
-**Agent rules:** [`.cursor/ARCHITECTURE.md`](../../../../.cursor/ARCHITECTURE.md) (Firebase section), [`.cursor/rules/firebase-catalog.mdc`](../../../../.cursor/rules/firebase-catalog.mdc).
+Maps into the same Dart models as `tools/seed/*.json` (`CatalogBrand`, `CatalogIp`, `CatalogSeries`, `CatalogFigure`) through `firestore_catalog_mapper.dart`.
 
-## Collections (top-level)
+**Storage (binary art):** [`FIREBASE_STORAGE_CATALOG.md`](FIREBASE_STORAGE_CATALOG.md) — paths are `catalog/series/<imageKey>.<ext>` and `catalog/figures/<imageKey>.<ext>`, resolved in app code only.
 
-- **`brands`**
-- **`ips`**
-- **`series`**
-- **`figures`**
+**Agent rules:** [`.cursor/ARCHITECTURE.md`](../../../../.cursor/ARCHITECTURE.md), [`.cursor/rules/firebase-catalog.mdc`](../../../../.cursor/rules/firebase-catalog.mdc).
 
-Each **document id** is the **canonical id** (e.g. `series/the_monsters_exciting_macaron` in the console is document id `the_monsters_exciting_macaron`, not a path with slashes).
+## Do not introduce
+
+- Alternate collection names or subcollection hierarchies under brands/ips/series
+- Duplicate catalog collections (e.g. a second `catalog_*` namespace)
+- `imagePath`, Storage URLs, or download tokens on Firestore documents
+- Dynamic or generated Storage folder structures — paths are deterministic from `imageKey` + kind + extension (see Storage doc)
+
+## Collections (use as-is)
+
+- `brands`
+- `ips`
+- `series`
+- `figures`
+
+Each **document id** is the **canonical id** (console path `series/the_monsters_exciting_macaron` means document id `the_monsters_exciting_macaron`, not slashes inside the id).
+
+## Canonical id alignment
+
+These ids must match everywhere:
+
+- Firestore document id and `id` field (when present)
+- `brandId`, `ipId`, `seriesId` cross-references on child docs
+- `imageKey` on series/figure docs (opaque; often equals figure/series id stem)
+- Firebase Storage object name: `catalog/series/<imageKey>.<ext>` or `catalog/figures/<imageKey>.<ext>`
+- Market/collection filter chips (`MarketTaxonomy.applyCatalogBundle`)
+- Shelf `catalogTemplateId` / figure template ids after add-from-catalog
+
+Display names are labels only — never used as filter ids or Storage paths.
 
 ## Document fields
 
@@ -35,26 +56,26 @@ Field names use the same camelCase keys as the JSON seed.
 
 Canonical POP MART lineup IP id is **`the_monsters`** (not `labubu`; Labubu is a character alias).
 
-### `series/{seriesId}`
+### `series/{seriesId}` (live example: `aespa_fluffy_club_vinyl_plush_doll_pendant_series`)
 
+- `id` (string) — usually equals document id
 - `brandId`, `ipId`, `displayName` (strings)
-- `releaseDate` — string `YYYY-MM-DD`, Firestore **`Timestamp`**, or **`null`** (normalized to UTC `YYYY-MM-DD` when Timestamp)
+- `imageKey` (string) — equals document id stem; Storage `catalog/series/<imageKey>.<ext>`
+- `aliases` (array of strings, optional) — used by catalog search
+- `releaseDate` — string `YYYY-MM-DD`, Firestore **`Timestamp`**, or **`null`**
 - `isBlindBox` (bool)
-- `imageKey` (string) — opaque thumbnail identity; mirrors `seriesId` today; clients resolve to bundled assets or future Storage/CDN URLs
-- `id` (optional)
 
-Legacy **`thumbnailAsset`** may still arrive from older documents; Dart parsers derive a provisional key from path stems when `imageKey` is missing. Prefer **`imageKey` only** for new writes.
+### `figures/{figureId}` (live example: `aespa_…_fiuffy_gelbulnyangi_giselle_ver`)
 
-### `figures/{figureId}`
-
-- `seriesId`, `brandId`, `ipId`, `displayName` (strings)
+- `id` (string) — equals document id
+- `imageKey` (string) — equals document id stem; Storage `catalog/figures/<imageKey>.<ext>`
+- `brandId`, `ipId`, `seriesId` (strings) — cross-refs to parent docs
+- `displayName` (string)
+- `rarityLabel` (string or **`null`**)
 - `isSecret` (bool)
-- `rarityLabel` (string, optional)
-- `sortOrder` (int or number)
-- `imageKey` (string) — opaque thumbnail identity aligned with canonical `figureId`
-- `id` (optional)
+- `sortOrder` (int; Firestore may store as number/double)
 
-Legacy **`thumbnailAsset`** is tolerated during migration; **`imageKey` only** going forward.
+Documents missing `imageKey` or required strings are **skipped** at load time (logged).
 
 ## Loader behavior
 
@@ -64,5 +85,7 @@ Legacy **`thumbnailAsset`** is tolerated during migration; **`imageKey` only** g
 
 ## Local JSON
 
-- `loadCatalogSeedBundle()` is unchanged and remains the default for the app and tests.
-- Run `flutterfire configure` and add platform config files (`google-services.json`, etc.) before expecting Firestore to work on device.
+- Canonical export for upload + offline dev: `D:\blindbox-catalog\data\{brands,ips,series,figures}.json` (keep in sync with Firestore).
+- App fallback copies live under `tools/seed/*.json` (same shape; currently ~6 brands, ~23 IPs, ~110 series, ~1151 figures).
+- `loadCatalogBundle()` loads Firestore first, then `tools/seed/` on failure.
+- Run `flutterfire configure` and add platform config files (`google-services.json`, etc.) before expecting Firestore on device.

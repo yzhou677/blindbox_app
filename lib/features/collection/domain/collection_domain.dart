@@ -32,7 +32,7 @@ class CatalogSeries {
     this.taxonomyIpId,
   });
 
-  /// Stable catalog series id (dedupe + future `catalog_series_id`).
+  /// Stable catalog series id (dedupe + future `catalog_series_id`; equals series `imageKey`).
   final String templateId;
   final String name;
   final String brand;
@@ -56,6 +56,7 @@ class CatalogFigure {
     required this.templateFigureId,
     required this.catalogSeriesTemplateId,
     required this.name,
+    this.catalogImageKey,
     this.imageUrl,
     required this.rarity,
     required this.isSecret,
@@ -66,6 +67,9 @@ class CatalogFigure {
   final String templateFigureId;
   final String catalogSeriesTemplateId;
   final String name;
+
+  /// Opaque catalog [imageKey] for Storage/bundled resolve (template-only; not on shelf rows).
+  final String? catalogImageKey;
   final String? imageUrl;
   final String rarity;
   final bool isSecret;

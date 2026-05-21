@@ -9,11 +9,11 @@ Read [`.cursor/ARCHITECTURE.md`](../ARCHITECTURE.md) for full detail. Enforce th
 
 ## Three universes (do not mix)
 
-1. **Catalog Universe** (`lib/features/catalog/`) — read-only reference. `CatalogSeedBundle`, `imageKey`, `CatalogImageResolver`. Sources: `loadCatalogSeedBundle()` (default) or `loadFirestoreCatalogBundle()` (optional). No shelf state.
+1. **Catalog Universe** (`lib/features/catalog/`) — read-only reference. `CatalogSeedBundle`, `imageKey`, `CatalogImageResolver`. Default: `loadCatalogBundle()` (Firestore `brands`/`ips`/`series`/`figures`, seed JSON fallback). No shelf state.
 
 2. **User Private Shelf** (`lib/features/collection/`) — local-first. `CollectionSnapshot`, `collectionNotifierProvider`, SharedPreferences codec. Media: `localImageUri`, `customCoverImageUri`, `imageUrl` — never `imageKey`. No cloud sync for collection unless explicitly requested.
 
-3. **Market / Home** — discover + listings. Data under `features/market/data/` and `features/home/`. Save to shelf only via `collectionNotifier` methods.
+3. **Market / Home** — eBay browse listings (`features/market/data/`), separate from Firestore catalog. Filter chip ids may align via `MarketTaxonomy.applyCatalogBundle()`; listing content/prices/images must not use catalog bundle or `imageKey`. Save to shelf only via `collectionNotifier` methods.
 
 **Firebase:** Firestore + Storage = **catalog only** (not shelf). See ARCHITECTURE.md → Firebase; catalog Storage ≠ shelf media. Rule: `firebase-catalog.mdc` when editing catalog/firebase files.
 

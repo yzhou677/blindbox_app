@@ -83,6 +83,12 @@ final class CatalogSearchService {
       if (q.isNotEmpty && seriesNorm.contains(q)) {
         take(_Rank(_tierSeries, seriesNorm.indexOf(q)));
       }
+      for (final alias in series.aliases) {
+        final a = normalizeCatalogSearchQuery(alias);
+        if (q.isNotEmpty && a.contains(q)) {
+          take(_Rank(_tierAlias, a.indexOf(q)));
+        }
+      }
     }
 
     final ip = _ipById[fig.ipId];
