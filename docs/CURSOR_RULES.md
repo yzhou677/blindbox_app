@@ -1,5 +1,7 @@
 # Cursor Rules
 
+> **Canonical architecture and coding instructions** live in [`.cursor/ARCHITECTURE.md`](../.cursor/ARCHITECTURE.md) and [`.cursor/rules/`](../.cursor/rules/). Use those for agents and new work; this file is a short summary.
+
 Follow the existing project architecture strictly.
 
 Do not:
@@ -28,3 +30,18 @@ Before generating new architecture patterns:
 For MVP:
 - prioritize shipping features quickly
 - avoid premature optimization
+
+## Backend Integration Rules
+
+- Keep API clients inside feature/data or core/network layers
+- Do not call HTTP clients directly from widgets
+- Prefer repository abstractions
+- Preserve Riverpod boundaries
+- Avoid coupling UI to eBay response models
+- Create app-specific domain models/adapters
+- Keep mock data available for preview/testing
+- Do not add new API/transport-layer models into lib/models/.
+- New backend-related models should live inside feature-scoped data layers.
+- Keep DTOs feature-local.
+- UI should consume app-owned domain models, not raw API response models.
+- Prefer mapper layers between API DTOs and domain models.

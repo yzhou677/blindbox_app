@@ -1,0 +1,34 @@
+[
+  {
+    "id": "the_monsters",
+    "brandId": "pop_mart",
+    "displayName": "THE MONSTERS",
+    "aliases": [
+      "Labubu"
+    ]
+  },
+  {
+    "id": "hirono",
+    "brandId": "pop_mart",
+    "displayName": "Hirono",
+    "aliases": [
+      "Hirono"
+    ]
+  },
+  {
+    "id": "sonny_angel",
+    "brandId": "dreams_inc",
+    "displayName": "Sonny Angel",
+    "aliases": [
+      "SonnyAngel"
+    ]
+  },
+  {
+    "id": "smiski",
+    "brandId": "dreams_inc",
+    "displayName": "Smiski",
+    "aliases": [
+      "SMISKI"
+    ]
+  }
+]

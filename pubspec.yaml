@@ -37,6 +37,11 @@ dependencies:
   cached_network_image: ^3.4.1
   flutter_riverpod: ^2.6.1
   go_router: ^14.6.2
+  http: ^1.2.2
+  shared_preferences: ^2.3.5
+  firebase_core: ^4.9.0
+  cloud_firestore: ^6.4.1
+  image_picker: ^1.2.2
 
 dev_dependencies:
   flutter_test:
@@ -64,6 +69,10 @@ flutter:
 
   assets:
     - assets/images/app_icon.png
+    - assets/market/fake_ebay_browse_items.json
+    - assets/catalog/figures/
+    - assets/catalog/series/
+    - tools/seed/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

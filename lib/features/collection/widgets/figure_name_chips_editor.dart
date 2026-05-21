@@ -5,19 +5,26 @@ class FigureNameChipsEditor extends StatelessWidget {
   const FigureNameChipsEditor({
     super.key,
     required this.names,
+    required this.figureLocalUris,
     required this.onRemoveAt,
     required this.onEditAt,
     required this.addFieldController,
     required this.onAddSubmitted,
     required this.addFieldFocusNode,
+    required this.onPickFigurePhoto,
+    required this.onClearFigurePhoto,
   });
 
   final List<String> names;
+  /// Parallel to [names]; same length when the parent keeps them in sync.
+  final List<String?> figureLocalUris;
   final ValueChanged<int> onRemoveAt;
   final ValueChanged<int> onEditAt;
   final TextEditingController addFieldController;
   final VoidCallback onAddSubmitted;
   final FocusNode addFieldFocusNode;
+  final ValueChanged<int> onPickFigurePhoto;
+  final ValueChanged<int> onClearFigurePhoto;
 
   @override
   Widget build(BuildContext context) {
@@ -88,7 +95,11 @@ class FigureNameChipsEditor extends StatelessWidget {
                     for (var i = 0; i < names.length; i++)
                       _FigureNameChip(
                         label: names[i],
-                        onTap: () => onEditAt(i),
+                        hasPhoto: i < figureLocalUris.length &&
+                            (figureLocalUris[i]?.trim().isNotEmpty ?? false),
+                        onLabelTap: () => onEditAt(i),
+                        onPickPhoto: () => onPickFigurePhoto(i),
+                        onClearPhoto: () => onClearFigurePhoto(i),
                         onRemove: () => onRemoveAt(i),
                       ),
                   ],
@@ -144,12 +155,18 @@ class FigureNameChipsEditor extends StatelessWidget {
 class _FigureNameChip extends StatelessWidget {
   const _FigureNameChip({
     required this.label,
-    required this.onTap,
+    required this.hasPhoto,
+    required this.onLabelTap,
+    required this.onPickPhoto,
+    required this.onClearPhoto,
     required this.onRemove,
   });
 
   final String label;
-  final VoidCallback onTap;
+  final bool hasPhoto;
+  final VoidCallback onLabelTap;
+  final VoidCallback onPickPhoto;
+  final VoidCallback onClearPhoto;
   final VoidCallback onRemove;
 
   @override
@@ -161,41 +178,83 @@ class _FigureNameChip extends StatelessWidget {
       color: scheme.surfaceContainerLow,
       elevation: 0,
       borderRadius: BorderRadius.circular(999),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(999),
-        child: Padding(
-          padding: const EdgeInsets.only(left: 14, top: 8, bottom: 8, right: 6),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: -0.06,
-                  ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onLabelTap,
+              borderRadius: BorderRadius.circular(999),
+              child: Padding(
+                padding: const EdgeInsets.only(left: 14, top: 8, bottom: 8, right: 6),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (hasPhoto)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: Icon(
+                          Icons.photo_rounded,
+                          size: 18,
+                          color: scheme.primary.withValues(alpha: 0.78),
+                        ),
+                      ),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 160),
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: -0.06,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 4),
-              IconButton(
-                visualDensity: VisualDensity.compact,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                icon: Icon(
-                  Icons.close_rounded,
-                  size: 18,
-                  color: scheme.onSurfaceVariant.withValues(alpha: 0.65),
-                ),
-                onPressed: onRemove,
-                tooltip: 'Remove',
-              ),
-            ],
+            ),
           ),
-        ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 30, minHeight: 32),
+            tooltip: hasPhoto ? 'Change photo' : 'Add photo',
+            icon: Icon(
+              hasPhoto ? Icons.image_rounded : Icons.add_a_photo_outlined,
+              size: 18,
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
+            ),
+            onPressed: onPickPhoto,
+          ),
+          if (hasPhoto)
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 26, minHeight: 32),
+              tooltip: 'Remove photo',
+              icon: Icon(
+                Icons.restart_alt_rounded,
+                size: 18,
+                color: scheme.onSurfaceVariant.withValues(alpha: 0.55),
+              ),
+              onPressed: onClearPhoto,
+            ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            icon: Icon(
+              Icons.close_rounded,
+              size: 18,
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.65),
+            ),
+            onPressed: onRemove,
+            tooltip: 'Remove',
+          ),
+        ],
       ),
     );
   }

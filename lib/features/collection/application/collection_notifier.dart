@@ -1,40 +1,50 @@
-import 'package:blindbox_app/core/data/collectible_placeholder_art.dart';
-import 'package:blindbox_app/features/collection/data/collection_seed_data.dart';
+import 'dart:async';
+
+import 'package:blindbox_app/features/collection/bootstrap/collection_app_bootstrap.dart';
 import 'package:blindbox_app/features/collection/data/series_release_lookup.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/persistence/collection_snapshot_storage.dart';
 import 'package:blindbox_app/features/home/domain/series_release.dart';
 import 'package:blindbox_app/models/collectible.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// In-memory collection workflows. Persistence / APIs plug in here later.
+/// In-memory collection workflows with durable local persistence.
 final collectionNotifierProvider =
     NotifierProvider<CollectionNotifier, CollectionSnapshot>(CollectionNotifier.new);
 
 class CollectionNotifier extends Notifier<CollectionSnapshot> {
   @override
-  CollectionSnapshot build() => CollectionSeedData.initialSnapshot();
+  CollectionSnapshot build() => CollectionAppBootstrap.takeInitialSnapshot();
+
+  void _commit(CollectionSnapshot next) {
+    state = next;
+    unawaited(CollectionSnapshotStorage.save(next));
+  }
 
   void cycleFigure(String figureId) {
     if (!_figureOnShelf(figureId)) return;
     final cur = state.trackedOrDefault(figureId);
-    final TrackedFigure next;
-    if (cur.owned) {
-      next = TrackedFigure(figureId: figureId, owned: false, wishlist: false);
-    } else if (cur.wishlist) {
-      next = TrackedFigure(figureId: figureId, owned: true, wishlist: false);
-    } else {
-      next = TrackedFigure(figureId: figureId, owned: false, wishlist: true);
+    final FigureCollectionState nextState;
+    switch (cur.state) {
+      case FigureCollectionState.owned:
+        nextState = FigureCollectionState.none;
+      case FigureCollectionState.wishlist:
+        nextState = FigureCollectionState.owned;
+      case FigureCollectionState.none:
+        nextState = FigureCollectionState.wishlist;
     }
     final m = Map<String, TrackedFigure>.from(state.figureStates);
-    if (!next.owned && !next.wishlist) {
+    if (nextState == FigureCollectionState.none) {
       m.remove(figureId);
     } else {
-      m[figureId] = next;
+      m[figureId] = TrackedFigure(figureId: figureId, state: nextState);
     }
-    state = CollectionSnapshot(
-      shelfSeries: state.shelfSeries,
-      figureStates: m,
+    _commit(
+      CollectionSnapshot(
+        shelfSeries: state.shelfSeries,
+        figureStates: m,
+      ),
     );
   }
 
@@ -72,6 +82,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       seriesId: seriesId,
       name: c.name,
       imageUrl: c.imageUrl,
+      localImageUri: null,
       rarity: 'Regular',
       isSecret: false,
     );
@@ -85,9 +96,11 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       notes: null,
       catalogTemplateId: catalogKey,
     );
-    state = CollectionSnapshot(
-      shelfSeries: [series, ...state.shelfSeries],
-      figureStates: state.figureStates,
+    _commit(
+      CollectionSnapshot(
+        shelfSeries: [series, ...state.shelfSeries],
+        figureStates: state.figureStates,
+      ),
     );
   }
 
@@ -105,6 +118,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
           seriesId: seriesId,
           name: slot.name,
           imageUrl: slot.imageUrl,
+          localImageUri: null,
           rarity: slot.isSecret ? 'Secret' : 'Regular',
           isSecret: slot.isSecret,
           taxonomyBrandId: release.taxonomyBrandId,
@@ -124,9 +138,11 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       taxonomyBrandId: release.taxonomyBrandId,
       taxonomyIpId: release.taxonomyIpId,
     );
-    state = CollectionSnapshot(
-      shelfSeries: [series, ...state.shelfSeries],
-      figureStates: state.figureStates,
+    _commit(
+      CollectionSnapshot(
+        shelfSeries: [series, ...state.shelfSeries],
+        figureStates: state.figureStates,
+      ),
     );
   }
 
@@ -139,9 +155,11 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       newSeriesId,
       catalogTemplateKey: catalogKey,
     );
-    state = CollectionSnapshot(
-      shelfSeries: [cloned, ...state.shelfSeries],
-      figureStates: state.figureStates,
+    _commit(
+      CollectionSnapshot(
+        shelfSeries: [cloned, ...state.shelfSeries],
+        figureStates: state.figureStates,
+      ),
     );
   }
 
@@ -150,6 +168,8 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
     String? brand,
     String? ipDisplayName,
     required List<String> figureNames,
+    List<String?>? figureLocalImageUris,
+    String? customCoverImageUri,
     String? notes,
   }) {
     final seriesId = 'custom-${DateTime.now().microsecondsSinceEpoch}';
@@ -168,17 +188,21 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
         ? seriesName.trim()
         : ipDisplayName!.trim();
     final figures = <ShelfFigure>[];
+    final perFigUris = figureLocalImageUris ?? const <String?>[];
     var i = 0;
     for (final raw in figureNames) {
       final name = raw.trim();
       if (name.isEmpty) continue;
       final fid = '$seriesId-f-$i';
+      final rawUri = i < perFigUris.length ? perFigUris[i] : null;
+      final local = rawUri?.trim();
       figures.add(
         ShelfFigure(
           id: fid,
           seriesId: seriesId,
           name: name,
-          imageUrl: placeholderCollectibleArtUrl('$seriesId-$i', 'f5f5f5'),
+          imageUrl: null,
+          localImageUri: (local != null && local.isNotEmpty) ? local : null,
           rarity: 'Custom',
           isSecret: false,
         ),
@@ -187,6 +211,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
     }
     if (figures.isEmpty) return;
     final trimmedNotes = notes?.trim();
+    final trimmedCover = customCoverImageUri?.trim();
     final series = ShelfSeries(
       id: seriesId,
       name: seriesName.trim(),
@@ -196,10 +221,13 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       shelfAccent: accent,
       notes: (trimmedNotes == null || trimmedNotes.isEmpty) ? null : trimmedNotes,
       catalogTemplateId: null,
+      customCoverImageUri: (trimmedCover != null && trimmedCover.isNotEmpty) ? trimmedCover : null,
     );
-    state = CollectionSnapshot(
-      shelfSeries: [series, ...state.shelfSeries],
-      figureStates: state.figureStates,
+    _commit(
+      CollectionSnapshot(
+        shelfSeries: [series, ...state.shelfSeries],
+        figureStates: state.figureStates,
+      ),
     );
   }
 
@@ -210,9 +238,11 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
     for (final f in series.figures) {
       m.remove(f.id);
     }
-    state = CollectionSnapshot(
-      shelfSeries: state.shelfSeries.where((s) => s.id != seriesId).toList(growable: false),
-      figureStates: m,
+    _commit(
+      CollectionSnapshot(
+        shelfSeries: state.shelfSeries.where((s) => s.id != seriesId).toList(growable: false),
+        figureStates: m,
+      ),
     );
   }
 }

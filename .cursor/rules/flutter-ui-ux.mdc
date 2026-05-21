@@ -1,0 +1,33 @@
+---
+description: Cozy collector UI, FeedRhythm spacing, imagery-first layouts
+alwaysApply: true
+---
+
+# Flutter UI / UX
+
+## Product feel
+
+- Cozy, collectible, shelf-oriented — premium but playful
+- Imagery first; text supports visuals
+- Avoid enterprise dashboards, search-engine debug copy, and cluttered layouts
+
+## Spacing
+
+- Use constants from `lib/core/layout/feed_rhythm.dart` (`FeedRhythm`) for tab feeds and collection shelf rhythm
+- Targeted spacing tweaks over global padding inflation
+
+## Collection / add flows
+
+- Add-to-collection search: **series-centric** rows (one series per row)
+- Subtitles: `Includes {figure}` when one figure matches; otherwise `{n} figures` and optional `• chase included` — no `Matched: A, B, C…` lists
+- Tap search row → preview sheet; **Add** button → commit to shelf (do not add on row tap alone)
+
+## Images
+
+- Local shelf photos: `CollectibleThumbImage` + device paths; graceful placeholder on missing files
+- Catalog art: `imageKey` via `CatalogImageResolver` — not on shelf models
+
+## Code style
+
+- Small reusable widgets; avoid massive files and excessive boilerplate
+- Follow existing patterns in the feature you are editing

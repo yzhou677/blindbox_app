@@ -1,0 +1,44 @@
+---
+description: Three-universe boundaries, folder layout, Riverpod and persistence rules
+alwaysApply: true
+---
+
+# Project architecture
+
+Read [`.cursor/ARCHITECTURE.md`](../ARCHITECTURE.md) for full detail. Enforce these boundaries:
+
+## Three universes (do not mix)
+
+1. **Catalog Universe** (`lib/features/catalog/`) — read-only reference. `CatalogSeedBundle`, `imageKey`, `CatalogImageResolver`. Sources: `loadCatalogSeedBundle()` (default) or `loadFirestoreCatalogBundle()` (optional). No shelf state.
+
+2. **User Private Shelf** (`lib/features/collection/`) — local-first. `CollectionSnapshot`, `collectionNotifierProvider`, SharedPreferences codec. Media: `localImageUri`, `customCoverImageUri`, `imageUrl` — never `imageKey`. No cloud sync for collection unless explicitly requested.
+
+3. **Market / Home** — discover + listings. Data under `features/market/data/` and `features/home/`. Save to shelf only via `collectionNotifier` methods.
+
+**Firebase:** Firestore + Storage = **catalog only** (not shelf). See ARCHITECTURE.md → Firebase; catalog Storage ≠ shelf media. Rule: `firebase-catalog.mdc` when editing catalog/firebase files.
+
+## Folder layout
+
+- `lib/features/<feature>/` with `application/`, `data/`, `domain/`, `presentation/`, `widgets/`
+- `lib/core/` for router, theme, FeedRhythm, Firebase init
+- `lib/shared/widgets/` for cross-feature UI only
+
+## Legacy guardrails (frozen — do not expand)
+
+- **`lib/models/`** is grandfathered presentation-only (`Collectible`, `MarketListing`, …). **Do NOT** add new files or types there.
+- New DTOs, domain models, and mappers → owning `features/<feature>/data/` or `domain/`
+- **No `lib/services/`** — do not create generic service layers; use feature `data/` repositories
+- Existing grandfathered imports OK; **no mass migration** unless the user explicitly requests it
+- **No cleanup refactors** or “while I’m here” architecture moves on unrelated tasks
+- Incremental evolution only; preserve catalog / shelf / market boundaries and local-first collection
+
+## State
+
+- Use **Riverpod**; do not replace it
+- No HTTP in widgets
+- Collection writes only through `CollectionNotifier`
+- Catalog search stays pure Dart (`CatalogSearchService`) over a bundle
+
+## MVP
+
+- Small focused diffs; no full rewrites of catalog search, collection flow, or catalog source switching unless the task requires it

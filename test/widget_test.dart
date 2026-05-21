@@ -8,6 +8,7 @@ import 'package:blindbox_app/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 List<Override> _blindboxTestOverrides() => [
       seriesReleaseLookupProvider.overrideWithValue(mockSeriesReleaseByDropId),
@@ -19,6 +20,9 @@ final class EmptyTestCollectionNotifier extends CollectionNotifier {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  SharedPreferences.setMockInitialValues({});
+
   testWidgets('App shell shows Home tab', (WidgetTester tester) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -58,7 +62,7 @@ void main() {
     expect(find.text('All'), findsOneWidget);
     expect(find.text('The Other One'), findsOneWidget);
 
-    await tester.tap(find.text('TOPTOY'));
+    await tester.tap(find.text('Dreams Inc.'));
     await tester.pump(const Duration(milliseconds: 200));
     expect(find.text('Nothing on your shelf for this brand yet.'), findsOneWidget);
 
@@ -88,7 +92,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
     expect(find.text('IP'), findsOneWidget);
-    expect(find.text('Labubu'), findsWidgets);
+    expect(find.text('THE MONSTERS'), findsWidgets);
   });
 
   testWidgets('Collection empty state is polished', (WidgetTester tester) async {

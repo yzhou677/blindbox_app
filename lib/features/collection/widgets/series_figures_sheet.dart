@@ -93,6 +93,7 @@ class SeriesFiguresSheet extends ConsumerWidget {
                   children: [
                     for (final f in series.figures)
                       FigureCapsuleCard(
+                        series: series,
                         figure: f,
                         tracked: snap.trackedOrDefault(f.id),
                         onTap: () => notifier.cycleFigure(f.id),

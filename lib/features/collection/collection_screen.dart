@@ -53,7 +53,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       builder: (ctx) {
         return AlertDialog(
           title: const Text('Remove series?'),
-          content: Text('“$name” will leave your shelf (mock data only).'),
+          content: Text('“$name” will leave your shelf.'),
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
             FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Remove')),
@@ -82,6 +82,8 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
             String? brand,
             String? ipDisplayName,
             required List<String> figureNames,
+            required List<String?> figureLocalImageUris,
+            String? customCoverImageUri,
             String? notes,
           }) {
             ref.read(collectionNotifierProvider.notifier).addCustomSeries(
@@ -89,6 +91,8 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                   brand: brand,
                   ipDisplayName: ipDisplayName,
                   figureNames: figureNames,
+                  figureLocalImageUris: figureLocalImageUris,
+                  customCoverImageUri: customCoverImageUri,
                   notes: notes,
                 );
           },
@@ -237,7 +241,12 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, FeedRhythm.tabScrollTailPadding),
+              padding: const EdgeInsets.fromLTRB(
+                20,
+                FeedRhythm.collectionFilterToFirstCard,
+                20,
+                FeedRhythm.tabScrollTailPadding,
+              ),
               child: Builder(
                 builder: (context) {
                   final visible =

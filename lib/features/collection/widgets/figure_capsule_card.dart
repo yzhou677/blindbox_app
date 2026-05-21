@@ -1,17 +1,19 @@
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
-import 'package:blindbox_app/features/collection/widgets/collectible_figure_placeholder.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:blindbox_app/features/collection/presentation/shelf_figure_media.dart';
+import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
 import 'package:flutter/material.dart';
 
 /// Mini blind-box / shelf card — collected, wish list, and open-slot states.
 class FigureCapsuleCard extends StatefulWidget {
   const FigureCapsuleCard({
     super.key,
+    required this.series,
     required this.figure,
     required this.tracked,
     required this.onTap,
   });
 
+  final ShelfSeries series;
   final ShelfFigure figure;
   final TrackedFigure tracked;
   final VoidCallback onTap;
@@ -223,6 +225,7 @@ class _FigureCapsuleCardState extends State<FigureCapsuleCard> with TickerProvid
                                 key: ValueKey<String>('${widget.figure.id}-${owned}_${wish}_$missing'),
                                 missing: missing,
                                 scheme: scheme,
+                                series: widget.series,
                                 figure: widget.figure,
                                 sheen: _sheen,
                               ),
@@ -307,12 +310,14 @@ class _ArtWindow extends StatelessWidget {
     super.key,
     required this.missing,
     required this.scheme,
+    required this.series,
     required this.figure,
     required this.sheen,
   });
 
   final bool missing;
   final ColorScheme scheme;
+  final ShelfSeries series;
   final ShelfFigure figure;
   final AnimationController? sheen;
 
@@ -345,9 +350,9 @@ class _ArtWindow extends StatelessWidget {
                       scheme.onSurface.withValues(alpha: Theme.of(context).brightness == Brightness.dark ? 0.14 : 0.07),
                       BlendMode.srcATop,
                     ),
-                    child: _FigureThumb(figure: figure, scheme: scheme),
+                    child: _FigureThumb(figure: figure, series: series, scheme: scheme),
                   )
-                : _FigureThumb(figure: figure, scheme: scheme),
+                : _FigureThumb(figure: figure, series: series, scheme: scheme),
           ),
           if (missing)
             CustomPaint(
@@ -482,32 +487,21 @@ class _DashedSlotBorderPainter extends CustomPainter {
 }
 
 class _FigureThumb extends StatelessWidget {
-  const _FigureThumb({required this.figure, required this.scheme});
+  const _FigureThumb({required this.figure, required this.series, required this.scheme});
 
   final ShelfFigure figure;
+  final ShelfSeries series;
   final ColorScheme scheme;
 
   @override
   Widget build(BuildContext context) {
-    if (figure.imageUrl != null) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(11),
-        child: CachedNetworkImage(
-          imageUrl: figure.imageUrl!,
-          fit: BoxFit.contain,
-          fadeInDuration: const Duration(milliseconds: 280),
-          errorWidget: (context, url, error) => CollectibleFigurePlaceholder(
-            name: figure.name,
-            seedKey: figure.id,
-            isSecret: figure.isSecret,
-          ),
-        ),
-      );
-    }
-    return CollectibleFigurePlaceholder(
+    return CollectibleThumbImage(
+      imageRef: ShelfFigureMedia.figureDisplayRef(figure, series),
       name: figure.name,
       seedKey: figure.id,
       isSecret: figure.isSecret,
+      fit: BoxFit.contain,
+      borderRadius: BorderRadius.circular(11),
     );
   }
 }

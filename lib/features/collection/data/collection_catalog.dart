@@ -10,7 +10,7 @@ abstract final class CollectionCatalog {
   static const String _seriesHironoOther = 'series-hirono-other-one';
   static const String _ipSkull = 'skullpanda';
   static const String _seriesSkull = 'series-skull-everyday';
-  static const String _ipLabubu = 'labubu';
+  static const String _ipTheMonsters = 'the_monsters';
   static const String _seriesLabubu = 'series-labubu-mini';
   static const String _ipDimoo = 'dimoo';
   static const String _seriesDimoo = 'series-dimoo-dino';
@@ -92,7 +92,7 @@ abstract final class CollectionCatalog {
           rarity: 'Regular',
           isSecret: false,
           taxonomyBrandId: _taxonomyBrandPopMart,
-          taxonomyIpId: _ipLabubu,
+          taxonomyIpId: _ipTheMonsters,
         ),
         CatalogFigure(
           templateFigureId: 'fig-labubu-heart',
@@ -102,7 +102,7 @@ abstract final class CollectionCatalog {
           rarity: 'Regular',
           isSecret: false,
           taxonomyBrandId: _taxonomyBrandPopMart,
-          taxonomyIpId: _ipLabubu,
+          taxonomyIpId: _ipTheMonsters,
         ),
         CatalogFigure(
           templateFigureId: 'fig-labubu-hidden',
@@ -112,7 +112,7 @@ abstract final class CollectionCatalog {
           rarity: 'Secret',
           isSecret: true,
           taxonomyBrandId: _taxonomyBrandPopMart,
-          taxonomyIpId: _ipLabubu,
+          taxonomyIpId: _ipTheMonsters,
         ),
       ];
 
@@ -198,18 +198,18 @@ abstract final class CollectionCatalog {
         ],
       ),
       IPDefinition(
-        id: _ipLabubu,
-        name: 'The Monsters',
+        id: _ipTheMonsters,
+        name: 'THE MONSTERS',
         catalogSeries: [
           CatalogSeries(
             templateId: _seriesLabubu,
             name: 'Labubu Exciting Macaron',
             brand: 'POP MART',
-            ipName: 'The Monsters',
+            ipName: 'THE MONSTERS',
             shelfAccent: const Color(0xFFE4F2EA),
             figures: _labubuFigures(_seriesLabubu),
             taxonomyBrandId: _taxonomyBrandPopMart,
-            taxonomyIpId: _ipLabubu,
+            taxonomyIpId: _ipTheMonsters,
           ),
         ],
       ),

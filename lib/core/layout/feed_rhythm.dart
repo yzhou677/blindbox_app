@@ -48,6 +48,9 @@ abstract final class FeedRhythm {
   /// Vertical gap between full-width listing cards (shelf separation).
   static const double listingCardVerticalGap = 22;
 
+  /// Air between collection brand filter chips and the first shelf card.
+  static const double collectionFilterToFirstCard = 12;
+
   /// Horizontal gap between cards in home/market rails.
   static const double horizontalRailCardGap = 24;
 

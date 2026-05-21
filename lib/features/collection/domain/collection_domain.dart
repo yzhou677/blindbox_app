@@ -87,6 +87,7 @@ class ShelfSeries {
     this.catalogTemplateId,
     this.taxonomyBrandId,
     this.taxonomyIpId,
+    this.customCoverImageUri,
   });
 
   /// Unique shelf instance id (per user after persistence).
@@ -105,6 +106,10 @@ class ShelfSeries {
   final Color shelfAccent;
   final String? notes;
 
+  /// Local device path or `file:` URI for a user-authored series cover only.
+  /// Catalog-backed rows should leave this null.
+  final String? customCoverImageUri;
+
   int get figureCount => figures.length;
 
   /// User-authored local shelf row (no catalog/drop template key).
@@ -122,6 +127,7 @@ class ShelfFigure {
     required this.seriesId,
     required this.name,
     this.imageUrl,
+    this.localImageUri,
     required this.rarity,
     required this.isSecret,
     this.taxonomyBrandId,
@@ -134,7 +140,12 @@ class ShelfFigure {
   /// Parent [ShelfSeries.id] (series instance, never an IP taxonomy id).
   final String seriesId;
   final String name;
+
+  /// Catalog-resolved asset path, remote art, or legacy placeholder URLs — not [imageKey].
   final String? imageUrl;
+
+  /// User private shelf: local path / `file:` URI only. Never a catalog image key.
+  final String? localImageUri;
   final String rarity;
   final bool isSecret;
 
@@ -145,24 +156,31 @@ class ShelfFigure {
   final String? catalogFigureTemplateId;
 }
 
-/// Runtime ownership for one figure id.
+/// User progress for one figure slot (wishlist → owned → none); mutually exclusive.
+enum FigureCollectionState {
+  none,
+  wishlist,
+  owned,
+}
+
+/// Runtime ownership for one shelf figure id ([ShelfFigure.id] instance key).
 @immutable
 class TrackedFigure {
   const TrackedFigure({
     required this.figureId,
-    required this.owned,
-    required this.wishlist,
+    required this.state,
   });
 
   final String figureId;
-  final bool owned;
-  final bool wishlist;
+  final FigureCollectionState state;
 
-  TrackedFigure copyWith({bool? owned, bool? wishlist}) {
+  bool get owned => state == FigureCollectionState.owned;
+  bool get wishlist => state == FigureCollectionState.wishlist;
+
+  TrackedFigure copyWith({FigureCollectionState? state}) {
     return TrackedFigure(
       figureId: figureId,
-      owned: owned ?? this.owned,
-      wishlist: wishlist ?? this.wishlist,
+      state: state ?? this.state,
     );
   }
 }
@@ -189,9 +207,9 @@ SeriesProgressCounts progressForSeries(ShelfSeries series, Map<String, TrackedFi
   var m = 0;
   for (final f in series.figures) {
     final t = states[f.id];
-    if (t?.owned == true) {
+    if (t?.state == FigureCollectionState.owned) {
       o++;
-    } else if (t?.wishlist == true) {
+    } else if (t?.state == FigureCollectionState.wishlist) {
       w++;
     } else {
       m++;
@@ -216,6 +234,7 @@ ShelfSeries cloneCatalogSeriesOntoShelf(
         seriesId: newShelfSeriesId,
         name: f.name,
         imageUrl: f.imageUrl,
+        localImageUri: null,
         rarity: f.rarity,
         isSecret: f.isSecret,
         taxonomyBrandId: f.taxonomyBrandId ?? template.taxonomyBrandId,
@@ -257,6 +276,7 @@ ShelfSeries shelfSeriesMirrorCatalogTemplate(CatalogSeries template) {
           seriesId: template.templateId,
           name: f.name,
           imageUrl: f.imageUrl,
+          localImageUri: null,
           rarity: f.rarity,
           isSecret: f.isSecret,
           taxonomyBrandId: f.taxonomyBrandId ?? template.taxonomyBrandId,
@@ -288,7 +308,7 @@ class CollectionSnapshot {
   int get totalOwnedFigures {
     var c = 0;
     for (final t in figureStates.values) {
-      if (t.owned) c++;
+      if (t.state == FigureCollectionState.owned) c++;
     }
     return c;
   }
@@ -296,7 +316,7 @@ class CollectionSnapshot {
   int get totalWishlistFigures {
     var c = 0;
     for (final t in figureStates.values) {
-      if (t.wishlist) c++;
+      if (t.state == FigureCollectionState.wishlist) c++;
     }
     return c;
   }
@@ -322,7 +342,7 @@ class CollectionSnapshot {
   bool get isWarmStart => totalOwnedFigures == 0 && totalWishlistFigures == 0;
 
   TrackedFigure trackedOrDefault(String figureId) {
-    return figureStates[figureId] ?? TrackedFigure(figureId: figureId, owned: false, wishlist: false);
+    return figureStates[figureId] ?? TrackedFigure(figureId: figureId, state: FigureCollectionState.none);
   }
 
   /// True if this template (by stable catalog / drop id) already lives on the shelf.
