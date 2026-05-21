@@ -22,7 +22,11 @@ void main() {
          "thumbnailAsset": "assets/catalog/series/macaron.png"},
         {"id": "wild", "brandId": "pop_mart", "ipId": "hirono",
          "displayName": "Hirono Boundary — Test Series", "releaseDate": "2026-04-02",
-         "isBlindBox": true, "thumbnailAsset": "assets/catalog/series/wild.png"}
+         "isBlindBox": true, "imageKey": "wild",
+         "aliases": ["Quiet Garden"]},
+        {"id": "alias_only", "brandId": "pop_mart", "ipId": "hirono",
+         "displayName": "Obscure Official Title", "releaseDate": "2026-03-01",
+         "isBlindBox": true, "imageKey": "alias_only", "aliases": ["Moonlight"]}
       ]'''),
       figures: parseCatalogFiguresJson(r'''[
         {"id": "fig_soy", "seriesId": "macaron", "brandId": "pop_mart",
@@ -36,7 +40,9 @@ void main() {
          "rarityLabel": "1/72", "sortOrder": 999, "thumbnailAsset": "assets/f/chase.png"},
         {"id": "fig_hirono", "seriesId": "wild", "brandId": "pop_mart", "ipId": "hirono",
          "displayName": "Quiet Rain", "isSecret": false, "sortOrder": 1,
-         "thumbnailAsset": "assets/f/rain.png"}
+         "imageKey": "fig_hirono"},
+        {"id": "fig_moon", "seriesId": "alias_only", "brandId": "pop_mart", "ipId": "hirono",
+         "displayName": "Lunar", "isSecret": false, "sortOrder": 1, "imageKey": "fig_moon"}
       ]'''),
     );
   });
@@ -94,7 +100,7 @@ void main() {
   test('brand alias popmart matches at weak tier', () {
     final svc = CatalogSearchService(bundle);
     final r = svc.search('popmart');
-    expect(r.length, 4);
+    expect(r.length, 5);
   });
 
   test('no match for unrelated string', () {
@@ -104,5 +110,13 @@ void main() {
 
   test('normalize collapses whitespace for query', () {
     expect(normalizeCatalogSearchQuery('  Macaron  '), 'macaron');
+  });
+
+  test('series alias matches figures in that series', () {
+    final svc = CatalogSearchService(bundle);
+    final moon = svc.search('moonlight');
+    expect(moon, hasLength(1));
+    expect(moon.single.figureId, 'fig_moon');
+    expect(moon.single.seriesName, 'Obscure Official Title');
   });
 }

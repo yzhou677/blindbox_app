@@ -1,4 +1,5 @@
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/presentation/figure_secret_rarity_style.dart';
 import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
 import 'package:flutter/material.dart';
 
@@ -128,10 +129,20 @@ class _PreviewFigureRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final secretLook = FigureSecretRarityStyle.resolve(
+      isSecret: figure.isSecret,
+      rarityLabel: figure.rarity,
+      isDark: isDark,
+    );
+    final rowBase = scheme.surfaceContainerLow;
+    final rowColor = secretLook != null ? secretLook.cardTint(rowBase) : rowBase;
 
     return Material(
-      color: scheme.surfaceContainerLow,
+      color: rowColor,
       borderRadius: BorderRadius.circular(16),
+      shadowColor: secretLook?.accent.withValues(alpha: 0.12),
+      elevation: secretLook != null ? 0.5 : 0,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(10, 10, 12, 10),
         child: Row(

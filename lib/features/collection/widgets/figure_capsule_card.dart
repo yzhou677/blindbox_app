@@ -1,4 +1,5 @@
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/presentation/figure_secret_rarity_style.dart';
 import 'package:blindbox_app/features/collection/widgets/shelf_figure_thumb.dart';
 import 'package:flutter/material.dart';
 
@@ -21,42 +22,18 @@ class FigureCapsuleCard extends StatefulWidget {
   State<FigureCapsuleCard> createState() => _FigureCapsuleCardState();
 }
 
-class _FigureCapsuleCardState extends State<FigureCapsuleCard> with TickerProviderStateMixin {
+class _FigureCapsuleCardState extends State<FigureCapsuleCard> with SingleTickerProviderStateMixin {
   late AnimationController _press;
-  AnimationController? _sheen;
 
   @override
   void initState() {
     super.initState();
     _press = AnimationController(vsync: this, duration: const Duration(milliseconds: 220));
-    _initSheen();
-  }
-
-  void _initSheen() {
-    if (widget.figure.isSecret) {
-      _sheen ??= AnimationController(vsync: this, duration: const Duration(milliseconds: 4200))
-        ..repeat();
-    }
-  }
-
-  @override
-  void didUpdateWidget(FigureCapsuleCard oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.figure.isSecret != widget.figure.isSecret) {
-      if (widget.figure.isSecret) {
-        _sheen ??= AnimationController(vsync: this, duration: const Duration(milliseconds: 4200))
-          ..repeat();
-      } else {
-        _sheen?.dispose();
-        _sheen = null;
-      }
-    }
   }
 
   @override
   void dispose() {
     _press.dispose();
-    _sheen?.dispose();
     super.dispose();
   }
 
@@ -77,11 +54,11 @@ class _FigureCapsuleCardState extends State<FigureCapsuleCard> with TickerProvid
     final wish = widget.tracked.wishlist;
     final missing = !owned && !wish;
 
-    final Color matTint;
-    final Color borderColor;
-    final double borderWidth;
-    final List<BoxShadow> shadows;
-    final Gradient? cardFaceGradient;
+    Color matTint;
+    Color borderColor;
+    double borderWidth;
+    List<BoxShadow> shadows;
+    Gradient? cardFaceGradient;
 
     if (owned) {
       matTint = Color.lerp(
@@ -162,6 +139,19 @@ class _FigureCapsuleCardState extends State<FigureCapsuleCard> with TickerProvid
       cardFaceGradient = null;
     }
 
+    final secretLook = FigureSecretRarityStyle.resolve(
+      isSecret: widget.figure.isSecret,
+      rarityLabel: widget.figure.rarity,
+      isDark: isDark,
+    );
+    if (secretLook != null) {
+      matTint = secretLook.cardTint(matTint);
+      cardFaceGradient = secretLook.cardGradient(matTint);
+      borderColor = secretLook.subtleBorder();
+      borderWidth = 1.2;
+      shadows = [...secretLook.glowShadows(), ...shadows];
+    }
+
     final tilt = ((widget.figure.id.hashCode % 5) - 2) * 0.012;
 
     return Transform.rotate(
@@ -226,7 +216,7 @@ class _FigureCapsuleCardState extends State<FigureCapsuleCard> with TickerProvid
                                 scheme: scheme,
                                 series: widget.series,
                                 figure: widget.figure,
-                                sheen: _sheen,
+                                secretLook: secretLook,
                               ),
                             ),
                           ),
@@ -311,18 +301,20 @@ class _ArtWindow extends StatelessWidget {
     required this.scheme,
     required this.series,
     required this.figure,
-    required this.sheen,
+    required this.secretLook,
   });
 
   final bool missing;
   final ColorScheme scheme;
   final ShelfSeries series;
   final ShelfFigure figure;
-  final AnimationController? sheen;
+  final FigureSecretRarityLook? secretLook;
 
   @override
   Widget build(BuildContext context) {
-    final sheenCtrl = sheen;
+    final artTint = secretLook?.cardTint(
+      Color.lerp(scheme.surfaceContainerLow, scheme.surface, 0.5)!,
+    );
     final inner = ClipRRect(
       borderRadius: BorderRadius.circular(15),
       child: Stack(
@@ -330,15 +322,24 @@ class _ArtWindow extends StatelessWidget {
         children: [
           DecoratedBox(
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  scheme.surface.withValues(alpha: missing ? 0.5 : 0.72),
-                  Color.lerp(scheme.surfaceContainerLow, scheme.surface, 0.5)!
-                      .withValues(alpha: missing ? 0.55 : 0.85),
-                ],
-              ),
+              gradient: secretLook != null && artTint != null
+                  ? LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        artTint.withValues(alpha: missing ? 0.45 : 0.62),
+                        artTint.withValues(alpha: missing ? 0.5 : 0.78),
+                      ],
+                    )
+                  : LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        scheme.surface.withValues(alpha: missing ? 0.5 : 0.72),
+                        Color.lerp(scheme.surfaceContainerLow, scheme.surface, 0.5)!
+                            .withValues(alpha: missing ? 0.55 : 0.85),
+                      ],
+                    ),
             ),
           ),
           Padding(
@@ -360,32 +361,6 @@ class _ArtWindow extends StatelessWidget {
                 radius: 15,
               ),
             ),
-          if (figure.isSecret && sheenCtrl != null)
-            Positioned.fill(
-              child: RepaintBoundary(
-                child: AnimatedBuilder(
-                  animation: sheenCtrl,
-                  builder: (context, _) {
-                    return CustomPaint(
-                      painter: _SecretSheenPainter(progress: sheenCtrl.value),
-                    );
-                  },
-                ),
-              ),
-            ),
-          if (figure.isSecret)
-            IgnorePointer(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(15),
-                  border: Border.all(
-                    width: 1.25,
-                    color: Color.lerp(const Color(0xFFE8C547), scheme.primary, 0.45)!
-                        .withValues(alpha: 0.55),
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );
@@ -400,10 +375,12 @@ class _ArtWindow extends StatelessWidget {
             offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(
-          color: scheme.outlineVariant.withValues(alpha: missing ? 0.35 : 0.22),
-          width: 1,
-        ),
+        border: secretLook != null
+            ? Border.all(color: secretLook!.subtleBorder(), width: 1.1)
+            : Border.all(
+                color: scheme.outlineVariant.withValues(alpha: missing ? 0.35 : 0.22),
+                width: 1,
+              ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(2),
@@ -420,35 +397,6 @@ class _ArtWindow extends StatelessWidget {
       ),
     );
   }
-}
-
-class _SecretSheenPainter extends CustomPainter {
-  _SecretSheenPainter({required this.progress});
-
-  final double progress;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final shift = progress * 2.4 - 0.4;
-    final paint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment(-1.1 + shift, -0.6),
-        end: Alignment(0.2 + shift, 1.1),
-        colors: [
-          Colors.transparent,
-          Colors.white.withValues(alpha: 0.09),
-          const Color(0xFFE8D5FF).withValues(alpha: 0.15),
-          Colors.white.withValues(alpha: 0.075),
-          Colors.transparent,
-        ],
-        stops: const [0.0, 0.38, 0.5, 0.62, 1.0],
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
-      ..blendMode = BlendMode.softLight;
-    canvas.drawRect(Offset.zero & size, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _SecretSheenPainter oldDelegate) => oldDelegate.progress != progress;
 }
 
 class _DashedSlotBorderPainter extends CustomPainter {
