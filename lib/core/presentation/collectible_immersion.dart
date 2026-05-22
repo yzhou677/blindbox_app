@@ -82,7 +82,7 @@ class CollectibleSheetFocusFrame extends StatelessWidget {
             scheme.surface.withValues(alpha: 0.02),
             scheme.surface,
           ],
-          stops: const [0, 0.12],
+          stops: const [0, 0.08],
         ),
       ),
       child: child,

@@ -25,6 +25,24 @@ class SeriesHeroMetaBlock extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final ipLabel = shelfIpLabelFromBrandLine(brand: brand, line: ipLine);
     final brandLabel = brand.trim();
+    final showBrand = brandLabel.isNotEmpty &&
+        (ipLabel.isEmpty ||
+            ipLabel.toLowerCase() != brandLabel.toLowerCase());
+
+    final topGap = switch (density) {
+      SeriesHeroMetaDensity.sheet => 4.0,
+      SeriesHeroMetaDensity.compact => 6.0,
+      SeriesHeroMetaDensity.hero => 6.0,
+    };
+    final lineGap = switch (density) {
+      SeriesHeroMetaDensity.sheet => 1.0,
+      SeriesHeroMetaDensity.compact => 2.0,
+      SeriesHeroMetaDensity.hero => 2.0,
+    };
+    final trailingGap = switch (density) {
+      SeriesHeroMetaDensity.sheet => 4.0,
+      _ => 6.0,
+    };
 
     final ipStyle = density == SeriesHeroMetaDensity.hero
         ? CollectibleTypography.seriesIpLine(textTheme, scheme)
@@ -51,15 +69,15 @@ class SeriesHeroMetaBlock extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (ipLabel.isNotEmpty) ...[
-          const SizedBox(height: 6),
+          SizedBox(height: topGap),
           Text(ipLabel, style: ipStyle),
         ],
-        if (brandLabel.isNotEmpty) ...[
-          SizedBox(height: ipLabel.isNotEmpty ? 2 : 6),
+        if (showBrand) ...[
+          SizedBox(height: ipLabel.isNotEmpty ? lineGap : topGap),
           Text(brandLabel, style: brandStyle),
         ],
         if (trailingMeta != null && trailingMeta!.trim().isNotEmpty) ...[
-          const SizedBox(height: 6),
+          SizedBox(height: trailingGap),
           Text(trailingMeta!.trim(), style: metaStyle),
         ],
       ],
@@ -67,4 +85,4 @@ class SeriesHeroMetaBlock extends StatelessWidget {
   }
 }
 
-enum SeriesHeroMetaDensity { hero, compact }
+enum SeriesHeroMetaDensity { hero, compact, sheet }

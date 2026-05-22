@@ -62,12 +62,12 @@ class CatalogSeriesPreviewSheet extends ConsumerWidget {
           SliverToBoxAdapter(
             child: CollectibleRelationshipLine(
               text: relationshipLine,
-              padding: const EdgeInsets.only(top: 10),
+              padding: const EdgeInsets.only(top: 8),
             ),
           ),
         SliverPadding(
           padding: const EdgeInsets.only(
-            top: FeedRhythm.sheetSectionGap,
+            top: FeedRhythm.sheetFigureRailGap,
             bottom: AppSpacing.sm,
           ),
           sliver: SliverList.separated(

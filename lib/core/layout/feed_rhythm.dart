@@ -104,6 +104,14 @@ abstract final class FeedRhythm {
   static const double sheetSectionGap = 18;
   static const double sheetFigureRailGap = 14;
 
+  // —— Detail / hero editorial rhythm (post–Phase 6 density pass) ——
+
+  static const double detailHeroOuterPadding = 10;
+  static const double detailHeroInnerPadding = 6;
+  static const double detailBodyTopGap = 16;
+  static const double detailBodyBottomGap = 28;
+  static const double detailHeroToBodyGap = 12;
+
   /// Max height fraction for figure gallery stage (breathing room above caption).
-  static const double galleryStageMaxHeightFactor = 0.82;
+  static const double galleryStageMaxHeightFactor = 0.88;
 }

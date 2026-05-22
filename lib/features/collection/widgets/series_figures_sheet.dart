@@ -1,5 +1,4 @@
 import 'package:blindbox_app/core/theme/app_spacing.dart';
-import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_adapters.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_sheet.dart';
 import 'package:blindbox_app/features/collectible_relationship/application/collectible_relationship_providers.dart';
@@ -49,6 +48,13 @@ class SeriesFiguresSheet extends ConsumerWidget {
     final memoryReflection = ref.watch(
       collectionMemoryReflectionForSeriesProvider(seriesId),
     );
+    final trailingMeta = series.figureCount > 0
+        ? '${progress.owned} of ${series.figureCount} on shelf'
+        : null;
+    final contextualLine =
+        (relationshipLine != null && relationshipLine.isNotEmpty)
+            ? relationshipLine
+            : memoryReflection;
 
     return CollectibleSheetInsets(
       child: CustomScrollView(
@@ -60,20 +66,14 @@ class SeriesFiguresSheet extends ConsumerWidget {
               seriesTitle: series.name,
               brand: series.brand,
               ipLine: series.ipName,
+              trailingMeta: trailingMeta,
               padding: EdgeInsets.zero,
             ),
           ),
-          if (relationshipLine != null && relationshipLine.isNotEmpty)
+          if (contextualLine != null && contextualLine.isNotEmpty)
             SliverToBoxAdapter(
               child: CollectibleRelationshipLine(
-                text: relationshipLine,
-                padding: const EdgeInsets.only(top: 10),
-              ),
-            ),
-          if (memoryReflection != null && memoryReflection.isNotEmpty)
-            SliverToBoxAdapter(
-              child: CollectibleRelationshipLine(
-                text: memoryReflection,
+                text: contextualLine,
                 padding: const EdgeInsets.only(top: 8),
               ),
             ),
@@ -87,7 +87,10 @@ class SeriesFiguresSheet extends ConsumerWidget {
               ),
             ),
           SliverPadding(
-            padding: const EdgeInsets.only(top: 18, bottom: AppSpacing.lg),
+            padding: EdgeInsets.only(
+              top: isComplete ? 14 : FeedRhythm.sheetFigureRailGap,
+              bottom: AppSpacing.lg,
+            ),
             sliver: SliverToBoxAdapter(
               child: SizedBox(
                 width: double.infinity,

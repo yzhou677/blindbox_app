@@ -1,9 +1,11 @@
+import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/collectible_shelf_shadow.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/market/presentation/market_listing_image.dart';
 import 'package:blindbox_app/features/market/application/market_listings_providers.dart';
+import 'package:blindbox_app/features/market/presentation/collectible_market_mood_copy.dart';
 import 'package:blindbox_app/features/market/utils/market_format.dart';
 import 'package:blindbox_app/features/collectible_relationship/application/collectible_relationship_providers.dart';
 import 'package:blindbox_app/features/collectible_relationship/widgets/collectible_relationship_line.dart';
@@ -52,6 +54,7 @@ class MarketDetailScreen extends ConsumerWidget {
 
     final c = listing.collectible;
     final accent = c.shelfAccent ?? scheme.tertiaryContainer;
+    final appBarTitle = c.name.trim().isNotEmpty ? c.name : c.series;
 
     return Scaffold(
       backgroundColor: scheme.surface,
@@ -68,7 +71,7 @@ class MarketDetailScreen extends ConsumerWidget {
               onPressed: () => context.pop(),
             ),
             title: Text(
-              c.series,
+              appBarTitle,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: CollectibleTypography.seriesHeroTitle(textTheme, scheme)
@@ -77,13 +80,23 @@ class MarketDetailScreen extends ConsumerWidget {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+              padding: EdgeInsets.fromLTRB(
+                20,
+                FeedRhythm.detailHeroToBodyGap,
+                20,
+                0,
+              ),
               child: _MarketDetailHero(listing: listing, accent: accent),
             ),
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(22, 24, 22, 40),
+              padding: EdgeInsets.fromLTRB(
+                22,
+                FeedRhythm.detailBodyTopGap,
+                22,
+                FeedRhythm.detailBodyBottomGap,
+              ),
               child: _MarketDetailBody(listingId: listingId, listing: listing),
             ),
           ),
@@ -104,6 +117,10 @@ class _MarketDetailHero extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final c = listing.collectible;
+    final aspect = CatalogImageDisplaySpec.aspectRatioFor(
+          CatalogImageDisplayMode.seriesCoverHero,
+        ) ??
+        1.0;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -120,7 +137,7 @@ class _MarketDetailHero extends StatelessWidget {
         ),
         clipBehavior: Clip.antiAlias,
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(FeedRhythm.detailHeroOuterPadding),
           child: DecoratedBox(
             decoration: BoxDecoration(
               borderRadius: AppRadii.matRadius,
@@ -137,9 +154,10 @@ class _MarketDetailHero extends StatelessWidget {
               ),
             ),
             child: Padding(
-              padding: const EdgeInsets.all(10),
+              padding:
+                  const EdgeInsets.all(FeedRhythm.detailHeroInnerPadding),
               child: AspectRatio(
-                aspectRatio: 0.95,
+                aspectRatio: aspect,
                 child: ClipRRect(
                   borderRadius: AppRadii.insetRadius,
                   child: ColoredBox(
@@ -183,21 +201,47 @@ class _MarketDetailBody extends ConsumerWidget {
         : down
             ? scheme.error
             : scheme.onSurfaceVariant;
+    final figureName = c.name.trim();
+    final showFigureSubtitle =
+        figureName.isNotEmpty && figureName.toLowerCase() != c.series.trim().toLowerCase();
+    final release = c.releaseDateLabel.trim();
+    final marketFacts = [
+      CollectibleMarketMoodCopy.sightingsLabel(listing.listingCount),
+      if (release.isNotEmpty) 'Released $release',
+    ].join(' · ');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          c.name,
-          style: CollectibleTypography.figureCaption(textTheme, scheme),
+          c.series,
+          style: CollectibleTypography.seriesHeroTitle(textTheme, scheme),
         ),
+        if (showFigureSubtitle) ...[
+          const SizedBox(height: 4),
+          Text(
+            figureName,
+            style: CollectibleTypography.figureCaption(textTheme, scheme),
+          ),
+        ],
         SeriesHeroMetaBlock(
           brand: c.brand,
-          ipLine: c.ipLine ?? c.brand,
-          trailingMeta: '${listing.listingCount} listings · ${c.releaseDateLabel}',
+          ipLine: c.ipLine?.trim() ?? '',
           density: SeriesHeroMetaDensity.compact,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
+        Text(
+          marketFacts,
+          style: CollectibleTypography.figureMeta(textTheme, scheme),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          CollectibleMarketMoodCopy.listingDetailLine(listing),
+          style: textTheme.bodyMedium?.copyWith(
+            color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
+            height: 1.3,
+          ),
+        ),
         ListingMarketSignals(listing: listing, dense: true),
         Builder(
           builder: (context) {
@@ -207,11 +251,11 @@ class _MarketDetailBody extends ConsumerWidget {
             if (line == null || line.isEmpty) return const SizedBox.shrink();
             return CollectibleRelationshipLine(
               text: line,
-              padding: const EdgeInsets.only(top: 10),
+              padding: const EdgeInsets.only(top: 8),
             );
           },
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
         Row(
           crossAxisAlignment: CrossAxisAlignment.baseline,
           textBaseline: TextBaseline.alphabetic,

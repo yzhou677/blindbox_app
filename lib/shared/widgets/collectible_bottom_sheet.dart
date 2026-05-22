@@ -42,8 +42,9 @@ ScrollPhysics collectibleSheetScrollPhysics([ScrollPhysics? parent]) {
 
 /// Maps screen-height targets to [DraggableScrollableSheet] child sizes.
 ///
-/// The modal host is [maxScreenFraction] tall so `initialChildSize: 1` is the
-/// expanded cap — not an oversized empty panel above the sheet chrome.
+/// The modal host matches the open height so `initialChildSize: 1` fills the
+/// panel at rest — no empty surface above the drag handle. Pass a larger
+/// [maxScreenFraction] only when a sheet must drag taller than its open height.
 final class CollectibleSheetExtent {
   const CollectibleSheetExtent({
     required this.hostHeight,
@@ -67,16 +68,17 @@ CollectibleSheetExtent resolveCollectibleSheetExtent({
   final max = maxScreenFraction.clamp(0.5, 0.98);
   final open = openScreenFraction.clamp(minScreenFraction, max);
   final min = minScreenFraction.clamp(0.18, open);
-  final hostHeight = screenHeight * max;
+  final hostFraction = open;
+  final hostHeight = screenHeight * hostFraction;
 
   double childSize(double screenFraction) =>
-      (screenFraction / max).clamp(0.15, 1.0);
+      (screenFraction / hostFraction).clamp(0.15, 1.0);
 
   return CollectibleSheetExtent(
     hostHeight: hostHeight,
-    initialChildSize: childSize(open),
+    initialChildSize: 1.0,
     minChildSize: childSize(min),
-    maxChildSize: 1.0,
+    maxChildSize: childSize(max),
   );
 }
 
@@ -140,7 +142,7 @@ Future<T?> showCollectibleBottomSheet<T>({
         openScreenFraction: heightFraction,
         minScreenFraction:
             minHeightFraction ?? FeedRhythm.sheetMinScreenFraction,
-        maxScreenFraction: maxHeightFraction ?? FeedRhythm.sheetMaxChildSize,
+        maxScreenFraction: maxHeightFraction ?? heightFraction,
       );
 
       return Padding(
