@@ -56,7 +56,7 @@ firebase.json
 # Firebase — client config (use *.example templates; see docs/FIREBASE_LOCAL_SETUP.md)
 /android/app/google-services.json
 /ios/Runner/GoogleService-Info.plist
-/lib/firebase_options.dart
+# /lib/firebase_options.dart
 firebase-debug.log
 firestore-debug.log
 ui-debug.log
