@@ -4,8 +4,10 @@ import 'package:blindbox_app/features/home/data/home_drop_rail_context.dart';
 import 'package:blindbox_app/features/home/data/mock_latest_drops.dart';
 import 'package:blindbox_app/features/home/widgets/latest_drops_section.dart';
 import 'package:blindbox_app/features/home/widgets/trending_series_section.dart';
+import 'package:blindbox_app/shared/widgets/app_search_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -33,9 +35,16 @@ class HomeScreen extends ConsumerWidget {
             title: Text('Discover', style: textTheme.titleLarge),
           ),
           SliverToBoxAdapter(
+            child: AppSearchField(
+              readOnly: true,
+              onTap: () => context.push('/home/catalog'),
+              hintText: 'Search catalog — figures, series, IPs…',
+            ),
+          ),
+          SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.only(
-                top: FeedRhythm.belowMainTabAppBar,
+                top: 12,
                 bottom: FeedRhythm.tabScrollTailPadding,
               ),
               child: feedAsync.when(

@@ -59,8 +59,17 @@ void main() {
       CatalogImageDisplaySpec.layoutExtentFor(
         CatalogImageDisplayMode.figureThumb,
       ),
-      60,
+      68,
     );
+  });
+
+  test('resolved photo figure thumbs use gentle cover framing', () {
+    final spec = CatalogImageDisplaySpec.forMode(
+      CatalogImageDisplayMode.figureThumb,
+      imageRef: 'https://cdn.example.com/promo/figure.jpg',
+    );
+    expect(spec.framing, CatalogImageFraming.coverFill);
+    expect(spec.fit, BoxFit.cover);
   });
 
   test('memCache decode uses long edge only to preserve aspect ratio', () {

@@ -1,3 +1,4 @@
+import 'package:blindbox_app/features/catalog/presentation/catalog_browse_screen.dart';
 import 'package:blindbox_app/features/collection/collection_screen.dart';
 import 'package:blindbox_app/features/home/drop_detail_screen.dart';
 import 'package:blindbox_app/features/home/home_screen.dart';
@@ -26,6 +27,32 @@ final GoRouter appRouter = GoRouter(
                 child: const HomeScreen(),
               ),
               routes: [
+                GoRoute(
+                  path: 'catalog',
+                  pageBuilder: (context, state) => CustomTransitionPage<void>(
+                    key: state.pageKey,
+                    child: const CatalogBrowseScreen(),
+                    transitionDuration: const Duration(milliseconds: 320),
+                    transitionsBuilder:
+                        (context, animation, secondaryAnimation, child) {
+                      final curved = CurvedAnimation(
+                        parent: animation,
+                        curve: Curves.easeOutCubic,
+                        reverseCurve: Curves.easeInCubic,
+                      );
+                      return FadeTransition(
+                        opacity: curved,
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0, 0.04),
+                            end: Offset.zero,
+                          ).animate(curved),
+                          child: child,
+                        ),
+                      );
+                    },
+                  ),
+                ),
                 GoRoute(
                   path: 'detail/:id',
                   pageBuilder: (context, state) {

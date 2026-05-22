@@ -1,6 +1,7 @@
 import 'package:blindbox_app/features/catalog/presentation/catalog_aspect_image.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/collection/widgets/collectible_figure_placeholder.dart';
+import 'package:blindbox_app/shared/widgets/app_image_shimmer.dart';
 import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
 import 'package:flutter/material.dart';
 
@@ -166,15 +167,8 @@ class CatalogResolvedImage extends StatelessWidget {
   }
 
   Widget _loadingMat(ColorScheme scheme) {
-    return ColoredBox(
-      color: scheme.surfaceContainerHighest.withValues(alpha: 0.45),
-      child: const Center(
-        child: SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      ),
+    return AppImageShimmer(
+      borderRadius: borderRadius ?? BorderRadius.zero,
     );
   }
 

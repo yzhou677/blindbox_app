@@ -1,6 +1,7 @@
 import 'package:blindbox_app/features/catalog/catalog_image_resolver.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/collection/widgets/collectible_figure_placeholder.dart';
+import 'package:blindbox_app/shared/widgets/app_image_shimmer.dart';
 import 'package:blindbox_app/shared/widgets/catalog_resolved_image.dart';
 import 'package:flutter/material.dart';
 
@@ -189,21 +190,7 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
         CatalogImageDisplaySpec.borderRadiusFor(widget.displayMode);
 
     if (_loading) {
-      return ClipRRect(
-        borderRadius: radius,
-        child: ColoredBox(
-          color: Theme.of(
-            context,
-          ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
-          child: const Center(
-            child: SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-          ),
-        ),
-      );
+      return AppImageShimmer(borderRadius: radius);
     }
     if (_imageRef == null || _imageRef!.isEmpty) {
       return ClipRRect(

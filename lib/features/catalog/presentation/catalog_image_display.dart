@@ -1,3 +1,6 @@
+import 'package:blindbox_app/core/theme/app_image_styles.dart';
+import 'package:blindbox_app/core/theme/app_radii.dart';
+import 'package:blindbox_app/shared/widgets/app_image_frame.dart';
 import 'package:flutter/material.dart';
 
 /// Adaptive presentation intent — UI only, not Storage/Firestore.
@@ -34,6 +37,7 @@ enum CatalogImageDisplayMode {
   figureThumb,
   figureLineupCell,
   figureCapsule,
+  figureGallery,
   marketCatalogThumb,
 }
 
@@ -82,7 +86,8 @@ class CatalogImageDisplaySpec {
       CatalogImageDisplayMode.marketCatalogThumb => CatalogImageMode.editorial,
       CatalogImageDisplayMode.figureThumb ||
       CatalogImageDisplayMode.figureLineupCell ||
-      CatalogImageDisplayMode.figureCapsule => CatalogImageMode.figure,
+      CatalogImageDisplayMode.figureCapsule ||
+      CatalogImageDisplayMode.figureGallery => CatalogImageMode.figure,
     };
   }
 
@@ -94,8 +99,39 @@ class CatalogImageDisplaySpec {
     var mode = presentationModeFor(surface);
     if (mode == CatalogImageMode.figure && looksLikeFigureAsset(imageRef)) {
       mode = CatalogImageMode.transparentFigure;
+    } else if (surface == CatalogImageDisplayMode.figureThumb &&
+        mode == CatalogImageMode.figure &&
+        looksLikePhotoFigureAsset(imageRef)) {
+      return _figureThumbPhotoSpec();
     }
     return forPresentationMode(mode, surface: surface);
+  }
+
+  /// Opaque promo / photo figure art — gentle cover, not harsh square crop.
+  static bool looksLikePhotoFigureAsset(String? ref) {
+    final r = ref?.trim().toLowerCase();
+    if (r == null || r.isEmpty) return false;
+    if (looksLikeFigureAsset(r)) return false;
+    return r.endsWith('.jpg') ||
+        r.endsWith('.jpeg') ||
+        r.contains('promo') ||
+        r.contains('photo');
+  }
+
+  static CatalogImageDisplaySpec _figureThumbPhotoSpec() {
+    return const CatalogImageDisplaySpec(
+      presentationMode: CatalogImageMode.figure,
+      framing: CatalogImageFraming.coverFill,
+      fit: BoxFit.cover,
+      alignment: Alignment(0, -0.08),
+      filterQuality: FilterQuality.high,
+      fadeInDuration: AppImageStyles.imageFadeIn,
+      fadeOutDuration: AppImageStyles.imageFadeOut,
+      contentPadding: EdgeInsets.zero,
+      matOpacity: 0.38,
+      memCacheLogicalExtent: 220,
+      memCacheDevicePixelScale: 1.85,
+    );
   }
 
   static bool looksLikeFigureAsset(String? ref) {
@@ -182,6 +218,7 @@ class CatalogImageDisplaySpec {
 
   static Alignment _figureAlignmentFor(CatalogImageDisplayMode? surface) {
     return switch (surface) {
+      CatalogImageDisplayMode.figureGallery => Alignment.center,
       CatalogImageDisplayMode.figureLineupCell => const Alignment(0, -0.04),
       _ => const Alignment(0, -0.06),
     };
@@ -193,6 +230,7 @@ class CatalogImageDisplaySpec {
   }) {
     if (transparent) {
       return switch (surface) {
+        CatalogImageDisplayMode.figureGallery => const EdgeInsets.all(8),
         CatalogImageDisplayMode.figureCapsule => const EdgeInsets.symmetric(
           horizontal: 4,
           vertical: 3,
@@ -202,6 +240,7 @@ class CatalogImageDisplaySpec {
       };
     }
     return switch (surface) {
+      CatalogImageDisplayMode.figureGallery => const EdgeInsets.all(6),
       CatalogImageDisplayMode.figureCapsule => const EdgeInsets.symmetric(
         horizontal: 3,
         vertical: 2,
@@ -217,12 +256,14 @@ class CatalogImageDisplaySpec {
   }) {
     if (transparent) {
       return switch (surface) {
+        CatalogImageDisplayMode.figureGallery => 1.04,
         CatalogImageDisplayMode.figureLineupCell => 1.08,
         CatalogImageDisplayMode.figureCapsule => 1.07,
         _ => 1.08,
       };
     }
     return switch (surface) {
+      CatalogImageDisplayMode.figureGallery => 1.04,
       CatalogImageDisplayMode.figureLineupCell => 1.08,
       CatalogImageDisplayMode.figureCapsule => 1.06,
       _ => 1.07,
@@ -231,6 +272,7 @@ class CatalogImageDisplaySpec {
 
   static double? _figureDecodeHintFor(CatalogImageDisplayMode? surface) {
     return switch (surface) {
+      CatalogImageDisplayMode.figureGallery => 720.0,
       CatalogImageDisplayMode.figureCapsule => 280.0,
       CatalogImageDisplayMode.figureLineupCell => 240.0,
       _ => 200.0,
@@ -242,9 +284,10 @@ class CatalogImageDisplaySpec {
       CatalogImageDisplayMode.seriesCoverHero => BorderRadius.circular(14),
       CatalogImageDisplayMode.seriesCoverThumb ||
       CatalogImageDisplayMode.marketCatalogThumb => BorderRadius.circular(12),
-      CatalogImageDisplayMode.figureCapsule => BorderRadius.circular(11),
-      CatalogImageDisplayMode.figureLineupCell => BorderRadius.circular(16),
-      CatalogImageDisplayMode.figureThumb => BorderRadius.circular(12),
+      CatalogImageDisplayMode.figureCapsule => AppRadii.insetRadius,
+      CatalogImageDisplayMode.figureGallery => AppRadii.figureGalleryRadius,
+      CatalogImageDisplayMode.figureLineupCell => AppRadii.figureLineupRadius,
+      CatalogImageDisplayMode.figureThumb => AppRadii.figureThumbRadius,
     };
   }
 
@@ -260,8 +303,9 @@ class CatalogImageDisplaySpec {
   static double? layoutExtentFor(CatalogImageDisplayMode mode) {
     return switch (mode) {
       CatalogImageDisplayMode.seriesCoverThumb => 68,
-      CatalogImageDisplayMode.figureThumb => 60,
-      CatalogImageDisplayMode.figureLineupCell => 80,
+      CatalogImageDisplayMode.figureThumb => AppImageStyles.figureThumbExtent,
+      CatalogImageDisplayMode.figureLineupCell =>
+        AppImageStyles.figureLineupExtent,
       CatalogImageDisplayMode.marketCatalogThumb => 72,
       _ => null,
     };
@@ -296,10 +340,14 @@ class CatalogImageDisplaySpec {
       );
     }
 
-    return (logical * devicePixelRatio * scale * zoomFactor).round().clamp(
-      96,
-      1024,
-    );
+    final maxExtent = presentationMode == CatalogImageMode.figure &&
+            memCacheLogicalExtent != null &&
+            memCacheLogicalExtent! >= 600
+        ? 1536
+        : 1024;
+    return (logical * devicePixelRatio * scale * zoomFactor)
+        .round()
+        .clamp(96, maxExtent);
   }
 
   @Deprecated(
@@ -346,6 +394,23 @@ class CatalogImageSlot extends StatelessWidget {
       body = AspectRatio(aspectRatio: ar, child: child);
     }
 
+    if (_usesPremiumFigureFrame(displayMode)) {
+      return AppImageFrame(
+        extent: w,
+        displayMode: displayMode,
+        borderRadius: radius,
+        child: body,
+      );
+    }
+
     return ClipRRect(borderRadius: radius, child: body);
+  }
+
+  static bool _usesPremiumFigureFrame(CatalogImageDisplayMode mode) {
+    return switch (mode) {
+      CatalogImageDisplayMode.figureThumb ||
+      CatalogImageDisplayMode.figureLineupCell => true,
+      _ => false,
+    };
   }
 }

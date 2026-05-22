@@ -1,5 +1,7 @@
 import 'dart:math' as math;
 
+import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_adapters.dart';
+import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_sheet.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/widgets/figure_capsule_card.dart';
@@ -72,7 +74,7 @@ class SeriesFiguresSheet extends ConsumerWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              'Tap a figure: wish list → collected → open slot',
+              'Tap art to browse · tap card to update your shelf',
               style: textTheme.bodySmall?.copyWith(
                 color: scheme.onSurfaceVariant.withValues(alpha: 0.86),
                 height: 1.35,
@@ -99,6 +101,17 @@ class SeriesFiguresSheet extends ConsumerWidget {
                         figure: f,
                         tracked: snap.trackedOrDefault(f.id),
                         onTap: () => notifier.cycleFigure(f.id),
+                        onBrowseFigure: () {
+                          final index = series.figures.indexWhere(
+                            (fig) => fig.id == f.id,
+                          );
+                          showCatalogFigureGallery(
+                            context,
+                            items: catalogGalleryItemsFromShelfSeries(series),
+                            initialIndex: index < 0 ? 0 : index,
+                            seriesTitle: series.name,
+                          );
+                        },
                       ),
                   ],
                 ),

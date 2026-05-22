@@ -12,12 +12,14 @@ class FigureCapsuleCard extends StatefulWidget {
     required this.figure,
     required this.tracked,
     required this.onTap,
+    this.onBrowseFigure,
   });
 
   final ShelfSeries series;
   final ShelfFigure figure;
   final TrackedFigure tracked;
   final VoidCallback onTap;
+  final VoidCallback? onBrowseFigure;
 
   @override
   State<FigureCapsuleCard> createState() => _FigureCapsuleCardState();
@@ -209,7 +211,12 @@ class _FigureCapsuleCardState extends State<FigureCapsuleCard>
                       Stack(
                         clipBehavior: Clip.none,
                         children: [
-                          AspectRatio(
+                          GestureDetector(
+                            onTap: widget.onBrowseFigure,
+                            behavior: widget.onBrowseFigure != null
+                                ? HitTestBehavior.opaque
+                                : HitTestBehavior.deferToChild,
+                            child: AspectRatio(
                             aspectRatio: 1,
                             child: AnimatedSwitcher(
                               duration: const Duration(milliseconds: 260),
@@ -238,6 +245,7 @@ class _FigureCapsuleCardState extends State<FigureCapsuleCard>
                                 secretLook: secretLook,
                               ),
                             ),
+                          ),
                           ),
                           if (wish && !owned)
                             Positioned(

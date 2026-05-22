@@ -11,15 +11,11 @@ class ReleaseLineupStrip extends StatelessWidget {
     super.key,
     required this.slots,
     required this.accent,
-    this.selectedIndex = -1,
     required this.onSlotTap,
   });
 
   final List<ReleaseLineupSlot> slots;
   final Color accent;
-
-  /// Index of the slot whose floating preview is open, or `-1` for none.
-  final int selectedIndex;
   final ValueChanged<int> onSlotTap;
 
   static const double cellExtent = 78;
@@ -49,7 +45,6 @@ class ReleaseLineupStrip extends StatelessWidget {
           slot: slots[i],
           accent: accent,
           scheme: scheme,
-          isSelected: selectedIndex >= 0 && i == selectedIndex,
           onTap: () => onSlotTap(i),
         ),
       ),
@@ -62,14 +57,12 @@ class _LineupCell extends StatelessWidget {
     required this.slot,
     required this.accent,
     required this.scheme,
-    required this.isSelected,
     required this.onTap,
   });
 
   final ReleaseLineupSlot slot;
   final Color accent;
   final ColorScheme scheme;
-  final bool isSelected;
   final VoidCallback onTap;
 
   @override
@@ -100,33 +93,19 @@ class _LineupCell extends StatelessWidget {
               borderRadius: r,
               splashColor: accent.withValues(alpha: 0.12),
               highlightColor: accent.withValues(alpha: 0.06),
-              child: AnimatedScale(
-                scale: isSelected ? 1.04 : 1.0,
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeOutCubic,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 220),
-                  curve: Curves.easeOutCubic,
-                  decoration: BoxDecoration(
-                    borderRadius: r,
-                    border: Border.all(
-                      color: isSelected ? accent.withValues(alpha: 0.72) : baseBorder,
-                      width: isSelected ? 2.25 : 1,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: r,
+                  border: Border.all(color: baseBorder),
+                  boxShadow: [
+                    BoxShadow(
+                      color: scheme.shadow.withValues(alpha: 0.06),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: scheme.shadow.withValues(alpha: isSelected ? 0.1 : 0.06),
-                        blurRadius: isSelected ? 12 : 8,
-                        offset: Offset(0, isSelected ? 4 : 3),
-                      ),
-                    ],
-                    color: isSelected
-                        ? Color.lerp(scheme.surfaceContainerLow, accent, 0.08)!
-                            .withValues(alpha: 0.55)
-                        : null,
-                  ),
-                  child: ClipRRect(borderRadius: r, child: tile),
+                  ],
                 ),
+                child: ClipRRect(borderRadius: r, child: tile),
               ),
             ),
           ),
@@ -139,7 +118,7 @@ class _LineupCell extends StatelessWidget {
             style: textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.w600,
               letterSpacing: 0.02,
-              color: scheme.onSurfaceVariant.withValues(alpha: isSelected ? 0.92 : 0.82),
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
             ),
           ),
         ],

@@ -1,5 +1,7 @@
-import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
+import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_adapters.dart';
+import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_sheet.dart';
+import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/catalog_search_row_summary.dart';
 import 'package:blindbox_app/features/collection/presentation/figure_secret_rarity_style.dart';
 import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
@@ -14,10 +16,12 @@ class CatalogSeriesPreviewSheet extends StatelessWidget {
     super.key,
     required this.series,
     required this.onAdd,
+    this.showAddButton = true,
   });
 
   final CatalogSeries series;
   final VoidCallback onAdd;
+  final bool showAddButton;
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +73,7 @@ class CatalogSeriesPreviewSheet extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '${series.brand} · $figureLine',
+                  '${series.brand} · $figureLine · tap a figure to browse',
                   style: textTheme.bodySmall?.copyWith(
                     color: scheme.onSurfaceVariant.withValues(alpha: 0.86),
                     height: 1.35,
@@ -86,52 +90,70 @@ class CatalogSeriesPreviewSheet extends StatelessWidget {
             separatorBuilder: (context, index) => const SizedBox(height: 10),
             itemBuilder: (context, i) {
               final f = series.figures[i];
-              return _PreviewFigureRow(figure: f, accent: series.shelfAccent);
+              return _PreviewFigureRow(
+                figure: f,
+                accent: series.shelfAccent,
+                onTap: () {
+                  final items = catalogGalleryItemsFromCatalogSeries(series);
+                  showCatalogFigureGallery(
+                    context,
+                    items: items,
+                    initialIndex: i,
+                    seriesTitle: series.name,
+                  );
+                },
+              );
             },
           ),
         ),
-        Material(
-          color: scheme.surface,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(
-                  color: scheme.outlineVariant.withValues(alpha: 0.28),
+        if (showAddButton)
+          Material(
+            color: scheme.surface,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(
+                    color: scheme.outlineVariant.withValues(alpha: 0.28),
+                  ),
                 ),
               ),
-            ),
-            child: SafeArea(
-              top: false,
-              minimum: const EdgeInsets.only(bottom: 8),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-                child: FilledButton(
-                  onPressed: () {
-                    onAdd();
-                    Navigator.of(context).pop();
-                  },
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+              child: SafeArea(
+                top: false,
+                minimum: const EdgeInsets.only(bottom: 8),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                  child: FilledButton(
+                    onPressed: () {
+                      onAdd();
+                      Navigator.of(context).pop();
+                    },
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
                     ),
+                    child: const Text('Add to shelf'),
                   ),
-                  child: const Text('Add to shelf'),
                 ),
               ),
             ),
           ),
-        ),
       ],
     );
   }
 }
 
 class _PreviewFigureRow extends StatelessWidget {
-  const _PreviewFigureRow({required this.figure, required this.accent});
+  const _PreviewFigureRow({
+    required this.figure,
+    required this.accent,
+    required this.onTap,
+  });
 
   final CatalogFigure figure;
   final Color accent;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -150,10 +172,13 @@ class _PreviewFigureRow extends StatelessWidget {
 
     return Material(
       color: rowColor,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(18),
       shadowColor: secretLook?.accent.withValues(alpha: 0.12),
       elevation: secretLook != null ? 0.5 : 0,
-      child: Padding(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Padding(
         padding: const EdgeInsets.fromLTRB(10, 10, 12, 10),
         child: Row(
           children: [
@@ -207,8 +232,14 @@ class _PreviewFigureRow extends StatelessWidget {
                   0.5,
                 )!.withValues(alpha: 0.88),
               ),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 22,
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.45),
+            ),
           ],
         ),
+      ),
       ),
     );
   }
