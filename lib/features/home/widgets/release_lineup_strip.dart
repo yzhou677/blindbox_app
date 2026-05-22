@@ -1,4 +1,7 @@
+import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/home/domain/series_release.dart';
+import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
+import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
@@ -21,6 +24,14 @@ class ReleaseLineupStrip extends StatelessWidget {
 
   static const double cellExtent = 78;
   static const double gap = 12;
+
+  /// Secret slots with a catalog [imageKey] show real art; blur tile only when art is unknown.
+  static bool slotUsesSecretPlaceholder(ReleaseLineupSlot slot) {
+    if (!slot.isSecret) return false;
+    if (slot.imageKey.trim().isNotEmpty) return false;
+    final url = slot.imageUrl?.trim();
+    return url == null || url.isEmpty;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,24 +77,13 @@ class _LineupCell extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final r = BorderRadius.circular(16);
 
-    final tile = slot.isSecret
+    final tile = ReleaseLineupStrip.slotUsesSecretPlaceholder(slot)
         ? _secretTile(r)
         : ClipRRect(
             borderRadius: r,
             child: ColoredBox(
               color: scheme.surfaceContainerHighest.withValues(alpha: 0.55),
-              child: slot.imageUrl != null
-                  ? CachedNetworkImage(
-                      imageUrl: slot.imageUrl!,
-                      width: ReleaseLineupStrip.cellExtent,
-                      height: ReleaseLineupStrip.cellExtent,
-                      fit: BoxFit.cover,
-                      fadeInDuration: const Duration(milliseconds: 180),
-                    )
-                  : SizedBox(
-                      width: ReleaseLineupStrip.cellExtent,
-                      height: ReleaseLineupStrip.cellExtent,
-                    ),
+              child: _figureArt(slot, r),
             ),
           );
 
@@ -147,6 +147,55 @@ class _LineupCell extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _figureArt(ReleaseLineupSlot slot, BorderRadius r) {
+    final key = slot.imageKey.trim();
+    if (key.isNotEmpty) {
+      return SizedBox(
+        width: ReleaseLineupStrip.cellExtent,
+        height: ReleaseLineupStrip.cellExtent,
+        child: CatalogImageFromKey(
+          imageKey: key,
+          name: slot.name,
+          seedKey: slot.slotId,
+          isSecret: slot.isSecret,
+          displayMode: CatalogImageDisplayMode.figureLineupCell,
+          borderRadius: r,
+          width: ReleaseLineupStrip.cellExtent,
+          height: ReleaseLineupStrip.cellExtent,
+        ),
+      );
+    }
+
+    final url = slot.imageUrl?.trim();
+    if (url != null && url.isNotEmpty) {
+      if (CollectibleThumbImage.isAssetPath(url)) {
+        return SizedBox(
+          width: ReleaseLineupStrip.cellExtent,
+          height: ReleaseLineupStrip.cellExtent,
+          child: CollectibleThumbImage(
+            imageRef: url,
+            name: slot.name,
+            seedKey: slot.slotId,
+            catalogDisplayMode: CatalogImageDisplayMode.figureLineupCell,
+            borderRadius: r,
+          ),
+        );
+      }
+      return CachedNetworkImage(
+        imageUrl: url,
+        width: ReleaseLineupStrip.cellExtent,
+        height: ReleaseLineupStrip.cellExtent,
+        fit: BoxFit.cover,
+        fadeInDuration: const Duration(milliseconds: 180),
+      );
+    }
+
+    return SizedBox(
+      width: ReleaseLineupStrip.cellExtent,
+      height: ReleaseLineupStrip.cellExtent,
     );
   }
 

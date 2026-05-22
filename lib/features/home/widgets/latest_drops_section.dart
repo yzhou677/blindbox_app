@@ -7,9 +7,16 @@ import 'package:flutter/material.dart';
 import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
 
 class LatestDropsSection extends StatelessWidget {
-  const LatestDropsSection({super.key, required this.releases});
+  const LatestDropsSection({
+    super.key,
+    required this.releases,
+    this.trailingCaption,
+  });
 
   final List<SeriesRelease> releases;
+
+  /// When set (e.g. [HomeDropRailContext.recentReleasesRailCaption]), overrides month-based caption.
+  final String? trailingCaption;
 
   static const double _railHeight = 428;
 
@@ -18,8 +25,10 @@ class LatestDropsSection extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final brightness = Theme.of(context).brightness;
     final textTheme = Theme.of(context).textTheme;
-    final heroes = releases.map((r) => r.heroCollectible);
-    final caption = HomeDropRailContext.latestDropsRailCaption(heroes);
+    final caption = trailingCaption ??
+        HomeDropRailContext.latestDropsRailCaption(
+          releases.map((r) => r.heroCollectible),
+        );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

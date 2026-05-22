@@ -1,5 +1,7 @@
 import 'package:blindbox_app/core/media/device_local_ref.dart';
+import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/collection/widgets/collectible_figure_placeholder.dart';
+import 'package:blindbox_app/shared/widgets/catalog_resolved_image.dart';
 import 'collectible_local_file_image_stub.dart'
     if (dart.library.io) 'collectible_local_file_image.dart' as shelf_local_image;
 import 'package:cached_network_image/cached_network_image.dart';
@@ -16,6 +18,7 @@ class CollectibleThumbImage extends StatelessWidget {
     this.compact = false,
     this.fit = BoxFit.cover,
     this.borderRadius = const BorderRadius.all(Radius.circular(12)),
+    this.catalogDisplayMode,
   });
 
   final String? imageRef;
@@ -25,6 +28,9 @@ class CollectibleThumbImage extends StatelessWidget {
   final bool compact;
   final BoxFit fit;
   final BorderRadius borderRadius;
+
+  /// When set, bundled/remote catalog art uses [CatalogImageDisplaySpec] (not [fit]).
+  final CatalogImageDisplayMode? catalogDisplayMode;
 
   static bool isAssetPath(String? ref) {
     final r = ref?.trim();
@@ -52,6 +58,18 @@ class CollectibleThumbImage extends StatelessWidget {
         isSecret: isSecret,
         compact: compact,
         fit: fit,
+        borderRadius: borderRadius,
+      );
+    }
+
+    if (catalogDisplayMode != null) {
+      return CatalogResolvedImage(
+        imageRef: ref,
+        spec: CatalogImageDisplaySpec.forMode(catalogDisplayMode!),
+        name: name,
+        seedKey: seedKey,
+        isSecret: isSecret,
+        compact: compact,
         borderRadius: borderRadius,
       );
     }

@@ -1,4 +1,5 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_series_art.dart';
 import 'package:blindbox_app/features/collection/presentation/shelf_figure_media.dart';
@@ -80,9 +81,8 @@ Widget _seriesThumbContent({
       name: name,
       seedKey: seed,
       isSecret: secret,
-      series: true,
+      displayMode: CatalogImageDisplayMode.seriesCoverThumb,
       compact: true,
-      fit: BoxFit.cover,
       borderRadius: BorderRadius.zero,
     );
   }

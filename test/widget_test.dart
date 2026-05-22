@@ -3,6 +3,7 @@ import 'package:blindbox_app/features/collection/application/collection_notifier
 import 'package:blindbox_app/features/collection/collection_screen.dart';
 import 'package:blindbox_app/features/collection/data/series_release_lookup.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/home/application/home_feed_provider.dart';
 import 'package:blindbox_app/features/home/data/mock_latest_drops.dart';
 import 'package:blindbox_app/main.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +12,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 List<Override> _blindboxTestOverrides() => [
+      homeFeedSnapshotProvider.overrideWith(
+        (_) async => HomeFeedSnapshot(
+          latest: mockSeriesReleases,
+          trending: mockSeriesReleases.skip(1).take(4).toList(growable: false),
+        ),
+      ),
       seriesReleaseLookupProvider.overrideWithValue(mockSeriesReleaseByDropId),
     ];
 
@@ -36,9 +43,9 @@ void main() {
     expect(find.text('Home'), findsWidgets);
     expect(find.text('Discover'), findsWidgets);
     expect(find.text('Latest drops'), findsOneWidget);
+    expect(find.text('Recent releases'), findsOneWidget);
     expect(find.text('Luna Astronaut'), findsOneWidget);
     expect(find.text('Trending series'), findsOneWidget);
-    expect(find.text('Skullpanda'), findsOneWidget);
   });
 
   testWidgets('Collection tab shows series-first shelf and summary', (WidgetTester tester) async {

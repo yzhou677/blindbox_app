@@ -68,6 +68,13 @@ void main() {
     });
   });
 
+  test('recentReleasesRailCaption is stable copy', () {
+    expect(
+      HomeDropRailContext.recentReleasesRailCaption,
+      'Recent releases',
+    );
+  });
+
   group('HomeDropRailContext.latestDropsRailCaption', () {
     test('newest in current month (past) → New this month', () {
       final clock = DateTime(2026, 5, 13);

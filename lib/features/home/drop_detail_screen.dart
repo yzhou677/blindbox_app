@@ -1,26 +1,30 @@
-import 'package:blindbox_app/features/home/data/mock_latest_drops.dart';
+import 'package:blindbox_app/features/collection/data/series_release_lookup.dart';
 import 'package:blindbox_app/features/home/domain/series_release.dart';
 import 'package:blindbox_app/features/home/widgets/collectible_network_image.dart';
 import 'package:blindbox_app/features/home/widgets/release_lineup_strip.dart';
 import 'package:blindbox_app/features/home/widgets/save_series_release_button.dart';
+import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
+import 'package:blindbox_app/features/home/widgets/series_release_cover_image.dart';
+import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
 import 'package:blindbox_app/models/collectible.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 /// Series release detail — image-first lineup browse and a single clear add CTA.
-class DropDetailScreen extends StatefulWidget {
+class DropDetailScreen extends ConsumerStatefulWidget {
   const DropDetailScreen({super.key, required this.releaseId});
 
   final String releaseId;
 
   @override
-  State<DropDetailScreen> createState() => _DropDetailScreenState();
+  ConsumerState<DropDetailScreen> createState() => _DropDetailScreenState();
 }
 
-class _DropDetailScreenState extends State<DropDetailScreen> with SingleTickerProviderStateMixin {
+class _DropDetailScreenState extends ConsumerState<DropDetailScreen>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _peekController;
   int? _peekLineupIndex;
-
   @override
   void initState() {
     super.initState();
@@ -36,8 +40,10 @@ class _DropDetailScreenState extends State<DropDetailScreen> with SingleTickerPr
     super.dispose();
   }
 
+  SeriesRelease? _release() => ref.read(seriesReleaseLookupProvider)(widget.releaseId);
+
   void _openPeek(int index) {
-    final release = mockSeriesReleaseByDropId(widget.releaseId);
+    final release = _release();
     if (release == null || index < 0 || index >= release.lineup.length) return;
 
     final wasOpen = _peekLineupIndex != null;
@@ -67,7 +73,7 @@ class _DropDetailScreenState extends State<DropDetailScreen> with SingleTickerPr
       brand: h.brand,
       ipLine: h.ipLine,
       releaseDate: h.releaseDate,
-      imageUrl: slot.imageUrl!,
+      imageUrl: slot.imageUrl ?? h.imageUrl,
       shelfAccent: h.shelfAccent,
     );
   }
@@ -77,7 +83,7 @@ class _DropDetailScreenState extends State<DropDetailScreen> with SingleTickerPr
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final textTheme = theme.textTheme;
-    final release = mockSeriesReleaseByDropId(widget.releaseId);
+    final release = _release();
 
     if (release == null) {
       return Scaffold(
@@ -135,7 +141,7 @@ class _DropDetailScreenState extends State<DropDetailScreen> with SingleTickerPr
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                    child: _DetailHero(collectible: hero, accent: accent),
+                    child: _DetailHero(release: release, accent: accent),
                   ),
                 ),
                 SliverToBoxAdapter(
@@ -327,14 +333,9 @@ class _LineupPeekCard extends StatelessWidget {
                       aspectRatio: 0.92,
                       child: ColoredBox(
                         color: scheme.surface.withValues(alpha: 0.55),
-                        child: slot.isSecret || slot.imageUrl == null
+                        child: ReleaseLineupStrip.slotUsesSecretPlaceholder(slot)
                             ? _PeekSecretMat(accent: accent)
-                            : CollectibleNetworkImage(
-                                collectible: peekCollectibleBuilder(release, slot),
-                                heroTag: null,
-                                borderRadius: BorderRadius.zero,
-                                fit: BoxFit.contain,
-                              ),
+                            : _LineupPeekFigure(slot: slot),
                       ),
                     ),
                     Padding(
@@ -419,13 +420,50 @@ class _PeekSecretMat extends StatelessWidget {
   }
 }
 
+class _LineupPeekFigure extends StatelessWidget {
+  const _LineupPeekFigure({required this.slot});
+
+  final ReleaseLineupSlot slot;
+
+  @override
+  Widget build(BuildContext context) {
+    final key = slot.imageKey.trim();
+    if (key.isNotEmpty) {
+      return CatalogImageFromKey(
+        imageKey: key,
+        name: slot.name,
+        seedKey: slot.slotId,
+        isSecret: slot.isSecret,
+        displayMode: CatalogImageDisplayMode.figureThumb,
+        borderRadius: BorderRadius.zero,
+      );
+    }
+    final url = slot.imageUrl?.trim();
+    if (url != null && url.isNotEmpty) {
+      return CollectibleNetworkImage(
+        collectible: Collectible(
+          id: '${slot.slotId}-peek',
+          name: slot.name,
+          series: slot.name,
+          brand: '',
+          releaseDate: DateTime(2000),
+          imageUrl: url,
+        ),
+        borderRadius: BorderRadius.zero,
+        fit: BoxFit.contain,
+      );
+    }
+    return const SizedBox.expand();
+  }
+}
+
 class _DetailHero extends StatelessWidget {
   const _DetailHero({
-    required this.collectible,
+    required this.release,
     required this.accent,
   });
 
-  final Collectible collectible;
+  final SeriesRelease release;
   final Color accent;
 
   @override
@@ -478,11 +516,10 @@ class _DetailHero extends StatelessWidget {
                   borderRadius: BorderRadius.circular(14),
                   child: ColoredBox(
                     color: scheme.surface.withValues(alpha: 0.72),
-                    child: CollectibleNetworkImage(
-                      collectible: collectible,
-                      heroTag: collectible.heroImageTag,
+                    child: SeriesReleaseCoverImage(
+                      release: release,
+                      heroTag: SeriesReleaseCoverImage.heroTagFor(release),
                       borderRadius: BorderRadius.circular(14),
-                      fit: BoxFit.contain,
                     ),
                   ),
                 ),

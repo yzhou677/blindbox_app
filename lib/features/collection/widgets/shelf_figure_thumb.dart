@@ -1,3 +1,4 @@
+import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/shelf_figure_media.dart';
 import 'package:blindbox_app/features/collection/widgets/collectible_figure_placeholder.dart';
@@ -5,7 +6,7 @@ import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
 import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
 import 'package:flutter/material.dart';
 
-/// Shelf figure tile art: local / persisted URL first, else catalog figure id → Storage.
+/// Shelf figure tile art: local / persisted URL first, else catalog figure [imageKey].
 class ShelfFigureThumb extends StatelessWidget {
   const ShelfFigureThumb({
     super.key,
@@ -15,7 +16,7 @@ class ShelfFigureThumb extends StatelessWidget {
     required this.seedKey,
     this.isSecret = false,
     this.compact = false,
-    this.fit = BoxFit.cover,
+    this.displayMode = CatalogImageDisplayMode.figureThumb,
     this.borderRadius = const BorderRadius.all(Radius.circular(12)),
   });
 
@@ -25,7 +26,7 @@ class ShelfFigureThumb extends StatelessWidget {
   final String seedKey;
   final bool isSecret;
   final bool compact;
-  final BoxFit fit;
+  final CatalogImageDisplayMode displayMode;
   final BorderRadius borderRadius;
 
   @override
@@ -38,7 +39,20 @@ class ShelfFigureThumb extends StatelessWidget {
         seedKey: seedKey,
         isSecret: isSecret,
         compact: compact,
-        fit: fit,
+        borderRadius: borderRadius,
+        catalogDisplayMode: CatalogImageDisplayMode.figureThumb,
+      );
+    }
+
+    final catalogImageKey = figure.imageKey?.trim();
+    if (catalogImageKey != null && catalogImageKey.isNotEmpty) {
+      return CatalogImageFromKey(
+        imageKey: catalogImageKey,
+        name: name,
+        seedKey: seedKey,
+        isSecret: isSecret,
+        compact: compact,
+        displayMode: displayMode,
         borderRadius: borderRadius,
       );
     }
@@ -53,7 +67,7 @@ class ShelfFigureThumb extends StatelessWidget {
         seedKey: seedKey,
         isSecret: isSecret,
         compact: compact,
-        fit: fit,
+        displayMode: displayMode,
         borderRadius: borderRadius,
       );
     }

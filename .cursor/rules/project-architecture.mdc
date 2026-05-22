@@ -42,3 +42,10 @@ Read [`.cursor/ARCHITECTURE.md`](../ARCHITECTURE.md) for full detail. Enforce th
 ## MVP
 
 - Small focused diffs; no full rewrites of catalog search, collection flow, or catalog source switching unless the task requires it
+
+## Test-driven
+
+- **Behavior changes:** add or update tests in the same change — prefer driving logic from tests (pure pickers, codecs, search ranking) before wiring UI.
+- **Where tests live:** unit tests next to behavior (`test/<feature>_…_test.dart`); widget smoke in `test/widget_test.dart`; override Riverpod/async providers in tests (e.g. `homeFeedSnapshotProvider`) instead of relying on Firestore/network.
+- **What to test:** real rules and edge cases (date windows, exclusions, fallbacks, migrations) — not trivial getters or framework boilerplate.
+- **Finish:** run `flutter analyze` and the **relevant** `flutter test` targets (feature tests + widget tests when UI/providers change); fix failures before handing off.

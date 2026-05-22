@@ -1,4 +1,5 @@
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/collection/presentation/figure_secret_rarity_style.dart';
 import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
 import 'package:flutter/material.dart';
@@ -157,7 +158,7 @@ class _PreviewFigureRow extends StatelessWidget {
                       seedKey: figure.templateFigureId,
                       isSecret: figure.isSecret,
                       compact: true,
-                      fit: BoxFit.cover,
+                      displayMode: CatalogImageDisplayMode.figureThumb,
                       borderRadius: BorderRadius.circular(12),
                     )
                   : ColoredBox(

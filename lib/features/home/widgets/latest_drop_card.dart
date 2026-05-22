@@ -1,8 +1,8 @@
 import 'package:blindbox_app/core/theme/collectible_shelf_shadow.dart';
 import 'package:blindbox_app/core/theme/collectible_shape.dart';
 import 'package:blindbox_app/features/home/domain/series_release.dart';
-import 'package:blindbox_app/features/home/widgets/collectible_network_image.dart';
 import 'package:blindbox_app/features/home/widgets/save_series_release_button.dart';
+import 'package:blindbox_app/features/home/widgets/series_release_cover_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -76,11 +76,10 @@ class LatestDropCard extends StatelessWidget {
                             color: scheme.surface.withValues(
                               alpha: theme.brightness == Brightness.dark ? 0.82 : 0.72,
                             ),
-                            child: CollectibleNetworkImage(
-                              collectible: hero,
-                              heroTag: hero.heroImageTag,
+                            child: SeriesReleaseCoverImage(
+                              release: release,
+                              heroTag: SeriesReleaseCoverImage.heroTagFor(release),
                               borderRadius: CollectibleShape.insetRadius,
-                              fit: BoxFit.contain,
                             ),
                           ),
                         ),

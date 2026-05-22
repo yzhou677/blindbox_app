@@ -5,6 +5,9 @@ import 'package:blindbox_app/models/collectible.dart';
 /// precision in UI labels. Seasonal marketing buckets are intentionally avoided
 /// so the time model stays consistent (month-based).
 abstract final class HomeDropRailContext {
+  /// Latest Drops rail subtitle when driven by the 3-month catalog window.
+  static const String recentReleasesRailCaption = 'Recent releases';
+
   static const _monthsLong = <String>[
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December',

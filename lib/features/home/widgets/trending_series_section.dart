@@ -1,23 +1,24 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
-import 'package:blindbox_app/core/theme/collectible_shelf_shadow.dart';
-import 'package:blindbox_app/core/theme/collectible_tokens.dart';
 import 'package:blindbox_app/features/home/data/home_section_zones.dart';
-import 'package:blindbox_app/features/home/data/mock_trending_series.dart';
-import 'package:blindbox_app/features/home/widgets/trending_series_capsule.dart';
+import 'package:blindbox_app/features/home/domain/series_release.dart';
+import 'package:blindbox_app/features/home/widgets/latest_drop_card.dart';
 import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
 import 'package:flutter/material.dart';
 
-/// Horizontal IP / series rail — softer and more compact than Latest Drops.
+/// Trending series rail — same card language as Latest Drops.
 class TrendingSeriesSection extends StatelessWidget {
-  const TrendingSeriesSection({super.key});
+  const TrendingSeriesSection({super.key, required this.releases});
+
+  final List<SeriesRelease> releases;
+
+  static const double _railHeight = 428;
 
   @override
   Widget build(BuildContext context) {
+    if (releases.isEmpty) return const SizedBox.shrink();
+
     final scheme = Theme.of(context).colorScheme;
     final brightness = Theme.of(context).brightness;
-    final tokens = CollectibleTokens.of(context);
-    final railHeight =
-        kTrendingSeriesCapsuleHeight + CollectibleShelfShadow.horizontalRailShellBottomSlack(tokens);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -32,21 +33,16 @@ class TrendingSeriesSection extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 14),
             child: SizedBox(
-              height: railHeight,
+              height: _railHeight,
               child: ListView.separated(
-                clipBehavior: Clip.none,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
-                itemCount: mockTrendingSeries.length,
+                itemCount: releases.length,
                 separatorBuilder: (context, index) =>
                     SizedBox(width: FeedRhythm.horizontalRailCardGap),
-                itemBuilder: (context, index) {
-                  return Align(
-                    alignment: Alignment.topCenter,
-                    child: TrendingSeriesCapsule(series: mockTrendingSeries[index]),
-                  );
-                },
+                itemBuilder: (context, index) =>
+                    LatestDropCard(release: releases[index]),
               ),
             ),
           ),

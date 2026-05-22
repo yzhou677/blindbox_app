@@ -1,6 +1,8 @@
 import 'package:blindbox_app/features/catalog/adapters/catalog_seed_to_collection_template.dart';
+import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
 import 'package:blindbox_app/features/catalog/catalog_bundle_loader.dart';
 import 'package:blindbox_app/features/catalog/catalog_latest_series.dart';
+import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
 import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_series.dart' as seed_catalog;
@@ -39,17 +41,15 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
   }
 
   void _loadCatalog() {
+    final cached = CatalogBundleCache.current;
+    if (cached != null) {
+      _applyCatalogBundle(cached);
+    }
     loadCatalogBundle().then((b) {
       if (!mounted) return;
-      final snap = ref.read(collectionNotifierProvider);
-      MarketTaxonomy.applyCatalogBundle(b);
-      setState(() {
-        _catalogBundle = b;
-        _catalogLoadFailed = false;
-        _recommendationsFuture = _loadRecommendationTemplates(b, snap);
-      });
+      _applyCatalogBundle(b);
     }).catchError((_) {
-      if (mounted) {
+      if (mounted && _catalogBundle == null) {
         setState(() {
           _catalogLoadFailed = true;
           _catalogBundle = null;
@@ -59,21 +59,31 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     });
   }
 
+  void _applyCatalogBundle(CatalogSeedBundle b) {
+    final snap = ref.read(collectionNotifierProvider);
+    MarketTaxonomy.applyCatalogBundle(b);
+    setState(() {
+      _catalogBundle = b;
+      _catalogLoadFailed = false;
+      _recommendationsFuture = _loadRecommendationTemplates(b, snap);
+    });
+  }
+
   Future<List<CatalogSeries>> _loadRecommendationTemplates(
     CatalogSeedBundle bundle,
     CollectionSnapshot snap,
   ) async {
     final picks = pickLatestSeriesRecommendations(bundle, snap);
-    final out = <CatalogSeries>[];
-    for (final seedSeries in picks) {
-      final template = await catalogTemplateFromSeedSeries(
-        bundle,
-        seedSeries.id,
-        resolveFigureImages: false,
-      );
-      if (template != null) out.add(template);
-    }
-    return out;
+    final templates = await Future.wait(
+      picks.map(
+        (seedSeries) => catalogTemplateFromSeedSeries(
+          bundle,
+          seedSeries.id,
+          resolveFigureImages: false,
+        ),
+      ),
+    );
+    return [for (final t in templates) if (t != null) t];
   }
 
   @override
@@ -613,13 +623,14 @@ class _SeriesCatalogSearchRowCard extends StatelessWidget {
                   height: 56,
                   child: CatalogImageFromKey(
                     imageKey: row.coverImageKey,
-                    series: true,
                     name: row.seriesTitle,
                     seedKey: row.seriesId,
                     isSecret: row.hasAnySecret,
                     compact: true,
-                    fit: BoxFit.cover,
+                    displayMode: CatalogImageDisplayMode.seriesCoverThumb,
                     borderRadius: BorderRadius.circular(14),
+                    width: 56,
+                    height: 56,
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -752,12 +763,13 @@ class _SuggestionCard extends StatelessWidget {
                   child: coverImageKey.isNotEmpty
                       ? CatalogImageFromKey(
                           imageKey: coverImageKey,
-                          series: true,
                           name: series.name,
                           seedKey: series.templateId,
                           compact: true,
-                          fit: BoxFit.cover,
+                          displayMode: CatalogImageDisplayMode.seriesCoverThumb,
                           borderRadius: BorderRadius.circular(14),
+                          width: 56,
+                          height: 56,
                         )
                       : ColoredBox(
                           color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),

@@ -113,6 +113,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
     final hero = release.heroCollectible;
     final figures = <ShelfFigure>[];
     for (final slot in release.lineup) {
+      final figureKey = slot.imageKey.trim();
       figures.add(
         ShelfFigure(
           id: '$seriesId-slot-${slot.slotId}',
@@ -122,8 +123,10 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
           localImageUri: null,
           rarity: slot.isSecret ? 'Secret' : 'Regular',
           isSecret: slot.isSecret,
+          imageKey: figureKey.isNotEmpty ? figureKey : null,
           taxonomyBrandId: release.taxonomyBrandId,
           taxonomyIpId: release.taxonomyIpId,
+          catalogFigureTemplateId: slot.slotId,
         ),
       );
     }
@@ -136,6 +139,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       shelfAccent: hero.shelfAccent ?? const Color(0xFFE8DEF5),
       notes: null,
       catalogTemplateId: catalogKey,
+      imageKey: release.seriesImageKey,
       taxonomyBrandId: release.taxonomyBrandId,
       taxonomyIpId: release.taxonomyIpId,
     );

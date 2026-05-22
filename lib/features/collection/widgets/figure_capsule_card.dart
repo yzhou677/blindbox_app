@@ -1,3 +1,4 @@
+import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/figure_secret_rarity_style.dart';
 import 'package:blindbox_app/features/collection/widgets/shelf_figure_thumb.dart';
@@ -450,7 +451,7 @@ class _FigureThumb extends StatelessWidget {
       name: figure.name,
       seedKey: figure.id,
       isSecret: figure.isSecret,
-      fit: BoxFit.contain,
+      displayMode: CatalogImageDisplayMode.figureCapsule,
       borderRadius: BorderRadius.circular(11),
     );
   }
