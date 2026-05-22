@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/presentation/collectible_immersion.dart';
 import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
@@ -25,7 +27,7 @@ class CatalogFigureGalleryPage extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final w = constraints.maxWidth;
-          final h = constraints.maxHeight * 0.84;
+          final h = constraints.maxHeight * FeedRhythm.galleryStageMaxHeightFactor;
 
           return Center(
             child: GestureDetector(
@@ -37,18 +39,43 @@ class CatalogFigureGalleryPage extends StatelessWidget {
                   boxShadow: [
                     BoxShadow(
                       color: Theme.of(context).colorScheme.shadow.withValues(
-                        alpha: 0.14,
+                        alpha: 0.12,
                       ),
-                      blurRadius: 32,
-                      offset: const Offset(0, 14),
-                      spreadRadius: -8,
+                      blurRadius: 36,
+                      offset: const Offset(0, 16),
+                      spreadRadius: -10,
                     ),
                   ],
                 ),
-                child: _GalleryArt(
-                  item: item,
-                  width: w,
-                  height: h,
+                child: Stack(
+                  fit: StackFit.passthrough,
+                  children: [
+                    _GalleryArt(
+                      item: item,
+                      width: w,
+                      height: h,
+                    ),
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            borderRadius: AppRadii.figureGalleryRadius,
+                            gradient: RadialGradient(
+                              center: Alignment.center,
+                              radius: 1.05,
+                              colors: [
+                                Colors.transparent,
+                                CollectibleImmersion.galleryStageVignette(
+                                  Theme.of(context).colorScheme,
+                                ),
+                              ],
+                              stops: const [0.55, 1],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

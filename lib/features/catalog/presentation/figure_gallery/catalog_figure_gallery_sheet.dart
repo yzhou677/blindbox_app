@@ -1,5 +1,6 @@
 import 'dart:ui' show ImageFilter;
 
+import 'package:blindbox_app/core/presentation/collectible_immersion.dart';
 import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
@@ -25,7 +26,7 @@ Future<void> showCatalogFigureGallery(
     PageRouteBuilder<void>(
       opaque: false,
       barrierDismissible: true,
-      barrierColor: Colors.black.withValues(alpha: 0.72),
+      barrierColor: CollectibleImmersion.galleryBarrier,
       transitionDuration: CollectibleMotion.galleryOpen,
       reverseTransitionDuration: CollectibleMotion.galleryClose,
       pageBuilder: (ctx, animation, secondaryAnimation) {
@@ -37,15 +38,14 @@ Future<void> showCatalogFigureGallery(
         );
       },
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        final curved = CurvedAnimation(
-          parent: animation,
-          curve: CollectibleMotion.easeOut,
-          reverseCurve: CollectibleMotion.easeIn,
-        );
+        final curved = CollectibleMotion.curved(animation);
         return FadeTransition(
           opacity: curved,
           child: ScaleTransition(
-            scale: Tween<double>(begin: 0.96, end: 1).animate(curved),
+            scale: Tween<double>(
+              begin: CollectibleMotion.galleryEnterScale,
+              end: 1,
+            ).animate(curved),
             child: child,
           ),
         );
@@ -139,9 +139,9 @@ class _CatalogFigureGallerySheetState extends State<CatalogFigureGallerySheet> {
             Opacity(
               opacity: routeFade,
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                child: const ColoredBox(
-                  color: Color(0x66000000),
+                filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+                child: ColoredBox(
+                  color: CollectibleImmersion.galleryBarrier,
                 ),
               ),
             ),
@@ -219,11 +219,16 @@ class _CatalogFigureGallerySheetState extends State<CatalogFigureGallerySheet> {
                           physics: const BouncingScrollPhysics(),
                           allowImplicitScrolling: true,
                           itemBuilder: (context, index) {
-                            return CatalogFigureGalleryPage(
+                            return CollectiblePresenceFade(
                               key: ValueKey<String>(
-                                'gallery-page:${widget.items[index].id}',
+                                'gallery-presence:${widget.items[index].id}',
                               ),
-                              item: widget.items[index],
+                              child: CatalogFigureGalleryPage(
+                                key: ValueKey<String>(
+                                  'gallery-page:${widget.items[index].id}',
+                                ),
+                                item: widget.items[index],
+                              ),
                             );
                           },
                         ),

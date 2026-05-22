@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/core/theme/collectible_shape.dart';
 import 'package:blindbox_app/core/theme/collectible_shelf_shadow.dart';
@@ -43,7 +44,7 @@ class _SeriesShelfCardState extends State<SeriesShelfCard>
     super.initState();
     _completeGlow = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 920),
+      duration: CollectibleMotion.glow,
     );
     _wasComplete = _isSeriesComplete;
   }
@@ -77,9 +78,9 @@ class _SeriesShelfCardState extends State<SeriesShelfCard>
     return AnimatedBuilder(
       animation: _completeGlow,
       builder: (context, child) {
-        final v = Curves.easeOutCubic.transform(_completeGlow.value);
+        final v = CollectibleMotion.easeOut.transform(_completeGlow.value);
         final hump = math.sin(v * math.pi);
-        final scale = 1.0 + 0.006 * hump;
+        final scale = 1.0 + CollectibleMotion.shelfCompleteScaleHump * hump;
         final glow = Color.lerp(
           const Color(0xFFE8C547),
           Theme.of(context).colorScheme.tertiary,
@@ -188,7 +189,7 @@ class _SeriesMatShell extends StatelessWidget {
     ];
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: FeedRhythm.listingCardVerticalGap),
+      padding: const EdgeInsets.only(bottom: FeedRhythm.collectionShelfCardGap),
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: radius,

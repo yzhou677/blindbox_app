@@ -1,5 +1,7 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/presentation/collectible_immersion.dart';
 import 'package:blindbox_app/core/theme/app_radii.dart';
+import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:flutter/material.dart';
 
 /// Builds sheet body content wired to the modal [ScrollController].
@@ -126,6 +128,8 @@ Future<T?> showCollectibleBottomSheet<T>({
     isDismissible: true,
     enableDrag: true,
     showDragHandle: false,
+    barrierColor: CollectibleImmersion.sheetBarrier(scheme),
+    sheetAnimationStyle: CollectibleMotion.sheetAnimationStyle(),
     backgroundColor: backgroundColor ?? scheme.surface,
     shape: AppRadii.sheetShape,
     builder: (ctx) {
@@ -189,7 +193,9 @@ class _CollectibleDraggableSheetHost extends StatelessWidget {
       builder: (context, scrollController) {
         return CollectibleSheetScope(
           scrollController: scrollController,
-          child: builder(context, scrollController),
+          child: CollectibleSheetFocusFrame(
+            child: builder(context, scrollController),
+          ),
         );
       },
     );

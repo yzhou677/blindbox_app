@@ -185,8 +185,9 @@ class _FigureCapsuleCardState extends State<FigureCapsuleCard>
           child: AnimatedBuilder(
             animation: _press,
             builder: (context, child) {
-              final t = Curves.easeOutCubic.transform(_press.value);
-              final scale = 1.0 - (0.028 * t);
+              final t = CollectibleMotion.easeOut.transform(_press.value);
+              final scale =
+                  1.0 - ((1 - CollectibleMotion.pressScale) * t);
               return Transform.scale(
                 scale: scale,
                 alignment: Alignment.center,
@@ -194,8 +195,8 @@ class _FigureCapsuleCardState extends State<FigureCapsuleCard>
               );
             },
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 280),
-              curve: Curves.easeOutCubic,
+              duration: CollectibleMotion.crossfade,
+              curve: CollectibleMotion.easeOut,
               decoration: BoxDecoration(
                 borderRadius: AppRadii.cardRadius,
                 gradient: cardFaceGradient,
@@ -222,17 +223,22 @@ class _FigureCapsuleCardState extends State<FigureCapsuleCard>
                             child: AspectRatio(
                             aspectRatio: 1,
                             child: AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 260),
-                              switchInCurve: Curves.easeOut,
-                              switchOutCurve: Curves.easeIn,
+                              duration: CollectibleMotion.crossfade,
+                              switchInCurve: CollectibleMotion.easeOut,
+                              switchOutCurve: CollectibleMotion.easeIn,
                               transitionBuilder: (child, anim) {
                                 return FadeTransition(
                                   opacity: anim,
                                   child: ScaleTransition(
                                     scale: Tween(
-                                      begin: 0.96,
+                                      begin: CollectibleMotion.galleryEnterScale,
                                       end: 1.0,
-                                    ).animate(anim),
+                                    ).animate(
+                                      CurvedAnimation(
+                                        parent: anim,
+                                        curve: CollectibleMotion.easeOut,
+                                      ),
+                                    ),
                                     child: child,
                                   ),
                                 );

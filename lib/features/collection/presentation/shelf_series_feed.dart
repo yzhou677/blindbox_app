@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/features/collection/application/series_completion_atmosphere.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_emotional_profile.dart';
@@ -41,7 +42,10 @@ List<Widget> buildShelfSeriesFeed({
           : ipKey;
       out.add(
         Padding(
-          padding: const EdgeInsets.only(bottom: 10, top: 4),
+          padding: const EdgeInsets.only(
+            bottom: 10,
+            top: FeedRhythm.collectionUniverseSectionTop,
+          ),
           child: CollectibleSectionHeader(
             title: label,
             padding: EdgeInsets.zero,

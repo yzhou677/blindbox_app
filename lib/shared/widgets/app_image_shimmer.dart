@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:flutter/material.dart';
 
 /// Soft pulsing placeholder while catalog art resolves or downloads.
@@ -22,7 +23,7 @@ class _AppImageShimmerState extends State<AppImageShimmer>
     super.initState();
     _pulse = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1100),
+      duration: CollectibleMotion.shimmer,
     )..repeat(reverse: true);
   }
 
@@ -43,7 +44,7 @@ class _AppImageShimmerState extends State<AppImageShimmer>
       child: AnimatedBuilder(
         animation: _pulse,
         builder: (context, child) {
-          final t = Curves.easeInOut.transform(_pulse.value);
+          final t = CollectibleMotion.springSoft.transform(_pulse.value);
           return DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(

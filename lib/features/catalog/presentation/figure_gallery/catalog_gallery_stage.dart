@@ -115,9 +115,9 @@ class CatalogGalleryStage extends StatelessWidget {
             if (showBackdrop) ...[
               Positioned.fill(
                 child: Opacity(
-                  opacity: 0.58,
+                  opacity: 0.52,
                   child: ImageFiltered(
-                    imageFilter: ImageFilter.blur(sigmaX: 26, sigmaY: 26),
+                    imageFilter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
                     child: Transform.scale(
                       scale: 1.12,
                       child: buildLayer(

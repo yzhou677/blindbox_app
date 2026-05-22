@@ -57,6 +57,12 @@ abstract final class FeedRhythm {
   /// Vertical gap between full-width listing cards (shelf separation).
   static const double listingCardVerticalGap = 22;
 
+  /// Extra air between collection shelf series cards (exhibition pacing).
+  static const double collectionShelfCardGap = 26;
+
+  /// Universe section label to first card in that group.
+  static const double collectionUniverseSectionTop = 6;
+
   /// Air between collection brand filter chips and the first shelf card.
   static const double collectionFilterToFirstCard = 12;
 
@@ -97,4 +103,7 @@ abstract final class FeedRhythm {
   static const double sheetBodyBottomInset = 14;
   static const double sheetSectionGap = 18;
   static const double sheetFigureRailGap = 14;
+
+  /// Max height fraction for figure gallery stage (breathing room above caption).
+  static const double galleryStageMaxHeightFactor = 0.82;
 }
