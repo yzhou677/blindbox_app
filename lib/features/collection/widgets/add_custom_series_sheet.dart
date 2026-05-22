@@ -121,110 +121,103 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final bottom = MediaQuery.paddingOf(context).bottom;
     final sheetScroll = CollectibleSheetScope.scrollControllerOf(context);
 
-    return Padding(
-      padding: EdgeInsets.only(
-        left: FeedRhythm.sheetHorizontal,
-        right: FeedRhythm.sheetHorizontal,
-        bottom: bottom + 14,
-      ),
+    return CollectibleSheetInsets(
       child: Form(
         key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                controller: sheetScroll,
-                physics: collectibleSheetScrollPhysics(),
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const CollectibleSheetChrome(
-                        editorialTitle: 'New series',
-                        padding: EdgeInsets.only(top: FeedRhythm.sheetChromeTop),
-                      ),
-                      const SizedBox(height: FeedRhythm.sheetSectionGap),
-                      CustomSeriesCoverSlot(
-                        imagePath: _coverUri,
-                        onReplaceTap: _pickCover,
-                        onClearTap: _clearCover,
-                      ),
-                      const SizedBox(height: FeedRhythm.sheetSectionGap + 6),
-                      TextFormField(
-                        controller: _seriesName,
-                        style: Theme.of(context).textTheme.titleMedium,
-                        textInputAction: TextInputAction.next,
-                        decoration: quietCustomSeriesField(
-                          scheme,
-                          hintText: 'Series name',
-                        ),
-                        validator: (v) {
-                          if (v == null || v.trim().isEmpty) {
-                            return 'Name required';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _brand,
-                        textInputAction: TextInputAction.next,
-                        decoration: quietCustomSeriesField(
-                          scheme,
-                          hintText: 'Brand',
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _ip,
-                        textInputAction: TextInputAction.next,
-                        decoration: quietCustomSeriesField(
-                          scheme,
-                          hintText: 'Universe',
-                        ),
-                      ),
-                      const SizedBox(height: FeedRhythm.sheetSectionGap + 8),
-                      FigureNameChipsEditor(
-                        figures: _figures,
-                        onRemoveAt: _removeAt,
-                        onEditAt: _editAt,
-                        addFieldController: _newFigure,
-                        addFieldFocusNode: _newFigureFocus,
-                        onAddSubmitted: _addFigureFromField,
-                        onPickFigurePhoto: _pickFigurePhoto,
-                      ),
-                      const SizedBox(height: FeedRhythm.sheetSectionGap),
-                      TextFormField(
-                        controller: _notes,
-                        maxLines: 2,
-                        textInputAction: TextInputAction.done,
-                        decoration: quietCustomSeriesField(
-                          scheme,
-                          hintText: 'Note',
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                    ],
-                  ),
-                ),
+        child: CustomScrollView(
+          controller: sheetScroll,
+          physics: collectibleSheetScrollPhysics(),
+          slivers: [
+            const SliverToBoxAdapter(
+              child: CollectibleSheetChrome(
+                editorialTitle: 'New series',
+                padding: EdgeInsets.zero,
               ),
-              const SizedBox(height: 14),
-              FilledButton(
-                onPressed: _save,
-                style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 15),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: AppRadii.fieldRadius,
+            ),
+            SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: FeedRhythm.sheetSectionGap),
+                  CustomSeriesCoverSlot(
+                    imagePath: _coverUri,
+                    onReplaceTap: _pickCover,
+                    onClearTap: _clearCover,
                   ),
-                ),
-                child: const Text('Add to shelf'),
+                  const SizedBox(height: FeedRhythm.sheetSectionGap + 6),
+                  TextFormField(
+                    controller: _seriesName,
+                    style: Theme.of(context).textTheme.titleMedium,
+                    textInputAction: TextInputAction.next,
+                    decoration: quietCustomSeriesField(
+                      scheme,
+                      hintText: 'Series name',
+                    ),
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return 'Name required';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _brand,
+                    textInputAction: TextInputAction.next,
+                    decoration: quietCustomSeriesField(
+                      scheme,
+                      hintText: 'Brand',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _ip,
+                    textInputAction: TextInputAction.next,
+                    decoration: quietCustomSeriesField(
+                      scheme,
+                      hintText: 'Universe',
+                    ),
+                  ),
+                  const SizedBox(height: FeedRhythm.sheetSectionGap + 8),
+                  FigureNameChipsEditor(
+                    figures: _figures,
+                    onRemoveAt: _removeAt,
+                    onEditAt: _editAt,
+                    addFieldController: _newFigure,
+                    addFieldFocusNode: _newFigureFocus,
+                    onAddSubmitted: _addFigureFromField,
+                    onPickFigurePhoto: _pickFigurePhoto,
+                  ),
+                  const SizedBox(height: FeedRhythm.sheetSectionGap),
+                  TextFormField(
+                    controller: _notes,
+                    maxLines: 2,
+                    textInputAction: TextInputAction.done,
+                    decoration: quietCustomSeriesField(
+                      scheme,
+                      hintText: 'Note',
+                    ),
+                  ),
+                  const SizedBox(height: 22),
+                  FilledButton(
+                    onPressed: _save,
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: AppRadii.fieldRadius,
+                      ),
+                    ),
+                    child: const Text('Add to shelf'),
+                  ),
+                  const SizedBox(height: 8),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
+      ),
     );
   }
 }

@@ -125,6 +125,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
   }) {
     showCollectibleBottomSheet<void>(
       context: context,
+      heightFraction: FeedRhythm.sheetPreviewOpenScreenFraction,
       builder: (_, scroll) =>
           CatalogSeriesPreviewSheet(series: series, onAdd: onAdd),
     );
@@ -134,19 +135,13 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final bottom = MediaQuery.paddingOf(context).bottom;
     final snap = ref.watch(collectionNotifierProvider);
     final notifier = ref.read(collectionNotifierProvider.notifier);
     final catalogActive = _trimmedQuery.isNotEmpty;
     final sheetScroll = CollectibleSheetScope.scrollControllerOf(context);
 
-    return Padding(
-      padding: EdgeInsets.only(
-        left: FeedRhythm.sheetHorizontal,
-        right: FeedRhythm.sheetHorizontal,
-        top: FeedRhythm.sheetChromeTop,
-        bottom: bottom + AppSpacing.md,
-      ),
+    return CollectibleSheetInsets(
+      extraBottom: AppSpacing.md,
       child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

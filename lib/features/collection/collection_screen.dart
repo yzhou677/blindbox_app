@@ -93,6 +93,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
   void _openFiguresSheet(BuildContext context, String seriesId) {
     showCollectibleBottomSheet<void>(
       context: context,
+      heightFraction: FeedRhythm.sheetFiguresOpenScreenFraction,
       builder: (_, scroll) => SeriesFiguresSheet(seriesId: seriesId),
     );
   }

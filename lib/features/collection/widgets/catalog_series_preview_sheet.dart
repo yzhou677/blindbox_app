@@ -11,13 +11,9 @@ import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
-import 'package:blindbox_app/shared/widgets/series_hero_meta_block.dart';
 import 'package:flutter/material.dart';
 
 /// Read-only catalog lineup preview before adding a series to the shelf.
-///
-/// Mirrors the cozy layout of [SeriesFiguresSheet] without shelf state cycling.
-/// Fills the host sheet height with a pinned bottom CTA tray.
 class CatalogSeriesPreviewSheet extends StatelessWidget {
   const CatalogSeriesPreviewSheet({
     super.key,
@@ -33,36 +29,35 @@ class CatalogSeriesPreviewSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
     final hasChase = series.figures.any((f) => f.isSecret);
     final figureLine = catalogSearchRowSummary(
       figureCount: series.figureCount,
       hasChase: hasChase,
       matchedFigureNames: const {},
     );
+    final scroll = CollectibleSheetScope.scrollControllerOf(context);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SafeArea(
-          bottom: false,
+    return CollectibleSheetInsets(
+      extraBottom: 0,
+      child: CustomScrollView(
+        controller: scroll,
+        physics: collectibleSheetScrollPhysics(),
+        slivers: [
+        SliverToBoxAdapter(
           child: CollectibleSheetChrome(
             seriesTitle: series.name,
             brand: series.brand,
             ipLine: series.ipName,
             trailingMeta: figureLine,
+            padding: EdgeInsets.zero,
           ),
         ),
-        Expanded(
-          child: ListView.separated(
-            controller: CollectibleSheetScope.scrollControllerOf(context),
-            physics: collectibleSheetScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(
-              FeedRhythm.sheetHorizontal,
-              FeedRhythm.sheetSectionGap,
-              FeedRhythm.sheetHorizontal,
-              AppSpacing.sm,
-            ),
+        SliverPadding(
+          padding: const EdgeInsets.only(
+            top: FeedRhythm.sheetSectionGap,
+            bottom: AppSpacing.sm,
+          ),
+          sliver: SliverList.separated(
             itemCount: series.figures.length,
             separatorBuilder: (context, index) => const SizedBox(height: 14),
             itemBuilder: (context, i) {
@@ -84,21 +79,24 @@ class CatalogSeriesPreviewSheet extends StatelessWidget {
           ),
         ),
         if (showAddButton)
-          Material(
-            color: scheme.surface,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(
-                    color: scheme.outlineVariant.withValues(alpha: 0.28),
+          SliverToBoxAdapter(
+            child: Material(
+              color: scheme.surface,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  border: Border(
+                    top: BorderSide(
+                      color: scheme.outlineVariant.withValues(alpha: 0.28),
+                    ),
                   ),
                 ),
-              ),
-              child: SafeArea(
-                top: false,
-                minimum: const EdgeInsets.only(bottom: 8),
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                  padding: EdgeInsets.only(
+                    left: 0,
+                    right: 0,
+                    top: 10,
+                    bottom: MediaQuery.paddingOf(context).bottom + 8,
+                  ),
                   child: FilledButton(
                     onPressed: () {
                       onAdd();
@@ -116,7 +114,8 @@ class CatalogSeriesPreviewSheet extends StatelessWidget {
               ),
             ),
           ),
-      ],
+        ],
+      ),
     );
   }
 }

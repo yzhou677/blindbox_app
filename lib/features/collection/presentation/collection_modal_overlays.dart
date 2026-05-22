@@ -38,7 +38,7 @@ void dismissCollectionModalOverlays(BuildContext context) {
 Future<T?> showCollectionModalBottomSheet<T>({
   required BuildContext context,
   required CollectibleSheetWidgetBuilder builder,
-  double heightFraction = FeedRhythm.sheetAddSeriesHeightFraction,
+  double heightFraction = FeedRhythm.sheetAddSeriesOpenScreenFraction,
   Color? backgroundColor,
 }) {
   return showCollectibleBottomSheet<T>(

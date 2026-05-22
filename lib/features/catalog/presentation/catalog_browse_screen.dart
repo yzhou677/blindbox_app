@@ -60,6 +60,7 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
     await showCollectibleBottomSheet<void>(
       context: context,
       useRootNavigator: true,
+      heightFraction: FeedRhythm.sheetPreviewOpenScreenFraction,
       builder: (ctx, scroll) => CatalogSeriesPreviewSheet(
         series: template,
         onAdd: onShelf
