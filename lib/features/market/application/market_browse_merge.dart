@@ -1,3 +1,4 @@
+import 'package:blindbox_app/features/market/application/market_listing_dedupe.dart';
 import 'package:blindbox_app/features/market/domain/market_provider_id.dart';
 import 'package:blindbox_app/models/market_listing.dart';
 
@@ -9,14 +10,14 @@ List<MarketListing> mergeMarketBrowseListings({
 }) {
   final seen = <String>{};
   for (final row in assetRows) {
-    seen.add(_dedupeKey(row));
+    seen.add(marketListingDedupeKey(row));
   }
 
   final out = List<MarketListing>.from(assetRows);
   var mercariAdded = 0;
   for (final row in mercariRows) {
     if (mercariAdded >= maxMercariRows) break;
-    final key = _dedupeKey(row);
+    final key = marketListingDedupeKey(row);
     if (seen.contains(key)) continue;
     seen.add(key);
     out.add(row);
@@ -29,10 +30,4 @@ List<MarketListing> assetRowsFromSession(List<MarketListing> session) {
   return session
       .where((e) => e.providerId == MarketProviderId.mock.wireName)
       .toList(growable: false);
-}
-
-String _dedupeKey(MarketListing row) {
-  final native = row.providerListingId?.trim();
-  if (native != null && native.isNotEmpty) return '${row.providerId}:$native';
-  return '${row.providerId}:${row.id}';
 }

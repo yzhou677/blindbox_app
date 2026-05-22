@@ -24,6 +24,7 @@ Last reviewed against the repo structure and key files.
 - [x] Market browse stays on `MarketSource`/repository — no Firestore catalog queries for listing rows
 - [x] Market identity matching: offline `CatalogIdentityIndex` + `MarketIdentityMatcher` at bootstrap (no matcher in widgets)
 - [x] `MarketTaxonomy.applyCatalogBundle()` at startup; brand-scoped filter chips use Firestore-backed `_catalogBrands` / `_catalogIps`
+- [x] Collectible market snapshots: aggregator + `CollectibleMarketSession` under `features/market/`; browse feed uses snapshot cards (listings stay transient)
 
 ---
 

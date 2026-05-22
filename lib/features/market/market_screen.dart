@@ -1,17 +1,16 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
+import 'package:blindbox_app/features/market/application/collectible_market_providers.dart';
 import 'package:blindbox_app/features/market/application/market_browse_notifier.dart';
 import 'package:blindbox_app/features/market/application/market_browse_refresh_controller.dart';
-import 'package:blindbox_app/features/market/application/market_listings_providers.dart';
-import 'package:blindbox_app/features/market/catalog/market_listing_filters.dart';
 import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
 import 'package:blindbox_app/features/market/data/mock_market_listings.dart';
+import 'package:blindbox_app/features/market/presentation/collectible_market_sort.dart';
 import 'package:blindbox_app/features/market/presentation/market_price_sort.dart';
+import 'package:blindbox_app/features/market/widgets/collectible_market_card.dart';
 import 'package:blindbox_app/features/market/widgets/market_discovery_chips.dart';
-import 'package:blindbox_app/features/market/widgets/market_listing_card.dart';
 import 'package:blindbox_app/features/market/widgets/market_search_bar.dart';
 import 'package:blindbox_app/features/market/widgets/trending_market_section.dart';
-import 'package:blindbox_app/models/market_listing.dart';
 import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -68,29 +67,18 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
     ref.read(marketBrowseNotifierProvider.notifier).clearSearchSession();
   }
 
-  List<MarketListing> _visibleListings(MarketBrowseState browse, List<MarketListing> all) {
-    final q = browse.query.trim().toLowerCase();
-    return all
-        .where(
-          (m) => marketListingVisible(
-            m,
-            brandId: browse.brandId,
-            ipId: browse.ipId,
-            queryLower: q,
-          ),
-        )
-        .toList(growable: false);
-  }
-
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final browse = ref.watch(marketBrowseNotifierProvider);
     final notifier = ref.read(marketBrowseNotifierProvider.notifier);
-    final allListings = ref.watch(marketBrowseListingsProvider);
-    final filtered = _visibleListings(browse, allListings);
-    final sorted = marketListingsSortedByPrice(filtered, _priceSort);
+    final snapshots = ref.watch(visibleCollectibleMarketSnapshotsProvider);
+    final sorted = sortCollectibleMarketSnapshots(
+      snapshots,
+      _priceSort,
+      sortByPrice: true,
+    );
     final immersive = browse.searchResultsActive;
 
     return Scaffold(
@@ -154,7 +142,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
             const SliverToBoxAdapter(child: SizedBox(height: FeedRhythm.marketTrendingToBrowseHeaderGap)),
             SliverToBoxAdapter(
               child: CollectibleSectionHeader(
-                title: 'Listings',
+                title: 'Collectibles',
                 padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
                 trailing: TextButton(
                   key: const Key('market_browse_price_sort'),
@@ -216,7 +204,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
-                    return MarketListingCard(listing: sorted[index]);
+                    return CollectibleMarketCard(snapshot: sorted[index]);
                   },
                   childCount: sorted.length,
                 ),

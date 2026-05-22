@@ -1,5 +1,6 @@
 import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_figure.dart';
+import 'package:blindbox_app/features/catalog/models/catalog_series.dart';
 import 'package:blindbox_app/features/market/application/market_listing_title_normalizer.dart';
 import 'package:flutter/foundation.dart';
 
@@ -76,7 +77,7 @@ class CatalogFigureCandidate {
 
 /// Offline index of catalog tokens for marketplace title matching.
 class CatalogIdentityIndex {
-  CatalogIdentityIndex._(this._figuresById);
+  CatalogIdentityIndex._(this._figuresById, this._seriesById);
 
   factory CatalogIdentityIndex.fromBundle(CatalogSeedBundle bundle) {
     final seriesById = {for (final s in bundle.series) s.id: s};
@@ -165,10 +166,11 @@ class CatalogIdentityIndex {
       }
     }
 
-    return CatalogIdentityIndex._(figuresById).._hits = hits;
+    return CatalogIdentityIndex._(figuresById, seriesById).._hits = hits;
   }
 
   final Map<String, CatalogFigure> _figuresById;
+  final Map<String, CatalogSeries> _seriesById;
   late final List<CatalogTokenHit> _hits;
 
   static const int tierExactFigure = 1;
@@ -230,6 +232,8 @@ class CatalogIdentityIndex {
   }
 
   CatalogFigure? figureById(String id) => _figuresById[id];
+
+  CatalogSeries? seriesById(String id) => _seriesById[id];
 
   (int tier, int index)? _scoreToken(
     String haystack,

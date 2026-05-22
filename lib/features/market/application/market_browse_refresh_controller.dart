@@ -1,6 +1,9 @@
+import 'package:blindbox_app/features/market/application/collectible_market_diagnostics.dart';
+import 'package:blindbox_app/features/market/application/market_browse_intelligence_install.dart';
 import 'package:blindbox_app/features/market/application/market_browse_merge.dart';
 import 'package:blindbox_app/features/market/application/market_listing_identity_enricher.dart';
 import 'package:blindbox_app/features/market/application/market_match_diagnostics.dart';
+import 'package:blindbox_app/features/market/application/collectible_market_providers.dart';
 import 'package:blindbox_app/features/market/application/market_listings_providers.dart';
 import 'package:blindbox_app/features/market/data/market_browse_listings_session.dart';
 import 'package:blindbox_app/features/market/data/repository/market_listings_repository.dart';
@@ -42,16 +45,19 @@ class MarketBrowseRefreshNotifier extends Notifier<bool> {
           maxMercariRows: MarketSandboxConfig.maxMercariItems,
         );
         final enriched = enrichBrowseListingsIdentity(merged);
-        MarketBrowseListingsSession.instance.install(enriched);
+        installMarketBrowseIntelligence(enriched);
         MarketMatchDiagnostics.logIfDebug(enriched);
+        CollectibleMarketDiagnostics.logIfDebug();
       } else {
         final repo = ref.read(marketListingsRepositoryProvider);
         final enriched = enrichBrowseListingsIdentity(
           await repo.loadBrowseListings(),
         );
-        MarketBrowseListingsSession.instance.install(enriched);
+        installMarketBrowseIntelligence(enriched);
       }
       ref.invalidate(marketBrowseListingsProvider);
+      ref.invalidate(collectibleMarketSnapshotsProvider);
+      ref.invalidate(visibleCollectibleMarketSnapshotsProvider);
     } finally {
       state = false;
     }
