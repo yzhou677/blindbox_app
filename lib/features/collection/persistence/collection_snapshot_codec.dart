@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 
 const _schemaVersion = 2;
 
-/// JSON payload for [CollectionSnapshot] — no [Color] in wire shape (ARGB int only).
+/// JSON payload for [CollectionSnapshot] — catalog-aligned keys on wire where practical.
 abstract final class CollectionSnapshotCodec {
   static String encode(CollectionSnapshot snap) {
     return jsonEncode({
@@ -44,22 +44,31 @@ abstract final class CollectionSnapshotCodec {
         if (tf.state == FigureCollectionState.none) continue;
         figureStates[id] = tf;
       }
-      return CollectionSnapshot(shelfSeries: shelfSeries, figureStates: figureStates);
+      return CollectionSnapshot(
+        shelfSeries: shelfSeries,
+        figureStates: figureStates,
+      );
     } catch (_) {
       return null;
     }
   }
 
   static Map<String, dynamic> _seriesToJson(ShelfSeries s) {
+    final brandId = s.taxonomyBrandId;
+    final ipId = s.taxonomyIpId;
     return {
       'id': s.id,
+      'displayName': s.name,
       'name': s.name,
       'brand': s.brand,
       'ipName': s.ipName,
+      'brandId': ?brandId,
+      'ipId': ?ipId,
+      'imageKey': ?s.imageKey,
       'notes': s.notes,
       'catalogTemplateId': s.catalogTemplateId,
-      'taxonomyBrandId': s.taxonomyBrandId,
-      'taxonomyIpId': s.taxonomyIpId,
+      'taxonomyBrandId': brandId,
+      'taxonomyIpId': ipId,
       'customCoverImageUri': s.customCoverImageUri,
       'shelfAccentArgb': _colorToArgb(s.shelfAccent),
       'figures': [for (final f in s.figures) _figureToJson(f)],
@@ -70,10 +79,11 @@ abstract final class CollectionSnapshotCodec {
     if (raw is! Map) return null;
     final m = Map<String, dynamic>.from(raw);
     final id = m['id'] as String?;
-    final name = m['name'] as String?;
+    final displayName = (m['displayName'] as String?) ?? (m['name'] as String?);
     final brand = m['brand'] as String?;
     final ipName = m['ipName'] as String?;
-    if (id == null || name == null || brand == null || ipName == null) return null;
+    if (id == null || displayName == null || brand == null || ipName == null)
+      return null;
     final accent = _colorFromArgb(m['shelfAccentArgb']);
     if (accent == null) return null;
     final figsRaw = m['figures'];
@@ -84,17 +94,23 @@ abstract final class CollectionSnapshotCodec {
       if (f == null) return null;
       figures.add(f);
     }
+    final brandId =
+        (m['brandId'] as String?) ?? (m['taxonomyBrandId'] as String?);
+    final ipId = (m['ipId'] as String?) ?? (m['taxonomyIpId'] as String?);
+    final imageKey =
+        (m['imageKey'] as String?) ?? (m['catalogTemplateId'] as String?);
     return ShelfSeries(
       id: id,
-      name: name,
+      name: displayName,
       brand: brand,
       ipName: ipName,
       figures: figures,
       shelfAccent: accent,
       notes: m['notes'] as String?,
       catalogTemplateId: m['catalogTemplateId'] as String?,
-      taxonomyBrandId: m['taxonomyBrandId'] as String?,
-      taxonomyIpId: m['taxonomyIpId'] as String?,
+      taxonomyBrandId: brandId,
+      taxonomyIpId: ipId,
+      imageKey: imageKey,
       customCoverImageUri: m['customCoverImageUri'] as String?,
     );
   }
@@ -103,10 +119,13 @@ abstract final class CollectionSnapshotCodec {
     return {
       'id': f.id,
       'seriesId': f.seriesId,
+      'displayName': f.name,
       'name': f.name,
+      'imageKey': ?f.imageKey,
       'imageUrl': f.imageUrl,
       'localImageUri': f.localImageUri,
       'rarity': f.rarity,
+      'rarityLabel': ?f.rarityLabel,
       'isSecret': f.isSecret,
       'taxonomyBrandId': f.taxonomyBrandId,
       'taxonomyIpId': f.taxonomyIpId,
@@ -119,22 +138,52 @@ abstract final class CollectionSnapshotCodec {
     final m = Map<String, dynamic>.from(raw);
     final id = m['id'] as String?;
     final seriesId = m['seriesId'] as String?;
-    final name = m['name'] as String?;
-    final rarity = m['rarity'] as String?;
+    final displayName = (m['displayName'] as String?) ?? (m['name'] as String?);
     final isSecret = m['isSecret'] as bool? ?? false;
-    if (id == null || seriesId == null || name == null || rarity == null) return null;
+    if (id == null || seriesId == null || displayName == null) return null;
+
+    final rarityLabel = m['rarityLabel'] as String?;
+    final legacyRarity = m['rarity'] as String?;
+    final migratedLabel = _migrateRarityLabel(
+      rarityLabel,
+      legacyRarity,
+      isSecret,
+    );
+    final rarity = legacyRarity ?? _rarityLine(isSecret, migratedLabel);
+
     return ShelfFigure(
       id: id,
       seriesId: seriesId,
-      name: name,
+      name: displayName,
       imageUrl: m['imageUrl'] as String?,
       localImageUri: m['localImageUri'] as String?,
+      imageKey: (m['imageKey'] as String?) ?? id,
       rarity: rarity,
       isSecret: isSecret,
+      rarityLabel: migratedLabel,
       taxonomyBrandId: m['taxonomyBrandId'] as String?,
       taxonomyIpId: m['taxonomyIpId'] as String?,
       catalogFigureTemplateId: m['catalogFigureTemplateId'] as String?,
     );
+  }
+
+  static String? _migrateRarityLabel(
+    String? rarityLabel,
+    String? legacyRarity,
+    bool isSecret,
+  ) {
+    final label = rarityLabel?.trim();
+    if (label != null && label.isNotEmpty) return label;
+    final legacy = legacyRarity?.trim();
+    if (legacy != null && RegExp(r'^\d+\s*:\s*\d+\s*$').hasMatch(legacy))
+      return legacy;
+    return null;
+  }
+
+  static String _rarityLine(bool isSecret, String? rarityLabel) {
+    final label = rarityLabel?.trim();
+    if (label != null && label.isNotEmpty) return label;
+    return isSecret ? 'Secret' : 'Regular';
   }
 
   /// Supports enum name string (v1) or legacy `{ "owned": bool, "wishlist": bool }`.
@@ -151,11 +200,25 @@ abstract final class CollectionSnapshotCodec {
       final o = raw['owned'] == true;
       final w = raw['wishlist'] == true;
       if (o && w) {
-        return TrackedFigure(figureId: figureId, state: FigureCollectionState.owned);
+        return TrackedFigure(
+          figureId: figureId,
+          state: FigureCollectionState.owned,
+        );
       }
-      if (o) return TrackedFigure(figureId: figureId, state: FigureCollectionState.owned);
-      if (w) return TrackedFigure(figureId: figureId, state: FigureCollectionState.wishlist);
-      return TrackedFigure(figureId: figureId, state: FigureCollectionState.none);
+      if (o)
+        return TrackedFigure(
+          figureId: figureId,
+          state: FigureCollectionState.owned,
+        );
+      if (w)
+        return TrackedFigure(
+          figureId: figureId,
+          state: FigureCollectionState.wishlist,
+        );
+      return TrackedFigure(
+        figureId: figureId,
+        state: FigureCollectionState.none,
+      );
     }
     return null;
   }

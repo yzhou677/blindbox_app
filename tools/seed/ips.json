@@ -1,18 +1,99 @@
 [
   {
+    "id": "skullpanda",
+    "brandId": "pop_mart",
+    "displayName": "Skullpanda",
+    "aliases": [
+      "Skull Panda"
+    ]
+  },
+  {
+    "id": "pucky",
+    "brandId": "pop_mart",
+    "displayName": "Pucky",
+    "aliases": []
+  },
+  {
+    "id": "twinkle_twinkle",
+    "displayName": "Twinkle Twinkle",
+    "brandId": "pop_mart",
+    "aliases": [
+      "Twinkle"
+    ]
+  },
+  {
+    "id": "bikini_bottom_buddies",
+    "displayName": "Bikini Bottom Buddies",
+    "brandId": "pop_mart",
+    "aliases": [
+      "SpongeBob"
+    ]
+  },
+  {
+    "id": "aespa",
+    "brandId": "pop_mart",
+    "displayName": "aespa",
+    "aliases": []
+  },
+  {
+    "id": "dimoo",
+    "brandId": "pop_mart",
+    "displayName": "Dimoo",
+    "aliases": []
+  },
+  {
+    "id": "polar",
+    "brandId": "pop_mart",
+    "displayName": "Polar",
+    "aliases": []
+  },
+  {
+    "id": "crybaby",
+    "brandId": "pop_mart",
+    "displayName": "Crybaby",
+    "aliases": [
+      "Cry Baby"
+    ]
+  },
+  {
+    "id": "baby_molly",
+    "brandId": "pop_mart",
+    "displayName": "Baby Molly",
+    "aliases": []
+  },
+  {
+    "id": "zsiga",
+    "brandId": "pop_mart",
+    "displayName": "Zsiga",
+    "aliases": []
+  },
+  {
     "id": "the_monsters",
     "brandId": "pop_mart",
-    "displayName": "THE MONSTERS",
+    "displayName": "The Monsters",
     "aliases": [
-      "Labubu"
+      "Labubu",
+      "Monsters"
     ]
+  },
+  {
+    "id": "molly",
+    "brandId": "pop_mart",
+    "displayName": "Molly",
+    "aliases": []
   },
   {
     "id": "hirono",
     "brandId": "pop_mart",
     "displayName": "Hirono",
+    "aliases": []
+  },
+  {
+    "id": "space_molly",
+    "brandId": "pop_mart",
+    "displayName": "Space Molly",
     "aliases": [
-      "Hirono"
+      "Mega Space Molly"
     ]
   },
   {
@@ -27,8 +108,52 @@
     "id": "smiski",
     "brandId": "dreams_inc",
     "displayName": "Smiski",
+    "aliases": []
+  },
+  {
+    "id": "nanci",
+    "brandId": "rolife",
+    "displayName": "Nanci",
     "aliases": [
-      "SMISKI"
+      "Rolife Nanci"
     ]
+  },
+  {
+    "id": "dora",
+    "brandId": "tntspace",
+    "displayName": "DORA",
+    "aliases": []
+  },
+  {
+    "id": "nommi",
+    "brandId": "toptoy",
+    "displayName": "Nommi",
+    "aliases": []
+  },
+  {
+    "id": "nommi_x_amarilith",
+    "brandId": "toptoy",
+    "displayName": "Nommi x Amarilith",
+    "aliases": [
+      "Amarilith"
+    ]
+  },
+  {
+    "id": "maymei",
+    "brandId": "toptoy",
+    "displayName": "MayMei",
+    "aliases": []
+  },
+  {
+    "id": "nyota",
+    "brandId": "pop_mart",
+    "displayName": "Nyota",
+    "aliases": []
+  },
+  {
+    "id": "baby_three",
+    "brandId": "dpl",
+    "displayName": "Baby Three",
+    "aliases": []
   }
 ]

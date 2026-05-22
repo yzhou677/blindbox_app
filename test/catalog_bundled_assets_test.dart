@@ -14,6 +14,7 @@ void main() {
           'assets/catalog/figures/the_monsters_exciting_macaron_soymilk.webp',
           'assets/catalog/figures/the_monsters_exciting_macaron_soymilk.png',
           'assets/catalog/figures/the_monsters_exciting_macaron_soymilk.jpg',
+          'assets/catalog/figures/the_monsters_exciting_macaron_soymilk.jpeg',
         ],
       );
     });
@@ -26,6 +27,43 @@ void main() {
       expect(
         CatalogImageResolver.seriesAsset('bar'),
         'assets/catalog/series/bar.avif',
+      );
+    });
+
+    test('storage probe order lists all supported extensions per imageKey', () {
+      final paths = [
+        for (final ext in CatalogImageResolver.assetExtensions)
+          CatalogImageResolver.storageObjectPath(
+            kind: CatalogImageKind.series,
+            imageKey: 'crybaby_cry_me_an_ocean',
+            extension: ext,
+          ),
+      ];
+      expect(paths, [
+        'catalog/series/crybaby_cry_me_an_ocean.avif',
+        'catalog/series/crybaby_cry_me_an_ocean.webp',
+        'catalog/series/crybaby_cry_me_an_ocean.png',
+        'catalog/series/crybaby_cry_me_an_ocean.jpg',
+        'catalog/series/crybaby_cry_me_an_ocean.jpeg',
+      ]);
+    });
+
+    test('storageObjectPath is deterministic from imageKey kind and extension', () {
+      expect(
+        CatalogImageResolver.storageObjectPath(
+          kind: CatalogImageKind.series,
+          imageKey: 'the_monsters_exciting_macaron',
+          extension: '.webp',
+        ),
+        'catalog/series/the_monsters_exciting_macaron.webp',
+      );
+      expect(
+        CatalogImageResolver.storageObjectPath(
+          kind: CatalogImageKind.figure,
+          imageKey: 'the_monsters_exciting_macaron_labubu_soymilk',
+          extension: 'png',
+        ),
+        'catalog/figures/the_monsters_exciting_macaron_labubu_soymilk.png',
       );
     });
 

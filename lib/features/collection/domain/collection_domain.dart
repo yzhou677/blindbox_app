@@ -30,9 +30,10 @@ class CatalogSeries {
     this.notes,
     this.taxonomyBrandId,
     this.taxonomyIpId,
+    this.catalogCoverImageKey,
   });
 
-  /// Stable catalog series id (dedupe + future `catalog_series_id`).
+  /// Stable catalog series id (dedupe + future `catalog_series_id`; equals series `imageKey`).
   final String templateId;
   final String name;
   final String brand;
@@ -41,6 +42,9 @@ class CatalogSeries {
   /// Canonical ids aligned with [MarketListing.taxonomyBrandId] / `.taxonomyIpId` when known.
   final String? taxonomyBrandId;
   final String? taxonomyIpId;
+
+  /// Canonical catalog series cover [imageKey] (`catalog/series/<key>.*`).
+  final String? catalogCoverImageKey;
 
   final List<CatalogFigure> figures;
   final Color shelfAccent;
@@ -56,6 +60,7 @@ class CatalogFigure {
     required this.templateFigureId,
     required this.catalogSeriesTemplateId,
     required this.name,
+    this.catalogImageKey,
     this.imageUrl,
     required this.rarity,
     required this.isSecret,
@@ -66,6 +71,9 @@ class CatalogFigure {
   final String templateFigureId;
   final String catalogSeriesTemplateId;
   final String name;
+
+  /// Opaque catalog [imageKey] for Storage/bundled resolve (template-only; not on shelf rows).
+  final String? catalogImageKey;
   final String? imageUrl;
   final String rarity;
   final bool isSecret;
@@ -87,14 +95,20 @@ class ShelfSeries {
     this.catalogTemplateId,
     this.taxonomyBrandId,
     this.taxonomyIpId,
+    this.imageKey,
     this.customCoverImageUri,
   });
 
   /// Unique shelf instance id (per user after persistence).
   final String id;
+
+  /// Series display label (wire: `displayName`; same as catalog [displayName]).
   final String name;
   final String brand;
   final String ipName;
+
+  /// Catalog-aligned cover stem for custom rows (local file via [customCoverImageUri]).
+  final String? imageKey;
 
   /// When non-null, stable key for catalog/drop dedup ([CollectionSnapshot.hasTemplateOnShelf]).
   final String? catalogTemplateId;
@@ -116,7 +130,47 @@ class ShelfSeries {
   bool get isCustomLocal => catalogTemplateId == null;
 
   /// Latest-drops style import (mock `drop-*` template keys).
-  bool get isDropImport => catalogTemplateId != null && catalogTemplateId!.startsWith('drop-');
+  bool get isDropImport =>
+      catalogTemplateId != null && catalogTemplateId!.startsWith('drop-');
+}
+
+/// IP line for shelf UI — plain [ShelfSeries.ipName] or legacy `brand · ip` from Home imports.
+String shelfSeriesIpLabel(ShelfSeries series) {
+  return shelfIpLabelFromBrandLine(
+    brand: series.brand,
+    line: series.ipName,
+  );
+}
+
+/// Normalizes catalog IP text or legacy `brand · ip` copy onto the shelf.
+String shelfIpLabelFromBrandLine({required String brand, required String line}) {
+  final ip = line.trim();
+  if (ip.isEmpty) return ip;
+  const sep = ' · ';
+  if (!ip.contains(sep)) return ip;
+  final brandKey = brand.trim();
+  if (brandKey.isEmpty) return ip;
+  final parts = ip.split(sep);
+  if (parts.first.trim().toLowerCase() == brandKey.toLowerCase()) {
+    final tail = parts.sublist(1).join(sep).trim();
+    return tail.isNotEmpty ? tail : ip;
+  }
+  return ip;
+}
+
+/// Display + styling helpers for [ShelfFigure] rarity fields.
+extension ShelfFigureRarityDisplay on ShelfFigure {
+  String get displayRarity {
+    final label = rarityLabel?.trim();
+    if (label != null && label.isNotEmpty) return label;
+    return rarity;
+  }
+
+  String? get effectiveRarityLabel {
+    final label = rarityLabel?.trim();
+    if (label != null && label.isNotEmpty) return label;
+    return null;
+  }
 }
 
 /// One owned figure slot on a [ShelfSeries] row.
@@ -130,6 +184,8 @@ class ShelfFigure {
     this.localImageUri,
     required this.rarity,
     required this.isSecret,
+    this.rarityLabel,
+    this.imageKey,
     this.taxonomyBrandId,
     this.taxonomyIpId,
     this.catalogFigureTemplateId,
@@ -139,6 +195,8 @@ class ShelfFigure {
 
   /// Parent [ShelfSeries.id] (series instance, never an IP taxonomy id).
   final String seriesId;
+
+  /// Figure display label (wire: `displayName`).
   final String name;
 
   /// Catalog-resolved asset path, remote art, or legacy placeholder URLs — not [imageKey].
@@ -146,8 +204,16 @@ class ShelfFigure {
 
   /// User private shelf: local path / `file:` URI only. Never a catalog image key.
   final String? localImageUri;
+
+  /// Opaque art stem for custom rows (pairs with [localImageUri]; catalog uses Storage).
+  final String? imageKey;
+
+  /// Short rarity line for UI (Regular / Secret / legacy Custom).
   final String rarity;
   final bool isSecret;
+
+  /// Catalog ratio label when secret (e.g. `1:72`); null for regular custom figures.
+  final String? rarityLabel;
 
   final String? taxonomyBrandId;
   final String? taxonomyIpId;
@@ -157,19 +223,12 @@ class ShelfFigure {
 }
 
 /// User progress for one figure slot (wishlist → owned → none); mutually exclusive.
-enum FigureCollectionState {
-  none,
-  wishlist,
-  owned,
-}
+enum FigureCollectionState { none, wishlist, owned }
 
 /// Runtime ownership for one shelf figure id ([ShelfFigure.id] instance key).
 @immutable
 class TrackedFigure {
-  const TrackedFigure({
-    required this.figureId,
-    required this.state,
-  });
+  const TrackedFigure({required this.figureId, required this.state});
 
   final String figureId;
   final FigureCollectionState state;
@@ -178,10 +237,7 @@ class TrackedFigure {
   bool get wishlist => state == FigureCollectionState.wishlist;
 
   TrackedFigure copyWith({FigureCollectionState? state}) {
-    return TrackedFigure(
-      figureId: figureId,
-      state: state ?? this.state,
-    );
+    return TrackedFigure(figureId: figureId, state: state ?? this.state);
   }
 }
 
@@ -198,10 +254,14 @@ class SeriesProgressCounts {
   final int wishlist;
   final int missing;
 
-  double completion(int total) => total <= 0 ? 0 : (owned / total).clamp(0.0, 1.0);
+  double completion(int total) =>
+      total <= 0 ? 0 : (owned / total).clamp(0.0, 1.0);
 }
 
-SeriesProgressCounts progressForSeries(ShelfSeries series, Map<String, TrackedFigure> states) {
+SeriesProgressCounts progressForSeries(
+  ShelfSeries series,
+  Map<String, TrackedFigure> states,
+) {
   var o = 0;
   var w = 0;
   var m = 0;
@@ -237,6 +297,8 @@ ShelfSeries cloneCatalogSeriesOntoShelf(
         localImageUri: null,
         rarity: f.rarity,
         isSecret: f.isSecret,
+        rarityLabel: _rarityLabelFromLine(f.rarity, f.isSecret),
+        imageKey: f.catalogImageKey,
         taxonomyBrandId: f.taxonomyBrandId ?? template.taxonomyBrandId,
         taxonomyIpId: f.taxonomyIpId ?? template.taxonomyIpId,
         catalogFigureTemplateId: f.templateFigureId,
@@ -254,7 +316,14 @@ ShelfSeries cloneCatalogSeriesOntoShelf(
     catalogTemplateId: catalogTemplateKey,
     taxonomyBrandId: template.taxonomyBrandId,
     taxonomyIpId: template.taxonomyIpId,
+    imageKey: _shelfSeriesCoverKey(template, catalogTemplateKey),
   );
+}
+
+String _shelfSeriesCoverKey(CatalogSeries template, String catalogTemplateKey) {
+  final cover = template.catalogCoverImageKey?.trim();
+  if (cover != null && cover.isNotEmpty) return cover;
+  return catalogTemplateKey;
 }
 
 /// Default seed shelf row that mirrors catalog template ids (stable progress keys).
@@ -269,6 +338,7 @@ ShelfSeries shelfSeriesMirrorCatalogTemplate(CatalogSeries template) {
     catalogTemplateId: template.templateId,
     taxonomyBrandId: template.taxonomyBrandId,
     taxonomyIpId: template.taxonomyIpId,
+    imageKey: _shelfSeriesCoverKey(template, template.templateId),
     figures: [
       for (final f in template.figures)
         ShelfFigure(
@@ -279,12 +349,20 @@ ShelfSeries shelfSeriesMirrorCatalogTemplate(CatalogSeries template) {
           localImageUri: null,
           rarity: f.rarity,
           isSecret: f.isSecret,
+          rarityLabel: _rarityLabelFromLine(f.rarity, f.isSecret),
+          imageKey: f.catalogImageKey,
           taxonomyBrandId: f.taxonomyBrandId ?? template.taxonomyBrandId,
           taxonomyIpId: f.taxonomyIpId ?? template.taxonomyIpId,
           catalogFigureTemplateId: f.templateFigureId,
         ),
     ],
   );
+}
+
+String? _rarityLabelFromLine(String rarity, bool isSecret) {
+  final t = rarity.trim();
+  if (RegExp(r'^\d+\s*:\s*\d+\s*$').hasMatch(t)) return t;
+  return null;
 }
 
 /// User shelf is the source of truth — catalog is suggestions only.
@@ -298,10 +376,8 @@ class CollectionSnapshot {
   final List<ShelfSeries> shelfSeries;
   final Map<String, TrackedFigure> figureStates;
 
-  static CollectionSnapshot emptyTest() => const CollectionSnapshot(
-        shelfSeries: [],
-        figureStates: {},
-      );
+  static CollectionSnapshot emptyTest() =>
+      const CollectionSnapshot(shelfSeries: [], figureStates: {});
 
   int get trackedSeriesCount => shelfSeries.length;
 
@@ -342,13 +418,15 @@ class CollectionSnapshot {
   bool get isWarmStart => totalOwnedFigures == 0 && totalWishlistFigures == 0;
 
   TrackedFigure trackedOrDefault(String figureId) {
-    return figureStates[figureId] ?? TrackedFigure(figureId: figureId, state: FigureCollectionState.none);
+    return figureStates[figureId] ??
+        TrackedFigure(figureId: figureId, state: FigureCollectionState.none);
   }
 
   /// True if this template (by stable catalog / drop id) already lives on the shelf.
   bool hasTemplateOnShelf(String catalogSeriesTemplateId) {
     for (final s in shelfSeries) {
-      if (s.catalogTemplateId == catalogSeriesTemplateId || s.id == catalogSeriesTemplateId) {
+      if (s.catalogTemplateId == catalogSeriesTemplateId ||
+          s.id == catalogSeriesTemplateId) {
         return true;
       }
     }

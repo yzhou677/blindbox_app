@@ -18,14 +18,18 @@ Last reviewed against the repo structure and key files.
 - [x] Bootstrap in `main.dart` for market + collection restore
 - [x] Legacy expansion guardrails documented (`lib/models/` frozen; feature-owned new models) in `ARCHITECTURE.md`
 - [x] Firebase integration boundaries documented (Firestore + Storage catalog-only; shelf local-first) in `ARCHITECTURE.md` + `firebase-catalog.mdc`
+- [x] Add Series uses `loadCatalogBundle()` (Firestore + seed fallback) and `pickLatestSeriesRecommendations` — not `CollectionCatalog`
+- [x] `CatalogImageResolver` + Storage paths wired for catalog UI (`CatalogImageFromKey`, add sheet search)
+- [x] Market browse stays on eBay datasource/repository — no Firestore catalog queries for listing rows
+- [x] `MarketTaxonomy.applyCatalogBundle()` at startup; brand-scoped filter chips use Firestore-backed `_catalogBrands` / `_catalogIps`
 
 ---
 
 ## Known drift / transitional (documented; fix only when tasked)
 
-- [ ] **Dual catalog in add flow:** Search uses seed JSON (`add_to_collection_sheet.dart`); idle suggestions use hardcoded `CollectionCatalog`; demo shelf seed uses `CollectionCatalog.defaultShelfSeries()` in `collection_seed_data.dart`
-- [ ] **Firestore catalog** loader exists; UI still defaults to `loadCatalogSeedBundle()` — switch only when explicitly tasked
-- [ ] **Firebase Storage** not wired in app yet (`firebase_storage` not in dependencies); docs define path convention and resolver order for when connected
+- [ ] **`CollectionCatalog`** still exists for demo shelf seed (`collection_seed_data.dart`) — frozen; not the add-flow catalog source
+- [ ] **Market listing card images** still from eBay DTO / mock URLs — not Firebase Storage catalog art (intentional until tasked)
+- [ ] **Shelf templates** may persist resolved Storage download URLs in `ShelfFigure.imageUrl` at add time (catalog clone path) — optional hardening later
 - [ ] **Collection** remains local-first — no Firestore/Storage sync for shelf (intentional until a future milestone)
 - [x] **`docs/PROJECT_OVERVIEW.md`** — updated to **SharedPreferences** and **`http`** (was Hive/Isar + Dio)
 - [ ] **`lib/models/`** still **in use** for grandfathered presentation types (`Collectible`, `MarketListing`, …) — **expansion frozen**; migrate call sites only when explicitly tasked, not as default agent work

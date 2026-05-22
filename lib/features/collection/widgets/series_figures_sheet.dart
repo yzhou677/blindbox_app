@@ -1,8 +1,12 @@
-import 'dart:math' as math;
-
+import 'package:blindbox_app/core/theme/app_spacing.dart';
+import 'package:blindbox_app/core/theme/collectible_typography.dart';
+import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_adapters.dart';
+import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_sheet.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/widgets/figure_capsule_card.dart';
+import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -26,55 +30,29 @@ class SeriesFiguresSheet extends ConsumerWidget {
     final series = _findSeries(snap, seriesId);
     if (series == null) return const SizedBox.shrink();
 
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
     final progress = progressForSeries(series, snap.figureStates);
-    final isComplete = series.figureCount > 0 && progress.owned >= series.figureCount;
+    final isComplete =
+        series.figureCount > 0 && progress.owned >= series.figureCount;
     final secrets = series.figures.where((f) => f.isSecret).toList();
     final chasesHome =
-        secrets.isNotEmpty && secrets.every((f) => snap.trackedOrDefault(f.id).owned);
-
+        secrets.isNotEmpty &&
+        secrets.every((f) => snap.trackedOrDefault(f.id).owned);
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 18),
+        padding: const EdgeInsets.fromLTRB(
+          FeedRhythm.sheetHorizontal,
+          FeedRhythm.sheetChromeTop,
+          FeedRhythm.sheetHorizontal,
+          AppSpacing.lg,
+        ),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: scheme.outlineVariant.withValues(alpha: 0.55),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              ),
-            ),
-            const SizedBox(height: 14),
-            Text(
-              series.ipName,
-              style: textTheme.labelLarge?.copyWith(
-                color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.12,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              series.name,
-              style: textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.22,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Tap a figure: wish list → collected → open slot',
-              style: textTheme.bodySmall?.copyWith(
-                color: scheme.onSurfaceVariant.withValues(alpha: 0.86),
-                height: 1.35,
-              ),
+            CollectibleSheetChrome(
+              seriesTitle: series.name,
+              brand: series.brand,
+              ipLine: series.ipName,
+              padding: EdgeInsets.zero,
             ),
             if (isComplete) ...[
               const SizedBox(height: 14),
@@ -82,23 +60,36 @@ class SeriesFiguresSheet extends ConsumerWidget {
                 chasesHome: chasesHome && secrets.isNotEmpty,
               ),
             ],
-            const SizedBox(height: 16),
-            SizedBox(
-              height: math.min(MediaQuery.sizeOf(context).height * 0.52, 440),
+            const SizedBox(height: 18),
+            Expanded(
               child: SingleChildScrollView(
-                child: Wrap(
-                  spacing: 12,
-                  runSpacing: 14,
-                  alignment: WrapAlignment.start,
-                  children: [
-                    for (final f in series.figures)
-                      FigureCapsuleCard(
-                        series: series,
-                        figure: f,
-                        tracked: snap.trackedOrDefault(f.id),
-                        onTap: () => notifier.cycleFigure(f.id),
-                      ),
-                  ],
+                child: SizedBox(
+                  width: double.infinity,
+                  child: Wrap(
+                    spacing: 14,
+                    runSpacing: 18,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      for (final f in series.figures)
+                        FigureCapsuleCard(
+                          series: series,
+                          figure: f,
+                          tracked: snap.trackedOrDefault(f.id),
+                          onTap: () => notifier.cycleFigure(f.id),
+                          onBrowseFigure: () {
+                            final index = series.figures.indexWhere(
+                              (fig) => fig.id == f.id,
+                            );
+                            showCatalogFigureGallery(
+                              context,
+                              items: catalogGalleryItemsFromShelfSeries(series),
+                              initialIndex: index < 0 ? 0 : index,
+                              seriesTitle: series.name,
+                            );
+                          },
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -125,13 +116,20 @@ class _SeriesCompleteBanner extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         gradient: LinearGradient(
           colors: [
-            Color.lerp(scheme.primaryContainer, const Color(0xFFFFF6E8), isDark ? 0.15 : 0.45)!
-                .withValues(alpha: isDark ? 0.5 : 0.72),
+            Color.lerp(
+              scheme.primaryContainer,
+              const Color(0xFFFFF6E8),
+              isDark ? 0.15 : 0.45,
+            )!.withValues(alpha: isDark ? 0.5 : 0.72),
             scheme.surfaceContainerHighest.withValues(alpha: 0.35),
           ],
         ),
         border: Border.all(
-          color: Color.lerp(scheme.primary, const Color(0xFFE8C547), 0.3)!.withValues(alpha: 0.45),
+          color: Color.lerp(
+            scheme.primary,
+            const Color(0xFFE8C547),
+            0.3,
+          )!.withValues(alpha: 0.45),
         ),
         boxShadow: [
           BoxShadow(
@@ -156,7 +154,9 @@ class _SeriesCompleteBanner extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    chasesHome ? 'Whole series — chase home' : 'This series feels complete',
+                    chasesHome
+                        ? 'Whole series — chase home'
+                        : 'This series feels complete',
                     style: textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                       letterSpacing: -0.1,

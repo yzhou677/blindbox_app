@@ -19,7 +19,11 @@ class CollectibleFigurePlaceholder extends StatelessWidget {
   final bool compact;
 
   static String initialsFor(String name) {
-    final parts = name.trim().split(RegExp(r'\s+')).where((e) => e.isNotEmpty).toList();
+    final parts = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((e) => e.isNotEmpty)
+        .toList();
     if (parts.isEmpty) return '?';
     if (parts.length == 1) {
       final w = parts[0];
@@ -33,7 +37,12 @@ class CollectibleFigurePlaceholder extends StatelessWidget {
     final h = seed.hashCode.abs() % 360;
     final light = HSLColor.fromAHSL(1, h.toDouble(), 0.36, 0.94).toColor();
     final deep = HSLColor.fromAHSL(1, (h + 22) % 360.0, 0.48, 0.68).toColor();
-    final accent = HSLColor.fromAHSL(1, (h + 200) % 360.0, 0.55, 0.62).toColor();
+    final accent = HSLColor.fromAHSL(
+      1,
+      (h + 200) % 360.0,
+      0.55,
+      0.62,
+    ).toColor();
     return (light, deep, accent);
   }
 
@@ -49,19 +58,20 @@ class CollectibleFigurePlaceholder extends StatelessWidget {
     final rOuter = compact ? 11.0 : 15.0;
     final rInner = compact ? 8.0 : 12.0;
 
-    final letterStyle = (compact ? textTheme.titleSmall : textTheme.titleLarge)?.copyWith(
-      fontWeight: FontWeight.w800,
-      letterSpacing: compact ? -0.15 : -0.35,
-      color: deep.withValues(alpha: 0.9),
-      height: 1,
-      shadows: [
-        Shadow(
-          color: Colors.white.withValues(alpha: 0.55),
-          blurRadius: compact ? 2 : 4,
-          offset: const Offset(0, 0.5),
-        ),
-      ],
-    );
+    final letterStyle = (compact ? textTheme.titleSmall : textTheme.titleLarge)
+        ?.copyWith(
+          fontWeight: FontWeight.w800,
+          letterSpacing: compact ? -0.15 : -0.35,
+          color: deep.withValues(alpha: 0.9),
+          height: 1,
+          shadows: [
+            Shadow(
+              color: Colors.white.withValues(alpha: 0.55),
+              blurRadius: compact ? 2 : 4,
+              offset: const Offset(0, 0.5),
+            ),
+          ],
+        );
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -81,7 +91,11 @@ class CollectibleFigurePlaceholder extends StatelessWidget {
           ),
         ],
         border: Border.all(
-          color: Color.lerp(deep, scheme.outline, 0.35)!.withValues(alpha: 0.35),
+          color: Color.lerp(
+            deep,
+            scheme.outline,
+            0.35,
+          )!.withValues(alpha: 0.35),
           width: compact ? 1 : 1.15,
         ),
         gradient: LinearGradient(
@@ -140,9 +154,7 @@ class CollectibleFigurePlaceholder extends StatelessWidget {
                   ),
                 ),
                 Positioned.fill(
-                  child: CustomPaint(
-                    painter: _BlisterGloss(compact: compact),
-                  ),
+                  child: CustomPaint(painter: _BlisterGloss(compact: compact)),
                 ),
                 if (!compact)
                   Positioned(
@@ -176,12 +188,7 @@ class CollectibleFigurePlaceholder extends StatelessWidget {
                       ],
                     ),
                   ),
-                Center(
-                  child: Text(
-                    initials,
-                    style: letterStyle,
-                  ),
-                ),
+                Center(child: Text(initials, style: letterStyle)),
                 if (isSecret && !compact)
                   Positioned(
                     bottom: 5,
@@ -190,7 +197,11 @@ class CollectibleFigurePlaceholder extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.auto_awesome_rounded, size: 11, color: deep.withValues(alpha: 0.5)),
+                        Icon(
+                          Icons.star_rounded,
+                          size: 11,
+                          color: deep.withValues(alpha: 0.5),
+                        ),
                         const SizedBox(width: 3),
                         Text(
                           'chase',
@@ -221,7 +232,9 @@ class _BlisterGloss extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final r = BorderRadius.circular(compact ? 8 : 12).toRRect(Rect.fromLTWH(0, 0, size.width, size.height));
+    final r = BorderRadius.circular(
+      compact ? 8 : 12,
+    ).toRRect(Rect.fromLTWH(0, 0, size.width, size.height));
     final paint = Paint()
       ..shader = ui.Gradient.linear(
         Offset(size.width * 0.15, 0),
@@ -237,7 +250,8 @@ class _BlisterGloss extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _BlisterGloss oldDelegate) => oldDelegate.compact != compact;
+  bool shouldRepaint(covariant _BlisterGloss oldDelegate) =>
+      oldDelegate.compact != compact;
 }
 
 class _BlisterShelfBackdrop extends CustomPainter {
@@ -254,14 +268,10 @@ class _BlisterShelfBackdrop extends CustomPainter {
       height: size.height * (compact ? 0.42 : 0.48),
     );
     final paint = Paint()
-      ..shader = ui.Gradient.radial(
-        oval.center,
-        oval.longestSide * 0.45,
-        [
-          accent,
-          accent.withValues(alpha: 0),
-        ],
-      );
+      ..shader = ui.Gradient.radial(oval.center, oval.longestSide * 0.45, [
+        accent,
+        accent.withValues(alpha: 0),
+      ]);
     canvas.drawOval(oval, paint);
   }
 
@@ -348,7 +358,12 @@ class _ToySilhouettePainter extends CustomPainter {
     final path = Path();
     switch (v % 3) {
       case 0:
-        path.addOval(Rect.fromCircle(center: Offset(w * (0.5 + n1 * 0.3), h * 0.3), radius: w * 0.17));
+        path.addOval(
+          Rect.fromCircle(
+            center: Offset(w * (0.5 + n1 * 0.3), h * 0.3),
+            radius: w * 0.17,
+          ),
+        );
         path.addRRect(
           RRect.fromRectAndRadius(
             Rect.fromLTWH(w * 0.24, h * 0.4, w * 0.52, h * 0.48),
@@ -357,8 +372,19 @@ class _ToySilhouettePainter extends CustomPainter {
         );
         break;
       case 1:
-        path.addOval(Rect.fromCircle(center: Offset(w * 0.5, h * 0.28 + n2), radius: w * 0.19));
-        path.addOval(Rect.fromCenter(center: Offset(w * 0.5, h * 0.62), width: w * 0.58, height: h * 0.42));
+        path.addOval(
+          Rect.fromCircle(
+            center: Offset(w * 0.5, h * 0.28 + n2),
+            radius: w * 0.19,
+          ),
+        );
+        path.addOval(
+          Rect.fromCenter(
+            center: Offset(w * 0.5, h * 0.62),
+            width: w * 0.58,
+            height: h * 0.42,
+          ),
+        );
         break;
       default:
         path.moveTo(w * 0.5, h * 0.1 + n1);

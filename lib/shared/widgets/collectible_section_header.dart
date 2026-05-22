@@ -1,5 +1,6 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/collectible_tokens.dart';
+import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:flutter/material.dart';
 
 /// Section rhythm: soft lead, title row, optional subtitle deck.
@@ -17,7 +18,7 @@ class CollectibleSectionHeader extends StatelessWidget {
   final String? subtitle;
   final Widget? trailing;
 
-  /// Replaces the default tiny sparkle (e.g. fire icon for market rails).
+  /// Optional lead beside the title (e.g. fire icon for market rails).
   final Widget? titleAccessory;
   final EdgeInsetsGeometry padding;
 
@@ -25,13 +26,6 @@ class CollectibleSectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-
-    final lead = titleAccessory ??
-        Icon(
-          Icons.auto_awesome_rounded,
-          size: 15,
-          color: scheme.primary.withValues(alpha: 0.3),
-        );
 
     final deck = subtitle?.trim();
 
@@ -43,14 +37,19 @@ class CollectibleSectionHeader extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: lead,
-              ),
+              if (titleAccessory != null) ...[
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: titleAccessory,
+                ),
+              ],
               Expanded(
                 child: Text(
                   title,
-                  style: textTheme.titleMedium,
+                  style: CollectibleTypography.shelfSeriesTitle(
+                    textTheme,
+                    scheme,
+                  ),
                 ),
               ),
               if (trailing case final t?) ...[
@@ -69,7 +68,9 @@ class CollectibleSectionHeader extends StatelessWidget {
             const SizedBox(height: FeedRhythm.sectionTitleToSubtitle),
             Text(
               d,
-              style: CollectibleTokens.of(context).supportiveBody(textTheme, scheme),
+              style: CollectibleTokens.of(
+                context,
+              ).supportiveBody(textTheme, scheme),
             ),
           ],
         ],

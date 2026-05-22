@@ -1,0 +1,15 @@
+# Documentation index
+
+Human-oriented notes for the Blindbox app. **Agent rules and architecture live under `.cursor/`, not here.**
+
+## In this folder
+
+- [`PROJECT_OVERVIEW.md`](PROJECT_OVERVIEW.md) — product goals and feature outline
+- [`FIREBASE_LOCAL_SETUP.md`](FIREBASE_LOCAL_SETUP.md) — Firebase / emulator setup for local dev
+- [`CURSOR_RULES.md`](CURSOR_RULES.md) — pointer to where Cursor rules and architecture actually live
+
+## For Cursor agents and contributors
+
+- **Architecture:** [`.cursor/ARCHITECTURE.md`](../.cursor/ARCHITECTURE.md)
+- **Rules:** [`.cursor/rules/`](../.cursor/rules/)
+- **Checklist:** [`.cursor/CONFORMITY_AUDIT.md`](../.cursor/CONFORMITY_AUDIT.md)

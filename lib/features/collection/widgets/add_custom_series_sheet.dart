@@ -1,19 +1,25 @@
+import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/theme/app_radii.dart';
+import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
 import 'package:blindbox_app/features/collection/widgets/custom_series_cover_slot.dart';
+import 'package:blindbox_app/features/collection/widgets/custom_series_quiet_field.dart';
+import 'package:blindbox_app/features/collection/widgets/edit_custom_figure_dialog.dart';
 import 'package:blindbox_app/features/collection/widgets/figure_name_chips_editor.dart';
 import 'package:blindbox_app/features/collection/widgets/shelf_gallery_pick.dart';
+import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
 import 'package:flutter/material.dart';
 
-typedef CustomSeriesFormSubmit = void Function({
-  required String seriesName,
-  String? brand,
-  String? ipDisplayName,
-  required List<String> figureNames,
-  required List<String?> figureLocalImageUris,
-  String? customCoverImageUri,
-  String? notes,
-});
+typedef CustomSeriesFormSubmit =
+    void Function({
+      required String seriesName,
+      String? brand,
+      String? ipDisplayName,
+      required List<CustomFigureDraft> figures,
+      String? customCoverImageUri,
+      String? notes,
+    });
 
-/// Shelf-first custom series — chips for figures, light fields for the rest.
+/// Shelf-first custom series — quiet fields, figure list, cover photo.
 class AddCustomSeriesSheet extends StatefulWidget {
   const AddCustomSeriesSheet({super.key, required this.onSubmit});
 
@@ -32,8 +38,7 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
   final _newFigureFocus = FocusNode();
   final _formKey = GlobalKey<FormState>();
 
-  final List<String> _figureNames = [];
-  final List<String?> _figureLocalUris = [];
+  final List<CustomFigureDraft> _figures = [];
   String? _coverUri;
 
   @override
@@ -51,55 +56,24 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
     final raw = _newFigure.text.trim();
     if (raw.isEmpty) return;
     setState(() {
-      _figureNames.add(raw);
-      _figureLocalUris.add(null);
+      _figures.add(CustomFigureDraft(displayName: raw));
       _newFigure.clear();
     });
   }
 
   Future<void> _editAt(int index) async {
-    final current = _figureNames[index];
-    final editController = TextEditingController(text: current);
-    final next = await showDialog<String>(
+    FocusManager.instance.primaryFocus?.unfocus();
+    final current = _figures[index];
+    final next = await showDialog<CustomFigureDraft>(
       context: context,
-      builder: (ctx) {
-        final scheme = Theme.of(ctx).colorScheme;
-        return AlertDialog(
-          title: const Text('Rename figure'),
-          content: TextField(
-            controller: editController,
-            autofocus: true,
-            textInputAction: TextInputAction.done,
-            decoration: InputDecoration(
-              hintText: 'Name',
-              filled: true,
-              fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-            ),
-            onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-            FilledButton(
-              onPressed: () => Navigator.pop(ctx, editController.text.trim()),
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
+      builder: (ctx) => EditCustomFigureDialog(initial: current),
     );
-    editController.dispose();
-    if (!mounted || next == null || next.isEmpty) return;
-    setState(() => _figureNames[index] = next);
+    if (!mounted || next == null) return;
+    setState(() => _figures[index] = next);
   }
 
   void _removeAt(int i) {
-    setState(() {
-      _figureNames.removeAt(i);
-      if (i < _figureLocalUris.length) {
-        _figureLocalUris.removeAt(i);
-      }
-    });
+    setState(() => _figures.removeAt(i));
   }
 
   Future<void> _pickCover() async {
@@ -114,39 +88,29 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
     final path = await pickShelfGalleryImage(context);
     if (!mounted || path == null) return;
     setState(() {
-      while (_figureLocalUris.length <= i) {
-        _figureLocalUris.add(null);
-      }
-      _figureLocalUris[i] = path;
-    });
-  }
-
-  void _clearFigurePhoto(int i) {
-    setState(() {
-      if (i < _figureLocalUris.length) {
-        _figureLocalUris[i] = null;
-      }
+      final f = _figures[i];
+      _figures[i] = CustomFigureDraft(
+        displayName: f.displayName,
+        localImageUri: path,
+        isSecret: f.isSecret,
+        rarityLabel: f.rarityLabel,
+      );
     });
   }
 
   void _save() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    if (_figureNames.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Add at least one figure')),
-      );
+    if (_figures.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Add a figure')));
       return;
     }
     widget.onSubmit(
       seriesName: _seriesName.text.trim(),
       brand: _brand.text.trim().isEmpty ? null : _brand.text.trim(),
       ipDisplayName: _ip.text.trim().isEmpty ? null : _ip.text.trim(),
-      figureNames: List<String>.from(_figureNames),
-      figureLocalImageUris: List<String?>.generate(
-        _figureNames.length,
-        (i) => i < _figureLocalUris.length ? _figureLocalUris[i] : null,
-        growable: false,
-      ),
+      figures: List<CustomFigureDraft>.from(_figures),
       customCoverImageUri: _coverUri,
       notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
     );
@@ -156,7 +120,6 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
     final bottom = MediaQuery.paddingOf(context).bottom;
     final maxH = MediaQuery.sizeOf(context).height * 0.88;
 
@@ -164,84 +127,43 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
       height: maxH,
       child: Padding(
         padding: EdgeInsets.only(
-          left: 20,
-          right: 20,
-          top: 12,
-          bottom: bottom + 16,
+          left: FeedRhythm.sheetHorizontal,
+          right: FeedRhythm.sheetHorizontal,
+          bottom: bottom + 14,
         ),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: scheme.outlineVariant.withValues(alpha: 0.55),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
               Expanded(
                 child: SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text(
-                        'Your own series',
-                        style: textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: -0.2,
-                        ),
+                      const CollectibleSheetChrome(
+                        editorialTitle: 'New series',
+                        padding: EdgeInsets.only(top: FeedRhythm.sheetChromeTop),
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'Give the series a name, tag your pulls, and they’ll land on your shelf like the rest.',
-                        style: textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
-                          height: 1.35,
-                        ),
-                      ),
-                      const SizedBox(height: 22),
+                      const SizedBox(height: FeedRhythm.sheetSectionGap),
                       CustomSeriesCoverSlot(
                         imagePath: _coverUri,
                         onReplaceTap: _pickCover,
                         onClearTap: _clearCover,
                       ),
-                      const SizedBox(height: 22),
-                      Text.rich(
-                        TextSpan(
-                          style: textTheme.labelLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: scheme.onSurface.withValues(alpha: 0.9),
-                          ),
-                          children: [
-                            const TextSpan(text: 'Series name '),
-                            TextSpan(
-                              text: '*',
-                              style: TextStyle(
-                                color: scheme.error,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: FeedRhythm.sheetSectionGap + 6),
                       TextFormField(
                         controller: _seriesName,
+                        style: Theme.of(context).textTheme.titleMedium,
                         textInputAction: TextInputAction.next,
-                        decoration: InputDecoration(
-                          hintText: 'e.g. The Other One',
-                          filled: true,
-                          fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                        decoration: quietCustomSeriesField(
+                          scheme,
+                          hintText: 'Series name',
                         ),
                         validator: (v) {
-                          if (v == null || v.trim().isEmpty) return 'Add a series name';
+                          if (v == null || v.trim().isEmpty) {
+                            return 'Name required';
+                          }
                           return null;
                         },
                       ),
@@ -249,60 +171,55 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
                       TextFormField(
                         controller: _brand,
                         textInputAction: TextInputAction.next,
-                        decoration: InputDecoration(
+                        decoration: quietCustomSeriesField(
+                          scheme,
                           hintText: 'Brand',
-                          filled: true,
-                          fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                         ),
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _ip,
                         textInputAction: TextInputAction.next,
-                        decoration: InputDecoration(
-                          hintText: 'Universe / IP',
-                          filled: true,
-                          fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                        decoration: quietCustomSeriesField(
+                          scheme,
+                          hintText: 'Franchise',
                         ),
                       ),
-                      const SizedBox(height: 22),
+                      const SizedBox(height: FeedRhythm.sheetSectionGap + 8),
                       FigureNameChipsEditor(
-                        names: _figureNames,
-                        figureLocalUris: _figureLocalUris,
+                        figures: _figures,
                         onRemoveAt: _removeAt,
                         onEditAt: _editAt,
                         addFieldController: _newFigure,
                         addFieldFocusNode: _newFigureFocus,
                         onAddSubmitted: _addFigureFromField,
                         onPickFigurePhoto: _pickFigurePhoto,
-                        onClearFigurePhoto: _clearFigurePhoto,
                       ),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: FeedRhythm.sheetSectionGap),
                       TextFormField(
                         controller: _notes,
                         maxLines: 2,
                         textInputAction: TextInputAction.done,
-                        decoration: InputDecoration(
-                          hintText: 'Shelf note',
-                          filled: true,
-                          fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                        decoration: quietCustomSeriesField(
+                          scheme,
+                          hintText: 'Note',
                         ),
                       ),
+                      const SizedBox(height: 8),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 14),
               FilledButton(
                 onPressed: _save,
                 style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: AppRadii.fieldRadius,
+                  ),
                 ),
-                child: const Text('Place on shelf'),
+                child: const Text('Add to shelf'),
               ),
             ],
           ),

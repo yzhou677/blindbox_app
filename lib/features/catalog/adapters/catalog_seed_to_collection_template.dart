@@ -12,8 +12,10 @@ import 'package:flutter/material.dart';
 /// Returns null if [seriesId] is unknown or has no figures in the bundle.
 Future<domain.CatalogSeries?> catalogTemplateFromSeedSeries(
   CatalogSeedBundle bundle,
-  String seriesId,
-) async {
+  String seriesId, {
+  /// When false, skips Storage/network image resolution (fast path for recommendation rails).
+  bool resolveFigureImages = true,
+}) async {
   CatalogSeries? series;
   for (final s in bundle.series) {
     if (s.id == seriesId) {
@@ -22,24 +24,25 @@ Future<domain.CatalogSeries?> catalogTemplateFromSeedSeries(
     }
   }
   if (series == null) return null;
+  final catalogSeries = series;
 
   CatalogBrand? brand;
   for (final b in bundle.brands) {
-    if (b.id == series.brandId) {
+    if (b.id == catalogSeries.brandId) {
       brand = b;
       break;
     }
   }
   CatalogIp? ip;
   for (final i in bundle.ips) {
-    if (i.id == series.ipId) {
+    if (i.id == catalogSeries.ipId) {
       ip = i;
       break;
     }
   }
 
-  final brandLine = brand?.displayName ?? series.brandId;
-  final ipLine = ip?.displayName ?? series.ipId;
+  final brandLine = brand?.displayName ?? catalogSeries.brandId;
+  final ipLine = ip?.displayName ?? catalogSeries.ipId;
 
   final figs = <CatalogFigure>[];
   for (final f in bundle.figures) {
@@ -63,34 +66,66 @@ Future<domain.CatalogSeries?> catalogTemplateFromSeedSeries(
   final accent = accents[seriesId.hashCode.abs() % accents.length];
 
   final templateFigures = <domain.CatalogFigure>[];
-  for (final f in figs) {
-    final imageUrl = f.imageKey.trim().isEmpty
-        ? null
-        : await CatalogImageResolver.resolveFigureAsset(f.imageKey);
-    templateFigures.add(
-      domain.CatalogFigure(
-        templateFigureId: f.id,
-        catalogSeriesTemplateId: series.id,
-        name: f.displayName,
-        imageUrl: imageUrl,
-        rarity: f.rarityLabel?.trim().isNotEmpty == true
-            ? f.rarityLabel!.trim()
-            : (f.isSecret ? 'Secret' : 'Regular'),
-        isSecret: f.isSecret,
-        taxonomyBrandId: series.brandId,
-        taxonomyIpId: series.ipId,
-      ),
+  if (resolveFigureImages) {
+    final resolved = await Future.wait(
+      figs.map((f) async {
+        String? imageUrl;
+        if (f.imageKey.trim().isNotEmpty) {
+          imageUrl = await CatalogImageResolver.resolveFigureDisplayRef(f.imageKey);
+        }
+        return (
+          figure: f,
+          imageUrl: imageUrl,
+        );
+      }),
     );
+    for (final row in resolved) {
+      final f = row.figure;
+      templateFigures.add(
+        domain.CatalogFigure(
+          templateFigureId: f.id,
+          catalogSeriesTemplateId: catalogSeries.id,
+          name: f.displayName,
+          catalogImageKey: f.imageKey,
+          imageUrl: row.imageUrl,
+          rarity: f.rarityLabel?.trim().isNotEmpty == true
+              ? f.rarityLabel!.trim()
+              : (f.isSecret ? 'Secret' : 'Regular'),
+          isSecret: f.isSecret,
+          taxonomyBrandId: catalogSeries.brandId,
+          taxonomyIpId: catalogSeries.ipId,
+        ),
+      );
+    }
+  } else {
+    for (final f in figs) {
+      templateFigures.add(
+        domain.CatalogFigure(
+          templateFigureId: f.id,
+          catalogSeriesTemplateId: catalogSeries.id,
+          name: f.displayName,
+          catalogImageKey: f.imageKey,
+          imageUrl: null,
+          rarity: f.rarityLabel?.trim().isNotEmpty == true
+              ? f.rarityLabel!.trim()
+              : (f.isSecret ? 'Secret' : 'Regular'),
+          isSecret: f.isSecret,
+          taxonomyBrandId: catalogSeries.brandId,
+          taxonomyIpId: catalogSeries.ipId,
+        ),
+      );
+    }
   }
 
   return domain.CatalogSeries(
-    templateId: series.id,
-    name: series.displayName,
+    templateId: catalogSeries.id,
+    name: catalogSeries.displayName,
     brand: brandLine,
     ipName: ipLine,
     shelfAccent: accent,
-    taxonomyBrandId: series.brandId,
-    taxonomyIpId: series.ipId,
+    taxonomyBrandId: catalogSeries.brandId,
+    taxonomyIpId: catalogSeries.ipId,
+    catalogCoverImageKey: catalogSeries.imageKey.trim(),
     figures: templateFigures,
   );
 }

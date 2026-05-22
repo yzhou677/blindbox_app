@@ -1,7 +1,9 @@
+import 'package:blindbox_app/core/theme/app_radii.dart';
+import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
 import 'package:flutter/material.dart';
 
-/// Soft shelf-style control: tap to add/replace a series cover from the gallery.
+/// Series cover — tap to add or replace from the gallery.
 class CustomSeriesCoverSlot extends StatelessWidget {
   const CustomSeriesCoverSlot({
     super.key,
@@ -10,7 +12,6 @@ class CustomSeriesCoverSlot extends StatelessWidget {
     required this.onClearTap,
   });
 
-  /// Local path from [ImagePicker] or `null` when unset.
   final String? imagePath;
   final VoidCallback onReplaceTap;
   final VoidCallback onClearTap;
@@ -21,38 +22,30 @@ class CustomSeriesCoverSlot extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final has = imagePath != null && imagePath!.trim().isNotEmpty;
 
-    final radius = BorderRadius.circular(20);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Cover (optional)',
-          style: textTheme.labelLarge?.copyWith(
+          'Cover',
+          style: CollectibleTypography.figureMeta(textTheme, scheme).copyWith(
+            fontSize: 12,
+            letterSpacing: 0.14,
             fontWeight: FontWeight.w600,
-            letterSpacing: 0.04,
-            color: scheme.onSurface.withValues(alpha: 0.88),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         Material(
-          color: scheme.surfaceContainerLow,
-          borderRadius: radius,
+          color: scheme.surfaceContainerLow.withValues(alpha: 0.7),
+          borderRadius: AppRadii.cardRadius,
           child: InkWell(
             onTap: onReplaceTap,
-            borderRadius: radius,
+            borderRadius: AppRadii.cardRadius,
             child: Ink(
-              height: 120,
+              height: 132,
               decoration: BoxDecoration(
-                borderRadius: radius,
-                border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.38)),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    scheme.surfaceContainerLow,
-                    Color.lerp(scheme.surfaceContainerLow, scheme.secondaryContainer, 0.22)!,
-                  ],
+                borderRadius: AppRadii.cardRadius,
+                border: Border.all(
+                  color: scheme.outlineVariant.withValues(alpha: 0.22),
                 ),
               ),
               child: Stack(
@@ -65,47 +58,38 @@ class CustomSeriesCoverSlot extends StatelessWidget {
                         name: 'Cover',
                         seedKey: 'custom-cover',
                         fit: BoxFit.cover,
-                        borderRadius: radius,
+                        borderRadius: AppRadii.cardRadius,
                       ),
                     ),
                   if (!has)
                     Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.add_photo_alternate_outlined,
-                            size: 32,
-                            color: scheme.primary.withValues(alpha: 0.72),
-                          ),
-                          const SizedBox(height: 8),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: Text(
-                              'Tap to choose a cosy cover photo',
-                              style: textTheme.bodySmall?.copyWith(
-                                color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
-                                height: 1.3,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ],
+                      child: Icon(
+                        Icons.add_photo_alternate_outlined,
+                        size: 30,
+                        color: scheme.onSurfaceVariant.withValues(alpha: 0.38),
                       ),
                     ),
                   if (has)
                     Positioned(
-                      right: 8,
-                      top: 8,
+                      right: 10,
+                      top: 10,
                       child: Material(
-                        color: scheme.surface.withValues(alpha: 0.92),
+                        color: scheme.surface.withValues(alpha: 0.9),
                         shape: const CircleBorder(),
                         child: IconButton(
                           tooltip: 'Remove cover',
-                          icon: Icon(Icons.close_rounded, size: 20, color: scheme.onSurfaceVariant),
+                          icon: Icon(
+                            Icons.close_rounded,
+                            size: 18,
+                            color: scheme.onSurfaceVariant.withValues(
+                              alpha: 0.7,
+                            ),
+                          ),
                           onPressed: onClearTap,
                           visualDensity: VisualDensity.compact,
-                          style: IconButton.styleFrom(padding: const EdgeInsets.all(6)),
+                          style: IconButton.styleFrom(
+                            padding: const EdgeInsets.all(6),
+                          ),
                         ),
                       ),
                     ),

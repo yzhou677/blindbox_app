@@ -6,6 +6,9 @@ abstract final class FeedRhythm {
   /// Padding below the compact [SliverAppBar] before first body copy or controls.
   static const double belowMainTabAppBar = 10;
 
+  /// Air between tab title ([SliverAppBar]) and [AppSearchField] on Discover / Market.
+  static const double headerToSearchField = 14;
+
   /// Default gap between major Home feed sections (Latest drops ↔ Trending).
   static const double homeMajorSectionGap = 32;
 
@@ -30,14 +33,20 @@ abstract final class FeedRhythm {
   /// Space below the Browse listings section title before the first feed row.
   static const double marketBrowseHeaderToFeedGap = 18;
 
-  /// Vertical gap between Market browse feed rows (lighter than shelf cards).
-  static const double marketListingFeedCardVerticalGap = 14;
+  /// Vertical gap between Market browse feed rows (gallery pacing, not dense list).
+  static const double marketListingFeedCardVerticalGap = 18;
 
-  /// Fixed square thumbnail for Market browse feed rows.
-  static const double marketListingThumbnailExtent = 92;
+  /// Showcase thumb for Market browse rows.
+  static const double marketListingThumbnailExtent = 96;
 
-  /// Trending rail height (preview cards); lower than browse for hierarchy.
-  static const double marketTrendingRailHeight = 180;
+  /// Trending rail height (image-first mini cards).
+  static const double marketTrendingRailHeight = 196;
+
+  /// Home series rails (Latest drops / Trending series).
+  static const double homeSeriesRailHeight = 448;
+
+  /// Horizontal showcase card width on Home series rails.
+  static const double homeSeriesRailCardWidth = 272;
 
   /// Square series thumb on shelf cards (browse / recognition).
   static const double collectionShelfThumbnailExtent = 88;
@@ -52,11 +61,21 @@ abstract final class FeedRhythm {
   static const double collectionFilterToFirstCard = 12;
 
   /// Horizontal gap between cards in home/market rails.
-  static const double horizontalRailCardGap = 24;
+  static const double horizontalRailCardGap = 28;
 
   /// Vertical gap between stacked blocks inside a tab (e.g. search vs chips).
   static const double blockGapMedium = 18;
 
   /// Extra air below the last block inside main-tab scroll bodies.
   static const double tabScrollTailPadding = 36;
+
+  // —— Sheets & modals (shared chrome) ——
+
+  static const double sheetHeightFraction = 0.74;
+  static const double sheetAddSeriesHeightFraction = 0.78;
+  static const double sheetHorizontal = 16;
+  static const double sheetChromeTop = 12;
+  static const double sheetHeaderAfterHandle = 16;
+  static const double sheetSectionGap = 18;
+  static const double sheetFigureRailGap = 14;
 }

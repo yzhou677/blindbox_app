@@ -46,7 +46,9 @@ class CollectionSummarySection extends StatelessWidget {
           DecoratedBox(
             decoration: BoxDecoration(
               borderRadius: CollectibleShape.shellRadius,
-              color: scheme.surfaceContainerLow.withValues(alpha: isDark ? 0.92 : 1),
+              color: scheme.surfaceContainerLow.withValues(
+                alpha: isDark ? 0.92 : 1,
+              ),
               border: Border.all(
                 color: Color.lerp(
                   scheme.outlineVariant,
@@ -75,7 +77,7 @@ class CollectionSummarySection extends StatelessWidget {
                     ),
                     _ShelfGlanceStat(
                       count: stats.wantListCount,
-                      label: 'Wish list',
+                      label: 'Wishlist',
                       scheme: scheme,
                       textTheme: textTheme,
                     ),

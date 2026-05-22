@@ -1,8 +1,12 @@
+import 'package:blindbox_app/core/theme/app_radii.dart';
+import 'package:blindbox_app/core/theme/collectible_shelf_shadow.dart';
+import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/home/widgets/collectible_network_image.dart';
 import 'package:blindbox_app/features/market/application/market_listings_providers.dart';
 import 'package:blindbox_app/features/market/utils/market_format.dart';
 import 'package:blindbox_app/features/market/widgets/listing_market_signals.dart';
 import 'package:blindbox_app/models/market_listing.dart';
+import 'package:blindbox_app/shared/widgets/series_hero_meta_block.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -29,20 +33,15 @@ class MarketDetailScreen extends ConsumerWidget {
     if (listing == null) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Market'),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_rounded),
             onPressed: () => context.pop(),
           ),
         ),
         body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text(
-              'This listing is not in the mock catalog.',
-              textAlign: TextAlign.center,
-              style: textTheme.bodyLarge?.copyWith(color: scheme.onSurfaceVariant),
-            ),
+          child: Text(
+            'Not found',
+            style: CollectibleTypography.figureMeta(textTheme, scheme),
           ),
         ),
       );
@@ -66,13 +65,11 @@ class MarketDetailScreen extends ConsumerWidget {
               onPressed: () => context.pop(),
             ),
             title: Text(
-              c.name,
+              c.series,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.12,
-              ),
+              style: CollectibleTypography.seriesHeroTitle(textTheme, scheme)
+                  .copyWith(fontSize: 18),
             ),
           ),
           SliverToBoxAdapter(
@@ -83,8 +80,8 @@ class MarketDetailScreen extends ConsumerWidget {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(22, 28, 22, 40),
-              child: _MarketDetailBody(listing: listing, accent: accent),
+              padding: const EdgeInsets.fromLTRB(22, 24, 22, 40),
+              child: _MarketDetailBody(listing: listing),
             ),
           ),
         ],
@@ -102,58 +99,52 @@ class _MarketDetailHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final brightness = Theme.of(context).brightness;
-    final outerRadius = BorderRadius.circular(26);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final c = listing.collectible;
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: outerRadius,
-        boxShadow: [
-          BoxShadow(
-            color: Color.lerp(scheme.shadow, accent, 0.1)!
-                .withValues(alpha: brightness == Brightness.dark ? 0.4 : 0.1),
-            blurRadius: 34,
-            offset: const Offset(0, 16),
-            spreadRadius: -7,
-          ),
-        ],
+        borderRadius: AppRadii.spotlightRadius,
+        boxShadow: CollectibleShelfShadow.productShell(context, accent: accent),
       ),
       child: Material(
         color: scheme.surfaceContainerLow,
         shape: RoundedRectangleBorder(
-          borderRadius: outerRadius,
+          borderRadius: AppRadii.spotlightRadius,
           side: BorderSide(
-            color: accent.withValues(alpha: brightness == Brightness.dark ? 0.2 : 0.34),
+            color: accent.withValues(alpha: isDark ? 0.2 : 0.32),
           ),
         ),
         clipBehavior: Clip.antiAlias,
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(12),
           child: DecoratedBox(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: AppRadii.matRadius,
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  accent.withValues(alpha: 0.38),
-                  scheme.surface.withValues(alpha: 0.1),
+                  accent.withValues(alpha: isDark ? 0.32 : 0.38),
+                  scheme.surface.withValues(alpha: 0.06),
                 ],
+              ),
+              border: Border.all(
+                color: accent.withValues(alpha: isDark ? 0.1 : 0.16),
               ),
             ),
             child: Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(10),
               child: AspectRatio(
-                aspectRatio: 0.92,
+                aspectRatio: 0.95,
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: AppRadii.insetRadius,
                   child: ColoredBox(
-                    color: scheme.surface.withValues(alpha: 0.72),
+                    color: scheme.surface.withValues(alpha: 0.5),
                     child: CollectibleNetworkImage(
                       collectible: c,
                       heroTag: listing.marketHeroTag,
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.zero,
                       fit: BoxFit.contain,
                     ),
                   ),
@@ -168,10 +159,9 @@ class _MarketDetailHero extends StatelessWidget {
 }
 
 class _MarketDetailBody extends StatelessWidget {
-  const _MarketDetailBody({required this.listing, required this.accent});
+  const _MarketDetailBody({required this.listing});
 
   final MarketListing listing;
-  final Color accent;
 
   @override
   Widget build(BuildContext context) {
@@ -189,158 +179,44 @@ class _MarketDetailBody extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: scheme.primaryContainer.withValues(alpha: 0.52),
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: scheme.primary.withValues(alpha: 0.16)),
-          ),
-          child: Text(
-            c.series,
-            style: textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.14,
-              height: 1.12,
-              color: scheme.onPrimaryContainer.withValues(alpha: 0.9),
-            ),
-          ),
-        ),
-        const SizedBox(height: 14),
         Text(
           c.name,
-          style: textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w600,
-            letterSpacing: -0.38,
-            height: 1.12,
-          ),
+          style: CollectibleTypography.figureCaption(textTheme, scheme),
         ),
-        const SizedBox(height: 18),
+        SeriesHeroMetaBlock(
+          brand: c.brand,
+          ipLine: c.ipLine ?? c.brand,
+          trailingMeta: '${listing.listingCount} listings · ${c.releaseDateLabel}',
+          density: SeriesHeroMetaDensity.compact,
+        ),
+        const SizedBox(height: 12),
         ListingMarketSignals(listing: listing, dense: true),
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
         Row(
           crossAxisAlignment: CrossAxisAlignment.baseline,
           textBaseline: TextBaseline.alphabetic,
           children: [
             Text(
               formatMarketUsd(listing.currentPriceUsd),
-              style: textTheme.headlineLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.55,
-                height: 1,
+              style: textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0,
+                height: 1.1,
               ),
             ),
-            const SizedBox(width: 14),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: deltaColor.withValues(alpha: up ? 0.14 : down ? 0.12 : 0.08),
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: Text(
+            if (up || down) ...[
+              const SizedBox(width: 10),
+              Text(
                 formatPriceChangePercent(listing.priceChangePercent),
-                style: textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: deltaColor.withValues(alpha: 0.92),
+                style: textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w500,
+                  color: deltaColor.withValues(alpha: 0.72),
                 ),
               ),
-            ),
+            ],
           ],
-        ),
-        const SizedBox(height: 22),
-        _SoftMarketTile(
-          icon: Icons.storefront_outlined,
-          label: 'Brand',
-          value: c.brand,
-          tint: accent.withValues(alpha: 0.2),
-        ),
-        if (listing.watchingCount > 0) ...[
-          const SizedBox(height: 12),
-          _SoftMarketTile(
-            icon: Icons.visibility_outlined,
-            label: 'Shelf interest',
-            value: '${listing.watchingCount} collectors watching (mock)',
-            tint: accent.withValues(alpha: 0.12),
-          ),
-        ],
-        const SizedBox(height: 12),
-        _SoftMarketTile(
-          icon: Icons.layers_outlined,
-          label: 'Active listings',
-          value: '${listing.listingCount} open offers (mock)',
-          tint: accent.withValues(alpha: 0.16),
-        ),
-        const SizedBox(height: 12),
-        _SoftMarketTile(
-          icon: Icons.calendar_today_outlined,
-          label: 'Release',
-          value: c.releaseDateLabel,
-          tint: accent.withValues(alpha: 0.14),
         ),
       ],
-    );
-  }
-}
-
-class _SoftMarketTile extends StatelessWidget {
-  const _SoftMarketTile({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.tint,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color tint;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Color.alphaBlend(
-          tint,
-          scheme.surfaceContainerHigh.withValues(alpha: 0.35),
-        ),
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, size: 22, color: scheme.onSurfaceVariant.withValues(alpha: 0.75)),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: textTheme.labelMedium?.copyWith(
-                      color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.15,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    value,
-                    style: textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w500,
-                      height: 1.28,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

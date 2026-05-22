@@ -30,6 +30,7 @@ void main() {
           "releaseDate": "2026-04-02",
           "isBlindBox": true,
           "imageKey": "s1",
+          "aliases": ["Series A Short"],
           "thumbnailAsset": "assets/catalog/series/legacy-can-be-ignored.png"
         }
       ]''';
@@ -37,6 +38,7 @@ void main() {
       expect(series.single.releaseDate, '2026-04-02');
       expect(series.single.isBlindBox, true);
       expect(series.single.imageKey, 's1');
+      expect(series.single.aliases, ['Series A Short']);
 
       const figuresJson = r'''[
         {

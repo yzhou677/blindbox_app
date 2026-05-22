@@ -13,29 +13,48 @@ Public **catalog** thumbnails only. User shelf photos (`localImageUri`, `customC
 
 ---
 
-## Object path convention (recommended)
+## Object path convention (required)
 
-Use stable keys aligned with `imageKey` — not shelf ids, not display names.
+Paths are **deterministic** — constructed at runtime from `imageKey` only.
 
-```
-catalog/figures/{imageKey}.webp
-catalog/series/{imageKey}.webp
-```
+**Series:** `catalog/series/<imageKey>.<ext>`  
+**Figures:** `catalog/figures/<imageKey>.<ext>`
+
+**Supported `<ext>` (probe in this order until one exists):** `.avif`, `.webp`, `.png`, `.jpg`, `.jpeg`
+
+Catalog art uses mixed formats in the bucket (mostly png / webp / jpg, some avif). Upload any supported extension; the app does not assume png-only.
+
+**Upload rule:** `imageKey` on the Firestore doc must equal the Storage filename stem (no path, no extension). Examples:
+
+- Series cover: `imageKey` `baby_molly_and_baby_tabby_series` → `catalog/series/baby_molly_and_baby_tabby_series.png`
+- Figure: `imageKey` `aespa_…_giselle_ver` → `catalog/figures/aespa_…_giselle_ver.png`
+
+The resolver does not rewrite keys (no `_series` suffix injection, no series+figure path concatenation).
 
 Examples:
 
 - `catalog/figures/the_monsters_exciting_macaron_labubu_soymilk.webp`
 - `catalog/series/the_monsters_exciting_macaron.webp`
 
-Prefer **`.webp`** (or **`.avif`**) for size; keep extension consistent per upload pipeline. The app resolver may probe multiple extensions when falling back to bundled assets.
+Upload binaries to these paths; set the same string as `imageKey` on the Firestore doc. Do **not** add `imagePath` or URL fields to catalog documents.
+
+Dart helper: `CatalogImageResolver.storageObjectPath(kind:, imageKey:, extension:)`.
 
 ---
 
-## Firestore ↔ Storage
+## Firestore ↔ Storage (separation of concerns)
 
-- Firestore documents store **`imageKey` only** — not Storage URLs, not download tokens.
-- At runtime, resolve `imageKey` → display URI in **`lib/features/catalog/`** (extend [`CatalogImageResolver`](../catalog_image_resolver.dart) or a sibling helper under `features/catalog/data/` or `firestore/`).
-- **Do not** write resolved URLs onto `ShelfFigure` / `ShelfSeries` in `CollectionSnapshot`; shelf keeps `imageUrl` as a resolved path/URL at add time or placeholder, per existing shelf media rules.
+- **Firestore** — canonical metadata only: ids, `displayName`, `imageKey`, taxonomy fields, dates
+- **Storage** — binary assets only, at the paths above
+- **App resolver** — `imageKey` + kind (series/figure) + extension → bundled asset or ephemeral download URL
+
+**Never:**
+
+- Store full Storage URLs in Firestore
+- Add `imagePath` (or similar) to catalog docs
+- Change the `imageKey` architecture
+
+Resolved download URLs may appear in widget/shelf `imageUrl` at add time for display; that is a **runtime cache**, not catalog source of truth.
 
 ---
 

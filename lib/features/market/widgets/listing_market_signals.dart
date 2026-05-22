@@ -8,8 +8,7 @@ class ListingMarketSignals extends StatelessWidget {
   final MarketListing listing;
   final bool dense;
 
-  static const int _maxChips = 3;
-  static const int _watchingThreshold = 80;
+  static const int _maxChips = 1;
 
   @override
   Widget build(BuildContext context) {
@@ -20,9 +19,9 @@ class ListingMarketSignals extends StatelessWidget {
     if (chips.isEmpty) return const SizedBox.shrink();
 
     return Padding(
-      padding: EdgeInsets.only(bottom: dense ? 6 : 8),
+      padding: EdgeInsets.only(top: dense ? 4 : 6, bottom: dense ? 2 : 6),
       child: Wrap(
-        spacing: 6,
+        spacing: 8,
         runSpacing: 6,
         children: [
           for (final c in chips)
@@ -49,9 +48,6 @@ class ListingMarketSignals extends StatelessWidget {
     }
     if (m.isTrending) {
       q.add((text: 'Trending', emphasis: _SignalEmphasis.soft));
-    }
-    if (m.watchingCount >= _watchingThreshold) {
-      q.add((text: '${m.watchingCount} watching', emphasis: _SignalEmphasis.neutral));
     }
 
     return q.length > _maxChips ? q.sublist(0, _maxChips) : q;
@@ -105,12 +101,12 @@ class _SignalPill extends StatelessWidget {
         border: Border.all(color: border),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         child: Text(
           text,
-          style: textTheme.labelMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.04,
+          style: textTheme.labelSmall?.copyWith(
+            fontWeight: FontWeight.w500,
+            letterSpacing: 0.06,
             height: 1.1,
             color: fg,
           ),

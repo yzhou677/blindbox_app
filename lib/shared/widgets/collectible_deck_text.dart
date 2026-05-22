@@ -11,11 +11,8 @@ class CollectibleDeckText extends StatelessWidget {
   });
 
   /// Smaller, quieter line (attribution, footnotes).
-  const CollectibleDeckText.meta(
-    this.text, {
-    super.key,
-    this.textAlign,
-  }) : meta = true;
+  const CollectibleDeckText.meta(this.text, {super.key, this.textAlign})
+    : meta = true;
 
   final String text;
   final TextAlign? textAlign;
@@ -26,7 +23,9 @@ class CollectibleDeckText extends StatelessWidget {
     final tokens = CollectibleTokens.of(context);
     final textTheme = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
-    final style = meta ? tokens.supportiveMeta(textTheme, scheme) : tokens.supportiveBody(textTheme, scheme);
+    final style = meta
+        ? tokens.supportiveMeta(textTheme, scheme)
+        : tokens.supportiveBody(textTheme, scheme);
     return Text(text, textAlign: textAlign, style: style);
   }
 }

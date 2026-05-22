@@ -1,9 +1,13 @@
+import 'package:blindbox_app/core/theme/app_radii.dart';
+import 'package:blindbox_app/core/theme/collectible_motion.dart';
+import 'package:blindbox_app/core/theme/collectible_typography.dart';
+import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
-import 'package:blindbox_app/features/collection/presentation/shelf_figure_media.dart';
-import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
+import 'package:blindbox_app/features/collection/presentation/figure_secret_rarity_style.dart';
+import 'package:blindbox_app/features/collection/widgets/shelf_figure_thumb.dart';
 import 'package:flutter/material.dart';
 
-/// Mini blind-box / shelf card — collected, wish list, and open-slot states.
+/// Mini blind-box / shelf card — collected, wishlist, and open-slot states.
 class FigureCapsuleCard extends StatefulWidget {
   const FigureCapsuleCard({
     super.key,
@@ -11,53 +15,35 @@ class FigureCapsuleCard extends StatefulWidget {
     required this.figure,
     required this.tracked,
     required this.onTap,
+    this.onBrowseFigure,
   });
 
   final ShelfSeries series;
   final ShelfFigure figure;
   final TrackedFigure tracked;
   final VoidCallback onTap;
+  final VoidCallback? onBrowseFigure;
 
   @override
   State<FigureCapsuleCard> createState() => _FigureCapsuleCardState();
 }
 
-class _FigureCapsuleCardState extends State<FigureCapsuleCard> with TickerProviderStateMixin {
+class _FigureCapsuleCardState extends State<FigureCapsuleCard>
+    with SingleTickerProviderStateMixin {
   late AnimationController _press;
-  AnimationController? _sheen;
 
   @override
   void initState() {
     super.initState();
-    _press = AnimationController(vsync: this, duration: const Duration(milliseconds: 220));
-    _initSheen();
-  }
-
-  void _initSheen() {
-    if (widget.figure.isSecret) {
-      _sheen ??= AnimationController(vsync: this, duration: const Duration(milliseconds: 4200))
-        ..repeat();
-    }
-  }
-
-  @override
-  void didUpdateWidget(FigureCapsuleCard oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.figure.isSecret != widget.figure.isSecret) {
-      if (widget.figure.isSecret) {
-        _sheen ??= AnimationController(vsync: this, duration: const Duration(milliseconds: 4200))
-          ..repeat();
-      } else {
-        _sheen?.dispose();
-        _sheen = null;
-      }
-    }
+    _press = AnimationController(
+      vsync: this,
+      duration: CollectibleMotion.press,
+    );
   }
 
   @override
   void dispose() {
     _press.dispose();
-    _sheen?.dispose();
     super.dispose();
   }
 
@@ -78,25 +64,29 @@ class _FigureCapsuleCardState extends State<FigureCapsuleCard> with TickerProvid
     final wish = widget.tracked.wishlist;
     final missing = !owned && !wish;
 
-    final Color matTint;
-    final Color borderColor;
-    final double borderWidth;
-    final List<BoxShadow> shadows;
-    final Gradient? cardFaceGradient;
+    Color matTint;
+    Color borderColor;
+    double borderWidth;
+    List<BoxShadow> shadows;
+    Gradient? cardFaceGradient;
 
     if (owned) {
       matTint = Color.lerp(
-            scheme.primaryContainer,
-            const Color(0xFFFFF6E5),
-            isDark ? 0.14 : 0.42,
-          )!
-          .withValues(alpha: isDark ? 0.42 : 0.58);
-      borderColor = Color.lerp(scheme.primary, const Color(0xFFC9A227), 0.28)!
-          .withValues(alpha: isDark ? 0.58 : 0.68);
+        scheme.primaryContainer,
+        const Color(0xFFFFF6E5),
+        isDark ? 0.14 : 0.42,
+      )!.withValues(alpha: isDark ? 0.42 : 0.58);
+      borderColor = Color.lerp(
+        scheme.primary,
+        const Color(0xFFC9A227),
+        0.28,
+      )!.withValues(alpha: isDark ? 0.58 : 0.68);
       borderWidth = 1.45;
       shadows = [
         BoxShadow(
-          color: const Color(0xFFE8C547).withValues(alpha: isDark ? 0.18 : 0.14),
+          color: const Color(
+            0xFFE8C547,
+          ).withValues(alpha: isDark ? 0.18 : 0.14),
           blurRadius: 18,
           spreadRadius: -4,
           offset: const Offset(0, 8),
@@ -119,12 +109,13 @@ class _FigureCapsuleCardState extends State<FigureCapsuleCard> with TickerProvid
       );
     } else if (wish) {
       matTint = Color.lerp(
-            scheme.primaryContainer,
-            const Color(0xFFFFF0F6),
-            isDark ? 0.22 : 0.58,
-          )!
-          .withValues(alpha: isDark ? 0.38 : 0.62);
-      borderColor = const Color(0xFFE879A6).withValues(alpha: isDark ? 0.58 : 0.78);
+        scheme.primaryContainer,
+        const Color(0xFFFFF0F6),
+        isDark ? 0.22 : 0.58,
+      )!.withValues(alpha: isDark ? 0.38 : 0.62);
+      borderColor = const Color(
+        0xFFE879A6,
+      ).withValues(alpha: isDark ? 0.58 : 0.78);
       borderWidth = 1.7;
       shadows = [
         BoxShadow(
@@ -150,8 +141,12 @@ class _FigureCapsuleCardState extends State<FigureCapsuleCard> with TickerProvid
         stops: const [0.0, 0.52, 1.0],
       );
     } else {
-      matTint = scheme.surfaceContainerHighest.withValues(alpha: isDark ? 0.4 : 0.5);
-      borderColor = scheme.outlineVariant.withValues(alpha: isDark ? 0.42 : 0.48);
+      matTint = scheme.surfaceContainerHighest.withValues(
+        alpha: isDark ? 0.4 : 0.5,
+      );
+      borderColor = scheme.outlineVariant.withValues(
+        alpha: isDark ? 0.42 : 0.48,
+      );
       borderWidth = 1.15;
       shadows = [
         BoxShadow(
@@ -163,6 +158,19 @@ class _FigureCapsuleCardState extends State<FigureCapsuleCard> with TickerProvid
       cardFaceGradient = null;
     }
 
+    final secretLook = FigureSecretRarityStyle.resolve(
+      isSecret: widget.figure.isSecret,
+      rarityLabel: widget.figure.effectiveRarityLabel ?? widget.figure.rarity,
+      isDark: isDark,
+    );
+    if (secretLook != null) {
+      matTint = secretLook.cardTint(matTint);
+      cardFaceGradient = secretLook.cardGradient(matTint);
+      borderColor = secretLook.subtleBorder();
+      borderWidth = 1.2;
+      shadows = [...secretLook.glowShadows(), ...shadows];
+    }
+
     final tilt = ((widget.figure.id.hashCode % 5) - 2) * 0.012;
 
     return Transform.rotate(
@@ -171,7 +179,7 @@ class _FigureCapsuleCardState extends State<FigureCapsuleCard> with TickerProvid
         color: Colors.transparent,
         child: InkWell(
           onTap: _handleTap,
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: AppRadii.cardRadius,
           splashColor: scheme.primary.withValues(alpha: 0.07),
           highlightColor: scheme.primary.withValues(alpha: 0.03),
           child: AnimatedBuilder(
@@ -189,7 +197,7 @@ class _FigureCapsuleCardState extends State<FigureCapsuleCard> with TickerProvid
               duration: const Duration(milliseconds: 280),
               curve: Curves.easeOutCubic,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(22),
+                borderRadius: AppRadii.cardRadius,
                 gradient: cardFaceGradient,
                 color: cardFaceGradient == null ? matTint : null,
                 border: Border.all(color: borderColor, width: borderWidth),
@@ -206,7 +214,12 @@ class _FigureCapsuleCardState extends State<FigureCapsuleCard> with TickerProvid
                       Stack(
                         clipBehavior: Clip.none,
                         children: [
-                          AspectRatio(
+                          GestureDetector(
+                            onTap: widget.onBrowseFigure,
+                            behavior: widget.onBrowseFigure != null
+                                ? HitTestBehavior.opaque
+                                : HitTestBehavior.deferToChild,
+                            child: AspectRatio(
                             aspectRatio: 1,
                             child: AnimatedSwitcher(
                               duration: const Duration(milliseconds: 260),
@@ -216,20 +229,26 @@ class _FigureCapsuleCardState extends State<FigureCapsuleCard> with TickerProvid
                                 return FadeTransition(
                                   opacity: anim,
                                   child: ScaleTransition(
-                                    scale: Tween(begin: 0.96, end: 1.0).animate(anim),
+                                    scale: Tween(
+                                      begin: 0.96,
+                                      end: 1.0,
+                                    ).animate(anim),
                                     child: child,
                                   ),
                                 );
                               },
                               child: _ArtWindow(
-                                key: ValueKey<String>('${widget.figure.id}-${owned}_${wish}_$missing'),
+                                key: ValueKey<String>(
+                                  '${widget.figure.id}-${owned}_${wish}_$missing',
+                                ),
                                 missing: missing,
                                 scheme: scheme,
                                 series: widget.series,
                                 figure: widget.figure,
-                                sheen: _sheen,
+                                secretLook: secretLook,
                               ),
                             ),
+                          ),
                           ),
                           if (wish && !owned)
                             Positioned(
@@ -253,44 +272,67 @@ class _FigureCapsuleCardState extends State<FigureCapsuleCard> with TickerProvid
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                                  child: Text(
-                                    'empty slot',
-                                    style: textTheme.labelSmall?.copyWith(
-                                      color: scheme.onSurfaceVariant.withValues(alpha: 0.48),
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 0.2,
-                                      height: 1,
-                                    ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 5,
+                                    vertical: 3,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.favorite_border_rounded,
+                                        size: 11,
+                                        color: scheme.onSurfaceVariant.withValues(
+                                          alpha: 0.48,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 3),
+                                      Text(
+                                        'tap',
+                                        style: textTheme.labelSmall?.copyWith(
+                                          color: scheme.onSurfaceVariant.withValues(
+                                            alpha: 0.48,
+                                          ),
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: 0.2,
+                                          height: 1,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
                             ),
                         ],
                       ),
-                      const SizedBox(height: 11),
+                      const SizedBox(height: 12),
                       Text(
                         widget.figure.name,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
-                        style: textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.1,
-                          height: 1.15,
+                        style: CollectibleTypography.figureCaption(
+                          textTheme,
+                          scheme,
+                        ).copyWith(
                           color: missing
-                              ? scheme.onSurface.withValues(alpha: 0.68)
-                              : null,
+                              ? scheme.onSurface.withValues(alpha: 0.55)
+                              : scheme.onSurface.withValues(alpha: 0.88),
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 5),
                       Text(
-                        widget.figure.isSecret ? '${widget.figure.rarity} · chase' : widget.figure.rarity,
+                        widget.figure.isSecret
+                            ? '${widget.figure.displayRarity} · chase'
+                            : widget.figure.displayRarity,
                         textAlign: TextAlign.center,
-                        style: textTheme.labelSmall?.copyWith(
-                          color: scheme.onSurfaceVariant.withValues(alpha: missing ? 0.52 : 0.78),
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.12,
+                        style: CollectibleTypography.figureMeta(
+                          textTheme,
+                          scheme,
+                        ).copyWith(
+                          color: scheme.onSurfaceVariant.withValues(
+                            alpha: missing ? 0.42 : 0.52,
+                          ),
                         ),
                       ),
                     ],
@@ -312,18 +354,20 @@ class _ArtWindow extends StatelessWidget {
     required this.scheme,
     required this.series,
     required this.figure,
-    required this.sheen,
+    required this.secretLook,
   });
 
   final bool missing;
   final ColorScheme scheme;
   final ShelfSeries series;
   final ShelfFigure figure;
-  final AnimationController? sheen;
+  final FigureSecretRarityLook? secretLook;
 
   @override
   Widget build(BuildContext context) {
-    final sheenCtrl = sheen;
+    final artTint = secretLook?.cardTint(
+      Color.lerp(scheme.surfaceContainerLow, scheme.surface, 0.5)!,
+    );
     final inner = ClipRRect(
       borderRadius: BorderRadius.circular(15),
       child: Stack(
@@ -331,15 +375,27 @@ class _ArtWindow extends StatelessWidget {
         children: [
           DecoratedBox(
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  scheme.surface.withValues(alpha: missing ? 0.5 : 0.72),
-                  Color.lerp(scheme.surfaceContainerLow, scheme.surface, 0.5)!
-                      .withValues(alpha: missing ? 0.55 : 0.85),
-                ],
-              ),
+              gradient: secretLook != null && artTint != null
+                  ? LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        artTint.withValues(alpha: missing ? 0.45 : 0.62),
+                        artTint.withValues(alpha: missing ? 0.5 : 0.78),
+                      ],
+                    )
+                  : LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        scheme.surface.withValues(alpha: missing ? 0.5 : 0.72),
+                        Color.lerp(
+                          scheme.surfaceContainerLow,
+                          scheme.surface,
+                          0.5,
+                        )!.withValues(alpha: missing ? 0.55 : 0.85),
+                      ],
+                    ),
             ),
           ),
           Padding(
@@ -347,10 +403,18 @@ class _ArtWindow extends StatelessWidget {
             child: missing
                 ? ColorFiltered(
                     colorFilter: ColorFilter.mode(
-                      scheme.onSurface.withValues(alpha: Theme.of(context).brightness == Brightness.dark ? 0.14 : 0.07),
+                      scheme.onSurface.withValues(
+                        alpha: Theme.of(context).brightness == Brightness.dark
+                            ? 0.14
+                            : 0.07,
+                      ),
                       BlendMode.srcATop,
                     ),
-                    child: _FigureThumb(figure: figure, series: series, scheme: scheme),
+                    child: _FigureThumb(
+                      figure: figure,
+                      series: series,
+                      scheme: scheme,
+                    ),
                   )
                 : _FigureThumb(figure: figure, series: series, scheme: scheme),
           ),
@@ -359,32 +423,6 @@ class _ArtWindow extends StatelessWidget {
               painter: _DashedSlotBorderPainter(
                 color: scheme.outlineVariant.withValues(alpha: 0.45),
                 radius: 15,
-              ),
-            ),
-          if (figure.isSecret && sheenCtrl != null)
-            Positioned.fill(
-              child: RepaintBoundary(
-                child: AnimatedBuilder(
-                  animation: sheenCtrl,
-                  builder: (context, _) {
-                    return CustomPaint(
-                      painter: _SecretSheenPainter(progress: sheenCtrl.value),
-                    );
-                  },
-                ),
-              ),
-            ),
-          if (figure.isSecret)
-            IgnorePointer(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(15),
-                  border: Border.all(
-                    width: 1.25,
-                    color: Color.lerp(const Color(0xFFE8C547), scheme.primary, 0.45)!
-                        .withValues(alpha: 0.55),
-                  ),
-                ),
               ),
             ),
         ],
@@ -401,10 +439,14 @@ class _ArtWindow extends StatelessWidget {
             offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(
-          color: scheme.outlineVariant.withValues(alpha: missing ? 0.35 : 0.22),
-          width: 1,
-        ),
+        border: secretLook != null
+            ? Border.all(color: secretLook!.subtleBorder(), width: 1.1)
+            : Border.all(
+                color: scheme.outlineVariant.withValues(
+                  alpha: missing ? 0.35 : 0.22,
+                ),
+                width: 1,
+              ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(2),
@@ -423,35 +465,6 @@ class _ArtWindow extends StatelessWidget {
   }
 }
 
-class _SecretSheenPainter extends CustomPainter {
-  _SecretSheenPainter({required this.progress});
-
-  final double progress;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final shift = progress * 2.4 - 0.4;
-    final paint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment(-1.1 + shift, -0.6),
-        end: Alignment(0.2 + shift, 1.1),
-        colors: [
-          Colors.transparent,
-          Colors.white.withValues(alpha: 0.09),
-          const Color(0xFFE8D5FF).withValues(alpha: 0.15),
-          Colors.white.withValues(alpha: 0.075),
-          Colors.transparent,
-        ],
-        stops: const [0.0, 0.38, 0.5, 0.62, 1.0],
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
-      ..blendMode = BlendMode.softLight;
-    canvas.drawRect(Offset.zero & size, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _SecretSheenPainter oldDelegate) => oldDelegate.progress != progress;
-}
-
 class _DashedSlotBorderPainter extends CustomPainter {
   _DashedSlotBorderPainter({required this.color, required this.radius});
 
@@ -460,7 +473,10 @@ class _DashedSlotBorderPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final r = RRect.fromRectAndRadius(Offset.zero & size, Radius.circular(radius));
+    final r = RRect.fromRectAndRadius(
+      Offset.zero & size,
+      Radius.circular(radius),
+    );
     final path = Path()..addRRect(r);
     final paint = Paint()
       ..color = color
@@ -469,7 +485,13 @@ class _DashedSlotBorderPainter extends CustomPainter {
     _drawDashedPath(canvas, path, paint, dash: 5, gap: 4);
   }
 
-  void _drawDashedPath(Canvas canvas, Path path, Paint paint, {required double dash, required double gap}) {
+  void _drawDashedPath(
+    Canvas canvas,
+    Path path,
+    Paint paint, {
+    required double dash,
+    required double gap,
+  }) {
     for (final metric in path.computeMetrics()) {
       var d = 0.0;
       while (d < metric.length) {
@@ -487,7 +509,11 @@ class _DashedSlotBorderPainter extends CustomPainter {
 }
 
 class _FigureThumb extends StatelessWidget {
-  const _FigureThumb({required this.figure, required this.series, required this.scheme});
+  const _FigureThumb({
+    required this.figure,
+    required this.series,
+    required this.scheme,
+  });
 
   final ShelfFigure figure;
   final ShelfSeries series;
@@ -495,12 +521,13 @@ class _FigureThumb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CollectibleThumbImage(
-      imageRef: ShelfFigureMedia.figureDisplayRef(figure, series),
+    return ShelfFigureThumb(
+      figure: figure,
+      series: series,
       name: figure.name,
       seedKey: figure.id,
       isSecret: figure.isSecret,
-      fit: BoxFit.contain,
+      displayMode: CatalogImageDisplayMode.figureCapsule,
       borderRadius: BorderRadius.circular(11),
     );
   }
@@ -535,10 +562,14 @@ class _WishRibbon extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.auto_fix_high_rounded, size: 13, color: Colors.white),
+            const Icon(
+              Icons.favorite_rounded,
+              size: 13,
+              color: Colors.white,
+            ),
             const SizedBox(width: 4),
             Text(
-              'Wish list',
+              'Wishlist',
               style: textTheme.labelSmall?.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.w800,
@@ -580,7 +611,11 @@ class _OwnedSeal extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.all(4),
-        child: Icon(Icons.workspace_premium_rounded, size: 17, color: scheme.onTertiaryContainer),
+        child: Icon(
+          Icons.workspace_premium_rounded,
+          size: 17,
+          color: scheme.onTertiaryContainer,
+        ),
       ),
     );
   }

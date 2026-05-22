@@ -15,6 +15,7 @@ final List<SeriesRelease> mockSeriesReleases = [
     brand: 'Bubble Workshop',
     ipLine: 'In-house IP',
     releaseDate: DateTime(2026, 4, 18),
+    seriesImageKey: 'drop-luna',
     heroCollectible: Collectible(
       id: 'drop-luna',
       name: 'Luna Astronaut',
@@ -28,36 +29,42 @@ final List<SeriesRelease> mockSeriesReleases = [
     lineup: [
       ReleaseLineupSlot(
         slotId: 'orbit-bunny',
+        imageKey: 'orbit-bunny',
         name: 'Orbit Bunny',
         imageUrl: mockCollectibleArtUrl('moon-orbit-bunny', 'f3e5f5'),
         isSecret: false,
       ),
       ReleaseLineupSlot(
         slotId: 'star-cat',
+        imageKey: 'star-cat',
         name: 'Star Cat',
         imageUrl: mockCollectibleArtUrl('moon-star-cat', 'ede7f6'),
         isSecret: false,
       ),
       ReleaseLineupSlot(
         slotId: 'luna',
+        imageKey: 'luna',
         name: 'Luna Astronaut',
         imageUrl: mockCollectibleArtUrl('luna-astro-moon', 'fce4ec'),
         isSecret: false,
       ),
       ReleaseLineupSlot(
         slotId: 'comet-pup',
+        imageKey: 'comet-pup',
         name: 'Comet Pup',
         imageUrl: mockCollectibleArtUrl('moon-comet-pup', 'e8eaf6'),
         isSecret: false,
       ),
       ReleaseLineupSlot(
         slotId: 'meteor-mouse',
+        imageKey: 'meteor-mouse',
         name: 'Meteor Mouse',
         imageUrl: mockCollectibleArtUrl('moon-meteor-mouse', 'e1bee7'),
         isSecret: false,
       ),
       ReleaseLineupSlot(
         slotId: 'eclipse',
+        imageKey: 'eclipse',
         name: 'Eclipse Visitor',
         imageUrl: null,
         isSecret: true,
@@ -72,6 +79,7 @@ final List<SeriesRelease> mockSeriesReleases = [
     brand: 'Soft Clay Co.',
     ipLine: 'Foodie universe',
     releaseDate: DateTime(2026, 4, 12),
+    seriesImageKey: 'drop-miso',
     heroCollectible: Collectible(
       id: 'drop-miso',
       name: 'Miso Baker',
@@ -85,30 +93,35 @@ final List<SeriesRelease> mockSeriesReleases = [
     lineup: [
       ReleaseLineupSlot(
         slotId: 'miso',
+        imageKey: 'miso',
         name: 'Miso Baker',
         imageUrl: mockCollectibleArtUrl('miso-baker-chef', 'ffe8dc'),
         isSecret: false,
       ),
       ReleaseLineupSlot(
         slotId: 'knead-bear',
+        imageKey: 'knead-bear',
         name: 'Knead Bear',
         imageUrl: mockCollectibleArtUrl('chef-knead-bear', 'fff3e0'),
         isSecret: false,
       ),
       ReleaseLineupSlot(
         slotId: 'spice-fox',
+        imageKey: 'spice-fox',
         name: 'Spice Fox',
         imageUrl: mockCollectibleArtUrl('chef-spice-fox', 'ffe0b2'),
         isSecret: false,
       ),
       ReleaseLineupSlot(
         slotId: 'oven-owl',
+        imageKey: 'oven-owl',
         name: 'Oven Owl',
         imageUrl: mockCollectibleArtUrl('chef-oven-owl', 'ffecb3'),
         isSecret: false,
       ),
       ReleaseLineupSlot(
         slotId: 'midnight-snack',
+        imageKey: 'midnight-snack',
         name: 'Midnight Snack',
         imageUrl: null,
         isSecret: true,
@@ -123,6 +136,7 @@ final List<SeriesRelease> mockSeriesReleases = [
     brand: 'Northline Toys',
     ipLine: 'Street crew IP',
     releaseDate: DateTime(2026, 3, 28),
+    seriesImageKey: 'drop-rio',
     heroCollectible: Collectible(
       id: 'drop-rio',
       name: 'Rio Skater',
@@ -136,30 +150,35 @@ final List<SeriesRelease> mockSeriesReleases = [
     lineup: [
       ReleaseLineupSlot(
         slotId: 'rio',
+        imageKey: 'rio',
         name: 'Rio Skater',
         imageUrl: mockCollectibleArtUrl('rio-skater-city', 'd9eef9'),
         isSecret: false,
       ),
       ReleaseLineupSlot(
         slotId: 'bench-pigeon',
+        imageKey: 'bench-pigeon',
         name: 'Bench Pigeon',
         imageUrl: mockCollectibleArtUrl('city-bench-pigeon', 'e3f2fd'),
         isSecret: false,
       ),
       ReleaseLineupSlot(
         slotId: 'metro-raccoon',
+        imageKey: 'metro-raccoon',
         name: 'Metro Raccoon',
         imageUrl: mockCollectibleArtUrl('city-metro-raccoon', 'e1f5fe'),
         isSecret: false,
       ),
       ReleaseLineupSlot(
         slotId: 'tagger-fox',
+        imageKey: 'tagger-fox',
         name: 'Tagger Fox',
         imageUrl: mockCollectibleArtUrl('city-tagger-fox', 'dcedc8'),
         isSecret: false,
       ),
       ReleaseLineupSlot(
         slotId: 'night-bus-cat',
+        imageKey: 'night-bus-cat',
         name: 'Night Bus Cat',
         imageUrl: mockCollectibleArtUrl('city-night-bus-cat', 'c5cae9'),
         isSecret: false,
@@ -174,6 +193,7 @@ final List<SeriesRelease> mockSeriesReleases = [
     brand: 'Bubble Workshop',
     ipLine: 'In-house IP',
     releaseDate: DateTime(2026, 3, 5),
+    seriesImageKey: 'drop-nori',
     heroCollectible: Collectible(
       id: 'drop-nori',
       name: 'Nori Gardener',
@@ -187,36 +207,42 @@ final List<SeriesRelease> mockSeriesReleases = [
     lineup: [
       ReleaseLineupSlot(
         slotId: 'nori',
+        imageKey: 'nori',
         name: 'Nori Gardener',
         imageUrl: mockCollectibleArtUrl('nori-garden-soft', 'dff5ea'),
         isSecret: false,
       ),
       ReleaseLineupSlot(
         slotId: 'fern-mouse',
+        imageKey: 'fern-mouse',
         name: 'Fern Mouse',
         imageUrl: mockCollectibleArtUrl('green-fern-mouse', 'c8e6c9'),
         isSecret: false,
       ),
       ReleaseLineupSlot(
         slotId: 'moss-toad',
+        imageKey: 'moss-toad',
         name: 'Moss Toad',
         imageUrl: mockCollectibleArtUrl('green-moss-toad', 'a5d6a7'),
         isSecret: false,
       ),
       ReleaseLineupSlot(
         slotId: 'vine-snail',
+        imageKey: 'vine-snail',
         name: 'Vine Snail',
         imageUrl: mockCollectibleArtUrl('green-vine-snail', 'dcedc8'),
         isSecret: false,
       ),
       ReleaseLineupSlot(
         slotId: 'root-gnome',
+        imageKey: 'root-gnome',
         name: 'Root Gnome',
         imageUrl: mockCollectibleArtUrl('green-root-gnome', 'b2dfdb'),
         isSecret: false,
       ),
       ReleaseLineupSlot(
         slotId: 'after-rain',
+        imageKey: 'after-rain',
         name: 'After the Rain',
         imageUrl: null,
         isSecret: true,
@@ -231,6 +257,7 @@ final List<SeriesRelease> mockSeriesReleases = [
     brand: 'Dreamforge',
     ipLine: 'Cloud critters',
     releaseDate: DateTime(2026, 2, 20),
+    seriesImageKey: 'drop-puff',
     heroCollectible: Collectible(
       id: 'drop-puff',
       name: 'Puff Cloud',
@@ -244,30 +271,35 @@ final List<SeriesRelease> mockSeriesReleases = [
     lineup: [
       ReleaseLineupSlot(
         slotId: 'puff',
+        imageKey: 'puff',
         name: 'Puff Cloud',
         imageUrl: mockCollectibleArtUrl('puff-cloud-sky', 'ebe9ff'),
         isSecret: false,
       ),
       ReleaseLineupSlot(
         slotId: 'bolt-kitten',
+        imageKey: 'bolt-kitten',
         name: 'Bolt Kitten',
         imageUrl: mockCollectibleArtUrl('sky-bolt-kitten', 'e8eaf6'),
         isSecret: false,
       ),
       ReleaseLineupSlot(
         slotId: 'drift-bunny',
+        imageKey: 'drift-bunny',
         name: 'Drift Bunny',
         imageUrl: mockCollectibleArtUrl('sky-drift-bunny', 'f3e5f5'),
         isSecret: false,
       ),
       ReleaseLineupSlot(
         slotId: 'nimbus-pup',
+        imageKey: 'nimbus-pup',
         name: 'Nimbus Pup',
         imageUrl: mockCollectibleArtUrl('sky-nimbus-pup', 'e1bee7'),
         isSecret: false,
       ),
       ReleaseLineupSlot(
         slotId: 'storm-chaser',
+        imageKey: 'storm-chaser',
         name: 'Storm Chaser',
         imageUrl: null,
         isSecret: true,

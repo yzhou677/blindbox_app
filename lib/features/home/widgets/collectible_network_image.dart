@@ -1,5 +1,6 @@
+import 'package:blindbox_app/features/catalog/presentation/catalog_aspect_image.dart';
+import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/models/collectible.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 /// Network image with soft pastel loading / error states; optional [heroTag] for transitions.
@@ -32,46 +33,48 @@ class CollectibleNetworkImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    CatalogAspectImage.assertAspectPreservingFit(fit);
     final image = ClipRRect(
       borderRadius: borderRadius,
-      child: CachedNetworkImage(
-        imageUrl: collectible.imageUrl,
-        fit: fit,
-        filterQuality: FilterQuality.medium,
-        fadeInDuration: const Duration(milliseconds: 340),
-        fadeOutDuration: const Duration(milliseconds: 140),
-        progressIndicatorBuilder: (context, url, progress) {
-          final total = progress.progress;
-          return DecoratedBox(
-            decoration: BoxDecoration(gradient: _matGradient(scheme)),
-            child: Center(
-              child: SizedBox(
-                width: 32,
-                height: 32,
-                child: total == null
-                    ? CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        color: scheme.primary.withValues(alpha: 0.35),
-                      )
-                    : CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        value: total,
-                        color: scheme.primary.withValues(alpha: 0.45),
-                      ),
-              ),
-            ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final dpr = MediaQuery.devicePixelRatioOf(context);
+          final spec = CatalogImageDisplaySpec.forMode(
+            CatalogImageDisplayMode.seriesCoverHero,
           );
-        },
-        errorWidget: (context, url, error) {
-          return DecoratedBox(
-            decoration: BoxDecoration(gradient: _matGradient(scheme)),
-            child: Center(
-              child: Icon(
-                Icons.toys_rounded,
-                size: 44,
-                color: scheme.onSurfaceVariant.withValues(alpha: 0.42),
-              ),
-            ),
+          final decodeExtent = spec.memCacheDecodeExtent(constraints, dpr);
+          return CatalogAspectImage.presentNetwork(
+            imageUrl: collectible.imageUrl,
+            fit: fit,
+            fillBounds: spec.fillsFrame,
+            filterQuality: FilterQuality.medium,
+            decodeExtent: decodeExtent,
+            fadeInDuration: const Duration(milliseconds: 340),
+            fadeOutDuration: const Duration(milliseconds: 140),
+            placeholder: (context, url) {
+              return DecoratedBox(
+                decoration: BoxDecoration(gradient: _matGradient(scheme)),
+                child: const Center(
+                  child: SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: CircularProgressIndicator(strokeWidth: 2.5),
+                  ),
+                ),
+              );
+            },
+            errorWidget: (context, url, error) {
+              return DecoratedBox(
+                decoration: BoxDecoration(gradient: _matGradient(scheme)),
+                child: Center(
+                  child: Icon(
+                    Icons.toys_rounded,
+                    size: 44,
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.42),
+                  ),
+                ),
+              );
+            },
           );
         },
       ),

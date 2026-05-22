@@ -14,9 +14,9 @@ class CollectionBrandFilterRow extends StatelessWidget {
   final ValueChanged<String> onBrandSelected;
 
   static List<({String id, String label})> chipOptions() => [
-        (id: MarketTaxonomyIds.anyBrand, label: 'All'),
-        for (final b in MarketTaxonomy.brands) (id: b.id, label: b.displayLabel),
-      ];
+    (id: MarketTaxonomyIds.anyBrand, label: 'All'),
+    for (final b in MarketTaxonomy.brands) (id: b.id, label: b.displayLabel),
+  ];
 
   @override
   Widget build(BuildContext context) {

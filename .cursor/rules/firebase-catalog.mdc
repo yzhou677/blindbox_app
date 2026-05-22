@@ -11,18 +11,20 @@ Read [`.cursor/ARCHITECTURE.md`](../ARCHITECTURE.md) → **Firebase (Firestore +
 - [`FIRESTORE_CATALOG_SCHEMA.md`](../../lib/features/catalog/firestore/FIRESTORE_CATALOG_SCHEMA.md)
 - [`FIREBASE_STORAGE_CATALOG.md`](../../lib/features/catalog/firestore/FIREBASE_STORAGE_CATALOG.md)
 
-## Firestore
+## Firestore (canonical schema — do not extend)
 
-- Catalog reference only: `brands`, `ips`, `series`, `figures` → `CatalogSeedBundle`
-- Call `ensureFirebaseInitialized()` before reads
-- Prefer one-shot `.get()` via `loadFirestoreCatalogBundle()` — no catalog listeners unless explicitly tasked
-- Do **not** default the UI to Firestore unless the task says to switch off seed JSON
-- Keep `tools/seed/` valid for offline tests and dev
+- Use **only** existing top-level collections: `brands`, `ips`, `series`, `figures`
+- Do **not** add nested hierarchies, duplicate catalog collections, or image-metadata collections
+- Metadata only on docs (`imageKey`, ids, `displayName`, …) — **no** Storage URLs, **no** `imagePath`
+- `loadFirestoreCatalogBundle()` / `loadCatalogBundle()` — one-shot reads, no listeners unless tasked
+- Canonical ids must match filters, Storage filenames, and `imageKey` resolution (e.g. `the_monsters`, not display labels)
 
-## Storage
+## Storage (canonical paths — deterministic)
 
-- Public catalog art under `catalog/figures/` and `catalog/series/` keyed by `imageKey`
-- Resolver order: bundled asset → Storage URL → placeholder
+- `catalog/series/<imageKey>.<ext>` and `catalog/figures/<imageKey>.<ext>`
+- Build paths in `CatalogImageResolver` from `imageKey` + `CatalogImageKind` + extensions (`.avif`, `.webp`, `.png`, `.jpg`, `.jpeg`) — probe all until Storage returns an object
+- Do **not** store URLs in Firestore or invent dynamic folder layouts
+- Resolver order: bundled asset → Storage download URL (runtime only) → placeholder
 - **Never** upload or sync `localImageUri` / `customCoverImageUri` from `features/collection/` in MVP tasks
 
 ## Boundaries
@@ -31,3 +33,4 @@ Read [`.cursor/ARCHITECTURE.md`](../ARCHITECTURE.md) → **Firebase (Firestore +
 - No `imageKey` on `ShelfFigure` / `ShelfSeries`; no Storage URLs in `CollectionSnapshotCodec`
 - No `lib/services/` — code stays in `features/catalog/` + `core/firebase/`
 - Canonical IP ids (e.g. `the_monsters`, not `labubu`)
+- **Market / eBay:** do not load catalog bundle or `imageKey` for listing rows or card images; `MarketTaxonomy.applyCatalogBundle` is filter ids/labels only

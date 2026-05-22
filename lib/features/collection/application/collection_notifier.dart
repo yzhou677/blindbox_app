@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:blindbox_app/features/catalog/catalog_image_resolver.dart';
 import 'package:blindbox_app/features/collection/bootstrap/collection_app_bootstrap.dart';
+import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
 import 'package:blindbox_app/features/collection/data/series_release_lookup.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/persistence/collection_snapshot_storage.dart';
@@ -11,7 +13,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// In-memory collection workflows with durable local persistence.
 final collectionNotifierProvider =
-    NotifierProvider<CollectionNotifier, CollectionSnapshot>(CollectionNotifier.new);
+    NotifierProvider<CollectionNotifier, CollectionSnapshot>(
+      CollectionNotifier.new,
+    );
 
 class CollectionNotifier extends Notifier<CollectionSnapshot> {
   @override
@@ -41,10 +45,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       m[figureId] = TrackedFigure(figureId: figureId, state: nextState);
     }
     _commit(
-      CollectionSnapshot(
-        shelfSeries: state.shelfSeries,
-        figureStates: m,
-      ),
+      CollectionSnapshot(shelfSeries: state.shelfSeries, figureStates: m),
     );
   }
 
@@ -70,12 +71,13 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
   void addSeriesFromDrop(Collectible c) {
     final fromRelease = ref.read(seriesReleaseLookupProvider)(c.id);
     if (fromRelease != null) {
-      addSeriesFromRelease(fromRelease);
+      unawaited(addSeriesFromRelease(fromRelease));
       return;
     }
     final catalogKey = 'drop-${c.id}';
     if (state.hasTemplateOnShelf(catalogKey)) return;
-    final seriesId = 'shelf-$catalogKey-${DateTime.now().microsecondsSinceEpoch}';
+    final seriesId =
+        'shelf-$catalogKey-${DateTime.now().microsecondsSinceEpoch}';
     final fid = '$seriesId-fig-0';
     final figure = ShelfFigure(
       id: fid,
@@ -90,11 +92,15 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       id: seriesId,
       name: c.series,
       brand: c.brand,
-      ipName: (c.ipLine?.trim().isNotEmpty ?? false) ? c.ipLine!.trim() : c.series,
+      ipName: shelfIpLabelFromBrandLine(
+        brand: c.brand,
+        line: (c.ipLine?.trim().isNotEmpty ?? false) ? c.ipLine!.trim() : c.series,
+      ),
       figures: [figure],
       shelfAccent: c.shelfAccent ?? const Color(0xFFE8DEF5),
       notes: null,
       catalogTemplateId: catalogKey,
+      imageKey: catalogKey,
     );
     _commit(
       CollectionSnapshot(
@@ -105,24 +111,31 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
   }
 
   /// Adds a Home **series release** (full lineup) to the shelf under `drop-{dropId}`.
-  void addSeriesFromRelease(SeriesRelease release) {
+  Future<void> addSeriesFromRelease(SeriesRelease release) async {
     final catalogKey = 'drop-${release.dropId}';
     if (state.hasTemplateOnShelf(catalogKey)) return;
-    final seriesId = 'shelf-$catalogKey-${DateTime.now().microsecondsSinceEpoch}';
+    final seriesId =
+        'shelf-$catalogKey-${DateTime.now().microsecondsSinceEpoch}';
     final hero = release.heroCollectible;
     final figures = <ShelfFigure>[];
     for (final slot in release.lineup) {
+      final figureKey = slot.imageKey.trim();
+      final imageUrl = figureKey.isNotEmpty
+          ? await CatalogImageResolver.resolveFigureDisplayRef(figureKey)
+          : slot.imageUrl?.trim();
       figures.add(
         ShelfFigure(
           id: '$seriesId-slot-${slot.slotId}',
           seriesId: seriesId,
           name: slot.name,
-          imageUrl: slot.imageUrl,
+          imageUrl: imageUrl != null && imageUrl.isNotEmpty ? imageUrl : null,
           localImageUri: null,
           rarity: slot.isSecret ? 'Secret' : 'Regular',
           isSecret: slot.isSecret,
+          imageKey: figureKey.isNotEmpty ? figureKey : null,
           taxonomyBrandId: release.taxonomyBrandId,
           taxonomyIpId: release.taxonomyIpId,
+          catalogFigureTemplateId: slot.slotId,
         ),
       );
     }
@@ -130,11 +143,17 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       id: seriesId,
       name: release.seriesName,
       brand: release.brand,
-      ipName: (release.ipLine?.trim().isNotEmpty ?? false) ? release.ipLine!.trim() : release.seriesName,
+      ipName: shelfIpLabelFromBrandLine(
+        brand: release.brand,
+        line: (release.ipLine?.trim().isNotEmpty ?? false)
+            ? release.ipLine!.trim()
+            : release.seriesName,
+      ),
       figures: figures,
       shelfAccent: hero.shelfAccent ?? const Color(0xFFE8DEF5),
       notes: null,
       catalogTemplateId: catalogKey,
+      imageKey: release.seriesImageKey,
       taxonomyBrandId: release.taxonomyBrandId,
       taxonomyIpId: release.taxonomyIpId,
     );
@@ -149,7 +168,8 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
   void addSeriesFromTemplate(CatalogSeries template) {
     final catalogKey = template.templateId;
     if (state.hasTemplateOnShelf(catalogKey)) return;
-    final newSeriesId = 'shelf-$catalogKey-${DateTime.now().microsecondsSinceEpoch}';
+    final newSeriesId =
+        'shelf-$catalogKey-${DateTime.now().microsecondsSinceEpoch}';
     final cloned = cloneCatalogSeriesOntoShelf(
       template,
       newSeriesId,
@@ -167,8 +187,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
     required String seriesName,
     String? brand,
     String? ipDisplayName,
-    required List<String> figureNames,
-    List<String?>? figureLocalImageUris,
+    required List<CustomFigureDraft> figures,
     String? customCoverImageUri,
     String? notes,
   }) {
@@ -182,46 +201,70 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       Color(0xFFEAF6FB),
     ];
     final accent = accents[seriesId.hashCode.abs() % accents.length];
+    final displayName = seriesName.trim();
     final trimmedBrand = brand?.trim();
-    final brandLine = (trimmedBrand == null || trimmedBrand.isEmpty) ? 'Independent' : trimmedBrand;
+    final brandLine = (trimmedBrand == null || trimmedBrand.isEmpty)
+        ? 'Independent'
+        : trimmedBrand;
     final ipLine = (ipDisplayName?.trim().isEmpty ?? true)
-        ? seriesName.trim()
+        ? displayName
         : ipDisplayName!.trim();
-    final figures = <ShelfFigure>[];
-    final perFigUris = figureLocalImageUris ?? const <String?>[];
+    final brandId = CustomSeriesConventions.brandIdFromDisplay(trimmedBrand);
+    final ipId = CustomSeriesConventions.ipIdFromDisplay(
+      seriesDisplayName: displayName,
+      ipDisplayName: ipDisplayName,
+    );
+    final shelfFigures = <ShelfFigure>[];
     var i = 0;
-    for (final raw in figureNames) {
-      final name = raw.trim();
-      if (name.isEmpty) continue;
-      final fid = '$seriesId-f-$i';
-      final rawUri = i < perFigUris.length ? perFigUris[i] : null;
-      final local = rawUri?.trim();
-      figures.add(
+    for (final draft in figures) {
+      final figName = draft.displayName.trim();
+      if (figName.isEmpty) continue;
+      final figId = CustomSeriesConventions.figureImageKey(seriesId, i);
+      final imageKey = CustomSeriesConventions.figureImageKey(seriesId, i);
+      final local = draft.localImageUri?.trim();
+      final rarityLabel = draft.isSecret ? draft.rarityLabel?.trim() : null;
+      shelfFigures.add(
         ShelfFigure(
-          id: fid,
+          id: figId,
           seriesId: seriesId,
-          name: name,
+          name: figName,
           imageUrl: null,
           localImageUri: (local != null && local.isNotEmpty) ? local : null,
-          rarity: 'Custom',
-          isSecret: false,
+          imageKey: imageKey,
+          rarity: CustomSeriesConventions.rarityLine(
+            isSecret: draft.isSecret,
+            rarityLabel: rarityLabel,
+          ),
+          isSecret: draft.isSecret,
+          rarityLabel: (rarityLabel != null && rarityLabel.isNotEmpty)
+              ? rarityLabel
+              : null,
+          taxonomyBrandId: brandId,
+          taxonomyIpId: ipId,
         ),
       );
       i++;
     }
-    if (figures.isEmpty) return;
+    if (shelfFigures.isEmpty) return;
     final trimmedNotes = notes?.trim();
     final trimmedCover = customCoverImageUri?.trim();
     final series = ShelfSeries(
       id: seriesId,
-      name: seriesName.trim(),
+      name: displayName,
       brand: brandLine,
       ipName: ipLine,
-      figures: figures,
+      figures: shelfFigures,
       shelfAccent: accent,
-      notes: (trimmedNotes == null || trimmedNotes.isEmpty) ? null : trimmedNotes,
+      notes: (trimmedNotes == null || trimmedNotes.isEmpty)
+          ? null
+          : trimmedNotes,
       catalogTemplateId: null,
-      customCoverImageUri: (trimmedCover != null && trimmedCover.isNotEmpty) ? trimmedCover : null,
+      taxonomyBrandId: brandId,
+      taxonomyIpId: ipId,
+      imageKey: CustomSeriesConventions.seriesImageKey(seriesId),
+      customCoverImageUri: (trimmedCover != null && trimmedCover.isNotEmpty)
+          ? trimmedCover
+          : null,
     );
     _commit(
       CollectionSnapshot(
@@ -240,9 +283,21 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
     }
     _commit(
       CollectionSnapshot(
-        shelfSeries: state.shelfSeries.where((s) => s.id != seriesId).toList(growable: false),
+        shelfSeries: state.shelfSeries
+            .where((s) => s.id != seriesId)
+            .toList(growable: false),
         figureStates: m,
       ),
     );
+  }
+
+  /// Removes the shelf row for a catalog or drop template key (e.g. `drop-{id}`).
+  void removeSeriesByCatalogTemplate(String catalogTemplateId) {
+    for (final s in state.shelfSeries) {
+      if (s.catalogTemplateId == catalogTemplateId) {
+        removeSeries(s.id);
+        return;
+      }
+    }
   }
 }

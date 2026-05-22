@@ -1,43 +1,44 @@
+import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/collectible_shelf_shadow.dart';
-import 'package:blindbox_app/core/theme/collectible_shape.dart';
+import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/home/domain/series_release.dart';
-import 'package:blindbox_app/features/home/widgets/collectible_network_image.dart';
 import 'package:blindbox_app/features/home/widgets/save_series_release_button.dart';
+import 'package:blindbox_app/features/home/widgets/series_release_cover_image.dart';
+import 'package:blindbox_app/shared/widgets/series_hero_meta_block.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-/// Series launch tile — hero figure art, series title, figure count (no repeated month).
-const double _kCardWidth = 252;
-const double _kImageAspect = 1.02;
-
+/// Series launch showcase tile — art-first, series title, quiet IP/brand.
 class LatestDropCard extends StatelessWidget {
   const LatestDropCard({super.key, required this.release});
 
   final SeriesRelease release;
+
+  static const double _imageAspect = 1.05;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final textTheme = theme.textTheme;
-    final outerRadius = CollectibleShape.shellRadius;
+    final isDark = theme.brightness == Brightness.dark;
     final hero = release.heroCollectible;
     final accent = hero.shelfAccent ?? scheme.tertiaryContainer;
 
     return SizedBox(
-      width: _kCardWidth,
+      width: FeedRhythm.homeSeriesRailCardWidth,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          borderRadius: outerRadius,
+          borderRadius: AppRadii.shellRadius,
           boxShadow: CollectibleShelfShadow.productShell(context, accent: accent),
         ),
         child: Material(
           color: scheme.surface,
           shape: RoundedRectangleBorder(
-            borderRadius: outerRadius,
+            borderRadius: AppRadii.shellRadius,
             side: BorderSide(
-              color: accent.withValues(alpha: theme.brightness == Brightness.dark ? 0.16 : 0.34),
-              width: 1,
+              color: accent.withValues(alpha: isDark ? 0.16 : 0.3),
             ),
           ),
           clipBehavior: Clip.antiAlias,
@@ -47,49 +48,40 @@ class LatestDropCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 AspectRatio(
-                  aspectRatio: _kImageAspect,
+                  aspectRatio: _imageAspect,
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+                    padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        borderRadius: CollectibleShape.matRadius,
+                        borderRadius: AppRadii.matRadius,
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            Color.lerp(scheme.surface, accent, 0.38)!
-                                .withValues(alpha: theme.brightness == Brightness.dark ? 0.32 : 0.58),
-                            accent.withValues(alpha: theme.brightness == Brightness.dark ? 0.32 : 0.4),
-                            scheme.surface.withValues(alpha: theme.brightness == Brightness.dark ? 0.18 : 0.12),
+                            Color.lerp(scheme.surface, accent, 0.32)!
+                                .withValues(alpha: isDark ? 0.28 : 0.5),
+                            accent.withValues(alpha: isDark ? 0.26 : 0.34),
+                            scheme.surface.withValues(alpha: 0.08),
                           ],
-                          stops: const [0.0, 0.42, 1.0],
+                          stops: const [0.0, 0.45, 1.0],
                         ),
                         border: Border.all(
-                          color: accent.withValues(alpha: theme.brightness == Brightness.dark ? 0.11 : 0.2),
+                          color: accent.withValues(alpha: isDark ? 0.1 : 0.18),
                         ),
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(10),
-                        child: ClipRRect(
-                          borderRadius: CollectibleShape.insetRadius,
-                          child: ColoredBox(
-                            color: scheme.surface.withValues(
-                              alpha: theme.brightness == Brightness.dark ? 0.82 : 0.72,
-                            ),
-                            child: CollectibleNetworkImage(
-                              collectible: hero,
-                              heroTag: hero.heroImageTag,
-                              borderRadius: CollectibleShape.insetRadius,
-                              fit: BoxFit.contain,
-                            ),
-                          ),
+                      child: ClipRRect(
+                        borderRadius: AppRadii.insetRadius,
+                        child: SeriesReleaseCoverImage(
+                          release: release,
+                          heroTag: SeriesReleaseCoverImage.heroTagFor(release),
+                          borderRadius: AppRadii.insetRadius,
                         ),
                       ),
                     ),
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 4, 10, 12),
+                  padding: const EdgeInsets.fromLTRB(16, 2, 12, 14),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -97,38 +89,23 @@ class LatestDropCard extends StatelessWidget {
                         release.seriesName,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.18,
-                          height: 1.15,
-                          color: scheme.onSurface.withValues(alpha: 0.94),
-                        ),
+                        style: CollectibleTypography.seriesHeroTitle(
+                          textTheme,
+                          scheme,
+                        ).copyWith(fontSize: 19),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        hero.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: textTheme.labelLarge?.copyWith(
-                          color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 0.02,
-                        ),
+                      SeriesHeroMetaBlock(
+                        brand: release.brand,
+                        ipLine: release.ipLine ?? release.brand,
+                        trailingMeta: release.lineup.length == 1
+                            ? '1 figure'
+                            : '${release.lineup.length} figures',
+                        density: SeriesHeroMetaDensity.compact,
                       ),
-                      const SizedBox(height: 10),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text(
-                            '${release.lineup.length} figures',
-                            style: textTheme.bodySmall?.copyWith(
-                              color: scheme.onSurfaceVariant.withValues(alpha: 0.68),
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const Spacer(),
-                          SaveSeriesReleaseButton(release: release),
-                        ],
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: SaveSeriesReleaseButton(release: release),
                       ),
                     ],
                   ),

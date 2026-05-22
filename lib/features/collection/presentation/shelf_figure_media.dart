@@ -5,15 +5,24 @@ import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 ///
 /// Priority for each figure tile:
 /// 1. [ShelfFigure.localImageUri] (device path / `file:` URI)
-/// 2. [ShelfSeries.customCoverImageUri] (series cover)
-/// 3. [ShelfFigure.imageUrl] (catalog-resolved asset path, network URL, etc.)
-/// 4. `null` → placeholder
+/// 2. [ShelfSeries.customCoverImageUri] (series cover) — optional; disabled for fullscreen gallery
+/// 3. [ShelfFigure.imageUrl] (resolved at catalog-clone or Home drop import — asset path or Storage URL)
+/// 4. `null` → placeholder / [CatalogImageFromKey] via [ShelfFigure.imageKey]
 ///
-/// Catalog clones keep using [ShelfFigure.imageUrl] populated from
-/// [CatalogImageResolver] in the seed adapter; they do not use [imageKey] on
-/// the shelf — only resolved paths in [imageUrl].
+/// Catalog clones and [CollectionNotifier.addSeriesFromRelease] persist [ShelfFigure.imageUrl]
+/// from [CatalogImageResolver.resolveFigureDisplayRef] at add time.
+/// Fullscreen gallery uses [figureDisplayRef] with `includeSeriesCoverFallback: false` so series
+/// cover art is not shown as figure art.
+/// When figure URL is missing, [ShelfFigureThumb] may resolve via [ShelfFigure.imageKey].
+///
+/// Series shelf covers: [seriesCoverRef] (user cover only) or [CollectionSeriesThumbnail]
+/// via [ShelfSeries.catalogTemplateId] → `catalog/series/<imageKey>.<ext>` — never figure art.
 abstract final class ShelfFigureMedia {
-  static String? figureDisplayRef(ShelfFigure figure, ShelfSeries series, {bool includeSeriesCoverFallback = true}) {
+  static String? figureDisplayRef(
+    ShelfFigure figure,
+    ShelfSeries series, {
+    bool includeSeriesCoverFallback = true,
+  }) {
     final local = figure.localImageUri?.trim();
     if (local != null && local.isNotEmpty) return local;
     if (includeSeriesCoverFallback) {
@@ -25,19 +34,17 @@ abstract final class ShelfFigureMedia {
     return null;
   }
 
-  /// Series row art: custom cover first, else first figure ref (excluding redundant cover pass).
-  static String? seriesRepresentativeRef(ShelfSeries series) {
+  /// User series cover path/URI only — not figure thumbnails or catalog Storage URLs.
+  static String? seriesCoverRef(ShelfSeries series) {
     final cover = series.customCoverImageUri?.trim();
     if (cover != null && cover.isNotEmpty) return cover;
-    for (final f in series.figures) {
-      final r = figureDisplayRef(f, series, includeSeriesCoverFallback: false);
-      if (r != null && r.isNotEmpty) return r;
-    }
     return null;
   }
 
   /// True when [ref] should be loaded as a device file (not `assets/`, not http).
-  static bool isDeviceLocalRef(String? ref) => DeviceLocalImageRef.looksLikeDevicePath(ref);
+  static bool isDeviceLocalRef(String? ref) =>
+      DeviceLocalImageRef.looksLikeDevicePath(ref);
 
-  static String normalizeDevicePath(String ref) => DeviceLocalImageRef.normalizeToFilePath(ref);
+  static String normalizeDevicePath(String ref) =>
+      DeviceLocalImageRef.normalizeToFilePath(ref);
 }

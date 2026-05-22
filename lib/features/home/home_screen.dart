@@ -1,20 +1,60 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/theme/collectible_motion.dart';
+import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
+import 'package:blindbox_app/features/home/application/home_feed_provider.dart';
 import 'package:blindbox_app/features/home/data/mock_latest_drops.dart';
 import 'package:blindbox_app/features/home/widgets/latest_drops_section.dart';
 import 'package:blindbox_app/features/home/widgets/trending_series_section.dart';
+import 'package:blindbox_app/shared/widgets/app_search_field.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    ShellTabReselectBus.instance.reselectedBranch.addListener(_onTabReselected);
+  }
+
+  @override
+  void dispose() {
+    ShellTabReselectBus.instance.reselectedBranch.removeListener(_onTabReselected);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onTabReselected() {
+    if (ShellTabReselectBus.instance.reselectedBranch.value != kHomeShellBranchIndex) {
+      return;
+    }
+    if (!_scrollController.hasClients) return;
+    _scrollController.animateTo(
+      0,
+      duration: CollectibleMotion.sheet,
+      curve: CollectibleMotion.easeOut,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final feedAsync = ref.watch(homeFeedSnapshotProvider);
 
     return Scaffold(
       backgroundColor: scheme.surfaceContainerLow,
       body: CustomScrollView(
+        controller: _scrollController,
         physics: const BouncingScrollPhysics(),
         slivers: [
           SliverAppBar(
@@ -30,22 +70,68 @@ class HomeScreen extends StatelessWidget {
           ),
           SliverToBoxAdapter(
             child: Padding(
+              padding: const EdgeInsets.only(top: FeedRhythm.headerToSearchField),
+              child: AppSearchField(
+                readOnly: true,
+                onTap: () => context.push('/home/catalog'),
+                hintText: 'Search catalog — figures, series, IPs…',
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
               padding: const EdgeInsets.only(
-                top: FeedRhythm.belowMainTabAppBar,
+                top: 12,
                 bottom: FeedRhythm.tabScrollTailPadding,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  LatestDropsSection(releases: mockSeriesReleases),
-                  const SizedBox(height: FeedRhythm.homeMajorSectionGap),
-                  const TrendingSeriesSection(),
-                ],
+              child: feedAsync.when(
+                loading: () => const _HomeFeedLoading(),
+                error: (_, _) => _HomeFeedBody(
+                  feed: HomeFeedSnapshot(
+                    latest: mockSeriesReleases,
+                    trending: mockSeriesReleases.skip(1).take(4).toList(growable: false),
+                  ),
+                ),
+                data: (feed) => _HomeFeedBody(feed: feed),
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _HomeFeedBody extends StatelessWidget {
+  const _HomeFeedBody({required this.feed});
+
+  final HomeFeedSnapshot feed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        LatestDropsSection(releases: feed.latest),
+        const SizedBox(height: FeedRhythm.homeMajorSectionGap),
+        TrendingSeriesSection(releases: feed.trending),
+      ],
+    );
+  }
+}
+
+class _HomeFeedLoading extends StatelessWidget {
+  const _HomeFeedLoading();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(height: 200, child: Center(child: CircularProgressIndicator())),
+        SizedBox(height: FeedRhythm.homeMajorSectionGap),
+        SizedBox(height: 200),
+      ],
     );
   }
 }

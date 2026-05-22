@@ -1,3 +1,5 @@
+import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+import 'package:blindbox_app/features/market/catalog/market_catalog_filters.dart';
 import 'package:blindbox_app/features/market/taxonomy/market_taxonomy_adapter.dart';
 import 'package:blindbox_app/models/market_listing.dart';
 import 'package:flutter/foundation.dart';
@@ -38,16 +40,16 @@ class MarketBrandTaxon {
 
 /// Central catalog: brands ↔ IPs, chip rows, and listing filter predicates.
 ///
-/// Rows are derived from curated registries via [MarketTaxonomyAdapter]; keep ids aligned
-/// with [MarketListing] taxonomy fields and the title resolver.
+/// Filter chip rows use [_catalogBrands] / [_catalogIps] (Firestore bundle when applied).
+/// [brandById] / [ipById] use the full adapter registry for listing copy and title resolution.
 abstract final class MarketTaxonomy {
-  static final List<MarketIpTaxon> allIps = [
-    for (final row in MarketTaxonomyAdapter.buildIpRows())
+  static final List<MarketIpTaxon> _defaultIps = [
+    for (final row in MarketTaxonomyAdapter.buildFilterIpRows())
       MarketIpTaxon(id: row.id, displayLabel: row.displayLabel),
   ];
 
-  static final List<MarketBrandTaxon> brands = [
-    for (final row in MarketTaxonomyAdapter.buildBrandRows())
+  static final List<MarketBrandTaxon> _defaultBrands = [
+    for (final row in MarketTaxonomyAdapter.buildFilterBrandRows())
       MarketBrandTaxon(
         id: row.id,
         displayLabel: row.displayLabel,
@@ -55,16 +57,55 @@ abstract final class MarketTaxonomy {
       ),
   ];
 
-  static MarketIpTaxon? ipById(String id) {
-    for (final i in allIps) {
-      if (i.id == id) return i;
+  static List<MarketIpTaxon> _catalogIps = _defaultIps;
+  static List<MarketBrandTaxon> _catalogBrands = _defaultBrands;
+
+  static List<MarketIpTaxon> get allIps => _catalogIps;
+  static List<MarketBrandTaxon> get brands => _catalogBrands;
+
+  /// Aligns market/collection filter chips with Firestore catalog ids (display names only for UI).
+  static void applyCatalogBundle(CatalogSeedBundle bundle) {
+    final fromCatalog = MarketCatalogFilters.brandsFromBundle(bundle);
+    if (fromCatalog.isNotEmpty) {
+      _catalogBrands = fromCatalog;
+      _catalogIps = MarketCatalogFilters.ipsFromBundle(bundle);
+    }
+  }
+
+  static MarketBrandTaxon? _filterBrandById(String id) {
+    for (final b in _catalogBrands) {
+      if (b.id == id) return b;
     }
     return null;
   }
 
+  static MarketIpTaxon? _filterIpById(String id) {
+    for (final ip in _catalogIps) {
+      if (ip.id == id) return ip;
+    }
+    return null;
+  }
+
+  /// Full-registry IP lookup for market listing titles (not filter chips).
+  static MarketIpTaxon? ipById(String id) {
+    for (final row in MarketTaxonomyAdapter.buildIpRows()) {
+      if (row.id == id) {
+        return MarketIpTaxon(id: row.id, displayLabel: row.displayLabel);
+      }
+    }
+    return null;
+  }
+
+  /// Full-registry brand lookup for market listing titles (not filter chips).
   static MarketBrandTaxon? brandById(String id) {
-    for (final b in brands) {
-      if (b.id == id) return b;
+    for (final row in MarketTaxonomyAdapter.buildBrandRows()) {
+      if (row.id == id) {
+        return MarketBrandTaxon(
+          id: row.id,
+          displayLabel: row.displayLabel,
+          supportedIpIds: row.supportedIpIds,
+        );
+      }
     }
     return null;
   }
@@ -79,8 +120,9 @@ abstract final class MarketTaxonomy {
   static List<({String id, String label})> ipChipOptionsForBrand(String brandId) {
     final ips = brandId == MarketTaxonomyIds.anyBrand
         ? allIps
-        : brandById(brandId)?.supportedIpIds
-                .map((id) => ipById(id))
+        : _filterBrandById(brandId)
+                ?.supportedIpIds
+                .map(_filterIpById)
                 .whereType<MarketIpTaxon>()
                 .toList(growable: false) ??
             const <MarketIpTaxon>[];
@@ -95,7 +137,7 @@ abstract final class MarketTaxonomy {
   static bool ipAllowedForBrand(String brandId, String ipId) {
     if (ipId == MarketTaxonomyIds.anyIp) return true;
     if (brandId == MarketTaxonomyIds.anyBrand) return true;
-    final b = brandById(brandId);
+    final b = _filterBrandById(brandId);
     return b != null && b.supportedIpIds.contains(ipId);
   }
 
