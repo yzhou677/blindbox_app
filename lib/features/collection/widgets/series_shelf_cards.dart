@@ -5,6 +5,7 @@ import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/core/theme/collectible_shape.dart';
 import 'package:blindbox_app/core/theme/collectible_shelf_shadow.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/domain/series_completion_atmosphere.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_series_thumbnail.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_progress_voice.dart';
 import 'package:flutter/material.dart';
@@ -17,12 +18,14 @@ class SeriesShelfCard extends StatefulWidget {
     required this.progress,
     required this.figureStates,
     required this.onOpen,
+    this.atmosphere,
     this.onRemove,
   });
 
   final ShelfSeries series;
   final SeriesProgressCounts progress;
   final Map<String, TrackedFigure> figureStates;
+  final SeriesCompletionAtmosphere? atmosphere;
   final VoidCallback onOpen;
   final VoidCallback? onRemove;
 
@@ -110,6 +113,7 @@ class _SeriesShelfCardState extends State<SeriesShelfCard>
       child: _SeriesMatShell(
         series: widget.series,
         accent: widget.series.shelfAccent,
+        atmosphere: widget.atmosphere,
         onTap: widget.onOpen,
         trailing: widget.onRemove == null
             ? null
@@ -126,6 +130,7 @@ class _SeriesShelfCardState extends State<SeriesShelfCard>
           progress: widget.progress,
           figureStates: widget.figureStates,
           series: widget.series,
+          atmosphere: widget.atmosphere,
         ),
       ),
     );
@@ -138,11 +143,13 @@ class _SeriesMatShell extends StatelessWidget {
     required this.accent,
     required this.onTap,
     required this.child,
+    this.atmosphere,
     this.trailing,
   });
 
   final ShelfSeries series;
   final Color accent;
+  final SeriesCompletionAtmosphere? atmosphere;
   final VoidCallback onTap;
   final Widget child;
   final Widget? trailing;
@@ -152,24 +159,46 @@ class _SeriesMatShell extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final radius = CollectibleShape.shellRadius;
+    final atm = atmosphere;
+    final nearComplete = atm?.nearComplete ?? false;
+    final missingSecret = atm?.missingSecret ?? false;
+    final sustainedComplete = atm?.complete ?? false;
+
+    var borderColor = accent.withValues(alpha: isDark ? 0.22 : 0.38);
+    if (nearComplete) {
+      borderColor = Color.lerp(
+        scheme.primary,
+        const Color(0xFFE8C547),
+        0.25,
+      )!.withValues(alpha: 0.42);
+    } else if (missingSecret) {
+      borderColor = scheme.tertiary.withValues(alpha: 0.38);
+    } else if (sustainedComplete) {
+      borderColor = const Color(0xFFE8C547).withValues(alpha: 0.35);
+    }
+
+    final shadows = [
+      ...CollectibleShelfShadow.productShell(context, accent: accent),
+      if (sustainedComplete)
+        BoxShadow(
+          color: const Color(0xFFE8C547).withValues(alpha: 0.08),
+          blurRadius: 16,
+          offset: const Offset(0, 4),
+        ),
+    ];
 
     return Padding(
       padding: const EdgeInsets.only(bottom: FeedRhythm.listingCardVerticalGap),
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: radius,
-          boxShadow: CollectibleShelfShadow.productShell(
-            context,
-            accent: accent,
-          ),
+          boxShadow: shadows,
         ),
         child: Material(
           color: scheme.surface,
           shape: RoundedRectangleBorder(
             borderRadius: radius,
-            side: BorderSide(
-              color: accent.withValues(alpha: isDark ? 0.22 : 0.38),
-            ),
+            side: BorderSide(color: borderColor, width: nearComplete ? 1.2 : 1),
           ),
           clipBehavior: Clip.antiAlias,
           child: Row(
@@ -212,6 +241,7 @@ class _SeriesMatContent extends StatelessWidget {
     required this.progress,
     required this.figureStates,
     required this.series,
+    this.atmosphere,
     this.extraLine,
   });
 
@@ -222,6 +252,7 @@ class _SeriesMatContent extends StatelessWidget {
   final SeriesProgressCounts progress;
   final Map<String, TrackedFigure> figureStates;
   final ShelfSeries series;
+  final SeriesCompletionAtmosphere? atmosphere;
 
   @override
   Widget build(BuildContext context) {
@@ -239,6 +270,7 @@ class _SeriesMatContent extends StatelessWidget {
       figureStates: figureStates,
     );
     final isComplete = totalFigures > 0 && progress.owned >= totalFigures;
+    final missingSecret = atmosphere?.missingSecret ?? false;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -281,7 +313,9 @@ class _SeriesMatContent extends StatelessWidget {
                     const Color(0xFFE8C547),
                     0.38,
                   )!.withValues(alpha: 0.78)
-                : scheme.primary.withValues(alpha: 0.48),
+                : missingSecret
+                    ? scheme.tertiary.withValues(alpha: 0.55)
+                    : scheme.primary.withValues(alpha: 0.48),
           ),
         ),
         const SizedBox(height: 11),

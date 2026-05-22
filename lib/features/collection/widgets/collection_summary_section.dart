@@ -27,10 +27,12 @@ class CollectionSummarySection extends StatelessWidget {
     super.key,
     required this.stats,
     this.shelfMoodLine,
+    this.memoryWhisper,
   });
 
   final CollectionAggregateStats stats;
   final String? shelfMoodLine;
+  final String? memoryWhisper;
 
   @override
   Widget build(BuildContext context) {
@@ -95,6 +97,17 @@ class CollectionSummarySection extends StatelessWidget {
                 color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
                 height: 1.38,
                 fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+          if (memoryWhisper != null && memoryWhisper!.trim().isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              memoryWhisper!,
+              textAlign: TextAlign.center,
+              style: textTheme.bodySmall?.copyWith(
+                color: scheme.onSurfaceVariant.withValues(alpha: 0.68),
+                height: 1.32,
               ),
             ),
           ],

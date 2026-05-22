@@ -167,7 +167,7 @@ class _FigureCapsuleCardState extends State<FigureCapsuleCard>
       matTint = secretLook.cardTint(matTint);
       cardFaceGradient = secretLook.cardGradient(matTint);
       borderColor = secretLook.subtleBorder();
-      borderWidth = 1.2;
+      borderWidth = owned ? 1.45 : 1.2;
       shadows = [...secretLook.glowShadows(), ...shadows];
     }
 

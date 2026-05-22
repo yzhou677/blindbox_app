@@ -6,6 +6,7 @@ import 'package:blindbox_app/core/theme/app_theme.dart';
 import 'package:blindbox_app/features/collection/bootstrap/collection_app_bootstrap.dart';
 import 'package:blindbox_app/features/collection/data/collection_seed_data.dart';
 import 'package:blindbox_app/features/collection/data/series_release_lookup.dart';
+import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
 import 'package:blindbox_app/features/collection/persistence/collection_snapshot_storage.dart';
 import 'package:blindbox_app/features/home/application/home_feed_provider.dart';
 import 'package:blindbox_app/features/market/data/market_catalog_identity_cache.dart';
@@ -30,6 +31,7 @@ Future<void> main() async {
   await bootstrapMarketBrowseListings();
   final restored = await CollectionSnapshotStorage.load();
   CollectionAppBootstrap.prime(restored ?? CollectionSeedData.initialSnapshot());
+  await CollectionMemoryStore.instance.ensureLoaded();
   runApp(
     ProviderScope(
       overrides: [
