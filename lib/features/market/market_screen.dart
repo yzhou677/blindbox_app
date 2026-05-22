@@ -2,7 +2,10 @@ import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
 import 'package:blindbox_app/features/market/application/collectible_market_providers.dart';
 import 'package:blindbox_app/features/market/application/market_browse_notifier.dart';
+import 'package:blindbox_app/features/market/application/market_browse_load_more_controller.dart';
 import 'package:blindbox_app/features/market/application/market_browse_refresh_controller.dart';
+import 'package:blindbox_app/features/market/data/sandbox/market_sandbox_config.dart';
+import 'package:blindbox_app/features/market/widgets/market_load_more_footer.dart';
 import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
 import 'package:blindbox_app/features/market/data/mock_market_listings.dart';
 import 'package:blindbox_app/features/market/presentation/collectible_market_sort.dart';
@@ -80,6 +83,9 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
       sortByPrice: true,
     );
     final immersive = browse.searchResultsActive;
+    final mercariHasMore = ref.watch(marketMercariHasMoreProvider);
+    final loadingMore = ref.watch(marketBrowseLoadMoreProvider);
+    final refreshing = ref.watch(marketBrowseRefreshProvider);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -208,6 +214,17 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                   },
                   childCount: sorted.length,
                 ),
+              ),
+            ),
+          if (MarketSandboxConfig.isActive &&
+              mercariHasMore &&
+              !immersive)
+            SliverToBoxAdapter(
+              child: MarketLoadMoreFooter(
+                loading: loadingMore || refreshing,
+                onLoadMore: () => ref
+                    .read(marketBrowseLoadMoreProvider.notifier)
+                    .loadMore(),
               ),
             ),
           ],

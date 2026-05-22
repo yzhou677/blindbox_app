@@ -10,9 +10,24 @@ abstract final class MarketSandboxConfig {
     defaultValue: '',
   );
 
-  static const int maxMercariItems = 24;
-  static const Duration requestTimeout = Duration(seconds: 8);
+  /// Rows per gateway page request.
+  static const int pageSize = 24;
+
+  /// Legacy alias — first-page fetch size.
+  static const int maxMercariItems = pageSize;
+
+  /// Maximum live Mercari rows merged into browse (calm cap, not infinite scroll).
+  static const int maxMercariTotalRows = 72;
+
+  static const int gatewayMaxAttempts = 3;
+  static const Duration requestTimeout = Duration(seconds: 10);
   static const Duration cacheTtl = Duration(hours: 6);
+  static const Duration diskStaleTtl = Duration(days: 7);
+
+  static Duration retryDelayForAttempt(int attempt) {
+    final ms = 400 * (1 << attempt.clamp(0, 4));
+    return Duration(milliseconds: ms);
+  }
 
   static bool get isActive {
     if (!enableLiveMercariSandbox) return false;

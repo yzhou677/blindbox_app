@@ -11,14 +11,23 @@ final class CachedBrowseBatch {
     required this.fetchedAt,
     required this.listings,
     this.wireJson,
+    this.nextCursor,
+    this.hasMore = false,
   });
 
   final DateTime fetchedAt;
   final List<MarketListing> listings;
   final String? wireJson;
+  final String? nextCursor;
+  final bool hasMore;
 
   bool isFresh({Duration? ttl}) {
     final maxAge = ttl ?? MarketSandboxConfig.cacheTtl;
+    return DateTime.now().difference(fetchedAt) <= maxAge;
+  }
+
+  bool isDiskStaleAcceptable({Duration? ttl}) {
+    final maxAge = ttl ?? MarketSandboxConfig.diskStaleTtl;
     return DateTime.now().difference(fetchedAt) <= maxAge;
   }
 }
@@ -65,6 +74,8 @@ final class MarketProviderBrowseCache {
         fetchedAt: DateTime.fromMillisecondsSinceEpoch(atMs),
         listings: listings,
         wireJson: wireJson,
+        nextCursor: decoded['nextCursor'] as String?,
+        hasMore: decoded['hasMore'] as bool? ?? false,
       );
       _memory[id] = batch;
       return batch.listings;
@@ -77,11 +88,15 @@ final class MarketProviderBrowseCache {
     required MarketProviderId id,
     required List<MarketListing> listings,
     String? wireJson,
+    String? nextCursor,
+    bool hasMore = false,
   }) {
     _memory[id] = CachedBrowseBatch(
       fetchedAt: DateTime.now(),
       listings: List<MarketListing>.unmodifiable(listings),
       wireJson: wireJson,
+      nextCursor: nextCursor,
+      hasMore: hasMore,
     );
   }
 
@@ -89,17 +104,65 @@ final class MarketProviderBrowseCache {
     required MarketProviderId id,
     required List<MarketListing> listings,
     String? wireJson,
+    String? nextCursor,
+    bool hasMore = false,
   }) async {
-    writeMemory(id: id, listings: listings, wireJson: wireJson);
+    writeMemory(
+      id: id,
+      listings: listings,
+      wireJson: wireJson,
+      nextCursor: nextCursor,
+      hasMore: hasMore,
+    );
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(
       _prefsKey(id),
       jsonEncode({
         'fetchedAtMs': DateTime.now().millisecondsSinceEpoch,
         'wireJson': wireJson,
+        'nextCursor': nextCursor,
+        'hasMore': hasMore,
         'listings': [for (final l in listings) _marketListingToJson(l)],
       }),
     );
+  }
+
+  CachedBrowseBatch? batchFor(MarketProviderId id) => _memory[id];
+
+  /// Appends deduped rows and updates continuation metadata.
+  Future<void> append({
+    required MarketProviderId id,
+    required List<MarketListing> newListings,
+    String? nextCursor,
+    bool hasMore = false,
+  }) async {
+    final existing = _memory[id];
+    final merged = _dedupeAppend(existing?.listings ?? const [], newListings);
+    await write(
+      id: id,
+      listings: merged,
+      wireJson: existing?.wireJson,
+      nextCursor: nextCursor,
+      hasMore: hasMore,
+    );
+  }
+
+  static List<MarketListing> _dedupeAppend(
+    List<MarketListing> base,
+    List<MarketListing> incoming,
+  ) {
+    final seen = <String>{};
+    for (final row in base) {
+      seen.add('${row.providerId}:${row.providerListingId ?? row.id}');
+    }
+    final out = List<MarketListing>.from(base);
+    for (final row in incoming) {
+      final key = '${row.providerId}:${row.providerListingId ?? row.id}';
+      if (seen.contains(key)) continue;
+      seen.add(key);
+      out.add(row);
+    }
+    return out;
   }
 
   void clear(MarketProviderId id) {

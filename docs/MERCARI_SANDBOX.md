@@ -20,12 +20,19 @@ Without both flags, the app behaves as before (asset feed only at startup).
 
 ## Gateway contract
 
-`GET {baseUrl}/v1/browse?limit=24`
+`GET {baseUrl}/v1/browse?limit=24&cursor={token}`
+
+Optional pagination fields:
+
+- `nextCursor` (or `cursor`) — continuation token for the next page
+- `hasMore` — boolean; inferred when `nextCursor` is present if omitted
 
 Response:
 
 ```json
 {
+  "nextCursor": "opaque-token",
+  "hasMore": true,
   "items": [
     {
       "id": "provider-native-id",
@@ -43,8 +50,10 @@ Response:
 | When | Behavior |
 |------|----------|
 | Startup | [`AssetMarketSource`](../lib/features/market/data/source/asset_market_source.dart) only — never blocks on gateway |
-| Pull to refresh (Market tab) | If sandbox active: merge asset session + live Mercari (deduped); else reload production sources |
-| Gateway failure | Mercari source returns cached rows if available; asset rows unchanged |
+| Pull to refresh (Market tab) | If sandbox active: reset Mercari pagination, fetch first page, merge with asset session |
+| Load more | Calm **Load more sightings** button (max 72 live rows); appends next gateway page |
+| Gateway failure | Retries with backoff; then returns cached rows if available; asset rows unchanged |
+| Malformed items | Skipped per-row during DTO parse (schema drift tolerance) |
 | UI | No provider badges; no error banners on failure |
 
 ## Risks (document findings here)
