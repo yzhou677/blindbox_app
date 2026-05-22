@@ -1,7 +1,8 @@
+import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/collectible_shelf_shadow.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
-import 'package:blindbox_app/features/home/widgets/collectible_network_image.dart';
+import 'package:blindbox_app/features/market/presentation/market_listing_image.dart';
 import 'package:blindbox_app/features/market/application/market_listings_providers.dart';
 import 'package:blindbox_app/features/market/utils/market_format.dart';
 import 'package:blindbox_app/features/market/widgets/listing_market_signals.dart';
@@ -141,11 +142,12 @@ class _MarketDetailHero extends StatelessWidget {
                   borderRadius: AppRadii.insetRadius,
                   child: ColoredBox(
                     color: scheme.surface.withValues(alpha: 0.5),
-                    child: CollectibleNetworkImage(
+                    child: MarketListingImage(
                       collectible: c,
                       heroTag: listing.marketHeroTag,
                       borderRadius: BorderRadius.zero,
                       fit: BoxFit.contain,
+                      displayMode: CatalogImageDisplayMode.seriesCoverHero,
                     ),
                   ),
                 ),

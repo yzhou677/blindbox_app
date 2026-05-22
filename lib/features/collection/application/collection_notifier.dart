@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:blindbox_app/features/catalog/catalog_image_resolver.dart';
 import 'package:blindbox_app/features/collection/bootstrap/collection_app_bootstrap.dart';
 import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
 import 'package:blindbox_app/features/collection/data/series_release_lookup.dart';
@@ -71,7 +70,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
   void addSeriesFromDrop(Collectible c) {
     final fromRelease = ref.read(seriesReleaseLookupProvider)(c.id);
     if (fromRelease != null) {
-      unawaited(addSeriesFromRelease(fromRelease));
+      addSeriesFromRelease(fromRelease);
       return;
     }
     final catalogKey = 'drop-${c.id}';
@@ -83,10 +82,11 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       id: fid,
       seriesId: seriesId,
       name: c.name,
-      imageUrl: c.imageUrl,
+      imageUrl: null,
       localImageUri: null,
       rarity: 'Regular',
       isSecret: false,
+      imageKey: c.id,
     );
     final series = ShelfSeries(
       id: seriesId,
@@ -110,8 +110,10 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
     );
   }
 
-  /// Adds a Home **series release** (full lineup) to the shelf under `drop-{dropId}`.
-  Future<void> addSeriesFromRelease(SeriesRelease release) async {
+  /// Adds a Home **series release** (full lineup) under `drop-{dropId}` — optimistic commit.
+  ///
+  /// Shelf UI renders from [ShelfFigure.imageKey] via [CatalogImageFromKey]; no URL hydration.
+  void addSeriesFromRelease(SeriesRelease release) {
     final catalogKey = 'drop-${release.dropId}';
     if (state.hasTemplateOnShelf(catalogKey)) return;
     final seriesId =
@@ -120,15 +122,12 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
     final figures = <ShelfFigure>[];
     for (final slot in release.lineup) {
       final figureKey = slot.imageKey.trim();
-      final imageUrl = figureKey.isNotEmpty
-          ? await CatalogImageResolver.resolveFigureDisplayRef(figureKey)
-          : slot.imageUrl?.trim();
       figures.add(
         ShelfFigure(
           id: '$seriesId-slot-${slot.slotId}',
           seriesId: seriesId,
           name: slot.name,
-          imageUrl: imageUrl != null && imageUrl.isNotEmpty ? imageUrl : null,
+          imageUrl: null,
           localImageUri: null,
           rarity: slot.isSecret ? 'Secret' : 'Regular',
           isSecret: slot.isSecret,

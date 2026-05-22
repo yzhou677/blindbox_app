@@ -2,7 +2,7 @@ import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/collectible_elevation.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
-import 'package:blindbox_app/features/home/widgets/collectible_network_image.dart';
+import 'package:blindbox_app/features/market/presentation/market_listing_image.dart';
 import 'package:blindbox_app/features/market/utils/market_format.dart';
 import 'package:blindbox_app/models/market_listing.dart';
 import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
@@ -107,7 +107,7 @@ class _TrendingMiniCard extends StatelessWidget {
                           borderRadius: AppRadii.insetRadius,
                           child: ColoredBox(
                             color: scheme.surface.withValues(alpha: 0.2),
-                            child: CollectibleNetworkImage(
+                            child: MarketListingImage(
                               collectible: c,
                               borderRadius: BorderRadius.zero,
                               fit: BoxFit.contain,

@@ -72,8 +72,10 @@ class CatalogFigure {
   final String catalogSeriesTemplateId;
   final String name;
 
-  /// Opaque catalog [imageKey] for Storage/bundled resolve (template-only; not on shelf rows).
+  /// Canonical catalog [imageKey] — UI resolves via [CatalogImageFromKey].
   final String? catalogImageKey;
+
+  /// Optional persistence cache only; UI must not depend on this field.
   final String? imageUrl;
   final String rarity;
   final bool isSecret;
@@ -199,7 +201,7 @@ class ShelfFigure {
   /// Figure display label (wire: `displayName`).
   final String name;
 
-  /// Catalog-resolved asset path, remote art, or legacy placeholder URLs — not [imageKey].
+  /// Optional persistence cache (asset/remote URL). UI uses [imageKey] + [CatalogImageFromKey].
   final String? imageUrl;
 
   /// User private shelf: local path / `file:` URI only. Never a catalog image key.

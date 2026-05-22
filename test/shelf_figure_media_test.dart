@@ -9,6 +9,7 @@ void main() {
     seriesId: 'series_1',
     name: 'Test',
     imageUrl: 'assets/catalog/figures/foo.png',
+    imageKey: 'foo',
     rarity: 'Regular',
     isSecret: false,
   );
@@ -24,7 +25,7 @@ void main() {
   );
 
   group('ShelfFigureMedia.figureDisplayRef', () {
-    test('prefers localImageUri over imageUrl', () {
+    test('prefers localImageUri over series cover', () {
       const figure = ShelfFigure(
         id: 'fig_1',
         seriesId: 'series_1',
@@ -40,7 +41,7 @@ void main() {
       );
     });
 
-    test('uses customCoverImageUri before imageUrl when fallback enabled', () {
+    test('uses customCoverImageUri when no local photo', () {
       const figure = ShelfFigure(
         id: 'fig_1',
         seriesId: 'series_1',
@@ -55,12 +56,13 @@ void main() {
       );
     });
 
-    test('skips series cover when includeSeriesCoverFallback is false', () {
+    test('ignores cached imageUrl — catalog uses imageKey in UI', () {
       const figure = ShelfFigure(
         id: 'fig_1',
         seriesId: 'series_1',
         name: 'Test',
         imageUrl: 'assets/catalog/figures/foo.png',
+        imageKey: 'foo',
         rarity: 'Regular',
         isSecret: false,
       );
@@ -70,8 +72,9 @@ void main() {
           baseSeries,
           includeSeriesCoverFallback: false,
         ),
-        'assets/catalog/figures/foo.png',
+        isNull,
       );
+      expect(ShelfFigureMedia.catalogFigureImageKey(figure), 'foo');
     });
 
     test('returns null when only series cover exists and fallback disabled', () {

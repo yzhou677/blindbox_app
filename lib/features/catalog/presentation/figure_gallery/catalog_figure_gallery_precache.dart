@@ -65,13 +65,6 @@ abstract final class CatalogFigureGalleryPrecache {
       }
       return;
     }
-
-    final url = item.imageUrl?.trim();
-    if (url != null && url.isNotEmpty && _isNetworkUrl(url)) {
-      if (context.mounted) {
-        await precacheImage(NetworkImage(url), context);
-      }
-    }
   }
 
   static bool _isNetworkUrl(String ref) {

@@ -1,4 +1,3 @@
-import 'package:blindbox_app/features/catalog/catalog_image_resolver.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/bootstrap/collection_app_bootstrap.dart';
 import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
@@ -73,9 +72,7 @@ void main() {
     expect(container.read(collectionNotifierProvider).figureStates, isEmpty);
   });
 
-  test('addSeriesFromRelease persists resolved figure imageUrl from imageKey', () async {
-    await CatalogImageResolver.ensureReady();
-
+  test('addSeriesFromRelease stores imageKey without imageUrl', () {
     CollectionAppBootstrap.prime(CollectionSnapshot.emptyTest());
     final container = ProviderContainer();
     addTearDown(container.dispose);
@@ -110,19 +107,15 @@ void main() {
       taxonomyIpId: 'the_monsters',
     );
 
-    await n.addSeriesFromRelease(release);
-    final snap = container.read(collectionNotifierProvider);
-    final shelf = snap.shelfSeries.single;
+    n.addSeriesFromRelease(release);
+    final shelf = container.read(collectionNotifierProvider).shelfSeries.single;
     expect(shelf.catalogTemplateId, 'drop-the_monsters_exciting_macaron');
     final fig = shelf.figures.single;
     expect(fig.imageKey, imageKey);
-    expect(fig.imageUrl, isNotNull);
-    expect(fig.imageUrl, contains('the_monsters_exciting_macaron_soymilk'));
+    expect(fig.imageUrl, isNull);
   });
 
-  test('addSeriesFromRelease dedupes when drop template already on shelf', () async {
-    await CatalogImageResolver.ensureReady();
-
+  test('addSeriesFromRelease dedupes when drop template already on shelf', () {
     CollectionAppBootstrap.prime(CollectionSnapshot.emptyTest());
     final container = ProviderContainer();
     addTearDown(container.dispose);
@@ -152,8 +145,8 @@ void main() {
       ],
     );
 
-    await n.addSeriesFromRelease(release);
-    await n.addSeriesFromRelease(release);
+    n.addSeriesFromRelease(release);
+    n.addSeriesFromRelease(release);
 
     final snap = container.read(collectionNotifierProvider);
     expect(
@@ -192,7 +185,7 @@ void main() {
       ],
     );
 
-    await n.addSeriesFromRelease(release);
+    n.addSeriesFromRelease(release);
     final fig = container.read(collectionNotifierProvider).shelfSeries.single.figures.single;
     expect(fig.imageKey, isNull);
     expect(fig.imageUrl, isNull);

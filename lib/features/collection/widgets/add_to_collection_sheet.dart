@@ -7,6 +7,7 @@ import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
 import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_series_search_rows.dart';
 import 'package:blindbox_app/features/catalog/widgets/catalog_series_search_row_card.dart';
+import 'package:blindbox_app/features/collection/application/catalog_series_shelf_commit.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/add_series_catalog_copy.dart';
@@ -109,30 +110,6 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
   String get _trimmedQuery => _search.text.trim();
 
   bool get _hasSearchText => _trimmedQuery.isNotEmpty;
-
-  /// Commits a catalog template to the shelf, resolving Storage URLs when the template has no art yet.
-  Future<void> _addCatalogSeriesToShelf(
-    CollectionNotifier notifier,
-    CatalogSeries template,
-  ) async {
-    var toAdd = template;
-    final needsResolve = template.figures.any((f) {
-      final u = f.imageUrl?.trim();
-      return u == null || u.isEmpty;
-    });
-    if (needsResolve) {
-      final bundle = _catalogBundle;
-      if (bundle != null) {
-        final resolved = await catalogTemplateFromSeedSeries(
-          bundle,
-          template.templateId,
-          resolveFigureImages: true,
-        );
-        if (resolved != null) toAdd = resolved;
-      }
-    }
-    notifier.addSeriesFromTemplate(toAdd);
-  }
 
   String _seriesCoverImageKey(CatalogSeedBundle bundle, String seriesId) {
     for (final s in bundle.series) {
@@ -340,16 +317,10 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
                 _openCatalogSeriesPreview(
                   ctx,
                   series: s,
-                  onAdd: () async {
-                    await _addCatalogSeriesToShelf(notifier, s);
-                    if (ctx.mounted) Navigator.of(ctx).pop();
-                  },
+                  onAdd: () => commitCatalogSeriesToShelf(notifier, s),
                 );
               },
-              onAdd: () async {
-                await _addCatalogSeriesToShelf(notifier, s);
-                if (ctx.mounted) Navigator.of(ctx).pop();
-              },
+              onAdd: () => commitCatalogSeriesToShelf(notifier, s),
             );
           },
         );
@@ -415,24 +386,23 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
             final template = await catalogTemplateFromSeedSeries(
               bundle,
               row.seriesId,
+              resolveFigureImages: false,
             );
             if (!ctx.mounted || template == null) return;
             _openCatalogSeriesPreview(
               ctx,
               series: template,
-              onAdd: () async {
-                await _addCatalogSeriesToShelf(notifier, template);
-                if (ctx.mounted) Navigator.of(ctx).pop();
-              },
+              onAdd: () => commitCatalogSeriesToShelf(notifier, template),
             );
           },
           onTrailingAction: () async {
             final template = await catalogTemplateFromSeedSeries(
               bundle,
               row.seriesId,
+              resolveFigureImages: false,
             );
             if (template != null) {
-              await _addCatalogSeriesToShelf(notifier, template);
+              commitCatalogSeriesToShelf(notifier, template);
             }
             if (ctx.mounted) Navigator.of(ctx).pop();
           },

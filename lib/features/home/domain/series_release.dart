@@ -17,6 +17,8 @@ class ReleaseLineupSlot {
 
   /// Canonical catalog figure [imageKey] (`catalog/figures/<imageKey>.*`).
   final String imageKey;
+
+  /// Legacy/mock preset URL — UI ignores; use [imageKey] with [CatalogImageFromKey].
   final String? imageUrl;
   final bool isSecret;
 }
