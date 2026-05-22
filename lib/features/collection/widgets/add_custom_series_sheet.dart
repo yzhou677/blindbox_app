@@ -183,7 +183,7 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
                         textInputAction: TextInputAction.next,
                         decoration: quietCustomSeriesField(
                           scheme,
-                          hintText: 'Franchise',
+                          hintText: 'Universe',
                         ),
                       ),
                       const SizedBox(height: FeedRhythm.sheetSectionGap + 8),
