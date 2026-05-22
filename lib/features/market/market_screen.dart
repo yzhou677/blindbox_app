@@ -1,6 +1,7 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
 import 'package:blindbox_app/features/market/application/market_browse_notifier.dart';
+import 'package:blindbox_app/features/market/application/market_browse_refresh_controller.dart';
 import 'package:blindbox_app/features/market/application/market_listings_providers.dart';
 import 'package:blindbox_app/features/market/catalog/market_listing_filters.dart';
 import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
@@ -94,10 +95,15 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: CustomScrollView(
-        controller: _scrollController,
-        physics: const BouncingScrollPhysics(),
-        slivers: [
+      body: RefreshIndicator(
+        onRefresh: () =>
+            ref.read(marketBrowseRefreshProvider.notifier).refresh(),
+        child: CustomScrollView(
+          controller: _scrollController,
+          physics: const AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics(),
+          ),
+          slivers: [
           SliverAppBar(
             pinned: false,
             floating: false,
@@ -216,7 +222,8 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                 ),
               ),
             ),
-        ],
+          ],
+        ),
       ),
     );
   }

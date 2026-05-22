@@ -10,7 +10,8 @@ Last reviewed against the repo structure and key files.
 
 - [x] Feature-based layout under `lib/features/`
 - [x] Collection mutations only via `CollectionNotifier` + `CollectionSnapshotCodec`
-- [x] Market: `MarketSource` → repository → providers; HTTP only in `ebay_http_browse_data_source.dart`
+- [x] Market: `MarketSource` → repository → providers; HTTP in `ebay_http_browse_data_source.dart` and `data/datasource/mercari/` (sandbox gateway only)
+- [x] Mercari live sandbox **off by default** (`MarketSandboxConfig`); asset bootstrap unchanged; manual refresh only
 - [x] Catalog search is pure Dart over `CatalogSeedBundle`
 - [x] Firestore loader returns same bundle type as seed loader
 - [x] Shelf media separation (`imageKey` in catalog only; `localImageUri` / `imageUrl` on shelf)
