@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/features/catalog/adapters/catalog_seed_to_collection_template.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
 import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
@@ -138,23 +139,28 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              AppSearchField(
-                controller: _search,
-                autofocus: true,
-                hintText: 'Search catalog — figures, series, IPs, aliases…',
-                onChanged: (_) => setState(() {}),
-                suffixIcon: !_hasSearchText
-                    ? null
-                    : IconButton(
-                        tooltip: 'Clear',
-                        icon: Icon(
-                          Icons.close_rounded,
-                          color: scheme.onSurfaceVariant.withValues(
-                            alpha: 0.7,
+              Padding(
+                padding: const EdgeInsets.only(
+                  top: FeedRhythm.headerToSearchField,
+                ),
+                child: AppSearchField(
+                  controller: _search,
+                  autofocus: true,
+                  hintText: 'Search catalog — figures, series, IPs, aliases…',
+                  onChanged: (_) => setState(() {}),
+                  suffixIcon: !_hasSearchText
+                      ? null
+                      : IconButton(
+                          tooltip: 'Clear',
+                          icon: Icon(
+                            Icons.close_rounded,
+                            color: scheme.onSurfaceVariant.withValues(
+                              alpha: 0.7,
+                            ),
                           ),
+                          onPressed: _search.clear,
                         ),
-                        onPressed: _search.clear,
-                      ),
+                ),
               ),
               if (_hasSearchText)
                 Padding(
