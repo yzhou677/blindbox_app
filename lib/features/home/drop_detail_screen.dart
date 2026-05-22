@@ -495,7 +495,7 @@ class _DetailHero extends StatelessWidget {
         ),
         clipBehavior: Clip.antiAlias,
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(10),
           child: DecoratedBox(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(18),
@@ -509,18 +509,18 @@ class _DetailHero extends StatelessWidget {
               ),
             ),
             child: Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(6),
               child: AspectRatio(
-                aspectRatio: 0.88,
+                aspectRatio: CatalogImageDisplaySpec.aspectRatioFor(
+                      CatalogImageDisplayMode.seriesCoverHero,
+                    ) ??
+                    1.0,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(14),
-                  child: ColoredBox(
-                    color: scheme.surface.withValues(alpha: 0.72),
-                    child: SeriesReleaseCoverImage(
-                      release: release,
-                      heroTag: SeriesReleaseCoverImage.heroTagFor(release),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
+                  child: SeriesReleaseCoverImage(
+                    release: release,
+                    heroTag: SeriesReleaseCoverImage.heroTagFor(release),
+                    borderRadius: BorderRadius.zero,
                   ),
                 ),
               ),

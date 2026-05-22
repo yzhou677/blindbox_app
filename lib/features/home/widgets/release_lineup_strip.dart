@@ -1,8 +1,8 @@
+import 'package:blindbox_app/features/catalog/presentation/catalog_aspect_image.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/home/domain/series_release.dart';
 import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
 import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 /// Horizontal, image-first lineup browse for a [SeriesRelease].
@@ -81,10 +81,7 @@ class _LineupCell extends StatelessWidget {
         ? _secretTile(r)
         : ClipRRect(
             borderRadius: r,
-            child: ColoredBox(
-              color: scheme.surfaceContainerHighest.withValues(alpha: 0.55),
-              child: _figureArt(slot, r),
-            ),
+            child: _figureArt(slot, r),
           );
 
     final baseBorder = slot.isSecret
@@ -184,12 +181,25 @@ class _LineupCell extends StatelessWidget {
           ),
         );
       }
-      return CachedNetworkImage(
-        imageUrl: url,
+      return SizedBox(
         width: ReleaseLineupStrip.cellExtent,
         height: ReleaseLineupStrip.cellExtent,
-        fit: BoxFit.cover,
-        fadeInDuration: const Duration(milliseconds: 180),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final spec = CatalogImageDisplaySpec.forMode(
+              CatalogImageDisplayMode.figureLineupCell,
+            );
+            final dpr = MediaQuery.devicePixelRatioOf(context);
+            return CatalogAspectImage.presentNetwork(
+              imageUrl: url,
+              fit: spec.fit,
+              fillBounds: spec.fillsFrame,
+              alignment: spec.alignment,
+              decodeExtent: spec.memCacheDecodeExtent(constraints, dpr),
+              fadeInDuration: const Duration(milliseconds: 180),
+            );
+          },
+        ),
       );
     }
 

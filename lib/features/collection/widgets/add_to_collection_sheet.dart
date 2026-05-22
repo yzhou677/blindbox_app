@@ -5,12 +5,14 @@ import 'package:blindbox_app/features/catalog/catalog_latest_series.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
 import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
-import 'package:blindbox_app/features/catalog/models/catalog_series.dart' as seed_catalog;
+import 'package:blindbox_app/features/catalog/models/catalog_series.dart'
+    as seed_catalog;
 import 'package:blindbox_app/features/catalog/search/catalog_search_result.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_service.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/add_series_catalog_copy.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart';
 import 'package:blindbox_app/features/collection/presentation/catalog_search_row_summary.dart';
 import 'package:blindbox_app/features/collection/widgets/catalog_series_preview_sheet.dart';
 import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
@@ -24,7 +26,8 @@ class AddToCollectionSheet extends ConsumerStatefulWidget {
   final VoidCallback onCreateCustom;
 
   @override
-  ConsumerState<AddToCollectionSheet> createState() => _AddToCollectionSheetState();
+  ConsumerState<AddToCollectionSheet> createState() =>
+      _AddToCollectionSheetState();
 }
 
 class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
@@ -45,18 +48,20 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     if (cached != null) {
       _applyCatalogBundle(cached);
     }
-    loadCatalogBundle().then((b) {
-      if (!mounted) return;
-      _applyCatalogBundle(b);
-    }).catchError((_) {
-      if (mounted && _catalogBundle == null) {
-        setState(() {
-          _catalogLoadFailed = true;
-          _catalogBundle = null;
-          _recommendationsFuture = null;
+    loadCatalogBundle()
+        .then((b) {
+          if (!mounted) return;
+          _applyCatalogBundle(b);
+        })
+        .catchError((_) {
+          if (mounted && _catalogBundle == null) {
+            setState(() {
+              _catalogLoadFailed = true;
+              _catalogBundle = null;
+              _recommendationsFuture = null;
+            });
+          }
         });
-      }
-    });
   }
 
   void _applyCatalogBundle(CatalogSeedBundle b) {
@@ -83,7 +88,10 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
         ),
       ),
     );
-    return [for (final t in templates) if (t != null) t];
+    return [
+      for (final t in templates)
+        if (t != null) t,
+    ];
   }
 
   @override
@@ -141,7 +149,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     required VoidCallback onAdd,
   }) {
     final h = MediaQuery.sizeOf(context).height * 0.74;
-    showModalBottomSheet<void>(
+    showCollectionModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       showDragHandle: false,
@@ -153,16 +161,16 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
         padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
         child: SizedBox(
           height: h,
-          child: CatalogSeriesPreviewSheet(
-            series: series,
-            onAdd: onAdd,
-          ),
+          child: CatalogSeriesPreviewSheet(series: series, onAdd: onAdd),
         ),
       ),
     );
   }
 
-  String _brandIpLineForSeries(CatalogSeedBundle bundle, seed_catalog.CatalogSeries series) {
+  String _brandIpLineForSeries(
+    CatalogSeedBundle bundle,
+    seed_catalog.CatalogSeries series,
+  ) {
     var brandName = series.brandId;
     for (final b in bundle.brands) {
       if (b.id == series.brandId) {
@@ -214,30 +222,32 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
       }
     }
 
-    return order.map((sid) {
-      final agg = groups[sid]!;
-      final series = seriesById[sid];
-      if (series == null) {
-        throw StateError('Catalog seed missing series $sid');
-      }
-      final coverKey = series.imageKey.trim();
+    return order
+        .map((sid) {
+          final agg = groups[sid]!;
+          final series = seriesById[sid];
+          if (series == null) {
+            throw StateError('Catalog seed missing series $sid');
+          }
+          final coverKey = series.imageKey.trim();
 
-      final figureCount = _figureCountInSeries(bundle, sid);
-      final summaryLine = catalogSearchRowSummary(
-        figureCount: figureCount,
-        hasChase: agg.hasAnySecret,
-        matchedFigureNames: agg.matchedFigureNames,
-      );
+          final figureCount = _figureCountInSeries(bundle, sid);
+          final summaryLine = catalogSearchRowSummary(
+            figureCount: figureCount,
+            hasChase: agg.hasAnySecret,
+            matchedFigureNames: agg.matchedFigureNames,
+          );
 
-      return _SeriesSearchRow(
-        seriesId: sid,
-        seriesTitle: series.displayName,
-        coverImageKey: coverKey,
-        summaryLine: summaryLine,
-        brandIpLine: _brandIpLineForSeries(bundle, series),
-        hasAnySecret: agg.hasAnySecret,
-      );
-    }).toList(growable: false);
+          return _SeriesSearchRow(
+            seriesId: sid,
+            seriesTitle: series.displayName,
+            coverImageKey: coverKey,
+            summaryLine: summaryLine,
+            brandIpLine: _brandIpLineForSeries(bundle, series),
+            hasAnySecret: agg.hasAnySecret,
+          );
+        })
+        .toList(growable: false);
   }
 
   @override
@@ -295,32 +305,50 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
               textInputAction: TextInputAction.search,
               decoration: InputDecoration(
                 hintText: 'Search catalog — figures, series, IPs, aliases…',
-                prefixIcon: Icon(Icons.search_rounded, color: scheme.onSurfaceVariant.withValues(alpha: 0.75)),
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  color: scheme.onSurfaceVariant.withValues(alpha: 0.75),
+                ),
                 suffixIcon: !_hasSearchText
                     ? null
                     : IconButton(
                         tooltip: 'Clear',
-                        icon: Icon(Icons.close_rounded, color: scheme.onSurfaceVariant.withValues(alpha: 0.7)),
+                        icon: Icon(
+                          Icons.close_rounded,
+                          color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
+                        ),
                         onPressed: () {
                           _search.clear();
                           setState(() {});
                         },
                       ),
                 filled: true,
-                fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
+                fillColor: scheme.surfaceContainerHighest.withValues(
+                  alpha: 0.4,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(18),
-                  borderSide: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.35)),
+                  borderSide: BorderSide(
+                    color: scheme.outlineVariant.withValues(alpha: 0.35),
+                  ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(18),
-                  borderSide: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.3)),
+                  borderSide: BorderSide(
+                    color: scheme.outlineVariant.withValues(alpha: 0.3),
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(18),
-                  borderSide: BorderSide(color: scheme.primary.withValues(alpha: 0.5), width: 1.35),
+                  borderSide: BorderSide(
+                    color: scheme.primary.withValues(alpha: 0.5),
+                    width: 1.35,
+                  ),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 4,
+                  vertical: 12,
+                ),
                 isDense: true,
               ),
             ),
@@ -370,7 +398,9 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
               onPressed: widget.onCreateCustom,
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -450,8 +480,12 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
           separatorBuilder: (context, index) => const SizedBox(height: 12),
           itemBuilder: (ctx, i) {
             final s = recs[i];
-            final coverKey = _seriesCoverImageKey(_catalogBundle!, s.templateId);
+            final coverKey = _seriesCoverImageKey(
+              _catalogBundle!,
+              s.templateId,
+            );
             return _SuggestionCard(
+              key: ValueKey<String>('add-series-rec:${s.templateId}'),
               series: s,
               coverImageKey: coverKey,
               onOpenPreview: () {
@@ -503,7 +537,11 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
       );
     }
 
-    final matches = _seriesSearchRows(bundle: bundle, snap: snap, query: _trimmedQuery);
+    final matches = _seriesSearchRows(
+      bundle: bundle,
+      snap: snap,
+      query: _trimmedQuery,
+    );
     if (matches.isEmpty) {
       return Center(
         child: Text(
@@ -522,9 +560,13 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
       itemBuilder: (ctx, i) {
         final row = matches[i];
         return _SeriesCatalogSearchRowCard(
+          key: ValueKey<String>('add-series-search:${row.seriesId}'),
           row: row,
           onOpenPreview: () async {
-            final template = await catalogTemplateFromSeedSeries(bundle, row.seriesId);
+            final template = await catalogTemplateFromSeedSeries(
+              bundle,
+              row.seriesId,
+            );
             if (!ctx.mounted || template == null) return;
             _openCatalogSeriesPreview(
               ctx,
@@ -536,8 +578,13 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
             );
           },
           onAdd: () async {
-            final template = await catalogTemplateFromSeedSeries(bundle, row.seriesId);
-            if (template != null) await _addCatalogSeriesToShelf(notifier, template);
+            final template = await catalogTemplateFromSeedSeries(
+              bundle,
+              row.seriesId,
+            );
+            if (template != null) {
+              await _addCatalogSeriesToShelf(notifier, template);
+            }
             if (ctx.mounted) Navigator.of(ctx).pop();
           },
         );
@@ -578,6 +625,7 @@ class _SeriesSearchRow {
 
 class _SeriesCatalogSearchRowCard extends StatelessWidget {
   const _SeriesCatalogSearchRowCard({
+    super.key,
     required this.row,
     required this.onOpenPreview,
     required this.onAdd,
@@ -618,19 +666,22 @@ class _SeriesCatalogSearchRowCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                SizedBox(
-                  width: 56,
-                  height: 56,
+                CatalogImageSlot(
+                  displayMode: CatalogImageDisplayMode.seriesCoverThumb,
+                  borderRadius: BorderRadius.circular(14),
                   child: CatalogImageFromKey(
+                    key: catalogImageWidgetKey(
+                      displayMode: CatalogImageDisplayMode.seriesCoverThumb,
+                      imageKey: row.coverImageKey,
+                      identity: row.seriesId,
+                    ),
                     imageKey: row.coverImageKey,
                     name: row.seriesTitle,
                     seedKey: row.seriesId,
                     isSecret: row.hasAnySecret,
                     compact: true,
                     displayMode: CatalogImageDisplayMode.seriesCoverThumb,
-                    borderRadius: BorderRadius.circular(14),
-                    width: 56,
-                    height: 56,
+                    borderRadius: BorderRadius.zero,
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -673,7 +724,9 @@ class _SeriesCatalogSearchRowCard extends StatelessWidget {
                       Text(
                         row.brandIpLine,
                         style: textTheme.labelMedium?.copyWith(
-                          color: scheme.onSurfaceVariant.withValues(alpha: 0.68),
+                          color: scheme.onSurfaceVariant.withValues(
+                            alpha: 0.68,
+                          ),
                         ),
                       ),
                     ],
@@ -686,7 +739,10 @@ class _SeriesCatalogSearchRowCard extends StatelessWidget {
                     onTap: onAdd,
                     borderRadius: BorderRadius.circular(14),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -698,7 +754,11 @@ class _SeriesCatalogSearchRowCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 4),
-                          Icon(Icons.add_rounded, size: 20, color: scheme.primary),
+                          Icon(
+                            Icons.add_rounded,
+                            size: 20,
+                            color: scheme.primary,
+                          ),
                         ],
                       ),
                     ),
@@ -715,6 +775,7 @@ class _SeriesCatalogSearchRowCard extends StatelessWidget {
 
 class _SuggestionCard extends StatelessWidget {
   const _SuggestionCard({
+    super.key,
     required this.series,
     required this.coverImageKey,
     required this.onOpenPreview,
@@ -742,13 +803,19 @@ class _SuggestionCard extends StatelessWidget {
         child: Ink(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: series.shelfAccent.withValues(alpha: 0.42)),
+            border: Border.all(
+              color: series.shelfAccent.withValues(alpha: 0.42),
+            ),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
                 scheme.surfaceContainerLow,
-                Color.lerp(scheme.surfaceContainerLow, series.shelfAccent, 0.12)!,
+                Color.lerp(
+                  scheme.surfaceContainerLow,
+                  series.shelfAccent,
+                  0.12,
+                )!,
               ],
             ),
           ),
@@ -757,25 +824,33 @@ class _SuggestionCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                SizedBox(
-                  width: 56,
-                  height: 56,
+                CatalogImageSlot(
+                  displayMode: CatalogImageDisplayMode.seriesCoverThumb,
+                  borderRadius: BorderRadius.circular(14),
                   child: coverImageKey.isNotEmpty
                       ? CatalogImageFromKey(
+                          key: catalogImageWidgetKey(
+                            displayMode:
+                                CatalogImageDisplayMode.seriesCoverThumb,
+                            imageKey: coverImageKey,
+                            identity: series.templateId,
+                          ),
                           imageKey: coverImageKey,
                           name: series.name,
                           seedKey: series.templateId,
                           compact: true,
                           displayMode: CatalogImageDisplayMode.seriesCoverThumb,
-                          borderRadius: BorderRadius.circular(14),
-                          width: 56,
-                          height: 56,
+                          borderRadius: BorderRadius.zero,
                         )
                       : ColoredBox(
-                          color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                          color: scheme.surfaceContainerHighest.withValues(
+                            alpha: 0.5,
+                          ),
                           child: Icon(
                             Icons.auto_awesome_motion_rounded,
-                            color: scheme.onSurfaceVariant.withValues(alpha: 0.45),
+                            color: scheme.onSurfaceVariant.withValues(
+                              alpha: 0.45,
+                            ),
                           ),
                         ),
                 ),
@@ -795,7 +870,9 @@ class _SuggestionCard extends StatelessWidget {
                       Text(
                         series.ipName,
                         style: textTheme.labelLarge?.copyWith(
-                          color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
+                          color: scheme.onSurfaceVariant.withValues(
+                            alpha: 0.78,
+                          ),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -803,7 +880,9 @@ class _SuggestionCard extends StatelessWidget {
                       Text(
                         '${series.brand} · ${series.figureCount} figures',
                         style: textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant.withValues(alpha: 0.68),
+                          color: scheme.onSurfaceVariant.withValues(
+                            alpha: 0.68,
+                          ),
                           height: 1.25,
                         ),
                       ),
@@ -817,7 +896,10 @@ class _SuggestionCard extends StatelessWidget {
                     onTap: onAdd,
                     borderRadius: BorderRadius.circular(14),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -829,7 +911,11 @@ class _SuggestionCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 4),
-                          Icon(Icons.add_rounded, size: 20, color: scheme.primary),
+                          Icon(
+                            Icons.add_rounded,
+                            size: 20,
+                            color: scheme.primary,
+                          ),
                         ],
                       ),
                     ),
@@ -843,4 +929,3 @@ class _SuggestionCard extends StatelessWidget {
     );
   }
 }
-

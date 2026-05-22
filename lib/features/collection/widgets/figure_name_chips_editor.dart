@@ -130,20 +130,32 @@ class FigureNameChipsEditor extends StatelessWidget {
                 decoration: InputDecoration(
                   hintText: 'Add a figure name',
                   filled: true,
-                  fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.45),
+                  fillColor: scheme.surfaceContainerHighest.withValues(
+                    alpha: 0.45,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.4)),
+                    borderSide: BorderSide(
+                      color: scheme.outlineVariant.withValues(alpha: 0.4),
+                    ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.35)),
+                    borderSide: BorderSide(
+                      color: scheme.outlineVariant.withValues(alpha: 0.35),
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: scheme.primary.withValues(alpha: 0.55), width: 1.4),
+                    borderSide: BorderSide(
+                      color: scheme.primary.withValues(alpha: 0.55),
+                      width: 1.4,
+                    ),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                   isDense: true,
                 ),
               ),
@@ -152,8 +164,13 @@ class FigureNameChipsEditor extends StatelessWidget {
             FilledButton.tonal(
               onPressed: onAddSubmitted,
               style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
               child: const Icon(Icons.add_rounded, size: 22),
             ),
@@ -194,7 +211,9 @@ class _FigureDraftChipState extends State<_FigureDraftChip> {
   @override
   void initState() {
     super.initState();
-    _rarityController = TextEditingController(text: widget.draft.rarityLabel ?? '');
+    _rarityController = TextEditingController(
+      text: widget.draft.rarityLabel ?? '',
+    );
   }
 
   @override
@@ -279,7 +298,9 @@ class _FigureDraftChipState extends State<_FigureDraftChip> {
                           Icon(
                             Icons.edit_outlined,
                             size: 13,
-                            color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
+                            color: scheme.onSurfaceVariant.withValues(
+                              alpha: 0.5,
+                            ),
                           ),
                         ],
                       ),
@@ -290,7 +311,10 @@ class _FigureDraftChipState extends State<_FigureDraftChip> {
                 IconButton(
                   visualDensity: VisualDensity.compact,
                   padding: const EdgeInsets.all(4),
-                  constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                  constraints: const BoxConstraints(
+                    minWidth: 34,
+                    minHeight: 34,
+                  ),
                   tooltip: hasPhoto ? 'Change photo' : 'Add photo',
                   icon: Icon(
                     hasPhoto ? Icons.image_rounded : Icons.add_a_photo_outlined,
@@ -304,7 +328,10 @@ class _FigureDraftChipState extends State<_FigureDraftChip> {
                   IconButton(
                     visualDensity: VisualDensity.compact,
                     padding: const EdgeInsets.all(4),
-                    constraints: const BoxConstraints(minWidth: 32, minHeight: 34),
+                    constraints: const BoxConstraints(
+                      minWidth: 32,
+                      minHeight: 34,
+                    ),
                     tooltip: 'Remove photo',
                     icon: Icon(
                       Icons.restart_alt_rounded,
@@ -318,7 +345,10 @@ class _FigureDraftChipState extends State<_FigureDraftChip> {
                 IconButton(
                   visualDensity: VisualDensity.compact,
                   padding: const EdgeInsets.all(4),
-                  constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                  constraints: const BoxConstraints(
+                    minWidth: 34,
+                    minHeight: 34,
+                  ),
                   icon: Icon(
                     Icons.close_rounded,
                     size: 18,
@@ -369,12 +399,21 @@ class _FigureDraftChipState extends State<_FigureDraftChip> {
                     hintText: 'e.g. 1:72',
                     isDense: true,
                     filled: true,
-                    fillColor: scheme.surface.withValues(alpha: isDark ? 0.35 : 0.55),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    fillColor: scheme.surface.withValues(
+                      alpha: isDark ? 0.35 : 0.55,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.32)),
+                      borderSide: BorderSide(
+                        color: scheme.outlineVariant.withValues(alpha: 0.32),
+                      ),
                     ),
                   ),
                 ),

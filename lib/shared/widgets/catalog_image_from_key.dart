@@ -4,6 +4,30 @@ import 'package:blindbox_app/features/collection/widgets/collectible_figure_plac
 import 'package:blindbox_app/shared/widgets/catalog_resolved_image.dart';
 import 'package:flutter/material.dart';
 
+/// Stable [Key] for catalog image widgets in lists — ties [State] to [imageKey].
+Key catalogImageWidgetKey({
+  required CatalogImageDisplayMode displayMode,
+  required String imageKey,
+  String? identity,
+}) {
+  final id = identity?.trim();
+  final k = imageKey.trim();
+  if (id != null && id.isNotEmpty) {
+    return ValueKey<String>('catalog-img:$displayMode:$id:$k');
+  }
+  return ValueKey<String>('catalog-img:$displayMode:$k');
+}
+
+/// Ignores stale async resolve completions when [imageKey] changes quickly.
+@visibleForTesting
+class CatalogImageResolveCoordinator {
+  int _generation = 0;
+
+  int begin() => ++_generation;
+
+  bool shouldApply(int generation) => generation == _generation;
+}
+
 /// Resolves a catalog [imageKey] then renders via [CatalogImageDisplaySpec].
 class CatalogImageFromKey extends StatefulWidget {
   const CatalogImageFromKey({
@@ -14,7 +38,7 @@ class CatalogImageFromKey extends StatefulWidget {
     required this.displayMode,
     this.isSecret = false,
     this.compact = false,
-    this.borderRadius = const BorderRadius.all(Radius.circular(12)),
+    this.borderRadius,
     this.width,
     this.height,
   });
@@ -25,7 +49,7 @@ class CatalogImageFromKey extends StatefulWidget {
   final CatalogImageDisplayMode displayMode;
   final bool isSecret;
   final bool compact;
-  final BorderRadius borderRadius;
+  final BorderRadius? borderRadius;
   final double? width;
   final double? height;
 
@@ -44,11 +68,9 @@ class CatalogImageFromKey extends StatefulWidget {
   }) {
     final mode = series
         ? (compact
-            ? CatalogImageDisplayMode.seriesCoverThumb
-            : CatalogImageDisplayMode.seriesCoverHero)
-        : (compact
-            ? CatalogImageDisplayMode.figureThumb
-            : CatalogImageDisplayMode.figureThumb);
+              ? CatalogImageDisplayMode.seriesCoverThumb
+              : CatalogImageDisplayMode.seriesCoverHero)
+        : CatalogImageDisplayMode.figureThumb;
     return CatalogImageFromKey(
       key: key,
       imageKey: imageKey,
@@ -68,15 +90,21 @@ class CatalogImageFromKey extends StatefulWidget {
 }
 
 class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
+  final CatalogImageResolveCoordinator _resolveCoordinator =
+      CatalogImageResolveCoordinator();
+
   String? _imageRef;
   bool _loading = true;
 
-  CatalogImageDisplaySpec get _spec => CatalogImageDisplaySpec.forMode(widget.displayMode);
+  CatalogImageDisplaySpec get _spec => CatalogImageDisplaySpec.forMode(
+        widget.displayMode,
+        imageRef: _imageRef ?? widget.imageKey,
+      );
 
   @override
   void initState() {
     super.initState();
-    _resolve();
+    _startResolve();
   }
 
   @override
@@ -84,19 +112,21 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.imageKey != widget.imageKey ||
         oldWidget.displayMode != widget.displayMode) {
-      _resolve();
+      _startResolve();
     }
   }
 
   bool get _isSeriesMode => switch (widget.displayMode) {
-        CatalogImageDisplayMode.seriesCoverThumb ||
-        CatalogImageDisplayMode.seriesCoverHero ||
-        CatalogImageDisplayMode.marketCatalogThumb => true,
-        _ => false,
-      };
+    CatalogImageDisplayMode.seriesCoverThumb ||
+    CatalogImageDisplayMode.seriesCoverHero ||
+    CatalogImageDisplayMode.marketCatalogThumb => true,
+    _ => false,
+  };
 
-  Future<void> _resolve() async {
+  void _startResolve() {
+    final generation = _resolveCoordinator.begin();
     final key = widget.imageKey.trim();
+
     if (key.isEmpty) {
       if (!mounted) return;
       setState(() {
@@ -106,12 +136,28 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
       return;
     }
 
-    // Bundled assets: instant paint without blocking on Storage.
+    // Drop stale art immediately so recycled list cells never flash the prior series.
+    if (mounted) {
+      setState(() {
+        _loading = true;
+        _imageRef = null;
+      });
+    }
+
+    _resolve(generation: generation, imageKey: key);
+  }
+
+  Future<void> _resolve({
+    required int generation,
+    required String imageKey,
+  }) async {
     final bundled = _isSeriesMode
-        ? await CatalogImageResolver.resolveSeriesAsset(key)
-        : await CatalogImageResolver.resolveFigureAsset(key);
+        ? await CatalogImageResolver.resolveSeriesAsset(imageKey)
+        : await CatalogImageResolver.resolveFigureAsset(imageKey);
+
+    if (!_resolveCoordinator.shouldApply(generation) || !mounted) return;
+
     if (bundled != null && bundled.isNotEmpty) {
-      if (!mounted) return;
       setState(() {
         _imageRef = bundled;
         _loading = false;
@@ -119,16 +165,17 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
       return;
     }
 
-    if (!mounted) return;
     setState(() {
       _loading = true;
       _imageRef = null;
     });
 
     final ref = _isSeriesMode
-        ? await CatalogImageResolver.resolveSeriesDisplayRef(key)
-        : await CatalogImageResolver.resolveFigureDisplayRef(key);
-    if (!mounted) return;
+        ? await CatalogImageResolver.resolveSeriesDisplayRef(imageKey)
+        : await CatalogImageResolver.resolveFigureDisplayRef(imageKey);
+
+    if (!_resolveCoordinator.shouldApply(generation) || !mounted) return;
+
     setState(() {
       _imageRef = ref;
       _loading = false;
@@ -137,11 +184,17 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
 
   @override
   Widget build(BuildContext context) {
+    final radius =
+        widget.borderRadius ??
+        CatalogImageDisplaySpec.borderRadiusFor(widget.displayMode);
+
     if (_loading) {
       return ClipRRect(
-        borderRadius: widget.borderRadius,
+        borderRadius: radius,
         child: ColoredBox(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
+          color: Theme.of(
+            context,
+          ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
           child: const Center(
             child: SizedBox(
               width: 20,
@@ -154,7 +207,7 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
     }
     if (_imageRef == null || _imageRef!.isEmpty) {
       return ClipRRect(
-        borderRadius: widget.borderRadius,
+        borderRadius: radius,
         child: CollectibleFigurePlaceholder(
           name: widget.name,
           seedKey: widget.seedKey,
@@ -164,13 +217,16 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
       );
     }
     return CatalogResolvedImage(
+      key: ValueKey<String>(
+        'catalog-resolved:${widget.imageKey.trim()}:$_imageRef',
+      ),
       imageRef: _imageRef!,
       spec: _spec,
       name: widget.name,
       seedKey: widget.seedKey,
       isSecret: widget.isSecret,
       compact: widget.compact,
-      borderRadius: widget.borderRadius,
+      borderRadius: radius,
       width: widget.width,
       height: widget.height,
     );

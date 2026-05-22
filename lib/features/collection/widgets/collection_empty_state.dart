@@ -26,8 +26,12 @@ class CollectionEmptyState extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  scheme.secondaryContainer.withValues(alpha: isDark ? 0.35 : 0.65),
-                  scheme.tertiaryContainer.withValues(alpha: isDark ? 0.22 : 0.45),
+                  scheme.secondaryContainer.withValues(
+                    alpha: isDark ? 0.35 : 0.65,
+                  ),
+                  scheme.tertiaryContainer.withValues(
+                    alpha: isDark ? 0.22 : 0.45,
+                  ),
                 ],
               ),
               boxShadow: [

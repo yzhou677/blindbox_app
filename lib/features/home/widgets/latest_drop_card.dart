@@ -49,7 +49,7 @@ class LatestDropCard extends StatelessWidget {
                 AspectRatio(
                   aspectRatio: _kImageAspect,
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 6),
                     child: DecoratedBox(
                       decoration: BoxDecoration(
                         borderRadius: CollectibleShape.matRadius,
@@ -68,20 +68,12 @@ class LatestDropCard extends StatelessWidget {
                           color: accent.withValues(alpha: theme.brightness == Brightness.dark ? 0.11 : 0.2),
                         ),
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(10),
-                        child: ClipRRect(
+                      child: ClipRRect(
+                        borderRadius: CollectibleShape.insetRadius,
+                        child: SeriesReleaseCoverImage(
+                          release: release,
+                          heroTag: SeriesReleaseCoverImage.heroTagFor(release),
                           borderRadius: CollectibleShape.insetRadius,
-                          child: ColoredBox(
-                            color: scheme.surface.withValues(
-                              alpha: theme.brightness == Brightness.dark ? 0.82 : 0.72,
-                            ),
-                            child: SeriesReleaseCoverImage(
-                              release: release,
-                              heroTag: SeriesReleaseCoverImage.heroTagFor(release),
-                              borderRadius: CollectibleShape.insetRadius,
-                            ),
-                          ),
                         ),
                       ),
                     ),

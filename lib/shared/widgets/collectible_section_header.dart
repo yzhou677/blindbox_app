@@ -26,7 +26,8 @@ class CollectibleSectionHeader extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    final lead = titleAccessory ??
+    final lead =
+        titleAccessory ??
         Icon(
           Icons.auto_awesome_rounded,
           size: 15,
@@ -43,16 +44,8 @@ class CollectibleSectionHeader extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: lead,
-              ),
-              Expanded(
-                child: Text(
-                  title,
-                  style: textTheme.titleMedium,
-                ),
-              ),
+              Padding(padding: const EdgeInsets.only(right: 8), child: lead),
+              Expanded(child: Text(title, style: textTheme.titleMedium)),
               if (trailing case final t?) ...[
                 const SizedBox(width: 8),
                 Flexible(
@@ -69,7 +62,9 @@ class CollectibleSectionHeader extends StatelessWidget {
             const SizedBox(height: FeedRhythm.sectionTitleToSubtitle),
             Text(
               d,
-              style: CollectibleTokens.of(context).supportiveBody(textTheme, scheme),
+              style: CollectibleTokens.of(
+                context,
+              ).supportiveBody(textTheme, scheme),
             ),
           ],
         ],

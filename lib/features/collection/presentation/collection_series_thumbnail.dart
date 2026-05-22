@@ -37,9 +37,7 @@ class CollectionSeriesThumbnail extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: r,
-          border: Border.all(
-            color: series.shelfAccent.withValues(alpha: 0.28),
-          ),
+          border: Border.all(color: series.shelfAccent.withValues(alpha: 0.28)),
           color: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
         ),
         child: ClipRRect(

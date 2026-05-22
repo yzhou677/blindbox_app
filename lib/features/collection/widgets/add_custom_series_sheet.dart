@@ -5,14 +5,15 @@ import 'package:blindbox_app/features/collection/widgets/figure_name_chips_edito
 import 'package:blindbox_app/features/collection/widgets/shelf_gallery_pick.dart';
 import 'package:flutter/material.dart';
 
-typedef CustomSeriesFormSubmit = void Function({
-  required String seriesName,
-  String? brand,
-  String? ipDisplayName,
-  required List<CustomFigureDraft> figures,
-  String? customCoverImageUri,
-  String? notes,
-});
+typedef CustomSeriesFormSubmit =
+    void Function({
+      required String seriesName,
+      String? brand,
+      String? ipDisplayName,
+      required List<CustomFigureDraft> figures,
+      String? customCoverImageUri,
+      String? notes,
+    });
 
 /// Shelf-first custom series — chips for figures, light fields for the rest.
 class AddCustomSeriesSheet extends StatefulWidget {
@@ -132,9 +133,9 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
   void _save() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_figures.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Add at least one figure')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Add at least one figure')));
       return;
     }
     widget.onSubmit(
@@ -196,7 +197,9 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
                       Text(
                         'Give the series a name, tag your pulls, and they’ll land on your shelf like the rest.',
                         style: textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
+                          color: scheme.onSurfaceVariant.withValues(
+                            alpha: 0.88,
+                          ),
                           height: 1.35,
                         ),
                       ),
@@ -232,11 +235,16 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
                         decoration: InputDecoration(
                           hintText: 'e.g. The Other One',
                           filled: true,
-                          fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                          fillColor: scheme.surfaceContainerHighest.withValues(
+                            alpha: 0.35,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                         ),
                         validator: (v) {
-                          if (v == null || v.trim().isEmpty) return 'Add a series name';
+                          if (v == null || v.trim().isEmpty)
+                            return 'Add a series name';
                           return null;
                         },
                       ),
@@ -247,8 +255,12 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
                         decoration: InputDecoration(
                           hintText: 'Brand (optional)',
                           filled: true,
-                          fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                          fillColor: scheme.surfaceContainerHighest.withValues(
+                            alpha: 0.35,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -258,8 +270,12 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
                         decoration: InputDecoration(
                           hintText: 'IP / universe (optional)',
                           filled: true,
-                          fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                          fillColor: scheme.surfaceContainerHighest.withValues(
+                            alpha: 0.35,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 22),
@@ -283,8 +299,12 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
                         decoration: InputDecoration(
                           hintText: 'Shelf note',
                           filled: true,
-                          fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                          fillColor: scheme.surfaceContainerHighest.withValues(
+                            alpha: 0.35,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                         ),
                       ),
                     ],
@@ -296,7 +316,9 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
                 onPressed: _save,
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
                 child: const Text('Place on shelf'),
               ),

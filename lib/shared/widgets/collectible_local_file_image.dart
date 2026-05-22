@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:blindbox_app/features/catalog/presentation/catalog_aspect_image.dart';
 import 'package:blindbox_app/features/collection/widgets/collectible_figure_placeholder.dart';
 import 'package:flutter/material.dart';
 
@@ -9,7 +10,9 @@ final Set<String> _loggedLocalThumbPaths = <String>{};
 void _debugLogLocalFailureOnce(String path, String reason) {
   if (_loggedLocalThumbPaths.contains(path)) return;
   _loggedLocalThumbPaths.add(path);
-  debugPrint('CollectibleThumbImage: local shelf media unavailable — $reason — "$path"');
+  debugPrint(
+    'CollectibleThumbImage: local shelf media unavailable — $reason — "$path"',
+  );
 }
 
 /// Local file image for mobile/desktop/native embedding (not web).
@@ -57,10 +60,12 @@ class _CollectibleLocalFileImage extends StatefulWidget {
   final BorderRadius borderRadius;
 
   @override
-  State<_CollectibleLocalFileImage> createState() => _CollectibleLocalFileImageState();
+  State<_CollectibleLocalFileImage> createState() =>
+      _CollectibleLocalFileImageState();
 }
 
-class _CollectibleLocalFileImageState extends State<_CollectibleLocalFileImage> {
+class _CollectibleLocalFileImageState
+    extends State<_CollectibleLocalFileImage> {
   /// After true, only placeholder is built (no [Image.file] retry on rebuild).
   bool _usePlaceholderOnly = false;
 
@@ -119,13 +124,16 @@ class _CollectibleLocalFileImageState extends State<_CollectibleLocalFileImage> 
       );
     }
 
+    CatalogAspectImage.assertAspectPreservingFit(widget.fit);
     return ClipRRect(
       borderRadius: widget.borderRadius,
-      child: Image.file(
-        File(widget.filePath),
+      child: CatalogAspectImage.coverFile(
+        file: File(widget.filePath),
         fit: widget.fit,
         errorBuilder: (context, error, stackTrace) {
-          WidgetsBinding.instance.addPostFrameCallback((_) => _onDecodeFailed(error));
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => _onDecodeFailed(error),
+          );
           return CollectibleFigurePlaceholder(
             name: widget.name,
             seedKey: widget.seedKey,

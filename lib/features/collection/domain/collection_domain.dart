@@ -126,7 +126,8 @@ class ShelfSeries {
   bool get isCustomLocal => catalogTemplateId == null;
 
   /// Latest-drops style import (mock `drop-*` template keys).
-  bool get isDropImport => catalogTemplateId != null && catalogTemplateId!.startsWith('drop-');
+  bool get isDropImport =>
+      catalogTemplateId != null && catalogTemplateId!.startsWith('drop-');
 }
 
 /// Display + styling helpers for [ShelfFigure] rarity fields.
@@ -194,19 +195,12 @@ class ShelfFigure {
 }
 
 /// User progress for one figure slot (wishlist → owned → none); mutually exclusive.
-enum FigureCollectionState {
-  none,
-  wishlist,
-  owned,
-}
+enum FigureCollectionState { none, wishlist, owned }
 
 /// Runtime ownership for one shelf figure id ([ShelfFigure.id] instance key).
 @immutable
 class TrackedFigure {
-  const TrackedFigure({
-    required this.figureId,
-    required this.state,
-  });
+  const TrackedFigure({required this.figureId, required this.state});
 
   final String figureId;
   final FigureCollectionState state;
@@ -215,10 +209,7 @@ class TrackedFigure {
   bool get wishlist => state == FigureCollectionState.wishlist;
 
   TrackedFigure copyWith({FigureCollectionState? state}) {
-    return TrackedFigure(
-      figureId: figureId,
-      state: state ?? this.state,
-    );
+    return TrackedFigure(figureId: figureId, state: state ?? this.state);
   }
 }
 
@@ -235,10 +226,14 @@ class SeriesProgressCounts {
   final int wishlist;
   final int missing;
 
-  double completion(int total) => total <= 0 ? 0 : (owned / total).clamp(0.0, 1.0);
+  double completion(int total) =>
+      total <= 0 ? 0 : (owned / total).clamp(0.0, 1.0);
 }
 
-SeriesProgressCounts progressForSeries(ShelfSeries series, Map<String, TrackedFigure> states) {
+SeriesProgressCounts progressForSeries(
+  ShelfSeries series,
+  Map<String, TrackedFigure> states,
+) {
   var o = 0;
   var w = 0;
   var m = 0;
@@ -346,10 +341,8 @@ class CollectionSnapshot {
   final List<ShelfSeries> shelfSeries;
   final Map<String, TrackedFigure> figureStates;
 
-  static CollectionSnapshot emptyTest() => const CollectionSnapshot(
-        shelfSeries: [],
-        figureStates: {},
-      );
+  static CollectionSnapshot emptyTest() =>
+      const CollectionSnapshot(shelfSeries: [], figureStates: {});
 
   int get trackedSeriesCount => shelfSeries.length;
 
@@ -390,13 +383,15 @@ class CollectionSnapshot {
   bool get isWarmStart => totalOwnedFigures == 0 && totalWishlistFigures == 0;
 
   TrackedFigure trackedOrDefault(String figureId) {
-    return figureStates[figureId] ?? TrackedFigure(figureId: figureId, state: FigureCollectionState.none);
+    return figureStates[figureId] ??
+        TrackedFigure(figureId: figureId, state: FigureCollectionState.none);
   }
 
   /// True if this template (by stable catalog / drop id) already lives on the shelf.
   bool hasTemplateOnShelf(String catalogSeriesTemplateId) {
     for (final s in shelfSeries) {
-      if (s.catalogTemplateId == catalogSeriesTemplateId || s.id == catalogSeriesTemplateId) {
+      if (s.catalogTemplateId == catalogSeriesTemplateId ||
+          s.id == catalogSeriesTemplateId) {
         return true;
       }
     }

@@ -44,7 +44,10 @@ abstract final class CollectionSnapshotCodec {
         if (tf.state == FigureCollectionState.none) continue;
         figureStates[id] = tf;
       }
-      return CollectionSnapshot(shelfSeries: shelfSeries, figureStates: figureStates);
+      return CollectionSnapshot(
+        shelfSeries: shelfSeries,
+        figureStates: figureStates,
+      );
     } catch (_) {
       return null;
     }
@@ -79,7 +82,8 @@ abstract final class CollectionSnapshotCodec {
     final displayName = (m['displayName'] as String?) ?? (m['name'] as String?);
     final brand = m['brand'] as String?;
     final ipName = m['ipName'] as String?;
-    if (id == null || displayName == null || brand == null || ipName == null) return null;
+    if (id == null || displayName == null || brand == null || ipName == null)
+      return null;
     final accent = _colorFromArgb(m['shelfAccentArgb']);
     if (accent == null) return null;
     final figsRaw = m['figures'];
@@ -90,9 +94,11 @@ abstract final class CollectionSnapshotCodec {
       if (f == null) return null;
       figures.add(f);
     }
-    final brandId = (m['brandId'] as String?) ?? (m['taxonomyBrandId'] as String?);
+    final brandId =
+        (m['brandId'] as String?) ?? (m['taxonomyBrandId'] as String?);
     final ipId = (m['ipId'] as String?) ?? (m['taxonomyIpId'] as String?);
-    final imageKey = (m['imageKey'] as String?) ?? (m['catalogTemplateId'] as String?);
+    final imageKey =
+        (m['imageKey'] as String?) ?? (m['catalogTemplateId'] as String?);
     return ShelfSeries(
       id: id,
       name: displayName,
@@ -138,7 +144,11 @@ abstract final class CollectionSnapshotCodec {
 
     final rarityLabel = m['rarityLabel'] as String?;
     final legacyRarity = m['rarity'] as String?;
-    final migratedLabel = _migrateRarityLabel(rarityLabel, legacyRarity, isSecret);
+    final migratedLabel = _migrateRarityLabel(
+      rarityLabel,
+      legacyRarity,
+      isSecret,
+    );
     final rarity = legacyRarity ?? _rarityLine(isSecret, migratedLabel);
 
     return ShelfFigure(
@@ -157,11 +167,16 @@ abstract final class CollectionSnapshotCodec {
     );
   }
 
-  static String? _migrateRarityLabel(String? rarityLabel, String? legacyRarity, bool isSecret) {
+  static String? _migrateRarityLabel(
+    String? rarityLabel,
+    String? legacyRarity,
+    bool isSecret,
+  ) {
     final label = rarityLabel?.trim();
     if (label != null && label.isNotEmpty) return label;
     final legacy = legacyRarity?.trim();
-    if (legacy != null && RegExp(r'^\d+\s*:\s*\d+\s*$').hasMatch(legacy)) return legacy;
+    if (legacy != null && RegExp(r'^\d+\s*:\s*\d+\s*$').hasMatch(legacy))
+      return legacy;
     return null;
   }
 
@@ -185,11 +200,25 @@ abstract final class CollectionSnapshotCodec {
       final o = raw['owned'] == true;
       final w = raw['wishlist'] == true;
       if (o && w) {
-        return TrackedFigure(figureId: figureId, state: FigureCollectionState.owned);
+        return TrackedFigure(
+          figureId: figureId,
+          state: FigureCollectionState.owned,
+        );
       }
-      if (o) return TrackedFigure(figureId: figureId, state: FigureCollectionState.owned);
-      if (w) return TrackedFigure(figureId: figureId, state: FigureCollectionState.wishlist);
-      return TrackedFigure(figureId: figureId, state: FigureCollectionState.none);
+      if (o)
+        return TrackedFigure(
+          figureId: figureId,
+          state: FigureCollectionState.owned,
+        );
+      if (w)
+        return TrackedFigure(
+          figureId: figureId,
+          state: FigureCollectionState.wishlist,
+        );
+      return TrackedFigure(
+        figureId: figureId,
+        state: FigureCollectionState.none,
+      );
     }
     return null;
   }

@@ -15,12 +15,15 @@ abstract final class CollectionProgressVoice {
     final missing = progress.missing;
     final wish = progress.wishlist;
     final secrets = series.figures.where((f) => f.isSecret).toList();
-    final ownedSecrets = secrets.where((f) => figureStates[f.id]?.owned == true).length;
+    final ownedSecrets = secrets
+        .where((f) => figureStates[f.id]?.owned == true)
+        .length;
     final allSecretsHome = secrets.isNotEmpty && ownedSecrets == secrets.length;
 
     if (owned >= total) {
       if (allSecretsHome) return 'Complete — chase home';
-      if (secrets.isNotEmpty && ownedSecrets > 0) return 'Complete — with a chase on shelf';
+      if (secrets.isNotEmpty && ownedSecrets > 0)
+        return 'Complete — with a chase on shelf';
       return 'Complete on your shelf';
     }
 
@@ -58,7 +61,9 @@ abstract final class CollectionProgressVoice {
     final missing = progress.missing;
     final wish = progress.wishlist;
     final secrets = series.figures.where((f) => f.isSecret).toList();
-    final ownedSecrets = secrets.where((f) => figureStates[f.id]?.owned == true).length;
+    final ownedSecrets = secrets
+        .where((f) => figureStates[f.id]?.owned == true)
+        .length;
 
     if (owned >= total) {
       return 'Every slot in this series is filled.';
@@ -71,7 +76,8 @@ abstract final class CollectionProgressVoice {
       final openChase = secrets.length - ownedSecrets;
       if (openChase > 0) parts.add('chase still hiding');
     }
-    if (parts.isEmpty) return 'Tap a figure: collected → wish list → open slot.';
+    if (parts.isEmpty)
+      return 'Tap a figure: collected → wish list → open slot.';
     return parts.join(' · ');
   }
 

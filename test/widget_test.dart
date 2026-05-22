@@ -12,14 +12,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 List<Override> _blindboxTestOverrides() => [
-      homeFeedSnapshotProvider.overrideWith(
-        (_) async => HomeFeedSnapshot(
-          latest: mockSeriesReleases,
-          trending: mockSeriesReleases.skip(1).take(4).toList(growable: false),
-        ),
-      ),
-      seriesReleaseLookupProvider.overrideWithValue(mockSeriesReleaseByDropId),
-    ];
+  homeFeedSnapshotProvider.overrideWith(
+    (_) async => HomeFeedSnapshot(
+      latest: mockSeriesReleases,
+      trending: mockSeriesReleases.skip(1).take(4).toList(growable: false),
+    ),
+  ),
+  seriesReleaseLookupProvider.overrideWithValue(mockSeriesReleaseByDropId),
+];
 
 final class EmptyTestCollectionNotifier extends CollectionNotifier {
   @override
@@ -48,7 +48,9 @@ void main() {
     expect(find.text('Trending series'), findsOneWidget);
   });
 
-  testWidgets('Collection tab shows series-first shelf and summary', (WidgetTester tester) async {
+  testWidgets('Collection tab shows series-first shelf and summary', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: _blindboxTestOverrides(),
@@ -65,20 +67,67 @@ void main() {
     expect(find.text('My collection'), findsWidgets);
     expect(find.text('In collection'), findsOneWidget);
     expect(find.text('5'), findsOneWidget);
-    expect(find.byKey(const Key('collection_header_add_series')), findsOneWidget);
+    expect(
+      find.byKey(const Key('collection_header_add_series')),
+      findsOneWidget,
+    );
     expect(find.text('All'), findsOneWidget);
     expect(find.text('The Other One'), findsOneWidget);
 
     await tester.tap(find.text('Dreams Inc.'));
     await tester.pump(const Duration(milliseconds: 200));
-    expect(find.text('Nothing on your shelf for this brand yet.'), findsOneWidget);
+    expect(
+      find.text('Nothing on your shelf for this brand yet.'),
+      findsOneWidget,
+    );
 
     await tester.tap(find.text('All'));
     await tester.pump(const Duration(milliseconds: 200));
     expect(find.text('The Other One'), findsOneWidget);
   });
 
-  testWidgets('Market tab shows search and trending', (WidgetTester tester) async {
+  testWidgets('Add series sheet dismisses when leaving Collection tab', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: _blindboxTestOverrides(),
+        child: const BlindboxApp(),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    await tester.tap(find.text('Collection'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+
+    await tester.tap(find.byKey(const Key('collection_header_add_series')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.text('Add a series'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.home_outlined));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.text('Add a series'), findsNothing);
+
+    await tester.tap(find.text('Collection'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.text('Add a series'), findsNothing);
+    expect(find.text('My collection'), findsWidgets);
+
+    // Flush catalog background refresh timer started by Add sheet.
+    await tester.pump(const Duration(seconds: 13));
+  });
+
+  testWidgets('Market tab shows search and trending', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: _blindboxTestOverrides(),
@@ -102,11 +151,15 @@ void main() {
     expect(find.text('THE MONSTERS'), findsWidgets);
   });
 
-  testWidgets('Collection empty state is polished', (WidgetTester tester) async {
+  testWidgets('Collection empty state is polished', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          collectionNotifierProvider.overrideWith(EmptyTestCollectionNotifier.new),
+          collectionNotifierProvider.overrideWith(
+            EmptyTestCollectionNotifier.new,
+          ),
         ],
         child: MaterialApp(
           theme: AppTheme.light(),

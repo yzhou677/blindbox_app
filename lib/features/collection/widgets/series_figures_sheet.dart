@@ -29,10 +29,12 @@ class SeriesFiguresSheet extends ConsumerWidget {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final progress = progressForSeries(series, snap.figureStates);
-    final isComplete = series.figureCount > 0 && progress.owned >= series.figureCount;
+    final isComplete =
+        series.figureCount > 0 && progress.owned >= series.figureCount;
     final secrets = series.figures.where((f) => f.isSecret).toList();
     final chasesHome =
-        secrets.isNotEmpty && secrets.every((f) => snap.trackedOrDefault(f.id).owned);
+        secrets.isNotEmpty &&
+        secrets.every((f) => snap.trackedOrDefault(f.id).owned);
 
     return SafeArea(
       child: Padding(
@@ -125,13 +127,20 @@ class _SeriesCompleteBanner extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         gradient: LinearGradient(
           colors: [
-            Color.lerp(scheme.primaryContainer, const Color(0xFFFFF6E8), isDark ? 0.15 : 0.45)!
-                .withValues(alpha: isDark ? 0.5 : 0.72),
+            Color.lerp(
+              scheme.primaryContainer,
+              const Color(0xFFFFF6E8),
+              isDark ? 0.15 : 0.45,
+            )!.withValues(alpha: isDark ? 0.5 : 0.72),
             scheme.surfaceContainerHighest.withValues(alpha: 0.35),
           ],
         ),
         border: Border.all(
-          color: Color.lerp(scheme.primary, const Color(0xFFE8C547), 0.3)!.withValues(alpha: 0.45),
+          color: Color.lerp(
+            scheme.primary,
+            const Color(0xFFE8C547),
+            0.3,
+          )!.withValues(alpha: 0.45),
         ),
         boxShadow: [
           BoxShadow(
@@ -156,7 +165,9 @@ class _SeriesCompleteBanner extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    chasesHome ? 'Whole series — chase home' : 'This series feels complete',
+                    chasesHome
+                        ? 'Whole series — chase home'
+                        : 'This series feels complete',
                     style: textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                       letterSpacing: -0.1,

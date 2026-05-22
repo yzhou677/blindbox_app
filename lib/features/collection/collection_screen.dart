@@ -2,6 +2,7 @@ import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_series_filter.dart';
 import 'package:blindbox_app/features/collection/widgets/add_custom_series_sheet.dart';
 import 'package:blindbox_app/features/collection/widgets/add_to_collection_sheet.dart';
@@ -16,6 +17,7 @@ import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
 import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 class CollectionScreen extends ConsumerStatefulWidget {
   const CollectionScreen({super.key});
@@ -28,9 +30,50 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
   /// Presentation-only brand facet; aligns with [MarketTaxonomyIds.anyBrand] / brand ids.
   String _brandFilterId = MarketTaxonomyIds.anyBrand;
 
+  VoidCallback? _routerListener;
+
+  @override
+  void initState() {
+    super.initState();
+    CollectionModalOverlayRegistry.instance.register(_dismissBranchOverlays);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_routerListener != null) return;
+    final router = GoRouter.maybeOf(context);
+    if (router == null) return;
+    _routerListener = () {
+      final path = router.state.uri.path;
+      if (!path.startsWith('/collection') && mounted) {
+        _dismissBranchOverlays();
+      }
+    };
+    router.routerDelegate.addListener(_routerListener!);
+  }
+
+  void _dismissBranchOverlays() {
+    if (!mounted) return;
+    dismissCollectionModalOverlays(context);
+  }
+
+  @override
+  void dispose() {
+    CollectionModalOverlayRegistry.instance.unregister();
+    if (_routerListener != null) {
+      try {
+        GoRouter.maybeOf(context)?.routerDelegate.removeListener(_routerListener!);
+      } catch (_) {
+        // Context may already be unmounted.
+      }
+    }
+    super.dispose();
+  }
+
   void _openFiguresSheet(BuildContext context, String seriesId) {
     final h = MediaQuery.sizeOf(context).height * 0.74;
-    showModalBottomSheet<void>(
+    showCollectionModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       showDragHandle: false,
@@ -48,7 +91,11 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     );
   }
 
-  Future<void> _confirmRemoveSeries(BuildContext context, String id, String name) async {
+  Future<void> _confirmRemoveSeries(
+    BuildContext context,
+    String id,
+    String name,
+  ) async {
     final go = await showDialog<bool>(
       context: context,
       builder: (ctx) {
@@ -56,8 +103,14 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
           title: const Text('Remove series?'),
           content: Text('“$name” will leave your shelf.'),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Remove')),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Remove'),
+            ),
           ],
         );
       },
@@ -68,7 +121,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
   }
 
   void _openAddCustom(BuildContext context) {
-    showModalBottomSheet<void>(
+    showCollectionModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -78,30 +131,33 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
         child: AddCustomSeriesSheet(
-          onSubmit: ({
-            required String seriesName,
-            String? brand,
-            String? ipDisplayName,
-            required List<CustomFigureDraft> figures,
-            String? customCoverImageUri,
-            String? notes,
-          }) {
-            ref.read(collectionNotifierProvider.notifier).addCustomSeries(
-                  seriesName: seriesName,
-                  brand: brand,
-                  ipDisplayName: ipDisplayName,
-                  figures: figures,
-                  customCoverImageUri: customCoverImageUri,
-                  notes: notes,
-                );
-          },
+          onSubmit:
+              ({
+                required String seriesName,
+                String? brand,
+                String? ipDisplayName,
+                required List<CustomFigureDraft> figures,
+                String? customCoverImageUri,
+                String? notes,
+              }) {
+                ref
+                    .read(collectionNotifierProvider.notifier)
+                    .addCustomSeries(
+                      seriesName: seriesName,
+                      brand: brand,
+                      ipDisplayName: ipDisplayName,
+                      figures: figures,
+                      customCoverImageUri: customCoverImageUri,
+                      notes: notes,
+                    );
+              },
         ),
       ),
     );
   }
 
   void _openAddToCollection(BuildContext context) {
-    showModalBottomSheet<void>(
+    showCollectionModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -218,7 +274,12 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                   foregroundColor: scheme.primary.withValues(alpha: 0.78),
                   shadowColor: Colors.transparent,
                   surfaceTintColor: Colors.transparent,
-                  padding: const EdgeInsetsDirectional.only(start: 8, end: 10, top: 8, bottom: 8),
+                  padding: const EdgeInsetsDirectional.only(
+                    start: 8,
+                    end: 10,
+                    top: 8,
+                    bottom: 8,
+                  ),
                   minimumSize: const Size(48, 40),
                   tapTargetSize: MaterialTapTargetSize.padded,
                   visualDensity: VisualDensity.compact,
@@ -248,8 +309,10 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               ),
               child: Builder(
                 builder: (context) {
-                  final visible =
-                      shelfSeriesVisibleForBrandFilter(snap.shelfSeries, _brandFilterId);
+                  final visible = shelfSeriesVisibleForBrandFilter(
+                    snap.shelfSeries,
+                    _brandFilterId,
+                  );
                   final scheme = Theme.of(context).colorScheme;
                   final textTheme = Theme.of(context).textTheme;
                   if (visible.isEmpty) {
@@ -258,7 +321,9 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                       child: Text(
                         'Nothing on your shelf for this brand yet.',
                         style: textTheme.bodyMedium?.copyWith(
-                          color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
+                          color: scheme.onSurfaceVariant.withValues(
+                            alpha: 0.78,
+                          ),
                           height: 1.4,
                         ),
                       ),
@@ -272,7 +337,8 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                           progress: progressForSeries(s, snap.figureStates),
                           figureStates: snap.figureStates,
                           onOpen: () => _openFiguresSheet(context, s.id),
-                          onRemove: () => _confirmRemoveSeries(context, s.id, s.name),
+                          onRemove: () =>
+                              _confirmRemoveSeries(context, s.id, s.name),
                         ),
                     ],
                   );

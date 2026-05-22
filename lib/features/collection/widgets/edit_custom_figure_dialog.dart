@@ -64,8 +64,12 @@ class _EditCustomFigureDialogState extends State<EditCustomFigureDialog> {
               decoration: InputDecoration(
                 labelText: 'Display name',
                 filled: true,
-                fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                fillColor: scheme.surfaceContainerHighest.withValues(
+                  alpha: 0.5,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -73,7 +77,9 @@ class _EditCustomFigureDialogState extends State<EditCustomFigureDialog> {
               contentPadding: EdgeInsets.zero,
               title: Text(
                 'Secret figure',
-                style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                style: textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               subtitle: Text(
                 'Chase / variant with optional ratio',
@@ -95,8 +101,12 @@ class _EditCustomFigureDialogState extends State<EditCustomFigureDialog> {
                   helperText: 'Chase ratio — optional',
                   helperMaxLines: 1,
                   filled: true,
-                  fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                  fillColor: scheme.surfaceContainerHighest.withValues(
+                    alpha: 0.5,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
               ),
             ],

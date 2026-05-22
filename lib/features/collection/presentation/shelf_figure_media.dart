@@ -16,7 +16,11 @@ import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 /// Series shelf covers: [seriesCoverRef] (user cover only) or [CollectionSeriesThumbnail]
 /// via [ShelfSeries.catalogTemplateId] → `catalog/series/<imageKey>.<ext>` — never figure art.
 abstract final class ShelfFigureMedia {
-  static String? figureDisplayRef(ShelfFigure figure, ShelfSeries series, {bool includeSeriesCoverFallback = true}) {
+  static String? figureDisplayRef(
+    ShelfFigure figure,
+    ShelfSeries series, {
+    bool includeSeriesCoverFallback = true,
+  }) {
     final local = figure.localImageUri?.trim();
     if (local != null && local.isNotEmpty) return local;
     if (includeSeriesCoverFallback) {
@@ -36,7 +40,9 @@ abstract final class ShelfFigureMedia {
   }
 
   /// True when [ref] should be loaded as a device file (not `assets/`, not http).
-  static bool isDeviceLocalRef(String? ref) => DeviceLocalImageRef.looksLikeDevicePath(ref);
+  static bool isDeviceLocalRef(String? ref) =>
+      DeviceLocalImageRef.looksLikeDevicePath(ref);
 
-  static String normalizeDevicePath(String ref) => DeviceLocalImageRef.normalizeToFilePath(ref);
+  static String normalizeDevicePath(String ref) =>
+      DeviceLocalImageRef.normalizeToFilePath(ref);
 }

@@ -45,13 +45,19 @@ class CustomSeriesCoverSlot extends StatelessWidget {
               height: 120,
               decoration: BoxDecoration(
                 borderRadius: radius,
-                border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.38)),
+                border: Border.all(
+                  color: scheme.outlineVariant.withValues(alpha: 0.38),
+                ),
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
                     scheme.surfaceContainerLow,
-                    Color.lerp(scheme.surfaceContainerLow, scheme.secondaryContainer, 0.22)!,
+                    Color.lerp(
+                      scheme.surfaceContainerLow,
+                      scheme.secondaryContainer,
+                      0.22,
+                    )!,
                   ],
                 ),
               ),
@@ -84,7 +90,9 @@ class CustomSeriesCoverSlot extends StatelessWidget {
                             child: Text(
                               'Tap to choose a cosy cover photo',
                               style: textTheme.bodySmall?.copyWith(
-                                color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
+                                color: scheme.onSurfaceVariant.withValues(
+                                  alpha: 0.88,
+                                ),
                                 height: 1.3,
                               ),
                               textAlign: TextAlign.center,
@@ -102,10 +110,16 @@ class CustomSeriesCoverSlot extends StatelessWidget {
                         shape: const CircleBorder(),
                         child: IconButton(
                           tooltip: 'Remove cover',
-                          icon: Icon(Icons.close_rounded, size: 20, color: scheme.onSurfaceVariant),
+                          icon: Icon(
+                            Icons.close_rounded,
+                            size: 20,
+                            color: scheme.onSurfaceVariant,
+                          ),
                           onPressed: onClearTap,
                           visualDensity: VisualDensity.compact,
-                          style: IconButton.styleFrom(padding: const EdgeInsets.all(6)),
+                          style: IconButton.styleFrom(
+                            padding: const EdgeInsets.all(6),
+                          ),
                         ),
                       ),
                     ),

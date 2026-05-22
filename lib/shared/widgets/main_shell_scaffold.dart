@@ -1,3 +1,4 @@
+import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -25,6 +26,14 @@ class MainShellScaffold extends StatelessWidget {
     ),
   ];
 
+  void _onDestinationSelected(BuildContext context, int index) {
+    if (shell.currentIndex == kCollectionShellBranchIndex &&
+        index != kCollectionShellBranchIndex) {
+      CollectionModalOverlayRegistry.instance.dismissAll();
+    }
+    shell.goBranch(index);
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -44,7 +53,9 @@ class MainShellScaffold extends StatelessWidget {
           scheme.primary,
           isLight ? 0.06 : 0.12,
         )!.withValues(alpha: isLight ? 0.11 : 0.22),
-        surfaceTintColor: scheme.primary.withValues(alpha: isLight ? 0.07 : 0.09),
+        surfaceTintColor: scheme.primary.withValues(
+          alpha: isLight ? 0.07 : 0.09,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -59,7 +70,7 @@ class MainShellScaffold extends StatelessWidget {
             ),
             NavigationBar(
               selectedIndex: shell.currentIndex,
-              onDestinationSelected: shell.goBranch,
+              onDestinationSelected: (index) => _onDestinationSelected(context, index),
               height: 64,
               elevation: 0,
               shadowColor: Colors.transparent,

@@ -28,8 +28,8 @@ abstract final class FigureSecretRarityStyle {
     final accent = denom <= 72
         ? _blue
         : denom <= 144
-            ? _purple
-            : _gold;
+        ? _purple
+        : _gold;
     return FigureSecretRarityLook(accent: accent, isDark: isDark);
   }
 }
@@ -41,8 +41,7 @@ final class FigureSecretRarityLook {
   final Color accent;
   final bool isDark;
 
-  Color cardTint(Color base) =>
-      Color.lerp(base, accent, isDark ? 0.14 : 0.2)!;
+  Color cardTint(Color base) => Color.lerp(base, accent, isDark ? 0.14 : 0.2)!;
 
   Gradient cardGradient(Color base) {
     final soft = cardTint(base);
@@ -59,13 +58,13 @@ final class FigureSecretRarityLook {
   }
 
   List<BoxShadow> glowShadows() => [
-        BoxShadow(
-          color: accent.withValues(alpha: isDark ? 0.14 : 0.12),
-          blurRadius: 16,
-          spreadRadius: -4,
-          offset: const Offset(0, 6),
-        ),
-      ];
+    BoxShadow(
+      color: accent.withValues(alpha: isDark ? 0.14 : 0.12),
+      blurRadius: 16,
+      spreadRadius: -4,
+      offset: const Offset(0, 6),
+    ),
+  ];
 
   Color subtleBorder() => accent.withValues(alpha: isDark ? 0.42 : 0.5);
 }
