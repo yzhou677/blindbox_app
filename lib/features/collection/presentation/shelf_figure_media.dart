@@ -1,23 +1,22 @@
 import 'package:blindbox_app/core/media/device_local_ref.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 
-/// Resolves shelf thumbnail strings for **[ShelfSeries]** / **[ShelfFigure]** only.
+/// Device-local media refs for shelf rows — catalog art uses [ShelfFigure.imageKey] in UI.
 ///
-/// Priority for each figure tile:
-/// 1. [ShelfFigure.localImageUri] (device path / `file:` URI)
-/// 2. [ShelfSeries.customCoverImageUri] (series cover) — optional; disabled for fullscreen gallery
-/// 3. [ShelfFigure.imageUrl] (resolved at catalog-clone or Home drop import — asset path or Storage URL)
-/// 4. `null` → placeholder / [CatalogImageFromKey] via [ShelfFigure.imageKey]
+/// [figureDisplayRef] returns only on-device paths (figure photo or optional series cover).
+/// Catalog / Storage art is rendered by [CatalogImageFromKey] via [catalogFigureImageKey].
 ///
-/// Catalog clones and [CollectionNotifier.addSeriesFromRelease] persist [ShelfFigure.imageUrl]
-/// from [CatalogImageResolver.resolveFigureDisplayRef] at add time.
-/// Fullscreen gallery uses [figureDisplayRef] with `includeSeriesCoverFallback: false` so series
-/// cover art is not shown as figure art.
-/// When figure URL is missing, [ShelfFigureThumb] may resolve via [ShelfFigure.imageKey].
-///
-/// Series shelf covers: [seriesCoverRef] (user cover only) or [CollectionSeriesThumbnail]
-/// via [ShelfSeries.catalogTemplateId] → `catalog/series/<imageKey>.<ext>` — never figure art.
+/// [ShelfFigure.imageUrl] may exist in persistence as an optional cache; UI must not read it.
 abstract final class ShelfFigureMedia {
+  /// Canonical catalog figure key for [CatalogImageFromKey], when present.
+  static String? catalogFigureImageKey(ShelfFigure figure) {
+    final key = figure.imageKey?.trim();
+    if (key != null && key.isNotEmpty) return key;
+    final templateId = figure.catalogFigureTemplateId?.trim();
+    if (templateId != null && templateId.isNotEmpty) return templateId;
+    return null;
+  }
+
   static String? figureDisplayRef(
     ShelfFigure figure,
     ShelfSeries series, {
@@ -29,8 +28,6 @@ abstract final class ShelfFigureMedia {
       final cover = series.customCoverImageUri?.trim();
       if (cover != null && cover.isNotEmpty) return cover;
     }
-    final catalog = figure.imageUrl?.trim();
-    if (catalog != null && catalog.isNotEmpty) return catalog;
     return null;
   }
 

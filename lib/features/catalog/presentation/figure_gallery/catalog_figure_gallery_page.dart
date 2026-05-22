@@ -88,18 +88,6 @@ class _GalleryArt extends StatelessWidget {
       );
     }
 
-    final url = item.imageUrl?.trim();
-    if (url != null && url.isNotEmpty) {
-      return CatalogGalleryStage(
-        width: width,
-        height: height,
-        imageRef: url,
-        name: item.name,
-        seedKey: item.id,
-        isSecret: item.isSecret,
-      );
-    }
-
     if (item.hasCatalogKey) {
       return SizedBox(
         width: width,

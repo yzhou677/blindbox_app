@@ -1,4 +1,3 @@
-import 'package:blindbox_app/features/catalog/catalog_image_resolver.dart';
 import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_brand.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_figure.dart';
@@ -13,7 +12,7 @@ import 'package:flutter/material.dart';
 Future<domain.CatalogSeries?> catalogTemplateFromSeedSeries(
   CatalogSeedBundle bundle,
   String seriesId, {
-  /// When false, skips Storage/network image resolution (fast path for recommendation rails).
+  /// When false, skips eager URL resolution (deprecated — templates never carry URLs).
   bool resolveFigureImages = true,
 }) async {
   CatalogSeries? series;
@@ -66,55 +65,22 @@ Future<domain.CatalogSeries?> catalogTemplateFromSeedSeries(
   final accent = accents[seriesId.hashCode.abs() % accents.length];
 
   final templateFigures = <domain.CatalogFigure>[];
-  if (resolveFigureImages) {
-    final resolved = await Future.wait(
-      figs.map((f) async {
-        String? imageUrl;
-        if (f.imageKey.trim().isNotEmpty) {
-          imageUrl = await CatalogImageResolver.resolveFigureDisplayRef(f.imageKey);
-        }
-        return (
-          figure: f,
-          imageUrl: imageUrl,
-        );
-      }),
+  for (final f in figs) {
+    templateFigures.add(
+      domain.CatalogFigure(
+        templateFigureId: f.id,
+        catalogSeriesTemplateId: catalogSeries.id,
+        name: f.displayName,
+        catalogImageKey: f.imageKey,
+        imageUrl: null,
+        rarity: f.rarityLabel?.trim().isNotEmpty == true
+            ? f.rarityLabel!.trim()
+            : (f.isSecret ? 'Secret' : 'Regular'),
+        isSecret: f.isSecret,
+        taxonomyBrandId: catalogSeries.brandId,
+        taxonomyIpId: catalogSeries.ipId,
+      ),
     );
-    for (final row in resolved) {
-      final f = row.figure;
-      templateFigures.add(
-        domain.CatalogFigure(
-          templateFigureId: f.id,
-          catalogSeriesTemplateId: catalogSeries.id,
-          name: f.displayName,
-          catalogImageKey: f.imageKey,
-          imageUrl: row.imageUrl,
-          rarity: f.rarityLabel?.trim().isNotEmpty == true
-              ? f.rarityLabel!.trim()
-              : (f.isSecret ? 'Secret' : 'Regular'),
-          isSecret: f.isSecret,
-          taxonomyBrandId: catalogSeries.brandId,
-          taxonomyIpId: catalogSeries.ipId,
-        ),
-      );
-    }
-  } else {
-    for (final f in figs) {
-      templateFigures.add(
-        domain.CatalogFigure(
-          templateFigureId: f.id,
-          catalogSeriesTemplateId: catalogSeries.id,
-          name: f.displayName,
-          catalogImageKey: f.imageKey,
-          imageUrl: null,
-          rarity: f.rarityLabel?.trim().isNotEmpty == true
-              ? f.rarityLabel!.trim()
-              : (f.isSecret ? 'Secret' : 'Regular'),
-          isSecret: f.isSecret,
-          taxonomyBrandId: catalogSeries.brandId,
-          taxonomyIpId: catalogSeries.ipId,
-        ),
-      );
-    }
   }
 
   return domain.CatalogSeries(

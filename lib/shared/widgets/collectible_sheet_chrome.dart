@@ -13,12 +13,7 @@ class CollectibleSheetChrome extends StatelessWidget {
     this.trailingMeta,
     this.editorialTitle,
     this.editorialSubtitle,
-    this.padding = const EdgeInsets.fromLTRB(
-      FeedRhythm.sheetHorizontal,
-      FeedRhythm.sheetChromeTop,
-      FeedRhythm.sheetHorizontal,
-      0,
-    ),
+    this.padding = const EdgeInsets.only(top: FeedRhythm.sheetChromeTop),
   });
 
   final String? seriesTitle;

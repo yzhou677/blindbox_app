@@ -30,7 +30,6 @@ class SaveSeriesReleaseButton extends ConsumerStatefulWidget {
 class _SaveSeriesReleaseButtonState extends ConsumerState<SaveSeriesReleaseButton>
     with SingleTickerProviderStateMixin {
   late final AnimationController _pulse;
-  bool _awaitingShelf = false;
 
   String get _catalogKey => 'drop-${widget.release.dropId}';
 
@@ -55,11 +54,13 @@ class _SaveSeriesReleaseButtonState extends ConsumerState<SaveSeriesReleaseButto
     });
   }
 
-  Future<void> _addToShelf() async {
-    setState(() => _awaitingShelf = true);
-    await ref
+  void _addToShelf() {
+    ref
         .read(collectionNotifierProvider.notifier)
         .addSeriesFromRelease(widget.release);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _runPulse();
+    });
   }
 
   Future<void> _confirmRemoveFromShelf() async {
@@ -104,17 +105,6 @@ class _SaveSeriesReleaseButtonState extends ConsumerState<SaveSeriesReleaseButto
     final onShelf = ref.watch(
       collectionNotifierProvider.select((s) => s.hasTemplateOnShelf(_catalogKey)),
     );
-
-    if (_awaitingShelf && onShelf) {
-      _awaitingShelf = false;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _runPulse();
-      });
-    } else if (_awaitingShelf && !onShelf) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) setState(() => _awaitingShelf = false);
-      });
-    }
 
     final scale = Tween<double>(begin: 1.0, end: 1.14).evaluate(
       CurvedAnimation(parent: _pulse, curve: Curves.easeOutCubic),

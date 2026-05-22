@@ -5,6 +5,7 @@ import 'package:blindbox_app/features/catalog/application/catalog_bundle_provide
 import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_series_search_rows.dart';
 import 'package:blindbox_app/features/catalog/widgets/catalog_series_search_row_card.dart';
+import 'package:blindbox_app/features/collection/application/catalog_series_shelf_commit.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/widgets/catalog_series_preview_sheet.dart';
@@ -45,7 +46,11 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
     CatalogSeedBundle bundle,
     String seriesId,
   ) async {
-    final template = await catalogTemplateFromSeedSeries(bundle, seriesId);
+    final template = await catalogTemplateFromSeedSeries(
+      bundle,
+      seriesId,
+      resolveFigureImages: false,
+    );
     if (!context.mounted || template == null) return;
 
     final notifier = ref.read(collectionNotifierProvider.notifier);
@@ -55,37 +60,15 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
     await showCollectibleBottomSheet<void>(
       context: context,
       useRootNavigator: true,
-      builder: (ctx) => CatalogSeriesPreviewSheet(
+      heightFraction: FeedRhythm.sheetPreviewOpenScreenFraction,
+      builder: (ctx, scroll) => CatalogSeriesPreviewSheet(
         series: template,
         onAdd: onShelf
             ? () {}
-            : () async {
-                await _addCatalogSeriesToShelf(notifier, template, bundle);
-              },
+            : () => commitCatalogSeriesToShelf(notifier, template),
         showAddButton: !onShelf,
       ),
     );
-  }
-
-  Future<void> _addCatalogSeriesToShelf(
-    CollectionNotifier notifier,
-    CatalogSeries template,
-    CatalogSeedBundle bundle,
-  ) async {
-    var toAdd = template;
-    final needsResolve = template.figures.any((f) {
-      final u = f.imageUrl?.trim();
-      return u == null || u.isEmpty;
-    });
-    if (needsResolve) {
-      final resolved = await catalogTemplateFromSeedSeries(
-        bundle,
-        template.templateId,
-        resolveFigureImages: true,
-      );
-      if (resolved != null) toAdd = resolved;
-    }
-    notifier.addSeriesFromTemplate(toAdd);
   }
 
   @override

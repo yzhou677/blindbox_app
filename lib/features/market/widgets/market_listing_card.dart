@@ -2,7 +2,7 @@ import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/collectible_elevation.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
-import 'package:blindbox_app/features/home/widgets/collectible_network_image.dart';
+import 'package:blindbox_app/features/market/presentation/market_listing_image.dart';
 import 'package:blindbox_app/features/market/utils/market_format.dart';
 import 'package:blindbox_app/features/market/widgets/listing_market_signals.dart';
 import 'package:blindbox_app/models/market_listing.dart';
@@ -72,7 +72,7 @@ class MarketListingCard extends StatelessWidget {
                           borderRadius: AppRadii.insetRadius,
                           child: ColoredBox(
                             color: scheme.surface.withValues(alpha: 0.35),
-                            child: CollectibleNetworkImage(
+                            child: MarketListingImage(
                               collectible: c,
                               heroTag: listing.marketHeroTag,
                               borderRadius: BorderRadius.zero,

@@ -6,6 +6,7 @@ import 'package:blindbox_app/features/collection/application/collection_notifier
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/widgets/figure_capsule_card.dart';
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,64 +38,64 @@ class SeriesFiguresSheet extends ConsumerWidget {
     final chasesHome =
         secrets.isNotEmpty &&
         secrets.every((f) => snap.trackedOrDefault(f.id).owned);
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          FeedRhythm.sheetHorizontal,
-          FeedRhythm.sheetChromeTop,
-          FeedRhythm.sheetHorizontal,
-          AppSpacing.lg,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            CollectibleSheetChrome(
+    final scroll = CollectibleSheetScope.scrollControllerOf(context);
+
+    return CollectibleSheetInsets(
+      child: CustomScrollView(
+        controller: scroll,
+        physics: collectibleSheetScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(
+            child: CollectibleSheetChrome(
               seriesTitle: series.name,
               brand: series.brand,
               ipLine: series.ipName,
               padding: EdgeInsets.zero,
             ),
-            if (isComplete) ...[
-              const SizedBox(height: 14),
-              _SeriesCompleteBanner(
-                chasesHome: chasesHome && secrets.isNotEmpty,
-              ),
-            ],
-            const SizedBox(height: 18),
-            Expanded(
-              child: SingleChildScrollView(
-                child: SizedBox(
-                  width: double.infinity,
-                  child: Wrap(
-                    spacing: 14,
-                    runSpacing: 18,
-                    alignment: WrapAlignment.center,
-                    children: [
-                      for (final f in series.figures)
-                        FigureCapsuleCard(
-                          series: series,
-                          figure: f,
-                          tracked: snap.trackedOrDefault(f.id),
-                          onTap: () => notifier.cycleFigure(f.id),
-                          onBrowseFigure: () {
-                            final index = series.figures.indexWhere(
-                              (fig) => fig.id == f.id,
-                            );
-                            showCatalogFigureGallery(
-                              context,
-                              items: catalogGalleryItemsFromShelfSeries(series),
-                              initialIndex: index < 0 ? 0 : index,
-                              seriesTitle: series.name,
-                            );
-                          },
-                        ),
-                    ],
-                  ),
+          ),
+          if (isComplete)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 14),
+                child: _SeriesCompleteBanner(
+                  chasesHome: chasesHome && secrets.isNotEmpty,
                 ),
               ),
             ),
-          ],
-        ),
+          SliverPadding(
+            padding: const EdgeInsets.only(top: 18, bottom: AppSpacing.lg),
+            sliver: SliverToBoxAdapter(
+              child: SizedBox(
+                width: double.infinity,
+                child: Wrap(
+                  spacing: 14,
+                  runSpacing: 18,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    for (final f in series.figures)
+                      FigureCapsuleCard(
+                        series: series,
+                        figure: f,
+                        tracked: snap.trackedOrDefault(f.id),
+                        onTap: () => notifier.cycleFigure(f.id),
+                        onBrowseFigure: () {
+                          final index = series.figures.indexWhere(
+                            (fig) => fig.id == f.id,
+                          );
+                          showCatalogFigureGallery(
+                            context,
+                            items: catalogGalleryItemsFromShelfSeries(series),
+                            initialIndex: index < 0 ? 0 : index,
+                            seriesTitle: series.name,
+                          );
+                        },
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

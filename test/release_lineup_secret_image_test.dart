@@ -13,7 +13,7 @@ void main() {
     expect(ReleaseLineupStrip.slotUsesSecretPlaceholder(withArt), isFalse);
   });
 
-  test('secret without imageKey or url uses blur placeholder', () {
+  test('secret without imageKey uses blur placeholder', () {
     const noArt = ReleaseLineupSlot(
       slotId: 'secret_fig',
       name: 'Hidden',
@@ -21,14 +21,5 @@ void main() {
       isSecret: true,
     );
     expect(ReleaseLineupStrip.slotUsesSecretPlaceholder(noArt), isTrue);
-
-    const mockUrl = ReleaseLineupSlot(
-      slotId: 'eclipse',
-      name: 'Eclipse',
-      imageKey: '',
-      imageUrl: 'https://example.com/eclipse.png',
-      isSecret: true,
-    );
-    expect(ReleaseLineupStrip.slotUsesSecretPlaceholder(mockUrl), isFalse);
   });
 }

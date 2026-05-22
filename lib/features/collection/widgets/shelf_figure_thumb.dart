@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/media/device_local_ref.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/shelf_figure_media.dart';
@@ -6,7 +7,7 @@ import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
 import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
 import 'package:flutter/material.dart';
 
-/// Shelf figure tile art: local / persisted URL first, else catalog figure [imageKey].
+/// Shelf figure tile — local photo, else [CatalogImageFromKey] from [ShelfFigure.imageKey].
 class ShelfFigureThumb extends StatelessWidget {
   const ShelfFigureThumb({
     super.key,
@@ -31,38 +32,24 @@ class ShelfFigureThumb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ref = ShelfFigureMedia.figureDisplayRef(figure, series);
-    if (ref != null && ref.isNotEmpty) {
+    final localRef = ShelfFigureMedia.figureDisplayRef(figure, series);
+    if (localRef != null &&
+        DeviceLocalImageRef.looksLikeDevicePath(localRef)) {
       return CollectibleThumbImage(
-        imageRef: ref,
+        imageRef: localRef,
         name: name,
         seedKey: seedKey,
         isSecret: isSecret,
         compact: compact,
         borderRadius: borderRadius,
-        catalogDisplayMode: CatalogImageDisplayMode.figureThumb,
+        catalogDisplayMode: displayMode,
       );
     }
 
-    final catalogImageKey = figure.imageKey?.trim();
-    if (catalogImageKey != null && catalogImageKey.isNotEmpty) {
+    final catalogImageKey = ShelfFigureMedia.catalogFigureImageKey(figure);
+    if (catalogImageKey != null) {
       return CatalogImageFromKey(
         imageKey: catalogImageKey,
-        name: name,
-        seedKey: seedKey,
-        isSecret: isSecret,
-        compact: compact,
-        displayMode: displayMode,
-        borderRadius: borderRadius,
-      );
-    }
-
-    final catalogFigureId = figure.catalogFigureTemplateId?.trim();
-    if (catalogFigureId != null &&
-        catalogFigureId.isNotEmpty &&
-        !series.isDropImport) {
-      return CatalogImageFromKey(
-        imageKey: catalogFigureId,
         name: name,
         seedKey: seedKey,
         isSecret: isSecret,

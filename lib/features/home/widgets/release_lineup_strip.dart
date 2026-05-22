@@ -1,10 +1,8 @@
 import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
-import 'package:blindbox_app/features/catalog/presentation/catalog_aspect_image.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/home/domain/series_release.dart';
 import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
-import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
 import 'package:flutter/material.dart';
 
 /// Horizontal, image-first lineup browse for a [SeriesRelease].
@@ -25,10 +23,7 @@ class ReleaseLineupStrip extends StatelessWidget {
 
   /// Secret slots with a catalog [imageKey] show real art; blur tile only when art is unknown.
   static bool slotUsesSecretPlaceholder(ReleaseLineupSlot slot) {
-    if (!slot.isSecret) return false;
-    if (slot.imageKey.trim().isNotEmpty) return false;
-    final url = slot.imageUrl?.trim();
-    return url == null || url.isEmpty;
+    return slot.isSecret && slot.imageKey.trim().isEmpty;
   }
 
   @override
@@ -139,43 +134,6 @@ class _LineupCell extends StatelessWidget {
           borderRadius: r,
           width: ReleaseLineupStrip.cellExtent,
           height: ReleaseLineupStrip.cellExtent,
-        ),
-      );
-    }
-
-    final url = slot.imageUrl?.trim();
-    if (url != null && url.isNotEmpty) {
-      if (CollectibleThumbImage.isAssetPath(url)) {
-        return SizedBox(
-          width: ReleaseLineupStrip.cellExtent,
-          height: ReleaseLineupStrip.cellExtent,
-          child: CollectibleThumbImage(
-            imageRef: url,
-            name: slot.name,
-            seedKey: slot.slotId,
-            catalogDisplayMode: CatalogImageDisplayMode.figureLineupCell,
-            borderRadius: r,
-          ),
-        );
-      }
-      return SizedBox(
-        width: ReleaseLineupStrip.cellExtent,
-        height: ReleaseLineupStrip.cellExtent,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final spec = CatalogImageDisplaySpec.forMode(
-              CatalogImageDisplayMode.figureLineupCell,
-            );
-            final dpr = MediaQuery.devicePixelRatioOf(context);
-            return CatalogAspectImage.presentNetwork(
-              imageUrl: url,
-              fit: spec.fit,
-              fillBounds: spec.fillsFrame,
-              alignment: spec.alignment,
-              decodeExtent: spec.memCacheDecodeExtent(constraints, dpr),
-              fadeInDuration: const Duration(milliseconds: 180),
-            );
-          },
         ),
       );
     }

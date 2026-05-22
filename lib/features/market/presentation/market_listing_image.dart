@@ -3,20 +3,25 @@ import 'package:blindbox_app/features/catalog/presentation/catalog_image_display
 import 'package:blindbox_app/models/collectible.dart';
 import 'package:flutter/material.dart';
 
-/// Network image with soft pastel loading / error states; optional [heroTag] for transitions.
-class CollectibleNetworkImage extends StatelessWidget {
-  const CollectibleNetworkImage({
+/// Market listing art — external photo URLs stay inside this media widget only.
+///
+/// Catalog/shelf surfaces use [CatalogImageFromKey]; eBay browse rows are not keyed
+/// in the catalog tree, so this is the market-specific presentation boundary.
+class MarketListingImage extends StatelessWidget {
+  const MarketListingImage({
     super.key,
     required this.collectible,
     this.heroTag,
     required this.borderRadius,
     this.fit = BoxFit.contain,
+    this.displayMode = CatalogImageDisplayMode.marketCatalogThumb,
   });
 
   final Collectible collectible;
   final String? heroTag;
   final BorderRadius borderRadius;
   final BoxFit fit;
+  final CatalogImageDisplayMode displayMode;
 
   LinearGradient _matGradient(ColorScheme scheme) {
     final a = collectible.shelfAccent ?? scheme.secondaryContainer;
@@ -33,18 +38,33 @@ class CollectibleNetworkImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final ref = collectible.imageUrl.trim();
     CatalogAspectImage.assertAspectPreservingFit(fit);
+
     final image = ClipRRect(
       borderRadius: borderRadius,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final dpr = MediaQuery.devicePixelRatioOf(context);
-          final spec = CatalogImageDisplaySpec.forMode(
-            CatalogImageDisplayMode.seriesCoverHero,
+          if (ref.isEmpty) {
+            return DecoratedBox(
+              decoration: BoxDecoration(gradient: _matGradient(scheme)),
+              child: Center(
+                child: Icon(
+                  Icons.toys_rounded,
+                  size: 44,
+                  color: scheme.onSurfaceVariant.withValues(alpha: 0.42),
+                ),
+              ),
+            );
+          }
+
+          final spec = CatalogImageDisplaySpec.forMode(displayMode);
+          final decodeExtent = spec.memCacheDecodeExtent(
+            constraints,
+            MediaQuery.devicePixelRatioOf(context),
           );
-          final decodeExtent = spec.memCacheDecodeExtent(constraints, dpr);
           return CatalogAspectImage.presentNetwork(
-            imageUrl: collectible.imageUrl,
+            imageUrl: ref,
             fit: fit,
             fillBounds: spec.fillsFrame,
             filterQuality: FilterQuality.medium,
@@ -80,10 +100,11 @@ class CollectibleNetworkImage extends StatelessWidget {
       ),
     );
 
-    if (heroTag == null) return image;
+    final tag = heroTag;
+    if (tag == null) return image;
 
     return Hero(
-      tag: heroTag!,
+      tag: tag,
       child: Material(type: MaterialType.transparency, child: image),
     );
   }

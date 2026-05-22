@@ -12,6 +12,8 @@
 
 ### Rule files in `.cursor/rules/`
 
+- `product-principles.mdc` — collectible lifestyle direction, calm UX, maintainability (always apply)
+- `offline-async-media.mdc` — offline-first, optimistic UI, imageKey, shared mutations/modals (always apply)
 - `project-architecture.mdc` — catalog / shelf / market boundaries (always apply)
 - `catalog-collection-boundary.mdc` — when editing catalog or collection
 - `firebase-catalog.mdc` — Firestore + Storage catalog paths

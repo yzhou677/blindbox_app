@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('catalogGalleryItemsFromShelfSeries', () {
-    test('uses resolved figure imageUrl for gallery', () {
+    test('passes catalog imageKey for gallery resolve', () {
       const series = ShelfSeries(
         id: 'series_a',
         name: 'Macaron',
@@ -27,14 +27,10 @@ void main() {
 
       final items = catalogGalleryItemsFromShelfSeries(series);
       expect(items, hasLength(1));
-      expect(
-        items.single.imageUrl,
-        'assets/catalog/figures/the_monsters_exciting_macaron_soymilk.png',
-      );
       expect(items.single.catalogImageKey, 'the_monsters_exciting_macaron_soymilk');
     });
 
-    test('does not use series cover when figure imageUrl is empty', () {
+    test('does not pass series cover as gallery item field', () {
       const series = ShelfSeries(
         id: 'series_b',
         name: 'Ocean',
@@ -54,10 +50,11 @@ void main() {
       );
 
       final items = catalogGalleryItemsFromShelfSeries(series);
-      expect(items.single.imageUrl, isNull);
+      expect(items.single.catalogImageKey, isNull);
+      expect(items.single.localImageUri, isNull);
     });
 
-    test('keeps catalogImageKey when imageUrl is missing for gallery fallback', () {
+    test('keeps catalogImageKey when imageUrl is missing on shelf row', () {
       const series = ShelfSeries(
         id: 'series_c',
         name: 'Ocean',
@@ -77,7 +74,6 @@ void main() {
       );
 
       final items = catalogGalleryItemsFromShelfSeries(series);
-      expect(items.single.imageUrl, isNull);
       expect(items.single.catalogImageKey, 'crybaby_cry_me_an_ocean_the_whale');
     });
   });

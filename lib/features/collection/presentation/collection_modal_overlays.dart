@@ -1,4 +1,5 @@
-import 'package:blindbox_app/core/theme/app_radii.dart';
+import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 
 /// Index of the `/collection` branch in [StatefulShellRoute.indexedStack] (see [appRouter]).
@@ -33,22 +34,18 @@ void dismissCollectionModalOverlays(BuildContext context) {
   navigator.popUntil((route) => route.isFirst);
 }
 
-/// Collection-owned modal bottom sheet — scoped to the Collection branch navigator.
+/// Collection-branch sheets — same drag/dismiss behavior as [showCollectibleBottomSheet].
 Future<T?> showCollectionModalBottomSheet<T>({
   required BuildContext context,
-  required WidgetBuilder builder,
-  bool isScrollControlled = false,
+  required CollectibleSheetWidgetBuilder builder,
+  double heightFraction = FeedRhythm.sheetAddSeriesOpenScreenFraction,
   Color? backgroundColor,
-  ShapeBorder? shape,
-  bool showDragHandle = false,
 }) {
-  return showModalBottomSheet<T>(
+  return showCollectibleBottomSheet<T>(
     context: context,
     useRootNavigator: false,
-    isScrollControlled: isScrollControlled,
+    heightFraction: heightFraction,
     backgroundColor: backgroundColor,
-    shape: shape ?? AppRadii.sheetShape,
-    showDragHandle: showDragHandle,
     builder: builder,
   );
 }

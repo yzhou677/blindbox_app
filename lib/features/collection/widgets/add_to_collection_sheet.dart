@@ -7,6 +7,7 @@ import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
 import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_series_search_rows.dart';
 import 'package:blindbox_app/features/catalog/widgets/catalog_series_search_row_card.dart';
+import 'package:blindbox_app/features/collection/application/catalog_series_shelf_commit.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/add_series_catalog_copy.dart';
@@ -110,30 +111,6 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
 
   bool get _hasSearchText => _trimmedQuery.isNotEmpty;
 
-  /// Commits a catalog template to the shelf, resolving Storage URLs when the template has no art yet.
-  Future<void> _addCatalogSeriesToShelf(
-    CollectionNotifier notifier,
-    CatalogSeries template,
-  ) async {
-    var toAdd = template;
-    final needsResolve = template.figures.any((f) {
-      final u = f.imageUrl?.trim();
-      return u == null || u.isEmpty;
-    });
-    if (needsResolve) {
-      final bundle = _catalogBundle;
-      if (bundle != null) {
-        final resolved = await catalogTemplateFromSeedSeries(
-          bundle,
-          template.templateId,
-          resolveFigureImages: true,
-        );
-        if (resolved != null) toAdd = resolved;
-      }
-    }
-    notifier.addSeriesFromTemplate(toAdd);
-  }
-
   String _seriesCoverImageKey(CatalogSeedBundle bundle, String seriesId) {
     for (final s in bundle.series) {
       if (s.id == seriesId) return s.imageKey.trim();
@@ -148,7 +125,9 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
   }) {
     showCollectibleBottomSheet<void>(
       context: context,
-      builder: (_) => CatalogSeriesPreviewSheet(series: series, onAdd: onAdd),
+      heightFraction: FeedRhythm.sheetPreviewOpenScreenFraction,
+      builder: (_, scroll) =>
+          CatalogSeriesPreviewSheet(series: series, onAdd: onAdd),
     );
   }
 
@@ -156,24 +135,14 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final bottom = MediaQuery.paddingOf(context).bottom;
     final snap = ref.watch(collectionNotifierProvider);
     final notifier = ref.read(collectionNotifierProvider.notifier);
     final catalogActive = _trimmedQuery.isNotEmpty;
+    final sheetScroll = CollectibleSheetScope.scrollControllerOf(context);
 
-    final sheetH =
-        MediaQuery.sizeOf(context).height * FeedRhythm.sheetAddSeriesHeightFraction;
-
-    return SizedBox(
-      height: sheetH,
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: FeedRhythm.sheetHorizontal,
-          right: FeedRhythm.sheetHorizontal,
-          top: FeedRhythm.sheetChromeTop,
-          bottom: bottom + AppSpacing.md,
-        ),
-        child: Column(
+    return CollectibleSheetInsets(
+      extraBottom: AppSpacing.md,
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             CollectibleSheetChrome(
@@ -233,12 +202,14 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
                       textTheme,
                       snap,
                       notifier,
+                      sheetScroll,
                     )
                   : _buildRecommendationsBody(
                       context,
                       scheme,
                       textTheme,
                       notifier,
+                      sheetScroll,
                     ),
             ),
             const SizedBox(height: 8),
@@ -261,7 +232,6 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
             ),
           ],
         ),
-      ),
     );
   }
 
@@ -270,6 +240,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     ColorScheme scheme,
     TextTheme textTheme,
     CollectionNotifier notifier,
+    ScrollController? sheetScroll,
   ) {
     if (_catalogLoadFailed) {
       return Center(
@@ -323,6 +294,8 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
           );
         }
         return ListView.separated(
+          controller: sheetScroll,
+          physics: collectibleSheetScrollPhysics(),
           padding: const EdgeInsets.only(bottom: 8),
           itemCount: recs.length,
           separatorBuilder: (context, index) => const SizedBox(height: 12),
@@ -340,16 +313,10 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
                 _openCatalogSeriesPreview(
                   ctx,
                   series: s,
-                  onAdd: () async {
-                    await _addCatalogSeriesToShelf(notifier, s);
-                    if (ctx.mounted) Navigator.of(ctx).pop();
-                  },
+                  onAdd: () => commitCatalogSeriesToShelf(notifier, s),
                 );
               },
-              onAdd: () async {
-                await _addCatalogSeriesToShelf(notifier, s);
-                if (ctx.mounted) Navigator.of(ctx).pop();
-              },
+              onAdd: () => commitCatalogSeriesToShelf(notifier, s),
             );
           },
         );
@@ -363,6 +330,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     TextTheme textTheme,
     CollectionSnapshot snap,
     CollectionNotifier notifier,
+    ScrollController? sheetScroll,
   ) {
     if (_catalogLoadFailed) {
       return Center(
@@ -402,6 +370,8 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     }
 
     return ListView.separated(
+      controller: sheetScroll,
+      physics: collectibleSheetScrollPhysics(),
       padding: const EdgeInsets.only(bottom: 8),
       itemCount: matches.length,
       separatorBuilder: (context, index) => const SizedBox(height: 12),
@@ -415,24 +385,23 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
             final template = await catalogTemplateFromSeedSeries(
               bundle,
               row.seriesId,
+              resolveFigureImages: false,
             );
             if (!ctx.mounted || template == null) return;
             _openCatalogSeriesPreview(
               ctx,
               series: template,
-              onAdd: () async {
-                await _addCatalogSeriesToShelf(notifier, template);
-                if (ctx.mounted) Navigator.of(ctx).pop();
-              },
+              onAdd: () => commitCatalogSeriesToShelf(notifier, template),
             );
           },
           onTrailingAction: () async {
             final template = await catalogTemplateFromSeedSeries(
               bundle,
               row.seriesId,
+              resolveFigureImages: false,
             );
             if (template != null) {
-              await _addCatalogSeriesToShelf(notifier, template);
+              commitCatalogSeriesToShelf(notifier, template);
             }
             if (ctx.mounted) Navigator.of(ctx).pop();
           },
