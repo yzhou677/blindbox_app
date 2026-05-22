@@ -1,0 +1,28 @@
+---
+description: Collectible lifestyle product direction — calm, immersive, non-CRUD UX
+alwaysApply: true
+---
+
+# Product direction
+
+This is a **collectible lifestyle app**, not a CRUD utility.
+
+Prioritize: immersive browsing, collectible presentation, calm/premium UI, smooth flows, consistency, reuse, offline-first reliability, emotional pacing.
+
+Avoid: screen-local one-offs, ad hoc models, backend-driven UI, blocking UX, dashboard density, repetitive helper copy, duplicated flows.
+
+## UX tone
+
+- Image-first, editorial, soft — gallery/shelf feeling, not forms or settings screens
+- Quiet metadata; trust the UI (minimal instructional copy)
+- `FeedRhythm` + shared typography/sheet chrome — do not inflate global padding
+- Extend shared primitives before inventing screen variants
+
+## Maintainability
+
+Before new code: **does a shared system already exist?** (see `offline-async-media.mdc`, `project-architecture.mdc`)
+
+- Incremental refinement — no drive-by rewrites or design-token explosion
+- One connected collectible universe — adapters at boundaries, not parallel identity models per screen
+
+Full reference: [`.cursor/ARCHITECTURE.md`](../ARCHITECTURE.md) → Long-term principles

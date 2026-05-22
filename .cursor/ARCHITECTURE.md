@@ -2,7 +2,27 @@
 
 Canonical reference for humans and Cursor agents. Supersedes scattered notes in `docs/` for day-to-day implementation guidance.
 
-**Related:** [`.cursor/rules/`](rules/) (agent rule snippets), [`CONFORMITY_AUDIT.md`](CONFORMITY_AUDIT.md) (codebase checklist), [`FIRESTORE_CATALOG_SCHEMA.md`](../lib/features/catalog/firestore/FIRESTORE_CATALOG_SCHEMA.md), [`FIREBASE_STORAGE_CATALOG.md`](../lib/features/catalog/firestore/FIREBASE_STORAGE_CATALOG.md)
+**Related:** [`.cursor/rules/`](rules/) (agent rule snippets — **`product-principles`**, **`offline-async-media`**, **`project-architecture`**), [`CONFORMITY_AUDIT.md`](CONFORMITY_AUDIT.md) (codebase checklist), [`FIRESTORE_CATALOG_SCHEMA.md`](../lib/features/catalog/firestore/FIRESTORE_CATALOG_SCHEMA.md), [`FIREBASE_STORAGE_CATALOG.md`](../lib/features/catalog/firestore/FIREBASE_STORAGE_CATALOG.md)
+
+---
+
+## Long-term principles (stable — not one-off cleanup)
+
+Treat these as **ongoing product and architecture law**, not a single refactor ticket.
+
+| Theme | Rule of thumb |
+|-------|----------------|
+| **Product** | Collectible lifestyle — calm, image-first, immersive; avoid CRUD/dashboard tone and chatty copy |
+| **Canonical identity** | Firebase catalog (`brands` / `ips` / `series` / `figures`, `imageKey`, aliases, rarity) is truth; Collection/Market **adapt** via mappers — no parallel per-screen DTOs or title/image logic |
+| **Three universes** | Catalog (read-only), Shelf (local-first), Market/Home (discover + listings) — do not mix persistence or media keys |
+| **imageKey** | UI renders through shared primitives + `CatalogImageResolver`; never construct Storage URLs in widgets; `imageUrl` is optional cache only |
+| **Offline-first** | Usable on bad network — bundled/cached catalog, local shelf codec, placeholders; browse/search/gallery without blocking on Firebase |
+| **Async** | Optimistic mutations; background hydration; no `await` resolve before shelf `_commit` or modal dismiss |
+| **Reuse** | `commitCatalogSeriesToShelf`, `showCollectibleBottomSheet`, `showCatalogFigureGallery`, shared cards/typography — extend before forking |
+| **Layers** | Widgets = render; application = rules/mutations; data/media = Firebase, codec, resolver, DTOs |
+| **Evolution** | Small focused diffs; extend existing systems; avoid token explosion and mass rewrites |
+
+Agent rules: `.cursor/rules/product-principles.mdc`, `.cursor/rules/offline-async-media.mdc`.
 
 ---
 
@@ -29,13 +49,11 @@ These must stay separate. Do not merge persistence, media keys, or loading paths
 - **Source of truth:** `CollectionSnapshot` in [`collection_domain.dart`](../lib/features/collection/domain/collection_domain.dart)
 - **Writes:** [`collectionNotifierProvider`](../lib/features/collection/application/collection_notifier.dart) only
 - **Persistence:** `SharedPreferences` + [`collection_snapshot_codec.dart`](../lib/features/collection/persistence/collection_snapshot_codec.dart) (schema v2)
-- **Media:**
-  - `ShelfFigure.localImageUri` — device paths / `file:` URIs for user photos
-  - `ShelfSeries.customCoverImageUri` — optional series cover (local only)
-  - `ShelfFigure.imageUrl` — **resolved display refs** (bundled `assets/catalog/figures/...` or Storage download URL) persisted at catalog-clone and Home drop import — **not** raw catalog `imageKey`
-  - `ShelfFigure.imageKey` — optional metadata for template/slot identity and async thumb/gallery fallback via [`CatalogImageFromKey`](../lib/shared/widgets/catalog_image_from_key.dart); not the shelf codec media contract
-- **Resolution:** [`ShelfFigureMedia`](../lib/features/collection/presentation/shelf_figure_media.dart) for display priority
-- **Home drop import:** [`addSeriesFromRelease`](../lib/features/collection/application/collection_notifier.dart) calls `CatalogImageResolver.resolveFigureDisplayRef` per lineup slot (same as [`catalog_seed_to_collection_template`](../lib/features/catalog/adapters/catalog_seed_to_collection_template.dart))
+- **Media (display contract):**
+  - `ShelfFigure.imageKey` + `ShelfSeries.imageKey` — **canonical** for catalog/drop art; UI via [`CatalogImageFromKey`](../lib/shared/widgets/catalog_image_from_key.dart) / [`ShelfFigureThumb`](../lib/features/collection/widgets/shelf_figure_thumb.dart)
+  - `ShelfFigure.localImageUri` / `ShelfSeries.customCoverImageUri` — user device photos only
+  - `ShelfFigure.imageUrl` — optional persistence cache; **UI must not read it** for catalog tiles (see [`ShelfFigureMedia`](../lib/features/collection/presentation/shelf_figure_media.dart))
+- **Add to shelf:** [`commitCatalogSeriesToShelf`](../lib/features/collection/application/catalog_series_shelf_commit.dart) → [`addSeriesFromTemplate`](../lib/features/collection/application/collection_notifier.dart) (optimistic, no pre-resolve); Home: [`addSeriesFromRelease`](../lib/features/collection/application/collection_notifier.dart) commits `imageKey` immediately
 
 **Never on shelf:** Firestore catalog documents on shelf rows, uploading private photos to cloud, or storing catalog `imageKey` as the primary persisted media field in the codec.
 
@@ -44,7 +62,7 @@ These must stay separate. Do not merge persistence, media keys, or loading paths
 - **Purpose:** Editorial feed (home) and market browse; entry points to save releases or view listings.
 - **Locations:** `lib/features/home/`, `lib/features/market/`
 - **Home:** Mock-driven today (`mock_latest_drops.dart`, etc.); save via `collectionNotifier.addSeriesFromRelease` + [`series_release_lookup`](../lib/features/collection/data/series_release_lookup.dart)
-- **Market listings:** eBay-shaped browse only — `FakeEbayBrowseDataSource` / [`EbayHttpBrowseDataSource`](../lib/features/market/data/datasource/ebay_http_browse_data_source.dart) → [`MarketListingsRepository`](../lib/features/market/data/repository/market_listings_repository.dart) → [`MarketListing`](../lib/models/market_listing.dart). Card images from DTO `imageUrl` or mock placeholders — **not** `imageKey` / Firestore / Storage catalog paths.
+- **Market listings:** eBay-shaped browse only — `FakeEbayBrowseDataSource` / [`EbayHttpBrowseDataSource`](../lib/features/market/data/datasource/ebay_http_browse_data_source.dart) → [`MarketListingsRepository`](../lib/features/market/data/repository/market_listings_repository.dart) → [`MarketListing`](../lib/models/market_listing.dart). Card art via [`MarketListingImage`](../lib/features/market/presentation/market_listing_image.dart) only — **not** catalog `imageKey` / Firestore.
 - **Market filters (shared ids only):** [`MarketTaxonomy`](../lib/features/market/catalog/market_taxonomy.dart) chip rows and predicates use canonical brand/IP **ids** aligned via `applyCatalogBundle()` after catalog bootstrap. Filter chips read `_catalogBrands` / `_catalogIps`; listing title resolution still uses the full [`MarketTaxonomyAdapter`](../lib/features/market/taxonomy/market_taxonomy_adapter.dart) registry. **Do not** load `CatalogSeedBundle` or query Firestore for listing content, prices, or card art.
 - **Into shelf:** Notifier methods only (`addSeriesFromDrop`, etc.) — not direct snapshot mutation from widgets
 
@@ -64,7 +82,8 @@ Catalog universe (read-only) — NOT used for market listing bodies
 
 User shelf (local-first)
   collectionNotifierProvider ──> CollectionSnapshot ──> SharedPreferences codec
-  Home drop ──> addSeriesFromRelease ──> resolveFigureDisplayRef ──> ShelfFigure.imageUrl
+  Home drop ──> addSeriesFromRelease ──> ShelfFigure.imageKey (optimistic commit)
+  Add catalog ──> commitCatalogSeriesToShelf ──> addSeriesFromTemplate
   Collection sheet ──> catalogGalleryItemsFromShelfSeries ──> fullscreen figure gallery
   (no Firestore shelf sync)
 
@@ -178,7 +197,7 @@ Firebase is for the **catalog universe only** in the current roadmap. Collection
 
 - **Scope:** read-only catalog thumbnails keyed by `imageKey`. Deterministic paths: `catalog/series/<imageKey>.<ext>`, `catalog/figures/<imageKey>.<ext>` — probe `.avif`, `.webp`, `.png`, `.jpg`, `.jpeg` until one exists. See [`FIREBASE_STORAGE_CATALOG.md`](../lib/features/catalog/firestore/FIREBASE_STORAGE_CATALOG.md).
 - **Not in scope for MVP agents:** uploading `localImageUri` / `customCoverImageUri` (private shelf photos).
-- **Resolver:** bundled asset first, then Storage download URL, then placeholder — at shelf import, persist the resolved ref on `ShelfFigure.imageUrl` (asset path or Storage URL). Do not write Storage URLs or `imageKey` onto Firestore catalog docs.
+- **Resolver:** bundled asset first, then Storage download URL — used inside `CatalogImageFromKey` / media layer at **display time**. Do not write Storage URLs onto Firestore catalog docs. Shelf codec may store optional `imageUrl` cache; UI still renders from `imageKey`.
 - **Code location:** `lib/features/catalog/` and `lib/core/firebase/` — no `lib/services/`. Uses `firebase_storage` for catalog art reads.
 
 ### What not to do (Firebase integration)
@@ -213,16 +232,19 @@ Security rules live in the Firebase console or your infra repo — catalog read 
 
 ### Catalog vs shelf images
 
-- **Catalog UI/search:** `imageKey` → `CatalogImageResolver`
-- **Shelf UI:** `ShelfFigureMedia` → `localImageUri` → `customCoverImageUri` (thumbs only) → `imageUrl` → placeholder / `CatalogImageFromKey` fallback
-- Do not treat catalog `imageKey` as the shelf persistence contract; optional `ShelfFigure.imageKey` is for resolve fallback only.
+- **All catalog/shelf/home lineup UI:** `imageKey` → [`CatalogImageFromKey`](../lib/shared/widgets/catalog_image_from_key.dart) → resolver (never await in widgets before paint)
+- **Shelf user photos:** `localImageUri` / `customCoverImageUri` via [`ShelfFigureMedia`](../lib/features/collection/presentation/shelf_figure_media.dart) + [`CollectibleThumbImage`](../lib/shared/widgets/collectible_thumb_image.dart)
+- **Market listing photos:** [`MarketListingImage`](../lib/features/market/presentation/market_listing_image.dart) — only place listing `imageUrl` is consumed in UI
+
+### Modals & sheets
+
+- **Bottom sheets:** [`showCollectibleBottomSheet`](../lib/shared/widgets/collectible_bottom_sheet.dart) / [`showCollectionModalBottomSheet`](../lib/features/collection/presentation/collection_modal_overlays.dart) — `DraggableScrollableSheet`, linked scroll controller, `shouldCloseOnMinExtent`
+- **Figure gallery:** [`showCatalogFigureGallery`](../lib/features/catalog/presentation/figure_gallery/catalog_figure_gallery_sheet.dart) — fullscreen route; adapters pass `catalogImageKey` only
 
 ### Figure gallery (collection + catalog)
 
-- **Entry:** [`showCatalogFigureGallery`](../lib/features/catalog/presentation/figure_gallery/catalog_figure_gallery_sheet.dart) from collection series sheet or catalog preview
-- **Shelf mapping:** [`catalogGalleryItemsFromShelfSeries`](../lib/features/catalog/presentation/figure_gallery/catalog_figure_gallery_adapters.dart) sets `imageUrl` via `ShelfFigureMedia.figureDisplayRef(..., includeSeriesCoverFallback: false)` so series cover is not used as figure art
-- **Fullscreen art** ([`_GalleryArt`](../lib/features/catalog/presentation/figure_gallery/catalog_figure_gallery_page.dart)): `localImageUri` → resolved `imageUrl` / `CatalogGalleryStage` → `CatalogImageFromKey` → placeholder
-- **Storage-only IPs:** Many series (e.g. Crybaby) have no bundled figure assets under `assets/catalog/figures/`; Home drop import must persist resolved `imageUrl` or gallery relies on slower async key resolve
+- **Shelf mapping:** [`catalogGalleryItemsFromShelfSeries`](../lib/features/catalog/presentation/figure_gallery/catalog_figure_gallery_adapters.dart) — `catalogImageKey` + `localImageUri` only
+- **Fullscreen:** [`CatalogFigureGalleryPage`](../lib/features/catalog/presentation/figure_gallery/catalog_figure_gallery_page.dart) — local file → `CatalogImageFromKey` → placeholder
 
 ### MVP discipline
 

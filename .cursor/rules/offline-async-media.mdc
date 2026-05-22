@@ -1,0 +1,36 @@
+---
+description: Offline-first, optimistic UI, imageKey-only rendering, shared mutations/modals
+alwaysApply: true
+---
+
+# Offline-first & async
+
+- **Local persistence is first-class** — collection codec, bundled/ cached catalog; app must feel usable on poor network
+- **Optimistic UI by default** — mutate `CollectionNotifier` state immediately; persist with `unawaited` save
+- **Never block UI** on Firebase, Storage URL resolve, or image hydration before `_commit` / render
+- **Progressive hydration** — shimmer/placeholder via `CatalogImageFromKey`; stale-while-revalidate where needed
+- Browse shelf, cached catalog, search, galleries without waiting on network
+
+## imageKey (canonical media identity)
+
+**UI consumes `imageKey` only** via:
+
+- `CatalogImageFromKey` / `CatalogImageDisplay` / `CatalogResolvedImage`
+- `ShelfFigureThumb`, `SeriesReleaseCoverImage`, `CollectionSeriesThumbnail`
+- `MarketListingImage` — **only** boundary for external listing photo URLs (market universe)
+
+**UI must NOT:** build Storage URLs, read `ShelfFigure.imageUrl` for catalog art, await resolve before add-to-shelf.
+
+**Media layer only:** `CatalogImageResolver`, feature `data/` mappers, codecs. `imageUrl` = optional cache/transport — UI works when null.
+
+## Reuse (do not fork)
+
+| Concern | Use |
+|--------|-----|
+| Add catalog series to shelf | `commitCatalogSeriesToShelf` → `CollectionNotifier` |
+| Home release save | `addSeriesFromRelease` (sync commit) |
+| Bottom sheets | `showCollectibleBottomSheet` / `showCollectionModalBottomSheet` |
+| Figure gallery | `showCatalogFigureGallery` |
+| Sheet scroll/dismiss | `CollectibleSheetScope` + linked `ScrollController` |
+
+No screen-owned add flows, modal dismiss logic, or one-off image wrappers.
