@@ -60,8 +60,14 @@ abstract final class FeedRhythm {
   /// Extra air between collection shelf series cards (exhibition pacing).
   static const double collectionShelfCardGap = 26;
 
-  /// Universe section label to first card in that group.
+  /// Space before the first universe header in the shelf feed.
   static const double collectionUniverseSectionTop = 6;
+
+  /// Calm break between universe groups (header-to-header), not card-to-card gap.
+  static const double collectionUniverseSectionGap = 20;
+
+  /// Header deck to first owned series card in a universe group.
+  static const double collectionUniverseHeaderToCards = 10;
 
   /// Air between collection brand filter chips and the first shelf card.
   static const double collectionFilterToFirstCard = 12;
