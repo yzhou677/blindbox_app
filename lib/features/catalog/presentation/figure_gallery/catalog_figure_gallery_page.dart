@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_item.dart';
@@ -32,7 +33,7 @@ class CatalogFigureGalleryPage extends StatelessWidget {
               onTap: () {},
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: AppRadii.figureGalleryRadius,
                   boxShadow: [
                     BoxShadow(
                       color: Theme.of(context).colorScheme.shadow.withValues(
@@ -114,7 +115,7 @@ class _GalleryArt extends StatelessWidget {
           seedKey: item.id,
           isSecret: item.isSecret,
           displayMode: CatalogImageDisplayMode.figureGallery,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: AppRadii.figureGalleryRadius,
           width: width,
           height: height,
         ),

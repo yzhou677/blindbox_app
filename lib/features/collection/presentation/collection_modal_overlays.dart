@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:flutter/material.dart';
 
 /// Index of the `/collection` branch in [StatefulShellRoute.indexedStack] (see [appRouter]).
@@ -46,7 +47,7 @@ Future<T?> showCollectionModalBottomSheet<T>({
     useRootNavigator: false,
     isScrollControlled: isScrollControlled,
     backgroundColor: backgroundColor,
-    shape: shape,
+    shape: shape ?? AppRadii.sheetShape,
     showDragHandle: showDragHandle,
     builder: builder,
   );

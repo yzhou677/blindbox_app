@@ -1,11 +1,13 @@
+import 'package:blindbox_app/core/theme/app_radii.dart';
+import 'package:blindbox_app/core/theme/collectible_elevation.dart';
+import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-/// Polished empty shelf — cozy, visual-first, not an error state.
+/// Empty shelf — visual-first, minimal copy.
 class CollectionEmptyState extends StatelessWidget {
   const CollectionEmptyState({super.key, this.onAddSeries});
 
-  /// Opens add-from-catalog or custom series flow.
   final VoidCallback? onAddSeries;
 
   @override
@@ -15,80 +17,51 @@ class CollectionEmptyState extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(32),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  scheme.secondaryContainer.withValues(
-                    alpha: isDark ? 0.35 : 0.65,
-                  ),
-                  scheme.tertiaryContainer.withValues(
-                    alpha: isDark ? 0.22 : 0.45,
-                  ),
-                ],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: scheme.shadow.withValues(alpha: isDark ? 0.35 : 0.08),
-                  blurRadius: 36,
-                  offset: const Offset(0, 18),
-                  spreadRadius: -8,
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(28, 40, 28, 36),
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.inventory_2_outlined,
-                    size: 52,
-                    color: scheme.onSecondaryContainer.withValues(alpha: 0.55),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Your shelf is waiting',
-                    textAlign: TextAlign.center,
-                    style: textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: -0.35,
-                      height: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Add your favorite pulls and make the shelf yours.',
-                    textAlign: TextAlign.center,
-                    style: textTheme.bodyLarge?.copyWith(
-                      color: scheme.onSurfaceVariant.withValues(alpha: 0.92),
-                      height: 1.45,
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-                  if (onAddSeries != null) ...[
-                    FilledButton(
-                      onPressed: onAddSeries,
-                      child: const Text('Add a series'),
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-                  FilledButton.tonalIcon(
-                    onPressed: () => context.go('/home'),
-                    icon: const Icon(Icons.explore_rounded, size: 20),
-                    label: const Text('Browse drops'),
-                  ),
-                ],
-              ),
-            ),
+      padding: const EdgeInsets.symmetric(horizontal: 28),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: AppRadii.shellRadius,
+          boxShadow: CollectibleElevation.softCard(context),
+          color: Color.lerp(
+            scheme.surfaceContainerLow,
+            scheme.secondaryContainer,
+            isDark ? 0.08 : 0.18,
           ),
-        ],
+          border: Border.all(
+            color: scheme.outlineVariant.withValues(alpha: isDark ? 0.28 : 0.34),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(28, 36, 28, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.inventory_2_outlined,
+                size: 48,
+                color: scheme.onSurfaceVariant.withValues(alpha: 0.42),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                'Empty shelf',
+                textAlign: TextAlign.center,
+                style: CollectibleTypography.seriesHeroTitle(textTheme, scheme),
+              ),
+              const SizedBox(height: 28),
+              if (onAddSeries != null) ...[
+                FilledButton(
+                  onPressed: onAddSeries,
+                  child: const Text('Add series'),
+                ),
+                const SizedBox(height: 10),
+              ],
+              FilledButton.tonal(
+                onPressed: () => context.go('/home'),
+                child: const Text('Discover'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

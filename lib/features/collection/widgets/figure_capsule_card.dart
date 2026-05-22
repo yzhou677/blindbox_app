@@ -1,3 +1,5 @@
+import 'package:blindbox_app/core/theme/app_radii.dart';
+import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
@@ -35,7 +37,7 @@ class _FigureCapsuleCardState extends State<FigureCapsuleCard>
     super.initState();
     _press = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 220),
+      duration: CollectibleMotion.press,
     );
   }
 
@@ -177,7 +179,7 @@ class _FigureCapsuleCardState extends State<FigureCapsuleCard>
         color: Colors.transparent,
         child: InkWell(
           onTap: _handleTap,
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: AppRadii.cardRadius,
           splashColor: scheme.primary.withValues(alpha: 0.07),
           highlightColor: scheme.primary.withValues(alpha: 0.03),
           child: AnimatedBuilder(
@@ -195,7 +197,7 @@ class _FigureCapsuleCardState extends State<FigureCapsuleCard>
               duration: const Duration(milliseconds: 280),
               curve: Curves.easeOutCubic,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(22),
+                borderRadius: AppRadii.cardRadius,
                 gradient: cardFaceGradient,
                 color: cardFaceGradient == null ? matTint : null,
                 border: Border.all(color: borderColor, width: borderWidth),

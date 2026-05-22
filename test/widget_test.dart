@@ -43,7 +43,7 @@ void main() {
     expect(find.text('Home'), findsWidgets);
     expect(find.text('Discover'), findsWidgets);
     expect(find.text('Latest drops'), findsOneWidget);
-    expect(find.text('Luna Astronaut'), findsOneWidget);
+    expect(find.text('Moon Mischief'), findsOneWidget);
     expect(find.text('Trending series'), findsOneWidget);
   });
 
@@ -169,7 +169,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
-    expect(find.text('Your shelf is waiting'), findsOneWidget);
-    expect(find.text('Browse drops'), findsOneWidget);
+    expect(find.text('Empty shelf'), findsOneWidget);
+    expect(find.text('Discover'), findsOneWidget);
   });
 }

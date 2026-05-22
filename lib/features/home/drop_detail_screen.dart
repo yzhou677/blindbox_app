@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_adapters.dart';
@@ -94,13 +95,6 @@ class DropDetailScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    release.seriesName,
-                    style: CollectibleTypography.seriesHeroTitle(
-                      textTheme,
-                      scheme,
-                    ),
-                  ),
                   SeriesHeroMetaBlock(
                     brand: release.brand,
                     ipLine: release.ipLine?.trim() ?? '',
@@ -146,7 +140,7 @@ class _DetailHero extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final brightness = Theme.of(context).brightness;
-    final outerRadius = BorderRadius.circular(26);
+    final outerRadius = AppRadii.spotlightRadius;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -174,7 +168,7 @@ class _DetailHero extends StatelessWidget {
           padding: const EdgeInsets.all(10),
           child: DecoratedBox(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: AppRadii.matRadius,
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -192,7 +186,7 @@ class _DetailHero extends StatelessWidget {
                     ) ??
                     1.0,
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: AppRadii.insetRadius,
                   child: SeriesReleaseCoverImage(
                     release: release,
                     heroTag: SeriesReleaseCoverImage.heroTagFor(release),

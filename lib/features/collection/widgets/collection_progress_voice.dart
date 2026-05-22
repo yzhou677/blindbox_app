@@ -66,7 +66,7 @@ abstract final class CollectionProgressVoice {
         .length;
 
     if (owned >= total) {
-      return 'Every slot in this series is filled.';
+      return '';
     }
 
     final parts = <String>[];
@@ -99,6 +99,6 @@ abstract final class CollectionProgressVoice {
     if (avg >= 90) return 'Almost every series feels complete — satisfying.';
     if (avg >= 70) return 'Your shelf is coming together beautifully.';
     if (avg >= 40) return 'Room to grow — each pull adds character.';
-    return 'Room to grow on your shelf.';
+    return 'Still growing.';
   }
 }

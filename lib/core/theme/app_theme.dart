@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -292,9 +293,7 @@ abstract final class AppTheme {
         elevation: 0,
         backgroundColor: colorScheme.surface,
         surfaceTintColor: colorScheme.surfaceTint.withValues(alpha: isLight ? 0.22 : 0.18),
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
-        ),
+        shape: AppRadii.sheetShape,
         dragHandleColor: colorScheme.onSurfaceVariant.withValues(alpha: 0.35),
       ),
       inputDecorationTheme: InputDecorationTheme(

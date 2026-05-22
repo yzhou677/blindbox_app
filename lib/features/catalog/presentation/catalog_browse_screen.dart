@@ -9,6 +9,7 @@ import 'package:blindbox_app/features/collection/application/collection_notifier
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/widgets/catalog_series_preview_sheet.dart';
 import 'package:blindbox_app/shared/widgets/app_search_field.dart';
+import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -51,29 +52,17 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
     final snap = ref.read(collectionNotifierProvider);
     final onShelf = snap.hasTemplateOnShelf(seriesId);
 
-    final h = MediaQuery.sizeOf(context).height * 0.74;
-    await showModalBottomSheet<void>(
+    await showCollectibleBottomSheet<void>(
       context: context,
-      isScrollControlled: true,
-      showDragHandle: false,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-      ),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
-        child: SizedBox(
-          height: h,
-          child: CatalogSeriesPreviewSheet(
-            series: template,
-            onAdd: onShelf
-                ? () {}
-                : () async {
-                    await _addCatalogSeriesToShelf(notifier, template, bundle);
-                  },
-            showAddButton: !onShelf,
-          ),
-        ),
+      useRootNavigator: true,
+      builder: (ctx) => CatalogSeriesPreviewSheet(
+        series: template,
+        onAdd: onShelf
+            ? () {}
+            : () async {
+                await _addCatalogSeriesToShelf(notifier, template, bundle);
+              },
+        showAddButton: !onShelf,
       ),
     );
   }
@@ -176,7 +165,7 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
                   child: Text(
-                    'Matching series',
+                    'Matches',
                     style: textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.12,

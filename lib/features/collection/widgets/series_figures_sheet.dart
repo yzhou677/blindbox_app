@@ -1,10 +1,12 @@
+import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_adapters.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_sheet.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/widgets/figure_capsule_card.dart';
-import 'package:blindbox_app/shared/widgets/series_hero_meta_block.dart';
+import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -28,8 +30,6 @@ class SeriesFiguresSheet extends ConsumerWidget {
     final series = _findSeries(snap, seriesId);
     if (series == null) return const SizedBox.shrink();
 
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
     final progress = progressForSeries(series, snap.figureStates);
     final isComplete =
         series.figureCount > 0 && progress.owned >= series.figureCount;
@@ -39,35 +39,28 @@ class SeriesFiguresSheet extends ConsumerWidget {
         secrets.every((f) => snap.trackedOrDefault(f.id).owned);
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 18),
+        padding: const EdgeInsets.fromLTRB(
+          FeedRhythm.sheetHorizontal,
+          FeedRhythm.sheetChromeTop,
+          FeedRhythm.sheetHorizontal,
+          AppSpacing.lg,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: scheme.outlineVariant.withValues(alpha: 0.55),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              ),
+            CollectibleSheetChrome(
+              seriesTitle: series.name,
+              brand: series.brand,
+              ipLine: series.ipName,
+              padding: EdgeInsets.zero,
             ),
-            const SizedBox(height: 16),
-            Text(
-              series.name,
-              style: CollectibleTypography.seriesHeroTitle(textTheme, scheme),
-            ),
-            SeriesHeroMetaBlock(brand: series.brand, ipLine: series.ipName),
             if (isComplete) ...[
               const SizedBox(height: 14),
               _SeriesCompleteBanner(
                 chasesHome: chasesHome && secrets.isNotEmpty,
               ),
             ],
-            const SizedBox(height: 14),
-            const _FigureProgressLegend(),
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
             Expanded(
               child: SingleChildScrollView(
                 child: SizedBox(
@@ -103,89 +96,6 @@ class SeriesFiguresSheet extends ConsumerWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _FigureProgressLegend extends StatelessWidget {
-  const _FigureProgressLegend();
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    final meta = CollectibleTypography.figureMeta(textTheme, scheme).copyWith(
-      color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
-      height: 1.25,
-    );
-
-    return Wrap(
-      crossAxisAlignment: WrapCrossAlignment.center,
-      spacing: 6,
-      runSpacing: 6,
-      children: [
-        Text('Tap a figure:', style: meta),
-        _LegendStep(
-          icon: Icons.favorite_border_rounded,
-          label: 'Wishlist',
-          style: meta,
-          scheme: scheme,
-        ),
-        _LegendArrow(scheme: scheme),
-        _LegendStep(
-          icon: Icons.check_circle_rounded,
-          label: 'Collected',
-          style: meta,
-          scheme: scheme,
-        ),
-        _LegendArrow(scheme: scheme),
-        Text('tap again to clear', style: meta),
-      ],
-    );
-  }
-}
-
-class _LegendStep extends StatelessWidget {
-  const _LegendStep({
-    required this.icon,
-    required this.label,
-    required this.style,
-    required this.scheme,
-  });
-
-  final IconData icon;
-  final String label;
-  final TextStyle style;
-  final ColorScheme scheme;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          icon,
-          size: 15,
-          color: scheme.onSurfaceVariant.withValues(alpha: 0.65),
-        ),
-        const SizedBox(width: 4),
-        Text(label, style: style),
-      ],
-    );
-  }
-}
-
-class _LegendArrow extends StatelessWidget {
-  const _LegendArrow({required this.scheme});
-
-  final ColorScheme scheme;
-
-  @override
-  Widget build(BuildContext context) {
-    return Icon(
-      Icons.arrow_forward_rounded,
-      size: 14,
-      color: scheme.onSurfaceVariant.withValues(alpha: 0.4),
     );
   }
 }

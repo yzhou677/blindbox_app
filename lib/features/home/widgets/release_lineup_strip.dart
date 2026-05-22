@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_aspect_image.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
@@ -69,7 +70,7 @@ class _LineupCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final r = BorderRadius.circular(16);
+    final r = AppRadii.figureLineupRadius;
 
     final tile = ReleaseLineupStrip.slotUsesSecretPlaceholder(slot)
         ? _secretTile(r)

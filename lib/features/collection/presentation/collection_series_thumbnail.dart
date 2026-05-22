@@ -1,4 +1,5 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_series_art.dart';
@@ -28,7 +29,7 @@ class CollectionSeriesThumbnail extends StatelessWidget {
     final name = series.name;
     final seed = series.catalogTemplateId ?? series.id;
     final secret = false;
-    final r = BorderRadius.circular(14);
+    final r = AppRadii.insetRadius;
 
     return SizedBox(
       width: size,

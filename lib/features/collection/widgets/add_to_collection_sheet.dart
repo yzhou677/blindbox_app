@@ -12,7 +12,14 @@ import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/add_series_catalog_copy.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart';
 import 'package:blindbox_app/features/collection/widgets/catalog_series_preview_sheet.dart';
+import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/shared/widgets/app_search_field.dart';
+import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
+import 'package:blindbox_app/core/theme/app_radii.dart';
+import 'package:blindbox_app/core/theme/collectible_typography.dart';
+import 'package:blindbox_app/shared/widgets/collectible_browse_card.dart';
+import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
 import 'package:blindbox_app/shared/widgets/series_hero_meta_block.dart';
 import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
 import 'package:flutter/material.dart';
@@ -139,22 +146,9 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     required CatalogSeries series,
     required VoidCallback onAdd,
   }) {
-    final h = MediaQuery.sizeOf(context).height * 0.74;
-    showCollectionModalBottomSheet<void>(
+    showCollectibleBottomSheet<void>(
       context: context,
-      isScrollControlled: true,
-      showDragHandle: false,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-      ),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
-        child: SizedBox(
-          height: h,
-          child: CatalogSeriesPreviewSheet(series: series, onAdd: onAdd),
-        ),
-      ),
+      builder: (_) => CatalogSeriesPreviewSheet(series: series, onAdd: onAdd),
     );
   }
 
@@ -167,47 +161,27 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     final notifier = ref.read(collectionNotifierProvider.notifier);
     final catalogActive = _trimmedQuery.isNotEmpty;
 
-    final sheetH = MediaQuery.sizeOf(context).height * 0.78;
+    final sheetH =
+        MediaQuery.sizeOf(context).height * FeedRhythm.sheetAddSeriesHeightFraction;
 
     return SizedBox(
       height: sheetH,
       child: Padding(
         padding: EdgeInsets.only(
-          left: 20,
-          right: 20,
-          top: 12,
-          bottom: bottom + 12,
+          left: FeedRhythm.sheetHorizontal,
+          right: FeedRhythm.sheetHorizontal,
+          top: FeedRhythm.sheetChromeTop,
+          bottom: bottom + AppSpacing.md,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: scheme.outlineVariant.withValues(alpha: 0.55),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              ),
+            CollectibleSheetChrome(
+              editorialTitle: 'Add a series',
+              editorialSubtitle: AddSeriesCatalogCopy.sheetSubtitle,
+              padding: EdgeInsets.zero,
             ),
-            const SizedBox(height: 18),
-            Text(
-              'Add a series',
-              style: textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.35,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              AddSeriesCatalogCopy.sheetSubtitle,
-              style: textTheme.bodySmall?.copyWith(
-                color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
-                height: 1.38,
-              ),
-            ),
-            const SizedBox(height: 16),
+            const SizedBox(height: FeedRhythm.sheetSectionGap),
             AppSearchField(
               controller: _search,
               padding: EdgeInsets.zero,
@@ -232,11 +206,10 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
-                  'Matching series',
-                  style: textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.12,
-                    color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
+                  AddSeriesCatalogCopy.catalogListHeading(searchActive: true),
+                  style: CollectibleTypography.catalogSeriesRowMeta(
+                    textTheme,
+                    scheme,
                   ),
                 ),
               )
@@ -488,42 +461,24 @@ class _SuggestionCard extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    return Material(
-      color: scheme.surfaceContainerLow,
-      elevation: 0,
-      shadowColor: scheme.shadow.withValues(alpha: 0.12),
-      borderRadius: BorderRadius.circular(22),
-      child: InkWell(
-        onTap: onOpenPreview,
-        borderRadius: BorderRadius.circular(22),
-        child: Ink(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(
-              color: series.shelfAccent.withValues(alpha: 0.42),
-            ),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                scheme.surfaceContainerLow,
-                Color.lerp(
-                  scheme.surfaceContainerLow,
-                  series.shelfAccent,
-                  0.12,
-                )!,
-              ],
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                CatalogImageSlot(
-                  displayMode: CatalogImageDisplayMode.seriesCoverThumb,
-                  borderRadius: BorderRadius.circular(14),
-                  child: coverImageKey.isNotEmpty
+    return CollectibleBrowseCard(
+      onTap: onOpenPreview,
+      borderColor: series.shelfAccent.withValues(alpha: 0.42),
+      fillGradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          scheme.surfaceContainerLow,
+          Color.lerp(scheme.surfaceContainerLow, series.shelfAccent, 0.12)!,
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          CatalogImageSlot(
+            displayMode: CatalogImageDisplayMode.seriesCoverThumb,
+            borderRadius: AppRadii.insetRadius,
+            child: coverImageKey.isNotEmpty
                       ? CatalogImageFromKey(
                           key: catalogImageWidgetKey(
                             displayMode:
@@ -557,9 +512,9 @@ class _SuggestionCard extends StatelessWidget {
                     children: [
                       Text(
                         series.name,
-                        style: textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.14,
+                        style: CollectibleTypography.catalogSeriesRowTitle(
+                          textTheme,
+                          scheme,
                         ),
                       ),
                       SeriesHeroMetaBlock(
@@ -573,42 +528,32 @@ class _SuggestionCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                Material(
-                  color: scheme.primary.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(14),
-                  child: InkWell(
-                    onTap: onAdd,
-                    borderRadius: BorderRadius.circular(14),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Add',
-                            style: textTheme.labelLarge?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: scheme.primary,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(
-                            Icons.add_rounded,
-                            size: 20,
-                            color: scheme.primary,
-                          ),
-                        ],
+          Material(
+            color: scheme.primary.withValues(alpha: 0.14),
+            borderRadius: AppRadii.insetRadius,
+            child: InkWell(
+              onTap: onAdd,
+              borderRadius: AppRadii.insetRadius,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Add',
+                      style: textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: scheme.primary,
                       ),
                     ),
-                  ),
+                    const SizedBox(width: 4),
+                    Icon(Icons.add_rounded, size: 20, color: scheme.primary),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }

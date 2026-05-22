@@ -15,6 +15,7 @@ import 'package:blindbox_app/features/collection/widgets/collection_warm_start_b
 import 'package:blindbox_app/features/collection/widgets/series_figures_sheet.dart';
 import 'package:blindbox_app/features/collection/widgets/series_shelf_cards.dart';
 import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
+import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -90,22 +91,9 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
   }
 
   void _openFiguresSheet(BuildContext context, String seriesId) {
-    final h = MediaQuery.sizeOf(context).height * 0.74;
-    showCollectionModalBottomSheet<void>(
+    showCollectibleBottomSheet<void>(
       context: context,
-      isScrollControlled: true,
-      showDragHandle: false,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-      ),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
-        child: SizedBox(
-          height: h,
-          child: SeriesFiguresSheet(seriesId: seriesId),
-        ),
-      ),
+      builder: (_) => SeriesFiguresSheet(seriesId: seriesId),
     );
   }
 
@@ -143,9 +131,6 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-      ),
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
         child: AddCustomSeriesSheet(
@@ -179,9 +164,6 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-      ),
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
         child: AddToCollectionSheet(

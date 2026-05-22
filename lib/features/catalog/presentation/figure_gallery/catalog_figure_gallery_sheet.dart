@@ -1,6 +1,8 @@
 import 'dart:ui' show ImageFilter;
 
+import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
+import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_item.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_page.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_precache.dart';
@@ -24,8 +26,8 @@ Future<void> showCatalogFigureGallery(
       opaque: false,
       barrierDismissible: true,
       barrierColor: Colors.black.withValues(alpha: 0.72),
-      transitionDuration: const Duration(milliseconds: 280),
-      reverseTransitionDuration: const Duration(milliseconds: 240),
+      transitionDuration: CollectibleMotion.galleryOpen,
+      reverseTransitionDuration: CollectibleMotion.galleryClose,
       pageBuilder: (ctx, animation, secondaryAnimation) {
         return CatalogFigureGallerySheet(
           items: items,
@@ -37,8 +39,8 @@ Future<void> showCatalogFigureGallery(
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         final curved = CurvedAnimation(
           parent: animation,
-          curve: Curves.easeOutCubic,
-          reverseCurve: Curves.easeInCubic,
+          curve: CollectibleMotion.easeOut,
+          reverseCurve: CollectibleMotion.easeIn,
         );
         return FadeTransition(
           opacity: curved,
@@ -229,9 +231,9 @@ class _CatalogFigureGallerySheetState extends State<CatalogFigureGallerySheet> {
                       Padding(
                         padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
                         child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 220),
-                          switchInCurve: Curves.easeOut,
-                          switchOutCurve: Curves.easeIn,
+                      duration: CollectibleMotion.crossfade,
+                      switchInCurve: CollectibleMotion.standard,
+                      switchOutCurve: Curves.easeIn,
                           child: Column(
                             key: ValueKey<String>(item.id),
                             children: [
@@ -291,13 +293,8 @@ class _GalleryDragHandle extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.only(top: 6, bottom: 4),
         child: Center(
-          child: Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: _kGalleryForeground.withValues(alpha: 0.35),
-              borderRadius: BorderRadius.circular(999),
-            ),
+          child: CollectibleSheetDragHandle(
+            color: _kGalleryForeground.withValues(alpha: 0.35),
           ),
         ),
       ),
@@ -321,8 +318,8 @@ class _GalleryPageIndicator extends StatelessWidget {
       children: [
         for (var i = 0; i < count; i++)
           AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOut,
+            duration: CollectibleMotion.crossfade,
+            curve: CollectibleMotion.standard,
             margin: const EdgeInsets.symmetric(horizontal: 3),
             width: i == index ? 18 : 6,
             height: 6,

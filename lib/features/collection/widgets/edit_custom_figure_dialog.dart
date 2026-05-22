@@ -1,4 +1,6 @@
+import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
+import 'package:blindbox_app/features/collection/widgets/custom_series_quiet_field.dart';
 import 'package:flutter/material.dart';
 
 /// Edit one custom figure draft — dialog owns controllers (safe cancel).
@@ -51,7 +53,8 @@ class _EditCustomFigureDialogState extends State<EditCustomFigureDialog> {
     final textTheme = Theme.of(context).textTheme;
 
     return AlertDialog(
-      title: const Text('Edit figure'),
+      shape: RoundedRectangleBorder(borderRadius: AppRadii.cardRadius),
+      title: const Text('Figure'),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -61,30 +64,15 @@ class _EditCustomFigureDialogState extends State<EditCustomFigureDialog> {
               controller: _name,
               autofocus: true,
               textInputAction: TextInputAction.next,
-              decoration: InputDecoration(
-                labelText: 'Display name',
-                filled: true,
-                fillColor: scheme.surfaceContainerHighest.withValues(
-                  alpha: 0.5,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
+              decoration: quietCustomSeriesField(scheme, hintText: 'Name'),
             ),
             const SizedBox(height: 16),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: Text(
-                'Secret figure',
+                'Secret',
                 style: textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w600,
-                ),
-              ),
-              subtitle: Text(
-                'Chase / variant with optional ratio',
-                style: textTheme.bodySmall?.copyWith(
-                  color: scheme.onSurfaceVariant.withValues(alpha: 0.8),
                 ),
               ),
               value: _isSecret,
@@ -96,18 +84,7 @@ class _EditCustomFigureDialogState extends State<EditCustomFigureDialog> {
                 controller: _rarity,
                 textInputAction: TextInputAction.done,
                 onSubmitted: (_) => _save(),
-                decoration: InputDecoration(
-                  hintText: 'e.g. 1:72',
-                  helperText: 'Chase ratio — optional',
-                  helperMaxLines: 1,
-                  filled: true,
-                  fillColor: scheme.surfaceContainerHighest.withValues(
-                    alpha: 0.5,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
+                decoration: quietCustomSeriesField(scheme, hintText: '1:72'),
               ),
             ],
           ],

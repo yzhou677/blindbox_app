@@ -1,5 +1,6 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/collectible_tokens.dart';
+import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:flutter/material.dart';
 
 /// Section rhythm: soft lead, title row, optional subtitle deck.
@@ -42,7 +43,15 @@ class CollectibleSectionHeader extends StatelessWidget {
                   child: titleAccessory,
                 ),
               ],
-              Expanded(child: Text(title, style: textTheme.titleMedium)),
+              Expanded(
+                child: Text(
+                  title,
+                  style: CollectibleTypography.shelfSeriesTitle(
+                    textTheme,
+                    scheme,
+                  ),
+                ),
+              ),
               if (trailing case final t?) ...[
                 const SizedBox(width: 8),
                 Flexible(

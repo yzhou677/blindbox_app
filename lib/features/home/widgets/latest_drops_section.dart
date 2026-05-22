@@ -13,7 +13,6 @@ class LatestDropsSection extends StatelessWidget {
 
   final List<SeriesRelease> releases;
 
-  static const double _railHeight = 428;
 
   @override
   Widget build(BuildContext context) {
@@ -28,9 +27,9 @@ class LatestDropsSection extends StatelessWidget {
         ColoredBox(
           color: HomeSectionZones.latestDropsMat(scheme, brightness),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 14),
+            padding: const EdgeInsets.symmetric(vertical: 18),
             child: SizedBox(
-              height: _railHeight,
+              height: FeedRhythm.homeSeriesRailHeight,
               child: ListView.separated(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 scrollDirection: Axis.horizontal,
