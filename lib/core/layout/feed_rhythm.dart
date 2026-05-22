@@ -98,9 +98,10 @@ abstract final class FeedRhythm {
   static const double sheetMinChildSize = sheetMinScreenFraction;
 
   static const double sheetHorizontal = 16;
-  static const double sheetChromeTop = 8;
-  static const double sheetHeaderAfterHandle = 14;
+  static const double sheetChromeTop = 10;
+  static const double sheetHeaderAfterHandle = 16;
   static const double sheetBodyBottomInset = 14;
+  static const double sheetEditorialBlockGap = 10;
   static const double sheetSectionGap = 18;
   static const double sheetFigureRailGap = 14;
 

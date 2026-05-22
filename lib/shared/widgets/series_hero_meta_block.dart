@@ -30,17 +30,17 @@ class SeriesHeroMetaBlock extends StatelessWidget {
             ipLabel.toLowerCase() != brandLabel.toLowerCase());
 
     final topGap = switch (density) {
-      SeriesHeroMetaDensity.sheet => 4.0,
+      SeriesHeroMetaDensity.sheet => 5.0,
       SeriesHeroMetaDensity.compact => 6.0,
       SeriesHeroMetaDensity.hero => 6.0,
     };
     final lineGap = switch (density) {
-      SeriesHeroMetaDensity.sheet => 1.0,
+      SeriesHeroMetaDensity.sheet => 3.0,
       SeriesHeroMetaDensity.compact => 2.0,
       SeriesHeroMetaDensity.hero => 2.0,
     };
     final trailingGap = switch (density) {
-      SeriesHeroMetaDensity.sheet => 4.0,
+      SeriesHeroMetaDensity.sheet => 5.0,
       _ => 6.0,
     };
 
@@ -49,20 +49,23 @@ class SeriesHeroMetaBlock extends StatelessWidget {
         : textTheme.labelLarge?.copyWith(
             color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
             fontWeight: FontWeight.w600,
+            height: density == SeriesHeroMetaDensity.sheet ? 1.28 : null,
           );
+
+    final sheetMetaHeight = density == SeriesHeroMetaDensity.sheet ? 1.32 : 1.25;
 
     final brandStyle = density == SeriesHeroMetaDensity.hero
         ? CollectibleTypography.seriesBrandLine(textTheme, scheme)
         : textTheme.bodySmall?.copyWith(
             color: scheme.onSurfaceVariant.withValues(alpha: 0.68),
-            height: 1.25,
+            height: sheetMetaHeight,
           );
 
     final metaStyle = density == SeriesHeroMetaDensity.hero
         ? CollectibleTypography.figureMeta(textTheme, scheme)
         : textTheme.bodySmall?.copyWith(
             color: scheme.onSurfaceVariant.withValues(alpha: 0.68),
-            height: 1.25,
+            height: sheetMetaHeight,
           );
 
     return Column(

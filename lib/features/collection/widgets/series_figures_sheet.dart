@@ -67,14 +67,13 @@ class SeriesFiguresSheet extends ConsumerWidget {
               brand: series.brand,
               ipLine: series.ipName,
               trailingMeta: trailingMeta,
-              padding: EdgeInsets.zero,
             ),
           ),
           if (contextualLine != null && contextualLine.isNotEmpty)
             SliverToBoxAdapter(
               child: CollectibleRelationshipLine(
                 text: contextualLine,
-                padding: const EdgeInsets.only(top: 8),
+                padding: const EdgeInsets.only(top: 10),
               ),
             ),
           if (isComplete)

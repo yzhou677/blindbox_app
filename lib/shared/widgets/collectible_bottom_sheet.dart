@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 typedef CollectibleSheetWidgetBuilder =
     Widget Function(BuildContext context, ScrollController scrollController);
 
-/// Exposes the [DraggableScrollableSheet] scroll controller to descendants.
+/// Exposes the sheet scroll controller to descendants.
 class CollectibleSheetScope extends InheritedWidget {
   const CollectibleSheetScope({
     super.key,
@@ -40,46 +40,15 @@ ScrollPhysics collectibleSheetScrollPhysics([ScrollPhysics? parent]) {
   );
 }
 
-/// Maps screen-height targets to [DraggableScrollableSheet] child sizes.
-///
-/// The modal host matches the open height so `initialChildSize: 1` fills the
-/// panel at rest — no empty surface above the drag handle. Pass a larger
-/// [maxScreenFraction] only when a sheet must drag taller than its open height.
-final class CollectibleSheetExtent {
-  const CollectibleSheetExtent({
-    required this.hostHeight,
-    required this.initialChildSize,
-    required this.minChildSize,
-    required this.maxChildSize,
-  });
-
-  final double hostHeight;
-  final double initialChildSize;
-  final double minChildSize;
-  final double maxChildSize;
-}
-
-CollectibleSheetExtent resolveCollectibleSheetExtent({
-  required double screenHeight,
+/// Target visible height as a fraction of the full screen.
+double resolveCollectibleSheetHeightFactor({
   double openScreenFraction = FeedRhythm.sheetOpenScreenFraction,
   double minScreenFraction = FeedRhythm.sheetMinScreenFraction,
   double maxScreenFraction = FeedRhythm.sheetMaxChildSize,
 }) {
   final max = maxScreenFraction.clamp(0.5, 0.98);
   final open = openScreenFraction.clamp(minScreenFraction, max);
-  final min = minScreenFraction.clamp(0.18, open);
-  final hostFraction = open;
-  final hostHeight = screenHeight * hostFraction;
-
-  double childSize(double screenFraction) =>
-      (screenFraction / hostFraction).clamp(0.15, 1.0);
-
-  return CollectibleSheetExtent(
-    hostHeight: hostHeight,
-    initialChildSize: 1.0,
-    minChildSize: childSize(min),
-    maxChildSize: childSize(max),
-  );
+  return open;
 }
 
 /// Horizontal + bottom safe inset for sheet bodies.
@@ -121,6 +90,12 @@ Future<T?> showCollectibleBottomSheet<T>({
   Color? backgroundColor,
 }) {
   final scheme = Theme.of(context).colorScheme;
+  final heightFactor = resolveCollectibleSheetHeightFactor(
+    openScreenFraction: heightFraction,
+    minScreenFraction:
+        minHeightFraction ?? FeedRhythm.sheetMinScreenFraction,
+    maxScreenFraction: maxHeightFraction ?? heightFraction,
+  );
 
   return showModalBottomSheet<T>(
     context: context,
@@ -134,72 +109,58 @@ Future<T?> showCollectibleBottomSheet<T>({
     sheetAnimationStyle: CollectibleMotion.sheetAnimationStyle(),
     backgroundColor: backgroundColor ?? scheme.surface,
     shape: AppRadii.sheetShape,
+    clipBehavior: Clip.antiAlias,
     builder: (ctx) {
       final viewInsets = MediaQuery.viewInsetsOf(ctx);
-      final screenHeight = MediaQuery.sizeOf(ctx).height;
-      final extent = resolveCollectibleSheetExtent(
-        screenHeight: screenHeight,
-        openScreenFraction: heightFraction,
-        minScreenFraction:
-            minHeightFraction ?? FeedRhythm.sheetMinScreenFraction,
-        maxScreenFraction: maxHeightFraction ?? heightFraction,
-      );
 
       return Padding(
         padding: EdgeInsets.only(bottom: viewInsets.bottom),
-        child: Align(
+        child: FractionallySizedBox(
+          heightFactor: heightFactor,
           alignment: Alignment.bottomCenter,
-          child: SizedBox(
-            height: extent.hostHeight,
-            child: _CollectibleDraggableSheetHost(
-              initialChildSize: extent.initialChildSize,
-              minChildSize: extent.minChildSize,
-              maxChildSize: extent.maxChildSize,
-              builder: builder,
-            ),
-          ),
+          widthFactor: 1,
+          child: _CollectibleSheetScrollHost(builder: builder),
         ),
       );
     },
   );
 }
 
-class _CollectibleDraggableSheetHost extends StatelessWidget {
-  const _CollectibleDraggableSheetHost({
-    required this.initialChildSize,
-    required this.minChildSize,
-    required this.maxChildSize,
-    required this.builder,
-  });
+/// Owns scroll controller; sheet height comes from [FractionallySizedBox], not
+/// [DraggableScrollableSheet], so the modal surface does not paint empty space
+/// above the drag handle.
+class _CollectibleSheetScrollHost extends StatefulWidget {
+  const _CollectibleSheetScrollHost({required this.builder});
 
-  final double initialChildSize;
-  final double minChildSize;
-  final double maxChildSize;
   final CollectibleSheetWidgetBuilder builder;
 
   @override
+  State<_CollectibleSheetScrollHost> createState() =>
+      _CollectibleSheetScrollHostState();
+}
+
+class _CollectibleSheetScrollHostState extends State<_CollectibleSheetScrollHost> {
+  late final ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
-      expand: false,
-      initialChildSize: initialChildSize,
-      minChildSize: minChildSize,
-      maxChildSize: maxChildSize,
-      snap: true,
-      snapSizes: <double>{
-        minChildSize,
-        initialChildSize,
-        maxChildSize,
-      }.toList()
-        ..sort(),
-      shouldCloseOnMinExtent: true,
-      builder: (context, scrollController) {
-        return CollectibleSheetScope(
-          scrollController: scrollController,
-          child: CollectibleSheetFocusFrame(
-            child: builder(context, scrollController),
-          ),
-        );
-      },
+    return CollectibleSheetScope(
+      scrollController: _scrollController,
+      child: CollectibleSheetFocusFrame(
+        child: widget.builder(context, _scrollController),
+      ),
     );
   }
 }

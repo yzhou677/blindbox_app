@@ -64,7 +64,7 @@ class CollectibleSheetChrome extends StatelessWidget {
                 density: SeriesHeroMetaDensity.sheet,
               )
             else if (trailingMeta != null && trailingMeta!.trim().isNotEmpty) ...[
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               Text(
                 trailingMeta!.trim(),
                 style: CollectibleTypography.figureMeta(textTheme, scheme),

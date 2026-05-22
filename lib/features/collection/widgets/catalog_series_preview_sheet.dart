@@ -55,14 +55,13 @@ class CatalogSeriesPreviewSheet extends ConsumerWidget {
             brand: series.brand,
             ipLine: series.ipName,
             trailingMeta: figureLine,
-            padding: EdgeInsets.zero,
           ),
         ),
         if (relationshipLine != null && relationshipLine.isNotEmpty)
           SliverToBoxAdapter(
             child: CollectibleRelationshipLine(
               text: relationshipLine,
-              padding: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.only(top: 10),
             ),
           ),
         SliverPadding(

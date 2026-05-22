@@ -56,18 +56,17 @@ Future<void> showCollectibleMarketSheet({
                         brand: c?.brand ?? '',
                         ipLine: c?.ipLine?.trim() ?? '',
                         trailingMeta: trailingMeta,
-                        padding: EdgeInsets.zero,
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: FeedRhythm.sheetEditorialBlockGap),
                       Text(
                         CollectibleMarketMoodCopy.subtitle(snapshot),
                         style: textTheme.bodyMedium?.copyWith(
                           color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
-                          height: 1.3,
+                          height: 1.35,
                         ),
                       ),
                       if (display.subtitle.isNotEmpty) ...[
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 6),
                         Text(
                           display.subtitle,
                           style: CollectibleTypography.figureMeta(
@@ -79,7 +78,7 @@ Future<void> showCollectibleMarketSheet({
                       CollectibleMarketSignals(snapshot: snapshot),
                       if (relationshipLine != null &&
                           relationshipLine.isNotEmpty) ...[
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 8),
                         CollectibleRelationshipLine(text: relationshipLine),
                       ],
                       const SizedBox(height: FeedRhythm.sheetFigureRailGap),

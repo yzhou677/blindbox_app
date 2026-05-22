@@ -245,7 +245,7 @@ Security rules live in the Firebase console or your infra repo — catalog read 
 
 ### Modals & sheets
 
-- **Bottom sheets:** [`showCollectibleBottomSheet`](../lib/shared/widgets/collectible_bottom_sheet.dart) / [`showCollectionModalBottomSheet`](../lib/features/collection/presentation/collection_modal_overlays.dart) — `DraggableScrollableSheet`, linked scroll controller, `shouldCloseOnMinExtent`
+- **Bottom sheets:** [`showCollectibleBottomSheet`](../lib/shared/widgets/collectible_bottom_sheet.dart) / [`showCollectionModalBottomSheet`](../lib/features/collection/presentation/collection_modal_overlays.dart) — `FractionallySizedBox` height cap, linked `ScrollController`, modal `enableDrag` dismiss
 - **Figure gallery:** [`showCatalogFigureGallery`](../lib/features/catalog/presentation/figure_gallery/catalog_figure_gallery_sheet.dart) — fullscreen route; adapters pass `catalogImageKey` only
 
 ### Figure gallery (collection + catalog)
