@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 typedef CollectibleSheetWidgetBuilder =
     Widget Function(BuildContext context, ScrollController scrollController);
 
-/// Exposes the sheet scroll controller to descendants.
+/// Exposes the [DraggableScrollableSheet] scroll controller to descendants.
 class CollectibleSheetScope extends InheritedWidget {
   const CollectibleSheetScope({
     super.key,
@@ -33,10 +33,13 @@ class CollectibleSheetScope extends InheritedWidget {
   }
 }
 
-/// Scroll physics for sheet lists — always scrollable so overscroll dismiss works.
+/// Scroll physics for sheet lists — cooperates with [DraggableScrollableSheet].
+///
+/// [AlwaysScrollableScrollPhysics] keeps short sheets draggable at scroll top;
+/// [ClampingScrollPhysics] hands off downward pulls to sheet dismissal.
 ScrollPhysics collectibleSheetScrollPhysics([ScrollPhysics? parent]) {
-  return const AlwaysScrollableScrollPhysics(
-    parent: BouncingScrollPhysics(),
+  return const ClampingScrollPhysics(
+    parent: AlwaysScrollableScrollPhysics(),
   );
 }
 
@@ -49,6 +52,36 @@ double resolveCollectibleSheetHeightFactor({
   final max = maxScreenFraction.clamp(0.5, 0.98);
   final open = openScreenFraction.clamp(minScreenFraction, max);
   return open;
+}
+
+/// Child-size ratios for [DraggableScrollableSheet] inside a height-capped host.
+final class CollectibleSheetDragSizes {
+  const CollectibleSheetDragSizes({
+    required this.initialChildSize,
+    required this.minChildSize,
+    required this.maxChildSize,
+  });
+
+  final double initialChildSize;
+  final double minChildSize;
+  final double maxChildSize;
+}
+
+CollectibleSheetDragSizes resolveCollectibleSheetDragSizes({
+  required double heightFactor,
+  double minScreenFraction = FeedRhythm.sheetMinScreenFraction,
+}) {
+  final open = heightFactor.clamp(0.2, 0.98);
+  final min = minScreenFraction.clamp(0.18, open);
+
+  double ratio(double screenFraction) =>
+      (screenFraction / open).clamp(0.15, 1.0);
+
+  return CollectibleSheetDragSizes(
+    initialChildSize: 1.0,
+    minChildSize: ratio(min),
+    maxChildSize: 1.0,
+  );
 }
 
 /// Horizontal + bottom safe inset for sheet bodies.
@@ -96,6 +129,11 @@ Future<T?> showCollectibleBottomSheet<T>({
         minHeightFraction ?? FeedRhythm.sheetMinScreenFraction,
     maxScreenFraction: maxHeightFraction ?? heightFraction,
   );
+  final dragSizes = resolveCollectibleSheetDragSizes(
+    heightFactor: heightFactor,
+    minScreenFraction:
+        minHeightFraction ?? FeedRhythm.sheetMinScreenFraction,
+  );
 
   return showModalBottomSheet<T>(
     context: context,
@@ -103,7 +141,7 @@ Future<T?> showCollectibleBottomSheet<T>({
     isScrollControlled: true,
     useSafeArea: false,
     isDismissible: true,
-    enableDrag: true,
+    enableDrag: false,
     showDragHandle: false,
     barrierColor: CollectibleImmersion.sheetBarrier(scheme),
     sheetAnimationStyle: CollectibleMotion.sheetAnimationStyle(),
@@ -119,48 +157,53 @@ Future<T?> showCollectibleBottomSheet<T>({
           heightFactor: heightFactor,
           alignment: Alignment.bottomCenter,
           widthFactor: 1,
-          child: _CollectibleSheetScrollHost(builder: builder),
+          child: _CollectibleDraggableSheetHost(
+            initialChildSize: dragSizes.initialChildSize,
+            minChildSize: dragSizes.minChildSize,
+            maxChildSize: dragSizes.maxChildSize,
+            builder: builder,
+          ),
         ),
       );
     },
   );
 }
 
-/// Owns scroll controller; sheet height comes from [FractionallySizedBox], not
-/// [DraggableScrollableSheet], so the modal surface does not paint empty space
-/// above the drag handle.
-class _CollectibleSheetScrollHost extends StatefulWidget {
-  const _CollectibleSheetScrollHost({required this.builder});
+/// [FractionallySizedBox] caps modal height; [DraggableScrollableSheet] links
+/// scroll and drag so downward pulls at scroll top dismiss the sheet.
+class _CollectibleDraggableSheetHost extends StatelessWidget {
+  const _CollectibleDraggableSheetHost({
+    required this.initialChildSize,
+    required this.minChildSize,
+    required this.maxChildSize,
+    required this.builder,
+  });
 
+  final double initialChildSize;
+  final double minChildSize;
+  final double maxChildSize;
   final CollectibleSheetWidgetBuilder builder;
 
   @override
-  State<_CollectibleSheetScrollHost> createState() =>
-      _CollectibleSheetScrollHostState();
-}
-
-class _CollectibleSheetScrollHostState extends State<_CollectibleSheetScrollHost> {
-  late final ScrollController _scrollController;
-
-  @override
-  void initState() {
-    super.initState();
-    _scrollController = ScrollController();
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return CollectibleSheetScope(
-      scrollController: _scrollController,
-      child: CollectibleSheetFocusFrame(
-        child: widget.builder(context, _scrollController),
-      ),
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: initialChildSize,
+      minChildSize: minChildSize,
+      maxChildSize: maxChildSize,
+      snap: true,
+      snapSizes: <double>{minChildSize, initialChildSize, maxChildSize}.toList()
+        ..sort(),
+      snapAnimationDuration: CollectibleMotion.sheetDismiss,
+      shouldCloseOnMinExtent: true,
+      builder: (context, scrollController) {
+        return CollectibleSheetScope(
+          scrollController: scrollController,
+          child: CollectibleSheetFocusFrame(
+            child: builder(context, scrollController),
+          ),
+        );
+      },
     );
   }
 }
