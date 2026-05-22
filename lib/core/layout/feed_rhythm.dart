@@ -6,6 +6,9 @@ abstract final class FeedRhythm {
   /// Padding below the compact [SliverAppBar] before first body copy or controls.
   static const double belowMainTabAppBar = 10;
 
+  /// Air between tab title ([SliverAppBar]) and [AppSearchField] on Discover / Market.
+  static const double headerToSearchField = 14;
+
   /// Default gap between major Home feed sections (Latest drops ↔ Trending).
   static const double homeMajorSectionGap = 32;
 

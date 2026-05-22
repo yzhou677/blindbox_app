@@ -87,7 +87,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.only(top: FeedRhythm.belowMainTabAppBar),
+              padding: const EdgeInsets.only(top: FeedRhythm.headerToSearchField),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [

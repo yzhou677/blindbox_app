@@ -216,6 +216,8 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
       borderRadius: radius,
       width: widget.width,
       height: widget.height,
+      immersiveGalleryStage:
+          widget.displayMode == CatalogImageDisplayMode.figureGallery,
     );
   }
 }

@@ -3,6 +3,8 @@ import 'package:blindbox_app/features/catalog/presentation/catalog_image_display
 import 'package:blindbox_app/features/collection/widgets/collectible_figure_placeholder.dart';
 import 'package:blindbox_app/shared/widgets/app_image_shimmer.dart';
 import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 
 /// Renders a resolved catalog asset path or Storage URL with adaptive presentation rules.
@@ -18,6 +20,7 @@ class CatalogResolvedImage extends StatelessWidget {
     this.borderRadius,
     this.width,
     this.height,
+    this.immersiveGalleryStage = false,
   });
 
   final String imageRef;
@@ -29,6 +32,9 @@ class CatalogResolvedImage extends StatelessWidget {
   final BorderRadius? borderRadius;
   final double? width;
   final double? height;
+
+  /// Blurred cover backdrop + contain foreground (fullscreen gallery).
+  final bool immersiveGalleryStage;
 
   @override
   Widget build(BuildContext context) {
@@ -53,15 +59,29 @@ class CatalogResolvedImage extends StatelessWidget {
           onError: () => _placeholder(radius),
         );
 
-        final framed = ClipRRect(
-          borderRadius: radius,
-          child: ColoredBox(
-            color: mat,
-            child: spec.fillsFrame
-                ? _coverFrame(constraints: constraints, image: image)
-                : _subjectContainFrame(constraints: constraints, image: image),
-          ),
-        );
+        final framed = immersiveGalleryStage && !spec.fillsFrame
+            ? _immersiveGalleryFrame(
+                scheme: scheme,
+                radius: radius,
+                constraints: constraints,
+                dpr: dpr,
+                ref: ref,
+                foreground: image,
+                placeholder: () => _loadingMat(scheme),
+                onError: () => _placeholder(radius),
+              )
+            : ClipRRect(
+                borderRadius: radius,
+                child: ColoredBox(
+                  color: mat,
+                  child: spec.fillsFrame
+                      ? _coverFrame(constraints: constraints, image: image)
+                      : _subjectContainFrame(
+                          constraints: constraints,
+                          image: image,
+                        ),
+                ),
+              );
 
         return framed;
       },
@@ -117,6 +137,52 @@ class CatalogResolvedImage extends StatelessWidget {
     );
   }
 
+  Widget _immersiveGalleryFrame({
+    required ColorScheme scheme,
+    required BorderRadius radius,
+    required BoxConstraints constraints,
+    required double dpr,
+    required String ref,
+    required Widget foreground,
+    required Widget Function() placeholder,
+    required Widget Function() onError,
+  }) {
+    final backdrop = _buildImage(
+      ref: ref,
+      constraints: constraints,
+      dpr: dpr,
+      fit: BoxFit.cover,
+      fillBounds: true,
+      placeholder: placeholder,
+      onError: onError,
+    );
+
+    return ClipRRect(
+      borderRadius: radius,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.58,
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 26, sigmaY: 26),
+                child: Transform.scale(
+                  scale: 1.12,
+                  child: ClipRect(child: backdrop),
+                ),
+              ),
+            ),
+          ),
+          Positioned.fill(
+            child: ColoredBox(color: scheme.scrim.withValues(alpha: 0.42)),
+          ),
+          _subjectContainFrame(constraints: constraints, image: foreground),
+        ],
+      ),
+    );
+  }
+
   Color _matColor(ColorScheme scheme) {
     return Color.alphaBlend(
       scheme.surface.withValues(alpha: spec.matOpacity),
@@ -130,16 +196,19 @@ class CatalogResolvedImage extends StatelessWidget {
     required double dpr,
     required Widget Function() placeholder,
     required Widget Function() onError,
+    BoxFit? fit,
+    bool? fillBounds,
   }) {
-    CatalogAspectImage.assertAspectPreservingFit(spec.fit);
+    final resolvedFit = fit ?? spec.fit;
+    CatalogAspectImage.assertAspectPreservingFit(resolvedFit);
     final decodeExtent = spec.memCacheDecodeExtent(constraints, dpr);
-    final expansive = spec.fillsFrame;
+    final expansive = fillBounds ?? spec.fillsFrame;
 
     if (CollectibleThumbImage.isAssetPath(ref)) {
       return CatalogAspectImage.presentAsset(
         asset: ref,
         key: ValueKey<String>('catalog-asset:$ref'),
-        fit: spec.fit,
+        fit: resolvedFit,
         alignment: spec.alignment,
         filterQuality: spec.filterQuality,
         fillBounds: expansive,
@@ -154,7 +223,7 @@ class CatalogResolvedImage extends StatelessWidget {
       key: ValueKey<String>('catalog-cached:$ref'),
       imageUrl: ref,
       cacheKey: ref,
-      fit: spec.fit,
+      fit: resolvedFit,
       alignment: spec.alignment,
       filterQuality: spec.filterQuality,
       decodeExtent: decodeExtent,

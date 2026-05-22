@@ -35,10 +35,13 @@ class HomeScreen extends ConsumerWidget {
             title: Text('Discover', style: textTheme.titleLarge),
           ),
           SliverToBoxAdapter(
-            child: AppSearchField(
-              readOnly: true,
-              onTap: () => context.push('/home/catalog'),
-              hintText: 'Search catalog — figures, series, IPs…',
+            child: Padding(
+              padding: const EdgeInsets.only(top: FeedRhythm.headerToSearchField),
+              child: AppSearchField(
+                readOnly: true,
+                onTap: () => context.push('/home/catalog'),
+                hintText: 'Search catalog — figures, series, IPs…',
+              ),
             ),
           ),
           SliverToBoxAdapter(
