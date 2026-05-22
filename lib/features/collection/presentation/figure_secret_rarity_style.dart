@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 abstract final class FigureSecretRarityStyle {
   static final RegExp _ratioPattern = RegExp(r'^(\d+)\s*:\s*(\d+)\s*$');
 
-  static const Color _blue = Color(0xFF6B9FE8);
-  static const Color _purple = Color(0xFF9B7FD4);
+  static const Color _bronze = Color(0xFFB8864F);
+  static const Color _silver = Color(0xFFA8B2C0);
   static const Color _gold = Color(0xFFD4AF5A);
 
   /// Parses the denominator from strings like `1:72`; null when not a ratio label.
@@ -17,7 +17,7 @@ abstract final class FigureSecretRarityStyle {
     return int.tryParse(match.group(2)!);
   }
 
-  /// Secret figures only; null for regular slots. Missing ratio label → blue (`1:72`) tier.
+  /// Secret figures only; null for regular slots. Missing ratio label → bronze (`1:72`) tier.
   static FigureSecretRarityLook? resolve({
     required bool isSecret,
     String? rarityLabel,
@@ -26,9 +26,9 @@ abstract final class FigureSecretRarityStyle {
     if (!isSecret) return null;
     final denom = parseRatioDenominator(rarityLabel) ?? 72;
     final accent = denom <= 72
-        ? _blue
+        ? _bronze
         : denom <= 144
-        ? _purple
+        ? _silver
         : _gold;
     return FigureSecretRarityLook(accent: accent, isDark: isDark);
   }

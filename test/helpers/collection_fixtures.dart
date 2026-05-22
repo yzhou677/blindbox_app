@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 ShelfSeries testShelfSeries({
   String id = 'series_test',
   String? catalogTemplateId = 'catalog_series_test',
+  String? imageKey,
   String? taxonomyBrandId = 'pop_mart',
   String? taxonomyIpId = 'the_monsters',
   List<ShelfFigure>? figures,
@@ -27,6 +28,7 @@ ShelfSeries testShelfSeries({
         ],
     shelfAccent: const Color(0xFFE4F2EA),
     catalogTemplateId: catalogTemplateId,
+    imageKey: imageKey,
     taxonomyBrandId: taxonomyBrandId,
     taxonomyIpId: taxonomyIpId,
   );

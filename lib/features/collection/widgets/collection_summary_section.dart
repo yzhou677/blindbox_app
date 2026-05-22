@@ -77,7 +77,7 @@ class CollectionSummarySection extends StatelessWidget {
                     ),
                     _ShelfGlanceStat(
                       count: stats.wantListCount,
-                      label: 'Wish list',
+                      label: 'Wishlist',
                       scheme: scheme,
                       textTheme: textTheme,
                     ),

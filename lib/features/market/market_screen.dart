@@ -1,4 +1,5 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
 import 'package:blindbox_app/features/market/application/market_browse_notifier.dart';
 import 'package:blindbox_app/features/market/application/market_listings_providers.dart';
 import 'package:blindbox_app/features/market/catalog/market_listing_filters.dart';
@@ -23,14 +24,36 @@ class MarketScreen extends ConsumerStatefulWidget {
 
 class _MarketScreenState extends ConsumerState<MarketScreen> {
   final TextEditingController _search = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
 
   /// Presentation-only; browse list is derived from filters + this order.
   MarketPriceSort _priceSort = MarketPriceSort.lowToHigh;
 
   @override
+  void initState() {
+    super.initState();
+    ShellTabReselectBus.instance.reselectedBranch.addListener(_onTabReselected);
+  }
+
+  @override
   void dispose() {
+    ShellTabReselectBus.instance.reselectedBranch.removeListener(_onTabReselected);
+    _scrollController.dispose();
     _search.dispose();
     super.dispose();
+  }
+
+  void _onTabReselected() {
+    if (ShellTabReselectBus.instance.reselectedBranch.value !=
+        kMarketShellBranchIndex) {
+      return;
+    }
+    if (!_scrollController.hasClients) return;
+    _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 320),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   void _clearDraft() {
@@ -72,6 +95,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: CustomScrollView(
+        controller: _scrollController,
         physics: const BouncingScrollPhysics(),
         slivers: [
           SliverAppBar(

@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -20,13 +21,21 @@ class MainShellScaffold extends StatelessWidget {
       label: 'Market',
     ),
     NavigationDestination(
-      icon: Icon(Icons.grid_view_rounded),
+      icon: Icon(Icons.collections_bookmark_outlined),
       selectedIcon: Icon(Icons.collections_bookmark_rounded),
       label: 'Collection',
     ),
   ];
 
   void _onDestinationSelected(BuildContext context, int index) {
+    if (shell.currentIndex == index) {
+      if (index == kCollectionShellBranchIndex) {
+        CollectionModalOverlayRegistry.instance.dismissAll();
+      }
+      shell.goBranch(index, initialLocation: true);
+      ShellTabReselectBus.instance.notify(index);
+      return;
+    }
     if (shell.currentIndex == kCollectionShellBranchIndex &&
         index != kCollectionShellBranchIndex) {
       CollectionModalOverlayRegistry.instance.dismissAll();

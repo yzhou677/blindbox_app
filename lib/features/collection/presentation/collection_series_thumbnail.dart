@@ -25,10 +25,9 @@ class CollectionSeriesThumbnail extends StatelessWidget {
     final size = extent ?? FeedRhythm.collectionShelfThumbnailExtent;
     final userCover = ShelfFigureMedia.seriesCoverRef(series);
     final catalogSeriesKey = CollectionSeriesArt.catalogSeriesImageKey(series);
-    final anchor = CollectionSeriesArt.anchorFigure(series);
-    final name = anchor?.name ?? series.name;
-    final seed = anchor?.id ?? series.id;
-    final secret = anchor?.isSecret ?? false;
+    final name = series.name;
+    final seed = series.catalogTemplateId ?? series.id;
+    final secret = false;
     final r = BorderRadius.circular(14);
 
     return SizedBox(

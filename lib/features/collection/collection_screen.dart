@@ -1,8 +1,9 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
-import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_series_filter.dart';
 import 'package:blindbox_app/features/collection/widgets/add_custom_series_sheet.dart';
 import 'package:blindbox_app/features/collection/widgets/add_to_collection_sheet.dart';
@@ -30,12 +31,27 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
   /// Presentation-only brand facet; aligns with [MarketTaxonomyIds.anyBrand] / brand ids.
   String _brandFilterId = MarketTaxonomyIds.anyBrand;
 
+  final ScrollController _scrollController = ScrollController();
   VoidCallback? _routerListener;
 
   @override
   void initState() {
     super.initState();
     CollectionModalOverlayRegistry.instance.register(_dismissBranchOverlays);
+    ShellTabReselectBus.instance.reselectedBranch.addListener(_onTabReselected);
+  }
+
+  void _onTabReselected() {
+    if (ShellTabReselectBus.instance.reselectedBranch.value !=
+        kCollectionShellBranchIndex) {
+      return;
+    }
+    if (!_scrollController.hasClients) return;
+    _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 320),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   @override
@@ -60,6 +76,8 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
 
   @override
   void dispose() {
+    ShellTabReselectBus.instance.reselectedBranch.removeListener(_onTabReselected);
+    _scrollController.dispose();
     CollectionModalOverlayRegistry.instance.unregister();
     if (_routerListener != null) {
       try {
@@ -190,6 +208,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       return Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: CustomScrollView(
+          controller: _scrollController,
           physics: const BouncingScrollPhysics(),
           slivers: [
             SliverAppBar(
@@ -220,6 +239,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: CustomScrollView(
+        controller: _scrollController,
         physics: const BouncingScrollPhysics(),
         slivers: [
           SliverAppBar(

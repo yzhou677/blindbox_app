@@ -15,7 +15,8 @@ class CatalogSeriesSearchRow {
     required this.seriesTitle,
     required this.coverImageKey,
     required this.summaryLine,
-    required this.brandIpLine,
+    required this.ipLine,
+    required this.brand,
     required this.hasAnySecret,
   });
 
@@ -23,7 +24,8 @@ class CatalogSeriesSearchRow {
   final String seriesTitle;
   final String coverImageKey;
   final String summaryLine;
-  final String brandIpLine;
+  final String ipLine;
+  final String brand;
   final bool hasAnySecret;
 }
 
@@ -91,7 +93,8 @@ List<CatalogSeriesSearchRow> buildCatalogSeriesSearchRows({
           seriesTitle: series.displayName,
           coverImageKey: series.imageKey.trim(),
           summaryLine: summaryLine,
-          brandIpLine: _brandIpLineForSeries(bundle, series),
+          ipLine: _seriesIpLine(bundle, series),
+          brand: _seriesBrandLine(bundle, series),
           hasAnySecret: agg.hasAnySecret,
         );
       })
@@ -106,23 +109,26 @@ int _figureCountInSeries(CatalogSeedBundle bundle, String seriesId) {
   return n;
 }
 
-String _brandIpLineForSeries(
+String _seriesBrandLine(
   CatalogSeedBundle bundle,
   seed_catalog.CatalogSeries series,
 ) {
-  var brandName = series.brandId;
   for (final b in bundle.brands) {
     if (b.id == series.brandId) {
-      brandName = b.displayName;
-      break;
+      return b.displayName;
     }
   }
-  var ipName = series.ipId;
+  return series.brandId;
+}
+
+String _seriesIpLine(
+  CatalogSeedBundle bundle,
+  seed_catalog.CatalogSeries series,
+) {
   for (final i in bundle.ips) {
     if (i.id == series.ipId) {
-      ipName = i.displayName;
-      break;
+      return i.displayName;
     }
   }
-  return '$brandName · $ipName';
+  return series.ipId;
 }

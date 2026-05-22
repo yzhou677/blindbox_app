@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_aspect_image.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/home/domain/series_release.dart';
@@ -18,8 +19,8 @@ class ReleaseLineupStrip extends StatelessWidget {
   final Color accent;
   final ValueChanged<int> onSlotTap;
 
-  static const double cellExtent = 78;
-  static const double gap = 12;
+  static const double cellExtent = 84;
+  static const double gap = 14;
 
   /// Secret slots with a catalog [imageKey] show real art; blur tile only when art is unknown.
   static bool slotUsesSecretPlaceholder(ReleaseLineupSlot slot) {
@@ -33,7 +34,7 @@ class ReleaseLineupStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return SizedBox(
-      height: cellExtent + 36,
+      height: cellExtent + 32,
       child: ListView.separated(
         clipBehavior: Clip.none,
         scrollDirection: Axis.horizontal,
@@ -109,17 +110,13 @@ class _LineupCell extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             slot.isSecret ? 'Secret' : slot.name,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
-            style: textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.02,
-              color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
-            ),
+            style: CollectibleTypography.figureMeta(textTheme, scheme),
           ),
         ],
       ),

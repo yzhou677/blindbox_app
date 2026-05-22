@@ -27,24 +27,28 @@ class CatalogFigureGalleryPage extends StatelessWidget {
           final h = constraints.maxHeight * 0.84;
 
           return Center(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: Theme.of(context).colorScheme.shadow.withValues(
-                      alpha: 0.14,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {},
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context).colorScheme.shadow.withValues(
+                        alpha: 0.14,
+                      ),
+                      blurRadius: 32,
+                      offset: const Offset(0, 14),
+                      spreadRadius: -8,
                     ),
-                    blurRadius: 32,
-                    offset: const Offset(0, 14),
-                    spreadRadius: -8,
-                  ),
-                ],
-              ),
-              child: _GalleryArt(
-                item: item,
-                width: w,
-                height: h,
+                  ],
+                ),
+                child: _GalleryArt(
+                  item: item,
+                  width: w,
+                  height: h,
+                ),
               ),
             ),
           );
@@ -83,6 +87,18 @@ class _GalleryArt extends StatelessWidget {
       );
     }
 
+    final url = item.imageUrl?.trim();
+    if (url != null && url.isNotEmpty) {
+      return CatalogGalleryStage(
+        width: width,
+        height: height,
+        imageRef: url,
+        name: item.name,
+        seedKey: item.id,
+        isSecret: item.isSecret,
+      );
+    }
+
     if (item.hasCatalogKey) {
       return SizedBox(
         width: width,
@@ -102,18 +118,6 @@ class _GalleryArt extends StatelessWidget {
           width: width,
           height: height,
         ),
-      );
-    }
-
-    final url = item.imageUrl?.trim();
-    if (url != null && url.isNotEmpty) {
-      return CatalogGalleryStage(
-        width: width,
-        height: height,
-        imageRef: url,
-        name: item.name,
-        seedKey: item.id,
-        isSecret: item.isSecret,
       );
     }
 

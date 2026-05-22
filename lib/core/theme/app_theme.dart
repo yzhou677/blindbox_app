@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'collectible_shape.dart';
 import 'collectible_tokens.dart';
@@ -92,6 +93,85 @@ abstract final class AppTheme {
     );
   }
 
+  /// Japanese pop blind-box tone — M PLUS Rounded 1c.
+  static TextTheme _typography(TextTheme base) {
+    final t = GoogleFonts.mPlusRounded1cTextTheme(base);
+    return t.copyWith(
+      displayLarge: t.displayLarge?.copyWith(
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.2,
+        height: 1.14,
+      ),
+      displayMedium: t.displayMedium?.copyWith(
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.14,
+        height: 1.16,
+      ),
+      displaySmall: t.displaySmall?.copyWith(
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.08,
+        height: 1.18,
+      ),
+      headlineLarge: t.headlineLarge?.copyWith(
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.06,
+        height: 1.18,
+      ),
+      headlineMedium: t.headlineMedium?.copyWith(
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0,
+        height: 1.2,
+      ),
+      headlineSmall: t.headlineSmall?.copyWith(
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.02,
+        height: 1.22,
+      ),
+      titleLarge: t.titleLarge?.copyWith(
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.02,
+        height: 1.24,
+      ),
+      titleMedium: t.titleMedium?.copyWith(
+        fontWeight: FontWeight.w500,
+        letterSpacing: 0.04,
+        height: 1.26,
+      ),
+      titleSmall: t.titleSmall?.copyWith(
+        fontWeight: FontWeight.w500,
+        letterSpacing: 0.06,
+        height: 1.3,
+      ),
+      bodyLarge: t.bodyLarge?.copyWith(
+        fontWeight: FontWeight.w400,
+        height: 1.44,
+        letterSpacing: 0.06,
+      ),
+      bodyMedium: t.bodyMedium?.copyWith(
+        fontWeight: FontWeight.w400,
+        height: 1.42,
+        letterSpacing: 0.05,
+      ),
+      bodySmall: t.bodySmall?.copyWith(
+        fontWeight: FontWeight.w400,
+        height: 1.4,
+        letterSpacing: 0.08,
+      ),
+      labelLarge: t.labelLarge?.copyWith(
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.12,
+      ),
+      labelMedium: t.labelMedium?.copyWith(
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.14,
+      ),
+      labelSmall: t.labelSmall?.copyWith(
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.16,
+      ),
+    );
+  }
+
   static ThemeData _base(ColorScheme colorScheme, Brightness brightness) {
     final isLight = brightness == Brightness.light;
     final seed = ThemeData(
@@ -99,66 +179,14 @@ abstract final class AppTheme {
       colorScheme: colorScheme,
       brightness: brightness,
     );
-    final t = seed.textTheme;
+    final t = _typography(seed.textTheme);
 
     return seed.copyWith(
       extensions: <ThemeExtension<dynamic>>[
         CollectibleTokens.forBrightness(brightness),
       ],
-      textTheme: t.copyWith(
-        titleLarge: t.titleLarge?.copyWith(
-          fontWeight: FontWeight.w600,
-          letterSpacing: -0.28,
-          height: 1.18,
-        ),
-        titleMedium: t.titleMedium?.copyWith(
-          fontWeight: FontWeight.w600,
-          letterSpacing: -0.15,
-          height: 1.2,
-        ),
-        titleSmall: t.titleSmall?.copyWith(
-          fontWeight: FontWeight.w500,
-          letterSpacing: -0.06,
-          height: 1.26,
-        ),
-        headlineMedium: t.headlineMedium?.copyWith(
-          fontWeight: FontWeight.w600,
-          letterSpacing: -0.42,
-          height: 1.14,
-        ),
-        headlineSmall: t.headlineSmall?.copyWith(
-          fontWeight: FontWeight.w600,
-          letterSpacing: -0.32,
-          height: 1.16,
-        ),
-        bodyLarge: t.bodyLarge?.copyWith(
-          fontWeight: FontWeight.w400,
-          height: 1.4,
-          letterSpacing: 0.04,
-        ),
-        bodyMedium: t.bodyMedium?.copyWith(
-          fontWeight: FontWeight.w400,
-          height: 1.38,
-          letterSpacing: 0.03,
-        ),
-        bodySmall: t.bodySmall?.copyWith(
-          fontWeight: FontWeight.w400,
-          height: 1.36,
-          letterSpacing: 0.05,
-        ),
-        labelLarge: t.labelLarge?.copyWith(
-          fontWeight: FontWeight.w500,
-          letterSpacing: 0.05,
-        ),
-        labelMedium: t.labelMedium?.copyWith(
-          fontWeight: FontWeight.w500,
-          letterSpacing: 0.08,
-        ),
-        labelSmall: t.labelSmall?.copyWith(
-          fontWeight: FontWeight.w500,
-          letterSpacing: 0.1,
-        ),
-      ),
+      textTheme: t,
+      primaryTextTheme: t,
       splashFactory: InkRipple.splashFactory,
       highlightColor: colorScheme.primary.withValues(alpha: isLight ? 0.07 : 0.055),
       appBarTheme: AppBarTheme(
@@ -168,10 +196,7 @@ abstract final class AppTheme {
         foregroundColor: colorScheme.onSurface,
         elevation: 0,
         surfaceTintColor: colorScheme.primary.withValues(alpha: isLight ? 0.1 : 0.12),
-        titleTextStyle: t.titleLarge?.copyWith(
-          fontWeight: FontWeight.w600,
-          letterSpacing: -0.24,
-        ),
+        titleTextStyle: t.titleLarge,
       ),
       navigationBarTheme: NavigationBarThemeData(
         elevation: 0,

@@ -5,13 +5,15 @@ import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 ///
 /// Priority for each figure tile:
 /// 1. [ShelfFigure.localImageUri] (device path / `file:` URI)
-/// 2. [ShelfSeries.customCoverImageUri] (series cover)
-/// 3. [ShelfFigure.imageUrl] (catalog-resolved asset path, network URL, etc.)
-/// 4. `null` → placeholder
+/// 2. [ShelfSeries.customCoverImageUri] (series cover) — optional; disabled for fullscreen gallery
+/// 3. [ShelfFigure.imageUrl] (resolved at catalog-clone or Home drop import — asset path or Storage URL)
+/// 4. `null` → placeholder / [CatalogImageFromKey] via [ShelfFigure.imageKey]
 ///
-/// Catalog clones prefer [ShelfFigure.imageUrl] from [CatalogImageResolver] at add time.
-/// When figure URL is missing, [ShelfFigureThumb] resolves via [ShelfFigure.catalogFigureTemplateId]
-/// → `catalog/figures/<imageKey>.<ext>`.
+/// Catalog clones and [CollectionNotifier.addSeriesFromRelease] persist [ShelfFigure.imageUrl]
+/// from [CatalogImageResolver.resolveFigureDisplayRef] at add time.
+/// Fullscreen gallery uses [figureDisplayRef] with `includeSeriesCoverFallback: false` so series
+/// cover art is not shown as figure art.
+/// When figure URL is missing, [ShelfFigureThumb] may resolve via [ShelfFigure.imageKey].
 ///
 /// Series shelf covers: [seriesCoverRef] (user cover only) or [CollectionSeriesThumbnail]
 /// via [ShelfSeries.catalogTemplateId] → `catalog/series/<imageKey>.<ext>` — never figure art.

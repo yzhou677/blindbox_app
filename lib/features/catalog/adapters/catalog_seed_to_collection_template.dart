@@ -125,6 +125,7 @@ Future<domain.CatalogSeries?> catalogTemplateFromSeedSeries(
     shelfAccent: accent,
     taxonomyBrandId: catalogSeries.brandId,
     taxonomyIpId: catalogSeries.ipId,
+    catalogCoverImageKey: catalogSeries.imageKey.trim(),
     figures: templateFigures,
   );
 }

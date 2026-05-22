@@ -1,5 +1,6 @@
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_item.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/presentation/shelf_figure_media.dart';
 import 'package:blindbox_app/features/home/domain/series_release.dart';
 
 List<CatalogFigureGalleryItem> catalogGalleryItemsFromCatalogSeries(
@@ -27,7 +28,12 @@ List<CatalogFigureGalleryItem> catalogGalleryItemsFromShelfSeries(
         id: f.id,
         name: f.name,
         catalogImageKey: f.imageKey,
-        imageUrl: f.imageUrl,
+        imageUrl: ShelfFigureMedia.figureDisplayRef(
+              f,
+              series,
+              includeSeriesCoverFallback: false,
+            ) ??
+            f.imageUrl,
         localImageUri: f.localImageUri,
         rarityLabel: f.displayRarity,
         isSecret: f.isSecret,

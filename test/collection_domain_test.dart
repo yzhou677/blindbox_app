@@ -141,4 +141,23 @@ void main() {
       expect(testShelfSeries().isDropImport, isFalse);
     });
   });
+
+  group('shelfIpLabelFromBrandLine', () {
+    test('strips legacy brand · ip prefix', () {
+      expect(
+        shelfIpLabelFromBrandLine(
+          brand: 'POP MART',
+          line: 'POP MART · Crybaby',
+        ),
+        'Crybaby',
+      );
+    });
+
+    test('keeps plain IP name', () {
+      expect(
+        shelfIpLabelFromBrandLine(brand: 'POP MART', line: 'Crybaby'),
+        'Crybaby',
+      );
+    });
+  });
 }

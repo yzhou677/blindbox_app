@@ -198,7 +198,7 @@ class CollectibleFigurePlaceholder extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          Icons.auto_awesome_rounded,
+                          Icons.star_rounded,
                           size: 11,
                           color: deep.withValues(alpha: 0.5),
                         ),

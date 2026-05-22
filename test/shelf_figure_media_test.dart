@@ -4,110 +4,110 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('figure ref prefers localImageUri over cover and imageUrl', () {
-    final fig = ShelfFigure(
-      id: 'f',
-      seriesId: 's',
-      name: 'F',
-      imageUrl: 'https://example.com/a.jpg',
-      localImageUri: '/tmp/a.png',
-      rarity: 'R',
-      isSecret: false,
-    );
-    final s = ShelfSeries(
-      id: 's',
-      name: 'S',
-      brand: 'B',
-      ipName: 'I',
-      figures: [fig],
-      shelfAccent: const Color(0xFFE4F2EA),
-      customCoverImageUri: 'file:///cover.jpg',
-    );
-    expect(ShelfFigureMedia.figureDisplayRef(fig, s), '/tmp/a.png');
+  const baseFigure = ShelfFigure(
+    id: 'fig_1',
+    seriesId: 'series_1',
+    name: 'Test',
+    imageUrl: 'assets/catalog/figures/foo.png',
+    rarity: 'Regular',
+    isSecret: false,
+  );
+
+  const baseSeries = ShelfSeries(
+    id: 'series_1',
+    name: 'Series',
+    brand: 'Brand',
+    ipName: 'IP',
+    figures: [baseFigure],
+    shelfAccent: Color(0xFFE8F5E9),
+    customCoverImageUri: '/covers/series.jpg',
+  );
+
+  group('ShelfFigureMedia.figureDisplayRef', () {
+    test('prefers localImageUri over imageUrl', () {
+      const figure = ShelfFigure(
+        id: 'fig_1',
+        seriesId: 'series_1',
+        name: 'Test',
+        localImageUri: '/device/photo.jpg',
+        imageUrl: 'assets/catalog/figures/foo.png',
+        rarity: 'Regular',
+        isSecret: false,
+      );
+      expect(
+        ShelfFigureMedia.figureDisplayRef(figure, baseSeries),
+        '/device/photo.jpg',
+      );
+    });
+
+    test('uses customCoverImageUri before imageUrl when fallback enabled', () {
+      const figure = ShelfFigure(
+        id: 'fig_1',
+        seriesId: 'series_1',
+        name: 'Test',
+        imageUrl: 'assets/catalog/figures/foo.png',
+        rarity: 'Regular',
+        isSecret: false,
+      );
+      expect(
+        ShelfFigureMedia.figureDisplayRef(figure, baseSeries),
+        '/covers/series.jpg',
+      );
+    });
+
+    test('skips series cover when includeSeriesCoverFallback is false', () {
+      const figure = ShelfFigure(
+        id: 'fig_1',
+        seriesId: 'series_1',
+        name: 'Test',
+        imageUrl: 'assets/catalog/figures/foo.png',
+        rarity: 'Regular',
+        isSecret: false,
+      );
+      expect(
+        ShelfFigureMedia.figureDisplayRef(
+          figure,
+          baseSeries,
+          includeSeriesCoverFallback: false,
+        ),
+        'assets/catalog/figures/foo.png',
+      );
+    });
+
+    test('returns null when only series cover exists and fallback disabled', () {
+      const figure = ShelfFigure(
+        id: 'fig_1',
+        seriesId: 'series_1',
+        name: 'Test',
+        rarity: 'Regular',
+        isSecret: false,
+      );
+      expect(
+        ShelfFigureMedia.figureDisplayRef(
+          figure,
+          baseSeries,
+          includeSeriesCoverFallback: false,
+        ),
+        isNull,
+      );
+    });
   });
 
-  test('figure ref uses series cover when no local', () {
-    final fig = ShelfFigure(
-      id: 'f',
-      seriesId: 's',
-      name: 'F',
-      imageUrl: 'https://last',
-      localImageUri: null,
-      rarity: 'R',
-      isSecret: false,
-    );
-    final s = ShelfSeries(
-      id: 's',
-      name: 'S',
-      brand: 'B',
-      ipName: 'I',
-      figures: [fig],
-      shelfAccent: const Color(0xFFE4F2EA),
-      customCoverImageUri: '/cover.png',
-    );
-    expect(ShelfFigureMedia.figureDisplayRef(fig, s), '/cover.png');
-  });
+  group('ShelfFigureMedia.seriesCoverRef', () {
+    test('returns customCoverImageUri when set', () {
+      expect(ShelfFigureMedia.seriesCoverRef(baseSeries), '/covers/series.jpg');
+    });
 
-  test('figure ref falls back to imageUrl (catalog path)', () {
-    final fig = ShelfFigure(
-      id: 'f',
-      seriesId: 's',
-      name: 'F',
-      imageUrl: 'assets/catalog/figures/x.png',
-      localImageUri: null,
-      rarity: 'R',
-      isSecret: false,
-    );
-    final s = ShelfSeries(
-      id: 's',
-      name: 'S',
-      brand: 'B',
-      ipName: 'I',
-      figures: [fig],
-      shelfAccent: const Color(0xFFE4F2EA),
-    );
-    expect(ShelfFigureMedia.figureDisplayRef(fig, s), 'assets/catalog/figures/x.png');
-  });
-
-  test('series cover ref returns custom cover only', () {
-    final fig = ShelfFigure(
-      id: 'f',
-      seriesId: 's',
-      name: 'F',
-      imageUrl: 'assets/a.png',
-      rarity: 'R',
-      isSecret: false,
-    );
-    final s = ShelfSeries(
-      id: 's',
-      name: 'S',
-      brand: 'B',
-      ipName: 'I',
-      figures: [fig],
-      shelfAccent: const Color(0xFFE4F2EA),
-      customCoverImageUri: '/me.jpg',
-    );
-    expect(ShelfFigureMedia.seriesCoverRef(s), '/me.jpg');
-  });
-
-  test('series cover ref ignores figure imageUrl', () {
-    final fig = ShelfFigure(
-      id: 'f',
-      seriesId: 's',
-      name: 'F',
-      imageUrl: 'assets/catalog/figures/x.png',
-      rarity: 'R',
-      isSecret: false,
-    );
-    final s = ShelfSeries(
-      id: 's',
-      name: 'S',
-      brand: 'B',
-      ipName: 'I',
-      figures: [fig],
-      shelfAccent: const Color(0xFFE4F2EA),
-      catalogTemplateId: 'some_series_id',
-    );
-    expect(ShelfFigureMedia.seriesCoverRef(s), isNull);
+    test('returns null when no custom cover', () {
+      const series = ShelfSeries(
+        id: 'series_1',
+        name: 'Series',
+        brand: 'Brand',
+        ipName: 'IP',
+        figures: [baseFigure],
+        shelfAccent: Color(0xFFE8F5E9),
+      );
+      expect(ShelfFigureMedia.seriesCoverRef(series), isNull);
+    });
   });
 }

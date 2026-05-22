@@ -30,6 +30,7 @@ class CatalogSeries {
     this.notes,
     this.taxonomyBrandId,
     this.taxonomyIpId,
+    this.catalogCoverImageKey,
   });
 
   /// Stable catalog series id (dedupe + future `catalog_series_id`; equals series `imageKey`).
@@ -41,6 +42,9 @@ class CatalogSeries {
   /// Canonical ids aligned with [MarketListing.taxonomyBrandId] / `.taxonomyIpId` when known.
   final String? taxonomyBrandId;
   final String? taxonomyIpId;
+
+  /// Canonical catalog series cover [imageKey] (`catalog/series/<key>.*`).
+  final String? catalogCoverImageKey;
 
   final List<CatalogFigure> figures;
   final Color shelfAccent;
@@ -128,6 +132,30 @@ class ShelfSeries {
   /// Latest-drops style import (mock `drop-*` template keys).
   bool get isDropImport =>
       catalogTemplateId != null && catalogTemplateId!.startsWith('drop-');
+}
+
+/// IP line for shelf UI — plain [ShelfSeries.ipName] or legacy `brand · ip` from Home imports.
+String shelfSeriesIpLabel(ShelfSeries series) {
+  return shelfIpLabelFromBrandLine(
+    brand: series.brand,
+    line: series.ipName,
+  );
+}
+
+/// Normalizes catalog IP text or legacy `brand · ip` copy onto the shelf.
+String shelfIpLabelFromBrandLine({required String brand, required String line}) {
+  final ip = line.trim();
+  if (ip.isEmpty) return ip;
+  const sep = ' · ';
+  if (!ip.contains(sep)) return ip;
+  final brandKey = brand.trim();
+  if (brandKey.isEmpty) return ip;
+  final parts = ip.split(sep);
+  if (parts.first.trim().toLowerCase() == brandKey.toLowerCase()) {
+    final tail = parts.sublist(1).join(sep).trim();
+    return tail.isNotEmpty ? tail : ip;
+  }
+  return ip;
 }
 
 /// Display + styling helpers for [ShelfFigure] rarity fields.
@@ -288,8 +316,14 @@ ShelfSeries cloneCatalogSeriesOntoShelf(
     catalogTemplateId: catalogTemplateKey,
     taxonomyBrandId: template.taxonomyBrandId,
     taxonomyIpId: template.taxonomyIpId,
-    imageKey: catalogTemplateKey,
+    imageKey: _shelfSeriesCoverKey(template, catalogTemplateKey),
   );
+}
+
+String _shelfSeriesCoverKey(CatalogSeries template, String catalogTemplateKey) {
+  final cover = template.catalogCoverImageKey?.trim();
+  if (cover != null && cover.isNotEmpty) return cover;
+  return catalogTemplateKey;
 }
 
 /// Default seed shelf row that mirrors catalog template ids (stable progress keys).
@@ -304,6 +338,7 @@ ShelfSeries shelfSeriesMirrorCatalogTemplate(CatalogSeries template) {
     catalogTemplateId: template.templateId,
     taxonomyBrandId: template.taxonomyBrandId,
     taxonomyIpId: template.taxonomyIpId,
+    imageKey: _shelfSeriesCoverKey(template, template.templateId),
     figures: [
       for (final f in template.figures)
         ShelfFigure(

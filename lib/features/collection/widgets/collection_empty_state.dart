@@ -81,7 +81,7 @@ class CollectionEmptyState extends StatelessWidget {
                   ],
                   FilledButton.tonalIcon(
                     onPressed: () => context.go('/home'),
-                    icon: const Icon(Icons.auto_awesome_rounded, size: 20),
+                    icon: const Icon(Icons.explore_rounded, size: 20),
                     label: const Text('Browse drops'),
                   ),
                 ],

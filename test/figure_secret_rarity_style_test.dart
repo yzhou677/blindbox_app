@@ -17,12 +17,12 @@ void main() {
   });
 
   test('resolve tiers secret figures by denominator', () {
-    final blue = FigureSecretRarityStyle.resolve(
+    final bronze = FigureSecretRarityStyle.resolve(
       isSecret: true,
       rarityLabel: '1:72',
       isDark: false,
     )!;
-    final purple = FigureSecretRarityStyle.resolve(
+    final silver = FigureSecretRarityStyle.resolve(
       isSecret: true,
       rarityLabel: '1:144',
       isDark: false,
@@ -32,22 +32,22 @@ void main() {
       rarityLabel: '1:288',
       isDark: false,
     )!;
-    expect(blue.accent, isNot(equals(purple.accent)));
-    expect(purple.accent, isNot(equals(gold.accent)));
+    expect(bronze.accent, isNot(equals(silver.accent)));
+    expect(silver.accent, isNot(equals(gold.accent)));
   });
 
-  test('resolve uses blue tier when secret has no ratio label', () {
+  test('resolve uses bronze tier when secret has no ratio label', () {
     final fallback = FigureSecretRarityStyle.resolve(
       isSecret: true,
       rarityLabel: null,
       isDark: false,
     )!;
-    final blue = FigureSecretRarityStyle.resolve(
+    final bronze = FigureSecretRarityStyle.resolve(
       isSecret: true,
       rarityLabel: '1:72',
       isDark: false,
     )!;
-    expect(fallback.accent, equals(blue.accent));
+    expect(fallback.accent, equals(bronze.accent));
   });
 
   test('tier boundaries at 72, 144, and 145 denominators', () {

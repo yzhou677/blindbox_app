@@ -12,7 +12,7 @@ enum SeriesReleaseShelfCtaVariant {
   filled,
 }
 
-/// Adds the full **series** from a Home release to the shelf (no snackbars; optional scale pulse).
+/// Adds or removes the full **series** from a Home release on the shelf.
 class SaveSeriesReleaseButton extends ConsumerStatefulWidget {
   const SaveSeriesReleaseButton({
     super.key,
@@ -55,11 +55,47 @@ class _SaveSeriesReleaseButtonState extends ConsumerState<SaveSeriesReleaseButto
     });
   }
 
-  void _handleTap() {
-    final onShelf = ref.read(collectionNotifierProvider.select((s) => s.hasTemplateOnShelf(_catalogKey)));
-    if (onShelf) return;
+  Future<void> _addToShelf() async {
     setState(() => _awaitingShelf = true);
-    ref.read(collectionNotifierProvider.notifier).addSeriesFromRelease(widget.release);
+    await ref
+        .read(collectionNotifierProvider.notifier)
+        .addSeriesFromRelease(widget.release);
+  }
+
+  Future<void> _confirmRemoveFromShelf() async {
+    final name = widget.release.seriesName;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Remove series?'),
+        content: Text('“$name” will leave your shelf.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    ref
+        .read(collectionNotifierProvider.notifier)
+        .removeSeriesByCatalogTemplate(_catalogKey);
+  }
+
+  void _handleTap() {
+    final onShelf = ref.read(
+      collectionNotifierProvider.select((s) => s.hasTemplateOnShelf(_catalogKey)),
+    );
+    if (onShelf) {
+      _confirmRemoveFromShelf();
+    } else {
+      _addToShelf();
+    }
   }
 
   @override
@@ -102,7 +138,7 @@ class _SaveSeriesReleaseButtonState extends ConsumerState<SaveSeriesReleaseButto
         alignment: Alignment.centerLeft,
         child: onShelf
             ? FilledButton.tonal(
-                onPressed: null,
+                onPressed: _handleTap,
                 style: filledStyle.copyWith(
                   foregroundColor: WidgetStatePropertyAll(
                     scheme.onSurfaceVariant.withValues(alpha: 0.85),
@@ -122,11 +158,11 @@ class _SaveSeriesReleaseButtonState extends ConsumerState<SaveSeriesReleaseButto
     return Transform.scale(
       scale: scale,
       child: IconButton(
-        tooltip: onShelf ? 'In your collection' : 'Add to my collection',
+        tooltip: onShelf ? 'Remove from collection' : 'Add to my collection',
         visualDensity: VisualDensity.compact,
         padding: EdgeInsets.zero,
         constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-        onPressed: onShelf ? null : _handleTap,
+        onPressed: _handleTap,
         icon: Icon(
           onShelf ? Icons.bookmark_added_rounded : Icons.add_circle_outline_rounded,
           size: 22,

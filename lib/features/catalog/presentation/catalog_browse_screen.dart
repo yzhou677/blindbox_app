@@ -1,4 +1,5 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/catalog/adapters/catalog_seed_to_collection_template.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
 import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
@@ -108,10 +109,19 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
     return Scaffold(
       backgroundColor: scheme.surfaceContainerLow,
       appBar: AppBar(
-        title: const Text('Search catalog'),
+        toolbarHeight: 72,
+        centerTitle: false,
+        titleSpacing: 20,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => context.pop(),
+        ),
+        title: Text(
+          'Search catalog',
+          style: CollectibleTypography.editorialScreenTitle(
+            textTheme,
+            scheme,
+          ),
         ),
       ),
       body: bundleAsync.when(
@@ -141,7 +151,7 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
             children: [
               Padding(
                 padding: const EdgeInsets.only(
-                  top: FeedRhythm.headerToSearchField,
+                  top: FeedRhythm.headerToSearchField + 4,
                 ),
                 child: AppSearchField(
                   controller: _search,
@@ -180,7 +190,7 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 28),
                           child: Text(
-                            'Search the full catalog to browse series and figures.',
+                            'Search by series, figure, or IP.',
                             textAlign: TextAlign.center,
                             style: textTheme.bodyLarge?.copyWith(
                               color: scheme.onSurfaceVariant.withValues(

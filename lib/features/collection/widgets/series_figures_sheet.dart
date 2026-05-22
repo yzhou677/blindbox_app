@@ -1,10 +1,10 @@
-import 'dart:math' as math;
-
+import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_adapters.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_sheet.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/widgets/figure_capsule_card.dart';
+import 'package:blindbox_app/shared/widgets/series_hero_meta_block.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -37,12 +37,10 @@ class SeriesFiguresSheet extends ConsumerWidget {
     final chasesHome =
         secrets.isNotEmpty &&
         secrets.every((f) => snap.trackedOrDefault(f.id).owned);
-
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 18),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Center(
@@ -55,71 +53,139 @@ class SeriesFiguresSheet extends ConsumerWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 14),
-            Text(
-              series.ipName,
-              style: textTheme.labelLarge?.copyWith(
-                color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.12,
-              ),
-            ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 16),
             Text(
               series.name,
-              style: textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.22,
-              ),
+              style: CollectibleTypography.seriesHeroTitle(textTheme, scheme),
             ),
-            const SizedBox(height: 6),
-            Text(
-              'Tap art to browse · tap card to update your shelf',
-              style: textTheme.bodySmall?.copyWith(
-                color: scheme.onSurfaceVariant.withValues(alpha: 0.86),
-                height: 1.35,
-              ),
-            ),
+            SeriesHeroMetaBlock(brand: series.brand, ipLine: series.ipName),
             if (isComplete) ...[
               const SizedBox(height: 14),
               _SeriesCompleteBanner(
                 chasesHome: chasesHome && secrets.isNotEmpty,
               ),
             ],
+            const SizedBox(height: 14),
+            const _FigureProgressLegend(),
             const SizedBox(height: 16),
-            SizedBox(
-              height: math.min(MediaQuery.sizeOf(context).height * 0.52, 440),
+            Expanded(
               child: SingleChildScrollView(
-                child: Wrap(
-                  spacing: 12,
-                  runSpacing: 14,
-                  alignment: WrapAlignment.start,
-                  children: [
-                    for (final f in series.figures)
-                      FigureCapsuleCard(
-                        series: series,
-                        figure: f,
-                        tracked: snap.trackedOrDefault(f.id),
-                        onTap: () => notifier.cycleFigure(f.id),
-                        onBrowseFigure: () {
-                          final index = series.figures.indexWhere(
-                            (fig) => fig.id == f.id,
-                          );
-                          showCatalogFigureGallery(
-                            context,
-                            items: catalogGalleryItemsFromShelfSeries(series),
-                            initialIndex: index < 0 ? 0 : index,
-                            seriesTitle: series.name,
-                          );
-                        },
-                      ),
-                  ],
+                child: SizedBox(
+                  width: double.infinity,
+                  child: Wrap(
+                    spacing: 14,
+                    runSpacing: 18,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      for (final f in series.figures)
+                        FigureCapsuleCard(
+                          series: series,
+                          figure: f,
+                          tracked: snap.trackedOrDefault(f.id),
+                          onTap: () => notifier.cycleFigure(f.id),
+                          onBrowseFigure: () {
+                            final index = series.figures.indexWhere(
+                              (fig) => fig.id == f.id,
+                            );
+                            showCatalogFigureGallery(
+                              context,
+                              items: catalogGalleryItemsFromShelfSeries(series),
+                              initialIndex: index < 0 ? 0 : index,
+                              seriesTitle: series.name,
+                            );
+                          },
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _FigureProgressLegend extends StatelessWidget {
+  const _FigureProgressLegend();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final meta = CollectibleTypography.figureMeta(textTheme, scheme).copyWith(
+      color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
+      height: 1.25,
+    );
+
+    return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 6,
+      runSpacing: 6,
+      children: [
+        Text('Tap a figure:', style: meta),
+        _LegendStep(
+          icon: Icons.favorite_border_rounded,
+          label: 'Wishlist',
+          style: meta,
+          scheme: scheme,
+        ),
+        _LegendArrow(scheme: scheme),
+        _LegendStep(
+          icon: Icons.check_circle_rounded,
+          label: 'Collected',
+          style: meta,
+          scheme: scheme,
+        ),
+        _LegendArrow(scheme: scheme),
+        Text('tap again to clear', style: meta),
+      ],
+    );
+  }
+}
+
+class _LegendStep extends StatelessWidget {
+  const _LegendStep({
+    required this.icon,
+    required this.label,
+    required this.style,
+    required this.scheme,
+  });
+
+  final IconData icon;
+  final String label;
+  final TextStyle style;
+  final ColorScheme scheme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          size: 15,
+          color: scheme.onSurfaceVariant.withValues(alpha: 0.65),
+        ),
+        const SizedBox(width: 4),
+        Text(label, style: style),
+      ],
+    );
+  }
+}
+
+class _LegendArrow extends StatelessWidget {
+  const _LegendArrow({required this.scheme});
+
+  final ColorScheme scheme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Icon(
+      Icons.arrow_forward_rounded,
+      size: 14,
+      color: scheme.onSurfaceVariant.withValues(alpha: 0.4),
     );
   }
 }

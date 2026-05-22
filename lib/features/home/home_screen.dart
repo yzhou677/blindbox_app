@@ -1,6 +1,6 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
 import 'package:blindbox_app/features/home/application/home_feed_provider.dart';
-import 'package:blindbox_app/features/home/data/home_drop_rail_context.dart';
 import 'package:blindbox_app/features/home/data/mock_latest_drops.dart';
 import 'package:blindbox_app/features/home/widgets/latest_drops_section.dart';
 import 'package:blindbox_app/features/home/widgets/trending_series_section.dart';
@@ -9,11 +9,43 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    ShellTabReselectBus.instance.reselectedBranch.addListener(_onTabReselected);
+  }
+
+  @override
+  void dispose() {
+    ShellTabReselectBus.instance.reselectedBranch.removeListener(_onTabReselected);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onTabReselected() {
+    if (ShellTabReselectBus.instance.reselectedBranch.value != kHomeShellBranchIndex) {
+      return;
+    }
+    if (!_scrollController.hasClients) return;
+    _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 320),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final feedAsync = ref.watch(homeFeedSnapshotProvider);
@@ -21,6 +53,7 @@ class HomeScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: scheme.surfaceContainerLow,
       body: CustomScrollView(
+        controller: _scrollController,
         physics: const BouncingScrollPhysics(),
         slivers: [
           SliverAppBar(
@@ -52,7 +85,7 @@ class HomeScreen extends ConsumerWidget {
               ),
               child: feedAsync.when(
                 loading: () => const _HomeFeedLoading(),
-                error: (_, __) => _HomeFeedBody(
+                error: (_, _) => _HomeFeedBody(
                   feed: HomeFeedSnapshot(
                     latest: mockSeriesReleases,
                     trending: mockSeriesReleases.skip(1).take(4).toList(growable: false),
@@ -78,10 +111,7 @@ class _HomeFeedBody extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        LatestDropsSection(
-          releases: feed.latest,
-          trailingCaption: HomeDropRailContext.recentReleasesRailCaption,
-        ),
+        LatestDropsSection(releases: feed.latest),
         const SizedBox(height: FeedRhythm.homeMajorSectionGap),
         TrendingSeriesSection(releases: feed.trending),
       ],

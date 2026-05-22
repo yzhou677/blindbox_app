@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/core/theme/collectible_shape.dart';
 import 'package:blindbox_app/core/theme/collectible_shelf_shadow.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
@@ -119,7 +120,7 @@ class _SeriesShelfCardState extends State<SeriesShelfCard>
               ),
         child: _SeriesMatContent(
           title: widget.series.name,
-          subtitle: widget.series.ipName,
+          subtitle: shelfSeriesIpLabel(widget.series),
           extraLine: extra,
           totalFigures: widget.series.figureCount,
           progress: widget.progress,
@@ -246,20 +247,12 @@ class _SeriesMatContent extends StatelessWidget {
           title,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
-          style: textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-            letterSpacing: -0.14,
-            height: 1.2,
-          ),
+          style: CollectibleTypography.shelfSeriesTitle(textTheme, scheme),
         ),
         const SizedBox(height: 6),
         Text(
           subtitle,
-          style: textTheme.labelLarge?.copyWith(
-            color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
-            fontWeight: FontWeight.w500,
-            letterSpacing: 0.06,
-          ),
+          style: CollectibleTypography.seriesIpLine(textTheme, scheme),
         ),
         if (extraLine != null) ...[
           const SizedBox(height: 4),
@@ -292,25 +285,18 @@ class _SeriesMatContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 11),
-        Text(
-          headline,
-          style: textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.12,
-            height: 1.25,
-            color: isComplete
-                ? Color.lerp(scheme.onPrimaryContainer, scheme.onSurface, 0.15)
-                : scheme.onSurface.withValues(alpha: 0.92),
+        if (headline.isNotEmpty)
+          Text(
+            headline,
+            style: CollectibleTypography.shelfProgressLine(textTheme, scheme),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          subline,
-          style: textTheme.bodySmall?.copyWith(
-            color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
-            height: 1.35,
+        if (subline.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            subline,
+            style: CollectibleTypography.shelfProgressMeta(textTheme, scheme),
           ),
-        ),
+        ],
       ],
     );
   }

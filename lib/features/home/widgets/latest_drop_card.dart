@@ -97,7 +97,7 @@ class LatestDropCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        hero.name,
+                        release.feedCardMetaLine,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: textTheme.labelLarge?.copyWith(

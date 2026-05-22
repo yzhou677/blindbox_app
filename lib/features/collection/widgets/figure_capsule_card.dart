@@ -1,10 +1,11 @@
+import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/figure_secret_rarity_style.dart';
 import 'package:blindbox_app/features/collection/widgets/shelf_figure_thumb.dart';
 import 'package:flutter/material.dart';
 
-/// Mini blind-box / shelf card — collected, wish list, and open-slot states.
+/// Mini blind-box / shelf card — collected, wishlist, and open-slot states.
 class FigureCapsuleCard extends StatefulWidget {
   const FigureCapsuleCard({
     super.key,
@@ -270,52 +271,66 @@ class _FigureCapsuleCardState extends State<FigureCapsuleCard>
                                 ),
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
+                                    horizontal: 5,
                                     vertical: 3,
                                   ),
-                                  child: Text(
-                                    'empty slot',
-                                    style: textTheme.labelSmall?.copyWith(
-                                      color: scheme.onSurfaceVariant.withValues(
-                                        alpha: 0.48,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.favorite_border_rounded,
+                                        size: 11,
+                                        color: scheme.onSurfaceVariant.withValues(
+                                          alpha: 0.48,
+                                        ),
                                       ),
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 0.2,
-                                      height: 1,
-                                    ),
+                                      const SizedBox(width: 3),
+                                      Text(
+                                        'tap',
+                                        style: textTheme.labelSmall?.copyWith(
+                                          color: scheme.onSurfaceVariant.withValues(
+                                            alpha: 0.48,
+                                          ),
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: 0.2,
+                                          height: 1,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
                             ),
                         ],
                       ),
-                      const SizedBox(height: 11),
+                      const SizedBox(height: 12),
                       Text(
                         widget.figure.name,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
-                        style: textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.1,
-                          height: 1.15,
+                        style: CollectibleTypography.figureCaption(
+                          textTheme,
+                          scheme,
+                        ).copyWith(
                           color: missing
-                              ? scheme.onSurface.withValues(alpha: 0.68)
-                              : null,
+                              ? scheme.onSurface.withValues(alpha: 0.55)
+                              : scheme.onSurface.withValues(alpha: 0.88),
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 5),
                       Text(
                         widget.figure.isSecret
                             ? '${widget.figure.displayRarity} · chase'
                             : widget.figure.displayRarity,
                         textAlign: TextAlign.center,
-                        style: textTheme.labelSmall?.copyWith(
+                        style: CollectibleTypography.figureMeta(
+                          textTheme,
+                          scheme,
+                        ).copyWith(
                           color: scheme.onSurfaceVariant.withValues(
-                            alpha: missing ? 0.52 : 0.78,
+                            alpha: missing ? 0.42 : 0.52,
                           ),
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.12,
                         ),
                       ),
                     ],
@@ -546,13 +561,13 @@ class _WishRibbon extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(
-              Icons.auto_fix_high_rounded,
+              Icons.favorite_rounded,
               size: 13,
               color: Colors.white,
             ),
             const SizedBox(width: 4),
             Text(
-              'Wish list',
+              'Wishlist',
               style: textTheme.labelSmall?.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.w800,

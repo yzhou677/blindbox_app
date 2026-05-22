@@ -5,48 +5,46 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('catalogSeriesImageKey returns template id for catalog clones', () {
+  test('catalogSeriesImageKey returns explicit imageKey when set', () {
+    final series = testShelfSeries(
+      catalogTemplateId: 'aespa_fluffy_club',
+      imageKey: 'custom_cover_stem',
+    );
+    expect(
+      CollectionSeriesArt.catalogSeriesImageKey(series),
+      'custom_cover_stem',
+    );
+  });
+
+  test('catalogSeriesImageKey falls back to template id for catalog clones', () {
     final series = testShelfSeries(catalogTemplateId: 'aespa_fluffy_club');
     expect(CollectionSeriesArt.catalogSeriesImageKey(series), 'aespa_fluffy_club');
   });
 
-  test('catalogSeriesImageKey is null for custom and drop imports', () {
+  test('catalogSeriesImageKey is null for custom local rows', () {
     expect(
       CollectionSeriesArt.catalogSeriesImageKey(
         testShelfSeries(catalogTemplateId: null),
       ),
       isNull,
     );
-    expect(
-      CollectionSeriesArt.catalogSeriesImageKey(
-        ShelfSeries(
-          id: 'd',
-          name: 'Drop',
-          brand: 'B',
-          ipName: 'I',
-          figures: const [],
-          shelfAccent: const Color(0xFFE4F2EA),
-          catalogTemplateId: 'drop-x',
-        ),
-      ),
-      isNull,
-    );
   });
 
-  test('anchorFigure returns first figure or null', () {
-    expect(CollectionSeriesArt.anchorFigure(testShelfSeries())!.name, 'Test Figure');
-    expect(
-      CollectionSeriesArt.anchorFigure(
-        ShelfSeries(
-          id: 'e',
-          name: 'E',
-          brand: 'B',
-          ipName: 'I',
-          figures: const [],
-          shelfAccent: const Color(0xFFE4F2EA),
-        ),
-      ),
-      isNull,
+  test('cloneCatalogSeriesOntoShelf persists catalog cover imageKey', () {
+    const template = CatalogSeries(
+      templateId: 'series_a',
+      name: 'Series A',
+      brand: 'Brand',
+      ipName: 'IP',
+      shelfAccent: Color(0xFFE4F2EA),
+      catalogCoverImageKey: 'series_cover_stem',
+      figures: [],
     );
+    final shelf = cloneCatalogSeriesOntoShelf(
+      template,
+      'shelf-series_a-1',
+      catalogTemplateKey: 'series_a',
+    );
+    expect(shelf.imageKey, 'series_cover_stem');
   });
 }

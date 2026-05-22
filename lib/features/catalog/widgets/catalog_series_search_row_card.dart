@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_series_search_rows.dart';
 import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
@@ -22,7 +23,6 @@ class CatalogSeriesSearchRowCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final secretTint = scheme.tertiary;
     final onTrailing = onTrailingAction ?? onOpenPreview;
 
     return Material(
@@ -37,13 +37,9 @@ class CatalogSeriesSearchRowCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(22),
             border: Border.all(
-              color: row.hasAnySecret
-                  ? secretTint.withValues(alpha: 0.38)
-                  : scheme.outlineVariant.withValues(alpha: 0.35),
+              color: scheme.outlineVariant.withValues(alpha: 0.35),
             ),
-            color: row.hasAnySecret
-                ? Color.lerp(scheme.surfaceContainerLow, secretTint, 0.07)
-                : scheme.surfaceContainerLow,
+            color: scheme.surfaceContainerLow,
           ),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
@@ -73,7 +69,7 @@ class CatalogSeriesSearchRowCard extends StatelessWidget {
                             alpha: 0.5,
                           ),
                           child: Icon(
-                            Icons.auto_awesome_motion_rounded,
+                            Icons.photo_outlined,
                             color: scheme.onSurfaceVariant.withValues(
                               alpha: 0.45,
                             ),
@@ -85,44 +81,37 @@ class CatalogSeriesSearchRowCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              row.seriesTitle,
-                              style: textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: -0.14,
-                              ),
-                            ),
-                          ),
-                          if (row.hasAnySecret)
-                            Padding(
-                              padding: const EdgeInsets.only(left: 6),
-                              child: Icon(
-                                Icons.auto_awesome_rounded,
-                                size: 18,
-                                color: secretTint.withValues(alpha: 0.88),
-                              ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
                       Text(
-                        row.summaryLine,
-                        style: textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
-                          fontWeight: FontWeight.w500,
-                          height: 1.25,
+                        row.seriesTitle,
+                        style: CollectibleTypography.catalogSeriesRowTitle(
+                          textTheme,
+                          scheme,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        row.brandIpLine,
-                        style: textTheme.labelMedium?.copyWith(
-                          color: scheme.onSurfaceVariant.withValues(
-                            alpha: 0.68,
+                        row.ipLine,
+                        style: CollectibleTypography.catalogSeriesRowIp(
+                          textTheme,
+                          scheme,
+                        ),
+                      ),
+                      if (row.brand.trim().isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          row.brand.trim(),
+                          style: CollectibleTypography.catalogSeriesRowMeta(
+                            textTheme,
+                            scheme,
                           ),
+                        ),
+                      ],
+                      const SizedBox(height: 3),
+                      Text(
+                        row.summaryLine,
+                        style: CollectibleTypography.catalogSeriesRowMeta(
+                          textTheme,
+                          scheme,
                         ),
                       ),
                     ],

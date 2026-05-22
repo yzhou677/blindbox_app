@@ -13,6 +13,7 @@ import 'package:blindbox_app/features/collection/presentation/add_series_catalog
 import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart';
 import 'package:blindbox_app/features/collection/widgets/catalog_series_preview_sheet.dart';
 import 'package:blindbox_app/shared/widgets/app_search_field.dart';
+import 'package:blindbox_app/shared/widgets/series_hero_meta_block.dart';
 import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -542,7 +543,7 @@ class _SuggestionCard extends StatelessWidget {
                             alpha: 0.5,
                           ),
                           child: Icon(
-                            Icons.auto_awesome_motion_rounded,
+                            Icons.photo_outlined,
                             color: scheme.onSurfaceVariant.withValues(
                               alpha: 0.45,
                             ),
@@ -561,25 +562,13 @@ class _SuggestionCard extends StatelessWidget {
                           letterSpacing: -0.14,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        series.ipName,
-                        style: textTheme.labelLarge?.copyWith(
-                          color: scheme.onSurfaceVariant.withValues(
-                            alpha: 0.78,
-                          ),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${series.brand} · ${series.figureCount} figures',
-                        style: textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant.withValues(
-                            alpha: 0.68,
-                          ),
-                          height: 1.25,
-                        ),
+                      SeriesHeroMetaBlock(
+                        brand: series.brand,
+                        ipLine: series.ipName,
+                        trailingMeta: series.figureCount == 1
+                            ? '1 figure'
+                            : '${series.figureCount} figures',
+                        density: SeriesHeroMetaDensity.compact,
                       ),
                     ],
                   ),

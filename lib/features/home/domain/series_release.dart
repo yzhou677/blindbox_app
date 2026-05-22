@@ -57,4 +57,13 @@ class SeriesRelease {
   final String? taxonomyIpId;
 
   bool get hasSecretInLineup => lineup.any((s) => s.isSecret);
+
+  /// Home feed card subtitle (`brand · IP`), not the hero figure name.
+  String get feedCardMetaLine {
+    final line = ipLine?.trim();
+    if (line != null && line.isNotEmpty) return line;
+    final brandLabel = brand.trim();
+    if (brandLabel.isNotEmpty) return brandLabel;
+    return seriesName;
+  }
 }

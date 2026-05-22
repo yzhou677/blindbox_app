@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:blindbox_app/features/catalog/catalog_image_resolver.dart';
 import 'package:blindbox_app/features/collection/bootstrap/collection_app_bootstrap.dart';
 import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
 import 'package:blindbox_app/features/collection/data/series_release_lookup.dart';
@@ -70,7 +71,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
   void addSeriesFromDrop(Collectible c) {
     final fromRelease = ref.read(seriesReleaseLookupProvider)(c.id);
     if (fromRelease != null) {
-      addSeriesFromRelease(fromRelease);
+      unawaited(addSeriesFromRelease(fromRelease));
       return;
     }
     final catalogKey = 'drop-${c.id}';
@@ -91,13 +92,15 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       id: seriesId,
       name: c.series,
       brand: c.brand,
-      ipName: (c.ipLine?.trim().isNotEmpty ?? false)
-          ? c.ipLine!.trim()
-          : c.series,
+      ipName: shelfIpLabelFromBrandLine(
+        brand: c.brand,
+        line: (c.ipLine?.trim().isNotEmpty ?? false) ? c.ipLine!.trim() : c.series,
+      ),
       figures: [figure],
       shelfAccent: c.shelfAccent ?? const Color(0xFFE8DEF5),
       notes: null,
       catalogTemplateId: catalogKey,
+      imageKey: catalogKey,
     );
     _commit(
       CollectionSnapshot(
@@ -108,7 +111,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
   }
 
   /// Adds a Home **series release** (full lineup) to the shelf under `drop-{dropId}`.
-  void addSeriesFromRelease(SeriesRelease release) {
+  Future<void> addSeriesFromRelease(SeriesRelease release) async {
     final catalogKey = 'drop-${release.dropId}';
     if (state.hasTemplateOnShelf(catalogKey)) return;
     final seriesId =
@@ -117,12 +120,15 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
     final figures = <ShelfFigure>[];
     for (final slot in release.lineup) {
       final figureKey = slot.imageKey.trim();
+      final imageUrl = figureKey.isNotEmpty
+          ? await CatalogImageResolver.resolveFigureDisplayRef(figureKey)
+          : slot.imageUrl?.trim();
       figures.add(
         ShelfFigure(
           id: '$seriesId-slot-${slot.slotId}',
           seriesId: seriesId,
           name: slot.name,
-          imageUrl: slot.imageUrl,
+          imageUrl: imageUrl != null && imageUrl.isNotEmpty ? imageUrl : null,
           localImageUri: null,
           rarity: slot.isSecret ? 'Secret' : 'Regular',
           isSecret: slot.isSecret,
@@ -137,9 +143,12 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       id: seriesId,
       name: release.seriesName,
       brand: release.brand,
-      ipName: (release.ipLine?.trim().isNotEmpty ?? false)
-          ? release.ipLine!.trim()
-          : release.seriesName,
+      ipName: shelfIpLabelFromBrandLine(
+        brand: release.brand,
+        line: (release.ipLine?.trim().isNotEmpty ?? false)
+            ? release.ipLine!.trim()
+            : release.seriesName,
+      ),
       figures: figures,
       shelfAccent: hero.shelfAccent ?? const Color(0xFFE8DEF5),
       notes: null,
@@ -280,5 +289,15 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
         figureStates: m,
       ),
     );
+  }
+
+  /// Removes the shelf row for a catalog or drop template key (e.g. `drop-{id}`).
+  void removeSeriesByCatalogTemplate(String catalogTemplateId) {
+    for (final s in state.shelfSeries) {
+      if (s.catalogTemplateId == catalogTemplateId) {
+        removeSeries(s.id);
+        return;
+      }
+    }
   }
 }

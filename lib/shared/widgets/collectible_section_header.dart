@@ -17,7 +17,7 @@ class CollectibleSectionHeader extends StatelessWidget {
   final String? subtitle;
   final Widget? trailing;
 
-  /// Replaces the default tiny sparkle (e.g. fire icon for market rails).
+  /// Optional lead beside the title (e.g. fire icon for market rails).
   final Widget? titleAccessory;
   final EdgeInsetsGeometry padding;
 
@@ -25,14 +25,6 @@ class CollectibleSectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-
-    final lead =
-        titleAccessory ??
-        Icon(
-          Icons.auto_awesome_rounded,
-          size: 15,
-          color: scheme.primary.withValues(alpha: 0.3),
-        );
 
     final deck = subtitle?.trim();
 
@@ -44,7 +36,12 @@ class CollectibleSectionHeader extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Padding(padding: const EdgeInsets.only(right: 8), child: lead),
+              if (titleAccessory != null) ...[
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: titleAccessory,
+                ),
+              ],
               Expanded(child: Text(title, style: textTheme.titleMedium)),
               if (trailing case final t?) ...[
                 const SizedBox(width: 8),

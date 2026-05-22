@@ -30,7 +30,7 @@ class CollectionWarmStartBanner extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Open a series and tap figures to mark collected or wish list.',
+                  'Open a series and tap figures to mark collected or wishlist.',
                   style: textTheme.bodyMedium?.copyWith(
                     color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
                     height: 1.35,

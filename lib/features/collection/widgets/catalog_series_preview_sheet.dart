@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_adapters.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_sheet.dart';
@@ -5,6 +6,7 @@ import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/catalog_search_row_summary.dart';
 import 'package:blindbox_app/features/collection/presentation/figure_secret_rarity_style.dart';
 import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
+import 'package:blindbox_app/shared/widgets/series_hero_meta_block.dart';
 import 'package:flutter/material.dart';
 
 /// Read-only catalog lineup preview before adding a series to the shelf.
@@ -54,30 +56,18 @@ class CatalogSeriesPreviewSheet extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 14),
-                Text(
-                  series.ipName,
-                  style: textTheme.labelLarge?.copyWith(
-                    color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.12,
-                  ),
-                ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 16),
                 Text(
                   series.name,
-                  style: textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: -0.22,
+                  style: CollectibleTypography.seriesHeroTitle(
+                    textTheme,
+                    scheme,
                   ),
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  '${series.brand} · $figureLine · tap a figure to browse',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant.withValues(alpha: 0.86),
-                    height: 1.35,
-                  ),
+                SeriesHeroMetaBlock(
+                  brand: series.brand,
+                  ipLine: series.ipName,
+                  trailingMeta: figureLine,
                 ),
               ],
             ),
@@ -85,9 +75,9 @@ class CatalogSeriesPreviewSheet extends StatelessWidget {
         ),
         Expanded(
           child: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            padding: const EdgeInsets.fromLTRB(16, 18, 16, 8),
             itemCount: series.figures.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 10),
+            separatorBuilder: (context, index) => const SizedBox(height: 14),
             itemBuilder: (context, i) {
               final f = series.figures[i];
               return _PreviewFigureRow(
@@ -179,7 +169,7 @@ class _PreviewFigureRow extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(18),
         child: Padding(
-        padding: const EdgeInsets.fromLTRB(10, 10, 12, 10),
+        padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
         child: Row(
           children: [
             CatalogImageSlot(
@@ -207,30 +197,24 @@ class _PreviewFigureRow extends StatelessWidget {
                 children: [
                   Text(
                     figure.name,
-                    style: textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.12,
+                    style: CollectibleTypography.figureCaption(
+                      textTheme,
+                      scheme,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 3),
                   Text(
                     figure.rarity,
-                    style: textTheme.labelMedium?.copyWith(
-                      color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
-                    ),
+                    style: CollectibleTypography.figureMeta(textTheme, scheme),
                   ),
                 ],
               ),
             ),
             if (figure.isSecret)
               Icon(
-                Icons.auto_awesome_rounded,
+                Icons.star_rounded,
                 size: 20,
-                color: Color.lerp(
-                  accent,
-                  scheme.tertiary,
-                  0.5,
-                )!.withValues(alpha: 0.88),
+                color: (secretLook?.accent ?? accent).withValues(alpha: 0.88),
               ),
             Icon(
               Icons.chevron_right_rounded,

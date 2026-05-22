@@ -1,11 +1,15 @@
 import 'dart:ui' show ImageFilter;
 
+import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_item.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_page.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_precache.dart';
 import 'package:flutter/material.dart';
 
-/// Opens an immersive fullscreen figure gallery (swipe between figures, drag to dismiss).
+/// Opens the shared fullscreen figure gallery (swipe, drag down, tap outside art to close).
+///
+/// All product surfaces must call this — Home release detail, Collection series sheet,
+/// and catalog add/preview flows. Do not push a separate gallery route.
 Future<void> showCatalogFigureGallery(
   BuildContext context, {
   required List<CatalogFigureGalleryItem> items,
@@ -18,7 +22,8 @@ Future<void> showCatalogFigureGallery(
   return Navigator.of(context, rootNavigator: true).push<void>(
     PageRouteBuilder<void>(
       opaque: false,
-      barrierColor: Colors.transparent,
+      barrierDismissible: true,
+      barrierColor: Colors.black.withValues(alpha: 0.72),
       transitionDuration: const Duration(milliseconds: 280),
       reverseTransitionDuration: const Duration(milliseconds: 240),
       pageBuilder: (ctx, animation, secondaryAnimation) {
@@ -46,6 +51,8 @@ Future<void> showCatalogFigureGallery(
     ),
   );
 }
+
+const Color _kGalleryForeground = Color(0xFFF5F5F5);
 
 /// Fullscreen swipeable gallery with blurred scrim, close control, and drag dismiss.
 class CatalogFigureGallerySheet extends StatefulWidget {
@@ -102,11 +109,22 @@ class _CatalogFigureGallerySheetState extends State<CatalogFigureGallerySheet> {
     Navigator.of(context).pop();
   }
 
+  String? _figureMetaLine(CatalogFigureGalleryItem item) {
+    final rarity = item.rarityLabel?.trim();
+    if (item.isSecret) {
+      if (rarity != null && rarity.isNotEmpty) {
+        return '$rarity · Secret';
+      }
+      return 'Secret';
+    }
+    return rarity != null && rarity.isNotEmpty ? rarity : null;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final item = widget.items[_currentIndex];
+    final metaLine = _figureMetaLine(item);
     final routeFade = widget.routeAnimation?.value ?? 1.0;
 
     return PopScope(
@@ -120,118 +138,131 @@ class _CatalogFigureGallerySheetState extends State<CatalogFigureGallerySheet> {
               opacity: routeFade,
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                child: ColoredBox(
-                  color: scheme.scrim.withValues(alpha: 0.5),
+                child: const ColoredBox(
+                  color: Color(0x66000000),
                 ),
               ),
             ),
             SafeArea(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+              child: Stack(
+                fit: StackFit.expand,
                 children: [
-                  _GalleryDragHandle(onDismiss: _dismiss),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(4, 0, 4, 4),
-                    child: Row(
-                      children: [
-                        IconButton(
-                          tooltip: 'Close',
-                          onPressed: _dismiss,
-                          icon: Icon(
-                            Icons.close_rounded,
-                            color: scheme.onSurface.withValues(alpha: 0.92),
+                  Positioned.fill(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: _dismiss,
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _GalleryDragHandle(onDismiss: _dismiss),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(4, 0, 4, 4),
+                        child: Row(
+                          children: [
+                            IconButton(
+                              tooltip: 'Close',
+                              onPressed: _dismiss,
+                              icon: const Icon(
+                                Icons.close_rounded,
+                                color: _kGalleryForeground,
+                              ),
+                            ),
+                            Expanded(
+                              child: Column(
+                                children: [
+                                  if (widget.seriesTitle != null &&
+                                      widget.seriesTitle!.isNotEmpty)
+                                    Text(
+                                      widget.seriesTitle!,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.center,
+                                      style: textTheme.labelLarge?.copyWith(
+                                        color: _kGalleryForeground.withValues(
+                                          alpha: 0.92,
+                                        ),
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  Text(
+                                    '${_currentIndex + 1} of ${widget.items.length}',
+                                    style: textTheme.labelMedium?.copyWith(
+                                      color: _kGalleryForeground.withValues(
+                                        alpha: 0.72,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 48),
+                          ],
+                        ),
+                      ),
+                      if (widget.items.length > 1)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: _GalleryPageIndicator(
+                            count: widget.items.length,
+                            index: _currentIndex,
                           ),
                         ),
-                        Expanded(
-                          child: Column(
-                            children: [
-                              if (widget.seriesTitle != null &&
-                                  widget.seriesTitle!.isNotEmpty)
-                                Text(
-                                  widget.seriesTitle!,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  textAlign: TextAlign.center,
-                                  style: textTheme.labelLarge?.copyWith(
-                                    color: scheme.onSurface.withValues(
-                                      alpha: 0.72,
-                                    ),
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              Text(
-                                '${_currentIndex + 1} of ${widget.items.length}',
-                                style: textTheme.labelMedium?.copyWith(
-                                  color: scheme.onSurface.withValues(
-                                    alpha: 0.55,
-                                  ),
-                                ),
+                      Expanded(
+                        child: PageView.builder(
+                          controller: _pageController,
+                          itemCount: widget.items.length,
+                          onPageChanged: _onPageSettled,
+                          physics: const BouncingScrollPhysics(),
+                          allowImplicitScrolling: true,
+                          itemBuilder: (context, index) {
+                            return CatalogFigureGalleryPage(
+                              key: ValueKey<String>(
+                                'gallery-page:${widget.items[index].id}',
                               ),
+                              item: widget.items[index],
+                            );
+                          },
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 220),
+                          switchInCurve: Curves.easeOut,
+                          switchOutCurve: Curves.easeIn,
+                          child: Column(
+                            key: ValueKey<String>(item.id),
+                            children: [
+                              Text(
+                                item.name,
+                                textAlign: TextAlign.center,
+                                style: CollectibleTypography.figureCaption(
+                                  textTheme,
+                                  Theme.of(context).colorScheme,
+                                ).copyWith(color: _kGalleryForeground),
+                              ),
+                              if (metaLine != null) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  metaLine,
+                                  textAlign: TextAlign.center,
+                                  style: CollectibleTypography.figureMeta(
+                                    textTheme,
+                                    Theme.of(context).colorScheme,
+                                  ).copyWith(
+                                    color: _kGalleryForeground.withValues(
+                                      alpha: 0.78,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),
-                        const SizedBox(width: 48),
-                      ],
-                    ),
-                  ),
-                  if (widget.items.length > 1)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: _GalleryPageIndicator(
-                        count: widget.items.length,
-                        index: _currentIndex,
                       ),
-                    ),
-                  Expanded(
-                    child: PageView.builder(
-                      controller: _pageController,
-                      itemCount: widget.items.length,
-                      onPageChanged: _onPageSettled,
-                      physics: const BouncingScrollPhysics(),
-                      allowImplicitScrolling: true,
-                      itemBuilder: (context, index) {
-                        return CatalogFigureGalleryPage(
-                          key: ValueKey<String>(
-                            'gallery-page:${widget.items[index].id}',
-                          ),
-                          item: widget.items[index],
-                        );
-                      },
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 220),
-                      switchInCurve: Curves.easeOut,
-                      switchOutCurve: Curves.easeIn,
-                      child: Column(
-                        key: ValueKey<String>(item.id),
-                        children: [
-                          Text(
-                            item.isSecret ? 'Secret' : item.name,
-                            textAlign: TextAlign.center,
-                            style: textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: -0.2,
-                              color: scheme.onSurface.withValues(alpha: 0.96),
-                            ),
-                          ),
-                          if (item.rarityLabel != null &&
-                              item.rarityLabel!.trim().isNotEmpty) ...[
-                            const SizedBox(height: 4),
-                            Text(
-                              item.rarityLabel!,
-                              textAlign: TextAlign.center,
-                              style: textTheme.bodyMedium?.copyWith(
-                                color: scheme.onSurface.withValues(alpha: 0.7),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
+                    ],
                   ),
                 ],
               ),
@@ -250,9 +281,9 @@ class _GalleryDragHandle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
+      onTap: onDismiss,
       onVerticalDragEnd: (d) {
         final v = d.primaryVelocity ?? 0;
         if (v > 380) onDismiss();
@@ -264,7 +295,7 @@ class _GalleryDragHandle extends StatelessWidget {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: scheme.onSurface.withValues(alpha: 0.28),
+              color: _kGalleryForeground.withValues(alpha: 0.35),
               borderRadius: BorderRadius.circular(999),
             ),
           ),
@@ -285,7 +316,6 @@ class _GalleryPageIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -299,8 +329,8 @@ class _GalleryPageIndicator extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(999),
               color: i == index
-                  ? scheme.primary.withValues(alpha: 0.85)
-                  : scheme.onSurface.withValues(alpha: 0.22),
+                  ? _kGalleryForeground.withValues(alpha: 0.92)
+                  : _kGalleryForeground.withValues(alpha: 0.32),
             ),
           ),
       ],

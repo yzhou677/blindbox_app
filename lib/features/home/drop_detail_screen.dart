@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_adapters.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_sheet.dart';
@@ -6,6 +7,7 @@ import 'package:blindbox_app/features/home/domain/series_release.dart';
 import 'package:blindbox_app/features/home/widgets/release_lineup_strip.dart';
 import 'package:blindbox_app/features/home/widgets/save_series_release_button.dart';
 import 'package:blindbox_app/features/home/widgets/series_release_cover_image.dart';
+import 'package:blindbox_app/shared/widgets/series_hero_meta_block.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -76,10 +78,8 @@ class DropDetailScreen extends ConsumerWidget {
               release.seriesName,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.12,
-              ),
+              style: CollectibleTypography.seriesHeroTitle(textTheme, scheme)
+                  .copyWith(fontSize: 18),
             ),
           ),
           SliverToBoxAdapter(
@@ -95,37 +95,20 @@ class DropDetailScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    hero.name,
-                    style: textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: -0.28,
-                      height: 1.12,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
                     release.seriesName,
-                    style: textTheme.titleSmall?.copyWith(
-                      color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
-                      fontWeight: FontWeight.w500,
+                    style: CollectibleTypography.seriesHeroTitle(
+                      textTheme,
+                      scheme,
                     ),
                   ),
-                  const SizedBox(height: 14),
-                  Text(
-                    release.brand,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${release.lineup.length} figures · tap to browse',
-                    style: textTheme.labelMedium?.copyWith(
-                      color: scheme.onSurfaceVariant.withValues(alpha: 0.55),
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 0.02,
-                    ),
+                  SeriesHeroMetaBlock(
+                    brand: release.brand,
+                    ipLine: release.ipLine?.trim() ?? '',
+                    trailingMeta: release.lineup.isEmpty
+                        ? null
+                        : release.lineup.length == 1
+                            ? '1 figure'
+                            : '${release.lineup.length} figures',
                   ),
                   if (release.lineup.isNotEmpty) ...[
                     const SizedBox(height: 20),

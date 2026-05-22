@@ -43,7 +43,6 @@ void main() {
     expect(find.text('Home'), findsWidgets);
     expect(find.text('Discover'), findsWidgets);
     expect(find.text('Latest drops'), findsOneWidget);
-    expect(find.text('Recent releases'), findsOneWidget);
     expect(find.text('Luna Astronaut'), findsOneWidget);
     expect(find.text('Trending series'), findsOneWidget);
   });
