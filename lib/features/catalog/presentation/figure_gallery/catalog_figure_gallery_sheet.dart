@@ -276,20 +276,38 @@ class _CatalogFigureGallerySheetState extends State<CatalogFigureGallerySheet> {
   }
 }
 
-class _GalleryDragHandle extends StatelessWidget {
+class _GalleryDragHandle extends StatefulWidget {
   const _GalleryDragHandle({required this.onDismiss});
 
   final VoidCallback onDismiss;
 
   @override
+  State<_GalleryDragHandle> createState() => _GalleryDragHandleState();
+}
+
+class _GalleryDragHandleState extends State<_GalleryDragHandle> {
+  double _dragDy = 0;
+
+  void _onDragEnd(DragEndDetails d) {
+    final v = d.primaryVelocity ?? 0;
+    if (_dragDy > 56 || v > 220) {
+      widget.onDismiss();
+    }
+    _dragDy = 0;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: onDismiss,
-      onVerticalDragEnd: (d) {
-        final v = d.primaryVelocity ?? 0;
-        if (v > 380) onDismiss();
+      onTap: widget.onDismiss,
+      onVerticalDragStart: (_) => _dragDy = 0,
+      onVerticalDragUpdate: (d) {
+        if ((d.primaryDelta ?? 0) > 0) {
+          _dragDy += d.primaryDelta ?? 0;
+        }
       },
+      onVerticalDragEnd: _onDragEnd,
       child: Padding(
         padding: const EdgeInsets.only(top: 6, bottom: 4),
         child: Center(

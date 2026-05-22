@@ -6,6 +6,7 @@ import 'package:blindbox_app/features/collection/widgets/custom_series_quiet_fie
 import 'package:blindbox_app/features/collection/widgets/edit_custom_figure_dialog.dart';
 import 'package:blindbox_app/features/collection/widgets/figure_name_chips_editor.dart';
 import 'package:blindbox_app/features/collection/widgets/shelf_gallery_pick.dart';
+import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
 import 'package:flutter/material.dart';
 
@@ -121,24 +122,24 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final bottom = MediaQuery.paddingOf(context).bottom;
-    final maxH = MediaQuery.sizeOf(context).height * 0.88;
+    final sheetScroll = CollectibleSheetScope.scrollControllerOf(context);
 
-    return SizedBox(
-      height: maxH,
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: FeedRhythm.sheetHorizontal,
-          right: FeedRhythm.sheetHorizontal,
-          bottom: bottom + 14,
-        ),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
+    return Padding(
+      padding: EdgeInsets.only(
+        left: FeedRhythm.sheetHorizontal,
+        right: FeedRhythm.sheetHorizontal,
+        bottom: bottom + 14,
+      ),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                controller: sheetScroll,
+                physics: collectibleSheetScrollPhysics(),
+                child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const CollectibleSheetChrome(
@@ -224,7 +225,6 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
             ],
           ),
         ),
-      ),
     );
   }
 }

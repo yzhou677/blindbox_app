@@ -9,6 +9,7 @@ import 'package:blindbox_app/features/collection/presentation/figure_secret_rari
 import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_radii.dart';
+import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
 import 'package:blindbox_app/shared/widgets/series_hero_meta_block.dart';
 import 'package:flutter/material.dart';
@@ -54,6 +55,8 @@ class CatalogSeriesPreviewSheet extends StatelessWidget {
         ),
         Expanded(
           child: ListView.separated(
+            controller: CollectibleSheetScope.scrollControllerOf(context),
+            physics: collectibleSheetScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(
               FeedRhythm.sheetHorizontal,
               FeedRhythm.sheetSectionGap,

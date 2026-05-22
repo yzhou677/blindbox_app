@@ -6,6 +6,7 @@ import 'package:blindbox_app/features/collection/application/collection_notifier
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/widgets/figure_capsule_card.dart';
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -63,6 +64,8 @@ class SeriesFiguresSheet extends ConsumerWidget {
             const SizedBox(height: 18),
             Expanded(
               child: SingleChildScrollView(
+                controller: CollectibleSheetScope.scrollControllerOf(context),
+                physics: collectibleSheetScrollPhysics(),
                 child: SizedBox(
                   width: double.infinity,
                   child: Wrap(

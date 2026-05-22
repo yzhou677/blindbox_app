@@ -1,33 +1,30 @@
 import 'package:blindbox_app/core/theme/app_theme.dart';
-import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart';
+import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('dismissCollectionModalOverlays closes open bottom sheet', (
+  testWidgets('showCollectibleBottomSheet uses DraggableScrollableSheet host', (
     tester,
   ) async {
-    late BuildContext hostContext;
-
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(),
         home: Builder(
           builder: (context) {
-            hostContext = context;
             return Scaffold(
               body: Center(
                 child: FilledButton(
                   onPressed: () {
-                    showCollectionModalBottomSheet<void>(
+                    showCollectibleBottomSheet<void>(
                       context: context,
                       builder: (ctx, scroll) => ListView(
                         controller: scroll,
-                        physics: const AlwaysScrollableScrollPhysics(),
+                        physics: collectibleSheetScrollPhysics(),
                         children: const [
-                          SizedBox(height: 120),
-                          Center(child: Text('Add a series')),
-                          SizedBox(height: 400),
+                          SizedBox(height: 48),
+                          Text('Sheet body'),
+                          SizedBox(height: 800),
                         ],
                       ),
                     );
@@ -43,10 +40,11 @@ void main() {
 
     await tester.tap(find.text('Open'));
     await tester.pumpAndSettle();
-    expect(find.text('Add a series'), findsOneWidget);
+    expect(find.text('Sheet body'), findsOneWidget);
+    expect(find.byType(DraggableScrollableSheet), findsOneWidget);
 
-    Navigator.of(hostContext).pop();
+    await tester.tapAt(const Offset(20, 20));
     await tester.pumpAndSettle();
-    expect(find.text('Add a series'), findsNothing);
+    expect(find.text('Sheet body'), findsNothing);
   });
 }

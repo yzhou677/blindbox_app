@@ -125,7 +125,8 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
   }) {
     showCollectibleBottomSheet<void>(
       context: context,
-      builder: (_) => CatalogSeriesPreviewSheet(series: series, onAdd: onAdd),
+      builder: (_, scroll) =>
+          CatalogSeriesPreviewSheet(series: series, onAdd: onAdd),
     );
   }
 
@@ -137,20 +138,16 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     final snap = ref.watch(collectionNotifierProvider);
     final notifier = ref.read(collectionNotifierProvider.notifier);
     final catalogActive = _trimmedQuery.isNotEmpty;
+    final sheetScroll = CollectibleSheetScope.scrollControllerOf(context);
 
-    final sheetH =
-        MediaQuery.sizeOf(context).height * FeedRhythm.sheetAddSeriesHeightFraction;
-
-    return SizedBox(
-      height: sheetH,
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: FeedRhythm.sheetHorizontal,
-          right: FeedRhythm.sheetHorizontal,
-          top: FeedRhythm.sheetChromeTop,
-          bottom: bottom + AppSpacing.md,
-        ),
-        child: Column(
+    return Padding(
+      padding: EdgeInsets.only(
+        left: FeedRhythm.sheetHorizontal,
+        right: FeedRhythm.sheetHorizontal,
+        top: FeedRhythm.sheetChromeTop,
+        bottom: bottom + AppSpacing.md,
+      ),
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             CollectibleSheetChrome(
@@ -210,12 +207,14 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
                       textTheme,
                       snap,
                       notifier,
+                      sheetScroll,
                     )
                   : _buildRecommendationsBody(
                       context,
                       scheme,
                       textTheme,
                       notifier,
+                      sheetScroll,
                     ),
             ),
             const SizedBox(height: 8),
@@ -238,7 +237,6 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
             ),
           ],
         ),
-      ),
     );
   }
 
@@ -247,6 +245,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     ColorScheme scheme,
     TextTheme textTheme,
     CollectionNotifier notifier,
+    ScrollController? sheetScroll,
   ) {
     if (_catalogLoadFailed) {
       return Center(
@@ -300,6 +299,8 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
           );
         }
         return ListView.separated(
+          controller: sheetScroll,
+          physics: collectibleSheetScrollPhysics(),
           padding: const EdgeInsets.only(bottom: 8),
           itemCount: recs.length,
           separatorBuilder: (context, index) => const SizedBox(height: 12),
@@ -334,6 +335,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     TextTheme textTheme,
     CollectionSnapshot snap,
     CollectionNotifier notifier,
+    ScrollController? sheetScroll,
   ) {
     if (_catalogLoadFailed) {
       return Center(
@@ -373,6 +375,8 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     }
 
     return ListView.separated(
+      controller: sheetScroll,
+      physics: collectibleSheetScrollPhysics(),
       padding: const EdgeInsets.only(bottom: 8),
       itemCount: matches.length,
       separatorBuilder: (context, index) => const SizedBox(height: 12),

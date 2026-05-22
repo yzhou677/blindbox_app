@@ -73,6 +73,12 @@ abstract final class FeedRhythm {
 
   static const double sheetHeightFraction = 0.74;
   static const double sheetAddSeriesHeightFraction = 0.78;
+
+  /// [DraggableScrollableSheet] extent — low enough to trigger dismiss on casual drag.
+  static const double sheetMinChildSize = 0.38;
+
+  /// Room to grow on upward drag without feeling locked.
+  static const double sheetMaxChildSize = 0.92;
   static const double sheetHorizontal = 16;
   static const double sheetChromeTop = 12;
   static const double sheetHeaderAfterHandle = 16;

@@ -93,7 +93,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
   void _openFiguresSheet(BuildContext context, String seriesId) {
     showCollectibleBottomSheet<void>(
       context: context,
-      builder: (_) => SeriesFiguresSheet(seriesId: seriesId),
+      builder: (_, scroll) => SeriesFiguresSheet(seriesId: seriesId),
     );
   }
 
@@ -129,11 +129,8 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
   void _openAddCustom(BuildContext context) {
     showCollectionModalBottomSheet<void>(
       context: context,
-      isScrollControlled: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
-        child: AddCustomSeriesSheet(
+      builder: (_, scroll) => AddCustomSeriesSheet(
           onSubmit:
               ({
                 required String seriesName,
@@ -154,7 +151,6 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                       notes: notes,
                     );
               },
-        ),
       ),
     );
   }
@@ -162,11 +158,8 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
   void _openAddToCollection(BuildContext context) {
     showCollectionModalBottomSheet<void>(
       context: context,
-      isScrollControlled: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
-        child: AddToCollectionSheet(
+      builder: (ctx, scroll) => AddToCollectionSheet(
           onCreateCustom: () {
             Navigator.of(ctx).pop();
             WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -175,7 +168,6 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               }
             });
           },
-        ),
       ),
     );
   }
