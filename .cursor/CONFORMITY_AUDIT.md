@@ -28,6 +28,7 @@ Last reviewed against the repo structure and key files.
 - [x] Shelf emotional intelligence: derived `ShelfEmotionalProfile` + `CollectionMemoryStore`; no codec/schema change to shelf rows
 - [x] Collectible relationship surfaces: `features/collectible_relationship/`; taxonomy-grounded hints; one editorial line per browse focal; no recommendation profiles
 - [x] Immersive presentation: shared `CollectibleMotion` + `CollectibleImmersion`; calmer gallery/sheet/shelf motion; no per-screen animation frameworks
+- [x] Personal collectible memory: `collection_memory_v2`, shelf eras, evolution whispers, IP depth; no social/streak/notification memory
 
 ---
 

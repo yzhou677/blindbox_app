@@ -1,11 +1,14 @@
 import 'package:flutter/foundation.dart';
 
-/// Foundation memory moments — no timeline UI in Phase 4.
+/// Personal memory moments — calm, derived; not a social timeline.
 enum CollectionMemoryMomentKind {
   firstSecretOwned,
   recentlyCompletedLineup,
   dominantUniverse,
   shelfMilestone,
+  longLovedUniverse,
+  shelfEvolution,
+  shelfGrowing,
 }
 
 @immutable
@@ -15,6 +18,7 @@ class CollectionMemoryMoment {
     this.seriesId,
     this.seriesName,
     this.taxonomyIpId,
+    this.universeLabel,
     this.observedAt,
   });
 
@@ -22,5 +26,6 @@ class CollectionMemoryMoment {
   final String? seriesId;
   final String? seriesName;
   final String? taxonomyIpId;
+  final String? universeLabel;
   final DateTime? observedAt;
 }

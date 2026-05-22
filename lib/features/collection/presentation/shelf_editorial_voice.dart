@@ -1,6 +1,7 @@
 import 'package:blindbox_app/features/collection/application/shelf_emotional_interpreter.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/domain/collection_memory_moment.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_memory_editorial.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_emotional_profile.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_interpretation_confidence.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_mood.dart';
@@ -57,21 +58,8 @@ abstract final class ShelfEditorialVoice {
     return null;
   }
 
-  static String? memoryWhisper(CollectionMemoryMoment moment) {
-    return switch (moment.kind) {
-      CollectionMemoryMomentKind.firstSecretOwned =>
-        'Your first secret figure found a home here',
-      CollectionMemoryMomentKind.recentlyCompletedLineup when
-            moment.seriesName != null =>
-        '${moment.seriesName} recently felt complete',
-      CollectionMemoryMomentKind.recentlyCompletedLineup =>
-        'A lineup recently felt complete',
-      CollectionMemoryMomentKind.dominantUniverse =>
-        'One universe keeps drawing you back',
-      CollectionMemoryMomentKind.shelfMilestone =>
-        'Every series on your shelf feels complete',
-    };
-  }
+  static String? memoryWhisper(CollectionMemoryMoment moment) =>
+      CollectionMemoryEditorial.whisperForMoment(moment);
 
   static String seriesCompleteBannerTitle({required bool chasesHome}) {
     return chasesHome

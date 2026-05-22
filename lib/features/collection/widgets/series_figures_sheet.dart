@@ -5,6 +5,7 @@ import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalo
 import 'package:blindbox_app/features/collectible_relationship/application/collectible_relationship_providers.dart';
 import 'package:blindbox_app/features/collectible_relationship/widgets/collectible_relationship_line.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
+import 'package:blindbox_app/features/collection/application/shelf_emotional_providers.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/shelf_editorial_voice.dart';
 import 'package:blindbox_app/features/collection/widgets/figure_capsule_card.dart';
@@ -45,6 +46,9 @@ class SeriesFiguresSheet extends ConsumerWidget {
     final relationshipLine = ref.watch(
       relationshipHintForShelfSeriesProvider(seriesId),
     );
+    final memoryReflection = ref.watch(
+      collectionMemoryReflectionForSeriesProvider(seriesId),
+    );
 
     return CollectibleSheetInsets(
       child: CustomScrollView(
@@ -64,6 +68,13 @@ class SeriesFiguresSheet extends ConsumerWidget {
               child: CollectibleRelationshipLine(
                 text: relationshipLine,
                 padding: const EdgeInsets.only(top: 10),
+              ),
+            ),
+          if (memoryReflection != null && memoryReflection.isNotEmpty)
+            SliverToBoxAdapter(
+              child: CollectibleRelationshipLine(
+                text: memoryReflection,
+                padding: const EdgeInsets.only(top: 8),
               ),
             ),
           if (isComplete)
