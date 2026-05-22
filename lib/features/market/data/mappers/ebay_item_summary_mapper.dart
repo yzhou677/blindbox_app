@@ -1,12 +1,15 @@
 import 'package:blindbox_app/features/home/data/mock_latest_drops.dart';
 import 'package:blindbox_app/features/market/data/dto/ebay_item_summary_dto.dart';
+import 'package:blindbox_app/features/market/domain/market_provider_id.dart';
 import 'package:blindbox_app/features/market/taxonomy/taxonomy_resolver.dart';
 import 'package:blindbox_app/models/collectible.dart';
 import 'package:blindbox_app/models/market_listing.dart';
 import 'package:flutter/material.dart';
 
 extension EbayItemSummaryDtoMapper on EbayItemSummaryDto {
-  MarketListing toMarketListing() {
+  MarketListing toMarketListing({
+    MarketProviderId providerId = MarketProviderId.ebay,
+  }) {
     const resolver = TitleTaxonomyResolver();
     final taxonomy = resolver.resolve(title);
     String? taxonomyBrandId;
@@ -28,8 +31,13 @@ extension EbayItemSummaryDtoMapper on EbayItemSummaryDto {
     final image = imageUrl.trim().isNotEmpty
         ? imageUrl
         : mockCollectibleArtUrl(appImageSeed, appImageTintHex);
+    final webUrl = itemWebUrl.trim();
+    final nativeId = itemId.trim();
     return MarketListing(
       id: appListingId,
+      providerId: providerId.wireName,
+      providerListingId: nativeId.isEmpty ? null : nativeId,
+      externalListingUrl: webUrl.isEmpty ? null : webUrl,
       taxonomyBrandId: taxonomyBrandId,
       taxonomyIpId: taxonomyIpId,
       collectible: Collectible(

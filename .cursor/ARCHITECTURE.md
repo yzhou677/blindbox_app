@@ -62,7 +62,7 @@ These must stay separate. Do not merge persistence, media keys, or loading paths
 - **Purpose:** Editorial feed (home) and market browse; entry points to save releases or view listings.
 - **Locations:** `lib/features/home/`, `lib/features/market/`
 - **Home:** Mock-driven today (`mock_latest_drops.dart`, etc.); save via `collectionNotifier.addSeriesFromRelease` + [`series_release_lookup`](../lib/features/collection/data/series_release_lookup.dart)
-- **Market listings:** eBay-shaped browse only — `FakeEbayBrowseDataSource` / [`EbayHttpBrowseDataSource`](../lib/features/market/data/datasource/ebay_http_browse_data_source.dart) → [`MarketListingsRepository`](../lib/features/market/data/repository/market_listings_repository.dart) → [`MarketListing`](../lib/models/market_listing.dart). Card art via [`MarketListingImage`](../lib/features/market/presentation/market_listing_image.dart) only — **not** catalog `imageKey` / Firestore.
+- **Market listings:** [`MarketSource`](../lib/features/market/data/source/market_source.dart) implementations (default [`AssetMarketSource`](../lib/features/market/data/source/asset_market_source.dart); dormant [`EbayMarketSource`](../lib/features/market/data/source/ebay_market_source.dart), [`MercariMarketSource`](../lib/features/market/data/source/mercari_market_source.dart)) → [`MarketListingsRepository`](../lib/features/market/data/repository/market_listings_repository.dart) → [`MarketListing`](../lib/models/market_listing.dart). Card art via [`MarketListingImage`](../lib/features/market/presentation/market_listing_image.dart) only — **not** catalog `imageKey` / Firestore.
 - **Market filters (shared ids only):** [`MarketTaxonomy`](../lib/features/market/catalog/market_taxonomy.dart) chip rows and predicates use canonical brand/IP **ids** aligned via `applyCatalogBundle()` after catalog bootstrap. Filter chips read `_catalogBrands` / `_catalogIps`; listing title resolution still uses the full [`MarketTaxonomyAdapter`](../lib/features/market/taxonomy/market_taxonomy_adapter.dart) registry. **Do not** load `CatalogSeedBundle` or query Firestore for listing content, prices, or card art.
 - **Into shelf:** Notifier methods only (`addSeriesFromDrop`, etc.) — not direct snapshot mutation from widgets
 
@@ -87,8 +87,8 @@ User shelf (local-first)
   Collection sheet ──> catalogGalleryItemsFromShelfSeries ──> fullscreen figure gallery
   (no Firestore shelf sync)
 
-Market / eBay (separate data path)
-  FakeEbayBrowse / EbayHttp ──> MarketListingsRepository ──> MarketListing (DTO imageUrl)
+Market (separate data path — not catalog bodies)
+  MarketSource(s) ──> MarketListingsRepository ──> MarketListing (external imageUrl via MarketListingImage)
         │
         └──> marketBrowseNotifier (filters via MarketTaxonomy ids; no CatalogSeedBundle for rows)
 ```
@@ -251,7 +251,7 @@ Security rules live in the Firebase console or your infra repo — catalog read 
 - Ship focused diffs; avoid rewriting `CatalogSearchService`, collection flow, or switching catalog source unless the task says so.
 - Default catalog source is `loadCatalogBundle()` (Firestore with seed fallback) — do not remove seed path without explicit task.
 - Firebase Storage: catalog art only; see [Firebase](#firebase-firestore--storage) — not shelf photo upload unless tasked.
-- Market listings: keep eBay browse path separate — do not wire listing cards to Firestore catalog or `imageKey`.
+- Market listings: keep marketplace provider path separate — do not wire listing cards to Firestore catalog or `imageKey`.
 - Do not expand grandfathered architecture (`lib/models/`, new `lib/services/`, growing `CollectionCatalog`) as part of unrelated tasks.
 
 ---

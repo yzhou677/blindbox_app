@@ -56,7 +56,7 @@ No complex backend required for MVP.
 
 ## 2. Market Section
 
-Display market information using eBay APIs.
+Display market information from marketplace providers (bundled demo feed today; Mercari planned; eBay adapter retained).
 
 Features:
 - search collectibles
@@ -145,7 +145,7 @@ go_router
 SharedPreferences (collection snapshot codec)
 
 ## Networking
-`http` package (eBay Browse API datasource in `features/market/data/`)
+`http` package (optional eBay Browse adapter in `features/market/data/`)
 
 ## Image Caching
 cached_network_image
@@ -283,7 +283,7 @@ Architecture has been prepared for backend integration:
 - reusable filtering and taxonomy models
 
 Next integration target:
-- eBay Browse API
+- Mercari marketplace integration (Phase 2 — cache, rate limits, stability)
 - search listings
 - pricing
 - sorting
@@ -291,8 +291,8 @@ Next integration target:
 
 ## Planned API Integration
 
-First external integration:
-- eBay Browse API
+First live provider target:
+- Mercari (after stub/architecture validation)
 
 Planned capabilities:
 - keyword search

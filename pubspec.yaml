@@ -71,7 +71,7 @@ flutter:
 
   assets:
     - assets/images/app_icon.png
-    - assets/market/fake_ebay_browse_items.json
+    - assets/market/fake_market_browse_items.json
     - assets/catalog/figures/
     - assets/catalog/series/
     - tools/seed/

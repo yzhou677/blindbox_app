@@ -19,7 +19,7 @@ class EbayHttpBrowseDataSource implements MarketBrowseDataSource {
     final uri = browseUri;
     if (uri == null) {
       throw UnsupportedError(
-        'eBay Browse is not configured (browseUri is null). Use FakeEbayBrowseDataSource for demos.',
+        'eBay Browse is not configured (browseUri is null). Use AssetMarketSource for demos.',
       );
     }
     final response = await client.get(uri);
