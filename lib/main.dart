@@ -8,6 +8,7 @@ import 'package:blindbox_app/features/collection/data/collection_seed_data.dart'
 import 'package:blindbox_app/features/collection/data/series_release_lookup.dart';
 import 'package:blindbox_app/features/collection/persistence/collection_snapshot_storage.dart';
 import 'package:blindbox_app/features/home/application/home_feed_provider.dart';
+import 'package:blindbox_app/features/market/data/market_catalog_identity_cache.dart';
 import 'package:blindbox_app/features/market/data/market_listings_bootstrap.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,6 +23,7 @@ Future<void> main() async {
   try {
     final catalogBundle = await CatalogBundleCache.loadOfflineFirst();
     MarketTaxonomy.applyCatalogBundle(catalogBundle);
+    MarketCatalogIdentityCache.install(catalogBundle);
   } catch (e, st) {
     debugPrint('Catalog seed bootstrap skipped: $e\n$st');
   }

@@ -1,3 +1,4 @@
+import 'package:blindbox_app/features/market/domain/market_identity_match.dart';
 import 'package:blindbox_app/models/collectible.dart';
 
 /// External marketplace browse row — transient listing state, not canonical catalog identity.
@@ -16,6 +17,7 @@ class MarketListing {
     this.externalListingUrl,
     this.taxonomyBrandId,
     this.taxonomyIpId,
+    this.catalogMatch,
     this.isTrending = false,
     this.watchingCount = 0,
     this.hasSecretFigure = false,
@@ -47,6 +49,9 @@ class MarketListing {
 
   /// Canonical IP key when this row sits under a character universe; null = no IP facet.
   final String? taxonomyIpId;
+
+  /// Catalog identity match from listing title (data layer; not shown in UI Phase 2A).
+  final MarketIdentityMatch? catalogMatch;
 
   final bool isTrending;
 

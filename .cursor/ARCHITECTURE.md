@@ -63,6 +63,7 @@ These must stay separate. Do not merge persistence, media keys, or loading paths
 - **Locations:** `lib/features/home/`, `lib/features/market/`
 - **Home:** Mock-driven today (`mock_latest_drops.dart`, etc.); save via `collectionNotifier.addSeriesFromRelease` + [`series_release_lookup`](../lib/features/collection/data/series_release_lookup.dart)
 - **Market listings:** [`MarketSource`](../lib/features/market/data/source/market_source.dart) implementations (default [`AssetMarketSource`](../lib/features/market/data/source/asset_market_source.dart); dormant [`EbayMarketSource`](../lib/features/market/data/source/ebay_market_source.dart), [`MercariMarketSource`](../lib/features/market/data/source/mercari_market_source.dart)) → [`MarketListingsRepository`](../lib/features/market/data/repository/market_listings_repository.dart) → [`MarketListing`](../lib/models/market_listing.dart). Card art via [`MarketListingImage`](../lib/features/market/presentation/market_listing_image.dart) only — **not** catalog `imageKey` / Firestore.
+- **Market identity matching (Phase 2A):** listing titles → [`MarketIdentityMatcher`](../lib/features/market/application/market_identity_matcher.dart) over offline [`CatalogIdentityIndex`](../lib/features/market/data/catalog_identity_index.dart) (built from catalog bundle at startup). Result on `MarketListing.catalogMatch` (data layer only; UI stays provider-neutral). Prefer unresolved/partial matches over wrong figure binding.
 - **Market filters (shared ids only):** [`MarketTaxonomy`](../lib/features/market/catalog/market_taxonomy.dart) chip rows and predicates use canonical brand/IP **ids** aligned via `applyCatalogBundle()` after catalog bootstrap. Filter chips read `_catalogBrands` / `_catalogIps`; listing title resolution still uses the full [`MarketTaxonomyAdapter`](../lib/features/market/taxonomy/market_taxonomy_adapter.dart) registry. **Do not** load `CatalogSeedBundle` or query Firestore for listing content, prices, or card art.
 - **Into shelf:** Notifier methods only (`addSeriesFromDrop`, etc.) — not direct snapshot mutation from widgets
 
@@ -88,9 +89,9 @@ User shelf (local-first)
   (no Firestore shelf sync)
 
 Market (separate data path — not catalog bodies)
-  MarketSource(s) ──> MarketListingsRepository ──> MarketListing (external imageUrl via MarketListingImage)
-        │
-        └──> marketBrowseNotifier (filters via MarketTaxonomy ids; no CatalogSeedBundle for rows)
+  MarketSource(s) ──> MarketListingsRepository ──> enrichListingIdentity ──> MarketListing
+        │                      (CatalogIdentityIndex + MarketIdentityMatcher)
+        └──> marketBrowseNotifier (filters via MarketTaxonomy ids; no CatalogSeedBundle for row bodies)
 ```
 
 **Startup ([`main.dart`](../lib/main.dart)):** optional Firebase init + `loadCatalogBundle()` + `MarketTaxonomy.applyCatalogBundle()` → bootstrap market listings → restore collection snapshot (or seed) → `ProviderScope` → `GoRouter`.

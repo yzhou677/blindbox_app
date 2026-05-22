@@ -1,7 +1,6 @@
 import 'package:blindbox_app/features/home/data/mock_latest_drops.dart';
 import 'package:blindbox_app/features/market/data/dto/ebay_item_summary_dto.dart';
 import 'package:blindbox_app/features/market/domain/market_provider_id.dart';
-import 'package:blindbox_app/features/market/taxonomy/taxonomy_resolver.dart';
 import 'package:blindbox_app/models/collectible.dart';
 import 'package:blindbox_app/models/market_listing.dart';
 import 'package:flutter/material.dart';
@@ -10,21 +9,11 @@ extension EbayItemSummaryDtoMapper on EbayItemSummaryDto {
   MarketListing toMarketListing({
     MarketProviderId providerId = MarketProviderId.ebay,
   }) {
-    const resolver = TitleTaxonomyResolver();
-    final taxonomy = resolver.resolve(title);
-    String? taxonomyBrandId;
-    String? taxonomyIpId;
-    if (taxonomy.ipId != null &&
-        taxonomy.brandId != null &&
-        taxonomy.confidence >= TitleTaxonomyResolver.minConfidenceForTaxonomyIds) {
-      taxonomyBrandId = taxonomy.brandId;
-      taxonomyIpId = taxonomy.ipId;
-    } else if (taxonomy.ipId == null &&
-        taxonomy.brandId != null &&
-        taxonomy.confidence >= TitleTaxonomyResolver.minConfidenceForBrandOnly) {
-      taxonomyBrandId = taxonomy.brandId;
-      taxonomyIpId = null;
-    }
+    final taxonomyBrandId = appTaxonomyBrandId.trim().isEmpty
+        ? null
+        : appTaxonomyBrandId.trim();
+    final ipRaw = appTaxonomyIpId?.trim();
+    final taxonomyIpId = ipRaw == null || ipRaw.isEmpty ? null : ipRaw;
 
     final priceUsd = double.tryParse(priceValue) ?? 0;
     final release = DateTime.tryParse(appReleaseDateIso) ?? DateTime.utc(2026);

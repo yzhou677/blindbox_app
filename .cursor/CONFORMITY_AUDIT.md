@@ -21,6 +21,7 @@ Last reviewed against the repo structure and key files.
 - [x] Add Series uses `loadCatalogBundle()` (Firestore + seed fallback) and `pickLatestSeriesRecommendations` — not `CollectionCatalog`
 - [x] `CatalogImageResolver` + Storage paths wired for catalog UI (`CatalogImageFromKey`, add sheet search)
 - [x] Market browse stays on `MarketSource`/repository — no Firestore catalog queries for listing rows
+- [x] Market identity matching: offline `CatalogIdentityIndex` + `MarketIdentityMatcher` at bootstrap (no matcher in widgets)
 - [x] `MarketTaxonomy.applyCatalogBundle()` at startup; brand-scoped filter chips use Firestore-backed `_catalogBrands` / `_catalogIps`
 
 ---

@@ -1,3 +1,4 @@
+import 'package:blindbox_app/features/market/application/market_listing_identity_enricher.dart';
 import 'package:blindbox_app/features/market/data/market_browse_listings_session.dart';
 import 'package:blindbox_app/features/market/data/repository/market_listings_repository.dart';
 import 'package:blindbox_app/features/market/data/source/default_market_sources.dart';
@@ -20,8 +21,9 @@ final marketBrowseListingsProvider = Provider<List<MarketListing>>((ref) {
 
 /// Pull-to-refresh / manual reload: re-fetch from sources into session.
 Future<void> refreshMarketBrowseListings(WidgetRef ref) async {
-  final next =
-      await ref.read(marketListingsRepositoryProvider).loadBrowseListings();
+  final next = enrichBrowseListingsIdentity(
+    await ref.read(marketListingsRepositoryProvider).loadBrowseListings(),
+  );
   MarketBrowseListingsSession.instance.install(next);
   ref.invalidate(marketBrowseListingsProvider);
 }
