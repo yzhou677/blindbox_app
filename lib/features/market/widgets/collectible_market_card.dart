@@ -8,17 +8,20 @@ import 'package:blindbox_app/features/market/presentation/collectible_market_moo
 import 'package:blindbox_app/features/market/presentation/market_listing_image.dart';
 import 'package:blindbox_app/features/market/utils/market_format.dart';
 import 'package:blindbox_app/features/market/widgets/collectible_market_signals.dart';
+import 'package:blindbox_app/features/collectible_relationship/application/collectible_relationship_providers.dart';
+import 'package:blindbox_app/features/collectible_relationship/widgets/collectible_relationship_line.dart';
 import 'package:blindbox_app/features/market/widgets/show_collectible_market_sheet.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Collectible-centered browse row — groups market sightings calmly.
-class CollectibleMarketCard extends StatelessWidget {
+class CollectibleMarketCard extends ConsumerWidget {
   const CollectibleMarketCard({super.key, required this.snapshot});
 
   final CollectibleMarketSnapshot snapshot;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final textTheme = theme.textTheme;
@@ -27,6 +30,9 @@ class CollectibleMarketCard extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final thumb = FeedRhythm.marketListingThumbnailExtent;
     final accent = rep?.collectible.shelfAccent ?? scheme.tertiaryContainer;
+    final relationshipLine = ref.watch(
+      relationshipHintForMarketSnapshotProvider(snapshot.identity.snapshotId),
+    );
 
     return Padding(
       padding: const EdgeInsets.only(
@@ -129,6 +135,11 @@ class CollectibleMarketCard extends StatelessWidget {
                           ),
                         ),
                         CollectibleMarketSignals(snapshot: snapshot),
+                        if (relationshipLine != null &&
+                            relationshipLine.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          CollectibleRelationshipLine(text: relationshipLine),
+                        ],
                         const SizedBox(height: 6),
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.baseline,

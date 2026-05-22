@@ -5,6 +5,8 @@ import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/market/presentation/market_listing_image.dart';
 import 'package:blindbox_app/features/market/application/market_listings_providers.dart';
 import 'package:blindbox_app/features/market/utils/market_format.dart';
+import 'package:blindbox_app/features/collectible_relationship/application/collectible_relationship_providers.dart';
+import 'package:blindbox_app/features/collectible_relationship/widgets/collectible_relationship_line.dart';
 import 'package:blindbox_app/features/market/widgets/listing_market_signals.dart';
 import 'package:blindbox_app/models/market_listing.dart';
 import 'package:blindbox_app/shared/widgets/series_hero_meta_block.dart';
@@ -82,7 +84,7 @@ class MarketDetailScreen extends ConsumerWidget {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(22, 24, 22, 40),
-              child: _MarketDetailBody(listing: listing),
+              child: _MarketDetailBody(listingId: listingId, listing: listing),
             ),
           ),
         ],
@@ -160,13 +162,17 @@ class _MarketDetailHero extends StatelessWidget {
   }
 }
 
-class _MarketDetailBody extends StatelessWidget {
-  const _MarketDetailBody({required this.listing});
+class _MarketDetailBody extends ConsumerWidget {
+  const _MarketDetailBody({
+    required this.listingId,
+    required this.listing,
+  });
 
+  final String listingId;
   final MarketListing listing;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final c = listing.collectible;
@@ -193,6 +199,18 @@ class _MarketDetailBody extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         ListingMarketSignals(listing: listing, dense: true),
+        Builder(
+          builder: (context) {
+            final line = ref.watch(
+              relationshipHintForMarketListingProvider(listingId),
+            );
+            if (line == null || line.isEmpty) return const SizedBox.shrink();
+            return CollectibleRelationshipLine(
+              text: line,
+              padding: const EdgeInsets.only(top: 10),
+            );
+          },
+        ),
         const SizedBox(height: 16),
         Row(
           crossAxisAlignment: CrossAxisAlignment.baseline,

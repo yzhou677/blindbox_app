@@ -11,10 +11,13 @@ import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
+import 'package:blindbox_app/features/collectible_relationship/application/collectible_relationship_providers.dart';
+import 'package:blindbox_app/features/collectible_relationship/widgets/collectible_relationship_line.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Read-only catalog lineup preview before adding a series to the shelf.
-class CatalogSeriesPreviewSheet extends StatelessWidget {
+class CatalogSeriesPreviewSheet extends ConsumerWidget {
   const CatalogSeriesPreviewSheet({
     super.key,
     required this.series,
@@ -27,7 +30,7 @@ class CatalogSeriesPreviewSheet extends StatelessWidget {
   final bool showAddButton;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
     final hasChase = series.figures.any((f) => f.isSecret);
     final figureLine = catalogSearchRowSummary(
@@ -36,6 +39,9 @@ class CatalogSeriesPreviewSheet extends StatelessWidget {
       matchedFigureNames: const {},
     );
     final scroll = CollectibleSheetScope.scrollControllerOf(context);
+    final relationshipLine = ref.watch(
+      relationshipHintForCatalogSeriesProvider(series.templateId),
+    );
 
     return CollectibleSheetInsets(
       extraBottom: 0,
@@ -52,6 +58,13 @@ class CatalogSeriesPreviewSheet extends StatelessWidget {
             padding: EdgeInsets.zero,
           ),
         ),
+        if (relationshipLine != null && relationshipLine.isNotEmpty)
+          SliverToBoxAdapter(
+            child: CollectibleRelationshipLine(
+              text: relationshipLine,
+              padding: const EdgeInsets.only(top: 10),
+            ),
+          ),
         SliverPadding(
           padding: const EdgeInsets.only(
             top: FeedRhythm.sheetSectionGap,

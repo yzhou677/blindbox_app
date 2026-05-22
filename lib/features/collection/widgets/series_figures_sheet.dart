@@ -2,6 +2,8 @@ import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_adapters.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_sheet.dart';
+import 'package:blindbox_app/features/collectible_relationship/application/collectible_relationship_providers.dart';
+import 'package:blindbox_app/features/collectible_relationship/widgets/collectible_relationship_line.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/shelf_editorial_voice.dart';
@@ -40,6 +42,9 @@ class SeriesFiguresSheet extends ConsumerWidget {
         secrets.isNotEmpty &&
         secrets.every((f) => snap.trackedOrDefault(f.id).owned);
     final scroll = CollectibleSheetScope.scrollControllerOf(context);
+    final relationshipLine = ref.watch(
+      relationshipHintForShelfSeriesProvider(seriesId),
+    );
 
     return CollectibleSheetInsets(
       child: CustomScrollView(
@@ -54,6 +59,13 @@ class SeriesFiguresSheet extends ConsumerWidget {
               padding: EdgeInsets.zero,
             ),
           ),
+          if (relationshipLine != null && relationshipLine.isNotEmpty)
+            SliverToBoxAdapter(
+              child: CollectibleRelationshipLine(
+                text: relationshipLine,
+                padding: const EdgeInsets.only(top: 10),
+              ),
+            ),
           if (isComplete)
             SliverToBoxAdapter(
               child: Padding(

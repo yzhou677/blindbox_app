@@ -4,8 +4,11 @@ import 'package:blindbox_app/features/market/application/collectible_market_disp
 import 'package:blindbox_app/features/market/domain/collectible_market_snapshot.dart';
 import 'package:blindbox_app/features/market/presentation/collectible_market_mood_copy.dart';
 import 'package:blindbox_app/features/market/widgets/market_listing_card.dart';
+import 'package:blindbox_app/features/collectible_relationship/application/collectible_relationship_providers.dart';
+import 'package:blindbox_app/features/collectible_relationship/widgets/collectible_relationship_line.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 Future<void> showCollectibleMarketSheet({
   required BuildContext context,
@@ -18,8 +21,13 @@ Future<void> showCollectibleMarketSheet({
     context: context,
     heightFraction: FeedRhythm.sheetOpenScreenFraction,
     builder: (ctx, scrollController) {
+      return Consumer(
+        builder: (ctx, ref, _) {
       final scheme = Theme.of(ctx).colorScheme;
       final textTheme = Theme.of(ctx).textTheme;
+      final relationshipLine = ref.watch(
+        relationshipHintForMarketSnapshotProvider(snapshot.identity.snapshotId),
+      );
 
       return CollectibleSheetInsets(
         child: CustomScrollView(
@@ -58,6 +66,11 @@ Future<void> showCollectibleMarketSheet({
                       color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
                     ),
                   ),
+                  if (relationshipLine != null &&
+                      relationshipLine.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    CollectibleRelationshipLine(text: relationshipLine),
+                  ],
                   const SizedBox(height: FeedRhythm.blockGapMedium),
                 ],
               ),
@@ -73,6 +86,8 @@ Future<void> showCollectibleMarketSheet({
             ),
           ],
         ),
+      );
+        },
       );
     },
   );

@@ -100,7 +100,8 @@ class CollectionSummarySection extends StatelessWidget {
               ),
             ),
           ],
-          if (memoryWhisper != null && memoryWhisper!.trim().isNotEmpty) ...[
+          if (memoryWhisper != null && memoryWhisper!.trim().isNotEmpty)
+            ...[
             const SizedBox(height: 6),
             Text(
               memoryWhisper!,
