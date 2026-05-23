@@ -1,5 +1,7 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/presentation/collectible_immersion.dart';
 import 'package:blindbox_app/core/theme/app_radii.dart';
+import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:flutter/material.dart';
 
 /// Builds sheet body content wired to the modal [ScrollController].
@@ -31,49 +33,53 @@ class CollectibleSheetScope extends InheritedWidget {
   }
 }
 
-/// Scroll physics for sheet lists — always scrollable so overscroll dismiss works.
+/// Scroll physics for sheet lists — cooperates with [DraggableScrollableSheet].
+///
+/// [AlwaysScrollableScrollPhysics] keeps short sheets draggable at scroll top;
+/// [ClampingScrollPhysics] hands off downward pulls to sheet dismissal.
 ScrollPhysics collectibleSheetScrollPhysics([ScrollPhysics? parent]) {
-  return const AlwaysScrollableScrollPhysics(
-    parent: BouncingScrollPhysics(),
+  return const ClampingScrollPhysics(
+    parent: AlwaysScrollableScrollPhysics(),
   );
 }
 
-/// Maps screen-height targets to [DraggableScrollableSheet] child sizes.
-///
-/// The modal host is [maxScreenFraction] tall so `initialChildSize: 1` is the
-/// expanded cap — not an oversized empty panel above the sheet chrome.
-final class CollectibleSheetExtent {
-  const CollectibleSheetExtent({
-    required this.hostHeight,
-    required this.initialChildSize,
-    required this.minChildSize,
-    required this.maxChildSize,
-  });
-
-  final double hostHeight;
-  final double initialChildSize;
-  final double minChildSize;
-  final double maxChildSize;
-}
-
-CollectibleSheetExtent resolveCollectibleSheetExtent({
-  required double screenHeight,
+/// Target visible height as a fraction of the full screen.
+double resolveCollectibleSheetHeightFactor({
   double openScreenFraction = FeedRhythm.sheetOpenScreenFraction,
   double minScreenFraction = FeedRhythm.sheetMinScreenFraction,
   double maxScreenFraction = FeedRhythm.sheetMaxChildSize,
 }) {
   final max = maxScreenFraction.clamp(0.5, 0.98);
   final open = openScreenFraction.clamp(minScreenFraction, max);
+  return open;
+}
+
+/// Child-size ratios for [DraggableScrollableSheet] inside a height-capped host.
+final class CollectibleSheetDragSizes {
+  const CollectibleSheetDragSizes({
+    required this.initialChildSize,
+    required this.minChildSize,
+    required this.maxChildSize,
+  });
+
+  final double initialChildSize;
+  final double minChildSize;
+  final double maxChildSize;
+}
+
+CollectibleSheetDragSizes resolveCollectibleSheetDragSizes({
+  required double heightFactor,
+  double minScreenFraction = FeedRhythm.sheetMinScreenFraction,
+}) {
+  final open = heightFactor.clamp(0.2, 0.98);
   final min = minScreenFraction.clamp(0.18, open);
-  final hostHeight = screenHeight * max;
 
-  double childSize(double screenFraction) =>
-      (screenFraction / max).clamp(0.15, 1.0);
+  double ratio(double screenFraction) =>
+      (screenFraction / open).clamp(0.15, 1.0);
 
-  return CollectibleSheetExtent(
-    hostHeight: hostHeight,
-    initialChildSize: childSize(open),
-    minChildSize: childSize(min),
+  return CollectibleSheetDragSizes(
+    initialChildSize: 1.0,
+    minChildSize: ratio(min),
     maxChildSize: 1.0,
   );
 }
@@ -117,6 +123,17 @@ Future<T?> showCollectibleBottomSheet<T>({
   Color? backgroundColor,
 }) {
   final scheme = Theme.of(context).colorScheme;
+  final heightFactor = resolveCollectibleSheetHeightFactor(
+    openScreenFraction: heightFraction,
+    minScreenFraction:
+        minHeightFraction ?? FeedRhythm.sheetMinScreenFraction,
+    maxScreenFraction: maxHeightFraction ?? heightFraction,
+  );
+  final dragSizes = resolveCollectibleSheetDragSizes(
+    heightFactor: heightFactor,
+    minScreenFraction:
+        minHeightFraction ?? FeedRhythm.sheetMinScreenFraction,
+  );
 
   return showModalBottomSheet<T>(
     context: context,
@@ -124,33 +141,27 @@ Future<T?> showCollectibleBottomSheet<T>({
     isScrollControlled: true,
     useSafeArea: false,
     isDismissible: true,
-    enableDrag: true,
+    enableDrag: false,
     showDragHandle: false,
+    barrierColor: CollectibleImmersion.sheetBarrier(scheme),
+    sheetAnimationStyle: CollectibleMotion.sheetAnimationStyle(),
     backgroundColor: backgroundColor ?? scheme.surface,
     shape: AppRadii.sheetShape,
+    clipBehavior: Clip.antiAlias,
     builder: (ctx) {
       final viewInsets = MediaQuery.viewInsetsOf(ctx);
-      final screenHeight = MediaQuery.sizeOf(ctx).height;
-      final extent = resolveCollectibleSheetExtent(
-        screenHeight: screenHeight,
-        openScreenFraction: heightFraction,
-        minScreenFraction:
-            minHeightFraction ?? FeedRhythm.sheetMinScreenFraction,
-        maxScreenFraction: maxHeightFraction ?? FeedRhythm.sheetMaxChildSize,
-      );
 
       return Padding(
         padding: EdgeInsets.only(bottom: viewInsets.bottom),
-        child: Align(
+        child: FractionallySizedBox(
+          heightFactor: heightFactor,
           alignment: Alignment.bottomCenter,
-          child: SizedBox(
-            height: extent.hostHeight,
-            child: _CollectibleDraggableSheetHost(
-              initialChildSize: extent.initialChildSize,
-              minChildSize: extent.minChildSize,
-              maxChildSize: extent.maxChildSize,
-              builder: builder,
-            ),
+          widthFactor: 1,
+          child: _CollectibleDraggableSheetHost(
+            initialChildSize: dragSizes.initialChildSize,
+            minChildSize: dragSizes.minChildSize,
+            maxChildSize: dragSizes.maxChildSize,
+            builder: builder,
           ),
         ),
       );
@@ -158,6 +169,8 @@ Future<T?> showCollectibleBottomSheet<T>({
   );
 }
 
+/// [FractionallySizedBox] caps modal height; [DraggableScrollableSheet] links
+/// scroll and drag so downward pulls at scroll top dismiss the sheet.
 class _CollectibleDraggableSheetHost extends StatelessWidget {
   const _CollectibleDraggableSheetHost({
     required this.initialChildSize,
@@ -179,17 +192,16 @@ class _CollectibleDraggableSheetHost extends StatelessWidget {
       minChildSize: minChildSize,
       maxChildSize: maxChildSize,
       snap: true,
-      snapSizes: <double>{
-        minChildSize,
-        initialChildSize,
-        maxChildSize,
-      }.toList()
+      snapSizes: <double>{minChildSize, initialChildSize, maxChildSize}.toList()
         ..sort(),
+      snapAnimationDuration: CollectibleMotion.sheetDismiss,
       shouldCloseOnMinExtent: true,
       builder: (context, scrollController) {
         return CollectibleSheetScope(
           scrollController: scrollController,
-          child: builder(context, scrollController),
+          child: CollectibleSheetFocusFrame(
+            child: builder(context, scrollController),
+          ),
         );
       },
     );

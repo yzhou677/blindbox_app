@@ -54,12 +54,22 @@ class CollectibleSheetChrome extends StatelessWidget {
               seriesTitle!,
               style: CollectibleTypography.seriesHeroTitle(textTheme, scheme),
             ),
-            if (brand != null && ipLine != null)
+            if (brand != null &&
+                ipLine != null &&
+                (brand!.trim().isNotEmpty || ipLine!.trim().isNotEmpty))
               SeriesHeroMetaBlock(
                 brand: brand!,
                 ipLine: ipLine!,
                 trailingMeta: trailingMeta,
+                density: SeriesHeroMetaDensity.sheet,
+              )
+            else if (trailingMeta != null && trailingMeta!.trim().isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                trailingMeta!.trim(),
+                style: CollectibleTypography.figureMeta(textTheme, scheme),
               ),
+            ],
           ],
         ],
       ),

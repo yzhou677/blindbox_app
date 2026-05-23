@@ -10,7 +10,8 @@ Last reviewed against the repo structure and key files.
 
 - [x] Feature-based layout under `lib/features/`
 - [x] Collection mutations only via `CollectionNotifier` + `CollectionSnapshotCodec`
-- [x] Market: datasource → mapper → repository → providers; HTTP only in `ebay_http_browse_data_source.dart`
+- [x] Market: `MarketSource` → repository → providers; HTTP in `ebay_http_browse_data_source.dart` and `data/datasource/mercari/` (sandbox gateway only)
+- [x] Mercari live sandbox **off by default** (`MarketSandboxConfig`); asset bootstrap unchanged; manual refresh only
 - [x] Catalog search is pure Dart over `CatalogSeedBundle`
 - [x] Firestore loader returns same bundle type as seed loader
 - [x] Shelf media separation (`imageKey` in catalog only; `localImageUri` / `imageUrl` on shelf)
@@ -20,15 +21,22 @@ Last reviewed against the repo structure and key files.
 - [x] Firebase integration boundaries documented (Firestore + Storage catalog-only; shelf local-first) in `ARCHITECTURE.md` + `firebase-catalog.mdc`
 - [x] Add Series uses `loadCatalogBundle()` (Firestore + seed fallback) and `pickLatestSeriesRecommendations` — not `CollectionCatalog`
 - [x] `CatalogImageResolver` + Storage paths wired for catalog UI (`CatalogImageFromKey`, add sheet search)
-- [x] Market browse stays on eBay datasource/repository — no Firestore catalog queries for listing rows
+- [x] Market browse stays on `MarketSource`/repository — no Firestore catalog queries for listing rows
+- [x] Market identity matching: offline `CatalogIdentityIndex` + `MarketIdentityMatcher` at bootstrap (no matcher in widgets)
 - [x] `MarketTaxonomy.applyCatalogBundle()` at startup; brand-scoped filter chips use Firestore-backed `_catalogBrands` / `_catalogIps`
+- [x] Collectible market snapshots: aggregator + `CollectibleMarketSession` under `features/market/`; browse feed uses snapshot cards (listings stay transient)
+- [x] Shelf emotional intelligence: derived `ShelfEmotionalProfile` + `CollectionMemoryStore`; no codec/schema change to shelf rows
+- [x] Collectible relationship surfaces: `features/collectible_relationship/`; taxonomy-grounded hints; one editorial line per browse focal; no recommendation profiles
+- [x] Immersive presentation: shared `CollectibleMotion` + `CollectibleImmersion`; calmer gallery/sheet/shelf motion; no per-screen animation frameworks
+- [x] Personal collectible memory: `collection_memory_v2`, shelf eras, evolution whispers, IP depth; no social/streak/notification memory
+- [x] Market production hardening: gateway retry, pagination cursor, cache append, calm load-more, schema-tolerant Mercari DTOs
 
 ---
 
 ## Known drift / transitional (documented; fix only when tasked)
 
 - [ ] **`CollectionCatalog`** still exists for demo shelf seed (`collection_seed_data.dart`) — frozen; not the add-flow catalog source
-- [ ] **Market listing card images** still from eBay DTO / mock URLs — not Firebase Storage catalog art (intentional until tasked)
+- [ ] **Market listing card images** still from provider wire URLs / mock URLs — not Firebase Storage catalog art (intentional until tasked)
 - [ ] **Shelf templates** may persist resolved Storage download URLs in `ShelfFigure.imageUrl` at add time (catalog clone path) — optional hardening later
 - [ ] **Collection** remains local-first — no Firestore/Storage sync for shelf (intentional until a future milestone)
 - [x] **`docs/PROJECT_OVERVIEW.md`** — updated to **SharedPreferences** and **`http`** (was Hive/Isar + Dio)

@@ -1,9 +1,12 @@
 import 'package:blindbox_app/core/theme/app_spacing.dart';
-import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_adapters.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_sheet.dart';
+import 'package:blindbox_app/features/collectible_relationship/application/collectible_relationship_providers.dart';
+import 'package:blindbox_app/features/collectible_relationship/widgets/collectible_relationship_line.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
+import 'package:blindbox_app/features/collection/application/shelf_emotional_providers.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/presentation/shelf_editorial_voice.dart';
 import 'package:blindbox_app/features/collection/widgets/figure_capsule_card.dart';
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
@@ -39,6 +42,19 @@ class SeriesFiguresSheet extends ConsumerWidget {
         secrets.isNotEmpty &&
         secrets.every((f) => snap.trackedOrDefault(f.id).owned);
     final scroll = CollectibleSheetScope.scrollControllerOf(context);
+    final relationshipLine = ref.watch(
+      relationshipHintForShelfSeriesProvider(seriesId),
+    );
+    final memoryReflection = ref.watch(
+      collectionMemoryReflectionForSeriesProvider(seriesId),
+    );
+    final trailingMeta = series.figureCount > 0
+        ? '${progress.owned} of ${series.figureCount} on shelf'
+        : null;
+    final contextualLine =
+        (relationshipLine != null && relationshipLine.isNotEmpty)
+            ? relationshipLine
+            : memoryReflection;
 
     return CollectibleSheetInsets(
       child: CustomScrollView(
@@ -50,9 +66,16 @@ class SeriesFiguresSheet extends ConsumerWidget {
               seriesTitle: series.name,
               brand: series.brand,
               ipLine: series.ipName,
-              padding: EdgeInsets.zero,
+              trailingMeta: trailingMeta,
             ),
           ),
+          if (contextualLine != null && contextualLine.isNotEmpty)
+            SliverToBoxAdapter(
+              child: CollectibleRelationshipLine(
+                text: contextualLine,
+                padding: const EdgeInsets.only(top: 10),
+              ),
+            ),
           if (isComplete)
             SliverToBoxAdapter(
               child: Padding(
@@ -63,7 +86,10 @@ class SeriesFiguresSheet extends ConsumerWidget {
               ),
             ),
           SliverPadding(
-            padding: const EdgeInsets.only(top: 18, bottom: AppSpacing.lg),
+            padding: EdgeInsets.only(
+              top: isComplete ? 14 : FeedRhythm.sheetFigureRailGap,
+              bottom: AppSpacing.lg,
+            ),
             sliver: SliverToBoxAdapter(
               child: SizedBox(
                 width: double.infinity,
@@ -155,9 +181,9 @@ class _SeriesCompleteBanner extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    chasesHome
-                        ? 'Whole series — chase home'
-                        : 'This series feels complete',
+                    ShelfEditorialVoice.seriesCompleteBannerTitle(
+                      chasesHome: chasesHome,
+                    ),
                     style: textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                       letterSpacing: -0.1,
@@ -165,9 +191,9 @@ class _SeriesCompleteBanner extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    chasesHome
-                        ? 'A rare, quiet moment for the shelf.'
-                        : 'Every figure has found its place here.',
+                    ShelfEditorialVoice.seriesCompleteBannerSubtitle(
+                      chasesHome: chasesHome,
+                    ),
                     style: textTheme.bodySmall?.copyWith(
                       color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
                       height: 1.3,

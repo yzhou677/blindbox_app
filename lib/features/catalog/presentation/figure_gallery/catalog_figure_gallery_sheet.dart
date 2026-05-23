@@ -1,5 +1,6 @@
 import 'dart:ui' show ImageFilter;
 
+import 'package:blindbox_app/core/presentation/collectible_immersion.dart';
 import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
@@ -25,7 +26,7 @@ Future<void> showCatalogFigureGallery(
     PageRouteBuilder<void>(
       opaque: false,
       barrierDismissible: true,
-      barrierColor: Colors.black.withValues(alpha: 0.72),
+      barrierColor: CollectibleImmersion.galleryBarrier,
       transitionDuration: CollectibleMotion.galleryOpen,
       reverseTransitionDuration: CollectibleMotion.galleryClose,
       pageBuilder: (ctx, animation, secondaryAnimation) {
@@ -37,15 +38,14 @@ Future<void> showCatalogFigureGallery(
         );
       },
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        final curved = CurvedAnimation(
-          parent: animation,
-          curve: CollectibleMotion.easeOut,
-          reverseCurve: CollectibleMotion.easeIn,
-        );
+        final curved = CollectibleMotion.curved(animation);
         return FadeTransition(
           opacity: curved,
           child: ScaleTransition(
-            scale: Tween<double>(begin: 0.96, end: 1).animate(curved),
+            scale: Tween<double>(
+              begin: CollectibleMotion.galleryEnterScale,
+              end: 1,
+            ).animate(curved),
             child: child,
           ),
         );
@@ -122,11 +122,28 @@ class _CatalogFigureGallerySheetState extends State<CatalogFigureGallerySheet> {
     return rarity != null && rarity.isNotEmpty ? rarity : null;
   }
 
+  String? _captionSecondaryLine({
+    required String? metaLine,
+    required String? seriesTitle,
+  }) {
+    final series = seriesTitle?.trim();
+    final meta = metaLine?.trim();
+    if (series != null && series.isNotEmpty) {
+      if (meta != null && meta.isNotEmpty) return '$series · $meta';
+      return series;
+    }
+    return meta;
+  }
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final item = widget.items[_currentIndex];
     final metaLine = _figureMetaLine(item);
+    final captionSecondary = _captionSecondaryLine(
+      metaLine: metaLine,
+      seriesTitle: widget.seriesTitle,
+    );
     final routeFade = widget.routeAnimation?.value ?? 1.0;
 
     return PopScope(
@@ -139,9 +156,9 @@ class _CatalogFigureGallerySheetState extends State<CatalogFigureGallerySheet> {
             Opacity(
               opacity: routeFade,
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                child: const ColoredBox(
-                  color: Color(0x66000000),
+                filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+                child: ColoredBox(
+                  color: CollectibleImmersion.galleryBarrier,
                 ),
               ),
             ),
@@ -160,7 +177,7 @@ class _CatalogFigureGallerySheetState extends State<CatalogFigureGallerySheet> {
                     children: [
                       _GalleryDragHandle(onDismiss: _dismiss),
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(4, 0, 4, 4),
+                        padding: const EdgeInsets.fromLTRB(4, 0, 4, 0),
                         child: Row(
                           children: [
                             IconButton(
@@ -172,31 +189,14 @@ class _CatalogFigureGallerySheetState extends State<CatalogFigureGallerySheet> {
                               ),
                             ),
                             Expanded(
-                              child: Column(
-                                children: [
-                                  if (widget.seriesTitle != null &&
-                                      widget.seriesTitle!.isNotEmpty)
-                                    Text(
-                                      widget.seriesTitle!,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      textAlign: TextAlign.center,
-                                      style: textTheme.labelLarge?.copyWith(
-                                        color: _kGalleryForeground.withValues(
-                                          alpha: 0.92,
-                                        ),
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  Text(
-                                    '${_currentIndex + 1} of ${widget.items.length}',
-                                    style: textTheme.labelMedium?.copyWith(
-                                      color: _kGalleryForeground.withValues(
-                                        alpha: 0.72,
-                                      ),
-                                    ),
+                              child: Text(
+                                '${_currentIndex + 1} of ${widget.items.length}',
+                                textAlign: TextAlign.center,
+                                style: textTheme.labelMedium?.copyWith(
+                                  color: _kGalleryForeground.withValues(
+                                    alpha: 0.72,
                                   ),
-                                ],
+                                ),
                               ),
                             ),
                             const SizedBox(width: 48),
@@ -205,7 +205,7 @@ class _CatalogFigureGallerySheetState extends State<CatalogFigureGallerySheet> {
                       ),
                       if (widget.items.length > 1)
                         Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.only(bottom: 6),
                           child: _GalleryPageIndicator(
                             count: widget.items.length,
                             index: _currentIndex,
@@ -219,21 +219,26 @@ class _CatalogFigureGallerySheetState extends State<CatalogFigureGallerySheet> {
                           physics: const BouncingScrollPhysics(),
                           allowImplicitScrolling: true,
                           itemBuilder: (context, index) {
-                            return CatalogFigureGalleryPage(
+                            return CollectiblePresenceFade(
                               key: ValueKey<String>(
-                                'gallery-page:${widget.items[index].id}',
+                                'gallery-presence:${widget.items[index].id}',
                               ),
-                              item: widget.items[index],
+                              child: CatalogFigureGalleryPage(
+                                key: ValueKey<String>(
+                                  'gallery-page:${widget.items[index].id}',
+                                ),
+                                item: widget.items[index],
+                              ),
                             );
                           },
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
+                        padding: const EdgeInsets.fromLTRB(24, 8, 24, 14),
                         child: AnimatedSwitcher(
-                      duration: CollectibleMotion.crossfade,
-                      switchInCurve: CollectibleMotion.standard,
-                      switchOutCurve: Curves.easeIn,
+                          duration: CollectibleMotion.crossfade,
+                          switchInCurve: CollectibleMotion.standard,
+                          switchOutCurve: Curves.easeIn,
                           child: Column(
                             key: ValueKey<String>(item.id),
                             children: [
@@ -245,10 +250,10 @@ class _CatalogFigureGallerySheetState extends State<CatalogFigureGallerySheet> {
                                   Theme.of(context).colorScheme,
                                 ).copyWith(color: _kGalleryForeground),
                               ),
-                              if (metaLine != null) ...[
+                              if (captionSecondary != null) ...[
                                 const SizedBox(height: 4),
                                 Text(
-                                  metaLine,
+                                  captionSecondary,
                                   textAlign: TextAlign.center,
                                   style: CollectibleTypography.figureMeta(
                                     textTheme,

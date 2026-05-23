@@ -1,9 +1,10 @@
+import 'package:blindbox_app/features/market/domain/market_identity_match.dart';
 import 'package:blindbox_app/models/collectible.dart';
 
-/// Mock market row: collectible + lightweight pricing / shelf signals.
+/// External marketplace browse row — transient listing state, not canonical catalog identity.
 ///
-/// [taxonomyBrandId] / [taxonomyIpId] align with app market taxonomy for filters;
-/// API rows can populate these from server `brandKey` / `ipKey`.
+/// [collectible] carries presentation fields for cards/detail; taxonomy ids align with
+/// the catalog universe for filters. [providerId] is a [MarketProviderId.name] wire value.
 class MarketListing {
   const MarketListing({
     required this.id,
@@ -11,8 +12,12 @@ class MarketListing {
     required this.currentPriceUsd,
     required this.priceChangePercent,
     required this.listingCount,
+    this.providerId = 'mock',
+    this.providerListingId,
+    this.externalListingUrl,
     this.taxonomyBrandId,
     this.taxonomyIpId,
+    this.catalogMatch,
     this.isTrending = false,
     this.watchingCount = 0,
     this.hasSecretFigure = false,
@@ -21,6 +26,15 @@ class MarketListing {
 
   final String id;
   final Collectible collectible;
+
+  /// [MarketProviderId.name] — data layer only; UI stays provider-neutral in Phase 1.
+  final String providerId;
+
+  /// Provider-native listing key (e.g. wire `itemId`).
+  final String? providerListingId;
+
+  /// Deep link to the seller listing; null when unknown.
+  final String? externalListingUrl;
 
   /// Typical last-sale style anchor (USD).
   final double currentPriceUsd;
@@ -35,6 +49,9 @@ class MarketListing {
 
   /// Canonical IP key when this row sits under a character universe; null = no IP facet.
   final String? taxonomyIpId;
+
+  /// Catalog identity match from listing title (data layer; not shown in UI Phase 2A).
+  final MarketIdentityMatch? catalogMatch;
 
   final bool isTrending;
 

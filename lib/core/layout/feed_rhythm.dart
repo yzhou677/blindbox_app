@@ -57,6 +57,18 @@ abstract final class FeedRhythm {
   /// Vertical gap between full-width listing cards (shelf separation).
   static const double listingCardVerticalGap = 22;
 
+  /// Extra air between collection shelf series cards (exhibition pacing).
+  static const double collectionShelfCardGap = 26;
+
+  /// Space before the first universe header in the shelf feed.
+  static const double collectionUniverseSectionTop = 6;
+
+  /// Calm break between universe groups (header-to-header), not card-to-card gap.
+  static const double collectionUniverseSectionGap = 20;
+
+  /// Header deck to first owned series card in a universe group.
+  static const double collectionUniverseHeaderToCards = 10;
+
   /// Air between collection brand filter chips and the first shelf card.
   static const double collectionFilterToFirstCard = 12;
 
@@ -92,9 +104,21 @@ abstract final class FeedRhythm {
   static const double sheetMinChildSize = sheetMinScreenFraction;
 
   static const double sheetHorizontal = 16;
-  static const double sheetChromeTop = 8;
-  static const double sheetHeaderAfterHandle = 14;
+  static const double sheetChromeTop = 10;
+  static const double sheetHeaderAfterHandle = 16;
   static const double sheetBodyBottomInset = 14;
+  static const double sheetEditorialBlockGap = 10;
   static const double sheetSectionGap = 18;
   static const double sheetFigureRailGap = 14;
+
+  // —— Detail / hero editorial rhythm (post–Phase 6 density pass) ——
+
+  static const double detailHeroOuterPadding = 10;
+  static const double detailHeroInnerPadding = 6;
+  static const double detailBodyTopGap = 16;
+  static const double detailBodyBottomGap = 28;
+  static const double detailHeroToBodyGap = 12;
+
+  /// Max height fraction for figure gallery stage (breathing room above caption).
+  static const double galleryStageMaxHeightFactor = 0.88;
 }

@@ -8,7 +8,10 @@ import 'package:blindbox_app/features/collection/presentation/collection_shelf_s
 import 'package:blindbox_app/features/collection/widgets/add_custom_series_sheet.dart';
 import 'package:blindbox_app/features/collection/widgets/add_to_collection_sheet.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_brand_filter_row.dart';
-import 'package:blindbox_app/features/collection/widgets/collection_progress_voice.dart';
+import 'package:blindbox_app/features/collectible_relationship/application/collectible_relationship_providers.dart';
+import 'package:blindbox_app/features/collection/application/shelf_emotional_providers.dart';
+import 'package:blindbox_app/features/collection/presentation/shelf_editorial_voice.dart';
+import 'package:blindbox_app/features/collection/presentation/shelf_series_feed.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_empty_state.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_summary_section.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_warm_start_banner.dart';
@@ -178,6 +181,15 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final snap = ref.watch(collectionNotifierProvider);
+    final profile = ref.watch(shelfEmotionalProfileProvider);
+    final insights = ref.watch(shelfRelationshipInsightsProvider);
+    final interpretationLine = ref.watch(shelfInterpretationLineProvider);
+    final memoryWhisper = ref.watch(shelfMemoryWhisperProvider);
+    final relationshipWhisper = ref.watch(shelfRelationshipWhisperProvider);
+    final sectionSubtitle = ShelfEditorialVoice.sectionSubtitle(
+      profile,
+      insights,
+    );
 
     if (snap.trackedSeriesCount == 0) {
       return Scaffold(
@@ -236,12 +248,16 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
           SliverToBoxAdapter(
             child: CollectionSummarySection(
               stats: CollectionAggregateStats.fromSnapshot(snap),
-              shelfMoodLine: CollectionProgressVoice.shelfMoodLine(snap),
+              shelfMoodLine: interpretationLine.isNotEmpty
+                  ? interpretationLine
+                  : ShelfEditorialVoice.shelfMoodLine(snap),
+              memoryWhisper: memoryWhisper ?? relationshipWhisper,
             ),
           ),
           SliverToBoxAdapter(
             child: CollectibleSectionHeader(
               title: 'My collection',
+              subtitle: sectionSubtitle,
               padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
               trailing: TextButton.icon(
                 key: const Key('collection_header_add_series'),
@@ -325,17 +341,14 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                     );
                   }
                   return Column(
-                    children: [
-                      for (final s in visible)
-                        SeriesShelfCard(
-                          series: s,
-                          progress: progressForSeries(s, snap.figureStates),
-                          figureStates: snap.figureStates,
-                          onOpen: () => _openFiguresSheet(context, s.id),
-                          onRemove: () =>
-                              _confirmRemoveSeries(context, s.id, s.name),
-                        ),
-                    ],
+                    children: buildShelfSeriesFeed(
+                      series: visible,
+                      figureStates: snap.figureStates,
+                      profile: profile,
+                      onOpen: (s) => _openFiguresSheet(context, s.id),
+                      onRemove: (s) =>
+                          _confirmRemoveSeries(context, s.id, s.name),
+                    ),
                   );
                 },
               ),

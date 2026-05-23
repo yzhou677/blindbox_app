@@ -4,6 +4,7 @@ import 'package:blindbox_app/features/collection/bootstrap/collection_app_bootst
 import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
 import 'package:blindbox_app/features/collection/data/series_release_lookup.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
 import 'package:blindbox_app/features/collection/persistence/collection_snapshot_storage.dart';
 import 'package:blindbox_app/features/home/domain/series_release.dart';
 import 'package:blindbox_app/models/collectible.dart';
@@ -21,8 +22,15 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
   CollectionSnapshot build() => CollectionAppBootstrap.takeInitialSnapshot();
 
   void _commit(CollectionSnapshot next) {
+    final previous = state;
     state = next;
     unawaited(CollectionSnapshotStorage.save(next));
+    unawaited(
+      CollectionMemoryStore.instance.recordTransitions(
+        previous: previous,
+        next: next,
+      ),
+    );
   }
 
   void cycleFigure(String figureId) {

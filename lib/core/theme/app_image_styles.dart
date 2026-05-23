@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:flutter/material.dart';
 
 /// Shared image presentation tokens (fade, mats, shadows, slot sizes).
@@ -7,8 +8,8 @@ abstract final class AppImageStyles {
   static const double figureThumbExtent = 68;
   static const double figureLineupExtent = 80;
 
-  static const Duration imageFadeIn = Duration(milliseconds: 280);
-  static const Duration imageFadeOut = Duration(milliseconds: 140);
+  static const Duration imageFadeIn = CollectibleMotion.imageSettle;
+  static const Duration imageFadeOut = Duration(milliseconds: 160);
 
   static Color figureMat(ColorScheme scheme) => Color.alphaBlend(
     scheme.surface.withValues(alpha: 0.42),

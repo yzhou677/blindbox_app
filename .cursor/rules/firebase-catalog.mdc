@@ -33,4 +33,4 @@ Read [`.cursor/ARCHITECTURE.md`](../ARCHITECTURE.md) → **Firebase (Firestore +
 - No `imageKey` on `ShelfFigure` / `ShelfSeries`; no Storage URLs in `CollectionSnapshotCodec`
 - No `lib/services/` — code stays in `features/catalog/` + `core/firebase/`
 - Canonical IP ids (e.g. `the_monsters`, not `labubu`)
-- **Market / eBay:** do not load catalog bundle or `imageKey` for listing rows or card images; `MarketTaxonomy.applyCatalogBundle` is filter ids/labels only
+- **Market:** do not load catalog bundle or `imageKey` for listing rows or card images; `MarketTaxonomy.applyCatalogBundle` is filter ids/labels only

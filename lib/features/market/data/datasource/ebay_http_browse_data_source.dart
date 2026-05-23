@@ -1,11 +1,11 @@
-import 'package:blindbox_app/features/market/data/datasource/market_browse_data_source.dart';
 import 'package:blindbox_app/features/market/data/dto/ebay_item_summary_dto.dart';
 import 'package:http/http.dart' as http;
 
 /// Real eBay Browse API (or compatible gateway). Wire when OAuth + endpoints are available.
 ///
-/// Today this is a **skeleton**: [fetchBrowseSummaries] throws until response mapping exists.
-class EbayHttpBrowseDataSource implements MarketBrowseDataSource {
+/// Not a [MarketSource] — [EbayMarketSource] maps DTOs to [MarketListing]. This class is
+/// wire-level only. Today [fetchBrowseSummaries] throws until response mapping exists.
+class EbayHttpBrowseDataSource {
   EbayHttpBrowseDataSource({
     required this.client,
     this.browseUri,
@@ -14,12 +14,11 @@ class EbayHttpBrowseDataSource implements MarketBrowseDataSource {
   final http.Client client;
   final Uri? browseUri;
 
-  @override
   Future<List<EbayItemSummaryDto>> fetchBrowseSummaries() async {
     final uri = browseUri;
     if (uri == null) {
       throw UnsupportedError(
-        'eBay Browse is not configured (browseUri is null). Use FakeEbayBrowseDataSource for demos.',
+        'eBay Browse is not configured (browseUri is null). Use AssetMarketSource for demos.',
       );
     }
     final response = await client.get(uri);

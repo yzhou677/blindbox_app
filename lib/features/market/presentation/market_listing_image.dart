@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 
 /// Market listing art — external photo URLs stay inside this media widget only.
 ///
-/// Catalog/shelf surfaces use [CatalogImageFromKey]; eBay browse rows are not keyed
-/// in the catalog tree, so this is the market-specific presentation boundary.
+/// Catalog/shelf surfaces use [CatalogImageFromKey]; external listing photos use URLs
+/// only through this market-specific presentation boundary.
 class MarketListingImage extends StatelessWidget {
   const MarketListingImage({
     super.key,

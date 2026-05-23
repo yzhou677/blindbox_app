@@ -1,0 +1,26 @@
+{
+  "name": "blindbox-functions",
+  "private": true,
+  "description": "Thin market provider gateway — Mercari browse only (no app intelligence).",
+  "engines": {
+    "node": "22"
+  },
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "lint": "tsc --noEmit",
+    "test": "npm run build && node --test test/*.test.js",
+    "serve": "npm run build && npx firebase emulators:start --only functions",
+    "deploy": "npm run build && npx firebase deploy --only functions:market"
+  },
+  "dependencies": {
+    "firebase-admin": "^10.3.0",
+    "firebase-functions": "^4.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "firebase-tools": "^15.18.0",
+    "typescript": "^5.7.0"
+  }
+}

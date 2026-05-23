@@ -1,4 +1,7 @@
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/presentation/shelf_editorial_voice.dart';
+import 'package:blindbox_app/features/collection/presentation/shelf_mood_legacy.dart'
+    show legacyShelfMoodLine;
 
 /// Human, shelf-first language for progress — not spreadsheet rows.
 abstract final class CollectionProgressVoice {
@@ -81,24 +84,13 @@ abstract final class CollectionProgressVoice {
   }
 
   /// One calm sentence for the overview card under the stats row.
+  ///
+  /// Delegates to [ShelfEditorialVoice] when interpretation confidence allows.
   static String shelfMoodLine(CollectionSnapshot snap) {
-    if (snap.shelfSeries.isEmpty) return '';
-
-    final avg = snap.averageCompletionPercent;
-    final seriesCount = snap.shelfSeries.length;
-    final allComplete = snap.shelfSeries.every((s) {
-      final p = progressForSeries(s, snap.figureStates);
-      return s.figureCount > 0 && p.owned >= s.figureCount;
-    });
-
-    if (allComplete && seriesCount > 0) {
-      return seriesCount == 1
-          ? 'This series feels complete — a quiet little win.'
-          : 'Every series feels complete — your shelf feels settled.';
-    }
-    if (avg >= 90) return 'Almost every series feels complete — satisfying.';
-    if (avg >= 70) return 'Your shelf is coming together beautifully.';
-    if (avg >= 40) return 'Room to grow — each pull adds character.';
-    return 'Still growing.';
+    return ShelfEditorialVoice.shelfMoodLine(snap);
   }
+
+  /// @deprecated Use [legacyShelfMoodLine] from `shelf_mood_legacy.dart`.
+  static String legacyShelfMoodLine(CollectionSnapshot snap) =>
+      legacyShelfMoodLine(snap);
 }

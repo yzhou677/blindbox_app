@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 /// Minimal shelf row for unit tests.
 ShelfSeries testShelfSeries({
   String id = 'series_test',
+  String name = 'Test Series',
+  String brand = 'POP MART',
+  String ipName = 'Test IP',
   String? catalogTemplateId = 'catalog_series_test',
   String? imageKey,
   String? taxonomyBrandId = 'pop_mart',
@@ -12,9 +15,9 @@ ShelfSeries testShelfSeries({
 }) {
   return ShelfSeries(
     id: id,
-    name: 'Test Series',
-    brand: 'POP MART',
-    ipName: 'Test IP',
+    name: name,
+    brand: brand,
+    ipName: ipName,
     figures: figures ??
         [
           const ShelfFigure(

@@ -1,15 +1,30 @@
-import 'package:blindbox_app/features/market/data/datasource/market_browse_data_source.dart';
-import 'package:blindbox_app/features/market/data/mappers/ebay_item_summary_mapper.dart';
+import 'package:blindbox_app/features/market/data/source/market_source.dart';
 import 'package:blindbox_app/models/market_listing.dart';
 
-/// Browse listings: datasource (DTO) → domain [MarketListing].
+/// Browse listings: one or more [MarketSource] implementations merged for the session.
 class MarketListingsRepository {
-  MarketListingsRepository(this._dataSource);
+  MarketListingsRepository(this._sources);
 
-  final MarketBrowseDataSource _dataSource;
+  final List<MarketSource> _sources;
 
   Future<List<MarketListing>> loadBrowseListings() async {
-    final dtos = await _dataSource.fetchBrowseSummaries();
-    return dtos.map((e) => e.toMarketListing()).toList(growable: false);
+    if (_sources.isEmpty) return const [];
+
+    final batches = await Future.wait(
+      _sources.map(_loadFromSource),
+    );
+    final merged = <MarketListing>[];
+    for (final batch in batches) {
+      merged.addAll(batch);
+    }
+    return merged;
+  }
+
+  Future<List<MarketListing>> _loadFromSource(MarketSource source) async {
+    try {
+      return await source.fetchBrowseListings();
+    } catch (_) {
+      return const [];
+    }
   }
 }
