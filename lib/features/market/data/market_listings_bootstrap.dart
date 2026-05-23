@@ -16,7 +16,7 @@ Future<void> bootstrapMarketBrowseListings() async {
     CollectibleMarketSession.instance.install(cachedSnapshots);
   }
 
-  final repo = MarketListingsRepository(defaultMarketSources());
+  final repo = MarketListingsRepository(productionMarketSources());
   final listings = enrichBrowseListingsIdentity(await repo.loadBrowseListings());
   installMarketBrowseIntelligence(listings);
 }

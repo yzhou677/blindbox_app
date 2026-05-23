@@ -5,6 +5,7 @@ import 'package:blindbox_app/features/market/application/market_browse_notifier.
 import 'package:blindbox_app/features/market/application/market_browse_load_more_controller.dart';
 import 'package:blindbox_app/features/market/application/market_browse_refresh_controller.dart';
 import 'package:blindbox_app/features/market/application/market_sandbox_diagnostics.dart';
+import 'package:blindbox_app/features/market/data/gateway/market_gateway_config.dart';
 import 'package:blindbox_app/features/market/data/sandbox/market_sandbox_config.dart';
 import 'package:blindbox_app/features/market/widgets/market_load_more_footer.dart';
 import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
@@ -85,7 +86,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
       sortByPrice: true,
     );
     final immersive = browse.searchResultsActive;
-    final mercariHasMore = ref.watch(marketMercariHasMoreProvider);
+    final liveHasMore = ref.watch(marketLiveBrowseHasMoreProvider);
     final loadingMore = ref.watch(marketBrowseLoadMoreProvider);
     final refreshing = ref.watch(marketBrowseRefreshProvider);
 
@@ -234,8 +235,8 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                 ),
               ),
             ),
-          if (MarketSandboxConfig.isActive &&
-              mercariHasMore &&
+          if ((MarketGatewayConfig.isActive || MarketSandboxConfig.isActive) &&
+              liveHasMore &&
               !immersive)
             SliverToBoxAdapter(
               child: MarketLoadMoreFooter(

@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase-admin/app';
 import { onRequest } from 'firebase-functions/v2/https';
-import { handleMercariBrowseRequest } from './providers/mercari/mercariBrowse';
+import { handleMarketBrowseRequest } from './marketBrowseRouter';
 
 initializeApp();
 
@@ -13,7 +13,7 @@ initializeApp();
  * Deploy URL (example):
  *   https://<region>-<project>.cloudfunctions.net/market/v1/browse
  *
- * Flutter `MERCARI_GATEWAY_BASE_URL` should be the function root (…/market).
+ * Flutter `MARKET_GATEWAY_BASE_URL` should be the function root (…/market).
  */
 export const market = onRequest(
   {
@@ -31,7 +31,7 @@ export const market = onRequest(
 
     const path = normalizePath(req.path);
     if (path === '/v1/browse') {
-      await handleMercariBrowseRequest(req, res);
+      await handleMarketBrowseRequest(req, res);
       return;
     }
 

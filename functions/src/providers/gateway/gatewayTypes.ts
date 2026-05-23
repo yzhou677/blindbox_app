@@ -1,0 +1,55 @@
+/** Stable market gateway wire — provider-neutral listing JSON. */
+
+export type GatewayListingDto = {
+  id: string;
+  title: string;
+  price: { value: string; currency: string };
+  image: { imageUrl: string };
+  listingUrl: string;
+};
+
+export type BrowseResponseDto = {
+  items: GatewayListingDto[];
+  nextCursor?: string;
+  hasMore: boolean;
+  meta?: BrowseResponseMeta;
+};
+
+export type BrowseDiagnostics = {
+  acquisitionStrategy?: string;
+  upstreamBlocked?: boolean;
+  rateLimited?: boolean;
+  timedOut?: boolean;
+  parseEmpty?: boolean;
+  parseFailed?: boolean;
+  usedFixtureFallback?: boolean;
+  paginationInconsistent?: boolean;
+  rawRowCount?: number;
+  normalizedCount?: number;
+  rowsDropped?: number;
+  message?: string;
+};
+
+export type BrowseResponseMeta = {
+  provider: 'ebay' | 'mercari';
+  mode: 'fixture' | 'live';
+  query: string;
+  limit: number;
+  upstreamDegraded?: boolean;
+  message?: string;
+  diagnostics?: BrowseDiagnostics;
+};
+
+export type BrowseQuery = {
+  limit: number;
+  cursor?: string;
+  q: string;
+};
+
+export type BrowseCursorPayload = {
+  q: string;
+  limit: number;
+  offset: number;
+};
+
+export type ProviderRawItem = Record<string, unknown>;

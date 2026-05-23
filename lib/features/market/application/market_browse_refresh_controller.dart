@@ -1,18 +1,19 @@
 import 'package:blindbox_app/features/market/application/market_browse_notifier.dart';
 import 'package:blindbox_app/features/market/application/market_sandbox_diagnostics.dart';
-import 'package:blindbox_app/features/market/application/collectible_market_diagnostics.dart';
 import 'package:blindbox_app/features/market/data/cache/market_provider_browse_cache.dart';
 import 'package:blindbox_app/features/market/data/collectible_market_session.dart';
 import 'package:blindbox_app/features/market/domain/market_provider_id.dart';
 import 'package:blindbox_app/features/market/application/market_browse_intelligence_install.dart';
 import 'package:blindbox_app/features/market/application/market_listing_identity_enricher.dart';
 import 'package:blindbox_app/features/market/application/market_match_diagnostics.dart';
+import 'package:blindbox_app/features/market/application/market_browse_session_rows.dart';
+import 'package:blindbox_app/features/market/application/market_gateway_browse_install.dart';
 import 'package:blindbox_app/features/market/application/market_sandbox_browse_install.dart';
 import 'package:blindbox_app/features/market/application/collectible_market_providers.dart';
 import 'package:blindbox_app/features/market/application/market_listings_providers.dart';
-import 'package:blindbox_app/features/market/data/repository/market_listings_repository.dart';
+import 'package:blindbox_app/features/market/data/gateway/market_gateway_config.dart';
 import 'package:blindbox_app/features/market/data/sandbox/market_sandbox_config.dart';
-import 'package:blindbox_app/features/market/data/source/default_market_sources.dart';
+import 'package:blindbox_app/features/market/data/source/ebay_gateway_market_source.dart';
 import 'package:blindbox_app/features/market/data/source/mercari_sandbox_market_source.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -30,9 +31,40 @@ class MarketBrowseRefreshNotifier extends Notifier<bool> {
     if (state) return;
     state = true;
     try {
-      final sessionRows = currentSessionRows();
+      final sessionRows = currentMarketBrowseSessionRows();
 
-      if (MarketSandboxConfig.isActive) {
+      if (MarketGatewayConfig.isActive) {
+        ref
+            .read(marketBrowseNotifierProvider.notifier)
+            .resetTaxonomyFiltersForSandbox();
+        final ebay = EbayGatewayMarketSource();
+        ebay.resetPagination();
+        await ebay.fetchFirstPage();
+        installGatewayMarketBrowse(
+          sessionRows: sessionRows,
+          ebaySource: ebay,
+        );
+        final ebayCount = MarketProviderBrowseCache.instance
+                .batchFor(MarketProviderId.ebay)
+                ?.listings
+                .length ??
+            0;
+        final visible = CollectibleMarketSession.instance.isInstalled
+            ? CollectibleMarketSession.instance.list.length
+            : 0;
+        final err = EbayGatewayMarketSource.lastFetchError;
+        ref.read(marketSandboxDiagnosticsProvider.notifier).report(
+              MarketSandboxDiagnostics(
+                gatewayUrl: MarketGatewayConfig.gatewayBaseUrl,
+                mercariListingCount: ebayCount,
+                visibleSnapshotCount: visible,
+                error: ebayCount == 0
+                    ? (err ?? 'Gateway returned 0 eBay listings')
+                    : null,
+                at: DateTime.now(),
+              ),
+            );
+      } else if (MarketSandboxConfig.isActive) {
         ref
             .read(marketBrowseNotifierProvider.notifier)
             .resetTaxonomyFiltersForSandbox();

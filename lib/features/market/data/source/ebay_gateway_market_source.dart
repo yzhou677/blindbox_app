@@ -1,31 +1,31 @@
 import 'dart:convert';
 
 import 'package:blindbox_app/features/market/data/cache/market_provider_browse_cache.dart';
+import 'package:blindbox_app/features/market/data/datasource/market_gateway_client.dart';
 import 'package:blindbox_app/features/market/data/datasource/mercari/mercari_browse_response_dto.dart';
-import 'package:blindbox_app/features/market/data/datasource/mercari/mercari_gateway_client.dart';
 import 'package:blindbox_app/features/market/data/datasource/mercari/mercari_gateway_exception.dart';
 import 'package:blindbox_app/features/market/data/datasource/mercari/mercari_listing_dto.dart';
-import 'package:blindbox_app/features/market/data/mappers/mercari_listing_mapper.dart';
-import 'package:blindbox_app/features/market/data/sandbox/market_sandbox_config.dart';
+import 'package:blindbox_app/features/market/data/gateway/market_gateway_config.dart';
+import 'package:blindbox_app/features/market/data/mappers/gateway_listing_mapper.dart';
 import 'package:blindbox_app/features/market/data/source/market_source.dart';
 import 'package:blindbox_app/features/market/domain/market_browse_page_result.dart';
 import 'package:blindbox_app/features/market/domain/market_provider_id.dart';
 import 'package:blindbox_app/models/market_listing.dart';
 import 'package:flutter/foundation.dart';
 
-/// Live Mercari browse via gateway — pagination, retry, stale cache recovery.
-class MercariSandboxMarketSource implements MarketSource {
-  MercariSandboxMarketSource({
-    MercariGatewayClient? gateway,
+/// Live eBay browse via Firebase gateway — no eBay secrets in the app.
+class EbayGatewayMarketSource implements MarketSource {
+  EbayGatewayMarketSource({
+    MarketGatewayClient? gateway,
     MarketProviderBrowseCache? cache,
-  })  : _gateway = gateway ?? MercariGatewayClient(),
+  })  : _gateway = gateway ?? MarketGatewayClient(),
         _cache = cache ?? MarketProviderBrowseCache.instance;
 
-  final MercariGatewayClient _gateway;
+  final MarketGatewayClient _gateway;
   final MarketProviderBrowseCache _cache;
 
   @override
-  MarketProviderId get providerId => MarketProviderId.mercari;
+  MarketProviderId get providerId => MarketProviderId.ebay;
 
   @override
   Future<List<MarketListing>> fetchBrowseListings() async {
@@ -33,18 +33,17 @@ class MercariSandboxMarketSource implements MarketSource {
     return page.listings;
   }
 
-  /// First page — replaces accumulated Mercari rows.
   Future<MarketBrowsePageResult> fetchFirstPage() async {
-    if (!MarketSandboxConfig.isActive) return MarketBrowsePageResult.empty;
+    if (!MarketGatewayConfig.isActive) return MarketBrowsePageResult.empty;
 
-    final uri = MarketSandboxConfig.gatewayUri;
+    final uri = MarketGatewayConfig.gatewayUri;
     if (uri == null) return MarketBrowsePageResult.empty;
 
     try {
       _clearFetchError();
       final response = await _gateway.fetchBrowse(
         baseUrl: uri,
-        limit: MarketSandboxConfig.pageSize,
+        limit: MarketGatewayConfig.pageSize,
       );
       return await _persistPage(
         items: response.items,
@@ -54,18 +53,17 @@ class MercariSandboxMarketSource implements MarketSource {
       );
     } on MercariGatewayException catch (e, st) {
       _recordFetchError(e);
-      debugPrint('MercariSandboxMarketSource: gateway failed: $e\n$st');
+      debugPrint('EbayGatewayMarketSource: gateway failed: $e\n$st');
       return _fallbackPage();
     } catch (e, st) {
       _recordFetchError(e);
-      debugPrint('MercariSandboxMarketSource: fetch failed: $e\n$st');
+      debugPrint('EbayGatewayMarketSource: fetch failed: $e\n$st');
       return _fallbackPage();
     }
   }
 
-  /// Appends the next gateway page when a continuation cursor exists.
   Future<MarketBrowsePageResult> fetchNextPage() async {
-    if (!MarketSandboxConfig.isActive) return MarketBrowsePageResult.empty;
+    if (!MarketGatewayConfig.isActive) return MarketBrowsePageResult.empty;
 
     final batch = _cache.batchFor(providerId);
     if (batch == null) return fetchFirstPage();
@@ -87,13 +85,13 @@ class MercariSandboxMarketSource implements MarketSource {
       );
     }
 
-    final uri = MarketSandboxConfig.gatewayUri;
+    final uri = MarketGatewayConfig.gatewayUri;
     if (uri == null) return _fallbackPage();
 
     try {
       final response = await _gateway.fetchBrowse(
         baseUrl: uri,
-        limit: MarketSandboxConfig.pageSize,
+        limit: MarketGatewayConfig.pageSize,
         cursor: cursor,
       );
       return await _persistPage(
@@ -103,10 +101,10 @@ class MercariSandboxMarketSource implements MarketSource {
         replace: false,
       );
     } on MercariGatewayException catch (e, st) {
-      debugPrint('MercariSandboxMarketSource: next page failed: $e\n$st');
+      debugPrint('EbayGatewayMarketSource: next page failed: $e\n$st');
       return _fallbackPage();
     } catch (e, st) {
-      debugPrint('MercariSandboxMarketSource: next page error: $e\n$st');
+      debugPrint('EbayGatewayMarketSource: next page error: $e\n$st');
       return _fallbackPage();
     }
   }
@@ -115,12 +113,9 @@ class MercariSandboxMarketSource implements MarketSource {
 
   void resetPagination() => _cache.clear(providerId);
 
-  /// Set when [fetchFirstPage] / [fetchNextPage] catch a failure (for sandbox diagnostics).
   static String? lastFetchError;
 
-  static void _recordFetchError(Object e) {
-    lastFetchError = e.toString();
-  }
+  static void _recordFetchError(Object e) => lastFetchError = e.toString();
 
   static void _clearFetchError() => lastFetchError = null;
 
@@ -135,7 +130,7 @@ class MercariSandboxMarketSource implements MarketSource {
   }
 
   bool _underTotalCap(int currentCount) =>
-      currentCount < MarketSandboxConfig.maxMercariTotalRows;
+      currentCount < MarketGatewayConfig.maxLiveRows;
 
   Future<MarketBrowsePageResult> _persistPage({
     required List<MercariListingDto> items,
@@ -143,12 +138,11 @@ class MercariSandboxMarketSource implements MarketSource {
     required bool hasMore,
     required bool replace,
   }) async {
-    final pageListings =
-        items
-            .map(
-              (e) => e.toMarketListing(providerId: MarketProviderId.mercari),
-            )
-            .toList(growable: false);
+    final pageListings = items
+        .map(
+          (e) => e.toMarketListing(providerId: MarketProviderId.ebay),
+        )
+        .toList(growable: false);
 
     if (replace) {
       await _cache.write(

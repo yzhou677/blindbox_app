@@ -72,7 +72,7 @@ export async function handleMercariBrowseRequest(
       items: [],
       hasMore: false,
       meta: buildBrowseMeta(
-        { mode: resolveMode(), query: '', limit: 0 },
+        { provider: 'mercari', mode: resolveMode(), query: '', limit: 0 },
         diagnostics,
       ),
     });
@@ -213,7 +213,10 @@ async function liveBrowse(query: BrowseQuery): Promise<BrowseResponseDto> {
     items: normalized.items,
     nextCursor,
     hasMore,
-    meta: buildBrowseMeta({ mode: 'live', query: q, limit }, diagnostics),
+    meta: buildBrowseMeta(
+      { provider: 'mercari', mode: 'live', query: q, limit },
+      diagnostics,
+    ),
   };
 }
 
@@ -233,7 +236,10 @@ function buildLiveFixtureFallbackResponse(input: {
       ? encodeCursor({ q, limit, offset: offset + limit })
       : undefined,
     hasMore,
-    meta: buildBrowseMeta({ mode: 'live', query: q, limit }, diagnostics),
+    meta: buildBrowseMeta(
+      { provider: 'mercari', mode: 'live', query: q, limit },
+      diagnostics,
+    ),
   };
 }
 
@@ -254,7 +260,7 @@ function fixtureBrowse(query: BrowseQuery): BrowseResponseDto {
       : undefined,
     hasMore,
     meta: buildBrowseMeta(
-      { mode: 'fixture', query: q, limit },
+      { provider: 'mercari', mode: 'fixture', query: q, limit },
       { acquisitionStrategy: 'fixture' },
     ),
   };
