@@ -1,8 +1,10 @@
 # Mercari gateway (Firebase Functions)
 
+> **Status (2026-05): live internal test paused.** Production deploy uses `MERCARI_GATEWAY_MODE=fixture` (no session cookies). Code and wire contract are **retained**; official marketplace APIs (eBay Browse) are the Product priority.
+
 Thin **provider stabilization layer** only. The Flutter app remains the intelligence authority (identity matching, shelf, relationships, emotional interpretation).
 
-Live marketplace providers are a **long-term production expectation**. Upstream instability is normal. Acquisition may evolve (HTTP today; browser runtime later). Graceful degradation stays core — not a temporary sandbox experiment.
+Upstream instability is expected when live mode is re-enabled for internal tests. Graceful fixture fallback stays core.
 
 See also [`functions/src/providers/mercari/ACQUISITION.md`](../functions/src/providers/mercari/ACQUISITION.md).
 

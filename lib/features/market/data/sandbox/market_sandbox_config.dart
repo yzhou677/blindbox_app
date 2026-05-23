@@ -1,4 +1,4 @@
-/// Feature-flagged live marketplace sandbox (default off).
+/// Feature-flagged Mercari gateway sandbox (default off; paused for Product — official API first).
 abstract final class MarketSandboxConfig {
   static const bool enableLiveMercariSandbox = bool.fromEnvironment(
     'MARKET_SANDBOX_MERCARI',

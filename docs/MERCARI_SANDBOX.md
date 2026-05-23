@@ -1,8 +1,10 @@
 # Mercari live provider sandbox (Phase 3A)
 
-Gateway-first Mercari integration for live provider data. **App network default off** until product flags enable it — gateway itself is production-oriented.
+> **Status (2026-05): paused / taken down.** Implementation stays in-repo for future experiments. **Production market data priority is official APIs** (eBay Browse first). Deployed gateway runs **fixture** mode; do not enable `MARKET_SANDBOX_MERCARI` in product builds.
 
-Long-term: live providers are expected; acquisition may move from HTTP fetch to browser runtime without changing Flutter DTOs.
+Gateway-first Mercari integration for live provider data. **App network default off** until product flags enable it.
+
+Long-term: alternate acquisition paths may return; they must not replace official API providers for Product live data.
 
 ## Architecture boundary
 

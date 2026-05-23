@@ -283,16 +283,17 @@ Architecture has been prepared for backend integration:
 - reusable filtering and taxonomy models
 
 Next integration target:
-- Mercari marketplace integration (Phase 2 — cache, rate limits, stability)
-- search listings
-- pricing
-- sorting
-- market trend data
+- **eBay Browse API** (official) — OAuth, wire mapping, production `MarketSource`
+- search listings, pricing, sorting via stable provider contracts
+- Mercari gateway path retained in-repo but **paused** (no Product live; see `docs/MERCARI_SANDBOX.md`)
 
 ## Planned API Integration
 
-First live provider target:
-- Mercari (after stub/architecture validation)
+First **Product** live provider:
+- **eBay Browse API** (official developer program)
+
+Retained but paused (internal architecture only):
+- Mercari gateway sandbox (`functions/` + `MARKET_SANDBOX_MERCARI` flag)
 
 Planned capabilities:
 - keyword search

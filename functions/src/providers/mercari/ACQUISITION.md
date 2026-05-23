@@ -27,6 +27,10 @@ MERCARI_ACQUISITION_RUNTIME=fetch   # default
 
 ## Long-term direction
 
-Live providers are a **production expectation**. Upstream instability is expected. Browser automation (Playwright/headless) is an acceptable future acquisition strategy — not a scraping platform. Graceful degradation (fixture fallback, calm app UX) remains core.
+**Product priority:** official marketplace APIs (eBay Browse first). Manual cookie headers and non-official acquisition are **not** the Product path.
+
+Live Mercari internal test is **paused** (gateway fixture-only in production). Code below is retained for future experiments.
+
+Live providers remain a long-term option where official APIs exist or partnerships allow. Browser automation (Playwright/headless) is an acceptable future acquisition strategy for **internal** experiments only — not a scraping platform. Graceful degradation (fixture fallback, calm app UX) remains core.
 
 Manual cookie headers (`MERCARI_EXTRA_HEADERS_JSON`) are a **bridge** for `FetchMercariRuntime`, not the permanent product architecture.
