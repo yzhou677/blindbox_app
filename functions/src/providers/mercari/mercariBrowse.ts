@@ -1,8 +1,8 @@
 import type { Request, Response } from 'express';
 import { readCache, writeCache } from '../../shared/cache/memoryCache';
-import { fetchJson, HttpError } from '../../shared/http/fetchJson';
+import { HttpError } from '../../shared/http/fetchJson';
 import { withRetries } from '../../shared/http/retry';
-import { extractMercariItems } from './mercariParser';
+import { createMercariRuntime } from './runtime/createMercariRuntime';
 import { normalizeBrowseItems } from './mercariNormalize';
 import {
   buildBrowseMeta,
@@ -23,8 +23,6 @@ const DEFAULT_QUERY = 'pop mart blind box';
 const DEFAULT_LIMIT = 24;
 const MAX_LIMIT = 48;
 const CACHE_TTL_MS = 90_000;
-const SEARCH_APQ_HASH =
-  '5b7b667eaf8a796406058428fa5df18e7cecd5229702ee0753a091d980884d38';
 
 type MercariMode = 'fixture' | 'live';
 
@@ -138,12 +136,18 @@ async function liveBrowse(query: BrowseQuery): Promise<BrowseResponseDto> {
   const limit = query.limit;
   const offset = query.cursor ? decoded.offset : 0;
 
-  const diagnostics: BrowseDiagnostics = emptyDiagnostics();
+  const runtime = createMercariRuntime();
+  const diagnostics: BrowseDiagnostics = {
+    ...emptyDiagnostics(),
+    acquisitionStrategy: runtime.strategyId,
+  };
   let rawItems: MercariRawItem[] = [];
   let fetchFailed = false;
 
   try {
-    rawItems = await withRetries(() => fetchMercariSearchPage(q, limit, offset));
+    rawItems = await withRetries(() =>
+      runtime.fetchSearchPage({ query: q, limit, offset }),
+    );
   } catch (e) {
     fetchFailed = true;
     Object.assign(diagnostics, classifyUpstreamError(e));
@@ -233,63 +237,6 @@ function buildLiveFixtureFallbackResponse(input: {
   };
 }
 
-async function fetchMercariSearchPage(
-  query: string,
-  limit: number,
-  offset: number,
-): Promise<MercariRawItem[]> {
-  const variables = {
-    criteria: query,
-    offset,
-    limit,
-    sortBy: 2,
-    itemStatuses: [1, 2],
-    sellerIds: [],
-    facetTypes: [],
-    facetValues: [],
-    priceMin: 0,
-    priceMax: 0,
-    conditionIds: [],
-    shippingPayerIds: [],
-    shippingMethodIds: [],
-    countrySources: ['US'],
-  };
-
-  const params = new URLSearchParams({
-    operationName: 'searchFacetQuery',
-    variables: JSON.stringify(variables),
-    extensions: JSON.stringify({
-      persistedQuery: { version: 1, sha256Hash: SEARCH_APQ_HASH },
-    }),
-  });
-
-  const url = `https://www.mercari.com/v1/api?${params.toString()}`;
-  const headers = buildMercariHeaders();
-  const payload = await fetchJson(url, { headers, timeoutMs: 12_000 });
-  return extractMercariItems(payload);
-}
-
-function buildMercariHeaders(): Record<string, string> {
-  const base: Record<string, string> = {
-    accept: 'application/json',
-    'accept-language': 'en-US,en;q=0.9',
-    'user-agent':
-      process.env.MERCARI_USER_AGENT?.trim() ||
-      'Mozilla/5.0 (compatible; BlindboxGateway/1.0)',
-    'x-apollo-operation-name': 'searchFacetQuery',
-  };
-
-  const extraJson = process.env.MERCARI_EXTRA_HEADERS_JSON?.trim();
-  if (!extraJson) return base;
-
-  try {
-    const extra = JSON.parse(extraJson) as Record<string, string>;
-    return { ...base, ...extra };
-  } catch {
-    return base;
-  }
-}
-
 function fixtureBrowse(query: BrowseQuery): BrowseResponseDto {
   const decoded = decodeCursor(query.cursor);
   const q = query.q || decoded.q;
@@ -306,7 +253,10 @@ function fixtureBrowse(query: BrowseQuery): BrowseResponseDto {
       ? encodeCursor({ q, limit, offset: offset + limit })
       : undefined,
     hasMore,
-    meta: buildBrowseMeta({ mode: 'fixture', query: q, limit }, emptyDiagnostics()),
+    meta: buildBrowseMeta(
+      { mode: 'fixture', query: q, limit },
+      { acquisitionStrategy: 'fixture' },
+    ),
   };
 }
 

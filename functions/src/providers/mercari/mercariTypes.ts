@@ -17,6 +17,7 @@ export type BrowseResponseDto = {
 
 /** Internal diagnostics — safe for wire; app ignores unknown fields. */
 export type BrowseDiagnostics = {
+  acquisitionStrategy?: string;
   upstreamBlocked?: boolean;
   rateLimited?: boolean;
   timedOut?: boolean;

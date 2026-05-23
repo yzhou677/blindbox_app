@@ -52,6 +52,7 @@ export function buildBrowseMeta(
 
 function pruneDiagnostics(diag: BrowseDiagnostics): BrowseDiagnostics | undefined {
   const out: BrowseDiagnostics = {};
+  if (diag.acquisitionStrategy) out.acquisitionStrategy = diag.acquisitionStrategy;
   if (diag.upstreamBlocked) out.upstreamBlocked = true;
   if (diag.rateLimited) out.rateLimited = true;
   if (diag.timedOut) out.timedOut = true;

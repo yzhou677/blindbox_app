@@ -2,6 +2,10 @@
 
 Thin **provider stabilization layer** only. The Flutter app remains the intelligence authority (identity matching, shelf, relationships, emotional interpretation).
 
+Live marketplace providers are a **long-term production expectation**. Upstream instability is normal. Acquisition may evolve (HTTP today; browser runtime later). Graceful degradation stays core — not a temporary sandbox experiment.
+
+See also [`functions/src/providers/mercari/ACQUISITION.md`](../functions/src/providers/mercari/ACQUISITION.md).
+
 ## Layout
 
 ```
@@ -9,14 +13,25 @@ functions/
   src/
     index.ts                 # HTTPS entry (`market`)
     providers/mercari/
-      mercariBrowse.ts       # GET /v1/browse handler
-      mercariNormalize.ts    # stable DTO mapping
-      mercariParser.ts       # upstream schema tolerance
+      mercariBrowse.ts       # gateway orchestration (HTTP, cache, cursor, meta)
+      mercariNormalize.ts    # normalization → stable DTO
+      mercariParser.ts       # schema tolerance (used by acquisition)
       mercariTypes.ts
+      runtime/
+        mercariProviderRuntime.ts   # acquisition interface
+        fetchMercariRuntime.ts      # HTTP + search APQ (current)
+        playwrightMercariRuntime.ts # reserved (not implemented)
+        createMercariRuntime.ts     # factory
     shared/
       http/                  # fetch + retry
       cache/                 # brief in-memory TTL cache
 ```
+
+### Three layers (do not mix)
+
+1. **Acquisition** — how raw rows are obtained (`MercariProviderRuntime`)
+2. **Normalization** — `mercariParser` + `mercariNormalize`
+3. **Gateway response** — `mercariBrowse` wire contract to Flutter
 
 ## Wire contract
 
@@ -32,14 +47,18 @@ Matches [`docs/MERCARI_SANDBOX.md`](MERCARI_SANDBOX.md):
 
 | Env | Default | Behavior |
 |-----|---------|----------|
-| `MERCARI_GATEWAY_MODE` | `fixture` | Deterministic sample listings (emulator / CI) |
-| `MERCARI_GATEWAY_MODE=live` | — | Calls Mercari US search APQ; degrades to fixture rows if upstream blocks |
+| `MERCARI_GATEWAY_MODE` | `fixture` | Deterministic sample listings (CI / safe default) |
+| `MERCARI_GATEWAY_MODE=live` | — | Live acquisition via active runtime; fixture fallback on failure |
+
+| `MERCARI_ACQUISITION_RUNTIME` | `fetch` | `FetchMercariRuntime` (HTTP + search APQ) |
+| `MERCARI_ACQUISITION_RUNTIME=playwright` | — | Reserved — `PlaywrightMercariRuntime` not implemented yet |
 
 Optional live tuning:
 
 - `MERCARI_DEFAULT_QUERY` — default `q` when omitted
-- `MERCARI_USER_AGENT` — upstream user agent
-- `MERCARI_EXTRA_HEADERS_JSON` — JSON object merged into upstream headers (session cookies, etc.)
+- `MERCARI_USER_AGENT` — `FetchMercariRuntime` user agent
+- `MERCARI_EXTRA_HEADERS_JSON` — bridge headers for fetch runtime (not long-term architecture)
+- `MERCARI_GATEWAY_DEBUG=1` — sparse operator logs
 
 ## Local setup
 
@@ -113,9 +132,15 @@ Then retry deploy. Optional: `firebase functions:artifacts:setpolicy --force` fo
 
 **Production default:** `MERCARI_GATEWAY_MODE` unset → **fixture** (safe). Set `live` only when intentionally testing upstream.
 
-## Controlled live testing (internal only)
+## Live operation (production path)
 
-1. Do **not** change Flutter release defaults (`MARKET_SANDBOX_MERCARI` stays off for production users).
+Production apps are expected to use live providers over time. The gateway ships with **fixture default** for safe deploys and tests; operators enable **live** when ready.
+
+Flutter release builds should gate network via product flags; the gateway contract does not change.
+
+## Controlled live rollout
+
+1. Product flags: enable Mercari network only when the app is ready (`MARKET_SANDBOX_MERCARI` or future production flag).
 2. Deploy with project env file (gitignored):
 
 ```bash

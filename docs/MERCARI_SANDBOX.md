@@ -1,6 +1,8 @@
 # Mercari live provider sandbox (Phase 3A)
 
-Experimental gateway-first Mercari integration. **Default off** — no network until explicitly enabled.
+Gateway-first Mercari integration for live provider data. **App network default off** until product flags enable it — gateway itself is production-oriented.
+
+Long-term: live providers are expected; acquisition may move from HTTP fetch to browser runtime without changing Flutter DTOs.
 
 ## Architecture boundary
 
