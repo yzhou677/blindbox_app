@@ -46,3 +46,14 @@ curl.exe "https://us-central1-blindbox-collection.cloudfunctions.net/market/v1/b
 ```
 
 Expect `meta.provider: "ebay"`. Without credentials, `meta.mode: "fixture"`.
+
+## eBay Browse wire (integration notes)
+
+Upstream `item_summary` rows use `itemId` (`v1|{legacyId}|0`), `itemWebUrl`, `price.value` (string or number), and optional `thumbnailImages` / `image`. The gateway:
+
+- Never exposes `itemHref` (API URL) to the app
+- Builds listing URLs from `itemWebUrl` or `legacyItemId`
+- Uses eBay `total` + `offset` for pagination (not page size alone)
+- Normalizes titles to NFC; missing images become empty `imageUrl` (app placeholder)
+
+Flutter maps stable eBay ids (`legacyItemId`) for dedupe keys (`mkt-ebay-{id}`).

@@ -95,12 +95,15 @@ async function liveBrowse(query: BrowseQuery): Promise<BrowseResponseDto> {
     acquisitionStrategy: 'ebay-browse',
   };
   let rawItems: ProviderRawItem[] = [];
+  let upstreamTotal = 0;
   let fetchFailed = false;
 
   try {
-    rawItems = await withRetries(() =>
+    const page = await withRetries(() =>
       fetchEbaySearchPage({ query: q, limit, offset }),
     );
+    rawItems = page.items;
+    upstreamTotal = page.total;
   } catch (e) {
     fetchFailed = true;
     Object.assign(diagnostics, classifyUpstreamError(e));
@@ -137,7 +140,10 @@ async function liveBrowse(query: BrowseQuery): Promise<BrowseResponseDto> {
     });
   }
 
-  let hasMore = rawItems.length >= limit;
+  let hasMore =
+    upstreamTotal > 0
+      ? offset + rawItems.length < upstreamTotal
+      : rawItems.length >= limit;
   let nextCursor = hasMore
     ? encodeCursor({ q, limit, offset: offset + limit })
     : undefined;
@@ -219,7 +225,7 @@ async function fetchEbaySearchPage(input: {
   query: string;
   limit: number;
   offset: number;
-}): Promise<ProviderRawItem[]> {
+}): Promise<{ items: ProviderRawItem[]; total: number; offset: number }> {
   const token = await getEbayAccessToken();
   const params = new URLSearchParams({
     q: input.query,
@@ -239,8 +245,21 @@ async function fetchEbaySearchPage(input: {
       },
       timeoutMs: 12_000,
     },
-  )) as { itemSummaries?: ProviderRawItem[] };
+  )) as {
+    itemSummaries?: ProviderRawItem[];
+    total?: number;
+    offset?: number;
+  };
 
   const rows = payload.itemSummaries;
-  return Array.isArray(rows) ? rows : [];
+  const items = Array.isArray(rows) ? rows : [];
+  const total =
+    typeof payload.total === 'number' && Number.isFinite(payload.total)
+      ? payload.total
+      : items.length;
+  const responseOffset =
+    typeof payload.offset === 'number' && Number.isFinite(payload.offset)
+      ? payload.offset
+      : input.offset;
+  return { items, total, offset: responseOffset };
 }

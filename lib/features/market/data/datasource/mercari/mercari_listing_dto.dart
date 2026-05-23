@@ -38,10 +38,20 @@ class MercariListingDto {
     return MercariListingDto(
       id: id,
       title: title,
-      priceValue: price['value'] as String? ?? json['priceValue'] as String? ?? '0',
+      priceValue: _wirePriceValue(price, json),
       currency: price['currency'] as String? ?? json['currency'] as String? ?? 'USD',
       imageUrl: image['imageUrl'] as String? ?? json['imageUrl'] as String? ?? '',
       listingUrl: json['listingUrl'] as String? ?? json['itemWebUrl'] as String? ?? '',
     );
+  }
+
+  static String _wirePriceValue(
+    Map<String, dynamic> price,
+    Map<String, dynamic> json,
+  ) {
+    final raw = price['value'] ?? json['priceValue'];
+    if (raw is String && raw.trim().isNotEmpty) return raw.trim();
+    if (raw is num) return raw.toString();
+    return '0';
   }
 }

@@ -9,10 +9,13 @@ extension GatewayListingDtoMapper on MercariListingDto {
     MarketProviderId providerId = MarketProviderId.mercari,
   }) {
     final nativeId = id.trim();
+    final stableNativeId = providerId == MarketProviderId.ebay
+        ? _ebayStableNativeId(nativeId)
+        : nativeId;
     final prefix = providerId.name;
-    final listingId = nativeId.isEmpty
+    final listingId = stableNativeId.isEmpty
         ? 'mkt-$prefix-${title.hashCode}'
-        : 'mkt-$prefix-$nativeId';
+        : 'mkt-$prefix-$stableNativeId';
     final priceUsd = double.tryParse(priceValue) ?? 0;
     final image = imageUrl.trim().isNotEmpty
         ? imageUrl.trim()
@@ -22,7 +25,7 @@ extension GatewayListingDtoMapper on MercariListingDto {
     return MarketListing(
       id: listingId,
       providerId: providerId.wireName,
-      providerListingId: nativeId.isEmpty ? null : nativeId,
+      providerListingId: stableNativeId.isEmpty ? null : stableNativeId,
       externalListingUrl: url.isEmpty ? null : url,
       taxonomyBrandId: null,
       taxonomyIpId: null,
@@ -39,4 +42,14 @@ extension GatewayListingDtoMapper on MercariListingDto {
       listingCount: 1,
     );
   }
+}
+
+/// eBay Browse uses `v1|{legacyItemId}|0` — stable id for dedupe and listing keys.
+String _ebayStableNativeId(String itemId) {
+  final parts = itemId.split('|');
+  if (parts.length >= 2 && parts.first == 'v1') {
+    final legacy = parts[1].trim();
+    if (legacy.isNotEmpty) return legacy;
+  }
+  return itemId;
 }
