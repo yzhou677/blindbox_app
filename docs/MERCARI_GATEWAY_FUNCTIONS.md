@@ -116,10 +116,20 @@ Then retry deploy. Optional: `firebase functions:artifacts:setpolicy --force` fo
 ## Controlled live testing (internal only)
 
 1. Do **not** change Flutter release defaults (`MARKET_SANDBOX_MERCARI` stays off for production users).
-2. On the `market` function, set env:
+2. Deploy with project env file (gitignored):
+
+```bash
+cd functions
+cp env.live.internal.example .env.blindbox-collection
+npm run deploy
+```
+
    - `MERCARI_GATEWAY_MODE=live`
    - Optional: `MERCARI_EXTRA_HEADERS_JSON` (session headers if Mercari blocks bare requests)
    - Optional: `MERCARI_GATEWAY_DEBUG=1` for sparse `console.warn` diagnostics in Cloud Logs
+
+   Revert to fixture-only: remove `.env.blindbox-collection` (or set `MERCARI_GATEWAY_MODE=fixture`) and redeploy.
+
 3. Probe production:
 
 ```bash
