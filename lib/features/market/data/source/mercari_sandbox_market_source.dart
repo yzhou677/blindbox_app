@@ -41,6 +41,7 @@ class MercariSandboxMarketSource implements MarketSource {
     if (uri == null) return MarketBrowsePageResult.empty;
 
     try {
+      _clearFetchError();
       final response = await _gateway.fetchBrowse(
         baseUrl: uri,
         limit: MarketSandboxConfig.pageSize,
@@ -52,9 +53,11 @@ class MercariSandboxMarketSource implements MarketSource {
         replace: true,
       );
     } on MercariGatewayException catch (e, st) {
+      _recordFetchError(e);
       debugPrint('MercariSandboxMarketSource: gateway failed: $e\n$st');
       return _fallbackPage();
     } catch (e, st) {
+      _recordFetchError(e);
       debugPrint('MercariSandboxMarketSource: fetch failed: $e\n$st');
       return _fallbackPage();
     }
@@ -111,6 +114,15 @@ class MercariSandboxMarketSource implements MarketSource {
   bool get hasMoreFromCache => _cache.batchFor(providerId)?.hasMore ?? false;
 
   void resetPagination() => _cache.clear(providerId);
+
+  /// Set when [fetchFirstPage] / [fetchNextPage] catch a failure (for sandbox diagnostics).
+  static String? lastFetchError;
+
+  static void _recordFetchError(Object e) {
+    lastFetchError = e.toString();
+  }
+
+  static void _clearFetchError() => lastFetchError = null;
 
   bool _pageHasMore(
     MercariBrowseResponseDto response, {

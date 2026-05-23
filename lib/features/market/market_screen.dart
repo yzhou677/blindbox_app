@@ -4,6 +4,7 @@ import 'package:blindbox_app/features/market/application/collectible_market_prov
 import 'package:blindbox_app/features/market/application/market_browse_notifier.dart';
 import 'package:blindbox_app/features/market/application/market_browse_load_more_controller.dart';
 import 'package:blindbox_app/features/market/application/market_browse_refresh_controller.dart';
+import 'package:blindbox_app/features/market/application/market_sandbox_diagnostics.dart';
 import 'package:blindbox_app/features/market/data/sandbox/market_sandbox_config.dart';
 import 'package:blindbox_app/features/market/widgets/market_load_more_footer.dart';
 import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
@@ -86,6 +87,22 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
     final mercariHasMore = ref.watch(marketMercariHasMoreProvider);
     final loadingMore = ref.watch(marketBrowseLoadMoreProvider);
     final refreshing = ref.watch(marketBrowseRefreshProvider);
+
+    ref.listen<MarketSandboxDiagnostics?>(marketSandboxDiagnosticsProvider,
+        (prev, next) {
+      if (next == null || !context.mounted) return;
+      final messenger = ScaffoldMessenger.of(context);
+      final text = next.succeeded
+          ? 'Mercari sandbox: ${next.mercariListingCount} listings merged '
+              '(${next.visibleSnapshotCount} cards visible)'
+          : 'Mercari sandbox failed: ${next.error}';
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(text),
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    });
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,

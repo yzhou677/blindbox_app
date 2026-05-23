@@ -66,6 +66,15 @@ class MarketBrowseNotifier extends Notifier<MarketBrowseState> {
     state = state.copyWith(ipId: id);
   }
 
+  /// Broadest taxonomy rails — used when live Mercari sandbox refreshes so
+  /// provider rows without catalog IP/brand are not filtered out.
+  void resetTaxonomyFiltersForSandbox() {
+    state = state.copyWith(
+      brandId: MarketTaxonomyIds.anyBrand,
+      ipId: MarketTaxonomyIds.anyIp,
+    );
+  }
+
   /// Enter immersive search after keyboard search / explicit submit.
   void submitSearch() {
     final hasQuery = state.query.trim().isNotEmpty;

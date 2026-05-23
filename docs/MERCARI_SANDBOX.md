@@ -16,6 +16,17 @@ flutter run \
   --dart-define=MERCARI_GATEWAY_BASE_URL=https://your-gateway.example
 ```
 
+**Android emulator** (with `firebase emulators:start --only functions` on the host):
+
+```bash
+adb reverse tcp:5001 tcp:5001
+flutter run \
+  --dart-define=MARKET_SANDBOX_MERCARI=true \
+  --dart-define=MERCARI_GATEWAY_BASE_URL=http://127.0.0.1:5001/<project>/us-central1/market
+```
+
+After **pull to refresh** on Market, a SnackBar reports success or the error (e.g. `0 listings` / connection refused). Fixture titles look like `pop mart — cozy vinyl figure` (often as separate cards, not LABUBU catalog names).
+
 Without both flags, the app behaves as before (asset feed only at startup).
 
 ## Gateway contract
@@ -63,10 +74,16 @@ Response:
 - Image URL hotlink stability
 - Response schema drift
 
-## Manual probe (optional)
+## Firebase Functions gateway
 
-Run against your gateway when implemented:
+Thin Mercari browse lives in-repo under `functions/` — see [`MERCARI_GATEWAY_FUNCTIONS.md`](MERCARI_GATEWAY_FUNCTIONS.md).
+
+Default emulator mode is **fixture** (no Mercari auth). Set `MERCARI_GATEWAY_MODE=live` on the function for upstream attempts.
+
+## Manual probe (optional)
 
 ```bash
 dart run tools/mercari_sandbox/probe_gateway.dart --url=https://your-gateway.example
+# emulator example:
+# --url=http://127.0.0.1:5001/<project>/us-central1/market
 ```
