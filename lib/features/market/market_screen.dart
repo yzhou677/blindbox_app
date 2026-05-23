@@ -16,6 +16,7 @@ import 'package:blindbox_app/features/market/widgets/market_discovery_chips.dart
 import 'package:blindbox_app/features/market/widgets/market_search_bar.dart';
 import 'package:blindbox_app/features/market/widgets/trending_market_section.dart';
 import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -90,7 +91,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
 
     ref.listen<MarketSandboxDiagnostics?>(marketSandboxDiagnosticsProvider,
         (prev, next) {
-      if (next == null || !context.mounted) return;
+      if (!kDebugMode || next == null || !context.mounted) return;
       final messenger = ScaffoldMessenger.of(context);
       final text = next.succeeded
           ? 'Mercari sandbox: ${next.mercariListingCount} listings merged '

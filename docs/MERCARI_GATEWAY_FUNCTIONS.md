@@ -85,9 +85,33 @@ Production:
 
 ## Deploy
 
+Prerequisites: Firebase CLI logged in, project `blindbox-collection`, `firebase.json` copied from `firebase.json.example`.
+
 ```bash
-cd functions && npm run deploy
+cd functions && npm run build && npm run deploy
 ```
+
+Production base URL (Gen2 HTTPS):
+
+`https://us-central1-blindbox-collection.cloudfunctions.net/market`
+
+Probe:
+
+```bash
+curl.exe "https://us-central1-blindbox-collection.cloudfunctions.net/market/v1/browse?limit=3&q=pop+mart"
+```
+
+### Deploy blocked: Cloud Build service account
+
+If deploy fails with *missing permission on the build service account*, in [Google Cloud Console](https://console.cloud.google.com/iam-admin/iam?project=blindbox-collection) grant the **Cloud Build** service account (`1094225908408@cloudbuild.gserviceaccount.com`) at least:
+
+- Cloud Functions Developer
+- Service Account User
+- Artifact Registry Writer
+
+Then retry deploy. Optional: `firebase functions:artifacts:setpolicy --force` for Artifact Registry cleanup policy.
+
+**Production default:** `MERCARI_GATEWAY_MODE` unset → **fixture** (safe). Set `live` only when intentionally testing upstream.
 
 ## Boundaries (intentional)
 
