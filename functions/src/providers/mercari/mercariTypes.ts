@@ -15,12 +15,28 @@ export type BrowseResponseDto = {
   meta?: BrowseResponseMeta;
 };
 
+/** Internal diagnostics — safe for wire; app ignores unknown fields. */
+export type BrowseDiagnostics = {
+  upstreamBlocked?: boolean;
+  rateLimited?: boolean;
+  timedOut?: boolean;
+  parseEmpty?: boolean;
+  parseFailed?: boolean;
+  usedFixtureFallback?: boolean;
+  paginationInconsistent?: boolean;
+  rawRowCount?: number;
+  normalizedCount?: number;
+  rowsDropped?: number;
+  message?: string;
+};
+
 export type BrowseResponseMeta = {
   mode: 'fixture' | 'live';
   query: string;
   limit: number;
   upstreamDegraded?: boolean;
   message?: string;
+  diagnostics?: BrowseDiagnostics;
 };
 
 export type BrowseQuery = {

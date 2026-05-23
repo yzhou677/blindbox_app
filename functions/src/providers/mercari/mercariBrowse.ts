@@ -4,8 +4,16 @@ import { fetchJson, HttpError } from '../../shared/http/fetchJson';
 import { withRetries } from '../../shared/http/retry';
 import { extractMercariItems } from './mercariParser';
 import { normalizeBrowseItems } from './mercariNormalize';
+import {
+  buildBrowseMeta,
+  classifyUpstreamError,
+  emptyDiagnostics,
+  gatewayDebugLog,
+  shouldUseFixtureFallback,
+} from './mercariDiagnostics';
 import type {
   BrowseCursorPayload,
+  BrowseDiagnostics,
   BrowseQuery,
   BrowseResponseDto,
   MercariRawItem,
@@ -54,11 +62,21 @@ export async function handleMercariBrowseRequest(
     res.status(200).json(payload);
   } catch (e) {
     const status = e instanceof HttpError ? (e.statusCode ?? 502) : 502;
+    const diagnostics: BrowseDiagnostics = {
+      ...classifyUpstreamError(e),
+      parseFailed: true,
+      message: e instanceof Error ? e.message : 'Browse failed',
+    };
+    gatewayDebugLog('browse_handler_error', diagnostics);
     res.status(status).json({
       error: 'gateway_unavailable',
-      message: e instanceof Error ? e.message : 'Browse failed',
+      message: diagnostics.message,
       items: [],
       hasMore: false,
+      meta: buildBrowseMeta(
+        { mode: resolveMode(), query: '', limit: 0 },
+        diagnostics,
+      ),
     });
   }
 }
@@ -120,35 +138,98 @@ async function liveBrowse(query: BrowseQuery): Promise<BrowseResponseDto> {
   const limit = query.limit;
   const offset = query.cursor ? decoded.offset : 0;
 
-  let rawItems: MercariRawItem[];
-  let degraded = false;
-  let message: string | undefined;
+  const diagnostics: BrowseDiagnostics = emptyDiagnostics();
+  let rawItems: MercariRawItem[] = [];
+  let fetchFailed = false;
 
   try {
     rawItems = await withRetries(() => fetchMercariSearchPage(q, limit, offset));
   } catch (e) {
-    degraded = true;
-    message = e instanceof Error ? e.message : 'Upstream unavailable';
-    rawItems = fixtureItems(q).slice(0, limit);
+    fetchFailed = true;
+    Object.assign(diagnostics, classifyUpstreamError(e));
+    diagnostics.message =
+      e instanceof Error ? e.message : 'Upstream unavailable';
+    gatewayDebugLog('live_fetch_failed', {
+      query: q,
+      ...diagnostics,
+    });
   }
 
-  const items = normalizeBrowseItems(rawItems);
-  const hasMore = rawItems.length >= limit;
-  const nextCursor = hasMore
+  if (!fetchFailed && rawItems.length === 0) {
+    diagnostics.parseEmpty = true;
+    diagnostics.message = 'Upstream returned no listing rows';
+  }
+
+  diagnostics.rawRowCount = rawItems.length;
+  let normalized = normalizeBrowseItems(rawItems);
+  diagnostics.normalizedCount = normalized.items.length;
+  const rowsDropped =
+    normalized.stats.malformedDropped + normalized.stats.duplicateDropped;
+  if (rowsDropped > 0) diagnostics.rowsDropped = rowsDropped;
+
+  if (shouldUseFixtureFallback({
+    fetchFailed,
+    rawRowCount: rawItems.length,
+    normalizedCount: normalized.items.length,
+  })) {
+    diagnostics.usedFixtureFallback = true;
+    const all = fixtureItems(q);
+    const slice = all.slice(offset, offset + limit);
+    normalized = normalizeBrowseItems(slice);
+    diagnostics.normalizedCount = normalized.items.length;
+    gatewayDebugLog('live_fixture_fallback', { query: q, diagnostics });
+    return buildLiveFixtureFallbackResponse({
+      q,
+      limit,
+      offset,
+      all,
+      items: normalized.items,
+      diagnostics,
+    });
+  }
+
+  let hasMore = rawItems.length >= limit;
+  let nextCursor = hasMore
     ? encodeCursor({ q, limit, offset: offset + limit })
     : undefined;
 
+  if (hasMore && normalized.items.length === 0) {
+    diagnostics.paginationInconsistent = true;
+    hasMore = false;
+    nextCursor = undefined;
+  }
+
+  gatewayDebugLog('live_success', {
+    query: q,
+    rawRowCount: rawItems.length,
+    normalizedCount: normalized.items.length,
+  });
+
   return {
-    items,
+    items: normalized.items,
     nextCursor,
     hasMore,
-    meta: {
-      mode: 'live',
-      query: q,
-      limit,
-      upstreamDegraded: degraded,
-      message,
-    },
+    meta: buildBrowseMeta({ mode: 'live', query: q, limit }, diagnostics),
+  };
+}
+
+function buildLiveFixtureFallbackResponse(input: {
+  q: string;
+  limit: number;
+  offset: number;
+  all: MercariRawItem[];
+  items: ReturnType<typeof normalizeBrowseItems>['items'];
+  diagnostics: BrowseDiagnostics;
+}): BrowseResponseDto {
+  const { q, limit, offset, all, items, diagnostics } = input;
+  const hasMore = offset + limit < all.length;
+  return {
+    items,
+    nextCursor: hasMore
+      ? encodeCursor({ q, limit, offset: offset + limit })
+      : undefined,
+    hasMore,
+    meta: buildBrowseMeta({ mode: 'live', query: q, limit }, diagnostics),
   };
 }
 
@@ -218,13 +299,14 @@ function fixtureBrowse(query: BrowseQuery): BrowseResponseDto {
   const slice = all.slice(offset, offset + limit);
   const hasMore = offset + limit < all.length;
 
+  const normalized = normalizeBrowseItems(slice);
   return {
-    items: normalizeBrowseItems(slice),
+    items: normalized.items,
     nextCursor: hasMore
       ? encodeCursor({ q, limit, offset: offset + limit })
       : undefined,
     hasMore,
-    meta: { mode: 'fixture', query: q, limit },
+    meta: buildBrowseMeta({ mode: 'fixture', query: q, limit }, emptyDiagnostics()),
   };
 }
 

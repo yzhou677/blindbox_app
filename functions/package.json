@@ -10,6 +10,7 @@
     "build": "tsc",
     "build:watch": "tsc --watch",
     "lint": "tsc --noEmit",
+    "test": "npm run build && node --test test/*.test.js",
     "serve": "npm run build && npx firebase emulators:start --only functions",
     "deploy": "npm run build && npx firebase deploy --only functions:market"
   },

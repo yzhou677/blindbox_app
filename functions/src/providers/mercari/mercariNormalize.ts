@@ -1,10 +1,50 @@
 import type { GatewayListingDto, MercariRawItem } from './mercariTypes';
 
+export type NormalizeStats = {
+  malformedDropped: number;
+  duplicateDropped: number;
+};
+
+export type NormalizeBrowseResult = {
+  items: GatewayListingDto[];
+  stats: NormalizeStats;
+};
+
+/** Maps provider rows to stable gateway DTOs — skips malformed and duplicate ids. */
+export function normalizeBrowseItems(rows: MercariRawItem[]): NormalizeBrowseResult {
+  const out: GatewayListingDto[] = [];
+  const seen = new Set<string>();
+  let malformedDropped = 0;
+  let duplicateDropped = 0;
+
+  for (const row of rows) {
+    const dto = normalizeListing(row);
+    if (!dto) {
+      malformedDropped++;
+      continue;
+    }
+    if (seen.has(dto.id)) {
+      duplicateDropped++;
+      continue;
+    }
+    seen.add(dto.id);
+    out.push(dto);
+  }
+
+  return {
+    items: out,
+    stats: { malformedDropped, duplicateDropped },
+  };
+}
+
 /** Maps one provider row to stable gateway DTO — skips malformed rows. */
 export function normalizeListing(raw: MercariRawItem): GatewayListingDto | null {
   const id = readString(raw, ['id', 'itemId', 'productId']);
-  const title = readString(raw, ['title', 'name', 'productName']);
-  if (!id || !title) return null;
+  const titleRaw = readString(raw, ['title', 'name', 'productName']);
+  if (!id || !titleRaw) return null;
+
+  const title = normalizeTitle(titleRaw);
+  if (!title) return null;
 
   const priceBlock = readRecord(raw.price) ?? raw;
   const value =
@@ -16,13 +56,16 @@ export function normalizeListing(raw: MercariRawItem): GatewayListingDto | null 
 
   const imageBlock = readRecord(raw.image) ?? readRecord(raw.photos) ?? raw;
   const imageUrl =
-    readString(imageBlock, ['imageUrl', 'url', 'thumbnail']) ??
-    readFirstPhotoUrl(raw) ??
-    '';
+    sanitizeImageUrl(
+      readString(imageBlock, ['imageUrl', 'url', 'thumbnail']) ??
+        readFirstPhotoUrl(raw) ??
+        '',
+    ) ?? '';
 
-  const listingUrl =
-    readString(raw, ['listingUrl', 'itemWebUrl', 'url', 'productUrl']) ??
-    (id.startsWith('m') ? `https://www.mercari.com/us/item/${id}/` : '');
+  const listingUrl = resolveListingUrl(
+    readString(raw, ['listingUrl', 'itemWebUrl', 'url', 'productUrl']),
+    id,
+  );
 
   return {
     id,
@@ -33,13 +76,28 @@ export function normalizeListing(raw: MercariRawItem): GatewayListingDto | null 
   };
 }
 
-export function normalizeBrowseItems(rows: MercariRawItem[]): GatewayListingDto[] {
-  const out: GatewayListingDto[] = [];
-  for (const row of rows) {
-    const dto = normalizeListing(row);
-    if (dto) out.push(dto);
+function normalizeTitle(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return '';
+  try {
+    return trimmed.normalize('NFC');
+  } catch {
+    return trimmed;
   }
-  return out;
+}
+
+function sanitizeImageUrl(raw: string): string | undefined {
+  const trimmed = raw.trim();
+  if (!trimmed) return undefined;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return undefined;
+}
+
+function resolveListingUrl(raw: string | undefined, id: string): string {
+  const trimmed = raw?.trim() ?? '';
+  if (trimmed && /^https?:\/\//i.test(trimmed)) return trimmed;
+  if (/^m\d+$/i.test(id)) return `https://www.mercari.com/us/item/${id}/`;
+  return '';
 }
 
 function readFirstPhotoUrl(raw: MercariRawItem): string | undefined {

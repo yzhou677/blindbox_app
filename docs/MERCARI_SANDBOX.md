@@ -78,7 +78,7 @@ Response:
 
 Thin Mercari browse lives in-repo under `functions/` — see [`MERCARI_GATEWAY_FUNCTIONS.md`](MERCARI_GATEWAY_FUNCTIONS.md).
 
-Default emulator mode is **fixture** (no Mercari auth). Set `MERCARI_GATEWAY_MODE=live` on the function for upstream attempts.
+Default emulator mode is **fixture** (no Mercari auth). Set `MERCARI_GATEWAY_MODE=live` on the function for upstream attempts (internal only — see gateway doc for `meta.diagnostics` when debugging live).
 
 ## Manual probe (optional)
 

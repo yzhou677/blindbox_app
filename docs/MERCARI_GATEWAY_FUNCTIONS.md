@@ -113,6 +113,39 @@ Then retry deploy. Optional: `firebase functions:artifacts:setpolicy --force` fo
 
 **Production default:** `MERCARI_GATEWAY_MODE` unset → **fixture** (safe). Set `live` only when intentionally testing upstream.
 
+## Controlled live testing (internal only)
+
+1. Do **not** change Flutter release defaults (`MARKET_SANDBOX_MERCARI` stays off for production users).
+2. On the `market` function, set env:
+   - `MERCARI_GATEWAY_MODE=live`
+   - Optional: `MERCARI_EXTRA_HEADERS_JSON` (session headers if Mercari blocks bare requests)
+   - Optional: `MERCARI_GATEWAY_DEBUG=1` for sparse `console.warn` diagnostics in Cloud Logs
+3. Probe production:
+
+```bash
+curl.exe "https://us-central1-blindbox-collection.cloudfunctions.net/market/v1/browse?limit=3&q=pop+mart"
+```
+
+Check response `meta`:
+
+| Field | Meaning |
+|-------|---------|
+| `mode` | `live` or `fixture` |
+| `upstreamDegraded` | Live path fell back to fixture rows |
+| `diagnostics.upstreamBlocked` | 403 / hard block |
+| `diagnostics.rateLimited` | 429 |
+| `diagnostics.timedOut` | 408 / abort |
+| `diagnostics.parseEmpty` | Upstream 200 but no rows extracted |
+| `diagnostics.usedFixtureFallback` | Serving fixture slice under live mode |
+| `diagnostics.rowsDropped` | Malformed/duplicate rows removed at normalize |
+
+Live failure behavior (no app changes required):
+
+- Upstream errors, empty parse, or zero normalized rows → **fixture fallback** with `upstreamDegraded: true`
+- Malformed/duplicate provider rows → dropped silently at gateway
+- Invalid image URLs → empty `imageUrl` (app placeholder)
+- Bad listing URLs → rebuilt from Mercari item id when possible
+
 ## Boundaries (intentional)
 
 **Gateway does:** fetch, parse, normalize, retry, short cache, graceful failure.
