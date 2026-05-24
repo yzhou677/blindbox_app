@@ -88,11 +88,15 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
     final immersive = browse.searchResultsActive;
     final liveHasMore = ref.watch(marketLiveBrowseHasMoreProvider);
     final loadingMore = ref.watch(marketBrowseLoadMoreProvider);
-    final refreshing = ref.watch(marketBrowseRefreshProvider);
 
     ref.listen<MarketSandboxDiagnostics?>(marketSandboxDiagnosticsProvider,
         (prev, next) {
-      if (!kDebugMode || next == null || !context.mounted) return;
+      if (!kDebugMode ||
+          next == null ||
+          !context.mounted ||
+          !MarketSandboxConfig.isActive) {
+        return;
+      }
       final messenger = ScaffoldMessenger.of(context);
       final text = next.succeeded
           ? 'Mercari sandbox: ${next.mercariListingCount} listings merged '
@@ -159,12 +163,16 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
               ),
             ),
           ),
-          if (!immersive) ...[
+          if (!immersive && !MarketGatewayConfig.isActive) ...[
             const SliverToBoxAdapter(child: SizedBox(height: FeedRhythm.blockGapMedium)),
             SliverToBoxAdapter(
               child: TrendingMarketSection(items: mockTrendingMarketListings()),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: FeedRhythm.marketTrendingToBrowseHeaderGap)),
+          ],
+          if (!immersive) ...[
+            if (MarketGatewayConfig.isActive)
+              const SliverToBoxAdapter(child: SizedBox(height: FeedRhythm.blockGapMedium)),
             SliverToBoxAdapter(
               child: CollectibleSectionHeader(
                 title: 'Collectibles',
@@ -240,7 +248,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
               !immersive)
             SliverToBoxAdapter(
               child: MarketLoadMoreFooter(
-                loading: loadingMore || refreshing,
+                loading: loadingMore,
                 onLoadMore: () => ref
                     .read(marketBrowseLoadMoreProvider.notifier)
                     .loadMore(),
