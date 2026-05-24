@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase-admin/app';
 import { onRequest } from 'firebase-functions/v2/https';
 import { handleMarketBrowseRequest } from './marketBrowseRouter';
+import { handleMarketItemRequest } from './marketItemRouter';
 
 initializeApp();
 
@@ -9,6 +10,7 @@ initializeApp();
  *
  * Routes:
  *   GET /v1/browse?limit=&cursor=&q=
+ *   GET /v1/item?itemId=
  *
  * Deploy URL (example):
  *   https://<region>-<project>.cloudfunctions.net/market/v1/browse
@@ -34,10 +36,14 @@ export const market = onRequest(
       await handleMarketBrowseRequest(req, res);
       return;
     }
+    if (path === '/v1/item') {
+      await handleMarketItemRequest(req, res);
+      return;
+    }
 
     res.status(404).json({
       error: 'not_found',
-      message: 'Supported: GET /v1/browse',
+      message: 'Supported: GET /v1/browse, GET /v1/item',
     });
   },
 );
