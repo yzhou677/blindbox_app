@@ -12,16 +12,17 @@ import {
   shouldUseFixtureFallback,
 } from './mercariDiagnostics';
 import type {
-  BrowseCursorPayload,
   BrowseDiagnostics,
   BrowseQuery,
   BrowseResponseDto,
   MercariRawItem,
 } from './mercariTypes';
+import {
+  decodeCursor,
+  encodeCursor,
+  parseBrowseQuery,
+} from '../gateway/parseBrowseQuery';
 
-const DEFAULT_QUERY = 'pop mart blind box';
-const DEFAULT_LIMIT = 24;
-const MAX_LIMIT = 48;
 const CACHE_TTL_MS = 90_000;
 
 type MercariMode = 'fixture' | 'live';
@@ -29,11 +30,6 @@ type MercariMode = 'fixture' | 'live';
 function resolveMode(): MercariMode {
   const raw = (process.env.MERCARI_GATEWAY_MODE ?? 'fixture').trim().toLowerCase();
   return raw === 'live' ? 'live' : 'fixture';
-}
-
-function resolveDefaultQuery(): string {
-  const q = process.env.MERCARI_DEFAULT_QUERY?.trim();
-  return q && q.length > 0 ? q : DEFAULT_QUERY;
 }
 
 /** Public browse handler for `GET /v1/browse`. */
@@ -48,7 +44,7 @@ export async function handleMercariBrowseRequest(
 
   try {
     const query = parseBrowseQuery(req);
-    const cacheKey = `browse:${query.q}:${query.limit}:${query.cursor ?? ''}`;
+    const cacheKey = `browse:${query.signature}:${query.limit}:${query.cursor ?? ''}`;
     const cached = readCache<BrowseResponseDto>(cacheKey);
     if (cached) {
       res.status(200).json(cached);
@@ -85,49 +81,6 @@ export async function browseMercari(query: BrowseQuery): Promise<BrowseResponseD
     return fixtureBrowse(query);
   }
   return liveBrowse(query);
-}
-
-function parseBrowseQuery(req: Request): BrowseQuery {
-  const limitRaw = parseInt(String(req.query.limit ?? DEFAULT_LIMIT), 10);
-  const limit = clamp(
-    Number.isFinite(limitRaw) ? limitRaw : DEFAULT_LIMIT,
-    1,
-    MAX_LIMIT,
-  );
-  const qRaw = String(req.query.q ?? req.query.query ?? '').trim();
-  const q = qRaw.length > 0 ? qRaw : resolveDefaultQuery();
-  const cursorRaw = String(req.query.cursor ?? '').trim();
-  return { limit, q, cursor: cursorRaw || undefined };
-}
-
-function parseCursor(raw: string): BrowseCursorPayload | undefined {
-  const trimmed = raw.trim();
-  if (!trimmed) return undefined;
-  try {
-    const json = Buffer.from(trimmed, 'base64url').toString('utf8');
-    const parsed = JSON.parse(json) as BrowseCursorPayload;
-    if (
-      typeof parsed.q === 'string' &&
-      typeof parsed.limit === 'number' &&
-      typeof parsed.offset === 'number'
-    ) {
-      return parsed;
-    }
-  } catch {
-    return undefined;
-  }
-  return undefined;
-}
-
-function encodeCursor(payload: BrowseCursorPayload): string {
-  return Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
-}
-
-function decodeCursor(token: string | undefined): BrowseCursorPayload {
-  if (!token) {
-    return { q: resolveDefaultQuery(), limit: DEFAULT_LIMIT, offset: 0 };
-  }
-  return parseCursor(token) ?? { q: resolveDefaultQuery(), limit: DEFAULT_LIMIT, offset: 0 };
 }
 
 async function liveBrowse(query: BrowseQuery): Promise<BrowseResponseDto> {
@@ -310,8 +263,4 @@ function fixtureItems(query: string): MercariRawItem[] {
       listingUrl: 'https://www.mercari.com/us/item/m90000000004/',
     },
   ];
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
 }

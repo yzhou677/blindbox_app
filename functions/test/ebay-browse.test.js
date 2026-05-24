@@ -18,16 +18,16 @@ describe('resolveMarketGatewayProvider', () => {
 });
 
 describe('browseEbay fixture mode', () => {
-  it('returns fixture listings without credentials', async () => {
+  it('returns empty rows (fixture data disabled for UX)', async () => {
     const prevMode = process.env.MARKET_GATEWAY_MODE;
     const prevId = process.env.EBAY_CLIENT_ID;
     process.env.MARKET_GATEWAY_MODE = 'fixture';
     delete process.env.EBAY_CLIENT_ID;
 
-    const payload = await browseEbay({ q: 'pop mart', limit: 2, cursor: undefined });
+    const payload = await browseEbay({ q: 'pop mart', limit: 2, cursor: undefined, signature: 'x' });
     assert.equal(payload.meta?.provider, 'ebay');
     assert.equal(payload.meta?.mode, 'fixture');
-    assert.equal(payload.items.length, 2);
+    assert.equal(payload.items.length, 0);
 
     if (prevMode) process.env.MARKET_GATEWAY_MODE = prevMode;
     if (prevId) process.env.EBAY_CLIENT_ID = prevId;

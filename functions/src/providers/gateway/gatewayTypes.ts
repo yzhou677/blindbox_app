@@ -8,6 +8,23 @@ export type GatewayListingDto = {
   listingUrl: string;
 };
 
+export type GatewayItemDetailDto = {
+  itemId: string;
+  title: string;
+  price: { value: string; currency: string };
+  imageUrl: string;
+  listingUrl: string;
+  condition?: string;
+  shortDescription?: string;
+  seller?: {
+    username?: string;
+    feedbackPercentage?: string;
+  };
+  shipping?: {
+    summary: string;
+  };
+};
+
 export type BrowseResponseDto = {
   items: GatewayListingDto[];
   nextCursor?: string;
@@ -44,6 +61,14 @@ export type BrowseQuery = {
   limit: number;
   cursor?: string;
   q: string;
+  brandId?: string;
+  ipId?: string;
+  searchText?: string;
+  sort?: string;
+  signature: string;
+  categoryIds?: string;
+  aspectFilter?: string;
+  franchiseAspectFilter?: string;
 };
 
 export type BrowseCursorPayload = {

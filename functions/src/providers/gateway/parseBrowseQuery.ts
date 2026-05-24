@@ -1,15 +1,19 @@
 import type { Request } from 'express';
 import type { BrowseCursorPayload, BrowseQuery } from './gatewayTypes';
+import {
+  browseQuerySignature,
+  composeBrowseUpstreamQ,
+} from './composeBrowseQuery';
+import {
+  composeBrowseAspectPlan,
+  composeBrowseFranchiseAspectPlan,
+} from './composeBrowseAspectFilter';
 
-const DEFAULT_QUERY = 'pop mart blind box';
-const DEFAULT_LIMIT = 24;
+const DEFAULT_LIMIT = 12;
 const MAX_LIMIT = 48;
 
 export function resolveDefaultBrowseQuery(): string {
-  const q =
-    process.env.EBAY_DEFAULT_QUERY?.trim() ||
-    process.env.MERCARI_DEFAULT_QUERY?.trim();
-  return q && q.length > 0 ? q : DEFAULT_QUERY;
+  return composeBrowseUpstreamQ({});
 }
 
 export function parseBrowseQuery(req: Request): BrowseQuery {
@@ -19,10 +23,59 @@ export function parseBrowseQuery(req: Request): BrowseQuery {
     1,
     MAX_LIMIT,
   );
+
+  const brandId = String(req.query.brandId ?? req.query.brand_id ?? '').trim();
+  const ipId = String(req.query.ipId ?? req.query.ip_id ?? '').trim();
+  const searchText = String(
+    req.query.searchText ?? req.query.search ?? '',
+  ).trim();
+  const sort = String(req.query.sort ?? 'relevance').trim();
+
   const qRaw = String(req.query.q ?? req.query.query ?? '').trim();
-  const q = qRaw.length > 0 ? qRaw : resolveDefaultBrowseQuery();
+  const hasQOverride = qRaw.length > 0;
+  const q = hasQOverride
+    ? qRaw
+    : composeBrowseUpstreamQ({
+        brandId: brandId || undefined,
+        ipId: ipId || undefined,
+        searchText: searchText || undefined,
+      });
+
+  const aspectPlan = hasQOverride
+    ? undefined
+    : composeBrowseAspectPlan({
+        brandId: brandId || undefined,
+        ipId: ipId || undefined,
+      });
+  const franchisePlan =
+    !hasQOverride && ipId
+      ? composeBrowseFranchiseAspectPlan({
+          brandId: brandId || undefined,
+          ipId,
+        })
+      : null;
+
+  const signature = browseQuerySignature({
+    brandId: brandId || undefined,
+    ipId: ipId || undefined,
+    searchText: searchText || undefined,
+    sort: sort || undefined,
+  });
+
   const cursorRaw = String(req.query.cursor ?? '').trim();
-  return { limit, q, cursor: cursorRaw || undefined };
+  return {
+    limit,
+    q,
+    brandId: brandId || undefined,
+    ipId: ipId || undefined,
+    searchText: searchText || undefined,
+    sort: sort || undefined,
+    signature,
+    cursor: cursorRaw || undefined,
+    categoryIds: aspectPlan?.active ? aspectPlan.categoryIds : undefined,
+    aspectFilter: aspectPlan?.active ? aspectPlan.aspectFilter : undefined,
+    franchiseAspectFilter: franchisePlan?.aspectFilter,
+  };
 }
 
 export function parseCursor(raw: string): BrowseCursorPayload | undefined {

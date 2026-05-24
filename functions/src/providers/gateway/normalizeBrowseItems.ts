@@ -1,3 +1,4 @@
+import { pickBestEbayImageUrl, upgradeEbayImageUrl } from './ebayImageUrl';
 import type { GatewayListingDto, ProviderRawItem } from './gatewayTypes';
 
 export type NormalizeStats = {
@@ -52,14 +53,7 @@ export function normalizeListing(raw: ProviderRawItem): GatewayListingDto | null
   const currency =
     readString(priceBlock, ['currency', 'currencyCode']) ?? 'USD';
 
-  const imageRecord = readRecord(raw.image);
-  const imageUrl =
-    sanitizeImageUrl(
-      readString(raw, ['imageUrl', 'url', 'thumbnail']) ??
-        (imageRecord ? readString(imageRecord, ['imageUrl', 'url']) : undefined) ??
-        readFirstImageUrl(raw) ??
-        '',
-    ) ?? '';
+  const imageUrl = upgradeEbayImageUrl(pickBestEbayImageUrl(raw), 'browse');
 
   const listingUrl = resolveListingUrl(
     readString(raw, ['itemWebUrl', 'itemAffiliateWebUrl', 'listingUrl', 'url']),
@@ -86,7 +80,7 @@ function normalizeTitle(raw: string): string {
   }
 }
 
-function resolveListingUrl(
+export function resolveListingUrl(
   raw: string | undefined,
   itemId: string,
   legacyItemId?: string,
@@ -105,47 +99,11 @@ function resolveListingUrl(
 }
 
 /** eBay Browse `itemId` is often `v1|{legacyItemId}|0`. */
-function parseEbayLegacyItemId(itemId: string): string | undefined {
+export function parseEbayLegacyItemId(itemId: string): string | undefined {
   const parts = itemId.split('|');
   if (parts.length >= 2 && parts[0] === 'v1') {
     const legacy = parts[1]?.trim();
     if (legacy && /^\d+$/.test(legacy)) return legacy;
-  }
-  return undefined;
-}
-
-function sanitizeImageUrl(raw: string): string | undefined {
-  const t = raw.trim();
-  if (!t.startsWith('http://') && !t.startsWith('https://')) return undefined;
-  return t;
-}
-
-function readFirstImageUrl(raw: ProviderRawItem): string | undefined {
-  const thumbs = raw.thumbnailImages;
-  if (!Array.isArray(thumbs) || thumbs.length === 0) return undefined;
-  for (const entry of thumbs) {
-    if (typeof entry === 'string' && entry.trim()) {
-      const url = sanitizeImageUrl(entry.trim());
-      if (url) return url;
-    }
-    if (entry && typeof entry === 'object') {
-      const url = readString(entry as ProviderRawItem, ['imageUrl', 'url']);
-      if (url) {
-        const sanitized = sanitizeImageUrl(url);
-        if (sanitized) return sanitized;
-      }
-    }
-  }
-  const additional = raw.additionalImages;
-  if (Array.isArray(additional) && additional.length > 0) {
-    const first = additional[0];
-    if (first && typeof first === 'object') {
-      const url = readString(first as ProviderRawItem, ['imageUrl', 'url']);
-      if (url) {
-        const sanitized = sanitizeImageUrl(url);
-        if (sanitized) return sanitized;
-      }
-    }
   }
   return undefined;
 }

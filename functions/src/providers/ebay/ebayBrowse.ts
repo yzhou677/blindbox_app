@@ -7,9 +7,16 @@ import {
   classifyUpstreamError,
   emptyDiagnostics,
   gatewayDebugLog,
-  shouldUseFixtureFallback,
 } from '../gateway/gatewayDiagnostics';
 import { normalizeBrowseItems } from '../gateway/normalizeBrowseItems';
+import {
+  composeTier2AspectFilter,
+  composeTier2KeywordQ,
+  mergeRawItemsById,
+  shouldRunTier2Supplement,
+  tier2CategoryIds,
+} from '../gateway/composeBrowseTier2';
+import { filterRawItemsByTaxonomy } from '../gateway/titleTaxonomyFilter';
 import {
   decodeCursor,
   encodeCursor,
@@ -22,7 +29,6 @@ import type {
   ProviderRawItem,
 } from '../gateway/gatewayTypes';
 import { ebayCredentialsConfigured, getEbayAccessToken, resolveEbayApiBase } from './ebayOAuth';
-import { ebayFixtureItems } from './ebayFixture';
 const CACHE_TTL_MS = 90_000;
 
 type EbayMode = 'fixture' | 'live';
@@ -45,7 +51,7 @@ export async function handleEbayBrowseRequest(
 
   try {
     const query = parseBrowseQuery(req);
-    const cacheKey = `ebay:browse:${query.q}:${query.limit}:${query.cursor ?? ''}`;
+    const cacheKey = `ebay:browse:${query.signature}:${query.limit}:${query.cursor ?? ''}`;
     const cached = readCache<BrowseResponseDto>(cacheKey);
     if (cached) {
       res.status(200).json(cached);
@@ -99,11 +105,57 @@ async function liveBrowse(query: BrowseQuery): Promise<BrowseResponseDto> {
   let fetchFailed = false;
 
   try {
-    const page = await withRetries(() =>
-      fetchEbaySearchPage({ query: q, limit, offset }),
+    let page = await withRetries(() =>
+      fetchEbaySearchPage({
+        query: q,
+        limit,
+        offset,
+        categoryIds: query.categoryIds,
+        aspectFilter: query.aspectFilter,
+      }),
     );
     rawItems = page.items;
     upstreamTotal = page.total;
+
+    if (
+      rawItems.length === 0 &&
+      query.franchiseAspectFilter &&
+      query.franchiseAspectFilter !== query.aspectFilter
+    ) {
+      page = await withRetries(() =>
+        fetchEbaySearchPage({
+          query: q,
+          limit,
+          offset,
+          categoryIds: query.categoryIds,
+          aspectFilter: query.franchiseAspectFilter,
+        }),
+      );
+      rawItems = page.items;
+      upstreamTotal = page.total;
+      diagnostics.acquisitionStrategy = 'ebay-browse-franchise-aspect';
+    }
+
+    if (shouldRunTier2Supplement(query, rawItems.length)) {
+      const tier2Aspect = composeTier2AspectFilter(query);
+      const tier2Q = composeTier2KeywordQ(query);
+      if (tier2Aspect || tier2Q.trim()) {
+        const tier2Page = await withRetries(() =>
+          fetchEbaySearchPage({
+            query: tier2Q,
+            limit,
+            offset,
+            categoryIds: tier2CategoryIds(query),
+            aspectFilter: tier2Aspect,
+          }),
+        );
+        if (tier2Page.items.length > 0) {
+          rawItems = mergeRawItemsById(rawItems, tier2Page.items);
+          upstreamTotal = Math.max(upstreamTotal, rawItems.length);
+          diagnostics.acquisitionStrategy = 'ebay-browse-tier2-keyword';
+        }
+      }
+    }
   } catch (e) {
     fetchFailed = true;
     Object.assign(diagnostics, classifyUpstreamError(e));
@@ -117,28 +169,22 @@ async function liveBrowse(query: BrowseQuery): Promise<BrowseResponseDto> {
     diagnostics.message = 'eBay returned no listing rows';
   }
 
+  const beforeTitleFilter = rawItems.length;
+  rawItems = filterRawItemsByTaxonomy(rawItems, {
+    brandId: query.brandId,
+    ipId: query.ipId,
+  });
+  const titleFilteredCount = beforeTitleFilter - rawItems.length;
+  if (titleFilteredCount > 0) {
+    diagnostics.rowsDropped = (diagnostics.rowsDropped ?? 0) + titleFilteredCount;
+  }
+
   diagnostics.rawRowCount = rawItems.length;
   let normalized = normalizeBrowseItems(rawItems);
   diagnostics.normalizedCount = normalized.items.length;
   const rowsDropped =
     normalized.stats.malformedDropped + normalized.stats.duplicateDropped;
   if (rowsDropped > 0) diagnostics.rowsDropped = rowsDropped;
-
-  if (
-    shouldUseFixtureFallback({
-      fetchFailed,
-      rawRowCount: rawItems.length,
-      normalizedCount: normalized.items.length,
-    })
-  ) {
-    diagnostics.usedFixtureFallback = true;
-    return buildFixtureFallbackResponse({
-      q,
-      limit,
-      offset,
-      diagnostics,
-    });
-  }
 
   let hasMore =
     upstreamTotal > 0
@@ -174,49 +220,30 @@ async function liveBrowse(query: BrowseQuery): Promise<BrowseResponseDto> {
 function fixtureBrowse(query: BrowseQuery): BrowseResponseDto {
   const decoded = decodeCursor(query.cursor);
   const q = query.q || decoded.q;
-  const limit = query.limit;
-  const offset = query.cursor ? decoded.offset : 0;
-  const all = ebayFixtureItems(q);
-  const slice = all.slice(offset, offset + limit);
-  const hasMore = offset + limit < all.length;
-  const normalized = normalizeBrowseItems(slice);
-
-  return {
-    items: normalized.items,
-    nextCursor: hasMore
-      ? encodeCursor({ q, limit, offset: offset + limit })
-      : undefined,
-    hasMore,
-    meta: buildBrowseMeta(
-      { provider: 'ebay', mode: 'fixture', query: q, limit },
-      { acquisitionStrategy: 'fixture' },
-    ),
-  };
+  return emptyBrowseResponse({
+    q,
+    limit: query.limit,
+    message: 'Gateway fixture mode disabled — configure live eBay credentials',
+    acquisitionStrategy: 'fixture-disabled',
+  });
 }
 
-function buildFixtureFallbackResponse(input: {
+function emptyBrowseResponse(input: {
   q: string;
   limit: number;
-  offset: number;
-  diagnostics: BrowseDiagnostics;
+  message?: string;
+  acquisitionStrategy?: string;
 }): BrowseResponseDto {
-  const { q, limit, offset, diagnostics } = input;
-  const all = ebayFixtureItems(q);
-  const slice = all.slice(offset, offset + limit);
-  const hasMore = offset + limit < all.length;
-  const normalized = normalizeBrowseItems(slice);
-  diagnostics.normalizedCount = normalized.items.length;
-  gatewayDebugLog('ebay_fixture_fallback', { query: q, diagnostics });
-
   return {
-    items: normalized.items,
-    nextCursor: hasMore
-      ? encodeCursor({ q, limit, offset: offset + limit })
-      : undefined,
-    hasMore,
+    items: [],
+    hasMore: false,
     meta: buildBrowseMeta(
-      { provider: 'ebay', mode: 'live', query: q, limit },
-      diagnostics,
+      { provider: 'ebay', mode: 'fixture', query: input.q, limit: input.limit },
+      {
+        acquisitionStrategy: input.acquisitionStrategy ?? 'empty',
+        parseEmpty: true,
+        message: input.message,
+      },
     ),
   };
 }
@@ -225,13 +252,20 @@ async function fetchEbaySearchPage(input: {
   query: string;
   limit: number;
   offset: number;
+  categoryIds?: string;
+  aspectFilter?: string;
 }): Promise<{ items: ProviderRawItem[]; total: number; offset: number }> {
   const token = await getEbayAccessToken();
   const params = new URLSearchParams({
-    q: input.query,
     limit: String(input.limit),
     offset: String(input.offset),
   });
+  const q = input.query.trim();
+  if (q) params.set('q', q);
+  const categoryIds = input.categoryIds?.trim();
+  if (categoryIds) params.set('category_ids', categoryIds);
+  const aspectFilter = input.aspectFilter?.trim();
+  if (aspectFilter) params.set('aspect_filter', aspectFilter);
   const marketplace =
     process.env.EBAY_MARKETPLACE_ID?.trim() || 'EBAY_US';
 

@@ -19,14 +19,13 @@ export function classifyUpstreamError(error: unknown): BrowseDiagnostics {
   return {};
 }
 
-export function shouldUseFixtureFallback(input: {
+export function shouldUseFixtureFallback(_input: {
   fetchFailed: boolean;
   rawRowCount: number;
   normalizedCount: number;
+  facetsActive?: boolean;
 }): boolean {
-  if (input.fetchFailed) return true;
-  if (input.rawRowCount === 0) return true;
-  return input.normalizedCount === 0;
+  return false;
 }
 
 export function buildBrowseMeta(

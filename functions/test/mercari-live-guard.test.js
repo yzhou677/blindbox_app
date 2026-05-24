@@ -6,50 +6,26 @@ const {
   classifyUpstreamError,
   shouldUseFixtureFallback,
   buildBrowseMeta,
-} = require('../lib/providers/mercari/mercariDiagnostics');
+} = require('../lib/providers/gateway/gatewayDiagnostics');
 const { HttpError } = require('../lib/shared/http/fetchJson');
-const { normalizeBrowseItems } = require('../lib/providers/mercari/mercariNormalize');
+const { normalizeBrowseItems } = require('../lib/providers/gateway/normalizeBrowseItems');
 
 describe('shouldUseFixtureFallback', () => {
-  it('falls back on fetch failure', () => {
+  it('is disabled — live UX must not inject fixture rows', () => {
     assert.equal(
       shouldUseFixtureFallback({
         fetchFailed: true,
         rawRowCount: 0,
         normalizedCount: 0,
       }),
-      true,
+      false,
     );
-  });
-
-  it('falls back on empty upstream rows', () => {
     assert.equal(
       shouldUseFixtureFallback({
         fetchFailed: false,
         rawRowCount: 0,
         normalizedCount: 0,
-      }),
-      true,
-    );
-  });
-
-  it('falls back when all rows fail normalization', () => {
-    assert.equal(
-      shouldUseFixtureFallback({
-        fetchFailed: false,
-        rawRowCount: 3,
-        normalizedCount: 0,
-      }),
-      true,
-    );
-  });
-
-  it('keeps live rows when normalized output exists', () => {
-    assert.equal(
-      shouldUseFixtureFallback({
-        fetchFailed: false,
-        rawRowCount: 2,
-        normalizedCount: 2,
+        facetsActive: true,
       }),
       false,
     );
