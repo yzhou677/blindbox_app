@@ -46,12 +46,12 @@ class MarketBrowseNotifier extends Notifier<MarketBrowseState> {
   @override
   MarketBrowseState build() => const MarketBrowseState();
 
-  /// Draft query from the field; clearing text exits [searchResultsActive].
+  /// Draft query from the field; activates live search when non-empty (Discover parity).
   void setQuery(String value) {
     final empty = value.trim().isEmpty;
     state = state.copyWith(
       query: value,
-      searchResultsActive: empty ? false : null,
+      searchResultsActive: !empty,
     );
   }
 

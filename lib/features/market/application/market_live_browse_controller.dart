@@ -98,12 +98,15 @@ class MarketLiveBrowseController extends Notifier<MarketLiveBrowseState> {
     if (generation != _session.state.generation || !_isActive) return;
 
     if (page.listings.isEmpty && !page.fromCache) {
-      _session.applyError(
-        generation: generation,
-        message: EbayGatewayMarketSource.lastFetchError ?? 'Load more failed',
-      );
-      _publishState();
-      return;
+      final err = EbayGatewayMarketSource.lastFetchError;
+      if (err != null) {
+        _session.applyError(
+          generation: generation,
+          message: err,
+        );
+        _publishState();
+        return;
+      }
     }
 
     _session.applyNextPage(
@@ -211,12 +214,15 @@ class MarketLiveBrowseController extends Notifier<MarketLiveBrowseState> {
     if (generation != _session.state.generation || !_isActive) return;
 
     if (page.listings.isEmpty && !page.fromCache) {
-      _session.applyError(
-        generation: generation,
-        message: EbayGatewayMarketSource.lastFetchError ?? 'Browse unavailable',
-      );
-      _publishState();
-      return;
+      final err = EbayGatewayMarketSource.lastFetchError;
+      if (err != null) {
+        _session.applyError(
+          generation: generation,
+          message: err,
+        );
+        _publishState();
+        return;
+      }
     }
 
     _session.applyFirstPage(

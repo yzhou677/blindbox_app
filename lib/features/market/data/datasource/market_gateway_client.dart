@@ -22,8 +22,8 @@ class MarketGatewayClient {
     return mercariGatewayWithRetries(() async {
       final params = <String, String>{
         'limit': '${query.limit}',
-        if (query.brandId != MarketBrowseQuery.anyBrand) 'brandId': query.brandId,
-        if (query.ipId != MarketBrowseQuery.anyIp) 'ipId': query.ipId,
+        'brandId': query.brandId,
+        'ipId': query.ipId,
         if (query.searchText.trim().isNotEmpty)
           'searchText': query.searchText.trim(),
         'sort': query.sort.wireName,

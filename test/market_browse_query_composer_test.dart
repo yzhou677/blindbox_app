@@ -3,15 +3,15 @@ import 'package:blindbox_app/features/market/domain/market_browse_query.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('POP MART + Labubu uses aspect facets (q empty)', () {
+  test('POP MART + Labubu uses brand q only (verified Character on gateway)', () {
     const query = MarketBrowseQuery(
       brandId: 'pop_mart',
       ipId: 'the_monsters',
     );
-    expect(MarketBrowseQueryComposer.composeUpstreamQ(query), '');
+    expect(MarketBrowseQueryComposer.composeUpstreamQ(query), 'pop mart');
   });
 
-  test('search macaron with brand/IP facets keeps only search text', () {
+  test('search macaron with verified IP keeps brand q + search text', () {
     const query = MarketBrowseQuery(
       brandId: 'pop_mart',
       ipId: 'the_monsters',
@@ -19,14 +19,25 @@ void main() {
     );
     expect(
       MarketBrowseQueryComposer.composeUpstreamQ(query),
-      'macaron',
+      'pop mart macaron',
     );
   });
 
-  test('Any brand + Any IP uses aspect facets (q empty)', () {
+  test('non-verified Dimoo includes IP keyword in q', () {
+    const query = MarketBrowseQuery(
+      brandId: 'pop_mart',
+      ipId: 'dimoo',
+    );
+    expect(
+      MarketBrowseQueryComposer.composeUpstreamQ(query),
+      'pop mart Dimoo',
+    );
+  });
+
+  test('Any brand + Any IP uses discover keywords', () {
     expect(
       MarketBrowseQueryComposer.composeUpstreamQ(const MarketBrowseQuery()),
-      '',
+      'blind box vinyl figure',
     );
   });
 

@@ -1,18 +1,37 @@
 import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
 import 'package:blindbox_app/features/market/domain/market_browse_query.dart';
-import 'package:blindbox_app/features/market/taxonomy/brand_taxonomy_registry.dart';
 import 'package:blindbox_app/features/market/taxonomy/ip_taxonomy_registry.dart';
 import 'package:blindbox_app/features/market/taxonomy/taxonomy_models.dart';
 
 /// Composes upstream eBay keyword queries from curated taxonomy + user text.
+///
+/// Mirrors gateway [composeBrowseUpstreamQ] — `q` is primary retrieval; aspects
+/// are server-side refinement only.
 abstract final class MarketBrowseQueryComposer {
-  static const String defaultCollectibleTerms = 'designer vinyl blind box figure';
+  static const String defaultCollectibleTerms = 'blind box vinyl figure';
+
+  /// IPs with live-verified eBay Character facet (must match gateway taxonomy).
+  static const Set<String> _verifiedCharacterIpIds = {
+    'the_monsters',
+    'hirono',
+    'skullpanda',
+    'crybaby',
+    'molly',
+    'pucky',
+  };
+
+  static const Map<String, String> _brandQueryTerms = {
+    'pop_mart': 'pop mart',
+    'dpl': 'cureplaneta',
+    'rolife': 'rolife',
+    'finding_unicorn': 'finding unicorn',
+    'tntspace': 'tnt space',
+    'toptoy': 'toptoy',
+  };
 
   /// Builds the keyword string sent to the gateway / eBay Browse `q` parameter.
   static String composeUpstreamQ(MarketBrowseQuery query) {
     final search = query.searchText.trim();
-    if (_useAspectFacets(query)) return search;
-
     final terms = <String>[];
 
     if (query.brandId != MarketTaxonomyIds.anyBrand) {
@@ -20,7 +39,8 @@ abstract final class MarketBrowseQueryComposer {
       if (brandTerm != null) terms.add(brandTerm);
     }
 
-    if (query.ipId != MarketTaxonomyIds.anyIp) {
+    if (query.ipId != MarketTaxonomyIds.anyIp &&
+        !_verifiedCharacterIpIds.contains(query.ipId)) {
       final ipTerm = _ipSearchTerm(query.ipId);
       if (ipTerm != null) terms.add(ipTerm);
     }
@@ -31,20 +51,8 @@ abstract final class MarketBrowseQueryComposer {
     return terms.join(' ');
   }
 
-  static bool _useAspectFacets(MarketBrowseQuery query) {
-    if (query.brandId == MarketTaxonomyIds.anyBrand &&
-        query.ipId == MarketTaxonomyIds.anyIp) {
-      return true;
-    }
-    return query.brandId != MarketTaxonomyIds.anyBrand ||
-        query.ipId != MarketTaxonomyIds.anyIp;
-  }
-
   static String? _brandSearchTerm(String brandId) {
-    for (final brand in BrandTaxonomyRegistry.all) {
-      if (brand.id == brandId) return brand.displayName;
-    }
-    return null;
+    return _brandQueryTerms[brandId];
   }
 
   static String? _ipSearchTerm(String ipId) {
