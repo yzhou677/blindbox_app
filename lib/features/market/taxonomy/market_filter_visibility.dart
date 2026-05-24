@@ -21,6 +21,16 @@ abstract final class MarketFilterVisibility {
     'molly': {'baby_molly', 'space_molly'},
   };
 
+  /// Brand rails that omit the “Any IP” chip (eBay aspect brand ≠ app label).
+  static const Set<String> hideAnyIpForBrandIds = {
+    'dpl',
+  };
+
+  /// When [hideAnyIpForBrandIds] applies, selecting the brand defaults to this IP.
+  static const Map<String, String> defaultIpWhenBrandSelected = {
+    'dpl': 'baby_three',
+  };
+
   /// Whether [ipId] should appear on market/collection filter chip rails for [brandIpIds].
   static bool shouldShowIpOnFilterRail(String ipId, Set<String> brandIpIds) {
     final children = suppressParentIpWhenChildrenPresent[ipId];

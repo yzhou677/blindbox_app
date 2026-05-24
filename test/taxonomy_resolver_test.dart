@@ -27,6 +27,12 @@ void main() {
       expect(m.ipId, 'nommi');
     });
 
+    test('Baby Three title resolves to dpl + baby_three', () {
+      final m = resolver.resolve('Baby Three Fairytale World Plush Blind Box');
+      expect(m.brandId, 'dpl');
+      expect(m.ipId, 'baby_three');
+    });
+
     test('weak unrelated title → unknown taxonomy match', () {
       final m = resolver.resolve('Vintage Toy Lot 1990 Mixed Figures');
       expect(m.brandId, isNull);
