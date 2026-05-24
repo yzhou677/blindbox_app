@@ -14,12 +14,13 @@ import 'package:blindbox_app/features/market/presentation/collectible_market_sor
 import 'package:blindbox_app/features/market/presentation/market_price_sort.dart';
 import 'package:blindbox_app/features/market/widgets/collectible_market_card.dart';
 import 'package:blindbox_app/features/market/widgets/market_discovery_chips.dart';
-import 'package:blindbox_app/features/market/widgets/market_search_bar.dart';
 import 'package:blindbox_app/features/market/widgets/trending_market_section.dart';
+import 'package:blindbox_app/shared/widgets/app_search_field.dart';
 import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 class MarketScreen extends ConsumerStatefulWidget {
   const MarketScreen({super.key});
@@ -29,7 +30,6 @@ class MarketScreen extends ConsumerStatefulWidget {
 }
 
 class _MarketScreenState extends ConsumerState<MarketScreen> {
-  final TextEditingController _search = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
   /// Presentation-only; browse list is derived from filters + this order.
@@ -45,7 +45,6 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
   void dispose() {
     ShellTabReselectBus.instance.reselectedBranch.removeListener(_onTabReselected);
     _scrollController.dispose();
-    _search.dispose();
     super.dispose();
   }
 
@@ -60,17 +59,6 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
       duration: const Duration(milliseconds: 320),
       curve: Curves.easeOutCubic,
     );
-  }
-
-  void _clearDraft() {
-    _search.clear();
-    ref.read(marketBrowseNotifierProvider.notifier).setQuery('');
-  }
-
-  void _clearSearchSession() {
-    FocusManager.instance.primaryFocus?.unfocus();
-    _search.clear();
-    ref.read(marketBrowseNotifierProvider.notifier).clearSearchSession();
   }
 
   @override
@@ -138,14 +126,10 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  MarketSearchBar(
-                    controller: _search,
-                    onChanged: notifier.setQuery,
-                    onSearchSubmitted: notifier.submitSearch,
-                    onClearSearchSession: _clearSearchSession,
-                    onClearDraft: _clearDraft,
-                    searchResultsActive: browse.searchResultsActive,
-                    showClearDraft: browse.query.trim().isNotEmpty && !browse.searchResultsActive,
+                  AppSearchField(
+                    readOnly: true,
+                    onTap: () => context.push('/market/search'),
+                    hintText: 'Search figures, series, brands…',
                   ),
                   if (!immersive) ...[
                     const SizedBox(height: FeedRhythm.blockGapMedium),
