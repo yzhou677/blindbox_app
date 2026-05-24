@@ -9,6 +9,8 @@ class MarketListingDetail {
     required this.imageUrl,
     required this.listingUrl,
     this.condition,
+    this.quantityAvailable,
+    this.availabilityStatus,
     this.shortDescription,
     this.sellerLine,
     this.shippingSummary,
@@ -19,6 +21,8 @@ class MarketListingDetail {
   final String imageUrl;
   final String listingUrl;
   final String? condition;
+  final int? quantityAvailable;
+  final String? availabilityStatus;
   final String? shortDescription;
   final String? sellerLine;
   final String? shippingSummary;

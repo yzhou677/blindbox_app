@@ -19,7 +19,8 @@ export function normalizeItemDetail(raw: ProviderRawItem): GatewayItemDetailDto 
     legacyItemId,
   );
 
-  const condition = readString(raw, ['condition', 'conditionDisplayName']);
+  const condition = readConditionLabel(raw);
+  const availability = readEstimatedAvailability(raw);
   const shortDescription = trimDescription(
     readString(raw, ['shortDescription', 'description']),
   );
@@ -41,6 +42,8 @@ export function normalizeItemDetail(raw: ProviderRawItem): GatewayItemDetailDto 
     imageUrl,
     listingUrl,
     condition: condition || undefined,
+    quantity: availability.quantity,
+    availabilityStatus: availability.status,
     shortDescription: shortDescription || undefined,
     seller:
       sellerUsername || sellerFeedback
@@ -51,6 +54,116 @@ export function normalizeItemDetail(raw: ProviderRawItem): GatewayItemDetailDto 
         : undefined,
     shipping: shippingSummary ? { summary: shippingSummary } : undefined,
   };
+}
+
+function readConditionLabel(raw: ProviderRawItem): string | undefined {
+  const display = readString(raw, [
+    'conditionDisplayName',
+    'conditionDescription',
+  ]);
+  if (display) return display;
+
+  const nested = readRecord(raw.condition);
+  if (nested) {
+    const nestedLabel = readString(nested, [
+      'conditionDisplayName',
+      'conditionDescription',
+      'condition',
+    ]);
+    if (nestedLabel) return formatConditionToken(nestedLabel);
+  }
+
+  const token = readString(raw, ['condition']);
+  if (token) return formatConditionToken(token);
+  return undefined;
+}
+
+function formatConditionToken(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return '';
+  const key = trimmed.toUpperCase().replace(/[\s-]+/g, '_');
+  const labels: Record<string, string> = {
+    NEW: 'New',
+    NEW_WITH_DEFECTS: 'New with defects',
+    NEW_OTHER: 'New (other)',
+    MANUFACTURER_REFURBISHED: 'Manufacturer refurbished',
+    CERTIFIED_REFURBISHED: 'Certified refurbished',
+    EXCELLENT_REFURBISHED: 'Excellent refurbished',
+    VERY_GOOD_REFURBISHED: 'Very good refurbished',
+    GOOD_REFURBISHED: 'Good refurbished',
+    SELLER_REFURBISHED: 'Seller refurbished',
+    LIKE_NEW: 'Like new',
+    USED: 'Used',
+    VERY_GOOD: 'Very good',
+    GOOD: 'Good',
+    ACCEPTABLE: 'Acceptable',
+    FOR_PARTS_OR_NOT_WORKING: 'For parts or not working',
+  };
+  return labels[key] ?? toTitleWords(trimmed.replace(/_/g, ' '));
+}
+
+function toTitleWords(raw: string): string {
+  return raw
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
+
+function readEstimatedAvailability(raw: ProviderRawItem): {
+  quantity?: number;
+  status?: string;
+} {
+  const rows = raw.estimatedAvailabilities;
+  if (!Array.isArray(rows) || rows.length === 0) {
+    const direct = readQuantityValue(raw.estimatedAvailableQuantity);
+    return direct != null ? { quantity: direct } : {};
+  }
+
+  let quantity: number | undefined;
+  let status: string | undefined;
+  for (const row of rows) {
+    if (!row || typeof row !== 'object') continue;
+    const entry = row as ProviderRawItem;
+    const rowQty = readQuantityValue(entry.estimatedAvailableQuantity);
+    if (rowQty != null) {
+      quantity = quantity == null ? rowQty : quantity + rowQty;
+    }
+    const rowStatus = readString(entry, ['estimatedAvailabilityStatus']);
+    if (rowStatus) {
+      status = mergeAvailabilityStatus(status, rowStatus);
+    }
+  }
+
+  return {
+    quantity,
+    status,
+  };
+}
+
+function mergeAvailabilityStatus(
+  current: string | undefined,
+  next: string,
+): string {
+  const normalized = next.trim().toUpperCase();
+  if (!current) return normalized;
+  const rank = (value: string) => {
+    if (value === 'OUT_OF_STOCK') return 0;
+    if (value === 'LIMITED_STOCK') return 1;
+    return 2;
+  };
+  return rank(normalized) < rank(current) ? normalized : current;
+}
+
+function readQuantityValue(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value) && value >= 0) {
+    return Math.floor(value);
+  }
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number.parseInt(value.trim(), 10);
+    if (Number.isFinite(parsed) && parsed >= 0) return parsed;
+  }
+  return undefined;
 }
 
 function buildShippingSummary(raw: ProviderRawItem): string | undefined {

@@ -11,6 +11,8 @@ class GatewayItemDetailDto {
     required this.imageUrl,
     required this.listingUrl,
     this.condition,
+    this.quantityAvailable,
+    this.availabilityStatus,
     this.shortDescription,
     this.sellerUsername,
     this.sellerFeedbackPercentage,
@@ -24,6 +26,8 @@ class GatewayItemDetailDto {
   final String imageUrl;
   final String listingUrl;
   final String? condition;
+  final int? quantityAvailable;
+  final String? availabilityStatus;
   final String? shortDescription;
   final String? sellerUsername;
   final String? sellerFeedbackPercentage;
@@ -52,6 +56,8 @@ class GatewayItemDetailDto {
       imageUrl: json['imageUrl'] as String? ?? '',
       listingUrl: json['listingUrl'] as String? ?? '',
       condition: (json['condition'] as String?)?.trim(),
+      quantityAvailable: _parseQuantity(json['quantity']),
+      availabilityStatus: (json['availabilityStatus'] as String?)?.trim(),
       shortDescription: (json['shortDescription'] as String?)?.trim(),
       sellerUsername: (seller?['username'] as String?)?.trim(),
       sellerFeedbackPercentage:
@@ -65,5 +71,14 @@ class GatewayItemDetailDto {
     if (raw is String && raw.trim().isNotEmpty) return raw.trim();
     if (raw is num) return raw.toString();
     return '0';
+  }
+
+  static int? _parseQuantity(Object? raw) {
+    if (raw is int && raw >= 0) return raw;
+    if (raw is num && raw >= 0) return raw.round();
+    if (raw is String && raw.trim().isNotEmpty) {
+      return int.tryParse(raw.trim());
+    }
+    return null;
   }
 }

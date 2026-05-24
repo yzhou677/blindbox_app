@@ -70,8 +70,29 @@ MarketListingDetail _mapDetail(GatewayItemDetailDto wire, MarketListing listing)
     imageUrl: image,
     listingUrl: listingUrl,
     condition: wire.condition,
+    quantityAvailable: wire.quantityAvailable,
+    availabilityStatus: wire.availabilityStatus,
     shortDescription: wire.shortDescription,
     sellerLine: sellerLine,
     shippingSummary: wire.shippingSummary,
   );
+}
+
+/// User-facing quantity / stock line for listing detail.
+String? formatMarketListingQuantityLine(MarketListingDetail detail) {
+  final status = detail.availabilityStatus?.trim().toUpperCase();
+  if (status == 'OUT_OF_STOCK') return 'Out of stock';
+
+  final qty = detail.quantityAvailable;
+  if (qty != null) {
+    if (qty == 0) return 'Out of stock';
+    if (qty == 1) return '1 available';
+    return '$qty available';
+  }
+
+  return switch (status) {
+    'IN_STOCK' => 'In stock',
+    'LIMITED_STOCK' => 'Limited stock',
+    _ => null,
+  };
 }

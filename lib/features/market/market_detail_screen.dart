@@ -349,6 +349,8 @@ class _MarketDetailFacts extends StatelessWidget {
     final rows = <({String label, String value})>[
       if (detail.condition case final condition?)
         (label: 'Condition', value: condition),
+      if (formatMarketListingQuantityLine(detail) case final quantity?)
+        (label: 'Quantity', value: quantity),
       if (detail.sellerLine case final seller?)
         (label: 'Seller', value: seller),
       if (detail.shippingSummary case final shipping?)

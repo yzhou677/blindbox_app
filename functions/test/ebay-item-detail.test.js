@@ -11,7 +11,7 @@ describe('normalizeItemDetail', () => {
       legacyItemId: '110589358256',
       title: 'POP MART Labubu',
       price: { value: '24.50', currency: 'USD' },
-      condition: 'New',
+      conditionDisplayName: 'New',
       shortDescription: 'Sealed blind box.',
       seller: { username: 'seller_one', feedbackPercentage: '99.2' },
       shippingOptions: [
@@ -39,5 +39,26 @@ describe('normalizeItemDetail', () => {
       'https://i.ebayimg.com/images/g/abc/s-l1600.jpg',
     );
     assert.ok(dto.listingUrl.includes('110589358256'));
+  });
+
+  it('maps estimated availability quantity and formats condition enums', () => {
+    const dto = normalizeItemDetail({
+      itemId: 'v1|1|0',
+      title: 'Smiski',
+      price: { value: '12.00', currency: 'USD' },
+      condition: 'USED',
+      estimatedAvailabilities: [
+        {
+          estimatedAvailabilityStatus: 'IN_STOCK',
+          estimatedAvailableQuantity: 3,
+        },
+      ],
+      itemWebUrl: 'https://www.ebay.com/itm/1',
+    });
+
+    assert.ok(dto);
+    assert.equal(dto.condition, 'Used');
+    assert.equal(dto.quantity, 3);
+    assert.equal(dto.availabilityStatus, 'IN_STOCK');
   });
 });
