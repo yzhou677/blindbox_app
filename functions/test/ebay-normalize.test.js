@@ -23,6 +23,22 @@ describe('normalizeListing eBay Browse shape', () => {
     assert.ok(dto.listingUrl.includes('110589358256'));
   });
 
+  it('maps seller username and itemCreationDate when present', () => {
+    const dto = normalizeListing({
+      itemId: 'v1|110589358256|0',
+      legacyItemId: '110589358256',
+      title: 'POP MART Labubu',
+      price: { value: '24.50', currency: 'USD' },
+      itemWebUrl:
+        'https://www.ebay.com/itm/POP-MART-Labubu/110589358256',
+      seller: { username: 'collectible_hub' },
+      itemCreationDate: '2026-03-01T12:00:00.000Z',
+    });
+    assert.ok(dto);
+    assert.equal(dto.seller?.username, 'collectible_hub');
+    assert.equal(dto.itemCreationDate, '2026-03-01T12:00:00.000Z');
+  });
+
   it('ignores itemHref API URLs when itemWebUrl missing', () => {
     const dto = normalizeListing({
       itemId: 'v1|999|0',

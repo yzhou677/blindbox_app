@@ -127,6 +127,20 @@ class EbayGatewayMarketSource implements MarketSource {
   CachedBrowseBatch? cachedBatchFor(MarketBrowseQuery query) =>
       _cache.batchForQuery(providerId, query.signature);
 
+  /// Memory batch first; on cold start hydrates per-query disk cache into memory.
+  Future<CachedBrowseBatch?> resolveCachedBatchFor(MarketBrowseQuery query) async {
+    var batch = cachedBatchFor(query);
+    if (batch != null) return batch;
+
+    await _cache.readStaleFromDiskForQuery(providerId, query.signature);
+    batch = cachedBatchFor(query);
+    if (batch == null) return null;
+    if (!batch.isDiskStaleAcceptable(ttl: MarketGatewayConfig.diskStaleTtl)) {
+      return null;
+    }
+    return batch;
+  }
+
   void resetPaginationFor(MarketBrowseQuery query) =>
       _cache.clearQuery(providerId, query.signature);
 

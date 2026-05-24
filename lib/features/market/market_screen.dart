@@ -10,11 +10,15 @@ import 'package:blindbox_app/features/market/data/sandbox/market_sandbox_config.
 import 'package:blindbox_app/features/market/widgets/market_load_more_footer.dart';
 import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
 import 'package:blindbox_app/features/market/data/mock_market_listings.dart';
-import 'package:blindbox_app/features/market/presentation/collectible_market_sort.dart';
+import 'package:blindbox_app/features/market/presentation/collectible_market_display_order.dart';
 import 'package:blindbox_app/features/market/presentation/market_price_sort.dart';
 import 'package:blindbox_app/features/market/widgets/collectible_market_card.dart';
+import 'package:blindbox_app/features/market/widgets/market_browse_session_transition.dart';
 import 'package:blindbox_app/features/market/widgets/market_discovery_chips.dart';
-import 'package:blindbox_app/features/market/widgets/trending_market_section.dart';
+import 'package:blindbox_app/features/market/application/chasers_phase1_scorer.dart';
+import 'package:blindbox_app/features/market/application/market_chasers_controller.dart';
+import 'package:blindbox_app/features/market/data/chasers/market_chasers_config.dart';
+import 'package:blindbox_app/features/market/widgets/chasers_market_section.dart';
 import 'package:blindbox_app/shared/widgets/app_search_field.dart';
 import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
 import 'package:flutter/foundation.dart';
@@ -34,6 +38,9 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
 
   /// Presentation-only; browse list is derived from filters + this order.
   MarketPriceSort _priceSort = MarketPriceSort.lowToHigh;
+  List<String> _displayOrderIds = const [];
+  MarketPriceSort _displayOrderPriceSort = MarketPriceSort.lowToHigh;
+  String? _displayOrderBrowseSignature;
 
   @override
   void initState() {
@@ -68,14 +75,44 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
     final browse = ref.watch(marketBrowseNotifierProvider);
     final notifier = ref.read(marketBrowseNotifierProvider.notifier);
     final snapshots = ref.watch(visibleCollectibleMarketSnapshotsProvider);
-    final sorted = sortCollectibleMarketSnapshots(
-      snapshots,
-      _priceSort,
-      sortByPrice: true,
+    final browseSignature = collectibleMarketBrowseSignature(
+      brandId: browse.brandId,
+      ipId: browse.ipId,
+      query: browse.query.trim(),
+      searchResultsActive: browse.searchResultsActive,
     );
+    final display = resolveCollectibleMarketDisplaySnapshots(
+      snapshots: snapshots,
+      browseSignature: browseSignature,
+      priceSort: _priceSort,
+      stablePagination: MarketGatewayConfig.isActive,
+      previousOrderIds: _displayOrderIds,
+      previousPriceSort: _displayOrderPriceSort,
+      previousBrowseSignature: _displayOrderBrowseSignature,
+    );
+    final sorted = display.snapshots;
+    if (display.orderIds != _displayOrderIds ||
+        _displayOrderPriceSort != _priceSort ||
+        _displayOrderBrowseSignature != browseSignature) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() {
+          _displayOrderIds = display.orderIds;
+          _displayOrderPriceSort = _priceSort;
+          _displayOrderBrowseSignature = browseSignature;
+        });
+      });
+    }
     final immersive = browse.searchResultsActive;
     final liveHasMore = ref.watch(marketLiveBrowseHasMoreProvider);
     final loadingMore = ref.watch(marketBrowseLoadMoreProvider);
+    final sessionTransitioning = ref.watch(marketBrowseSessionTransitionProvider);
+    final chasersState = ref.watch(marketChasersControllerProvider);
+    final showLiveChasersSlot = MarketChasersConfig.showLiveChasersSlot(
+      isLoading: chasersState.isLoading,
+      entryCount: chasersState.entries.length,
+    );
+    final showFixtureChasers = MarketChasersConfig.showFixtureRail;
 
     ref.listen<MarketSandboxDiagnostics?>(marketSandboxDiagnosticsProvider,
         (prev, next) {
@@ -131,6 +168,21 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                     onTap: () => context.push('/market/search'),
                     hintText: 'Search figures, series, brands…',
                   ),
+                  if (!immersive && showLiveChasersSlot) ...[
+                    const SizedBox(height: FeedRhythm.blockGapMedium),
+                    ChasersMarketSection(
+                      entries: chasersState.entries,
+                      isLoading: chasersState.isLoading,
+                    ),
+                    const SizedBox(height: FeedRhythm.marketChasersToBrowseHeaderGap),
+                  ],
+                  if (!immersive && showFixtureChasers) ...[
+                    const SizedBox(height: FeedRhythm.blockGapMedium),
+                    ChasersMarketSection(
+                      entries: chasersHeatFromFixtureListings(mockChasersMarketListings()),
+                    ),
+                    const SizedBox(height: FeedRhythm.marketChasersToBrowseHeaderGap),
+                  ],
                   if (!immersive) ...[
                     const SizedBox(height: FeedRhythm.blockGapMedium),
                     MarketDiscoveryChips(
@@ -147,13 +199,11 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
               ),
             ),
           ),
-          if (!immersive && !MarketGatewayConfig.isActive) ...[
+          if (!immersive &&
+              !MarketGatewayConfig.isActive &&
+              !showFixtureChasers &&
+              !showLiveChasersSlot)
             const SliverToBoxAdapter(child: SizedBox(height: FeedRhythm.blockGapMedium)),
-            SliverToBoxAdapter(
-              child: TrendingMarketSection(items: mockTrendingMarketListings()),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: FeedRhythm.marketTrendingToBrowseHeaderGap)),
-          ],
           if (!immersive) ...[
             if (MarketGatewayConfig.isActive)
               const SliverToBoxAdapter(child: SizedBox(height: FeedRhythm.blockGapMedium)),
@@ -203,10 +253,12 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
           if (sorted.isEmpty)
             SliverFillRemaining(
               hasScrollBody: false,
-              child: _MarketEmptySearch(
-                query: browse.query.trim(),
-                filterActive: browse.filtersActive,
-              ),
+              child: sessionTransitioning && MarketGatewayConfig.isActive
+                  ? const MarketBrowseResultsSkeleton()
+                  : _MarketEmptySearch(
+                      query: browse.query.trim(),
+                      filterActive: browse.filtersActive,
+                    ),
             )
           else
             SliverPadding(
@@ -218,12 +270,16 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                 20,
                 FeedRhythm.tabScrollTailPadding,
               ),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    return CollectibleMarketCard(snapshot: sorted[index]);
-                  },
-                  childCount: sorted.length,
+              sliver: SliverToBoxAdapter(
+                child: MarketBrowseSessionTransition(
+                  active: sessionTransitioning,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (final snapshot in sorted)
+                        CollectibleMarketCard(snapshot: snapshot),
+                    ],
+                  ),
                 ),
               ),
             ),

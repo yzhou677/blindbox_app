@@ -22,6 +22,8 @@ extension GatewayListingDtoMapper on MercariListingDto {
         ? upgradeEbayImageUrl(imageUrl.trim())
         : mockCollectibleArtUrl('$prefix-$listingId', 'e8eaf6');
     final url = listingUrl.trim();
+    final created = itemCreationDate?.trim();
+    final seller = sellerUsername?.trim();
 
     return MarketListing(
       id: listingId,
@@ -41,6 +43,9 @@ extension GatewayListingDtoMapper on MercariListingDto {
       currentPriceUsd: priceUsd,
       priceChangePercent: 0,
       listingCount: 1,
+      sellerUsername: seller != null && seller.isNotEmpty ? seller : null,
+      itemCreationDate:
+          created == null || created.isEmpty ? null : DateTime.tryParse(created),
     );
   }
 }

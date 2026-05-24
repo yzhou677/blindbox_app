@@ -37,10 +37,7 @@ Future<void> showCollectibleMarketSheet({
             ),
           );
           final c = rep?.collectible;
-          final trailingMeta = [
-            CollectibleMarketMoodCopy.snapshotPriceLabel(snapshot),
-            CollectibleMarketMoodCopy.sightingsLabel(snapshot.listingCount),
-          ].join(' · ');
+          final trailingMeta = CollectibleMarketMoodCopy.snapshotPriceLabel(snapshot);
 
           return CollectibleSheetInsets(
             child: CustomScrollView(

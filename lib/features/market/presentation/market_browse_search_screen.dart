@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:blindbox_app/features/market/application/collectible_market_providers.dart';
 import 'package:blindbox_app/features/market/application/market_browse_notifier.dart';
 import 'package:blindbox_app/features/market/application/market_browse_load_more_controller.dart';
-import 'package:blindbox_app/features/market/application/market_live_browse_controller.dart';
 import 'package:blindbox_app/features/market/data/gateway/market_gateway_config.dart';
 import 'package:blindbox_app/features/market/presentation/collectible_market_sort.dart';
 import 'package:blindbox_app/features/market/presentation/market_price_sort.dart';
+import 'package:blindbox_app/features/market/widgets/market_browse_session_transition.dart';
 import 'package:blindbox_app/features/market/widgets/collectible_market_card.dart';
 import 'package:blindbox_app/features/market/widgets/market_load_more_footer.dart';
 import 'package:blindbox_app/shared/widgets/feed_search_screen.dart';
@@ -80,8 +80,7 @@ class _MarketBrowseSearchScreenState
     );
     final liveHasMore = ref.watch(marketLiveBrowseHasMoreProvider);
     final loadingMore = ref.watch(marketBrowseLoadMoreProvider);
-    final liveState = ref.watch(marketLiveBrowseControllerProvider);
-    final loading = MarketGatewayConfig.isActive && liveState.isBusy;
+    final sessionTransitioning = ref.watch(marketBrowseSessionTransitionProvider);
 
     return FeedSearchScreen(
       title: 'Search market',
@@ -94,7 +93,7 @@ class _MarketBrowseSearchScreenState
       results: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (loading)
+          if (sessionTransitioning)
             LinearProgressIndicator(
               minHeight: 2,
               color: scheme.primary.withValues(alpha: 0.55),
@@ -102,30 +101,35 @@ class _MarketBrowseSearchScreenState
             ),
           Expanded(
             child: sorted.isEmpty
-                ? Center(
-                    child: Text(
-                      'No matches for that search.',
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: scheme.onSurfaceVariant.withValues(alpha: 0.8),
-                      ),
+                ? sessionTransitioning
+                    ? const MarketBrowseResultsSkeleton()
+                    : Center(
+                        child: Text(
+                          'No matches for that search.',
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: scheme.onSurfaceVariant.withValues(alpha: 0.8),
+                          ),
+                        ),
+                      )
+                : MarketBrowseSessionTransition(
+                    active: sessionTransitioning,
+                    child: ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+                      itemCount: sorted.length +
+                          (MarketGatewayConfig.isActive && liveHasMore ? 1 : 0),
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemBuilder: (context, index) {
+                        if (index >= sorted.length) {
+                          return MarketLoadMoreFooter(
+                            loading: loadingMore,
+                            onLoadMore: () => ref
+                                .read(marketBrowseLoadMoreProvider.notifier)
+                                .loadMore(),
+                          );
+                        }
+                        return CollectibleMarketCard(snapshot: sorted[index]);
+                      },
                     ),
-                  )
-                : ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-                    itemCount: sorted.length +
-                        (MarketGatewayConfig.isActive && liveHasMore ? 1 : 0),
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      if (index >= sorted.length) {
-                        return MarketLoadMoreFooter(
-                          loading: loadingMore,
-                          onLoadMore: () => ref
-                              .read(marketBrowseLoadMoreProvider.notifier)
-                              .loadMore(),
-                        );
-                      }
-                      return CollectibleMarketCard(snapshot: sorted[index]);
-                    },
                   ),
           ),
         ],

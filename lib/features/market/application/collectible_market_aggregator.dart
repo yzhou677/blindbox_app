@@ -14,14 +14,18 @@ final int _mediumRank = MarketMatchConfidence.medium.rank;
 
 /// Builds collectible-centered snapshots from enriched browse listings.
 List<CollectibleMarketSnapshot> buildCollectibleMarketSnapshots(
-  List<MarketListing> listings,
-) {
+  List<MarketListing> listings, {
+  bool preserveFeedOrder = false,
+}) {
   final buckets = <String, List<MarketListing>>{};
   final identities = <String, CollectibleMarketIdentity>{};
+  final firstListingIndex = <String, int>{};
 
-  for (final row in listings) {
+  for (var i = 0; i < listings.length; i++) {
+    final row = listings[i];
     final identity = _identityForListing(row);
     identities[identity.snapshotId] = identity;
+    firstListingIndex.putIfAbsent(identity.snapshotId, () => i);
     buckets.putIfAbsent(identity.snapshotId, () => []).add(row);
   }
 
@@ -70,7 +74,14 @@ List<CollectibleMarketSnapshot> buildCollectibleMarketSnapshots(
     );
   }
 
-  out.sort((a, b) => b.listingCount.compareTo(a.listingCount));
+  if (preserveFeedOrder) {
+    out.sort(
+      (a, b) => firstListingIndex[a.identity.snapshotId]!
+          .compareTo(firstListingIndex[b.identity.snapshotId]!),
+    );
+  } else {
+    out.sort((a, b) => b.listingCount.compareTo(a.listingCount));
+  }
   return out;
 }
 

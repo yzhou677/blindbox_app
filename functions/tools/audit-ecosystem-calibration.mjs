@@ -47,6 +47,10 @@ import {
   filterRawItemsByTaxonomy,
   listingTitleMatchesTaxonomy,
 } from '../lib/providers/gateway/titleTaxonomyFilter.js';
+import {
+  clusterMarketTitles,
+  sellerDiversityReport,
+} from './lib/market-title-cluster.mjs';
 
 const SAMPLE_LIMIT = 12;
 const SPARSE_THRESHOLD = 6;
@@ -120,12 +124,22 @@ async function searchEbay(base, token, { q, categoryIds, aspectFilter, limit = S
 
 function normalizeListing(row) {
   const cat = row.categories?.[0]?.categoryId ?? row.leafCategoryIds?.[0] ?? null;
+  const priceRaw = row.price?.value ?? row.price;
+  const priceUsd =
+    typeof priceRaw === 'number'
+      ? priceRaw
+      : typeof priceRaw === 'string'
+        ? Number.parseFloat(priceRaw)
+        : null;
   return {
     itemId: row.itemId ?? '',
     title: row.title ?? '',
     categoryId: cat ? String(cat) : null,
     imageUrl: row.image?.imageUrl ?? row.thumbnailImages?.[0]?.imageUrl ?? null,
     condition: row.condition ?? null,
+    sellerUsername: row.seller?.username ?? null,
+    itemCreationDate: row.itemCreationDate ?? null,
+    priceUsd: Number.isFinite(priceUsd) ? priceUsd : null,
   };
 }
 
@@ -190,6 +204,42 @@ function observedNamingPatterns(titles) {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 12)
     .map(([token, count]) => ({ token, count }));
+}
+
+function hintTokensForCombo(combo) {
+  const ip = MARKET_TAXONOMY_IPS.find((row) => row.id === combo.ipId);
+  const tokens = [];
+  if (ip?.displayName) tokens.push(ip.displayName);
+  for (const alias of ip?.aliases ?? []) tokens.push(alias);
+  const brand = MARKET_TAXONOMY_BRANDS.find((row) => row.id === combo.brandId);
+  if (brand?.displayName) tokens.push(brand.displayName);
+  return tokens;
+}
+
+function inspectTitleClusters(filtered, combo) {
+  const rows = filtered.map((r) => ({
+    title: r.title,
+    sellerUsername: r.sellerUsername,
+    priceUsd: r.priceUsd,
+  }));
+  const hintTokens = hintTokensForCombo(combo);
+  const clusters = clusterMarketTitles(rows, { hintTokens, minClusterSize: 2 });
+  const diversity = sellerDiversityReport(rows);
+  const singletonCount = rows.length - clusters.reduce((n, c) => n + c.listingCount, 0);
+  return {
+    sellerDiversity: diversity,
+    singletonListingCount: singletonCount,
+    multiListingClusters: clusters.length,
+    topClusters: clusters.slice(0, 5),
+    clusterQuality:
+      clusters.length === 0
+        ? 'no_multi_listing_clusters'
+        : clusters.some((c) => !c.likelyNoisy && !c.likelyAccessoryHeavy && c.uniqueSellerCount >= 2)
+          ? 'believable'
+          : clusters.some((c) => !c.likelyNoisy && !c.likelyAccessoryHeavy)
+            ? 'mixed'
+            : 'noisy',
+  };
 }
 
 function classifyQuality(input) {
@@ -333,6 +383,7 @@ async function auditCombo(base, token, combo) {
   });
 
   const observedSellerNaming = observedNamingPatterns(filtered.map((r) => r.title));
+  const titleClustering = inspectTitleClusters(filtered, combo);
 
   return {
     brand: combo.brand,
@@ -356,11 +407,14 @@ async function auditCombo(base, token, combo) {
     status: quality.status,
     why: quality.why,
     observedSellerNaming,
+    titleClustering,
     listings: filtered.slice(0, 5).map((r) => ({
       title: r.title,
       categoryId: r.categoryId,
       hasImage: Boolean(r.imageUrl),
       condition: r.condition,
+      sellerUsername: r.sellerUsername,
+      itemCreationDate: r.itemCreationDate,
     })),
     upstreamRejectedTitles: rawItems
       .filter((r, i) => !titleChecks[i])
@@ -432,6 +486,40 @@ function buildMarkdownReport(payload) {
   const top = [...tokenAgg.entries()].sort((a, b) => b[1] - a[1]).slice(0, 30);
   for (const [token, count] of top) {
     lines.push(`- ${token} (${count})`);
+  }
+  lines.push('');
+  lines.push('## Title clustering (aggregate)');
+  lines.push('');
+  const clusterQualityCounts = {};
+  let believableCombos = 0;
+  for (const row of payload.results) {
+    const q = row.titleClustering?.clusterQuality ?? 'unknown';
+    clusterQualityCounts[q] = (clusterQualityCounts[q] ?? 0) + 1;
+    if (q === 'believable') believableCombos++;
+  }
+  lines.push(`- Combos with believable multi-listing clusters: ${believableCombos}/${payload.results.length}`);
+  for (const [k, v] of Object.entries(clusterQualityCounts).sort((a, b) => b[1] - a[1])) {
+    lines.push(`- ${k}: ${v}`);
+  }
+  lines.push('');
+  lines.push('## Sample clusters (first healthy IP-specific combo with clusters)');
+  lines.push('');
+  const sample = payload.results.find(
+    (r) =>
+      r.status === 'healthy' &&
+      r.ipId !== ANY_IP &&
+      (r.titleClustering?.topClusters?.length ?? 0) > 0,
+  );
+  if (!sample) {
+    lines.push('None in sample.');
+  } else {
+    lines.push(`### ${sample.brand} + ${sample.ip}`);
+    for (const cluster of sample.titleClustering.topClusters.slice(0, 3)) {
+      lines.push(
+        `- **${cluster.label}** (${cluster.listingCount} listings, ${cluster.uniqueSellerCount} sellers, quality: ${cluster.likelyNoisy ? 'noisy' : cluster.likelyAccessoryHeavy ? 'accessory' : 'ok'})`,
+      );
+      for (const t of cluster.sampleTitles) lines.push(`  - ${t}`);
+    }
   }
   return lines.join('\n');
 }

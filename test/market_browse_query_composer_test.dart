@@ -41,6 +41,42 @@ void main() {
     );
   });
 
+  test('generic discover search is anchored', () {
+    expect(
+      MarketBrowseQueryComposer.composeUpstreamQ(
+        const MarketBrowseQuery(searchText: 'baby'),
+      ),
+      'blind box vinyl figure baby',
+    );
+  });
+
+  test('taxonomy-native discover search is not over-anchored', () {
+    expect(
+      MarketBrowseQueryComposer.composeUpstreamQ(
+        const MarketBrowseQuery(searchText: 'labubu'),
+      ),
+      'labubu',
+    );
+    expect(
+      MarketBrowseQueryComposer.composeUpstreamQ(
+        const MarketBrowseQuery(searchText: 'sonny angel'),
+      ),
+      'sonny angel',
+    );
+  });
+
+  test('brand-filtered search keeps chip context without discover anchor', () {
+    expect(
+      MarketBrowseQueryComposer.composeUpstreamQ(
+        const MarketBrowseQuery(
+          brandId: 'pop_mart',
+          searchText: 'baby',
+        ),
+      ),
+      'pop mart baby',
+    );
+  });
+
   test('signature excludes cursor', () {
     const a = MarketBrowseQuery(cursor: 'abc');
     const b = MarketBrowseQuery(cursor: 'xyz');

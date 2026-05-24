@@ -6,6 +6,10 @@ export type GatewayListingDto = {
   price: { value: string; currency: string };
   image: { imageUrl: string };
   listingUrl: string;
+  /** Minimal seller identity for heat/seller-diversity derivations. */
+  seller?: { username?: string };
+  /** ISO-8601 listing creation timestamp when upstream provides it. */
+  itemCreationDate?: string;
 };
 
 export type GatewayItemDetailDto = {

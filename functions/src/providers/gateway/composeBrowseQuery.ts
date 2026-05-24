@@ -445,6 +445,118 @@ export function ipKeywordTerm(ipId: string): string | undefined {
   return ipSearchTerm(ipId);
 }
 
+const COLLECTIBLE_SEARCH_CONTEXT_PHRASES = [
+  'blind box',
+  'blind-box',
+  'mystery box',
+  'vinyl figure',
+  'designer toy',
+  'art toy',
+  'sealed blind',
+  'pop mart',
+  'popmart',
+];
+
+let cachedTaxonomyNativeSearchPhrases: string[] | undefined;
+
+function normalizeSearchText(raw: string): string {
+  return raw.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function collectTaxonomyNativeSearchPhrases(): string[] {
+  if (cachedTaxonomyNativeSearchPhrases) return cachedTaxonomyNativeSearchPhrases;
+
+  const raw: string[] = [];
+  const push = (value: string | undefined) => {
+    const norm = normalizeSearchText(value ?? '');
+    if (norm.length > 0) raw.push(norm);
+  };
+
+  for (const brand of MARKET_TAXONOMY_BRANDS) {
+    push(brand.displayName);
+    for (const alias of brand.aliases ?? []) push(alias);
+    push(brand.ebayBrandQuery);
+    push(brand.ebayPreferredQueryAnyIp);
+    for (const alias of brand.titleMatchAliases ?? []) push(alias);
+    for (const aspect of brand.ebayAspectBrands ?? []) push(aspect);
+  }
+
+  for (const ip of MARKET_TAXONOMY_IPS) {
+    push(ip.displayName);
+    for (const alias of ip.aliases ?? []) push(alias);
+    push(ip.ebayCharacterValue);
+    push(ip.ebayPreferredQuery);
+    push(ip.ebayAspectBrand);
+    for (const alias of ip.titleMatchAliases ?? []) push(alias);
+  }
+
+  cachedTaxonomyNativeSearchPhrases = [...new Set(raw)].sort(
+    (a, b) => b.length - a.length,
+  );
+  return cachedTaxonomyNativeSearchPhrases;
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function searchContainsPhrase(norm: string, phrase: string): boolean {
+  if (phrase.includes(' ')) return norm.includes(phrase);
+  if (norm === phrase) return true;
+  return new RegExp(`\\b${escapeRegExp(phrase)}\\b`, 'i').test(norm);
+}
+
+export function searchContainsCollectibleContext(search: string): boolean {
+  const norm = normalizeSearchText(search);
+  if (!norm) return false;
+  if (norm === normalizeSearchText(DISCOVER_BROWSE_Q)) return true;
+  return COLLECTIBLE_SEARCH_CONTEXT_PHRASES.some((phrase) =>
+    searchContainsPhrase(norm, phrase),
+  );
+}
+
+export function isCollectibleNativeSearch(search: string): boolean {
+  const norm = normalizeSearchText(search);
+  if (!norm) return false;
+  return collectTaxonomyNativeSearchPhrases().some((phrase) =>
+    searchContainsPhrase(norm, phrase),
+  );
+}
+
+/** Whether discover browse should prepend [DISCOVER_BROWSE_Q] to user search. */
+export function shouldAnchorDiscoverSearch(
+  search: string,
+  brandId: string,
+  ipId: string,
+): boolean {
+  const trimmed = search.trim();
+  if (!trimmed) return false;
+  if (!isDiscoverBrowse(brandId, ipId)) return false;
+  if (isCollectibleNativeSearch(trimmed)) return false;
+  if (searchContainsCollectibleContext(trimmed)) return false;
+  return true;
+}
+
+export function resolveSearchTextForBrowse(input: {
+  searchText: string;
+  brandId?: string;
+  ipId?: string;
+}): string {
+  const trimmed = input.searchText.trim();
+  if (!trimmed) return trimmed;
+
+  const { brandId, ipId } = normalizeBrowseFacetIds(input);
+  if (shouldAnchorDiscoverSearch(trimmed, brandId, ipId)) {
+    return `${DISCOVER_BROWSE_Q} ${trimmed}`;
+  }
+  return trimmed;
+}
+
+/** @internal test helper */
+export function resetSearchAnchorCacheForTests(): void {
+  cachedTaxonomyNativeSearchPhrases = undefined;
+}
+
 /**
  * Builds upstream `q` — primary retrieval intent.
  * Verified Character IPs omit IP keywords (aspect refinement handles precision).
@@ -487,7 +599,11 @@ export function composeBrowseUpstreamQ(input: {
     if (supplement) terms.push(supplement);
   }
 
-  if (search) terms.push(search);
+  if (search) {
+    terms.push(
+      resolveSearchTextForBrowse({ searchText: search, brandId, ipId }),
+    );
+  }
 
   if (terms.length === 0) {
     if (isDiscoverBrowse(brandId, ipId)) return DISCOVER_BROWSE_Q;

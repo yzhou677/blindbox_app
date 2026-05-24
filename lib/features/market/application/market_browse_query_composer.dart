@@ -1,3 +1,4 @@
+import 'package:blindbox_app/features/market/application/market_browse_search_anchor.dart';
 import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
 import 'package:blindbox_app/features/market/domain/market_browse_query.dart';
 import 'package:blindbox_app/features/market/taxonomy/ip_taxonomy_registry.dart';
@@ -45,15 +46,24 @@ abstract final class MarketBrowseQueryComposer {
       if (ipTerm != null) terms.add(ipTerm);
     }
 
-    if (search.isNotEmpty) terms.add(search);
+    if (search.isNotEmpty) {
+      terms.add(
+        MarketBrowseSearchAnchor.resolveSearchText(
+          searchText: search,
+          brandId: query.brandId,
+          ipId: query.ipId,
+        ),
+      );
+    }
 
     if (terms.isEmpty) return defaultCollectibleTerms;
     return terms.join(' ');
   }
 
-  static String? _brandSearchTerm(String brandId) {
-    return _brandQueryTerms[brandId];
-  }
+  static String? _brandSearchTerm(String brandId) => brandQueryTermFor(brandId);
+
+  /// Gateway-aligned brand `q` token (for search-anchor parity).
+  static String? brandQueryTermFor(String brandId) => _brandQueryTerms[brandId];
 
   static String? _ipSearchTerm(String ipId) {
     for (final ip in IpTaxonomyRegistry.all) {

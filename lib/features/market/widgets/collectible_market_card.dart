@@ -5,7 +5,7 @@ import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/market/application/collectible_market_display_resolver.dart';
 import 'package:blindbox_app/features/market/domain/collectible_market_snapshot.dart';
 import 'package:blindbox_app/features/market/presentation/collectible_market_mood_copy.dart';
-import 'package:blindbox_app/features/market/presentation/market_listing_image.dart';
+import 'package:blindbox_app/features/market/widgets/market_listing_showcase_thumb.dart';
 import 'package:blindbox_app/features/market/utils/market_format.dart';
 import 'package:blindbox_app/features/market/widgets/collectible_market_signals.dart';
 import 'package:blindbox_app/features/collectible_relationship/application/collectible_relationship_providers.dart';
@@ -29,7 +29,6 @@ class CollectibleMarketCard extends ConsumerWidget {
     final rep = representativeListing(snapshot);
     final isDark = theme.brightness == Brightness.dark;
     final thumb = FeedRhythm.marketListingThumbnailExtent;
-    final accent = rep?.collectible.shelfAccent ?? scheme.tertiaryContainer;
     final relationshipLine = ref.watch(
       relationshipHintForMarketSnapshotProvider(snapshot.identity.snapshotId),
     );
@@ -66,37 +65,10 @@ class CollectibleMarketCard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (rep != null)
-                    SizedBox(
-                      width: thumb,
-                      height: thumb,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          borderRadius: AppRadii.matRadius,
-                          color: Color.lerp(
-                            scheme.surfaceContainerHighest,
-                            accent,
-                            isDark ? 0.1 : 0.14,
-                          )!.withValues(alpha: isDark ? 0.45 : 0.55),
-                          border: Border.all(
-                            color: accent.withValues(alpha: isDark ? 0.12 : 0.16),
-                          ),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8),
-                          child: ClipRRect(
-                            borderRadius: AppRadii.insetRadius,
-                            child: ColoredBox(
-                              color: scheme.surface.withValues(alpha: 0.35),
-                              child: MarketListingImage(
-                                collectible: rep.collectible,
-                                heroTag: 'collectible-market-${snapshot.identity.snapshotId}',
-                                borderRadius: BorderRadius.zero,
-                                fit: BoxFit.contain,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
+                    MarketListingShowcaseThumb(
+                      collectible: rep.collectible,
+                      extent: thumb,
+                      heroTag: 'collectible-market-${snapshot.identity.snapshotId}',
                     ),
                   if (rep != null) const SizedBox(width: 16),
                   Expanded(
@@ -141,28 +113,13 @@ class CollectibleMarketCard extends ConsumerWidget {
                           CollectibleRelationshipLine(text: relationshipLine),
                         ],
                         const SizedBox(height: 6),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.baseline,
-                          textBaseline: TextBaseline.alphabetic,
-                          children: [
-                            Text(
-                              _priceLabel(),
-                              style: textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0,
-                                height: 1.1,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Text(
-                              CollectibleMarketMoodCopy.sightingsLabel(
-                                snapshot.listingCount,
-                              ),
-                              style: textTheme.labelMedium?.copyWith(
-                                color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
-                              ),
-                            ),
-                          ],
+                        Text(
+                          _priceLabel(),
+                          style: textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0,
+                            height: 1.1,
+                          ),
                         ),
                       ],
                     ),

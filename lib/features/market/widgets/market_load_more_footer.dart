@@ -31,7 +31,7 @@ class MarketLoadMoreFooter extends StatelessWidget {
                   ),
                 )
               : Text(
-                  'Load more sightings',
+                  'Load more',
                   style: textTheme.labelLarge?.copyWith(
                     color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
                     fontWeight: FontWeight.w500,

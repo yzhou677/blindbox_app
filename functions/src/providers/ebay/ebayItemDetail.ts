@@ -7,6 +7,7 @@ import {
   gatewayDebugLog,
 } from '../gateway/gatewayDiagnostics';
 import type { GatewayItemDetailDto, ProviderRawItem } from '../gateway/gatewayTypes';
+import { parseEbayLegacyItemId } from '../gateway/normalizeBrowseItems';
 import { normalizeItemDetail } from '../gateway/normalizeItemDetail';
 import { ebayCredentialsConfigured, getEbayAccessToken, resolveEbayApiBase } from './ebayOAuth';
 
@@ -76,18 +77,57 @@ async function fetchEbayItemDetail(itemId: string): Promise<GatewayItemDetailDto
     return null;
   }
 
-  const raw = await withRetries(() => fetchEbayItemRaw(itemId));
-  return normalizeItemDetail(raw);
+  try {
+    const raw = await withRetries(() => fetchEbayItemRaw(itemId));
+    return normalizeItemDetail(raw);
+  } catch (e) {
+    const legacyId = parseEbayLegacyItemId(itemId);
+    if (!legacyId || legacyId === itemId) throw e;
+    gatewayDebugLog('ebay_item_retry_legacy', { itemId, legacyId });
+    const raw = await withRetries(() => fetchEbayItemByLegacyId(legacyId));
+    return normalizeItemDetail(raw);
+  }
 }
 
 async function fetchEbayItemRaw(itemId: string): Promise<ProviderRawItem> {
+  return fetchEbayItemFromPath(itemId);
+}
+
+async function fetchEbayItemByLegacyId(legacyItemId: string): Promise<ProviderRawItem> {
+  const token = await getEbayAccessToken();
+  const marketplace =
+    process.env.EBAY_MARKETPLACE_ID?.trim() || 'EBAY_US';
+  const params = new URLSearchParams({
+    legacy_item_id: legacyItemId,
+    fieldgroups: 'PRODUCT,ADDITIONAL_SELLER_DETAILS',
+  });
+
+  return (await fetchJson(
+    `${resolveEbayApiBase()}/buy/browse/v1/item/get_item_by_legacy_id?${params.toString()}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'X-EBAY-C-MARKETPLACE-ID': marketplace,
+        Accept: 'application/json',
+      },
+      timeoutMs: 12_000,
+    },
+  )) as ProviderRawItem;
+}
+
+async function fetchEbayItemFromPath(itemId: string): Promise<ProviderRawItem> {
   const token = await getEbayAccessToken();
   const marketplace =
     process.env.EBAY_MARKETPLACE_ID?.trim() || 'EBAY_US';
   const encoded = encodeURIComponent(itemId);
+  // Valid fieldgroups: COMPACT (alone), PRODUCT, ADDITIONAL_SELLER_DETAILS, CHARITY_DETAILS.
+  // SHIPPING is not valid and causes HTTP 400 from eBay Browse API.
+  const params = new URLSearchParams({
+    fieldgroups: 'PRODUCT,ADDITIONAL_SELLER_DETAILS',
+  });
 
   return (await fetchJson(
-    `${resolveEbayApiBase()}/buy/browse/v1/item/${encoded}?fieldgroups=PRODUCT,ADDITIONAL_SELLER_DETAILS,SHIPPING`,
+    `${resolveEbayApiBase()}/buy/browse/v1/item/${encoded}?${params.toString()}`,
     {
       headers: {
         Authorization: `Bearer ${token}`,

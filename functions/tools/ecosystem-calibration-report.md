@@ -1,6 +1,6 @@
 # Ecosystem Marketplace Calibration Report
 
-Generated: 2026-05-24T04:31:35.330Z
+Generated: 2026-05-24T05:00:16.380Z
 Category universe: 261068
 
 ## Summary
@@ -20,33 +20,48 @@ Category universe: 261068
 None — all combinations healthy in sample.
 ## Observed seller naming (aggregate)
 
-- series (275)
+- series (268)
 - box (244)
-- figure (211)
-- blind (166)
-- pop (160)
-- mart (157)
-- confirmed (120)
+- figure (210)
+- blind (162)
+- pop (158)
+- mart (155)
+- confirmed (121)
 - space (73)
 - tnt (68)
 - finding (67)
-- plush (66)
+- plush (65)
 - unicorn (65)
-- new (37)
-- sealed (31)
-- toy (31)
-- open (30)
-- the (30)
-- pendant (30)
+- new (48)
+- pendant (32)
+- the (32)
+- open (29)
 - baby (29)
+- toy (27)
+- sealed (26)
 - sonny (24)
 - angel (24)
-- nanci (24)
-- rolife (23)
+- rolife (24)
 - bob (23)
-- doll (22)
-- vinyl (21)
+- nanci (22)
 - rayan (21)
+- authentic (20)
 - cureplaneta (20)
 - three (20)
-- authentic (18)
+- toptoy (19)
+- vinyl (18)
+
+## Title clustering (aggregate)
+
+- Combos with believable multi-listing clusters: 36/38
+- believable: 36
+- no_multi_listing_clusters: 1
+- noisy: 1
+
+## Sample clusters (first healthy IP-specific combo with clusters)
+
+### POP MART + THE MONSTERS
+- **Labubu** (8 listings, 6 sellers, quality: ok)
+  - Pop Mart Labubu Dress Be Latte Vinyl Plush Doll The Monsters Authentic
+  - AUTHENTIC POP MART Labubu Exciting Macaron Series Plush Blind Box
+  - Pop Mart Labubu The Monsters x Hello Kitty And Friends Sanrio Plush Pendant

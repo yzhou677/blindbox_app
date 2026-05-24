@@ -1,4 +1,4 @@
-import 'package:blindbox_app/features/market/application/market_listings_providers.dart';
+import 'package:blindbox_app/features/market/application/market_listing_lookup.dart';
 import 'package:blindbox_app/features/market/data/datasource/gateway_item_detail_dto.dart';
 import 'package:blindbox_app/features/market/data/datasource/market_gateway_client.dart';
 import 'package:blindbox_app/features/market/data/gateway/market_gateway_config.dart';
@@ -11,13 +11,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 final marketGatewayClientProvider = Provider<MarketGatewayClient>((ref) {
   return MarketGatewayClient();
 });
-
-MarketListing? findMarketListingById(Ref ref, String listingId) {
-  for (final listing in ref.watch(marketBrowseListingsProvider)) {
-    if (listing.id == listingId) return listing;
-  }
-  return null;
-}
 
 /// Lazy gateway item detail for a browse row (live eBay only).
 final marketListingDetailProvider =

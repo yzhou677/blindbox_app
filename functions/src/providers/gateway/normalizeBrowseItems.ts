@@ -61,12 +61,21 @@ export function normalizeListing(raw: ProviderRawItem): GatewayListingDto | null
     legacyItemId,
   );
 
+  const sellerBlock = readRecord(raw.seller);
+  const sellerUsername = sellerBlock
+    ? readString(sellerBlock, ['username'])
+    : undefined;
+
+  const itemCreationDate = readString(raw, ['itemCreationDate']);
+
   return {
     id,
     title,
     price: { value, currency },
     image: { imageUrl },
     listingUrl,
+    seller: sellerUsername ? { username: sellerUsername } : undefined,
+    itemCreationDate: itemCreationDate || undefined,
   };
 }
 

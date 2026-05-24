@@ -57,3 +57,22 @@ Outputs:
 
 When adding Flutter IPs, **sync** `MARKET_TAXONOMY_IPS` in `composeBrowseQuery.ts`.
 
+## Title clustering inspection
+
+The ecosystem audit now reports per-combo:
+- `titleClustering.sellerDiversity` — unique sellers, top-seller share
+- `titleClustering.topClusters` — identity-level title clusters (min 2 listings)
+- `titleClustering.clusterQuality` — `believable` | `mixed` | `noisy` | `no_multi_listing_clusters`
+
+Shared algorithm: `tools/lib/market-title-cluster.mjs` (gateway audit) and `lib/features/market/domain/market_title_clusterer.dart` (app spike).
+
+## Phase 1 Chasers (app)
+
+Enable on live eBay with:
+
+```bash
+flutter run --dart-define=MARKET_CHASERS_SCORING=true ...
+```
+
+Probes up to 8 UI-visible IP-specific browse queries, clusters titles, ranks identity-level chasers. Rail appears when entries exist.
+

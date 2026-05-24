@@ -14,7 +14,7 @@ void installLiveBrowseListings(
   MarketBrowseQuery? query,
 }) {
   final hinted = applyQueryTaxonomyHints(listings, query);
-  installMarketBrowseIntelligence(hinted);
+  installMarketBrowseIntelligence(hinted, preserveFeedOrder: true);
   if (kDebugMode) {
     CollectibleMarketDiagnostics.logIfDebug();
   }

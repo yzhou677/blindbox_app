@@ -17,13 +17,22 @@ abstract final class CollectibleMarketMoodCopy {
       MarketMood.calm => 'A calm market week',
       MarketMood.active => 'Showing up in a few places lately',
       MarketMood.scarce => 'Rarely seen lately',
-      MarketMood.mixed => 'Quiet but varied sightings',
+      MarketMood.mixed => 'Quiet but varied activity',
     };
   }
 
-  static String sightingsLabel(int count) {
-    if (count <= 1) return '1 sighting';
-    return '$count sightings';
+  /// Soft observation line — no counts.
+  static String observedInMarketLine() => 'Observed in market';
+
+  static String recentlyActiveLine() => 'Recently active';
+
+  static String activeListingLine() => 'Active listing';
+
+  /// Chasers rail subtitle — IP context only, no numeric heat.
+  static String? chaserRailSubtitle({required String ipLabel}) {
+    final ip = ipLabel.trim();
+    if (ip.isEmpty) return recentlyActiveLine();
+    return ip;
   }
 
   /// Single-listing detail — calm market context without trader copy.
@@ -31,7 +40,7 @@ abstract final class CollectibleMarketMoodCopy {
     if (listing.hasSecretFigure) return 'A rare sighting in the market';
     if (listing.isHardToFind) return 'Rarely seen lately';
     if (listing.isTrending) return 'Showing up in a few places lately';
-    return 'A calm market week';
+    return observedInMarketLine();
   }
 
   static String snapshotPriceLabel(CollectibleMarketSnapshot snapshot) {

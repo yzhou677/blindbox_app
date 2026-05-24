@@ -11,8 +11,8 @@ import 'package:blindbox_app/features/market/data/gateway/market_gateway_config.
 import 'package:blindbox_app/features/market/data/sandbox/market_sandbox_config.dart';
 import 'package:blindbox_app/features/market/data/source/mercari_sandbox_market_source.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-final marketBrowseRefreshProvider =
-    NotifierProvider<MarketBrowseRefreshNotifier, bool>(
+
+final marketBrowseRefreshProvider =    NotifierProvider<MarketBrowseRefreshNotifier, bool>(
   MarketBrowseRefreshNotifier.new,
 );
 

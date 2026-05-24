@@ -78,8 +78,15 @@ class MarketLiveBrowseController extends Notifier<MarketLiveBrowseState> {
   Future<void> refresh() async {
     if (!MarketGatewayConfig.isActive) return;
     final browse = ref.read(marketBrowseNotifierProvider);
+    final query = marketBrowseQueryFromUi(browse);
+    final batch = await _ebay.resolveCachedBatchFor(query);
+    if (batch != null &&
+        batch.isFresh(ttl: MarketGatewayConfig.cacheTtl) &&
+        batch.listings.isNotEmpty) {
+      return;
+    }
     await _applyQuery(
-      _queryFromBrowse(browse),
+      query,
       reason: 'refresh',
       revalidate: true,
     );
@@ -181,7 +188,7 @@ class MarketLiveBrowseController extends Notifier<MarketLiveBrowseState> {
   }) async {
     if (!MarketGatewayConfig.isActive) return;
 
-    final staleBatch = _ebay.cachedBatchFor(query);
+    final staleBatch = await _ebay.resolveCachedBatchFor(query);
     final staleListings = staleBatch?.listings;
     _session.resetForQuery(
       query,
