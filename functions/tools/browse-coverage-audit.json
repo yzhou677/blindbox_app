@@ -1,0 +1,911 @@
+{
+  "fetchedAt": "2026-05-24T04:21:06.749Z",
+  "categoryId": "261068",
+  "sparseThreshold": 6,
+  "summary": {
+    "total": 32,
+    "healthy": 31,
+    "sparse": 1,
+    "empty": 0,
+    "titleFilteredEmpty": 0,
+    "missingGatewayIp": 0
+  },
+  "results": [
+    {
+      "brand": "Any Brand",
+      "ip": "Any IP",
+      "brandId": "any_brand",
+      "ipId": "any_ip",
+      "query": "blind box vinyl figure",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "discover",
+      "upstreamTotal": 16866,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "status": "healthy",
+      "recommendedRetrievalMode": "discover",
+      "sampleTitles": [
+        "Miniso Stitch Eat Something Before Sleep Series Vinyl Figure Confirmed Blind Box",
+        "MINISO Sanrio Characters Capybara Series Blind Box Vinyl Plush Figure Toy Gift",
+        "Ancient Nine Tails Fox Auspicious Series Volume 2 Blind-Box Vinyl Figure Case 8"
+      ],
+      "upstreamSampleTitles": [
+        "Miniso Stitch Eat Something Before Sleep Series Vinyl Figure Confirmed Blind Box",
+        "MINISO Sanrio Characters Capybara Series Blind Box Vinyl Plush Figure Toy Gift",
+        "Ancient Nine Tails Fox Auspicious Series Volume 2 Blind-Box Vinyl Figure Case 8"
+      ],
+      "error": null,
+      "taxonomyIpKnown": true
+    },
+    {
+      "brand": "POP MART",
+      "ip": "Any IP",
+      "brandId": "pop_mart",
+      "ipId": "any_ip",
+      "query": "pop mart",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 93790,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "status": "healthy",
+      "recommendedRetrievalMode": "q_only",
+      "sampleTitles": [
+        "POP MART x Hirono Road Journal Series Plush Pendant Confirmed Figure in Open Box",
+        "POP MART x Skullpanda Petals In Four Acts Series Confirmed Figure in Open Box",
+        "POP MART x Hirono Echo Series Confirmed Figure Doll in New Sealed Bag (Open Box)"
+      ],
+      "upstreamSampleTitles": [
+        "POP MART x Hirono Road Journal Series Plush Pendant Confirmed Figure in Open Box",
+        "POP MART x Skullpanda Petals In Four Acts Series Confirmed Figure in Open Box",
+        "POP MART x Hirono Echo Series Confirmed Figure Doll in New Sealed Bag (Open Box)"
+      ],
+      "error": null,
+      "taxonomyIpKnown": true
+    },
+    {
+      "brand": "POP MART",
+      "ip": "THE MONSTERS",
+      "brandId": "pop_mart",
+      "ipId": "the_monsters",
+      "query": "pop mart",
+      "categoryIds": "261068",
+      "aspect_filter": "categoryId:261068,Character:{Labubu}",
+      "verifiedFacet": true,
+      "retrievalMode": "q_and_verified_character",
+      "upstreamTotal": 31357,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 9,
+      "status": "healthy",
+      "recommendedRetrievalMode": "q_and_verified_character",
+      "sampleTitles": [
+        "Pop Mart Labubu Dress Be Latte Vinyl Plush Doll The Monsters Authentic",
+        "AUTHENTIC POP MART Labubu Exciting Macaron Series Plush Blind Box",
+        "Pop Mart Labubu The Monsters x Hello Kitty And Friends Sanrio Plush Pendant"
+      ],
+      "upstreamSampleTitles": [
+        "POP MART Why So Serious Series Vinyl Doll Pendant Confirmed Plush in OpenBox NEW",
+        "Pop Mart Labubu Dress Be Latte Vinyl Plush Doll The Monsters Authentic",
+        "AUTHENTIC POP MART Labubu Exciting Macaron Series Plush Blind Box"
+      ],
+      "error": null,
+      "taxonomyIpKnown": true
+    },
+    {
+      "brand": "POP MART",
+      "ip": "Hirono",
+      "brandId": "pop_mart",
+      "ipId": "hirono",
+      "query": "pop mart",
+      "categoryIds": "261068",
+      "aspect_filter": "categoryId:261068,Character:{Hirono}",
+      "verifiedFacet": true,
+      "retrievalMode": "q_and_verified_character",
+      "upstreamTotal": 3658,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 11,
+      "status": "healthy",
+      "recommendedRetrievalMode": "q_and_verified_character",
+      "sampleTitles": [
+        "POP MART x Hirono Road Journal Series Plush Pendant Confirmed Figure in Open Box",
+        "POP MART x Hirono Echo Series Confirmed Figure Doll in New Sealed Bag (Open Box)",
+        "POP MART Hirono Tamed Wildgrass Series Confirmed Figures Sealed Bag in Open Box"
+      ],
+      "upstreamSampleTitles": [
+        "POP MART x Hirono Road Journal Series Plush Pendant Confirmed Figure in Open Box",
+        "POP MART x Hirono Echo Series Confirmed Figure Doll in New Sealed Bag (Open Box)",
+        "POP MART Hirono Tamed Wildgrass Series Confirmed Figures Sealed Bag in Open Box"
+      ],
+      "error": null,
+      "taxonomyIpKnown": true
+    },
+    {
+      "brand": "POP MART",
+      "ip": "Skullpanda",
+      "brandId": "pop_mart",
+      "ipId": "skullpanda",
+      "query": "pop mart",
+      "categoryIds": "261068",
+      "aspect_filter": "categoryId:261068,Character:{Skullpanda}",
+      "verifiedFacet": true,
+      "retrievalMode": "q_and_verified_character",
+      "upstreamTotal": 8595,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 10,
+      "status": "healthy",
+      "recommendedRetrievalMode": "q_and_verified_character",
+      "sampleTitles": [
+        "POP MART x Skullpanda Petals In Four Acts Series Confirmed Figure in Open Box",
+        "POP MART x Skullpanda The Feast Begins Series Figure Toys Sealed Bag in Open Box",
+        "Pop Mart Mega SKULLPANDA 400% Red Crystal Series Figure, New Sealed"
+      ],
+      "upstreamSampleTitles": [
+        "POP MART x Skullpanda Petals In Four Acts Series Confirmed Figure in Open Box",
+        "POP MART x Skullpanda The Feast Begins Series Figure Toys Sealed Bag in Open Box",
+        "Pop Mart Mega SKULLPANDA 400% Red Crystal Series Figure, New Sealed"
+      ],
+      "error": null,
+      "taxonomyIpKnown": true
+    },
+    {
+      "brand": "POP MART",
+      "ip": "Crybaby",
+      "brandId": "pop_mart",
+      "ipId": "crybaby",
+      "query": "pop mart",
+      "categoryIds": "261068",
+      "aspect_filter": "categoryId:261068,Character:{Crybaby}",
+      "verifiedFacet": true,
+      "retrievalMode": "q_and_verified_character",
+      "upstreamTotal": 4726,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 4,
+      "status": "sparse",
+      "recommendedRetrievalMode": "q_and_verified_character",
+      "sampleTitles": [
+        "POP MART x Crybaby Vacation Mode On Series Vinyl Plush Key Pendant Figure Doll",
+        "POP MART Have A Good Run Series Crybaby Sweet Love Plush Pendant NEW in Open Box",
+        "Us Seller Pop Mart CRYBABY Cry Me An Ocean Plush Pendant"
+      ],
+      "upstreamSampleTitles": [
+        "POP MART Have A Good Run Series Plush Pendant Figure Doll Sealed Bag in Open Box",
+        "Pop Mart Dear Birds Series Plush Pendant - ALL CARACTORS - PRE-SALE",
+        "POP MART x Crybaby Vacation Mode On Series Vinyl Plush Key Pendant Figure Doll"
+      ],
+      "error": null,
+      "taxonomyIpKnown": true
+    },
+    {
+      "brand": "POP MART",
+      "ip": "Dimoo",
+      "brandId": "pop_mart",
+      "ipId": "dimoo",
+      "query": "pop mart Dimoo",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 4709,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 11,
+      "status": "healthy",
+      "recommendedRetrievalMode": "q_only",
+      "sampleTitles": [
+        "POP MART x Dimoo Moments In Bloom Series Confirmed Figure Sealed Bag in Open Box",
+        "POP MART Dimoo The Secret Theatre Club Series Plush Doll Pendant Figure Open Box",
+        "PreOrder GLOBAL 520 PCS POP MART DIMOO Elephant MoMo Figure Authentic US Seller"
+      ],
+      "upstreamSampleTitles": [
+        "POP MART x Dimoo Moments In Bloom Series Confirmed Figure Sealed Bag in Open Box",
+        "POP MART Dimoo The Secret Theatre Club Series Plush Doll Pendant Figure Open Box",
+        "PreOrder GLOBAL 520 PCS POP MART DIMOO Elephant MoMo Figure Authentic US Seller"
+      ],
+      "error": null,
+      "taxonomyIpKnown": true
+    },
+    {
+      "brand": "POP MART",
+      "ip": "Molly",
+      "brandId": "pop_mart",
+      "ipId": "molly",
+      "query": "pop mart",
+      "categoryIds": "261068",
+      "aspect_filter": "categoryId:261068,Character:{Molly}",
+      "verifiedFacet": true,
+      "retrievalMode": "q_and_verified_character",
+      "upstreamTotal": 6211,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 7,
+      "status": "healthy",
+      "recommendedRetrievalMode": "q_and_verified_character",
+      "sampleTitles": [
+        "POP MART 100% Mega Space Molly Series 2 Blind Box Confirmed Figure toy doll",
+        "POP MART x Kennyswork Mega Space Molly Series One Confirmed Box Figure Open Box",
+        "POP MART 100% Mega Space Molly Series 4 Blind Box Confirmed Figure Toy Doll"
+      ],
+      "upstreamSampleTitles": [
+        "POP MART Why So Serious Series Vinyl Doll Pendant Confirmed Plush in OpenBox NEW",
+        "Pop Mart Dear Birds Series Plush Pendant - ALL CARACTORS - PRE-SALE",
+        "POP MART 100% Mega Space Molly Series 2 Blind Box Confirmed Figure toy doll"
+      ],
+      "error": null,
+      "taxonomyIpKnown": true
+    },
+    {
+      "brand": "POP MART",
+      "ip": "Peach Riot",
+      "brandId": "pop_mart",
+      "ipId": "peach_riot",
+      "query": "pop mart PEACH RIOT",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 1036,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "status": "healthy",
+      "recommendedRetrievalMode": "q_only",
+      "sampleTitles": [
+        "100% Authentic POP MART x Peach Riot Rush Hour Series Confirmed Figure Dolls Toy",
+        "POP MART Peach Riot Rise Up Series Blind Box Blind Box Confirmed Figure Toy Doll",
+        "POP MART x Peach Riot Rush Hour Series Figure Dolls Toy - Gigi Mail Delivery"
+      ],
+      "upstreamSampleTitles": [
+        "100% Authentic POP MART x Peach Riot Rush Hour Series Confirmed Figure Dolls Toy",
+        "POP MART Peach Riot Rise Up Series Blind Box Blind Box Confirmed Figure Toy Doll",
+        "POP MART x Peach Riot Rush Hour Series Figure Dolls Toy - Gigi Mail Delivery"
+      ],
+      "error": null,
+      "taxonomyIpKnown": true
+    },
+    {
+      "brand": "POP MART",
+      "ip": "Nyota",
+      "brandId": "pop_mart",
+      "ipId": "nyota",
+      "query": "pop mart Nyota",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 494,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "status": "healthy",
+      "recommendedRetrievalMode": "q_only",
+      "sampleTitles": [
+        "POP MART Nyota Where Moments Meet Series Plush Doll - US SHIPPING",
+        "Nyota We Are All Stars Series Blind Box Comfirmed Figures Toy Gift Authentic",
+        "POP MART Nyota Figure ⭐️AUTHENTIC [Confirmed Childhood]  ⭐Free Mystery Stickers"
+      ],
+      "upstreamSampleTitles": [
+        "POP MART Nyota Where Moments Meet Series Plush Doll - US SHIPPING",
+        "Nyota We Are All Stars Series Blind Box Comfirmed Figures Toy Gift Authentic",
+        "POP MART Nyota Figure ⭐️AUTHENTIC [Confirmed Childhood]  ⭐Free Mystery Stickers"
+      ],
+      "error": null,
+      "taxonomyIpKnown": true
+    },
+    {
+      "brand": "POP MART",
+      "ip": "Pucky",
+      "brandId": "pop_mart",
+      "ipId": "pucky",
+      "query": "pop mart",
+      "categoryIds": "261068",
+      "aspect_filter": "categoryId:261068,Character:{Pucky}",
+      "verifiedFacet": true,
+      "retrievalMode": "q_and_verified_character",
+      "upstreamTotal": 1547,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 6,
+      "status": "healthy",
+      "recommendedRetrievalMode": "q_and_verified_character",
+      "sampleTitles": [
+        "POP MART Pucky Flying Babies Series Plush Pendant Confirmed Doll in Open Box",
+        "POP MART Pucky Dreamy Wishes Series Confirmed Figure Doll Sealed Bag in Open Box",
+        "Authentic POP MART Pucky Animal Tea Party Confirmed Blind Box Figure Panda Baby"
+      ],
+      "upstreamSampleTitles": [
+        "POP MART Pucky Flying Babies Series Plush Pendant Confirmed Doll in Open Box",
+        "POP MART Pucky Dreamy Wishes Series Confirmed Figure Doll Sealed Bag in Open Box",
+        "Authentic POP MART Pucky Animal Tea Party Confirmed Blind Box Figure Panda Baby"
+      ],
+      "error": null,
+      "taxonomyIpKnown": true
+    },
+    {
+      "brand": "POP MART",
+      "ip": "Hacipupu",
+      "brandId": "pop_mart",
+      "ipId": "hacipupu",
+      "query": "pop mart Hacipupu",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 1706,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 10,
+      "status": "healthy",
+      "recommendedRetrievalMode": "q_only",
+      "sampleTitles": [
+        "POP MART Hacipupu Gummy Bear Series Vinyl Plush Pendant Figure",
+        "POP MART Why So Serious Series Hacipupu Pendant Plush Toy Doll - Shadow Joker",
+        "POP MART x Hacipupu Snuggle with You Series Confirmed Box Figure Toy Open Box"
+      ],
+      "upstreamSampleTitles": [
+        "Pop Mart Dear Birds Series Plush Pendant - ALL CARACTORS - PRE-SALE",
+        "POP MART Hacipupu Gummy Bear Series Vinyl Plush Pendant Figure",
+        "POP MART Dear Birds Plush Pendant series Blind Box US PreSale"
+      ],
+      "error": null,
+      "taxonomyIpKnown": true
+    },
+    {
+      "brand": "POP MART",
+      "ip": "Sweet Bean",
+      "brandId": "pop_mart",
+      "ipId": "sweet_bean",
+      "query": "pop mart SWEET BEAN",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 625,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 10,
+      "status": "healthy",
+      "recommendedRetrievalMode": "q_only",
+      "sampleTitles": [
+        "POP MART x Sweet Bean I Want a Hug Series - When I Get Something",
+        "Sweet Bean Akihabara Series Blind Box New Pop Mart Birthday Party Collectible",
+        "Authentic Pop Mart. Matchless 14th Anniversary. Sweet Bean. Heroic Beggar. New."
+      ],
+      "upstreamSampleTitles": [
+        "POP MART x Sweet Bean I Want a Hug Series - When I Get Something",
+        "Sweet Bean Akihabara Series Blind Box New Pop Mart Birthday Party Collectible",
+        "Authentic Pop Mart. Matchless 14th Anniversary. Sweet Bean. Heroic Beggar. New."
+      ],
+      "error": null,
+      "taxonomyIpKnown": true
+    },
+    {
+      "brand": "POP MART",
+      "ip": "Azura",
+      "brandId": "pop_mart",
+      "ipId": "azura",
+      "query": "pop mart Azura",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 266,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "status": "healthy",
+      "recommendedRetrievalMode": "q_only",
+      "sampleTitles": [
+        "Pop MART x Azura Natural Elements Blind Box Figure - Fire - Used",
+        "Starry Beach Pop Mart Azura A Dream About Stars Blind Box Confirmed Decor Desk",
+        "Pop Mart Azura Natural Elements Mini Figure Desert New Opened Box"
+      ],
+      "upstreamSampleTitles": [
+        "Pop MART x Azura Natural Elements Blind Box Figure - Fire - Used",
+        "Starry Beach Pop Mart Azura A Dream About Stars Blind Box Confirmed Decor Desk",
+        "Pop Mart Azura Natural Elements Mini Figure Desert New Opened Box"
+      ],
+      "error": null,
+      "taxonomyIpKnown": true
+    },
+    {
+      "brand": "POP MART",
+      "ip": "Duckoo",
+      "brandId": "pop_mart",
+      "ipId": "duckoo",
+      "query": "pop mart Duckoo",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 212,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "status": "healthy",
+      "recommendedRetrievalMode": "q_only",
+      "sampleTitles": [
+        "Title Pop Mart Duckoo Farm Blind Box Figure Confirmed Sealed Bag Card Choose",
+        "Pop Mart Duckoo Fitness Gym Bag Brand New Us Seller",
+        "Authentic NEW POP DUCKOO Music Festival Series from POPMART FULL SET"
+      ],
+      "upstreamSampleTitles": [
+        "Title Pop Mart Duckoo Farm Blind Box Figure Confirmed Sealed Bag Card Choose",
+        "Pop Mart Duckoo Fitness Gym Bag Brand New Us Seller",
+        "Authentic NEW POP DUCKOO Music Festival Series from POPMART FULL SET"
+      ],
+      "error": null,
+      "taxonomyIpKnown": true
+    },
+    {
+      "brand": "POP MART",
+      "ip": "Zsiga",
+      "brandId": "pop_mart",
+      "ipId": "zsiga",
+      "query": "pop mart Zsiga",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 1161,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "status": "healthy",
+      "recommendedRetrievalMode": "q_only",
+      "sampleTitles": [
+        "POP MART Zsiga x Care Bears Series Confirmed Figure in New Sealed Bag Open Box",
+        "100%Authentic Zsiga Under The Sun Series Blind Box Confirmed Figure Toy Art Gift",
+        "POP MART Zsiga Pondering Love Figure 8.27inches Authentic NEW 1day Ship"
+      ],
+      "upstreamSampleTitles": [
+        "POP MART Zsiga x Care Bears Series Confirmed Figure in New Sealed Bag Open Box",
+        "100%Authentic Zsiga Under The Sun Series Blind Box Confirmed Figure Toy Art Gift",
+        "POP MART Zsiga Pondering Love Figure 8.27inches Authentic NEW 1day Ship"
+      ],
+      "error": null,
+      "taxonomyIpKnown": true
+    },
+    {
+      "brand": "Dreams Inc.",
+      "ip": "Any IP",
+      "brandId": "dreams_inc",
+      "ipId": "any_ip",
+      "query": "sonny angel blind box",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 1596,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "status": "healthy",
+      "recommendedRetrievalMode": "q_only",
+      "sampleTitles": [
+        "Sonny Angel I Love Rainy Day Series Blind Box Mini Figure Toys USA**",
+        "Sonny Angel 2019 CIRCUS Series Mini Figures Confirmed Blind Box Figure",
+        "Sonny Angel Hippers Decorative Mini Figure Looking Back Series with Blind Box"
+      ],
+      "upstreamSampleTitles": [
+        "Sonny Angel I Love Rainy Day Series Blind Box Mini Figure Toys USA**",
+        "Sonny Angel 2019 CIRCUS Series Mini Figures Confirmed Blind Box Figure",
+        "Sonny Angel Hippers Decorative Mini Figure Looking Back Series with Blind Box"
+      ],
+      "error": null,
+      "taxonomyIpKnown": true
+    },
+    {
+      "brand": "Dreams Inc.",
+      "ip": "Sonny Angel",
+      "brandId": "dreams_inc",
+      "ipId": "sonny_angel",
+      "query": "SONNY ANGEL",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 11656,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "status": "healthy",
+      "recommendedRetrievalMode": "q_only",
+      "sampleTitles": [
+        "Sonny Angel I Love Rainy Day Series Blind Box Mini Figure Toys USA**",
+        "Sonny Angel Birthday Gift Bear 2021 Original Mini Figure  1 Sealed Blind Box New",
+        "Sonny Angel Hippers Harvest Series - 1 Pack"
+      ],
+      "upstreamSampleTitles": [
+        "Sonny Angel I Love Rainy Day Series Blind Box Mini Figure Toys USA**",
+        "Sonny Angel Birthday Gift Bear 2021 Original Mini Figure  1 Sealed Blind Box New",
+        "Sonny Angel Hippers Harvest Series - 1 Pack"
+      ],
+      "error": null,
+      "taxonomyIpKnown": true
+    },
+    {
+      "brand": "Dreams Inc.",
+      "ip": "Smiski",
+      "brandId": "dreams_inc",
+      "ipId": "smiski",
+      "query": "Smiski",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 2386,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "status": "healthy",
+      "recommendedRetrievalMode": "q_only",
+      "sampleTitles": [
+        "Smiski Strap Series 1 blind figure 64735",
+        "SMISKI Figures Key Chain!! Glow In The Dark New AUTHRTIC Shipping From USA",
+        "Smiski Glow-in-the-Dark Figure Series 4 - Set of 3 - Discontinued Japan"
+      ],
+      "upstreamSampleTitles": [
+        "Smiski Strap Series 1 blind figure 64735",
+        "SMISKI Figures Key Chain!! Glow In The Dark New AUTHRTIC Shipping From USA",
+        "Smiski Glow-in-the-Dark Figure Series 4 - Set of 3 - Discontinued Japan"
+      ],
+      "error": null,
+      "taxonomyIpKnown": true
+    },
+    {
+      "brand": "Rolife",
+      "ip": "Any IP",
+      "brandId": "rolife",
+      "ipId": "any_ip",
+      "query": "rolife",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 1476,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "status": "healthy",
+      "recommendedRetrievalMode": "q_only",
+      "sampleTitles": [
+        "Rolife Nanci Oriental Auspiciousness Series phoenix ￼blind box card confirmed ",
+        "Rolife Nanci Flower Stories China Poetic Beauty Series Open Box Figure Art Toy",
+        "ROLIFE NANCI AUSPICIOUS EASTERN SPIRIT Authentic NEW Confirmed Phoenix USA"
+      ],
+      "upstreamSampleTitles": [
+        "Rolife Nanci Oriental Auspiciousness Series phoenix ￼blind box card confirmed ",
+        "Rolife Nanci Flower Stories China Poetic Beauty Series Open Box Figure Art Toy",
+        "ROLIFE NANCI AUSPICIOUS EASTERN SPIRIT Authentic NEW Confirmed Phoenix USA"
+      ],
+      "error": null,
+      "taxonomyIpKnown": true
+    },
+    {
+      "brand": "Rolife",
+      "ip": "Nanci",
+      "brandId": "rolife",
+      "ipId": "nanci",
+      "query": "rolife Nanci",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 1161,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "status": "healthy",
+      "recommendedRetrievalMode": "q_only",
+      "sampleTitles": [
+        "Rolife Nanci Flower Stories China Poetic Beauty Series Open Box Figure Art Toy",
+        "Rolife Nanci Flower Stories Series Confirmed Blind Box Figure Art Toys",
+        "Rolife Nanci Museum Fantasy Series Confirmed Blind Box Figure Art Toys"
+      ],
+      "upstreamSampleTitles": [
+        "Rolife Nanci Flower Stories China Poetic Beauty Series Open Box Figure Art Toy",
+        "Rolife Nanci Flower Stories Series Confirmed Blind Box Figure Art Toys",
+        "Rolife Nanci Museum Fantasy Series Confirmed Blind Box Figure Art Toys"
+      ],
+      "error": null,
+      "taxonomyIpKnown": true
+    },
+    {
+      "brand": "TNT SPACE",
+      "ip": "Any IP",
+      "brandId": "tntspace",
+      "ipId": "any_ip",
+      "query": "tnt space",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 497,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "status": "healthy",
+      "recommendedRetrievalMode": "q_only",
+      "sampleTitles": [
+        "TNT SPACE Boy Rayan Cool Color Plush Pendant Box Confirmed Exclusive Rare USA",
+        "TNT SPACE Boy Rayan Otherworld Series Crimson Blaze Blind Box Figure Confirmed",
+        "TNT SPACE Boy Rayan Time Rift Series Heat Beat Blind Box Figure Confirmed USA"
+      ],
+      "upstreamSampleTitles": [
+        "TNT SPACE Boy Rayan Cool Color Plush Pendant Box Confirmed Exclusive Rare USA",
+        "TNT SPACE Boy Rayan Otherworld Series Crimson Blaze Blind Box Figure Confirmed",
+        "TNT SPACE Boy Rayan Time Rift Series Heat Beat Blind Box Figure Confirmed USA"
+      ],
+      "error": null,
+      "taxonomyIpKnown": true
+    },
+    {
+      "brand": "TNT SPACE",
+      "ip": "Rayan",
+      "brandId": "tntspace",
+      "ipId": "rayan",
+      "query": "tnt space Rayan",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 129,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "status": "healthy",
+      "recommendedRetrievalMode": "q_only",
+      "sampleTitles": [
+        "TNT SPACE Boy Rayan Cool Color Plush Pendant Box Confirmed Exclusive Rare USA",
+        "Authentic TNT Space Boy Rayan Crush Spark Figurine - Brand New/Sealed",
+        "Rayan Virtual Breaker TNT space US SELLER Limited hang Card"
+      ],
+      "upstreamSampleTitles": [
+        "TNT SPACE Boy Rayan Cool Color Plush Pendant Box Confirmed Exclusive Rare USA",
+        "Authentic TNT Space Boy Rayan Crush Spark Figurine - Brand New/Sealed",
+        "Rayan Virtual Breaker TNT space US SELLER Limited hang Card"
+      ],
+      "error": null,
+      "taxonomyIpKnown": true
+    },
+    {
+      "brand": "TNT SPACE",
+      "ip": "Dora",
+      "brandId": "tntspace",
+      "ipId": "dora",
+      "query": "tnt space Dora",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 150,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "status": "healthy",
+      "recommendedRetrievalMode": "q_only",
+      "sampleTitles": [
+        "TNT SPACE Dora Wonderful Night Series Carousel Murmurs Blind Box Figure",
+        "Dora Dancer Figurine - Futirism Series Tnt Space",
+        "TNT SPACE Dora Wonderful Night Series Melancholy Cedar Blind Box Figure"
+      ],
+      "upstreamSampleTitles": [
+        "TNT SPACE Dora Wonderful Night Series Carousel Murmurs Blind Box Figure",
+        "Dora Dancer Figurine - Futirism Series Tnt Space",
+        "TNT SPACE Dora Wonderful Night Series Melancholy Cedar Blind Box Figure"
+      ],
+      "error": null,
+      "taxonomyIpKnown": true
+    },
+    {
+      "brand": "TNT SPACE",
+      "ip": "Zoraa",
+      "brandId": "tntspace",
+      "ipId": "zoraa",
+      "query": "tnt space Zoraa",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 84,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "status": "healthy",
+      "recommendedRetrievalMode": "q_only",
+      "sampleTitles": [
+        "TNT Space Baby Zoraa I Love Fruits Series Blind Box Figures- NEW/Sealed Case!",
+        "Baybee Zoraa Figurine Hang Card TNT Space Special Version",
+        "Baby Zoraa TNT Space Secrets Vinyl Figure Grey Wolf Girl Blind Box Woohoo boohoo"
+      ],
+      "upstreamSampleTitles": [
+        "TNT Space Baby Zoraa I Love Fruits Series Blind Box Figures- NEW/Sealed Case!",
+        "Baybee Zoraa Figurine Hang Card TNT Space Special Version",
+        "Baby Zoraa TNT Space Secrets Vinyl Figure Grey Wolf Girl Blind Box Woohoo boohoo"
+      ],
+      "error": null,
+      "taxonomyIpKnown": true
+    },
+    {
+      "brand": "TNT SPACE",
+      "ip": "Anmoo",
+      "brandId": "tntspace",
+      "ipId": "anmoo",
+      "query": "tnt space Anmoo",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 35,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "status": "healthy",
+      "recommendedRetrievalMode": "q_only",
+      "sampleTitles": [
+        "Tnt Space Anmoo Listen Attentively Series Mystery Box Figure Collectible Lot 2",
+        "Tnt Space Anmoo Listen Attentively Series 2.7\" Mystery Box Figure Collectible",
+        "TNT Space Little Anmoo The Perfect World Blind Box Figure Insomnia"
+      ],
+      "upstreamSampleTitles": [
+        "Tnt Space Anmoo Listen Attentively Series Mystery Box Figure Collectible Lot 2",
+        "Tnt Space Anmoo Listen Attentively Series 2.7\" Mystery Box Figure Collectible",
+        "TNT Space Little Anmoo The Perfect World Blind Box Figure Insomnia"
+      ],
+      "error": null,
+      "taxonomyIpKnown": true
+    },
+    {
+      "brand": "TNT SPACE",
+      "ip": "Liila",
+      "brandId": "tntspace",
+      "ipId": "liila",
+      "query": "tnt space LIITA",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 50,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "status": "healthy",
+      "recommendedRetrievalMode": "q_only",
+      "sampleTitles": [
+        "Tnt Space Liita Where Petal Settle Series 3.4\" Figure Cute Design Collectible",
+        "TNT Space X Liita Berry jam Big Doll Model Tidal Current Toys Collection New",
+        "Liita Forward By Light TNT Space Designer Art Toy Figure Blind Box + Card"
+      ],
+      "upstreamSampleTitles": [
+        "Tnt Space Liita Where Petal Settle Series 3.4\" Figure Cute Design Collectible",
+        "TNT Space X Liita Berry jam Big Doll Model Tidal Current Toys Collection New",
+        "Liita Forward By Light TNT Space Designer Art Toy Figure Blind Box + Card"
+      ],
+      "error": null,
+      "taxonomyIpKnown": true
+    },
+    {
+      "brand": "TOPTOY",
+      "ip": "Any IP",
+      "brandId": "toptoy",
+      "ipId": "any_ip",
+      "query": "toptoy",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 14079,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "status": "healthy",
+      "recommendedRetrievalMode": "q_only",
+      "sampleTitles": [
+        "TOPTOY Eevee Sleeping Position Series Figure Toy Gift Blind Box. (1 Box)",
+        "Toptoy Eevee Sleeping Position Series Confirmed Blind Box Figure Toy Gift",
+        "TOP TOY Naruto Beast Party Series Plush Confirmed Blind Box Figure Gift "
+      ],
+      "upstreamSampleTitles": [
+        "TOPTOY Eevee Sleeping Position Series Figure Toy Gift Blind Box. (1 Box)",
+        "Toptoy Eevee Sleeping Position Series Confirmed Blind Box Figure Toy Gift",
+        "TOP TOY Naruto Beast Party Series Plush Confirmed Blind Box Figure Gift "
+      ],
+      "error": null,
+      "taxonomyIpKnown": true
+    },
+    {
+      "brand": "TOPTOY",
+      "ip": "Nommi",
+      "brandId": "toptoy",
+      "ipId": "nommi",
+      "query": "toptoy Nommi",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 245,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "status": "healthy",
+      "recommendedRetrievalMode": "q_only",
+      "sampleTitles": [
+        "Authentic Top Toy Nommi Pinky Energy Series Blind Box Confirmed Alice US Seller",
+        "TOPTOY Nommi Forest Kingdom Series CURLY TAIL KITTY Action Figures Confirmed",
+        "Nommi Pink Energy Plush Figure Blind Box Series of 6 Collectibles — Your Choice!"
+      ],
+      "upstreamSampleTitles": [
+        "Authentic Top Toy Nommi Pinky Energy Series Blind Box Confirmed Alice US Seller",
+        "TOPTOY Nommi Forest Kingdom Series CURLY TAIL KITTY Action Figures Confirmed",
+        "Nommi Pink Energy Plush Figure Blind Box Series of 6 Collectibles — Your Choice!"
+      ],
+      "error": null,
+      "taxonomyIpKnown": true
+    },
+    {
+      "brand": "TOPTOY",
+      "ip": "Maymei",
+      "brandId": "toptoy",
+      "ipId": "maymei",
+      "query": "toptoy Maymei",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 155,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "status": "healthy",
+      "recommendedRetrievalMode": "q_only",
+      "sampleTitles": [
+        "AUTHENTIC Maymei 400% Forgotten Funfair Series TopToy Blind Box plush figure NIB",
+        "Maymei Funfair Series TOPTOY Blind Box 400% Forgotten Tour Guide Edition",
+        "Maymei Kitten Academy Series Plush Doll Blind Box All 6 Figures 2026"
+      ],
+      "upstreamSampleTitles": [
+        "AUTHENTIC Maymei 400% Forgotten Funfair Series TopToy Blind Box plush figure NIB",
+        "Maymei Funfair Series TOPTOY Blind Box 400% Forgotten Tour Guide Edition",
+        "Maymei Kitten Academy Series Plush Doll Blind Box All 6 Figures 2026"
+      ],
+      "error": null,
+      "taxonomyIpKnown": true
+    },
+    {
+      "brand": "DPL",
+      "ip": "Any IP",
+      "brandId": "dpl",
+      "ipId": "any_ip",
+      "query": "cureplaneta",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 346,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 9,
+      "status": "healthy",
+      "recommendedRetrievalMode": "q_only",
+      "sampleTitles": [
+        "Cureplaneta Baby Three Gothic Lolita Bunny V3 Plush Action Figure - SEALED",
+        "Cureplaneta Baby Three Dreamweaver 400% Edition Figure Toy, Pink",
+        "Baby Three Explorer 1000% -  Limited Edition  FREE GIFT WITH PURCHASE"
+      ],
+      "upstreamSampleTitles": [
+        "Cureplaneta Baby Three Gothic Lolita Bunny V3 Plush Action Figure - SEALED",
+        "Cureplaneta Baby Three Dreamweaver 400% Edition Figure Toy, Pink",
+        "Nina’s Vacation Snacks Blind Box"
+      ],
+      "error": null,
+      "taxonomyIpKnown": true
+    },
+    {
+      "brand": "DPL",
+      "ip": "Baby Three",
+      "brandId": "dpl",
+      "ipId": "baby_three",
+      "query": "cureplaneta BABY THREE",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 680,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "status": "healthy",
+      "recommendedRetrievalMode": "q_only",
+      "sampleTitles": [
+        "Cureplaneta Baby Three Gothic Lolita Bunny V3 Plush Action Figure - SEALED",
+        "Cureplaneta Baby Three Dreamweaver 400% Edition Figure Toy, Pink",
+        "Cureplaneta Baby Three BB3 1000% V2 Plush SCENTED 100% Confirmed Glass Eyes NEW"
+      ],
+      "upstreamSampleTitles": [
+        "Cureplaneta Baby Three Gothic Lolita Bunny V3 Plush Action Figure - SEALED",
+        "Cureplaneta Baby Three Dreamweaver 400% Edition Figure Toy, Pink",
+        "Cureplaneta Baby Three BB3 1000% V2 Plush SCENTED 100% Confirmed Glass Eyes NEW"
+      ],
+      "error": null,
+      "taxonomyIpKnown": true
+    }
+  ]
+}

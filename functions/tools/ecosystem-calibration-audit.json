@@ -1,0 +1,4188 @@
+{
+  "fetchedAt": "2026-05-24T04:31:35.330Z",
+  "categoryId": "261068",
+  "sparseThreshold": 6,
+  "summary": {
+    "total": 38,
+    "healthy": 38,
+    "sparse": 0,
+    "noisy": 0,
+    "ambiguous": 0,
+    "broken": 0,
+    "uiVisible": 32
+  },
+  "results": [
+    {
+      "brand": "Any Brand",
+      "ip": "Any IP",
+      "brandId": "any_brand",
+      "ipId": "any_ip",
+      "uiVisible": true,
+      "query": "blind box vinyl figure",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "discover",
+      "upstreamTotal": 16875,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "titlePassRate": 1,
+      "noiseRate": 0.083,
+      "accessoryRate": 0,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "blind",
+          "count": 14
+        },
+        {
+          "token": "box",
+          "count": 14
+        },
+        {
+          "token": "vinyl",
+          "count": 12
+        },
+        {
+          "token": "figure",
+          "count": 12
+        },
+        {
+          "token": "series",
+          "count": 8
+        },
+        {
+          "token": "miniso",
+          "count": 3
+        },
+        {
+          "token": "sealed",
+          "count": 3
+        },
+        {
+          "token": "stitch",
+          "count": 2
+        },
+        {
+          "token": "eat",
+          "count": 2
+        },
+        {
+          "token": "something",
+          "count": 2
+        },
+        {
+          "token": "before",
+          "count": 2
+        },
+        {
+          "token": "sleep",
+          "count": 2
+        }
+      ],
+      "listings": [
+        {
+          "title": "Miniso Stitch Eat Something Before Sleep Series Vinyl Figure Confirmed Blind Box",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "MINISO Sanrio Characters Capybara Series Blind Box Vinyl Plush Figure Toy Gift",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Ancient Nine Tails Fox Auspicious Series Volume 2 Blind-Box Vinyl Figure Case 8",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "12 Pack - Labubu Inspired Cute Flocked Bunny Wings 2025 Blind Box Vinyl Figure",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Culturefly Smols Horror Classics Series 2 Blind Box Vinyl Figure - Single Blind",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        }
+      ],
+      "upstreamRejectedTitles": [],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "POP MART",
+      "ip": "Any IP",
+      "brandId": "pop_mart",
+      "ipId": "any_ip",
+      "uiVisible": true,
+      "query": "pop mart",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 93699,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "titlePassRate": 1,
+      "noiseRate": 0,
+      "accessoryRate": 0,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "pop",
+          "count": 12
+        },
+        {
+          "token": "mart",
+          "count": 12
+        },
+        {
+          "token": "series",
+          "count": 11
+        },
+        {
+          "token": "figure",
+          "count": 11
+        },
+        {
+          "token": "box",
+          "count": 11
+        },
+        {
+          "token": "open",
+          "count": 10
+        },
+        {
+          "token": "confirmed",
+          "count": 8
+        },
+        {
+          "token": "hirono",
+          "count": 6
+        },
+        {
+          "token": "sealed",
+          "count": 6
+        },
+        {
+          "token": "bag",
+          "count": 6
+        },
+        {
+          "token": "doll",
+          "count": 5
+        },
+        {
+          "token": "plush",
+          "count": 4
+        }
+      ],
+      "listings": [
+        {
+          "title": "POP MART x Hirono Road Journal Series Plush Pendant Confirmed Figure in Open Box",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "POP MART x Skullpanda Petals In Four Acts Series Confirmed Figure in Open Box",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "POP MART x Hirono Echo Series Confirmed Figure Doll in New Sealed Bag (Open Box)",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "POP MART Dimoo The Secret Theatre Club Series Plush Doll Pendant Figure Open Box",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "POP MART x Hirono Clot Series Confirmed Figure Doll New in Sealed Bag (Open Box)",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        }
+      ],
+      "upstreamRejectedTitles": [],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "POP MART",
+      "ip": "THE MONSTERS",
+      "brandId": "pop_mart",
+      "ipId": "the_monsters",
+      "uiVisible": true,
+      "query": "pop mart",
+      "categoryIds": "261068",
+      "aspect_filter": "categoryId:261068,Character:{Labubu}",
+      "verifiedFacet": true,
+      "retrievalMode": "q_and_verified_character",
+      "upstreamTotal": 31342,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 9,
+      "titlePassRate": 0.75,
+      "noiseRate": 0,
+      "accessoryRate": 0,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "mart",
+          "count": 11
+        },
+        {
+          "token": "pop",
+          "count": 10
+        },
+        {
+          "token": "labubu",
+          "count": 10
+        },
+        {
+          "token": "plush",
+          "count": 6
+        },
+        {
+          "token": "big",
+          "count": 5
+        },
+        {
+          "token": "energy",
+          "count": 5
+        },
+        {
+          "token": "the",
+          "count": 4
+        },
+        {
+          "token": "monsters",
+          "count": 4
+        },
+        {
+          "token": "authentic",
+          "count": 4
+        },
+        {
+          "token": "box",
+          "count": 4
+        },
+        {
+          "token": "into",
+          "count": 4
+        },
+        {
+          "token": "vinyl",
+          "count": 3
+        }
+      ],
+      "listings": [
+        {
+          "title": "Pop Mart Labubu Dress Be Latte Vinyl Plush Doll The Monsters Authentic",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "AUTHENTIC POP MART Labubu Exciting Macaron Series Plush Blind Box",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "POP MART Labubu Secret ID Grey V3 Big Into Energy Hidden ID Labubu Grey Variant",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Pop Mart Labubu The Monsters x Hello Kitty And Friends Sanrio Plush Pendant",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "POP MART The Monsters Big Intero Energy Loyalty Labubu Plush Pendant Open Box",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        }
+      ],
+      "upstreamRejectedTitles": [
+        "POP MART Why So Serious Series Vinyl Doll Pendant Confirmed Plush in OpenBox NEW",
+        "POP MART Have A Good Run Series Plush Pendant Figure Doll Sealed Bag in Open Box",
+        "Pop Mart Dear Birds Series Plush Pendant - ALL CARACTORS - PRE-SALE"
+      ],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "POP MART",
+      "ip": "Hirono",
+      "brandId": "pop_mart",
+      "ipId": "hirono",
+      "uiVisible": true,
+      "query": "pop mart",
+      "categoryIds": "261068",
+      "aspect_filter": "categoryId:261068,Character:{Hirono}",
+      "verifiedFacet": true,
+      "retrievalMode": "q_and_verified_character",
+      "upstreamTotal": 3661,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 11,
+      "titlePassRate": 0.917,
+      "noiseRate": 0,
+      "accessoryRate": 0,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "pop",
+          "count": 11
+        },
+        {
+          "token": "mart",
+          "count": 11
+        },
+        {
+          "token": "hirono",
+          "count": 11
+        },
+        {
+          "token": "series",
+          "count": 10
+        },
+        {
+          "token": "open",
+          "count": 9
+        },
+        {
+          "token": "box",
+          "count": 9
+        },
+        {
+          "token": "confirmed",
+          "count": 8
+        },
+        {
+          "token": "figure",
+          "count": 8
+        },
+        {
+          "token": "sealed",
+          "count": 7
+        },
+        {
+          "token": "bag",
+          "count": 7
+        },
+        {
+          "token": "plush",
+          "count": 4
+        },
+        {
+          "token": "pendant",
+          "count": 4
+        }
+      ],
+      "listings": [
+        {
+          "title": "POP MART x Hirono Road Journal Series Plush Pendant Confirmed Figure in Open Box",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "POP MART x Hirono Echo Series Confirmed Figure Doll in New Sealed Bag (Open Box)",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "POP MART Hirono Tamed Wildgrass Series Confirmed Figures Sealed Bag in Open Box",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "POP MART x Hirono Clot Series Confirmed Figure Doll New in Sealed Bag (Open Box)",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "POP MART x Hirono The Other One Series Confirmed Figure Sealed Bag in Open Box",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        }
+      ],
+      "upstreamRejectedTitles": [
+        "Pop Mart Dear Birds Series Plush Pendant - ALL CARACTORS - PRE-SALE"
+      ],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "POP MART",
+      "ip": "Skullpanda",
+      "brandId": "pop_mart",
+      "ipId": "skullpanda",
+      "uiVisible": true,
+      "query": "pop mart",
+      "categoryIds": "261068",
+      "aspect_filter": "categoryId:261068,Character:{Skullpanda}",
+      "verifiedFacet": true,
+      "retrievalMode": "q_and_verified_character",
+      "upstreamTotal": 8595,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 10,
+      "titlePassRate": 0.833,
+      "noiseRate": 0,
+      "accessoryRate": 0,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "pop",
+          "count": 10
+        },
+        {
+          "token": "mart",
+          "count": 10
+        },
+        {
+          "token": "skullpanda",
+          "count": 10
+        },
+        {
+          "token": "series",
+          "count": 9
+        },
+        {
+          "token": "figure",
+          "count": 8
+        },
+        {
+          "token": "box",
+          "count": 7
+        },
+        {
+          "token": "open",
+          "count": 6
+        },
+        {
+          "token": "confirmed",
+          "count": 5
+        },
+        {
+          "token": "the",
+          "count": 4
+        },
+        {
+          "token": "sealed",
+          "count": 4
+        },
+        {
+          "token": "plush",
+          "count": 4
+        },
+        {
+          "token": "doll",
+          "count": 4
+        }
+      ],
+      "listings": [
+        {
+          "title": "POP MART x Skullpanda Petals In Four Acts Series Confirmed Figure in Open Box",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "POP MART x Skullpanda The Feast Begins Series Figure Toys Sealed Bag in Open Box",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Pop Mart Mega SKULLPANDA 400% Red Crystal Series Figure, New Sealed",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "POP MART x Skullpanda The Paradox Series Confirmed Figure Dolls Toy Open Box",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "POP MART x Skullpanda You Found Me Series Plush Doll Pendant Figure in Open Box",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        }
+      ],
+      "upstreamRejectedTitles": [
+        "POP MART Why So Serious Series Vinyl Doll Pendant Confirmed Plush in OpenBox NEW",
+        "Pop Mart Dear Birds Series Plush Pendant - ALL CARACTORS - PRE-SALE"
+      ],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "POP MART",
+      "ip": "Crybaby",
+      "brandId": "pop_mart",
+      "ipId": "crybaby",
+      "uiVisible": true,
+      "query": "pop mart Crybaby",
+      "categoryIds": "261068",
+      "aspect_filter": "categoryId:261068,Character:{Crybaby}",
+      "verifiedFacet": true,
+      "retrievalMode": "q_and_verified_character",
+      "upstreamTotal": 4560,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "titlePassRate": 1,
+      "noiseRate": 0,
+      "accessoryRate": 0.083,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "pop",
+          "count": 12
+        },
+        {
+          "token": "mart",
+          "count": 12
+        },
+        {
+          "token": "crybaby",
+          "count": 12
+        },
+        {
+          "token": "plush",
+          "count": 9
+        },
+        {
+          "token": "series",
+          "count": 8
+        },
+        {
+          "token": "figure",
+          "count": 4
+        },
+        {
+          "token": "crying",
+          "count": 4
+        },
+        {
+          "token": "cry",
+          "count": 4
+        },
+        {
+          "token": "ocean",
+          "count": 4
+        },
+        {
+          "token": "vinyl",
+          "count": 3
+        },
+        {
+          "token": "pendant",
+          "count": 3
+        },
+        {
+          "token": "doll",
+          "count": 3
+        }
+      ],
+      "listings": [
+        {
+          "title": "POP MART x Crybaby Vacation Mode On Series Vinyl Plush Key Pendant Figure Doll",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "POP MART Crybaby Crying to the Moon Sitting Series Full SEALED Case – 12 Figures",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "POP MART Crybaby Crying Again - SEALED BOX- CONFIRMED I’LL BRING YOU A FLOWER",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "I'LL BRING YOU A FLOWER POP MART Crybaby Crying Again Vinyl Plush Doll Authentic",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "POP MART Crybaby Vacation Mode On Series Plush Figure Toy Dolls - Let's Surf",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        }
+      ],
+      "upstreamRejectedTitles": [],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "POP MART",
+      "ip": "Dimoo",
+      "brandId": "pop_mart",
+      "ipId": "dimoo",
+      "uiVisible": true,
+      "query": "pop mart Dimoo",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 4709,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 11,
+      "titlePassRate": 0.917,
+      "noiseRate": 0,
+      "accessoryRate": 0,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "pop",
+          "count": 11
+        },
+        {
+          "token": "mart",
+          "count": 11
+        },
+        {
+          "token": "dimoo",
+          "count": 11
+        },
+        {
+          "token": "series",
+          "count": 8
+        },
+        {
+          "token": "figure",
+          "count": 8
+        },
+        {
+          "token": "box",
+          "count": 7
+        },
+        {
+          "token": "confirmed",
+          "count": 6
+        },
+        {
+          "token": "sealed",
+          "count": 5
+        },
+        {
+          "token": "open",
+          "count": 5
+        },
+        {
+          "token": "the",
+          "count": 5
+        },
+        {
+          "token": "bag",
+          "count": 4
+        },
+        {
+          "token": "doll",
+          "count": 3
+        }
+      ],
+      "listings": [
+        {
+          "title": "POP MART x Dimoo Moments In Bloom Series Confirmed Figure Sealed Bag in Open Box",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "POP MART Dimoo The Secret Theatre Club Series Plush Doll Pendant Figure Open Box",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Confirmed POP MART Dimoo Memories glowing hourglass crystal  Whispering Lilies",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "PreOrder GLOBAL 520 PCS POP MART DIMOO Elephant MoMo Figure Authentic US Seller",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "POP MART Dimoo World x Disney Series Confirmed Figure Sealed Bag in Open Box",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        }
+      ],
+      "upstreamRejectedTitles": [
+        "Pop Mart Dear Birds Series Plush Pendant - ALL CARACTORS - PRE-SALE"
+      ],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "POP MART",
+      "ip": "Molly",
+      "brandId": "pop_mart",
+      "ipId": "molly",
+      "uiVisible": true,
+      "query": "pop mart",
+      "categoryIds": "261068",
+      "aspect_filter": "categoryId:261068,Character:{Molly}",
+      "verifiedFacet": true,
+      "retrievalMode": "q_and_verified_character",
+      "upstreamTotal": 6211,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 7,
+      "titlePassRate": 0.583,
+      "noiseRate": 0,
+      "accessoryRate": 0,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "pop",
+          "count": 7
+        },
+        {
+          "token": "mart",
+          "count": 7
+        },
+        {
+          "token": "molly",
+          "count": 7
+        },
+        {
+          "token": "series",
+          "count": 7
+        },
+        {
+          "token": "box",
+          "count": 7
+        },
+        {
+          "token": "mega",
+          "count": 5
+        },
+        {
+          "token": "space",
+          "count": 5
+        },
+        {
+          "token": "confirmed",
+          "count": 5
+        },
+        {
+          "token": "figure",
+          "count": 5
+        },
+        {
+          "token": "100",
+          "count": 4
+        },
+        {
+          "token": "doll",
+          "count": 4
+        },
+        {
+          "token": "blind",
+          "count": 3
+        }
+      ],
+      "listings": [
+        {
+          "title": "POP MART 100% Mega Space Molly Series 2 Blind Box Confirmed Figure toy doll",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "POP MART x Kennyswork Mega Space Molly Series One Confirmed Box Figure Open Box",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "POP MART 100% Mega Space Molly Series 4 Blind Box Confirmed Figure Toy Doll",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "POP MART 100% Mega Space Molly x Emoji Series Confirmed Figure Doll in Open Box",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "POP MART 100% Mega Space Molly Series 2 Blind Box Confirmed Figure Toy Doll",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        }
+      ],
+      "upstreamRejectedTitles": [
+        "POP MART Why So Serious Series Vinyl Doll Pendant Confirmed Plush in OpenBox NEW",
+        "Pop Mart Dear Birds Series Plush Pendant - ALL CARACTORS - PRE-SALE",
+        "POP MART Have A Good Run Series Plush Pendant Figure Doll Sealed Bag in Open Box"
+      ],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "POP MART",
+      "ip": "Peach Riot",
+      "brandId": "pop_mart",
+      "ipId": "peach_riot",
+      "uiVisible": true,
+      "query": "pop mart PEACH RIOT",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 1036,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "titlePassRate": 1,
+      "noiseRate": 0,
+      "accessoryRate": 0,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "pop",
+          "count": 12
+        },
+        {
+          "token": "mart",
+          "count": 12
+        },
+        {
+          "token": "peach",
+          "count": 12
+        },
+        {
+          "token": "riot",
+          "count": 12
+        },
+        {
+          "token": "series",
+          "count": 11
+        },
+        {
+          "token": "figure",
+          "count": 10
+        },
+        {
+          "token": "toy",
+          "count": 7
+        },
+        {
+          "token": "confirmed",
+          "count": 6
+        },
+        {
+          "token": "rush",
+          "count": 5
+        },
+        {
+          "token": "hour",
+          "count": 5
+        },
+        {
+          "token": "dolls",
+          "count": 5
+        },
+        {
+          "token": "box",
+          "count": 5
+        }
+      ],
+      "listings": [
+        {
+          "title": "100% Authentic POP MART x Peach Riot Rush Hour Series Confirmed Figure Dolls Toy",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "Used"
+        },
+        {
+          "title": "POP MART Peach Riot Rise Up Series Blind Box Blind Box Confirmed Figure Toy Doll",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "POP MART x Peach Riot Rush Hour Series Figure Dolls Toy - Gigi Mail Delivery",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "POP MART x Peach Riot Rush Hour Series-- Poppy Ice Cream Parlor ",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "Used"
+        },
+        {
+          "title": "POP MART x Lil Peach Riot Sleepover Series Confirmed Figure Doll NEW in Open Box",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        }
+      ],
+      "upstreamRejectedTitles": [],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "POP MART",
+      "ip": "Nyota",
+      "brandId": "pop_mart",
+      "ipId": "nyota",
+      "uiVisible": true,
+      "query": "pop mart Nyota",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 494,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "titlePassRate": 1,
+      "noiseRate": 0,
+      "accessoryRate": 0,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "nyota",
+          "count": 12
+        },
+        {
+          "token": "pop",
+          "count": 9
+        },
+        {
+          "token": "mart",
+          "count": 9
+        },
+        {
+          "token": "series",
+          "count": 9
+        },
+        {
+          "token": "box",
+          "count": 7
+        },
+        {
+          "token": "blind",
+          "count": 6
+        },
+        {
+          "token": "where",
+          "count": 4
+        },
+        {
+          "token": "moments",
+          "count": 4
+        },
+        {
+          "token": "meet",
+          "count": 4
+        },
+        {
+          "token": "authentic",
+          "count": 4
+        },
+        {
+          "token": "plush",
+          "count": 3
+        },
+        {
+          "token": "figures",
+          "count": 3
+        }
+      ],
+      "listings": [
+        {
+          "title": "POP MART Nyota Where Moments Meet Series Plush Doll - US SHIPPING",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Nyota We Are All Stars Series Blind Box Comfirmed Figures Toy Gift Authentic",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "Used"
+        },
+        {
+          "title": "POP MART Nyota Figure ⭐️AUTHENTIC [Confirmed Childhood]  ⭐Free Mystery Stickers",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "POP MART Nyota's Fluffy Life Series Blind Box Confirmed Figure Toys Gifts",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "Used"
+        },
+        {
+          "title": "Authentic - POP MART Nyota I Am The Seasons Series Figure - Forest Tapestry",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        }
+      ],
+      "upstreamRejectedTitles": [],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "POP MART",
+      "ip": "Pucky",
+      "brandId": "pop_mart",
+      "ipId": "pucky",
+      "uiVisible": true,
+      "query": "pop mart Pucky",
+      "categoryIds": "261068",
+      "aspect_filter": "categoryId:261068,Character:{Pucky}",
+      "verifiedFacet": true,
+      "retrievalMode": "q_and_verified_character",
+      "upstreamTotal": 1432,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "titlePassRate": 1,
+      "noiseRate": 0,
+      "accessoryRate": 0,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "pop",
+          "count": 12
+        },
+        {
+          "token": "mart",
+          "count": 12
+        },
+        {
+          "token": "pucky",
+          "count": 12
+        },
+        {
+          "token": "confirmed",
+          "count": 8
+        },
+        {
+          "token": "figure",
+          "count": 8
+        },
+        {
+          "token": "box",
+          "count": 8
+        },
+        {
+          "token": "series",
+          "count": 6
+        },
+        {
+          "token": "blind",
+          "count": 6
+        },
+        {
+          "token": "animal",
+          "count": 5
+        },
+        {
+          "token": "tea",
+          "count": 5
+        },
+        {
+          "token": "party",
+          "count": 5
+        },
+        {
+          "token": "babies",
+          "count": 4
+        }
+      ],
+      "listings": [
+        {
+          "title": "POP MART Pucky Dreamy Wishes Series Confirmed Figure Doll Sealed Bag in Open Box",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "POP MART Pucky Milk Babies Series Dairy Confirmed Blind Box Figure Art Toys Gift",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Authentic POP MART Pucky Animal Tea Party Confirmed Blind Box Figure Panda Baby",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Authentic POP MART Pucky Animal Tea Party Confirmed Figure Poker Rabbit Baby",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "POP MART Pucky Flying Babies Series Plush Pendant Confirmed Doll in Open Box",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        }
+      ],
+      "upstreamRejectedTitles": [],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "POP MART",
+      "ip": "Hacipupu",
+      "brandId": "pop_mart",
+      "ipId": "hacipupu",
+      "uiVisible": true,
+      "query": "pop mart Hacipupu",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 1706,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 10,
+      "titlePassRate": 0.833,
+      "noiseRate": 0,
+      "accessoryRate": 0,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "hacipupu",
+          "count": 10
+        },
+        {
+          "token": "pop",
+          "count": 9
+        },
+        {
+          "token": "mart",
+          "count": 9
+        },
+        {
+          "token": "series",
+          "count": 7
+        },
+        {
+          "token": "figure",
+          "count": 7
+        },
+        {
+          "token": "box",
+          "count": 5
+        },
+        {
+          "token": "plush",
+          "count": 4
+        },
+        {
+          "token": "pendant",
+          "count": 4
+        },
+        {
+          "token": "gummy",
+          "count": 3
+        },
+        {
+          "token": "bear",
+          "count": 3
+        },
+        {
+          "token": "vinyl",
+          "count": 3
+        },
+        {
+          "token": "toy",
+          "count": 3
+        }
+      ],
+      "listings": [
+        {
+          "title": "POP MART Hacipupu Gummy Bear Series Vinyl Plush Pendant Figure",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "POP MART Why So Serious Series Hacipupu Pendant Plush Toy Doll - Shadow Joker",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Pop Mart Hacipupu Sled Figure Special Version New US Seller White & Blue",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "POP MART x Hacipupu Snuggle with You Series Confirmed Box Figure Toy Open Box",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "FREE SHIPPING! Pop Mart Hacipupu Night of Fantasy Series Confirmed LITTLE WIZARD",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        }
+      ],
+      "upstreamRejectedTitles": [
+        "Pop Mart Dear Birds Series Plush Pendant - ALL CARACTORS - PRE-SALE",
+        "POP MART Dear Birds Plush Pendant series Blind Box US PreSale"
+      ],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "POP MART",
+      "ip": "Sweet Bean",
+      "brandId": "pop_mart",
+      "ipId": "sweet_bean",
+      "uiVisible": true,
+      "query": "pop mart SWEET BEAN",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 626,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 10,
+      "titlePassRate": 0.833,
+      "noiseRate": 0,
+      "accessoryRate": 0,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "pop",
+          "count": 11
+        },
+        {
+          "token": "bean",
+          "count": 11
+        },
+        {
+          "token": "mart",
+          "count": 10
+        },
+        {
+          "token": "sweet",
+          "count": 10
+        },
+        {
+          "token": "series",
+          "count": 6
+        },
+        {
+          "token": "blind",
+          "count": 5
+        },
+        {
+          "token": "box",
+          "count": 5
+        },
+        {
+          "token": "new",
+          "count": 3
+        },
+        {
+          "token": "love",
+          "count": 3
+        },
+        {
+          "token": "confirmed",
+          "count": 3
+        },
+        {
+          "token": "collectible",
+          "count": 2
+        },
+        {
+          "token": "figure",
+          "count": 2
+        }
+      ],
+      "listings": [
+        {
+          "title": "POP MART x Sweet Bean I Want a Hug Series - When I Get Something",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Sweet Bean Akihabara Series Blind Box New Pop Mart Birthday Party Collectible",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Authentic Pop Mart. Matchless 14th Anniversary. Sweet Bean. Heroic Beggar. New.",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "POP MART Sweet Bean Love Afternoon Tea Series Confirmed Blind Box Figure Hot Toy",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Pop Mart Sweet Bean Fluffy Fridge Magnet",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        }
+      ],
+      "upstreamRejectedTitles": [
+        "Pop Mart Hand in Hand Series - Various IP",
+        "Pop Mart Pop Bean Going Outing With Me AUTHENTIC **your Choice**"
+      ],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "POP MART",
+      "ip": "Azura",
+      "brandId": "pop_mart",
+      "ipId": "azura",
+      "uiVisible": true,
+      "query": "pop mart Azura",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 266,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "titlePassRate": 1,
+      "noiseRate": 0,
+      "accessoryRate": 0,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "azura",
+          "count": 12
+        },
+        {
+          "token": "pop",
+          "count": 11
+        },
+        {
+          "token": "mart",
+          "count": 11
+        },
+        {
+          "token": "box",
+          "count": 9
+        },
+        {
+          "token": "figure",
+          "count": 9
+        },
+        {
+          "token": "blind",
+          "count": 8
+        },
+        {
+          "token": "series",
+          "count": 8
+        },
+        {
+          "token": "natural",
+          "count": 4
+        },
+        {
+          "token": "elements",
+          "count": 4
+        },
+        {
+          "token": "confirmed",
+          "count": 3
+        },
+        {
+          "token": "new",
+          "count": 3
+        },
+        {
+          "token": "fantasy",
+          "count": 3
+        }
+      ],
+      "listings": [
+        {
+          "title": "Pop MART x Azura Natural Elements Blind Box Figure - Fire - Used",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "Used"
+        },
+        {
+          "title": "Starry Beach Pop Mart Azura A Dream About Stars Blind Box Confirmed Decor Desk",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "Used"
+        },
+        {
+          "title": "Pop Mart Azura Natural Elements Mini Figure Desert New Opened Box",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "POP MART AZURA Fantasy Nature Series Assortment Box Sealed Blind Figures",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Pop Mart AZURA Fantasy Nature Series Blind Box Series - Confirmed Figure",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        }
+      ],
+      "upstreamRejectedTitles": [],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "POP MART",
+      "ip": "Duckoo",
+      "brandId": "pop_mart",
+      "ipId": "duckoo",
+      "uiVisible": true,
+      "query": "pop mart Duckoo",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 212,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "titlePassRate": 1,
+      "noiseRate": 0,
+      "accessoryRate": 0,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "duckoo",
+          "count": 13
+        },
+        {
+          "token": "pop",
+          "count": 12
+        },
+        {
+          "token": "mart",
+          "count": 9
+        },
+        {
+          "token": "series",
+          "count": 6
+        },
+        {
+          "token": "music",
+          "count": 5
+        },
+        {
+          "token": "festival",
+          "count": 5
+        },
+        {
+          "token": "blind",
+          "count": 4
+        },
+        {
+          "token": "box",
+          "count": 4
+        },
+        {
+          "token": "confirmed",
+          "count": 4
+        },
+        {
+          "token": "figure",
+          "count": 3
+        },
+        {
+          "token": "new",
+          "count": 3
+        },
+        {
+          "token": "authentic",
+          "count": 3
+        }
+      ],
+      "listings": [
+        {
+          "title": "Title Pop Mart Duckoo Farm Blind Box Figure Confirmed Sealed Bag Card Choose",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Pop Mart Duckoo Fitness Gym Bag Brand New Us Seller",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Authentic NEW POP DUCKOO Music Festival Series from POPMART FULL SET",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Pop Mart x Duckoo Music Festival Series - K-Pop",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Pop Mart DUCKOO Ball Club - Bowling Blind Box",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "Used"
+        }
+      ],
+      "upstreamRejectedTitles": [],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "POP MART",
+      "ip": "Zsiga",
+      "brandId": "pop_mart",
+      "ipId": "zsiga",
+      "uiVisible": true,
+      "query": "pop mart Zsiga",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 1161,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "titlePassRate": 1,
+      "noiseRate": 0,
+      "accessoryRate": 0,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "zsiga",
+          "count": 12
+        },
+        {
+          "token": "pop",
+          "count": 11
+        },
+        {
+          "token": "mart",
+          "count": 11
+        },
+        {
+          "token": "series",
+          "count": 9
+        },
+        {
+          "token": "figure",
+          "count": 7
+        },
+        {
+          "token": "confirmed",
+          "count": 5
+        },
+        {
+          "token": "new",
+          "count": 5
+        },
+        {
+          "token": "box",
+          "count": 5
+        },
+        {
+          "token": "the",
+          "count": 5
+        },
+        {
+          "token": "blind",
+          "count": 4
+        },
+        {
+          "token": "authentic",
+          "count": 3
+        },
+        {
+          "token": "toy",
+          "count": 2
+        }
+      ],
+      "listings": [
+        {
+          "title": "POP MART Zsiga x Care Bears Series Confirmed Figure in New Sealed Bag Open Box",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "POP MART Zsiga Pondering Love Figure 8.27inches Authentic NEW 1day Ship",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "100%Authentic Zsiga Under The Sun Series Blind Box Confirmed Figure Toy Art Gift",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "Used"
+        },
+        {
+          "title": "POP MART Hand In Hand Series Blind box Figure- ZSIGA (US)",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "POP MART The Golden Gallop Series Zsiga Figure Doll - Leaping Into Spring",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        }
+      ],
+      "upstreamRejectedTitles": [],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "Dreams Inc.",
+      "ip": "Any IP",
+      "brandId": "dreams_inc",
+      "ipId": "any_ip",
+      "uiVisible": true,
+      "query": "sonny angel blind box",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 1597,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "titlePassRate": 1,
+      "noiseRate": 0,
+      "accessoryRate": 0,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "sonny",
+          "count": 12
+        },
+        {
+          "token": "angel",
+          "count": 12
+        },
+        {
+          "token": "blind",
+          "count": 12
+        },
+        {
+          "token": "box",
+          "count": 12
+        },
+        {
+          "token": "series",
+          "count": 10
+        },
+        {
+          "token": "figure",
+          "count": 10
+        },
+        {
+          "token": "mini",
+          "count": 7
+        },
+        {
+          "token": "love",
+          "count": 5
+        },
+        {
+          "token": "day",
+          "count": 5
+        },
+        {
+          "token": "hippers",
+          "count": 4
+        },
+        {
+          "token": "gift",
+          "count": 4
+        },
+        {
+          "token": "rainy",
+          "count": 3
+        }
+      ],
+      "listings": [
+        {
+          "title": "Sonny Angel I Love Rainy Day Series Blind Box Mini Figure Toys USA**",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Sonny Angel 2019 CIRCUS Series Mini Figures Confirmed Blind Box Figure",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Sonny Angel Hippers Decorative Mini Figure Looking Back Series with Blind Box",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Sonny Angel HIPPER - Blind Box Figure - Multi-Series  ***READ DESCRIPTION***",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Sonny Angel I Love Rainy Day Series Blind Box Mini Figure Toys USA**",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        }
+      ],
+      "upstreamRejectedTitles": [],
+      "recommendations": [
+        "Any IP shows Sonny-heavy feed — Smiski requires explicit IP chip (by design)"
+      ],
+      "error": null
+    },
+    {
+      "brand": "Dreams Inc.",
+      "ip": "Sonny Angel",
+      "brandId": "dreams_inc",
+      "ipId": "sonny_angel",
+      "uiVisible": true,
+      "query": "SONNY ANGEL",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 11656,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "titlePassRate": 1,
+      "noiseRate": 0,
+      "accessoryRate": 0.083,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "sonny",
+          "count": 12
+        },
+        {
+          "token": "angel",
+          "count": 12
+        },
+        {
+          "token": "series",
+          "count": 10
+        },
+        {
+          "token": "blind",
+          "count": 9
+        },
+        {
+          "token": "box",
+          "count": 9
+        },
+        {
+          "token": "mini",
+          "count": 9
+        },
+        {
+          "token": "figure",
+          "count": 9
+        },
+        {
+          "token": "love",
+          "count": 4
+        },
+        {
+          "token": "day",
+          "count": 4
+        },
+        {
+          "token": "rainy",
+          "count": 3
+        },
+        {
+          "token": "toys",
+          "count": 3
+        },
+        {
+          "token": "usa",
+          "count": 3
+        }
+      ],
+      "listings": [
+        {
+          "title": "Sonny Angel I Love Rainy Day Series Blind Box Mini Figure Toys USA**",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Sonny Angel Birthday Gift Bear 2021 Original Mini Figure  1 Sealed Blind Box New",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Sonny Angel Hippers Harvest Series - 1 Pack",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Sonny Angel I Love Rainy Day Series Blind Box Mini Figure Toys USA",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Sonny Angel I Love Rainy Day Series Blind Box Mini Figure Toys USA**",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        }
+      ],
+      "upstreamRejectedTitles": [],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "Dreams Inc.",
+      "ip": "Smiski",
+      "brandId": "dreams_inc",
+      "ipId": "smiski",
+      "uiVisible": true,
+      "query": "Smiski",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 2386,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "titlePassRate": 1,
+      "noiseRate": 0,
+      "accessoryRate": 0.083,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "smiski",
+          "count": 13
+        },
+        {
+          "token": "series",
+          "count": 7
+        },
+        {
+          "token": "figure",
+          "count": 7
+        },
+        {
+          "token": "glow",
+          "count": 5
+        },
+        {
+          "token": "dark",
+          "count": 5
+        },
+        {
+          "token": "blind",
+          "count": 4
+        },
+        {
+          "token": "the",
+          "count": 4
+        },
+        {
+          "token": "discontinued",
+          "count": 3
+        },
+        {
+          "token": "box",
+          "count": 3
+        },
+        {
+          "token": "random",
+          "count": 3
+        },
+        {
+          "token": "shipping",
+          "count": 2
+        },
+        {
+          "token": "secret",
+          "count": 2
+        }
+      ],
+      "listings": [
+        {
+          "title": "Smiski Strap Series 1 blind figure 64735",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "SMISKI Figures Key Chain!! Glow In The Dark New AUTHRTIC Shipping From USA",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Secret Smiski Bundle",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Smiski Glow-in-the-Dark Figure Series 2 - Set of 3 - Discontinued Japan",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "Used"
+        },
+        {
+          "title": "SMISKI Living Series “Daydreaming” Smiski with Cat on Head. Free Shipping",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        }
+      ],
+      "upstreamRejectedTitles": [],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "Rolife",
+      "ip": "Any IP",
+      "brandId": "rolife",
+      "ipId": "any_ip",
+      "uiVisible": true,
+      "query": "rolife",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 1476,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "titlePassRate": 1,
+      "noiseRate": 0,
+      "accessoryRate": 0,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "rolife",
+          "count": 12
+        },
+        {
+          "token": "nanci",
+          "count": 12
+        },
+        {
+          "token": "box",
+          "count": 10
+        },
+        {
+          "token": "series",
+          "count": 9
+        },
+        {
+          "token": "blind",
+          "count": 9
+        },
+        {
+          "token": "confirmed",
+          "count": 9
+        },
+        {
+          "token": "figure",
+          "count": 6
+        },
+        {
+          "token": "oriental",
+          "count": 4
+        },
+        {
+          "token": "auspiciousness",
+          "count": 4
+        },
+        {
+          "token": "card",
+          "count": 3
+        },
+        {
+          "token": "art",
+          "count": 3
+        },
+        {
+          "token": "toy",
+          "count": 3
+        }
+      ],
+      "listings": [
+        {
+          "title": "Rolife Nanci Oriental Auspiciousness Series phoenix ￼blind box card confirmed ",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Rolife Nanci Flower Stories China Poetic Beauty Series Open Box Figure Art Toy",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "ROLIFE NANCI AUSPICIOUS EASTERN SPIRIT Authentic NEW Confirmed Phoenix USA",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Rolife Nanci Sweet Time Honey Air Series Confirmed Blind Box USA Authentic NEW",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Rolife Nanci's Sweet Time Surprise Figure Dolls 12 Pcs Blind Box Figure Toy Gift",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        }
+      ],
+      "upstreamRejectedTitles": [],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "Rolife",
+      "ip": "Nanci",
+      "brandId": "rolife",
+      "ipId": "nanci",
+      "uiVisible": true,
+      "query": "rolife Nanci",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 1162,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "titlePassRate": 1,
+      "noiseRate": 0,
+      "accessoryRate": 0,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "nanci",
+          "count": 12
+        },
+        {
+          "token": "box",
+          "count": 12
+        },
+        {
+          "token": "rolife",
+          "count": 11
+        },
+        {
+          "token": "blind",
+          "count": 10
+        },
+        {
+          "token": "series",
+          "count": 7
+        },
+        {
+          "token": "figure",
+          "count": 7
+        },
+        {
+          "token": "confirmed",
+          "count": 6
+        },
+        {
+          "token": "oriental",
+          "count": 5
+        },
+        {
+          "token": "auspiciousness",
+          "count": 5
+        },
+        {
+          "token": "art",
+          "count": 4
+        },
+        {
+          "token": "card",
+          "count": 3
+        },
+        {
+          "token": "flower",
+          "count": 2
+        }
+      ],
+      "listings": [
+        {
+          "title": "Rolife Nanci Flower Stories China Poetic Beauty Series Open Box Figure Art Toy",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Rolife Nanci Flower Stories Series Confirmed Blind Box Figure Art Toys",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Rolife Nanci Museum Fantasy Series Confirmed Blind Box Figure Art Toys",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Rolife Nanci 24 Solar Terms Blind Box",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Rolife Nanci Oriental Auspiciousness Series blind box Confirmed Black Tortoise",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        }
+      ],
+      "upstreamRejectedTitles": [],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "Finding Unicorn",
+      "ip": "Any IP",
+      "brandId": "finding_unicorn",
+      "ipId": "any_ip",
+      "uiVisible": false,
+      "query": "finding unicorn",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 597,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 10,
+      "titlePassRate": 0.833,
+      "noiseRate": 0,
+      "accessoryRate": 0,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "finding",
+          "count": 10
+        },
+        {
+          "token": "unicorn",
+          "count": 10
+        },
+        {
+          "token": "series",
+          "count": 6
+        },
+        {
+          "token": "figure",
+          "count": 4
+        },
+        {
+          "token": "zzoton",
+          "count": 3
+        },
+        {
+          "token": "blind",
+          "count": 3
+        },
+        {
+          "token": "bob",
+          "count": 3
+        },
+        {
+          "token": "sanrio",
+          "count": 2
+        },
+        {
+          "token": "box",
+          "count": 2
+        },
+        {
+          "token": "new",
+          "count": 2
+        },
+        {
+          "token": "toy",
+          "count": 2
+        },
+        {
+          "token": "secret",
+          "count": 2
+        }
+      ],
+      "listings": [
+        {
+          "title": "Finding Unicorn zZoton Dreamy Stage Series Naughty kitty",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "Used"
+        },
+        {
+          "title": "💡 Finding Unicorn x Sanrio zZoton Preparation Before Bedtime One Blind Box",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "New Blind Bag Finding Unicorn x MOLINTA Camp Fire Vlog Series Mini Figure Toy",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Secret Bear Garden Finding Unicorn Truth Or Lie Figure Shin Woo Baby Ghost Bear",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Finding Unicorn F.UN AGAN Dark Fairy Tale Series RABTY ZEROO-LOSER Action Figure",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "Used"
+        }
+      ],
+      "upstreamRejectedTitles": [
+        "Mystical Unicorn Hatchling 3D Printed Flexi Fidget Gift Articulated Toy",
+        "NEW Zuru 5 Surprise Fairy Unicorn Squad figure GLITTER series RILEY HARD TO FIND"
+      ],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "Finding Unicorn",
+      "ip": "Zzoton",
+      "brandId": "finding_unicorn",
+      "ipId": "zzoton",
+      "uiVisible": false,
+      "query": "finding unicorn Zzoton",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 140,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "titlePassRate": 1,
+      "noiseRate": 0,
+      "accessoryRate": 0,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "zzoton",
+          "count": 13
+        },
+        {
+          "token": "finding",
+          "count": 12
+        },
+        {
+          "token": "unicorn",
+          "count": 12
+        },
+        {
+          "token": "series",
+          "count": 8
+        },
+        {
+          "token": "figure",
+          "count": 7
+        },
+        {
+          "token": "box",
+          "count": 5
+        },
+        {
+          "token": "new",
+          "count": 5
+        },
+        {
+          "token": "blind",
+          "count": 4
+        },
+        {
+          "token": "dreamy",
+          "count": 3
+        },
+        {
+          "token": "stage",
+          "count": 3
+        },
+        {
+          "token": "magic",
+          "count": 2
+        },
+        {
+          "token": "adventure",
+          "count": 2
+        }
+      ],
+      "listings": [
+        {
+          "title": "💡 Finding Unicorn x Sanrio zZoton Preparation Before Bedtime One Blind Box",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Finding Unicorn zZoton Dreamy Stage Series Naughty kitty",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "Used"
+        },
+        {
+          "title": "Finding Unicorn zZoton Magic Adventure Series Figure Trees Secret NEW",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Finding Unicorn zZoton Dreamy Stage Series Figure Rebel Sweety NEW",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Finding Unicorn zZoton Blind Box Figure Spring outing",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "Used"
+        }
+      ],
+      "upstreamRejectedTitles": [],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "Finding Unicorn",
+      "ip": "Farmer Bob",
+      "brandId": "finding_unicorn",
+      "ipId": "farmer_bob",
+      "uiVisible": false,
+      "query": "finding unicorn FARMER BOB",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 147,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "titlePassRate": 1,
+      "noiseRate": 0,
+      "accessoryRate": 0,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "bob",
+          "count": 20
+        },
+        {
+          "token": "finding",
+          "count": 12
+        },
+        {
+          "token": "unicorn",
+          "count": 12
+        },
+        {
+          "token": "farmer",
+          "count": 12
+        },
+        {
+          "token": "limited",
+          "count": 6
+        },
+        {
+          "token": "figure",
+          "count": 5
+        },
+        {
+          "token": "action",
+          "count": 4
+        },
+        {
+          "token": "new",
+          "count": 4
+        },
+        {
+          "token": "series",
+          "count": 4
+        },
+        {
+          "token": "pendant",
+          "count": 3
+        },
+        {
+          "token": "toy",
+          "count": 3
+        },
+        {
+          "token": "cute",
+          "count": 3
+        }
+      ],
+      "listings": [
+        {
+          "title": "Finding Unicorn Farmer Bob Feeling You - Anxious READ",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "Used"
+        },
+        {
+          "title": "Finding Unicorn Farmer Bob Soda Bob Pendant Limited Action Figure New Toy",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Finding Unicorn Farmer Bob Skull Bob Limited Edition Cute In Stock New Toys ",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Finding Unicorn Farmer Bob Furry Rex-Dino Bob Green Ver. Action Figure",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "Used"
+        },
+        {
+          "title": "FARMER BOB - Bob Husky Finding Unicorn F.UN Series 2 Travel Around The World ",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        }
+      ],
+      "upstreamRejectedTitles": [],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "Finding Unicorn",
+      "ip": "Rico",
+      "brandId": "finding_unicorn",
+      "ipId": "rico",
+      "uiVisible": false,
+      "query": "finding unicorn Rico",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 91,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "titlePassRate": 1,
+      "noiseRate": 0,
+      "accessoryRate": 0.083,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "rico",
+          "count": 18
+        },
+        {
+          "token": "finding",
+          "count": 12
+        },
+        {
+          "token": "unicorn",
+          "count": 12
+        },
+        {
+          "token": "happy",
+          "count": 9
+        },
+        {
+          "token": "series",
+          "count": 7
+        },
+        {
+          "token": "dream",
+          "count": 4
+        },
+        {
+          "token": "winter",
+          "count": 4
+        },
+        {
+          "token": "days",
+          "count": 3
+        },
+        {
+          "token": "with",
+          "count": 3
+        },
+        {
+          "token": "blind",
+          "count": 2
+        },
+        {
+          "token": "box",
+          "count": 2
+        },
+        {
+          "token": "friends",
+          "count": 2
+        }
+      ],
+      "listings": [
+        {
+          "title": "Finding Unicorn Martube Rico Merry Christmas tree",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "Used"
+        },
+        {
+          "title": "F.UN Rico Happy Dream Finding Unicorn Winter Days Winter Patissier",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "Used"
+        },
+        {
+          "title": "RiCO Happy Winter Days Blind Box Series by Rico x Finding Unicorn",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "F.UN Finding Unicorn Rico Balloon Rico Running Badge",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "F.UN Finding Unicorn x RiCO Happy Dream Series 💭💫 RiCO with Dream Sheep",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "Used"
+        }
+      ],
+      "upstreamRejectedTitles": [],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "Finding Unicorn",
+      "ip": "Molinta",
+      "brandId": "finding_unicorn",
+      "ipId": "molinta",
+      "uiVisible": false,
+      "query": "finding unicorn Molinta",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 67,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "titlePassRate": 1,
+      "noiseRate": 0,
+      "accessoryRate": 0,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "molinta",
+          "count": 12
+        },
+        {
+          "token": "finding",
+          "count": 11
+        },
+        {
+          "token": "unicorn",
+          "count": 11
+        },
+        {
+          "token": "series",
+          "count": 10
+        },
+        {
+          "token": "box",
+          "count": 7
+        },
+        {
+          "token": "retro",
+          "count": 5
+        },
+        {
+          "token": "girls",
+          "count": 5
+        },
+        {
+          "token": "confirmed",
+          "count": 4
+        },
+        {
+          "token": "sealed",
+          "count": 4
+        },
+        {
+          "token": "opened",
+          "count": 4
+        },
+        {
+          "token": "blind",
+          "count": 4
+        },
+        {
+          "token": "figure",
+          "count": 3
+        }
+      ],
+      "listings": [
+        {
+          "title": "Molinta Finding Unicorn Retro Girls Series Forever Days Figure Confirmed",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Molinta Finding Unicorn Retro Girls Series Sweety Moment Sealed Opened Box",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "New Blind Bag Finding Unicorn x MOLINTA Camp Fire Vlog Series Mini Figure Toy",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Set Of 2 FINDING UNICORN - Molinta Cherry Blossom Cafe Series Figurines Toys ",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "Used"
+        },
+        {
+          "title": "Molinta Finding Unicorn Retro Girls Series Romantic Vacation Sealed Opened Box",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        }
+      ],
+      "upstreamRejectedTitles": [],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "Finding Unicorn",
+      "ip": "Shinwoo",
+      "brandId": "finding_unicorn",
+      "ipId": "shinwoo",
+      "uiVisible": false,
+      "query": "finding unicorn Shinwoo",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 118,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "titlePassRate": 1,
+      "noiseRate": 0,
+      "accessoryRate": 0,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "shinwoo",
+          "count": 12
+        },
+        {
+          "token": "finding",
+          "count": 10
+        },
+        {
+          "token": "unicorn",
+          "count": 8
+        },
+        {
+          "token": "box",
+          "count": 5
+        },
+        {
+          "token": "ghost",
+          "count": 5
+        },
+        {
+          "token": "bear",
+          "count": 5
+        },
+        {
+          "token": "lab",
+          "count": 4
+        },
+        {
+          "token": "dreamy",
+          "count": 4
+        },
+        {
+          "token": "land",
+          "count": 4
+        },
+        {
+          "token": "series",
+          "count": 4
+        },
+        {
+          "token": "blind",
+          "count": 4
+        },
+        {
+          "token": "lovesick",
+          "count": 3
+        }
+      ],
+      "listings": [
+        {
+          "title": "Finding Unicorn x Shinwoo Lovesick Lab Love Lab Vinyl Figure New Opened Box",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Finding Unicorn Shinwoo Dreamy Land Series Open Chaser Star Guardian",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "Used"
+        },
+        {
+          "title": "Finding Unicorn X Shinwoo Lovesick Lab Blind Box Confirmed Ghost Bear Love Lab",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "FINDING UNICORN x ShinWoo Ragbear Clinic Series Plush Blind Box",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "Used"
+        },
+        {
+          "title": "Finding Unicorn FUN Shinwoo The Lonely Moon HALF HEART BUNNY & THE OTHER HALF",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "Used"
+        }
+      ],
+      "upstreamRejectedTitles": [],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "TNT SPACE",
+      "ip": "Any IP",
+      "brandId": "tntspace",
+      "ipId": "any_ip",
+      "uiVisible": true,
+      "query": "tnt space",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 497,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "titlePassRate": 1,
+      "noiseRate": 0,
+      "accessoryRate": 0,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "tnt",
+          "count": 12
+        },
+        {
+          "token": "space",
+          "count": 12
+        },
+        {
+          "token": "rayan",
+          "count": 9
+        },
+        {
+          "token": "box",
+          "count": 9
+        },
+        {
+          "token": "boy",
+          "count": 8
+        },
+        {
+          "token": "series",
+          "count": 8
+        },
+        {
+          "token": "confirmed",
+          "count": 7
+        },
+        {
+          "token": "blind",
+          "count": 7
+        },
+        {
+          "token": "figure",
+          "count": 6
+        },
+        {
+          "token": "usa",
+          "count": 4
+        },
+        {
+          "token": "pendant",
+          "count": 2
+        },
+        {
+          "token": "otherworld",
+          "count": 2
+        }
+      ],
+      "listings": [
+        {
+          "title": "TNT SPACE Boy Rayan Cool Color Plush Pendant Box Confirmed Exclusive Rare USA",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "TNT SPACE Boy Rayan Otherworld Series Crimson Blaze Blind Box Figure Confirmed",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "TNT SPACE Boy Rayan Time Rift Series Heat Beat Blind Box Figure Confirmed USA",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Authentic TNT Space Boy Rayan Crush Spark Figurine - Brand New/Sealed",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "TNT SPACE Boy Rayan Otherworld Series Cloud Whisperer Blind Box Figure Confirmed",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        }
+      ],
+      "upstreamRejectedTitles": [],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "TNT SPACE",
+      "ip": "Rayan",
+      "brandId": "tntspace",
+      "ipId": "rayan",
+      "uiVisible": true,
+      "query": "tnt space Rayan",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 129,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "titlePassRate": 1,
+      "noiseRate": 0,
+      "accessoryRate": 0.083,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "tnt",
+          "count": 12
+        },
+        {
+          "token": "space",
+          "count": 12
+        },
+        {
+          "token": "rayan",
+          "count": 12
+        },
+        {
+          "token": "boy",
+          "count": 7
+        },
+        {
+          "token": "box",
+          "count": 6
+        },
+        {
+          "token": "confirmed",
+          "count": 6
+        },
+        {
+          "token": "series",
+          "count": 6
+        },
+        {
+          "token": "figure",
+          "count": 6
+        },
+        {
+          "token": "plush",
+          "count": 4
+        },
+        {
+          "token": "blind",
+          "count": 4
+        },
+        {
+          "token": "pendant",
+          "count": 3
+        },
+        {
+          "token": "usa",
+          "count": 3
+        }
+      ],
+      "listings": [
+        {
+          "title": "TNT SPACE Boy Rayan Cool Color Plush Pendant Box Confirmed Exclusive Rare USA",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Authentic TNT Space Boy Rayan Crush Spark Figurine - Brand New/Sealed",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "TNT SPACE Boy Rayan Otherworld Series Crimson Blaze Blind Box Figure Confirmed",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Rayan Virtual Breaker TNT space US SELLER Limited hang Card",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Rayan Un-Cowboy Plush Pendant - TNT Space",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        }
+      ],
+      "upstreamRejectedTitles": [],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "TNT SPACE",
+      "ip": "Dora",
+      "brandId": "tntspace",
+      "ipId": "dora",
+      "uiVisible": true,
+      "query": "tnt space Dora",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 150,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "titlePassRate": 1,
+      "noiseRate": 0,
+      "accessoryRate": 0,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "tnt",
+          "count": 12
+        },
+        {
+          "token": "space",
+          "count": 12
+        },
+        {
+          "token": "dora",
+          "count": 12
+        },
+        {
+          "token": "series",
+          "count": 8
+        },
+        {
+          "token": "blind",
+          "count": 8
+        },
+        {
+          "token": "box",
+          "count": 8
+        },
+        {
+          "token": "figure",
+          "count": 8
+        },
+        {
+          "token": "wonderful",
+          "count": 4
+        },
+        {
+          "token": "night",
+          "count": 4
+        },
+        {
+          "token": "ideal",
+          "count": 3
+        },
+        {
+          "token": "world",
+          "count": 3
+        },
+        {
+          "token": "figurine",
+          "count": 2
+        }
+      ],
+      "listings": [
+        {
+          "title": "TNT SPACE Dora Wonderful Night Series Carousel Murmurs Blind Box Figure",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "Used"
+        },
+        {
+          "title": "Dora Dancer Figurine - Futirism Series Tnt Space",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "TNT SPACE Dora Wonderful Night Series Melancholy Cedar Blind Box Figure",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "Used"
+        },
+        {
+          "title": "TNT SPACE Dora Material Vistas Series Blooming Blind Box Figure",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "Used"
+        },
+        {
+          "title": "An Ideal World Dora Adventureland figurine NIB 2024 TNT Space blind box NEW 4\"",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        }
+      ],
+      "upstreamRejectedTitles": [],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "TNT SPACE",
+      "ip": "Zoraa",
+      "brandId": "tntspace",
+      "ipId": "zoraa",
+      "uiVisible": true,
+      "query": "tnt space Zoraa",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 84,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "titlePassRate": 1,
+      "noiseRate": 0,
+      "accessoryRate": 0,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "zoraa",
+          "count": 13
+        },
+        {
+          "token": "tnt",
+          "count": 12
+        },
+        {
+          "token": "space",
+          "count": 12
+        },
+        {
+          "token": "box",
+          "count": 9
+        },
+        {
+          "token": "figure",
+          "count": 9
+        },
+        {
+          "token": "blind",
+          "count": 8
+        },
+        {
+          "token": "baby",
+          "count": 7
+        },
+        {
+          "token": "series",
+          "count": 7
+        },
+        {
+          "token": "gift",
+          "count": 3
+        },
+        {
+          "token": "love",
+          "count": 2
+        },
+        {
+          "token": "fruits",
+          "count": 2
+        },
+        {
+          "token": "grey",
+          "count": 2
+        }
+      ],
+      "listings": [
+        {
+          "title": "TNT Space Baby Zoraa I Love Fruits Series Blind Box Figures- NEW/Sealed Case!",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Baby Zoraa TNT Space Secrets Vinyl Figure Grey Wolf Girl Blind Box Woohoo boohoo",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "Used"
+        },
+        {
+          "title": "Baybee Zoraa Figurine Hang Card TNT Space Special Version",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "TNT Space Zoraa Cuteness is Justice Figure bundle: Pat A Ball, Eat Well (NO BOX)",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "TNT SPACE Zoraa Linglong Fu Series Book Girl with Blue Shirt Blind Box Figure",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "Used"
+        }
+      ],
+      "upstreamRejectedTitles": [],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "TNT SPACE",
+      "ip": "Anmoo",
+      "brandId": "tntspace",
+      "ipId": "anmoo",
+      "uiVisible": true,
+      "query": "tnt space Anmoo",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 35,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "titlePassRate": 1,
+      "noiseRate": 0,
+      "accessoryRate": 0.083,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "anmoo",
+          "count": 12
+        },
+        {
+          "token": "tnt",
+          "count": 9
+        },
+        {
+          "token": "space",
+          "count": 9
+        },
+        {
+          "token": "series",
+          "count": 8
+        },
+        {
+          "token": "box",
+          "count": 8
+        },
+        {
+          "token": "the",
+          "count": 8
+        },
+        {
+          "token": "figure",
+          "count": 7
+        },
+        {
+          "token": "world",
+          "count": 4
+        },
+        {
+          "token": "blind",
+          "count": 4
+        },
+        {
+          "token": "listen",
+          "count": 3
+        },
+        {
+          "token": "attentively",
+          "count": 3
+        },
+        {
+          "token": "mystery",
+          "count": 3
+        }
+      ],
+      "listings": [
+        {
+          "title": "Tnt Space Anmoo Listen Attentively Series Mystery Box Figure Collectible Lot 2",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Tnt Space Anmoo Listen Attentively Series 2.7\" Mystery Box Figure Collectible",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "TNT Space Little Anmoo The Perfect World Blind Box Figure Insomnia",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Tnt Space Anmoo The Lost Doll Series 6.6\" Plush Doll Keychain Backpack Pendant",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "Used"
+        },
+        {
+          "title": "TNT Space X ANMOO The Great pretend Model Limited edition Tidal Current Toys",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        }
+      ],
+      "upstreamRejectedTitles": [],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "TNT SPACE",
+      "ip": "Liila",
+      "brandId": "tntspace",
+      "ipId": "liila",
+      "uiVisible": true,
+      "query": "tnt space Liita",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 50,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "titlePassRate": 1,
+      "noiseRate": 0,
+      "accessoryRate": 0.083,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "liita",
+          "count": 12
+        },
+        {
+          "token": "tnt",
+          "count": 11
+        },
+        {
+          "token": "space",
+          "count": 11
+        },
+        {
+          "token": "tidal",
+          "count": 6
+        },
+        {
+          "token": "current",
+          "count": 6
+        },
+        {
+          "token": "toys",
+          "count": 6
+        },
+        {
+          "token": "model",
+          "count": 5
+        },
+        {
+          "token": "series",
+          "count": 4
+        },
+        {
+          "token": "figure",
+          "count": 4
+        },
+        {
+          "token": "collection",
+          "count": 4
+        },
+        {
+          "token": "new",
+          "count": 4
+        },
+        {
+          "token": "box",
+          "count": 4
+        }
+      ],
+      "listings": [
+        {
+          "title": "Tnt Space Liita Where Petal Settle Series 3.4\" Figure Cute Design Collectible",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "Used"
+        },
+        {
+          "title": "TNT Space X Liita Berry jam Big Doll Model Tidal Current Toys Collection New",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Liita Forward By Light TNT Space Designer Art Toy Figure Blind Box + Card",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "TNT Space X Liita White peach cat sauce Pendent Ornament Model Tidal Current Toy",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "TNT Space X Liita Guiyin Normal edition Statue Tidal Current Toys Collection New",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        }
+      ],
+      "upstreamRejectedTitles": [],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "TOPTOY",
+      "ip": "Any IP",
+      "brandId": "toptoy",
+      "ipId": "any_ip",
+      "uiVisible": true,
+      "query": "toptoy",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 14062,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "titlePassRate": 1,
+      "noiseRate": 0,
+      "accessoryRate": 0.083,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "box",
+          "count": 12
+        },
+        {
+          "token": "toptoy",
+          "count": 11
+        },
+        {
+          "token": "blind",
+          "count": 11
+        },
+        {
+          "token": "series",
+          "count": 10
+        },
+        {
+          "token": "figure",
+          "count": 6
+        },
+        {
+          "token": "confirmed",
+          "count": 6
+        },
+        {
+          "token": "sanrio",
+          "count": 6
+        },
+        {
+          "token": "gift",
+          "count": 5
+        },
+        {
+          "token": "eevee",
+          "count": 4
+        },
+        {
+          "token": "sleeping",
+          "count": 4
+        },
+        {
+          "token": "toy",
+          "count": 4
+        },
+        {
+          "token": "characters",
+          "count": 4
+        }
+      ],
+      "listings": [
+        {
+          "title": "TOPTOY Eevee Sleeping Position Series Figure Toy Gift Blind Box. (1 Box)",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "TOP TOY Naruto Beast Party Series Plush Confirmed Blind Box Figure Gift ",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "TOPTOY Sanrio Pompompurin Amusement Park Series Confirmed Blind Box Figure Gift",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "Used"
+        },
+        {
+          "title": " TOPTOY Eevee Sleeping Series Blind Box Figure sealed case United States seller ",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "✨New TopToy Sanrio Characters Starry Night Party Magician You Pick! US STOCK",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        }
+      ],
+      "upstreamRejectedTitles": [],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "TOPTOY",
+      "ip": "Nommi",
+      "brandId": "toptoy",
+      "ipId": "nommi",
+      "uiVisible": true,
+      "query": "toptoy Nommi",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 245,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "titlePassRate": 1,
+      "noiseRate": 0,
+      "accessoryRate": 0,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "nommi",
+          "count": 12
+        },
+        {
+          "token": "series",
+          "count": 10
+        },
+        {
+          "token": "toy",
+          "count": 7
+        },
+        {
+          "token": "energy",
+          "count": 7
+        },
+        {
+          "token": "box",
+          "count": 7
+        },
+        {
+          "token": "blind",
+          "count": 6
+        },
+        {
+          "token": "confirmed",
+          "count": 6
+        },
+        {
+          "token": "top",
+          "count": 5
+        },
+        {
+          "token": "pinky",
+          "count": 5
+        },
+        {
+          "token": "plush",
+          "count": 5
+        },
+        {
+          "token": "authentic",
+          "count": 4
+        },
+        {
+          "token": "doll",
+          "count": 3
+        }
+      ],
+      "listings": [
+        {
+          "title": "Authentic Top Toy Nommi Pinky Energy Series Blind Box Confirmed Alice US Seller",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "TOPTOY Nommi Forest Kingdom Series CURLY TAIL KITTY Action Figures Confirmed",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Nommi Pink Energy Plush Figure Blind Box Series of 6 Collectibles — Your Choice!",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Authentic Top Toy Nommi Pinky Energy Series Blind Box Confirmed Jane US Seller",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "Used"
+        },
+        {
+          "title": "Authentic Top Toy Nommi Pinky Energy Series Blind Box Confirmed Plush Doll",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "Used"
+        }
+      ],
+      "upstreamRejectedTitles": [],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "TOPTOY",
+      "ip": "Maymei",
+      "brandId": "toptoy",
+      "ipId": "maymei",
+      "uiVisible": true,
+      "query": "toptoy Maymei",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 155,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "titlePassRate": 1,
+      "noiseRate": 0,
+      "accessoryRate": 0.083,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "maymei",
+          "count": 12
+        },
+        {
+          "token": "series",
+          "count": 9
+        },
+        {
+          "token": "plush",
+          "count": 8
+        },
+        {
+          "token": "blind",
+          "count": 7
+        },
+        {
+          "token": "box",
+          "count": 7
+        },
+        {
+          "token": "pendant",
+          "count": 7
+        },
+        {
+          "token": "kitten",
+          "count": 6
+        },
+        {
+          "token": "confirmed",
+          "count": 6
+        },
+        {
+          "token": "academy",
+          "count": 4
+        },
+        {
+          "token": "400",
+          "count": 3
+        },
+        {
+          "token": "forgotten",
+          "count": 3
+        },
+        {
+          "token": "toptoy",
+          "count": 3
+        }
+      ],
+      "listings": [
+        {
+          "title": "AUTHENTIC Maymei 400% Forgotten Funfair Series TopToy Blind Box plush figure NIB",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Maymei Funfair Series TOPTOY Blind Box 400% Forgotten Tour Guide Edition",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Maymei Kitten Academy Series Plush Doll Blind Box All 6 Figures 2026",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "MAYMEI - Kitten Academy Series Plush Pendant - Confirmed TABBY KITTEN 🐈‍⬛",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Maymei Horoscope Stories Series Blind Box Confirmed Pendant Lanyard Sagittarius",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        }
+      ],
+      "upstreamRejectedTitles": [],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "DPL",
+      "ip": "Any IP",
+      "brandId": "dpl",
+      "ipId": "any_ip",
+      "uiVisible": true,
+      "query": "cureplaneta",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 360,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 9,
+      "titlePassRate": 0.75,
+      "noiseRate": 0,
+      "accessoryRate": 0,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "cureplaneta",
+          "count": 8
+        },
+        {
+          "token": "baby",
+          "count": 8
+        },
+        {
+          "token": "three",
+          "count": 8
+        },
+        {
+          "token": "plush",
+          "count": 6
+        },
+        {
+          "token": "new",
+          "count": 5
+        },
+        {
+          "token": "bb3",
+          "count": 3
+        },
+        {
+          "token": "eyes",
+          "count": 3
+        },
+        {
+          "token": "confirmed",
+          "count": 3
+        },
+        {
+          "token": "figure",
+          "count": 2
+        },
+        {
+          "token": "sealed",
+          "count": 2
+        },
+        {
+          "token": "400",
+          "count": 2
+        },
+        {
+          "token": "edition",
+          "count": 2
+        }
+      ],
+      "listings": [
+        {
+          "title": "Cureplaneta Baby Three Gothic Lolita Bunny V3 Plush Action Figure - SEALED",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Cureplaneta Baby Three Dreamweaver 400% Edition Figure Toy, Pink",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Baby Three Explorer 1000% -  Limited Edition  FREE GIFT WITH PURCHASE",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Cureplaneta BB3 400% V2 Big Plush Animal SCENTED Glass Eyes 13in Baby Three NEW",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Cureplaneta Baby Three Really Love You Confirmed Plush Dragon Fruit  Boba Eyes ",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        }
+      ],
+      "upstreamRejectedTitles": [
+        "Nina’s Vacation Snacks Blind Box",
+        "Kimipapa Animal Series Blind Box- New Sealed In Box Fast Ship! Authentic.",
+        "Milly Looking for Lolita “Hibermoon” Figure Blind Box Opened Kawaii Designer Toy"
+      ],
+      "recommendations": [],
+      "error": null
+    },
+    {
+      "brand": "DPL",
+      "ip": "Baby Three",
+      "brandId": "dpl",
+      "ipId": "baby_three",
+      "uiVisible": true,
+      "query": "cureplaneta BABY THREE",
+      "categoryIds": "261068",
+      "aspect_filter": null,
+      "verifiedFacet": false,
+      "retrievalMode": "q_only",
+      "upstreamTotal": 680,
+      "rawSampleCount": 12,
+      "afterTitleFilter": 12,
+      "titlePassRate": 1,
+      "noiseRate": 0,
+      "accessoryRate": 0.083,
+      "categoryDriftRate": 0,
+      "categoriesSeen": [
+        "261068"
+      ],
+      "status": "healthy",
+      "why": "Good upstream volume, title pass rate, and sample quality",
+      "observedSellerNaming": [
+        {
+          "token": "baby",
+          "count": 14
+        },
+        {
+          "token": "cureplaneta",
+          "count": 12
+        },
+        {
+          "token": "three",
+          "count": 12
+        },
+        {
+          "token": "plush",
+          "count": 9
+        },
+        {
+          "token": "confirmed",
+          "count": 6
+        },
+        {
+          "token": "eyes",
+          "count": 4
+        },
+        {
+          "token": "pendant",
+          "count": 4
+        },
+        {
+          "token": "new",
+          "count": 3
+        },
+        {
+          "token": "edition",
+          "count": 3
+        },
+        {
+          "token": "figure",
+          "count": 3
+        },
+        {
+          "token": "bb3",
+          "count": 2
+        },
+        {
+          "token": "1000",
+          "count": 2
+        }
+      ],
+      "listings": [
+        {
+          "title": "Cureplaneta Baby Three BB3 1000% V2 Plush SCENTED 100% Confirmed Glass Eyes NEW",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Cureplaneta Baby Three Dreamweaver 400% Edition Figure Toy, Pink",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Cureplaneta Baby Three Gothic Lolita Bunny V3 Plush Action Figure - SEALED",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Cureplaneta BB3 400% V2 Big Plush Animal SCENTED Glass Eyes 13in Baby Three NEW",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        },
+        {
+          "title": "Cureplaneta Baby Three Mini Animal World Plush pendant CONFIRMED PUPPY NEW",
+          "categoryId": "261068",
+          "hasImage": true,
+          "condition": "New"
+        }
+      ],
+      "upstreamRejectedTitles": [],
+      "recommendations": [],
+      "error": null
+    }
+  ]
+}
