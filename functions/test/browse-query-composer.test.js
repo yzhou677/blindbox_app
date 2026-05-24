@@ -5,32 +5,34 @@ const assert = require('node:assert/strict');
 const {
   composeBrowseUpstreamQ,
   browseQuerySignature,
+  DISCOVER_BROWSE_Q,
 } = require('../lib/providers/gateway/composeBrowseQuery');
 
 describe('composeBrowseUpstreamQ', () => {
-  it('uses aspect facets for brand/IP (q is empty without search text)', () => {
+  it('uses brand q for verified Character IP (Labubu)', () => {
     assert.equal(
       composeBrowseUpstreamQ({
         brandId: 'pop_mart',
         ipId: 'the_monsters',
       }),
-      '',
+      'pop mart',
     );
   });
 
-  it('passes search text when facets are active', () => {
+  it('appends user search text to brand q', () => {
     assert.equal(
       composeBrowseUpstreamQ({
         brandId: 'pop_mart',
         ipId: 'the_monsters',
         searchText: 'macaron',
       }),
-      'macaron',
+      'pop mart macaron',
     );
   });
 
-  it('uses empty q for Any brand + Any IP (curated brand OR facets)', () => {
-    assert.equal(composeBrowseUpstreamQ({}), '');
+  it('uses discover keywords for Any brand + Any IP', () => {
+    assert.equal(composeBrowseUpstreamQ({}), DISCOVER_BROWSE_Q);
+    assert.equal(DISCOVER_BROWSE_Q, 'blind box vinyl figure');
   });
 });
 

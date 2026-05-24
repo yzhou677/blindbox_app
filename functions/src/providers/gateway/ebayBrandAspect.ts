@@ -1,28 +1,22 @@
 /**
- * Maps in-app brand/IP facets to eBay Browse Brand aspect values.
+ * Brand/IP title tokens and legacy aspect helpers.
+ * Live retrieval uses `q` + verified Character facet — not Brand aspect_filter.
  */
 
 import {
   ANY_IP,
-  MARKET_HIDDEN_BROWSE_BRAND_IDS,
+  ipHasVerifiedCharacterAspect,
   MARKET_TAXONOMY_BRANDS,
   MARKET_TAXONOMY_IPS,
   type TaxonomyBrand,
 } from './composeBrowseQuery';
 
-/** All visible in-app brands → unique eBay Brand aspect values (OR discover feed). */
+/** @deprecated Brand OR discover — no longer used for browse aspect_filter. */
 export function resolveCuratedEbayBrandAspectValues(): string[] {
-  const out = new Set<string>();
-  for (const brand of MARKET_TAXONOMY_BRANDS) {
-    if (MARKET_HIDDEN_BROWSE_BRAND_IDS.has(brand.id)) continue;
-    for (const value of resolveEbayBrandAspectValues(brand.id, ANY_IP)) {
-      out.add(value);
-    }
-  }
-  return [...out];
+  return [];
 }
 
-/** Resolves eBay `Brand:{…}` aspect values for a brand/IP facet pair. */
+/** @deprecated Brand aspect_filter — retained for diagnostics/title tokens only. */
 export function resolveEbayBrandAspectValues(
   brandId: string,
   ipId?: string,
@@ -38,13 +32,12 @@ export function resolveEbayBrandAspectValues(
 
   if (brand.ebayAspectBrands?.length) return [...brand.ebayAspectBrands];
   if (brand.ebayAspectBrand) return [brand.ebayAspectBrand];
+  if (brand.ebayBrandQuery) return [brand.ebayBrandQuery];
   return [brand.displayName];
 }
 
 export function ipUsesCharacterAspect(ipId: string): boolean {
-  const ip = MARKET_TAXONOMY_IPS.find((row) => row.id === ipId);
-  if (!ip) return false;
-  return !ip.ebayAspectBrand;
+  return ipHasVerifiedCharacterAspect(ipId);
 }
 
 /** Title-match tokens for a studio brand (includes child eBay brand lines). */
@@ -72,6 +65,7 @@ export function brandTitleMatchTokens(brandId: string): string[] {
 function collectBrandTitleTokens(brand: TaxonomyBrand): string[] {
   const out = new Set<string>();
   out.add(normalizeToken(brand.displayName));
+  if (brand.ebayBrandQuery) out.add(normalizeToken(brand.ebayBrandQuery));
   if (brand.ebayAspectBrand) out.add(normalizeToken(brand.ebayAspectBrand));
   for (const value of brand.ebayAspectBrands ?? []) {
     out.add(normalizeToken(value));

@@ -15,6 +15,10 @@ export type GatewayItemDetailDto = {
   imageUrl: string;
   listingUrl: string;
   condition?: string;
+  /** Estimated units available for purchase (eBay estimatedAvailableQuantity). */
+  quantity?: number;
+  /** IN_STOCK, LIMITED_STOCK, OUT_OF_STOCK when provided by upstream. */
+  availabilityStatus?: string;
   shortDescription?: string;
   seller?: {
     username?: string;

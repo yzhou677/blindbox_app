@@ -3,10 +3,11 @@ import type { BrowseCursorPayload, BrowseQuery } from './gatewayTypes';
 import {
   browseQuerySignature,
   composeBrowseUpstreamQ,
+  normalizeBrowseFacetIds,
 } from './composeBrowseQuery';
 import {
   composeBrowseAspectPlan,
-  composeBrowseFranchiseAspectPlan,
+  resolveBrowseCategoryId,
 } from './composeBrowseAspectFilter';
 
 const DEFAULT_LIMIT = 12;
@@ -24,8 +25,12 @@ export function parseBrowseQuery(req: Request): BrowseQuery {
     MAX_LIMIT,
   );
 
-  const brandId = String(req.query.brandId ?? req.query.brand_id ?? '').trim();
-  const ipId = String(req.query.ipId ?? req.query.ip_id ?? '').trim();
+  const brandIdRaw = String(req.query.brandId ?? req.query.brand_id ?? '').trim();
+  const ipIdRaw = String(req.query.ipId ?? req.query.ip_id ?? '').trim();
+  const { brandId, ipId } = normalizeBrowseFacetIds({
+    brandId: brandIdRaw,
+    ipId: ipIdRaw,
+  });
   const searchText = String(
     req.query.searchText ?? req.query.search ?? '',
   ).trim();
@@ -36,28 +41,18 @@ export function parseBrowseQuery(req: Request): BrowseQuery {
   const q = hasQOverride
     ? qRaw
     : composeBrowseUpstreamQ({
-        brandId: brandId || undefined,
-        ipId: ipId || undefined,
+        brandId,
+        ipId,
         searchText: searchText || undefined,
       });
 
   const aspectPlan = hasQOverride
     ? undefined
-    : composeBrowseAspectPlan({
-        brandId: brandId || undefined,
-        ipId: ipId || undefined,
-      });
-  const franchisePlan =
-    !hasQOverride && ipId
-      ? composeBrowseFranchiseAspectPlan({
-          brandId: brandId || undefined,
-          ipId,
-        })
-      : null;
+    : composeBrowseAspectPlan({ brandId, ipId });
 
   const signature = browseQuerySignature({
-    brandId: brandId || undefined,
-    ipId: ipId || undefined,
+    brandId,
+    ipId,
     searchText: searchText || undefined,
     sort: sort || undefined,
   });
@@ -66,15 +61,14 @@ export function parseBrowseQuery(req: Request): BrowseQuery {
   return {
     limit,
     q,
-    brandId: brandId || undefined,
-    ipId: ipId || undefined,
+    brandId: brandId !== 'any_brand' ? brandId : undefined,
+    ipId: ipId !== 'any_ip' ? ipId : undefined,
     searchText: searchText || undefined,
     sort: sort || undefined,
     signature,
     cursor: cursorRaw || undefined,
-    categoryIds: aspectPlan?.active ? aspectPlan.categoryIds : undefined,
+    categoryIds: aspectPlan?.categoryIds ?? resolveBrowseCategoryId(),
     aspectFilter: aspectPlan?.active ? aspectPlan.aspectFilter : undefined,
-    franchiseAspectFilter: franchisePlan?.aspectFilter,
   };
 }
 

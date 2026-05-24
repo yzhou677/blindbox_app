@@ -1,90 +1,258 @@
 'use strict';
 
+
+
 const { describe, it } = require('node:test');
+
 const assert = require('node:assert/strict');
+
 const {
+
   composeBrowseUpstreamQ,
+
+  CANONICAL_EBAY_BROWSE_CATEGORY_ID,
+
 } = require('../lib/providers/gateway/composeBrowseQuery');
+
 const {
+
   composeBrowseAspectPlan,
-  composeBrowseFranchiseAspectPlan,
+
+  resolveBrowseCategoryId,
+
 } = require('../lib/providers/gateway/composeBrowseAspectFilter');
 
-describe('composeBrowseUpstreamQ with aspect facets', () => {
-  it('does not repeat brand/IP in q when facets are active', () => {
+
+
+describe('composeBrowseUpstreamQ (q-first retrieval)', () => {
+
+  it('uses brand q + omits IP keyword when Character facet is verified', () => {
+
     assert.equal(
+
       composeBrowseUpstreamQ({
+
         brandId: 'pop_mart',
+
         ipId: 'the_monsters',
+
       }),
-      '',
+
+      'pop mart',
+
     );
+
   });
 
-  it('keeps user search text when facets are active', () => {
+
+
+  it('supplements verified Character q when ebayPreferredQuery is set', () => {
+
     assert.equal(
+
       composeBrowseUpstreamQ({
+
         brandId: 'pop_mart',
+
+        ipId: 'crybaby',
+
+      }),
+
+      'pop mart Crybaby',
+
+    );
+
+  });
+
+
+
+  it('includes IP keyword for non-verified IPs', () => {
+
+    assert.equal(
+
+      composeBrowseUpstreamQ({
+
+        brandId: 'pop_mart',
+
+        ipId: 'dimoo',
+
+      }),
+
+      'pop mart Dimoo',
+
+    );
+
+  });
+
+
+
+  it('uses studio line q for Dreams Inc Sonny Angel (no Brand aspect)', () => {
+
+    assert.equal(
+
+      composeBrowseUpstreamQ({
+
+        brandId: 'dreams_inc',
+
+        ipId: 'sonny_angel',
+
+      }),
+
+      'SONNY ANGEL',
+
+    );
+
+  });
+
+
+
+  it('uses DPL + Baby Three q for non-verified IP', () => {
+
+    assert.equal(
+
+      composeBrowseUpstreamQ({
+
+        brandId: 'dpl',
+
+        ipId: 'baby_three',
+
+        searchText: 'plush',
+
+      }),
+
+      'cureplaneta BABY THREE plush',
+
+    );
+
+  });
+
+
+
+  it('keeps user search text with brand q', () => {
+
+    assert.equal(
+
+      composeBrowseUpstreamQ({
+
+        brandId: 'pop_mart',
+
         ipId: 'the_monsters',
+
         searchText: 'macaron',
+
       }),
-      'macaron',
+
+      'pop mart macaron',
+
     );
+
   });
+
 });
 
-describe('composeBrowseAspectPlan', () => {
-  it('ORs all curated eBay brands for Any brand + Any IP', () => {
+
+
+describe('composeBrowseAspectPlan (verified Character only)', () => {
+
+  it('uses canonical category 261068', () => {
+
+    assert.equal(resolveBrowseCategoryId(), CANONICAL_EBAY_BROWSE_CATEGORY_ID);
+
+    assert.equal(CANONICAL_EBAY_BROWSE_CATEGORY_ID, '261068');
+
+  });
+
+
+
+  it('uses discover browse for Any brand + Any IP (no aspect)', () => {
+
     const plan = composeBrowseAspectPlan({
+
       brandId: 'any_brand',
+
       ipId: 'any_ip',
+
     });
-    assert.equal(plan.active, true);
-    const filter = plan.aspectFilter ?? '';
-    assert.match(filter, /Brand:\{/);
-    assert.match(filter, /POP MART/);
-    assert.match(filter, /Sonny Angel/);
-    assert.match(filter, /Smiski/);
-    assert.match(filter, /Cureplaneta/);
-    assert.match(filter, /TOPTOY/);
-    assert.doesNotMatch(filter, /Finding Unicorn/i);
-    assert.doesNotMatch(filter, /Character:/);
+
+    assert.equal(plan.active, false);
+
+    assert.equal(plan.categoryIds, '261068');
+
+    assert.equal(plan.aspectFilter, undefined);
+
   });
 
-  it('maps POP MART brand + Labubu character aspects', () => {
+
+
+  it('applies verified Character facet for Labubu (no Brand aspect)', () => {
+
     const plan = composeBrowseAspectPlan({
+
       brandId: 'pop_mart',
+
       ipId: 'the_monsters',
+
     });
+
     assert.equal(plan.active, true);
-    assert.match(plan.aspectFilter ?? '', /Brand:\{POP MART\}/);
-    assert.match(plan.aspectFilter ?? '', /Character:\{.*LABUBU.*\}/i);
+
+    assert.match(plan.aspectFilter ?? '', /Character:\{Labubu\}/);
+
+    assert.doesNotMatch(plan.aspectFilter ?? '', /Brand:/);
+
   });
 
-  it('builds franchise fallback for line-level IPs', () => {
-    const plan = composeBrowseFranchiseAspectPlan({
+
+
+  it('does not apply aspect for non-verified Dimoo', () => {
+
+    const plan = composeBrowseAspectPlan({
+
       brandId: 'pop_mart',
-      ipId: 'the_monsters',
+
+      ipId: 'dimoo',
+
     });
-    assert.ok(plan);
-    assert.match(plan.aspectFilter ?? '', /Franchise:\{THE MONSTERS\}/);
+
+    assert.equal(plan.active, false);
+
+    assert.equal(plan.aspectFilter, undefined);
+
   });
 
-  it('maps Dreams Inc. Any IP to Sonny Angel | Smiski brand aspects', () => {
-    const plan = composeBrowseAspectPlan({
-      brandId: 'dreams_inc',
-      ipId: 'any_ip',
-    });
-    assert.match(plan.aspectFilter ?? '', /Brand:\{Sonny Angel\|Smiski\}/);
-    assert.doesNotMatch(plan.aspectFilter ?? '', /Character:/);
-  });
 
-  it('maps Sonny Angel IP to eBay brand aspect only', () => {
+
+  it('does not apply Brand aspect for Dreams Inc', () => {
+
     const plan = composeBrowseAspectPlan({
+
       brandId: 'dreams_inc',
+
       ipId: 'sonny_angel',
+
     });
-    assert.match(plan.aspectFilter ?? '', /Brand:\{Sonny Angel\}/);
-    assert.doesNotMatch(plan.aspectFilter ?? '', /Character:/);
+
+    assert.equal(plan.active, false);
+
+    assert.equal(plan.aspectFilter, undefined);
+
   });
+
+
+
+  it('does not apply Character aspect for non-verified Baby Three', () => {
+
+    const plan = composeBrowseAspectPlan({
+
+      brandId: 'dpl',
+
+      ipId: 'baby_three',
+
+    });
+
+    assert.equal(plan.active, false);
+
+  });
+
 });
+

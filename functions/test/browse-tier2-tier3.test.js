@@ -10,16 +10,17 @@ const {
 const {
   shouldRunTier2Supplement,
   composeTier2KeywordQ,
+  composeTier2AspectFilter,
 } = require('../lib/providers/gateway/composeBrowseTier2');
 
-describe('DPL / Baby Three eBay aspects', () => {
-  it('maps DPL brand to Cureplaneta aspect', () => {
+describe('DPL / Baby Three (q-first, no aspect)', () => {
+  it('does not apply Brand or Character aspect for Baby Three', () => {
     const plan = composeBrowseAspectPlan({
       brandId: 'dpl',
       ipId: 'baby_three',
     });
-    assert.match(plan.aspectFilter ?? '', /Brand:\{Cureplaneta\}/);
-    assert.match(plan.aspectFilter ?? '', /Character:\{.*BABY THREE.*\}/i);
+    assert.equal(plan.active, false);
+    assert.equal(plan.aspectFilter, undefined);
   });
 });
 
@@ -65,31 +66,36 @@ describe('titleTaxonomyFilter', () => {
 });
 
 describe('composeBrowseTier2', () => {
-  it('runs when strict aspect rows are sparse', () => {
+  it('runs when verified Character aspect rows are sparse', () => {
     assert.equal(
       shouldRunTier2Supplement(
-        { brandId: 'pop_mart', ipId: 'the_monsters', aspectFilter: 'categoryId:1,Brand:{X}' },
+        {
+          brandId: 'pop_mart',
+          ipId: 'the_monsters',
+          aspectFilter: 'categoryId:261068,Character:{Labubu}',
+        },
         2,
       ),
       true,
     );
     assert.equal(
       shouldRunTier2Supplement(
-        { brandId: 'pop_mart', aspectFilter: 'categoryId:1,Brand:{X}' },
+        { brandId: 'pop_mart', aspectFilter: 'categoryId:261068,Character:{Labubu}' },
         8,
       ),
       false,
     );
   });
 
-  it('keyword q uses IP term only when facets active', () => {
+  it('Tier 2 keyword q uses brand + non-verified IP terms (no Brand aspect)', () => {
     assert.equal(
       composeTier2KeywordQ({
         brandId: 'dpl',
         ipId: 'baby_three',
         searchText: 'plush',
       }),
-      'BABY THREE plush',
+      'cureplaneta BABY THREE plush',
     );
+    assert.equal(composeTier2AspectFilter({ brandId: 'pop_mart' }), undefined);
   });
 });

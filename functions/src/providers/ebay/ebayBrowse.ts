@@ -117,25 +117,6 @@ async function liveBrowse(query: BrowseQuery): Promise<BrowseResponseDto> {
     rawItems = page.items;
     upstreamTotal = page.total;
 
-    if (
-      rawItems.length === 0 &&
-      query.franchiseAspectFilter &&
-      query.franchiseAspectFilter !== query.aspectFilter
-    ) {
-      page = await withRetries(() =>
-        fetchEbaySearchPage({
-          query: q,
-          limit,
-          offset,
-          categoryIds: query.categoryIds,
-          aspectFilter: query.franchiseAspectFilter,
-        }),
-      );
-      rawItems = page.items;
-      upstreamTotal = page.total;
-      diagnostics.acquisitionStrategy = 'ebay-browse-franchise-aspect';
-    }
-
     if (shouldRunTier2Supplement(query, rawItems.length)) {
       const tier2Aspect = composeTier2AspectFilter(query);
       const tier2Q = composeTier2KeywordQ(query);

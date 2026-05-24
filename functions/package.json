@@ -11,6 +11,9 @@
     "build:watch": "tsc --watch",
     "lint": "tsc --noEmit",
     "test": "npm run build && node --test test/*.test.js",
+    "audit:coverage": "npm run build && node tools/audit-browse-coverage.mjs",
+    "audit:coverage:probe": "npm run build && node tools/audit-browse-coverage.mjs --probe-failures",
+    "audit:ecosystem": "npm run build && node tools/audit-ecosystem-calibration.mjs",
     "serve": "npm run build && npx firebase emulators:start --only functions",
     "deploy": "npm run build && npx firebase deploy --only functions:market"
   },

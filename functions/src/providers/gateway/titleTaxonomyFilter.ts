@@ -6,6 +6,7 @@
 import {
   ANY_BRAND,
   ANY_IP,
+  MARKET_TAXONOMY_BRANDS,
   MARKET_TAXONOMY_IPS,
 } from './composeBrowseQuery';
 import { brandTitleMatchTokens } from './ebayBrandAspect';
@@ -49,18 +50,28 @@ export function listingTitleMatchesTaxonomy(
 
 function titleContainsBrand(normTitle: string, brandId: string): boolean {
   const tokens = brandTitleMatchTokens(brandId);
-  return tokens.some((token) => normTitle.includes(token));
+  const brand = MARKET_TAXONOMY_BRANDS.find((b) => b.id === brandId);
+  for (const extra of brand?.titleMatchAliases ?? []) {
+    tokens.push(normalizeTitle(extra));
+  }
+  return tokens.some((token) => token.length > 0 && normTitle.includes(token));
 }
 
 function titleContainsIp(normTitle: string, ipId: string): boolean {
   const ip = MARKET_TAXONOMY_IPS.find((row) => row.id === ipId);
   if (!ip) return false;
+  const tokens: string[] = [];
   for (const alias of ip.aliases) {
     const token = normalizeTitle(alias);
-    if (token.length > 0 && normTitle.includes(token)) return true;
+    if (token.length > 0) tokens.push(token);
   }
   const display = normalizeTitle(ip.displayName);
-  return display.length > 0 && normTitle.includes(display);
+  if (display.length > 0) tokens.push(display);
+  for (const extra of ip.titleMatchAliases ?? []) {
+    const token = normalizeTitle(extra);
+    if (token.length > 0) tokens.push(token);
+  }
+  return tokens.some((token) => normTitle.includes(token));
 }
 
 function normalizeTitle(raw: string): string {
