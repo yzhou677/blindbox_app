@@ -17,7 +17,8 @@ abstract final class MarketGatewayConfig {
     defaultValue: '',
   );
 
-  static const int pageSize = 24;
+  static const int initialPageSize = 12;
+  static const int pageSize = 12;
   static const int maxLiveRows = 72;
   static const int gatewayMaxAttempts = 3;
   static const Duration requestTimeout = Duration(seconds: 12);

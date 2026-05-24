@@ -1,3 +1,4 @@
+import 'package:blindbox_app/features/market/utils/ebay_image_url.dart';
 import 'package:blindbox_app/features/home/data/mock_latest_drops.dart';
 import 'package:blindbox_app/features/market/data/datasource/mercari/mercari_listing_dto.dart';
 import 'package:blindbox_app/features/market/domain/market_provider_id.dart';
@@ -18,7 +19,7 @@ extension GatewayListingDtoMapper on MercariListingDto {
         : 'mkt-$prefix-$stableNativeId';
     final priceUsd = double.tryParse(priceValue) ?? 0;
     final image = imageUrl.trim().isNotEmpty
-        ? imageUrl.trim()
+        ? upgradeEbayImageUrl(imageUrl.trim())
         : mockCollectibleArtUrl('$prefix-$listingId', 'e8eaf6');
     final url = listingUrl.trim();
 

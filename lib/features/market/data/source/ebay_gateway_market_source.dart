@@ -3,17 +3,18 @@ import 'dart:convert';
 import 'package:blindbox_app/features/market/data/cache/market_provider_browse_cache.dart';
 import 'package:blindbox_app/features/market/data/datasource/market_gateway_client.dart';
 import 'package:blindbox_app/features/market/data/datasource/mercari/mercari_browse_response_dto.dart';
-import 'package:blindbox_app/features/market/data/datasource/mercari/mercari_gateway_exception.dart';
 import 'package:blindbox_app/features/market/data/datasource/mercari/mercari_listing_dto.dart';
+import 'package:blindbox_app/features/market/data/datasource/mercari/mercari_gateway_exception.dart';
 import 'package:blindbox_app/features/market/data/gateway/market_gateway_config.dart';
 import 'package:blindbox_app/features/market/data/mappers/gateway_listing_mapper.dart';
 import 'package:blindbox_app/features/market/data/source/market_source.dart';
 import 'package:blindbox_app/features/market/domain/market_browse_page_result.dart';
+import 'package:blindbox_app/features/market/domain/market_browse_query.dart';
 import 'package:blindbox_app/features/market/domain/market_provider_id.dart';
 import 'package:blindbox_app/models/market_listing.dart';
 import 'package:flutter/foundation.dart';
 
-/// Live eBay browse via Firebase gateway — no eBay secrets in the app.
+/// Live eBay browse via Firebase gateway — query-driven, no eBay secrets in the app.
 class EbayGatewayMarketSource implements MarketSource {
   EbayGatewayMarketSource({
     MarketGatewayClient? gateway,
@@ -29,23 +30,29 @@ class EbayGatewayMarketSource implements MarketSource {
 
   @override
   Future<List<MarketListing>> fetchBrowseListings() async {
-    final page = await fetchFirstPage();
+    final page = await fetchFirstPage(const MarketBrowseQuery());
     return page.listings;
   }
 
-  Future<MarketBrowsePageResult> fetchFirstPage() async {
+  Future<MarketBrowsePageResult> fetchFirstPage(MarketBrowseQuery query) async {
     if (!MarketGatewayConfig.isActive) return MarketBrowsePageResult.empty;
 
     final uri = MarketGatewayConfig.gatewayUri;
     if (uri == null) return MarketBrowsePageResult.empty;
 
+    final pageQuery = query.copyWith(
+      limit: query.limit > 0 ? query.limit : MarketGatewayConfig.initialPageSize,
+      clearCursor: true,
+    );
+
     try {
       _clearFetchError();
       final response = await _gateway.fetchBrowse(
         baseUrl: uri,
-        limit: MarketGatewayConfig.pageSize,
+        query: pageQuery,
       );
       return await _persistPage(
+        query: pageQuery,
         items: response.items,
         nextCursor: response.nextCursor,
         hasMore: _pageHasMore(response),
@@ -54,19 +61,22 @@ class EbayGatewayMarketSource implements MarketSource {
     } on MercariGatewayException catch (e, st) {
       _recordFetchError(e);
       debugPrint('EbayGatewayMarketSource: gateway failed: $e\n$st');
-      return _fallbackPage();
+      return _fallbackPage(pageQuery);
     } catch (e, st) {
       _recordFetchError(e);
       debugPrint('EbayGatewayMarketSource: fetch failed: $e\n$st');
-      return _fallbackPage();
+      return _fallbackPage(pageQuery);
     }
   }
 
-  Future<MarketBrowsePageResult> fetchNextPage() async {
+  Future<MarketBrowsePageResult> fetchNextPage(MarketBrowseQuery query) async {
     if (!MarketGatewayConfig.isActive) return MarketBrowsePageResult.empty;
 
-    final batch = _cache.batchFor(providerId);
-    if (batch == null) return fetchFirstPage();
+    final batch = _cache.batchForQuery(
+      providerId,
+      query.signature,
+    );
+    if (batch == null) return MarketBrowsePageResult.empty;
 
     final cursor = batch.nextCursor;
     if (cursor == null || cursor.isEmpty || !batch.hasMore) {
@@ -86,15 +96,20 @@ class EbayGatewayMarketSource implements MarketSource {
     }
 
     final uri = MarketGatewayConfig.gatewayUri;
-    if (uri == null) return _fallbackPage();
+    if (uri == null) return _fallbackPage(query);
+
+    final pageQuery = query.copyWith(
+      limit: MarketGatewayConfig.pageSize,
+      cursor: cursor,
+    );
 
     try {
       final response = await _gateway.fetchBrowse(
         baseUrl: uri,
-        limit: MarketGatewayConfig.pageSize,
-        cursor: cursor,
+        query: pageQuery,
       );
       return await _persistPage(
+        query: query,
         items: response.items,
         nextCursor: response.nextCursor,
         hasMore: _pageHasMore(response, existingCount: batch.listings.length),
@@ -102,16 +117,20 @@ class EbayGatewayMarketSource implements MarketSource {
       );
     } on MercariGatewayException catch (e, st) {
       debugPrint('EbayGatewayMarketSource: next page failed: $e\n$st');
-      return _fallbackPage();
+      return _fallbackPage(query);
     } catch (e, st) {
       debugPrint('EbayGatewayMarketSource: next page error: $e\n$st');
-      return _fallbackPage();
+      return _fallbackPage(query);
     }
   }
 
-  bool get hasMoreFromCache => _cache.batchFor(providerId)?.hasMore ?? false;
+  CachedBrowseBatch? cachedBatchFor(MarketBrowseQuery query) =>
+      _cache.batchForQuery(providerId, query.signature);
 
-  void resetPagination() => _cache.clear(providerId);
+  void resetPaginationFor(MarketBrowseQuery query) =>
+      _cache.clearQuery(providerId, query.signature);
+
+  bool get hasMoreFromCache => false;
 
   static String? lastFetchError;
 
@@ -133,6 +152,7 @@ class EbayGatewayMarketSource implements MarketSource {
       currentCount < MarketGatewayConfig.maxLiveRows;
 
   Future<MarketBrowsePageResult> _persistPage({
+    required MarketBrowseQuery query,
     required List<MercariListingDto> items,
     required String? nextCursor,
     required bool hasMore,
@@ -145,23 +165,25 @@ class EbayGatewayMarketSource implements MarketSource {
         .toList(growable: false);
 
     if (replace) {
-      await _cache.write(
+      await _cache.writeForQuery(
         id: providerId,
+        signature: query.signature,
         listings: pageListings,
         wireJson: _wireJson(items),
         nextCursor: nextCursor,
         hasMore: hasMore,
       );
     } else {
-      await _cache.append(
+      await _cache.appendForQuery(
         id: providerId,
+        signature: query.signature,
         newListings: pageListings,
         nextCursor: nextCursor,
         hasMore: hasMore,
       );
     }
 
-    final batch = _cache.batchFor(providerId)!;
+    final batch = _cache.batchForQuery(providerId, query.signature)!;
     return MarketBrowsePageResult(
       listings: batch.listings,
       nextCursor: batch.nextCursor,
@@ -184,16 +206,7 @@ class EbayGatewayMarketSource implements MarketSource {
     });
   }
 
-  Future<MarketBrowsePageResult> _fallbackPage() async {
-    final stale = _cache.readStale(providerId, allowExpired: true) ??
-        await _cache.readStaleFromDisk(providerId);
-    final listings = stale ?? const [];
-    final batch = _cache.batchFor(providerId);
-    return MarketBrowsePageResult(
-      listings: listings,
-      nextCursor: batch?.nextCursor,
-      hasMore: batch?.hasMore ?? false,
-      fromCache: true,
-    );
+  Future<MarketBrowsePageResult> _fallbackPage(MarketBrowseQuery query) async {
+    return MarketBrowsePageResult.empty;
   }
 }

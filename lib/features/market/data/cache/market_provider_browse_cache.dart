@@ -39,8 +39,15 @@ final class MarketProviderBrowseCache {
   static final MarketProviderBrowseCache instance = MarketProviderBrowseCache._();
 
   final Map<MarketProviderId, CachedBrowseBatch> _memory = {};
+  final Map<String, CachedBrowseBatch> _memoryByQuery = {};
+
+  static String _queryKey(MarketProviderId id, String signature) =>
+      '${id.wireName}|$signature';
 
   static String _prefsKey(MarketProviderId id) => 'market_browse_cache_${id.wireName}_v1';
+
+  static String _prefsKeyForQuery(MarketProviderId id, String signature) =>
+      'market_browse_cache_${id.wireName}_${signature.hashCode.abs()}_v2';
 
   List<MarketListing>? readStale(
     MarketProviderId id, {
@@ -128,6 +135,112 @@ final class MarketProviderBrowseCache {
   }
 
   CachedBrowseBatch? batchFor(MarketProviderId id) => _memory[id];
+
+  CachedBrowseBatch? batchForQuery(MarketProviderId id, String signature) =>
+      _memoryByQuery[_queryKey(id, signature)];
+
+  List<MarketListing>? readStaleForQuery(
+    MarketProviderId id,
+    String signature, {
+    Duration? ttl,
+    bool allowExpired = true,
+  }) {
+    final batch = batchForQuery(id, signature);
+    if (batch == null) return null;
+    if (!allowExpired && !batch.isFresh(ttl: ttl)) return null;
+    return batch.listings;
+  }
+
+  Future<List<MarketListing>?> readStaleFromDiskForQuery(
+    MarketProviderId id,
+    String signature,
+  ) async {
+    final mem = readStaleForQuery(id, signature);
+    if (mem != null) return mem;
+
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_prefsKeyForQuery(id, signature));
+    if (raw == null || raw.isEmpty) return null;
+
+    try {
+      final batch = _batchFromJson(raw);
+      _memoryByQuery[_queryKey(id, signature)] = batch;
+      return batch.listings;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> writeForQuery({
+    required MarketProviderId id,
+    required String signature,
+    required List<MarketListing> listings,
+    String? wireJson,
+    String? nextCursor,
+    bool hasMore = false,
+  }) async {
+    final batch = CachedBrowseBatch(
+      fetchedAt: DateTime.now(),
+      listings: List<MarketListing>.unmodifiable(listings),
+      wireJson: wireJson,
+      nextCursor: nextCursor,
+      hasMore: hasMore,
+    );
+    _memoryByQuery[_queryKey(id, signature)] = batch;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      _prefsKeyForQuery(id, signature),
+      jsonEncode(_batchToJson(batch)),
+    );
+  }
+
+  Future<void> appendForQuery({
+    required MarketProviderId id,
+    required String signature,
+    required List<MarketListing> newListings,
+    String? nextCursor,
+    bool hasMore = false,
+  }) async {
+    final existing = batchForQuery(id, signature);
+    final merged = _dedupeAppend(existing?.listings ?? const [], newListings);
+    await writeForQuery(
+      id: id,
+      signature: signature,
+      listings: merged,
+      wireJson: existing?.wireJson,
+      nextCursor: nextCursor,
+      hasMore: hasMore,
+    );
+  }
+
+  void clearQuery(MarketProviderId id, String signature) {
+    _memoryByQuery.remove(_queryKey(id, signature));
+  }
+
+  static Map<String, dynamic> _batchToJson(CachedBrowseBatch batch) => {
+        'fetchedAtMs': batch.fetchedAt.millisecondsSinceEpoch,
+        'wireJson': batch.wireJson,
+        'nextCursor': batch.nextCursor,
+        'hasMore': batch.hasMore,
+        'listings': [for (final l in batch.listings) _marketListingToJson(l)],
+      };
+
+  static CachedBrowseBatch _batchFromJson(String raw) {
+    final decoded = jsonDecode(raw) as Map<String, dynamic>;
+    final atMs = decoded['fetchedAtMs'] as int? ?? 0;
+    final listingMaps = decoded['listings'] as List<dynamic>? ?? const [];
+    final listings = [
+      for (final m in listingMaps)
+        if (m is Map<String, dynamic>) _marketListingFromJson(m),
+    ];
+    return CachedBrowseBatch(
+      fetchedAt: DateTime.fromMillisecondsSinceEpoch(atMs),
+      listings: listings,
+      wireJson: decoded['wireJson'] as String?,
+      nextCursor: decoded['nextCursor'] as String?,
+      hasMore: decoded['hasMore'] as bool? ?? false,
+    );
+  }
 
   /// Appends deduped rows and updates continuation metadata.
   Future<void> append({

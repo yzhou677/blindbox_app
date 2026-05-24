@@ -5,13 +5,12 @@ import 'package:blindbox_app/features/market/data/source/ebay_gateway_market_sou
 import 'package:blindbox_app/features/market/data/source/market_source.dart';
 import 'package:blindbox_app/features/market/data/source/mercari_sandbox_market_source.dart';
 
-/// Offline asset feed plus optional eBay gateway (official API via Functions).
+/// Production browse sources — live gateway only when enabled; bundled asset otherwise.
 List<MarketSource> productionMarketSources() {
-  final sources = <MarketSource>[AssetMarketSource()];
   if (MarketGatewayConfig.isActive) {
-    sources.add(EbayGatewayMarketSource());
+    return [EbayGatewayMarketSource()];
   }
-  return sources;
+  return [AssetMarketSource()];
 }
 
 /// Production sources plus optional Mercari sandbox (paused — internal only).
