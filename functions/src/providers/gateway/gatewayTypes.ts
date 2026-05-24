@@ -76,7 +76,6 @@ export type BrowseQuery = {
   signature: string;
   categoryIds?: string;
   aspectFilter?: string;
-  franchiseAspectFilter?: string;
 };
 
 export type BrowseCursorPayload = {

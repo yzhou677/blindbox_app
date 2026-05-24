@@ -4,15 +4,15 @@ import 'package:blindbox_app/features/market/domain/market_browse_query.dart';
 import 'package:blindbox_app/features/market/taxonomy/ip_taxonomy_registry.dart';
 import 'package:blindbox_app/features/market/taxonomy/taxonomy_models.dart';
 
-/// Composes upstream eBay keyword queries from curated taxonomy + user text.
+/// Parity mirror of gateway `composeBrowseUpstreamQ` for tests only.
 ///
-/// Mirrors gateway [composeBrowseUpstreamQ] — `q` is primary retrieval; aspects
-/// are server-side refinement only.
+/// Runtime retrieval sends facets to the gateway; upstream `q` is composed
+/// server-side in `functions/src/providers/gateway/composeBrowseQuery.ts`.
 abstract final class MarketBrowseQueryComposer {
   static const String defaultCollectibleTerms = 'blind box vinyl figure';
 
   /// IPs with live-verified eBay Character facet (must match gateway taxonomy).
-  static const Set<String> _verifiedCharacterIpIds = {
+  static const Set<String> verifiedCharacterIpIds = {
     'the_monsters',
     'hirono',
     'skullpanda',
@@ -30,20 +30,43 @@ abstract final class MarketBrowseQueryComposer {
     'toptoy': 'toptoy',
   };
 
-  /// Builds the keyword string sent to the gateway / eBay Browse `q` parameter.
+  static const Map<String, String> _brandPreferredQueryAnyIp = {
+    'dreams_inc': 'sonny angel blind box',
+  };
+
+  static const Map<String, String> _verifiedCharacterSupplements = {
+    'crybaby': 'Crybaby',
+    'pucky': 'Pucky',
+  };
+
+  /// Builds the keyword string the gateway would use for upstream eBay `q`.
   static String composeUpstreamQ(MarketBrowseQuery query) {
     final search = query.searchText.trim();
     final terms = <String>[];
 
     if (query.brandId != MarketTaxonomyIds.anyBrand) {
-      final brandTerm = _brandSearchTerm(query.brandId);
-      if (brandTerm != null) terms.add(brandTerm);
+      if (query.ipId == MarketTaxonomyIds.anyIp) {
+        final anyIpQ = _brandPreferredQueryAnyIp[query.brandId];
+        if (anyIpQ != null) {
+          terms.add(anyIpQ);
+        } else {
+          final brandTerm = brandQueryTermFor(query.brandId);
+          if (brandTerm != null) terms.add(brandTerm);
+        }
+      } else {
+        final brandTerm = brandQueryTermFor(query.brandId);
+        if (brandTerm != null) terms.add(brandTerm);
+      }
     }
 
     if (query.ipId != MarketTaxonomyIds.anyIp &&
-        !_verifiedCharacterIpIds.contains(query.ipId)) {
+        !verifiedCharacterIpIds.contains(query.ipId)) {
       final ipTerm = _ipSearchTerm(query.ipId);
       if (ipTerm != null) terms.add(ipTerm);
+    } else if (query.ipId != MarketTaxonomyIds.anyIp &&
+        verifiedCharacterIpIds.contains(query.ipId)) {
+      final supplement = _verifiedCharacterSupplements[query.ipId];
+      if (supplement != null) terms.add(supplement);
     }
 
     if (search.isNotEmpty) {
@@ -60,9 +83,7 @@ abstract final class MarketBrowseQueryComposer {
     return terms.join(' ');
   }
 
-  static String? _brandSearchTerm(String brandId) => brandQueryTermFor(brandId);
-
-  /// Gateway-aligned brand `q` token (for search-anchor parity).
+  /// Gateway-aligned brand `q` token (parity tests + search-anchor helper).
   static String? brandQueryTermFor(String brandId) => _brandQueryTerms[brandId];
 
   static String? _ipSearchTerm(String ipId) {

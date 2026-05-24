@@ -77,6 +77,29 @@ void main() {
     );
   });
 
+  test('Dreams Inc + Any IP uses preferred any-IP query (gateway parity)', () {
+    expect(
+      MarketBrowseQueryComposer.composeUpstreamQ(
+        const MarketBrowseQuery(
+          brandId: 'dreams_inc',
+        ),
+      ),
+      'sonny angel blind box',
+    );
+  });
+
+  test('verified Character IP may include preferred q supplement', () {
+    expect(
+      MarketBrowseQueryComposer.composeUpstreamQ(
+        const MarketBrowseQuery(
+          brandId: 'pop_mart',
+          ipId: 'crybaby',
+        ),
+      ),
+      'pop mart Crybaby',
+    );
+  });
+
   test('signature excludes cursor', () {
     const a = MarketBrowseQuery(cursor: 'abc');
     const b = MarketBrowseQuery(cursor: 'xyz');

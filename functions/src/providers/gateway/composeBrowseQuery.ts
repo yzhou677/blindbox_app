@@ -609,7 +609,6 @@ export function composeBrowseUpstreamQ(input: {
     if (isDiscoverBrowse(brandId, ipId)) return DISCOVER_BROWSE_Q;
     return (
       process.env.EBAY_DEFAULT_QUERY?.trim() ||
-      process.env.MERCARI_DEFAULT_QUERY?.trim() ||
       DISCOVER_BROWSE_Q
     );
   }

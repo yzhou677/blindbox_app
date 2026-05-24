@@ -4,9 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Market browse + search UI state.
 ///
-/// - [query]: draft text (synced with the search field). Drives listing filter.
-/// - [searchResultsActive]: immersive “search results” layout only after
-///   [MarketBrowseNotifier.submitSearch]; not tied to field focus.
+/// - [query]: draft text synced with the search field.
+/// - [searchResultsActive]: true when the user has a non-empty search query
+///   (live gateway search via [MarketLiveBrowseController]).
 @immutable
 class MarketBrowseState {
   const MarketBrowseState({
@@ -46,7 +46,7 @@ class MarketBrowseNotifier extends Notifier<MarketBrowseState> {
   @override
   MarketBrowseState build() => const MarketBrowseState();
 
-  /// Draft query from the field; activates live search when non-empty (Discover parity).
+  /// Draft query from the field; activates live search when non-empty.
   void setQuery(String value) {
     final empty = value.trim().isEmpty;
     state = state.copyWith(
@@ -66,8 +66,7 @@ class MarketBrowseNotifier extends Notifier<MarketBrowseState> {
     state = state.copyWith(ipId: id);
   }
 
-  /// Broadest taxonomy rails — used when live Mercari sandbox refreshes so
-  /// provider rows without catalog IP/brand are not filtered out.
+  /// Broadest taxonomy rails — Mercari sandbox refresh only.
   void resetTaxonomyFiltersForSandbox() {
     state = state.copyWith(
       brandId: MarketTaxonomyIds.anyBrand,
@@ -75,13 +74,7 @@ class MarketBrowseNotifier extends Notifier<MarketBrowseState> {
     );
   }
 
-  /// Enter immersive search after keyboard search / explicit submit.
-  void submitSearch() {
-    final hasQuery = state.query.trim().isNotEmpty;
-    state = state.copyWith(searchResultsActive: hasQuery);
-  }
-
-  /// Clear draft query, exit immersive search, keep shelf filters.
+  /// Clear draft query, exit search mode, keep brand/IP filters.
   void clearSearchSession() {
     state = state.copyWith(query: '', searchResultsActive: false);
   }

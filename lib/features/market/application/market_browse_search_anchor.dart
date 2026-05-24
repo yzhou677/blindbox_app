@@ -3,7 +3,7 @@ import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
 import 'package:blindbox_app/features/market/taxonomy/brand_taxonomy_registry.dart';
 import 'package:blindbox_app/features/market/taxonomy/ip_taxonomy_registry.dart';
 
-/// Conditional discover-search anchoring — mirrors gateway [composeBrowseQuery].
+/// Parity mirror of gateway search anchoring for tests only.
 abstract final class MarketBrowseSearchAnchor {
   static const _collectibleContextPhrases = [
     'blind box',

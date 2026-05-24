@@ -55,22 +55,6 @@ export function composeBrowseAspectPlan(input: {
   };
 }
 
-/** @deprecated Franchise facet — ineffective for designer toys; no longer used. */
-export function composeBrowseFranchiseAspectPlan(_input: {
-  brandId?: string;
-  ipId?: string;
-}): BrowseAspectPlan | null {
-  return null;
-}
-
-/** @deprecated Brand aspect — live API shows no meaningful narrowing. */
-export function composeBrowseBrandOnlyAspectPlan(
-  _brandId: string,
-  _ipId?: string,
-): BrowseAspectPlan | null {
-  return null;
-}
-
 function escapeAspectValue(value: string): string {
   return value.replace(/\|/g, '\\|');
 }

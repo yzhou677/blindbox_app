@@ -13,6 +13,3 @@ MarketListing? mockMarketListingById(String id) {
 List<MarketListing> mockChasersMarketListings() {
   return MarketBrowseListingsSession.instance.chasers;
 }
-
-@Deprecated('Use mockChasersMarketListings')
-List<MarketListing> mockTrendingMarketListings() => mockChasersMarketListings();

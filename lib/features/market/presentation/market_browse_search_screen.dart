@@ -12,6 +12,7 @@ import 'package:blindbox_app/features/market/widgets/market_load_more_footer.dar
 import 'package:blindbox_app/shared/widgets/feed_search_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 /// Market tab entry: same full-screen search flow as Discover catalog browse.
 class MarketBrowseSearchScreen extends ConsumerStatefulWidget {
@@ -56,17 +57,26 @@ class _MarketBrowseSearchScreenState
   void _onSearchChanged(String value) {
     setState(() {});
     _debounce?.cancel();
+    if (value.trim().isEmpty) {
+      _exitSearch(clearField: false);
+      return;
+    }
     _debounce = Timer(const Duration(milliseconds: 400), () {
       if (!mounted) return;
       ref.read(marketBrowseNotifierProvider.notifier).setQuery(value);
     });
   }
 
-  void _clearSearch() {
+  /// Restore Market feed and leave the search overlay route.
+  void _exitSearch({bool clearField = true}) {
     _debounce?.cancel();
-    _search.clear();
+    if (clearField) _search.clear();
     ref.read(marketBrowseNotifierProvider.notifier).clearSearchSession();
+    if (!mounted) return;
+    if (context.canPop()) context.pop();
   }
+
+  void _clearSearch() => _exitSearch();
 
   @override
   Widget build(BuildContext context) {
@@ -82,7 +92,12 @@ class _MarketBrowseSearchScreenState
     final loadingMore = ref.watch(marketBrowseLoadMoreProvider);
     final sessionTransitioning = ref.watch(marketBrowseSessionTransitionProvider);
 
-    return FeedSearchScreen(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _exitSearch(clearField: false);
+      },
+      child: FeedSearchScreen(
       title: 'Search market',
       hintText: 'Search figures, series, brands…',
       emptyPrompt: 'Search by series, figure, or brand.',
@@ -90,6 +105,7 @@ class _MarketBrowseSearchScreenState
       hasSearchText: _hasSearchText,
       onChanged: _onSearchChanged,
       onClear: _clearSearch,
+      onBack: () => _exitSearch(clearField: false),
       results: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -133,6 +149,7 @@ class _MarketBrowseSearchScreenState
                   ),
           ),
         ],
+      ),
       ),
     );
   }

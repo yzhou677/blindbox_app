@@ -6,7 +6,6 @@ import 'package:blindbox_app/features/market/application/market_listing_identity
 import 'package:blindbox_app/features/market/application/market_listings_providers.dart';
 import 'package:blindbox_app/features/market/application/market_match_diagnostics.dart';
 import 'package:blindbox_app/features/market/application/market_sandbox_browse_install.dart';
-import 'package:blindbox_app/features/market/application/market_sandbox_diagnostics.dart';
 import 'package:blindbox_app/features/market/data/gateway/market_gateway_config.dart';
 import 'package:blindbox_app/features/market/data/sandbox/market_sandbox_config.dart';
 import 'package:blindbox_app/features/market/data/source/mercari_sandbox_market_source.dart';
@@ -27,7 +26,6 @@ class MarketBrowseRefreshNotifier extends Notifier<bool> {
     try {
       if (MarketGatewayConfig.isActive) {
         await ref.read(marketLiveBrowseControllerProvider.notifier).refresh();
-        ref.read(marketSandboxDiagnosticsProvider.notifier).clear();
       } else if (MarketSandboxConfig.isActive) {
         ref
             .read(marketBrowseNotifierProvider.notifier)
@@ -39,7 +37,6 @@ class MarketBrowseRefreshNotifier extends Notifier<bool> {
           sessionRows: ref.read(marketBrowseListingsProvider),
         );
       } else {
-        ref.read(marketSandboxDiagnosticsProvider.notifier).clear();
         final repo = ref.read(marketListingsRepositoryProvider);
         final enriched = enrichBrowseListingsIdentity(
           await repo.loadBrowseListings(),

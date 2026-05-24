@@ -4,41 +4,10 @@
  */
 
 import {
-  ANY_IP,
-  ipHasVerifiedCharacterAspect,
   MARKET_TAXONOMY_BRANDS,
   MARKET_TAXONOMY_IPS,
   type TaxonomyBrand,
 } from './composeBrowseQuery';
-
-/** @deprecated Brand OR discover — no longer used for browse aspect_filter. */
-export function resolveCuratedEbayBrandAspectValues(): string[] {
-  return [];
-}
-
-/** @deprecated Brand aspect_filter — retained for diagnostics/title tokens only. */
-export function resolveEbayBrandAspectValues(
-  brandId: string,
-  ipId?: string,
-): string[] {
-  const trimmedIp = (ipId ?? ANY_IP).trim();
-  if (trimmedIp && trimmedIp !== ANY_IP) {
-    const ip = MARKET_TAXONOMY_IPS.find((row) => row.id === trimmedIp);
-    if (ip?.ebayAspectBrand) return [ip.ebayAspectBrand];
-  }
-
-  const brand = MARKET_TAXONOMY_BRANDS.find((b) => b.id === brandId);
-  if (!brand) return [];
-
-  if (brand.ebayAspectBrands?.length) return [...brand.ebayAspectBrands];
-  if (brand.ebayAspectBrand) return [brand.ebayAspectBrand];
-  if (brand.ebayBrandQuery) return [brand.ebayBrandQuery];
-  return [brand.displayName];
-}
-
-export function ipUsesCharacterAspect(ipId: string): boolean {
-  return ipHasVerifiedCharacterAspect(ipId);
-}
 
 /** Title-match tokens for a studio brand (includes child eBay brand lines). */
 export function brandTitleMatchTokens(brandId: string): string[] {

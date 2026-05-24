@@ -163,9 +163,11 @@ async function liveBrowse(query: BrowseQuery): Promise<BrowseResponseDto> {
   diagnostics.rawRowCount = rawItems.length;
   let normalized = normalizeBrowseItems(rawItems);
   diagnostics.normalizedCount = normalized.items.length;
-  const rowsDropped =
+  const normalizeDropped =
     normalized.stats.malformedDropped + normalized.stats.duplicateDropped;
-  if (rowsDropped > 0) diagnostics.rowsDropped = rowsDropped;
+  if (normalizeDropped > 0) {
+    diagnostics.rowsDropped = (diagnostics.rowsDropped ?? 0) + normalizeDropped;
+  }
 
   let hasMore =
     upstreamTotal > 0

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('typing activates live search (Discover parity)', () {
+  test('typing activates live search', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);
     final n = container.read(marketBrowseNotifierProvider.notifier);
@@ -28,17 +28,7 @@ void main() {
     expect(s.searchResultsActive, false);
   });
 
-  test('submitSearch with blank query does not activate immersive', () {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
-    final n = container.read(marketBrowseNotifierProvider.notifier);
-
-    n.setQuery('   ');
-    n.submitSearch();
-    expect(container.read(marketBrowseNotifierProvider).searchResultsActive, false);
-  });
-
-  test('clearSearchSession clears query and exits immersive', () {
+  test('clearSearchSession clears query and exits search mode', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);
     final n = container.read(marketBrowseNotifierProvider.notifier);

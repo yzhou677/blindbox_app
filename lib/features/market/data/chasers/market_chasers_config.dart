@@ -1,5 +1,4 @@
 import 'package:blindbox_app/features/market/data/gateway/market_gateway_config.dart';
-import 'package:blindbox_app/features/market/domain/chasers_heat_entry.dart';
 
 /// Chasers rail + Phase 1 heat scoring — off until explicitly enabled.
 abstract final class MarketChasersConfig {
@@ -32,9 +31,6 @@ abstract final class MarketChasersConfig {
   /// Show cached chasers from disk when younger than this (even if revalidating).
   static const Duration diskStaleTtl = Duration(days: 7);
 
-  /// @deprecated Use [memoryRefreshTtl].
-  static const Duration refreshTtl = memoryRefreshTtl;
-
   /// High-signal brand|ip probe keys — earlier batches hydrate the rail faster.
   static const List<String> probePriorityKeys = [
     'pop_mart|the_monsters',
@@ -50,12 +46,6 @@ abstract final class MarketChasersConfig {
   /// Fixture rail when not on live eBay.
   static bool get showFixtureRail =>
       enableChasersRail && !MarketGatewayConfig.isActive;
-
-  /// Live rail when Phase 1 scoring produced entries.
-  static bool showLiveRail(List<ChasersHeatEntry> entries) =>
-      enablePhase1Scoring &&
-      MarketGatewayConfig.isActive &&
-      entries.isNotEmpty;
 
   /// Reserve the Chasers slot while probing or when results are ready.
   static bool showLiveChasersSlot({

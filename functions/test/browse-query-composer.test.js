@@ -34,6 +34,13 @@ describe('composeBrowseUpstreamQ', () => {
     assert.equal(composeBrowseUpstreamQ({}), DISCOVER_BROWSE_Q);
     assert.equal(DISCOVER_BROWSE_Q, 'blind box vinyl figure');
   });
+
+  it('uses Dreams Inc preferred query for brand + Any IP', () => {
+    assert.equal(
+      composeBrowseUpstreamQ({ brandId: 'dreams_inc', ipId: 'any_ip' }),
+      'sonny angel blind box',
+    );
+  });
 });
 
 describe('browseQuerySignature', () => {

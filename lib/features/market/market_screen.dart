@@ -4,7 +4,6 @@ import 'package:blindbox_app/features/market/application/collectible_market_prov
 import 'package:blindbox_app/features/market/application/market_browse_notifier.dart';
 import 'package:blindbox_app/features/market/application/market_browse_load_more_controller.dart';
 import 'package:blindbox_app/features/market/application/market_browse_refresh_controller.dart';
-import 'package:blindbox_app/features/market/application/market_sandbox_diagnostics.dart';
 import 'package:blindbox_app/features/market/data/gateway/market_gateway_config.dart';
 import 'package:blindbox_app/features/market/data/sandbox/market_sandbox_config.dart';
 import 'package:blindbox_app/features/market/widgets/market_load_more_footer.dart';
@@ -21,7 +20,6 @@ import 'package:blindbox_app/features/market/data/chasers/market_chasers_config.
 import 'package:blindbox_app/features/market/widgets/chasers_market_section.dart';
 import 'package:blindbox_app/shared/widgets/app_search_field.dart';
 import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -113,27 +111,6 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
       entryCount: chasersState.entries.length,
     );
     final showFixtureChasers = MarketChasersConfig.showFixtureRail;
-
-    ref.listen<MarketSandboxDiagnostics?>(marketSandboxDiagnosticsProvider,
-        (prev, next) {
-      if (!kDebugMode ||
-          next == null ||
-          !context.mounted ||
-          !MarketSandboxConfig.isActive) {
-        return;
-      }
-      final messenger = ScaffoldMessenger.of(context);
-      final text = next.succeeded
-          ? 'Mercari sandbox: ${next.mercariListingCount} listings merged '
-              '(${next.visibleSnapshotCount} cards visible)'
-          : 'Mercari sandbox failed: ${next.error}';
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(text),
-          duration: const Duration(seconds: 5),
-        ),
-      );
-    });
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,

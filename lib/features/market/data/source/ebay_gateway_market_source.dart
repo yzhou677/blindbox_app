@@ -144,8 +144,6 @@ class EbayGatewayMarketSource implements MarketSource {
   void resetPaginationFor(MarketBrowseQuery query) =>
       _cache.clearQuery(providerId, query.signature);
 
-  bool get hasMoreFromCache => false;
-
   static String? lastFetchError;
 
   static void _recordFetchError(Object e) => lastFetchError = e.toString();

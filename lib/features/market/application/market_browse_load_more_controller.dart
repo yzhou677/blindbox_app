@@ -27,9 +27,6 @@ final marketLiveBrowseHasMoreProvider = Provider<bool>((ref) {
       batch.listings.length < MarketSandboxConfig.maxMercariTotalRows;
 });
 
-/// @deprecated Use [marketLiveBrowseHasMoreProvider].
-final marketMercariHasMoreProvider = marketLiveBrowseHasMoreProvider;
-
 final marketBrowseLoadMoreProvider =
     NotifierProvider<MarketBrowseLoadMoreNotifier, bool>(
   MarketBrowseLoadMoreNotifier.new,

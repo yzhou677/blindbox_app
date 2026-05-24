@@ -15,6 +15,7 @@ class FeedSearchScreen extends StatelessWidget {
     required this.results,
     this.onChanged,
     this.onClear,
+    this.onBack,
   });
 
   final String title;
@@ -25,6 +26,9 @@ class FeedSearchScreen extends StatelessWidget {
   final Widget results;
   final ValueChanged<String>? onChanged;
   final VoidCallback? onClear;
+
+  /// When set, replaces the default [Navigator.maybePop] (e.g. Market search exit).
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +43,13 @@ class FeedSearchScreen extends StatelessWidget {
         titleSpacing: 20,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () {
+            if (onBack != null) {
+              onBack!();
+            } else {
+              Navigator.of(context).maybePop();
+            }
+          },
         ),
         title: Text(
           title,

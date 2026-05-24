@@ -1,6 +1,6 @@
 /**
- * Tier 2 — when verified Character aspect rows are sparse, retry q-only
- * (no aspect_filter) with full brand + IP keywords.
+ * Tier 2 — when verified Character aspect rows are sparse, retry the same
+ * composed `q` without aspect_filter (Character facet can over-narrow).
  */
 
 import { ANY_BRAND, ANY_IP, composeBrowseUpstreamQ } from './composeBrowseQuery';
