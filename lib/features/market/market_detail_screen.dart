@@ -4,11 +4,14 @@ import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/collectible_shelf_shadow.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/market/presentation/market_listing_image.dart';
+import 'package:blindbox_app/features/market/application/market_listing_detail_provider.dart';
 import 'package:blindbox_app/features/market/application/market_listings_providers.dart';
 import 'package:blindbox_app/features/market/presentation/collectible_market_mood_copy.dart';
+import 'package:blindbox_app/features/market/utils/open_market_listing_url.dart';
 import 'package:blindbox_app/features/market/utils/market_format.dart';
 import 'package:blindbox_app/features/collectible_relationship/application/collectible_relationship_providers.dart';
 import 'package:blindbox_app/features/collectible_relationship/widgets/collectible_relationship_line.dart';
+import 'package:blindbox_app/features/market/domain/market_listing_detail.dart';
 import 'package:blindbox_app/features/market/widgets/listing_market_signals.dart';
 import 'package:blindbox_app/models/market_listing.dart';
 import 'package:blindbox_app/shared/widgets/series_hero_meta_block.dart';
@@ -86,7 +89,7 @@ class MarketDetailScreen extends ConsumerWidget {
                 20,
                 0,
               ),
-              child: _MarketDetailHero(listing: listing, accent: accent),
+              child: _MarketDetailHero(listingId: listingId, listing: listing, accent: accent),
             ),
           ),
           SliverToBoxAdapter(
@@ -106,17 +109,27 @@ class MarketDetailScreen extends ConsumerWidget {
   }
 }
 
-class _MarketDetailHero extends StatelessWidget {
-  const _MarketDetailHero({required this.listing, required this.accent});
+class _MarketDetailHero extends ConsumerWidget {
+  const _MarketDetailHero({
+    required this.listingId,
+    required this.listing,
+    required this.accent,
+  });
 
+  final String listingId;
   final MarketListing listing;
   final Color accent;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final c = listing.collectible;
+    final detail = ref.watch(marketListingDetailProvider(listingId));
+    final heroImage = detail.maybeWhen(
+      data: (value) => value?.imageUrl,
+      orElse: () => null,
+    );
     final aspect = CatalogImageDisplaySpec.aspectRatioFor(
           CatalogImageDisplayMode.seriesCoverHero,
         ) ??
@@ -164,6 +177,7 @@ class _MarketDetailHero extends StatelessWidget {
                     color: scheme.surface.withValues(alpha: 0.5),
                     child: MarketListingImage(
                       collectible: c,
+                      imageUrlOverride: heroImage,
                       heroTag: listing.marketHeroTag,
                       borderRadius: BorderRadius.zero,
                       fit: BoxFit.contain,
@@ -194,6 +208,8 @@ class _MarketDetailBody extends ConsumerWidget {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final c = listing.collectible;
+    final detailAsync = ref.watch(marketListingDetailProvider(listingId));
+    final detail = detailAsync.valueOrNull;
     final up = listing.priceChangePercent > 0;
     final down = listing.priceChangePercent < 0;
     final deltaColor = up
@@ -243,6 +259,18 @@ class _MarketDetailBody extends ConsumerWidget {
           ),
         ),
         ListingMarketSignals(listing: listing, dense: true),
+        if (detailAsync.isLoading) ...[
+          const SizedBox(height: 12),
+          LinearProgressIndicator(
+            minHeight: 2,
+            color: scheme.primary.withValues(alpha: 0.55),
+            backgroundColor: scheme.surfaceContainerHighest,
+          ),
+        ],
+        if (detail != null) ...[
+          const SizedBox(height: 16),
+          _MarketDetailFacts(detail: detail),
+        ],
         Builder(
           builder: (context) {
             final line = ref.watch(
@@ -280,6 +308,108 @@ class _MarketDetailBody extends ConsumerWidget {
             ],
           ],
         ),
+        if (_listingUrl(listing, detail) != null) ...[
+          const SizedBox(height: 18),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.tonalIcon(
+              onPressed: () => openMarketListingUrl(
+                context,
+                _listingUrl(listing, detail),
+              ),
+              icon: const Icon(Icons.open_in_new_rounded, size: 18),
+              label: Text(
+                listing.providerId == 'ebay' ? 'View on eBay' : 'View listing',
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+String? _listingUrl(MarketListing listing, MarketListingDetail? detail) {
+  final fromDetail = detail?.listingUrl.trim();
+  if (fromDetail != null && fromDetail.isNotEmpty) return fromDetail;
+  final fromListing = listing.externalListingUrl?.trim();
+  if (fromListing != null && fromListing.isNotEmpty) return fromListing;
+  return null;
+}
+
+class _MarketDetailFacts extends StatelessWidget {
+  const _MarketDetailFacts({required this.detail});
+
+  final MarketListingDetail detail;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final rows = <({String label, String value})>[
+      if (detail.condition case final condition?)
+        (label: 'Condition', value: condition),
+      if (detail.sellerLine case final seller?)
+        (label: 'Seller', value: seller),
+      if (detail.shippingSummary case final shipping?)
+        (label: 'Shipping', value: shipping),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final row in rows) ...[
+          _MarketDetailFactRow(label: row.label, value: row.value),
+          const SizedBox(height: 8),
+        ],
+        if (detail.shortDescription case final description?) ...[
+          Text(
+            'About this listing',
+            style: CollectibleTypography.figureMeta(textTheme, scheme).copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            description,
+            maxLines: 5,
+            overflow: TextOverflow.ellipsis,
+            style: textTheme.bodyMedium?.copyWith(
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
+              height: 1.35,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _MarketDetailFactRow extends StatelessWidget {
+  const _MarketDetailFactRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final labelStyle = CollectibleTypography.figureMeta(textTheme, scheme)
+        .copyWith(fontWeight: FontWeight.w600);
+    final valueStyle = textTheme.bodyMedium?.copyWith(
+      color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
+      height: 1.25,
+    );
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 84,
+          child: Text(label, style: labelStyle),
+        ),
+        Expanded(child: Text(value, style: valueStyle)),
       ],
     );
   }
