@@ -39,6 +39,8 @@ flutter run \
 
 Without flags, Market uses bundled asset feed only. Gateway failure falls back to asset rows (and optional stale eBay cache).
 
+Live gateway browse skips catalog identity matching (listing-level cards use eBay titles directly). Catalog matching remains available for offline/mock paths only.
+
 ## Probe
 
 ```bash
@@ -46,6 +48,35 @@ curl.exe "https://us-central1-blindbox-collection.cloudfunctions.net/market/v1/b
 ```
 
 Expect `meta.provider: "ebay"`. Without credentials, `meta.mode: "fixture"`.
+
+## Gateway query facets
+
+`GET /v1/browse` accepts provider-neutral facets (gateway composes eBay `q`):
+
+| Param | Role |
+|-------|------|
+| `brandId` | Maps to eBay item aspect **Brand** (e.g. `pop_mart` → `POP MART`) |
+| `ipId` | Maps to eBay **Character** / **Franchise** aspects (e.g. `the_monsters` → LABUBU / THE MONSTERS) |
+| `searchText` | User search terms (after submit in app) |
+| `sort` | Reserved (`relevance` default) |
+| `limit` | Page size (default 12) |
+| `cursor` | Pagination continuation |
+
+Legacy `q` still works as override. Example:
+
+```bash
+curl.exe "https://us-central1-blindbox-collection.cloudfunctions.net/market/v1/browse?brandId=pop_mart&ipId=the_monsters&limit=12"
+```
+
+With `brandId` / `ipId`, the gateway uses eBay **aspect_filter** (not keyword stuffing):
+
+- **Brand** → item aspect `Brand:{POP MART}`
+- **IP** → item aspect `Character:{LABUBU|THE MONSTERS|…}` with **Franchise** fallback when Character returns no rows
+- **searchText** → keyword `q` only (optional)
+- Category defaults to `19007` (Designer & Urban Vinyl); override with `EBAY_BROWSE_CATEGORY_ID`
+- **Tier 2:** when strict aspect rows &lt; 6, supplement with Brand aspect + IP keywords in `q`
+- **Tier 3:** gateway drops rows whose titles contradict selected brand/IP
+- **DPL:** in-app brand `dpl` maps to eBay aspect `Cureplaneta`; filter rail shows only `baby_three` (no “Any IP”)
 
 ## eBay Browse wire (integration notes)
 
@@ -55,5 +86,10 @@ Upstream `item_summary` rows use `itemId` (`v1|{legacyId}|0`), `itemWebUrl`, `pr
 - Builds listing URLs from `itemWebUrl` or `legacyItemId`
 - Uses eBay `total` + `offset` for pagination (not page size alone)
 - Normalizes titles to NFC; missing images become empty `imageUrl` (app placeholder)
+- Upgrades eBay CDN thumbs to `s-l500` on browse rows (detail uses `s-l1600`)
+
+## Item detail
+
+`GET /v1/item?itemId=v1|{legacyId}|0` returns condition, seller, shipping summary, short description, high-res image, and listing URL. The app loads this lazily on the market detail screen (live eBay only).
 
 Flutter maps stable eBay ids (`legacyItemId`) for dedupe keys (`mkt-ebay-{id}`).
