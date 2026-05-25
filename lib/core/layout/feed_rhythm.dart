@@ -60,10 +60,9 @@ abstract final class FeedRhythm {
   /// Horizontal showcase card width on Home series rails.
   static const double homeSeriesRailCardWidth = 272;
 
-  /// Official editorial rail — compact vs [homeSeriesRailHeight] so Latest stays hero.
-  static const double homeOfficialFeedImageAspect = 1.08;
-  static const double homeOfficialFeedCardWidth = 248;
-  static const double homeOfficialFeedRailHeight = 332;
+  /// Compact official updates feed (stacked post tiles).
+  static const double homeOfficialFeedThumbnailExtent = 72;
+  static const double homeOfficialFeedPostGap = 10;
 
   /// Square series thumb on shelf cards (browse / recognition).
   static const double collectionShelfThumbnailExtent = 88;

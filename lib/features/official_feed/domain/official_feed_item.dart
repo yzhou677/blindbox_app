@@ -12,6 +12,7 @@ class OfficialFeedItem {
     required this.officialUrl,
     required this.publishedAt,
     required this.contentHash,
+    this.summary,
     this.locale,
   });
 
@@ -23,5 +24,8 @@ class OfficialFeedItem {
   final String officialUrl;
   final DateTime publishedAt;
   final String contentHash;
+
+  /// Optional short deck copy under the title (Firestore `summary`).
+  final String? summary;
   final String? locale;
 }

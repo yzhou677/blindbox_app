@@ -109,11 +109,11 @@ class _HomeFeedBody extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const OfficialFeedSection(),
-        const SizedBox(height: FeedRhythm.homeMajorSectionGap),
         LatestDropsSection(releases: feed.latest),
         const SizedBox(height: FeedRhythm.homeMajorSectionGap),
         TrendingSeriesSection(releases: feed.trending),
+        const SizedBox(height: FeedRhythm.homeMajorSectionGap),
+        const OfficialFeedSection(),
       ],
     );
   }

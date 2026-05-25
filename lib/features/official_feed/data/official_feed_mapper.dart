@@ -50,6 +50,7 @@ OfficialFeedItem? mapOfficialFeedItem(String docId, Map<String, dynamic> data) {
   }
 
   final locale = (data['locale'] as String?)?.trim();
+  final summary = (data['summary'] as String?)?.trim();
 
   return OfficialFeedItem(
     id: id,
@@ -60,6 +61,7 @@ OfficialFeedItem? mapOfficialFeedItem(String docId, Map<String, dynamic> data) {
     officialUrl: officialUrl,
     publishedAt: publishedAt,
     contentHash: contentHash,
+    summary: summary?.isNotEmpty == true ? summary : null,
     locale: locale?.isNotEmpty == true ? locale : null,
   );
 }
