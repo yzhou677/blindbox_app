@@ -31,7 +31,7 @@ Future<List<SeriesRelease>> buildSeriesReleasesFromCatalog(
       ),
     ),
   );
-  return [for (final r in built) if (r != null) r];
+  return [for (final r in built) ?r];
 }
 
 Future<SeriesRelease?> _buildOne(

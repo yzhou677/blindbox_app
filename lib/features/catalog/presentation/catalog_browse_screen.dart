@@ -87,7 +87,7 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
         onClear: _search.clear,
         results: const Center(child: CircularProgressIndicator()),
       ),
-      error: (_, __) => FeedSearchScreen(
+      error: (_, _) => FeedSearchScreen(
         title: 'Search catalog',
         hintText: 'Search catalog — figures, series, IPs, aliases…',
         emptyPrompt: 'Search by series, figure, or IP.',

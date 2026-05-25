@@ -43,7 +43,7 @@ class ChasersMarketSection extends StatelessWidget {
               scrollDirection: Axis.horizontal,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: 3,
-              separatorBuilder: (_, __) =>
+              separatorBuilder: (_, _) =>
                   SizedBox(width: FeedRhythm.horizontalRailCardGap),
               itemBuilder: (context, index) => const _ChasersSkeletonCard(),
             ),

@@ -1,7 +1,6 @@
 import 'package:blindbox_app/features/collectible_relationship/application/collectible_relationship_index.dart';
 import 'package:blindbox_app/features/collectible_relationship/domain/collectible_relationship_hint.dart';
 import 'package:blindbox_app/features/collectible_relationship/domain/collectible_relationship_kind.dart';
-import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 
 /// Picks at most one editorial relationship hint for a focal collectible context.
 CollectibleRelationshipHint? resolveCollectibleRelationshipHint({

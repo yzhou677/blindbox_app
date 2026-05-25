@@ -5,9 +5,7 @@ import 'package:blindbox_app/features/market/domain/collectible_market_grouping_
 import 'package:blindbox_app/features/market/domain/collectible_market_identity.dart';
 import 'package:blindbox_app/features/market/domain/collectible_market_snapshot.dart';
 import 'package:blindbox_app/features/market/domain/market_match_confidence.dart';
-import 'package:blindbox_app/features/market/domain/market_mood.dart';
 import 'package:blindbox_app/features/market/domain/observed_price_range.dart';
-import 'package:blindbox_app/features/market/domain/rarity_presence.dart';
 import 'package:blindbox_app/models/market_listing.dart';
 
 final int _mediumRank = MarketMatchConfidence.medium.rank;

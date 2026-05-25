@@ -11,7 +11,7 @@ ShelfEmotionalProfile interpretShelf(CollectionSnapshot snap) {
       secretOwnedCount: 0,
       secretSlotCount: 0,
       seriesCompleteCount: 0,
-      editorialThemes: const [],
+      editorialThemes: [],
     );
   }
 

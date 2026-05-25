@@ -25,8 +25,9 @@ abstract final class CollectionProgressVoice {
 
     if (owned >= total) {
       if (allSecretsHome) return 'Complete — chase home';
-      if (secrets.isNotEmpty && ownedSecrets > 0)
+      if (secrets.isNotEmpty && ownedSecrets > 0) {
         return 'Complete — with a chase on shelf';
+      }
       return 'Complete on your shelf';
     }
 
