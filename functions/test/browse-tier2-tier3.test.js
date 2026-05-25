@@ -63,6 +63,54 @@ describe('titleTaxonomyFilter', () => {
     assert.equal(rows.length, 1);
     assert.equal(rows[0].itemId, '1');
   });
+
+  it('catalog POP MART collab IPs match seller-native title phrases', () => {
+    assert.equal(
+      listingTitleMatchesTaxonomy(
+        'POP MART aespa Fluffy Club Series Vinyl Plush Doll Pendant Blind Box',
+        { brandId: 'pop_mart', ipId: 'aespa' },
+      ),
+      true,
+    );
+    assert.equal(
+      listingTitleMatchesTaxonomy(
+        'Pop Mart Twinkle Twinkle MOON GELATO Series Plush Pendant Blind Box',
+        { brandId: 'pop_mart', ipId: 'twinkle_twinkle' },
+      ),
+      true,
+    );
+    assert.equal(
+      listingTitleMatchesTaxonomy(
+        'POP MART SpongeBob Bikini Bottom Buddies Whimsical Plush Series 2 Blind Box',
+        { brandId: 'pop_mart', ipId: 'bikini_bottom_buddies' },
+      ),
+      true,
+    );
+    assert.equal(
+      listingTitleMatchesTaxonomy(
+        'POP MART 100% Mega Space Molly Series 4 Blind Box',
+        { brandId: 'pop_mart', ipId: 'space_molly' },
+      ),
+      true,
+    );
+  });
+
+  it('Polar title tier rejects bare polar bear noise', () => {
+    assert.equal(
+      listingTitleMatchesTaxonomy(
+        'POP MART Dimoo AQUARIUM SERIES Blind Box POLAR BEAR Vinyl Figure',
+        { brandId: 'pop_mart', ipId: 'polar' },
+      ),
+      false,
+    );
+    assert.equal(
+      listingTitleMatchesTaxonomy(
+        'Pop Mart Polar Monster Village Villio Figure Authentic',
+        { brandId: 'pop_mart', ipId: 'polar' },
+      ),
+      true,
+    );
+  });
 });
 
 describe('composeBrowseTier2', () => {

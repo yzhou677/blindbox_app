@@ -65,12 +65,15 @@ function titleContainsIp(normTitle: string, ipId: string): boolean {
     const token = normalizeTitle(alias);
     if (token.length > 0) tokens.push(token);
   }
-  const display = normalizeTitle(ip.displayName);
-  if (display.length > 0) tokens.push(display);
+  if (!ip.titleMatchAliasesOnly) {
+    const display = normalizeTitle(ip.displayName);
+    if (display.length > 0) tokens.push(display);
+  }
   for (const extra of ip.titleMatchAliases ?? []) {
     const token = normalizeTitle(extra);
     if (token.length > 0) tokens.push(token);
   }
+  if (tokens.length === 0) return false;
   return tokens.some((token) => normTitle.includes(token));
 }
 

@@ -86,6 +86,44 @@ describe('composeBrowseUpstreamQ (q-first retrieval)', () => {
 
 
 
+  it('uses calibrated preferred q for catalog-only POP MART IPs', () => {
+
+    assert.equal(
+
+      composeBrowseUpstreamQ({ brandId: 'pop_mart', ipId: 'twinkle_twinkle' }),
+
+      'pop mart Twinkle Twinkle',
+
+    );
+
+    assert.equal(
+
+      composeBrowseUpstreamQ({ brandId: 'pop_mart', ipId: 'polar' }),
+
+      'pop mart Polar Monster Village',
+
+    );
+
+    assert.equal(
+
+      composeBrowseUpstreamQ({ brandId: 'pop_mart', ipId: 'aespa' }),
+
+      'pop mart aespa',
+
+    );
+
+    assert.equal(
+
+      composeBrowseUpstreamQ({ brandId: 'pop_mart', ipId: 'space_molly' }),
+
+      'pop mart Space Molly',
+
+    );
+
+  });
+
+
+
   it('uses studio line q for Dreams Inc Sonny Angel (no Brand aspect)', () => {
 
     assert.equal(

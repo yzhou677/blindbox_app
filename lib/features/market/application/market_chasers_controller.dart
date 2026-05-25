@@ -42,6 +42,7 @@ class MarketChasersController extends Notifier<MarketChasersState> {
   @override
   MarketChasersState build() {
     ref.onDispose(() => _refreshScheduled = false);
+    state = const MarketChasersState();
     _hydrateFromMemoryCache();
     if (_shouldRun) {
       _scheduleRefreshIfStale();
