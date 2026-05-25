@@ -58,9 +58,15 @@ class CollectibleSheetScrollView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scroll = controller ?? CollectibleSheetScope.scrollControllerOf(context);
+    assert(
+      scroll != null,
+      'CollectibleSheetScrollView requires the DraggableScrollableSheet controller '
+      '(pass it explicitly or build under CollectibleSheetScope).',
+    );
     return CustomScrollView(
       controller: scroll,
       physics: collectibleSheetScrollPhysics(),
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       slivers: slivers,
     );
   }

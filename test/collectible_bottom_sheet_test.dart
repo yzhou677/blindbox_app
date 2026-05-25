@@ -34,11 +34,10 @@ void main() {
                     showCollectibleBottomSheet<void>(
                       context: context,
                       heightFraction: 0.5,
-                      builder: (ctx, scroll) => ListView(
+                      builder: (ctx, scroll) => CollectibleSheetScrollView(
                         controller: scroll,
-                        physics: collectibleSheetScrollPhysics(),
-                        children: const [
-                          Text('Sheet body'),
+                        slivers: const [
+                          SliverToBoxAdapter(child: Text('Sheet body')),
                         ],
                       ),
                     );
@@ -56,6 +55,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Sheet body'), findsOneWidget);
     expect(find.byType(DraggableScrollableSheet), findsOneWidget);
+    expect(find.byType(CollectibleSheetScrollView), findsOneWidget);
+    expect(find.descendant(of: find.byType(DraggableScrollableSheet), matching: find.byType(Material)), findsOneWidget);
 
     final sheetMaterial = tester.widget<Material>(
       find.descendant(

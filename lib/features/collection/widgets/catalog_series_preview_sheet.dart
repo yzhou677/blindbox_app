@@ -45,9 +45,8 @@ class CatalogSeriesPreviewSheet extends ConsumerWidget {
 
     return CollectibleSheetInsets(
       extraBottom: 0,
-      child: CustomScrollView(
+      child: CollectibleSheetScrollView(
         controller: scroll,
-        physics: collectibleSheetScrollPhysics(),
         slivers: [
         SliverToBoxAdapter(
           child: CollectibleSheetChrome(

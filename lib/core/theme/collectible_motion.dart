@@ -8,8 +8,6 @@ abstract final class CollectibleMotion {
 
   static const Duration sheet = Duration(milliseconds: 360);
   static const Duration sheetDismiss = Duration(milliseconds: 280);
-  /// Snap settle while dragging — shorter than route dismiss so release feels tight.
-  static const Duration sheetSnap = Duration(milliseconds: 220);
   static const Duration galleryOpen = Duration(milliseconds: 340);
   static const Duration galleryClose = Duration(milliseconds: 280);
   static const Duration crossfade = Duration(milliseconds: 260);

@@ -40,9 +40,8 @@ Future<void> showCollectibleMarketSheet({
           final trailingMeta = CollectibleMarketMoodCopy.snapshotPriceLabel(snapshot);
 
           return CollectibleSheetInsets(
-            child: CustomScrollView(
+            child: CollectibleSheetScrollView(
               controller: scrollController,
-              physics: collectibleSheetScrollPhysics(),
               slivers: [
                 SliverToBoxAdapter(
                   child: Column(

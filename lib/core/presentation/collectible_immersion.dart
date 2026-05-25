@@ -60,24 +60,3 @@ class _CollectiblePresenceFadeState extends State<CollectiblePresenceFade>
     return FadeTransition(opacity: _opacity, child: widget.child);
   }
 }
-
-/// Opaque sheet body frame — keeps modal chrome detached from the page behind.
-///
-/// A translucent top gradient caused shelf copy to bleed through the drag handle.
-class CollectibleSheetFocusFrame extends StatelessWidget {
-  const CollectibleSheetFocusFrame({
-    super.key,
-    required this.child,
-  });
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return ColoredBox(
-      color: scheme.surface,
-      child: child,
-    );
-  }
-}

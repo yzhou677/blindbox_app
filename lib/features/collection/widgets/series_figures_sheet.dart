@@ -57,9 +57,8 @@ class SeriesFiguresSheet extends ConsumerWidget {
             : memoryReflection;
 
     return CollectibleSheetInsets(
-      child: CustomScrollView(
+      child: CollectibleSheetScrollView(
         controller: scroll,
-        physics: collectibleSheetScrollPhysics(),
         slivers: [
           SliverToBoxAdapter(
             child: CollectibleSheetChrome(

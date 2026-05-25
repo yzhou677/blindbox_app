@@ -124,6 +124,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
   }) {
     showCollectibleBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       heightFraction: FeedRhythm.sheetPreviewOpenScreenFraction,
       builder: (_, scroll) =>
           CatalogSeriesPreviewSheet(series: series, onAdd: onAdd),

@@ -126,9 +126,8 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
     return CollectibleSheetInsets(
       child: Form(
         key: _formKey,
-        child: CustomScrollView(
+        child: CollectibleSheetScrollView(
           controller: sheetScroll,
-          physics: collectibleSheetScrollPhysics(),
           slivers: [
             const SliverToBoxAdapter(
               child: CollectibleSheetChrome(
