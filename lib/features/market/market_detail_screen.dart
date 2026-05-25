@@ -13,6 +13,7 @@ import 'package:blindbox_app/features/collectible_relationship/application/colle
 import 'package:blindbox_app/features/collectible_relationship/widgets/collectible_relationship_line.dart';
 import 'package:blindbox_app/features/market/domain/chasers_heat_entry.dart';
 import 'package:blindbox_app/features/market/domain/market_listing_detail.dart';
+import 'package:blindbox_app/features/market/widgets/listing_description_section.dart';
 import 'package:blindbox_app/features/market/widgets/listing_market_signals.dart';
 import 'package:blindbox_app/models/market_listing.dart';
 import 'package:blindbox_app/shared/widgets/series_hero_meta_block.dart';
@@ -231,8 +232,6 @@ class _MarketDetailBody extends ConsumerWidget {
           : CollectibleMarketMoodCopy.listingDetailLine(listing),
       if (release.isNotEmpty) 'Released $release',
     ].join(' · ');
-    final description = detail?.shortDescription?.trim();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -269,25 +268,7 @@ class _MarketDetailBody extends ConsumerWidget {
             backgroundColor: scheme.surfaceContainerHighest,
           ),
         ],
-        if (description != null && description.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          Text(
-            'About this listing',
-            style: CollectibleTypography.figureMeta(textTheme, scheme).copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            description,
-            maxLines: 5,
-            overflow: TextOverflow.ellipsis,
-            style: textTheme.bodyMedium?.copyWith(
-              color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
-              height: 1.35,
-            ),
-          ),
-        ],
+        ListingDescriptionSection(description: detail?.shortDescription),
         Builder(
           builder: (context) {
             final line = ref.watch(
