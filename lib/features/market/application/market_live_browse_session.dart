@@ -75,8 +75,10 @@ final class MarketLiveBrowseSession {
     return next;
   }
 
-  /// Reset for a new query signature — optionally hydrate from stale cache first.
-  void resetForQuery(
+  /// Reset for a new query signature — bumps [generation] and optionally hydrates memory cache.
+  ///
+  /// Returns the new generation token; network/cache commits must match it to apply.
+  int resetForQuery(
     MarketBrowseQuery query, {
     List<MarketListing>? staleListings,
     String? staleCursor,
@@ -90,6 +92,23 @@ final class MarketLiveBrowseSession {
       hasMore: staleHasMore,
       fromStaleCache: staleListings != null && staleListings.isNotEmpty,
       generation: generation,
+    );
+    return generation;
+  }
+
+  /// Disk/memory stale hydrate while the first page is still loading.
+  void hydrateStaleListings({
+    required int generation,
+    required List<MarketListing> listings,
+    String? staleCursor,
+    bool staleHasMore = false,
+  }) {
+    if (generation != _state.generation || listings.isEmpty) return;
+    _state = _state.copyWith(
+      listings: List<MarketListing>.unmodifiable(listings),
+      nextCursor: staleCursor,
+      hasMore: staleHasMore,
+      fromStaleCache: true,
     );
   }
 

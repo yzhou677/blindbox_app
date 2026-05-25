@@ -18,18 +18,27 @@ final marketLiveBrowseControllerProvider =
 );
 
 /// Query-driven live browse orchestration — session, pagination, stale-while-revalidate.
+///
+/// Latest filter selection always wins: each query bumps [MarketLiveBrowseState.generation]
+/// synchronously before any await; older network/cache commits are discarded.
 class MarketLiveBrowseController extends Notifier<MarketLiveBrowseState> {
   final MarketLiveBrowseSession _session = MarketLiveBrowseSession();
   final EbayGatewayMarketSource _ebay = EbayGatewayMarketSource();
-  String? _lastAppliedSignature;
+  String? _lastHandoffSignature;
   bool _initialScheduled = false;
-  bool _applyQueryInFlight = false;
   bool _disposed = false;
 
   bool get _isActive => !_disposed;
 
   void _publishState() {
     if (_isActive) state = _session.state;
+  }
+
+  /// True when [generation] still owns the active query handoff.
+  bool _ownsGeneration(int generation, MarketBrowseQuery query) {
+    return _isActive &&
+        generation == _session.state.generation &&
+        query.signature == _session.state.querySignature;
   }
 
   @override
@@ -48,7 +57,7 @@ class MarketLiveBrowseController extends Notifier<MarketLiveBrowseState> {
       Future.microtask(() {
         if (!_isActive) return;
         final browse = ref.read(marketBrowseNotifierProvider);
-        _applyQuery(_queryFromBrowse(browse), reason: 'bootstrap');
+        _startQuery(_queryFromBrowse(browse), reason: 'bootstrap');
       });
     }
 
@@ -71,8 +80,71 @@ class MarketLiveBrowseController extends Notifier<MarketLiveBrowseState> {
         prev?.searchResultsActive == true && !next.searchResultsActive;
 
     if (brandIpChanged || searchCommitted || searchCleared) {
-      _applyQuery(nextQuery, reason: 'filters');
+      _startQuery(nextQuery, reason: 'filters');
     }
+  }
+
+  /// Synchronous handoff — bumps generation before any await so latest filters win.
+  int? _handoffQuery(
+    MarketBrowseQuery query, {
+    required String reason,
+    bool revalidate = false,
+  }) {
+    if (!MarketGatewayConfig.isActive) return null;
+    if (!revalidate &&
+        _lastHandoffSignature == query.signature &&
+        _session.state.isBusy &&
+        _session.state.querySignature == query.signature) {
+      return null;
+    }
+
+    final memoryBatch = _ebay.cachedBatchFor(query);
+    final generation = _session.resetForQuery(
+      query,
+      staleListings: memoryBatch?.listings,
+      staleCursor: memoryBatch?.nextCursor,
+      staleHasMore: memoryBatch?.hasMore ?? false,
+    );
+    _lastHandoffSignature = query.signature;
+
+    if (revalidate || reason == 'refresh') {
+      _session.markRefreshing(generation: generation);
+    } else {
+      _session.markLoadingInitial(generation: generation);
+    }
+    _publishState();
+
+    if (memoryBatch != null && memoryBatch.listings.isNotEmpty) {
+      unawaited(
+        _commitInstall(
+          memoryBatch.listings,
+          query: query,
+          generation: generation,
+        ),
+      );
+    }
+    return generation;
+  }
+
+  /// Handoff + background fetch — overlapping requests are fine; stale gens are dropped.
+  void _startQuery(
+    MarketBrowseQuery query, {
+    required String reason,
+    bool revalidate = false,
+  }) {
+    final generation = _handoffQuery(
+      query,
+      reason: reason,
+      revalidate: revalidate,
+    );
+    if (generation == null) return;
+    unawaited(
+      _fetchFirstPage(
+        query: query,
+        generation: generation,
+        revalidate: revalidate,
+      ),
+    );
   }
 
   Future<void> refresh() async {
@@ -85,9 +157,15 @@ class MarketLiveBrowseController extends Notifier<MarketLiveBrowseState> {
         batch.listings.isNotEmpty) {
       return;
     }
-    await _applyQuery(
+    final generation = _handoffQuery(
       query,
       reason: 'refresh',
+      revalidate: true,
+    );
+    if (generation == null) return;
+    await _fetchFirstPage(
+      query: query,
+      generation: generation,
       revalidate: true,
     );
   }
@@ -97,12 +175,12 @@ class MarketLiveBrowseController extends Notifier<MarketLiveBrowseState> {
     if (!_session.state.hasMore) return;
 
     final generation = _session.state.generation;
+    final baseQuery = _session.state.query;
     _session.markLoadingMore(generation: generation);
     _publishState();
 
-    final baseQuery = _session.state.query;
     final page = await _ebay.fetchNextPage(baseQuery);
-    if (generation != _session.state.generation || !_isActive) return;
+    if (!_ownsGeneration(generation, baseQuery)) return;
 
     if (page.listings.isEmpty && !page.fromCache) {
       final err = EbayGatewayMarketSource.lastFetchError;
@@ -125,100 +203,41 @@ class MarketLiveBrowseController extends Notifier<MarketLiveBrowseState> {
     _publishState();
     await _commitInstall(
       _session.state.listings,
-      query: _session.state.query,
+      query: baseQuery,
       generation: generation,
     );
   }
 
-  /// Identity enrich + aggregation — yield a frame before heavy sync work.
-  Future<void> _commitInstall(
-    List<MarketListing> listings, {
+  Future<void> _fetchFirstPage({
     required MarketBrowseQuery query,
     required int generation,
+    required bool revalidate,
   }) async {
-    if (generation != _session.state.generation) return;
-    await Future<void>.delayed(Duration.zero);
-    if (generation != _session.state.generation || !_isActive) return;
-    installLiveBrowseListings(listings, query: query);
-    _scheduleBrowseProviderRefresh();
-  }
+    final diskBatch = await _ebay.resolveCachedBatchFor(query);
+    if (!_ownsGeneration(generation, query)) return;
 
-  /// Refresh browse-derived providers after session singletons update.
-  ///
-  /// Deferred to the next frame so async gateway work cannot invalidate during
-  /// an in-flight provider build (avoids Riverpod re-entrancy exceptions).
-  void _scheduleBrowseProviderRefresh() {
-    if (!_isActive) return;
-    SchedulerBinding.instance.scheduleFrameCallback((_) {
-      if (!_isActive) return;
-      ref.invalidate(marketBrowseListingsProvider);
-      ref.invalidate(collectibleMarketSnapshotsProvider);
-    });
-  }
-
-  Future<void> _applyQuery(
-    MarketBrowseQuery query, {
-    required String reason,
-    bool revalidate = false,
-  }) async {
-    if (!MarketGatewayConfig.isActive) return;
-    if (_applyQueryInFlight && !revalidate) return;
-    if (!revalidate &&
-        _lastAppliedSignature == query.signature &&
-        _session.state.hasListings) {
-      return;
-    }
-
-    _applyQueryInFlight = true;
-    try {
-      await _applyQueryInner(
-        query,
-        reason: reason,
-        revalidate: revalidate,
-      );
-    } finally {
-      _applyQueryInFlight = false;
-    }
-  }
-
-  Future<void> _applyQueryInner(
-    MarketBrowseQuery query, {
-    required String reason,
-    bool revalidate = false,
-  }) async {
-    if (!MarketGatewayConfig.isActive) return;
-
-    final staleBatch = await _ebay.resolveCachedBatchFor(query);
-    final staleListings = staleBatch?.listings;
-    _session.resetForQuery(
-      query,
-      staleListings: staleListings,
-      staleCursor: staleBatch?.nextCursor,
-      staleHasMore: staleBatch?.hasMore ?? false,
-    );
-    _lastAppliedSignature = query.signature;
-
-    final generation = _session.state.generation;
-
-    if (staleListings != null && staleListings.isNotEmpty) {
-      unawaited(
-        _commitInstall(
-          staleListings,
-          query: query,
+    if (diskBatch != null && diskBatch.listings.isNotEmpty) {
+      final currentCount = _session.state.listings.length;
+      if (currentCount == 0 || diskBatch.listings.length > currentCount) {
+        _session.hydrateStaleListings(
           generation: generation,
-        ),
-      );
+          listings: diskBatch.listings,
+          staleCursor: diskBatch.nextCursor,
+          staleHasMore: diskBatch.hasMore,
+        );
+        _publishState();
+        unawaited(
+          _commitInstall(
+            diskBatch.listings,
+            query: query,
+            generation: generation,
+          ),
+        );
+      }
     }
-
-    if (revalidate || reason == 'refresh') {
-      _session.markRefreshing(generation: generation);
-    } else {
-      _session.markLoadingInitial(generation: generation);
-    }
-    _publishState();
 
     final page = await _ebay.fetchFirstPage(query);
-    if (generation != _session.state.generation || !_isActive) return;
+    if (!_ownsGeneration(generation, query)) return;
 
     if (page.listings.isEmpty && !page.fromCache) {
       final err = EbayGatewayMarketSource.lastFetchError;
@@ -246,6 +265,33 @@ class MarketLiveBrowseController extends Notifier<MarketLiveBrowseState> {
       query: query,
       generation: generation,
     );
+  }
+
+  /// Identity enrich + aggregation — yield a frame before heavy sync work.
+  Future<void> _commitInstall(
+    List<MarketListing> listings, {
+    required MarketBrowseQuery query,
+    required int generation,
+  }) async {
+    if (!_ownsGeneration(generation, query)) return;
+    await Future<void>.delayed(Duration.zero);
+    if (!_ownsGeneration(generation, query)) return;
+    installLiveBrowseListings(listings, query: query);
+    _scheduleBrowseProviderRefresh(generation: generation);
+  }
+
+  /// Refresh browse-derived providers after session singletons update.
+  ///
+  /// Deferred to the next frame so async gateway work cannot invalidate during
+  /// an in-flight provider build (avoids Riverpod re-entrancy exceptions).
+  void _scheduleBrowseProviderRefresh({required int generation}) {
+    if (!_isActive) return;
+    SchedulerBinding.instance.scheduleFrameCallback((_) {
+      if (!_isActive) return;
+      if (generation != _session.state.generation) return;
+      ref.invalidate(marketBrowseListingsProvider);
+      ref.invalidate(collectibleMarketSnapshotsProvider);
+    });
   }
 
   static MarketBrowseQuery _queryFromBrowse(MarketBrowseState browse) {

@@ -27,7 +27,8 @@ void main() {  test('resetForQuery bumps generation and hydrates stale rows', ()
     final session = MarketLiveBrowseSession();
     const query = MarketBrowseQuery(brandId: 'pop_mart');
 
-    session.resetForQuery(query, staleListings: const []);
+    final gen = session.resetForQuery(query, staleListings: const []);
+    expect(gen, 1);
     expect(session.state.generation, 1);
     expect(session.state.querySignature, query.signature);
     expect(session.state.isLoadingInitial, false);
@@ -79,5 +80,39 @@ void main() {  test('resetForQuery bumps generation and hydrates stale rows', ()
     expect(session.state.listings.length, 2);
     expect(session.state.isLoadingMore, false);
     expect(session.state.hasMore, false);
+  });
+
+  test('hydrateStaleListings ignores stale generation', () {
+    final session = MarketLiveBrowseSession();
+    const query = MarketBrowseQuery(brandId: 'pop_mart', ipId: 'molly');
+    final gen = session.resetForQuery(query);
+    session.markLoadingInitial(generation: gen);
+
+    session.resetForQuery(
+      const MarketBrowseQuery(brandId: 'pop_mart', ipId: 'skullpanda'),
+    );
+    session.hydrateStaleListings(
+      generation: gen,
+      listings: [_row('stale')],
+    );
+    expect(session.state.listings, isEmpty);
+  });
+
+  test('hydrateStaleListings updates rows for active generation', () {
+    final session = MarketLiveBrowseSession();
+    const query = MarketBrowseQuery(brandId: 'pop_mart', ipId: 'molly');
+    final gen = session.resetForQuery(query);
+    session.markLoadingInitial(generation: gen);
+
+    session.hydrateStaleListings(
+      generation: gen,
+      listings: [_row('cached')],
+      staleHasMore: true,
+      staleCursor: 'c1',
+    );
+    expect(session.state.listings, hasLength(1));
+    expect(session.state.fromStaleCache, isTrue);
+    expect(session.state.isLoadingInitial, isTrue);
+    expect(session.state.hasMore, isTrue);
   });
 }
