@@ -1,4 +1,5 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/presentation/collectible_immersion.dart';
 import 'package:blindbox_app/core/theme/app_theme.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:flutter/material.dart';
@@ -53,6 +54,15 @@ void main() {
     expect(find.text('Sheet body'), findsOneWidget);
     expect(find.byType(DraggableScrollableSheet), findsOneWidget);
     expect(find.byType(FractionallySizedBox), findsWidgets);
+    expect(find.byType(CollectibleSheetFocusFrame), findsOneWidget);
+    final sheetMaterial = tester.widget<Material>(
+      find.descendant(
+        of: find.byType(FractionallySizedBox),
+        matching: find.byType(Material),
+      ).first,
+    );
+    expect(sheetMaterial.color, AppTheme.light().colorScheme.surface);
+    expect(sheetMaterial.elevation, greaterThan(0));
 
     await tester.tapAt(const Offset(20, 20));
     await tester.pumpAndSettle();

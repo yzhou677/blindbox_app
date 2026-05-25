@@ -29,12 +29,14 @@ class CollectibleSheetChrome extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    return Padding(
-      padding: padding,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Center(child: CollectibleSheetDragHandle()),
+    return Material(
+      color: scheme.surface,
+      child: Padding(
+        padding: padding,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Center(child: CollectibleSheetDragHandle()),
           if (editorialTitle != null) ...[
             SizedBox(height: FeedRhythm.sheetHeaderAfterHandle),
             Text(
@@ -72,6 +74,7 @@ class CollectibleSheetChrome extends StatelessWidget {
             ],
           ],
         ],
+        ),
       ),
     );
   }

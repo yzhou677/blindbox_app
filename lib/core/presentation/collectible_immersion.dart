@@ -61,7 +61,9 @@ class _CollectiblePresenceFadeState extends State<CollectiblePresenceFade>
   }
 }
 
-/// Softens sheet chrome while keeping scroll content readable.
+/// Opaque sheet body frame — keeps modal chrome detached from the page behind.
+///
+/// A translucent top gradient caused shelf copy to bleed through the drag handle.
 class CollectibleSheetFocusFrame extends StatelessWidget {
   const CollectibleSheetFocusFrame({
     super.key,
@@ -73,18 +75,8 @@ class CollectibleSheetFocusFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            scheme.surface.withValues(alpha: 0.02),
-            scheme.surface,
-          ],
-          stops: const [0, 0.08],
-        ),
-      ),
+    return ColoredBox(
+      color: scheme.surface,
       child: child,
     );
   }
