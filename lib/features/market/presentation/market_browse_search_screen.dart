@@ -4,7 +4,7 @@ import 'package:blindbox_app/features/market/application/collectible_market_prov
 import 'package:blindbox_app/features/market/application/market_browse_notifier.dart';
 import 'package:blindbox_app/features/market/application/market_browse_load_more_controller.dart';
 import 'package:blindbox_app/features/market/data/gateway/market_gateway_config.dart';
-import 'package:blindbox_app/features/market/presentation/collectible_market_sort.dart';
+import 'package:blindbox_app/features/market/presentation/collectible_market_display_order.dart';
 import 'package:blindbox_app/features/market/presentation/market_price_sort.dart';
 import 'package:blindbox_app/features/market/widgets/market_browse_session_transition.dart';
 import 'package:blindbox_app/features/market/widgets/collectible_market_card.dart';
@@ -27,7 +27,10 @@ class _MarketBrowseSearchScreenState
     extends ConsumerState<MarketBrowseSearchScreen> {
   final _search = TextEditingController();
   Timer? _debounce;
-  MarketPriceSort _priceSort = MarketPriceSort.lowToHigh;
+  final MarketPriceSort _priceSort = MarketPriceSort.lowToHigh;
+  List<String> _displayOrderIds = const [];
+  MarketPriceSort _displayOrderPriceSort = MarketPriceSort.lowToHigh;
+  String? _displayOrderBrowseSignature;
 
   @override
   void initState() {
@@ -82,12 +85,36 @@ class _MarketBrowseSearchScreenState
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final browse = ref.watch(marketBrowseNotifierProvider);
     final snapshots = ref.watch(visibleCollectibleMarketSnapshotsProvider);
-    final sorted = sortCollectibleMarketSnapshots(
-      snapshots,
-      _priceSort,
-      sortByPrice: true,
+    final browseSignature = collectibleMarketBrowseSignature(
+      brandId: browse.brandId,
+      ipId: browse.ipId,
+      query: browse.query.trim(),
+      searchResultsActive: browse.searchResultsActive,
     );
+    final display = resolveCollectibleMarketDisplaySnapshots(
+      snapshots: snapshots,
+      browseSignature: browseSignature,
+      priceSort: _priceSort,
+      stablePagination: MarketGatewayConfig.isActive,
+      previousOrderIds: _displayOrderIds,
+      previousPriceSort: _displayOrderPriceSort,
+      previousBrowseSignature: _displayOrderBrowseSignature,
+    );
+    final sorted = display.snapshots;
+    if (display.orderIds != _displayOrderIds ||
+        _displayOrderPriceSort != _priceSort ||
+        _displayOrderBrowseSignature != browseSignature) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() {
+          _displayOrderIds = display.orderIds;
+          _displayOrderPriceSort = _priceSort;
+          _displayOrderBrowseSignature = browseSignature;
+        });
+      });
+    }
     final liveHasMore = ref.watch(marketLiveBrowseHasMoreProvider);
     final loadingMore = ref.watch(marketBrowseLoadMoreProvider);
     final sessionTransitioning = ref.watch(marketBrowseSessionTransitionProvider);
@@ -133,7 +160,7 @@ class _MarketBrowseSearchScreenState
                       padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
                       itemCount: sorted.length +
                           (MarketGatewayConfig.isActive && liveHasMore ? 1 : 0),
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      separatorBuilder: (_, _) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         if (index >= sorted.length) {
                           return MarketLoadMoreFooter(
@@ -143,7 +170,11 @@ class _MarketBrowseSearchScreenState
                                 .loadMore(),
                           );
                         }
-                        return CollectibleMarketCard(snapshot: sorted[index]);
+                        final snapshot = sorted[index];
+                        return CollectibleMarketCard(
+                          key: ValueKey(snapshot.identity.snapshotId),
+                          snapshot: snapshot,
+                        );
                       },
                     ),
                   ),
