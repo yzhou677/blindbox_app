@@ -3,6 +3,17 @@ import 'package:flutter/material.dart';
 /// Soft shelf mats for Home rails — [ColorScheme] only, no extra framing.
 /// Section identity comes from color + spacing; cards keep their own shells.
 abstract final class HomeSectionZones {
+  /// Warm editorial wash behind Official drops — quieter than Latest so rails stay balanced.
+  static Color officialFeedMat(ColorScheme scheme, Brightness brightness) {
+    final isLight = brightness == Brightness.light;
+    final wash = Color.lerp(
+      scheme.secondaryContainer,
+      scheme.tertiaryContainer,
+      isLight ? 0.34 : 0.28,
+    )!.withValues(alpha: isLight ? 0.36 : 0.28);
+    return Color.lerp(scheme.surface, wash, isLight ? 0.26 : 0.24)!;
+  }
+
   /// Lavender–peach wash behind Latest Drops.
   static Color latestDropsMat(ColorScheme scheme, Brightness brightness) {
     final isLight = brightness == Brightness.light;
