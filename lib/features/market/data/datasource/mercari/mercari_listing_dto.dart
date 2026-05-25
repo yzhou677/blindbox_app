@@ -10,6 +10,8 @@ class MercariListingDto {
     required this.currency,
     required this.imageUrl,
     required this.listingUrl,
+    this.sellerUsername,
+    this.itemCreationDate,
   });
 
   final String id;
@@ -18,6 +20,8 @@ class MercariListingDto {
   final String currency;
   final String imageUrl;
   final String listingUrl;
+  final String? sellerUsername;
+  final String? itemCreationDate;
 
   factory MercariListingDto.fromJson(Map<String, dynamic> json) {
     final parsed = tryParse(json);
@@ -35,13 +39,26 @@ class MercariListingDto {
 
     final price = json['price'] as Map<String, dynamic>? ?? const {};
     final image = json['image'] as Map<String, dynamic>? ?? const {};
-    return MercariListingDto(
+    final seller = json['seller'] as Map<String, dynamic>?;
+  return MercariListingDto(
       id: id,
       title: title,
-      priceValue: price['value'] as String? ?? json['priceValue'] as String? ?? '0',
+      priceValue: _wirePriceValue(price, json),
       currency: price['currency'] as String? ?? json['currency'] as String? ?? 'USD',
       imageUrl: image['imageUrl'] as String? ?? json['imageUrl'] as String? ?? '',
       listingUrl: json['listingUrl'] as String? ?? json['itemWebUrl'] as String? ?? '',
+      sellerUsername: seller?['username'] as String?,
+      itemCreationDate: json['itemCreationDate'] as String?,
     );
+  }
+
+  static String _wirePriceValue(
+    Map<String, dynamic> price,
+    Map<String, dynamic> json,
+  ) {
+    final raw = price['value'] ?? json['priceValue'];
+    if (raw is String && raw.trim().isNotEmpty) return raw.trim();
+    if (raw is num) return raw.toString();
+    return '0';
   }
 }

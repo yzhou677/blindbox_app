@@ -35,6 +35,10 @@ final class MarketBrowseListingsSession {
     return null;
   }
 
-  List<MarketListing> get trending =>
+  /// Fixture rows flagged as chaser candidates (`isTrending` in bundled JSON).
+  List<MarketListing> get chasers =>
       list.where((e) => e.isTrending).toList(growable: false);
+
+  @Deprecated('Use chasers')
+  List<MarketListing> get trending => chasers;
 }

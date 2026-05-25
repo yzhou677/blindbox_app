@@ -31,9 +31,9 @@ class HomeFeedSnapshot {
   }
 }
 
-HomeFeedSnapshot _mockHomeFeedSnapshot() => HomeFeedSnapshot(
-      latest: mockSeriesReleases,
-      trending: mockSeriesReleases.skip(1).take(4).toList(growable: false),
+HomeFeedSnapshot _emptyHomeFeedSnapshot() => const HomeFeedSnapshot(
+      latest: [],
+      trending: [],
     );
 
 final homeFeedSnapshotProvider = FutureProvider<HomeFeedSnapshot>((ref) async {
@@ -50,17 +50,15 @@ final homeFeedSnapshotProvider = FutureProvider<HomeFeedSnapshot>((ref) async {
     final trending = await buildSeriesReleasesFromCatalog(bundle, pick.trending);
 
     if (latest.isEmpty && trending.isEmpty) {
-      return _mockHomeFeedSnapshot();
+      return _emptyHomeFeedSnapshot();
     }
 
     return HomeFeedSnapshot(
-      latest: latest.isNotEmpty ? latest : mockSeriesReleases,
-      trending: trending.isNotEmpty
-          ? trending
-          : mockSeriesReleases.skip(1).take(4).toList(growable: false),
+      latest: latest,
+      trending: trending,
     );
   } catch (_) {
-    return _mockHomeFeedSnapshot();
+    return _emptyHomeFeedSnapshot();
   }
 });
 

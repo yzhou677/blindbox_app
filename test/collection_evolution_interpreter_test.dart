@@ -1,6 +1,5 @@
 import 'package:blindbox_app/features/collection/application/collection_evolution_interpreter.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
-import 'package:blindbox_app/features/collection/domain/collection_evolution.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_era.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_mood.dart';
 import 'package:flutter_test/flutter_test.dart';

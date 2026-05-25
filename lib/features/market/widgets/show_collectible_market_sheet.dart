@@ -37,26 +37,22 @@ Future<void> showCollectibleMarketSheet({
             ),
           );
           final c = rep?.collectible;
-          final trailingMeta = [
-            CollectibleMarketMoodCopy.snapshotPriceLabel(snapshot),
-            CollectibleMarketMoodCopy.sightingsLabel(snapshot.listingCount),
-          ].join(' · ');
+          final trailingMeta = CollectibleMarketMoodCopy.snapshotPriceLabel(snapshot);
 
           return CollectibleSheetInsets(
-            child: CustomScrollView(
+            child: CollectibleSheetScrollView(
               controller: scrollController,
-              physics: collectibleSheetScrollPhysics(),
+              header: CollectibleSheetChrome(
+                seriesTitle: display.title,
+                brand: c?.brand ?? '',
+                ipLine: c?.ipLine?.trim() ?? '',
+                trailingMeta: trailingMeta,
+              ),
               slivers: [
                 SliverToBoxAdapter(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      CollectibleSheetChrome(
-                        seriesTitle: display.title,
-                        brand: c?.brand ?? '',
-                        ipLine: c?.ipLine?.trim() ?? '',
-                        trailingMeta: trailingMeta,
-                      ),
                       const SizedBox(height: FeedRhythm.sheetEditorialBlockGap),
                       Text(
                         CollectibleMarketMoodCopy.subtitle(snapshot),

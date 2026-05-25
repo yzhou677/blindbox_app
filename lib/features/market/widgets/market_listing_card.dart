@@ -2,7 +2,7 @@ import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/collectible_elevation.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
-import 'package:blindbox_app/features/market/presentation/market_listing_image.dart';
+import 'package:blindbox_app/features/market/widgets/market_listing_showcase_thumb.dart';
 import 'package:blindbox_app/features/market/utils/market_format.dart';
 import 'package:blindbox_app/features/market/widgets/listing_market_signals.dart';
 import 'package:blindbox_app/models/market_listing.dart';
@@ -21,7 +21,6 @@ class MarketListingCard extends StatelessWidget {
     final scheme = theme.colorScheme;
     final textTheme = theme.textTheme;
     final c = listing.collectible;
-    final accent = c.shelfAccent ?? scheme.tertiaryContainer;
     final isDark = theme.brightness == Brightness.dark;
     final thumb = FeedRhythm.marketListingThumbnailExtent;
 
@@ -51,37 +50,10 @@ class MarketListingCard extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(
-                    width: thumb,
-                    height: thumb,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        borderRadius: AppRadii.matRadius,
-                        color: Color.lerp(
-                          scheme.surfaceContainerHighest,
-                          accent,
-                          isDark ? 0.1 : 0.14,
-                        )!.withValues(alpha: isDark ? 0.45 : 0.55),
-                        border: Border.all(
-                          color: accent.withValues(alpha: isDark ? 0.12 : 0.16),
-                        ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: ClipRRect(
-                          borderRadius: AppRadii.insetRadius,
-                          child: ColoredBox(
-                            color: scheme.surface.withValues(alpha: 0.35),
-                            child: MarketListingImage(
-                              collectible: c,
-                              heroTag: listing.marketHeroTag,
-                              borderRadius: BorderRadius.zero,
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+                  MarketListingShowcaseThumb(
+                    collectible: c,
+                    extent: thumb,
+                    heroTag: listing.marketHeroTag,
                   ),
                   const SizedBox(width: 16),
                   Expanded(

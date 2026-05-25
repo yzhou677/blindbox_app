@@ -60,32 +60,3 @@ class _CollectiblePresenceFadeState extends State<CollectiblePresenceFade>
     return FadeTransition(opacity: _opacity, child: widget.child);
   }
 }
-
-/// Softens sheet chrome while keeping scroll content readable.
-class CollectibleSheetFocusFrame extends StatelessWidget {
-  const CollectibleSheetFocusFrame({
-    super.key,
-    required this.child,
-  });
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            scheme.surface.withValues(alpha: 0.02),
-            scheme.surface,
-          ],
-          stops: const [0, 0.08],
-        ),
-      ),
-      child: child,
-    );
-  }
-}

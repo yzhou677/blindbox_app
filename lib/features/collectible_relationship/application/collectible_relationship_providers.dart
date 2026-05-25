@@ -6,7 +6,6 @@ import 'package:blindbox_app/features/collectible_relationship/domain/collectibl
 import 'package:blindbox_app/features/collectible_relationship/presentation/collectible_relationship_copy.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/application/shelf_emotional_providers.dart';
-import 'package:blindbox_app/features/collection/application/shelf_relationship_analyzer.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/market/application/collectible_market_providers.dart';
 import 'package:blindbox_app/features/market/application/market_listings_providers.dart';

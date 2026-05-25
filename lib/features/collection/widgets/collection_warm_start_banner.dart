@@ -15,10 +15,10 @@ class CollectionWarmStartBanner extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: AppRadii.matRadius,
-          color: scheme.secondaryContainer.withValues(alpha: 0.35),
-          border: Border.all(
-            color: scheme.outlineVariant.withValues(alpha: 0.4),
-          ),
+          color: Theme.of(context).brightness == Brightness.dark
+              ? scheme.surfaceContainer
+              : scheme.secondaryContainer.withValues(alpha: 0.55),
+          border: Border.all(color: scheme.outlineVariant),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

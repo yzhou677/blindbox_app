@@ -3,7 +3,6 @@ import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
-import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_series_filter.dart';
 import 'package:blindbox_app/features/collection/widgets/add_custom_series_sheet.dart';
 import 'package:blindbox_app/features/collection/widgets/add_to_collection_sheet.dart';
@@ -16,7 +15,6 @@ import 'package:blindbox_app/features/collection/widgets/collection_empty_state.
 import 'package:blindbox_app/features/collection/widgets/collection_summary_section.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_warm_start_banner.dart';
 import 'package:blindbox_app/features/collection/widgets/series_figures_sheet.dart';
-import 'package:blindbox_app/features/collection/widgets/series_shelf_cards.dart';
 import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
@@ -280,8 +278,8 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                   backgroundColor: Color.lerp(
                     scheme.surface,
                     scheme.primaryContainer,
-                    0.32,
-                  )!.withValues(alpha: 0.92),
+                    Theme.of(context).brightness == Brightness.dark ? 0.22 : 0.32,
+                  ),
                   foregroundColor: scheme.primary.withValues(alpha: 0.78),
                   shadowColor: Colors.transparent,
                   surfaceTintColor: Colors.transparent,
@@ -342,6 +340,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                   }
                   return Column(
                     children: buildShelfSeriesFeed(
+                      context: context,
                       series: visible,
                       figureStates: snap.figureStates,
                       profile: profile,

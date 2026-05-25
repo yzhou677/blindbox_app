@@ -128,14 +128,9 @@
     "id": "nommi",
     "brandId": "toptoy",
     "displayName": "Nommi",
-    "aliases": []
-  },
-  {
-    "id": "nommi_x_amarilith",
-    "brandId": "toptoy",
-    "displayName": "Nommi x Amarilith",
     "aliases": [
-      "Amarilith"
+      "Amarilith",
+      "Sweet Bites"
     ]
   },
   {

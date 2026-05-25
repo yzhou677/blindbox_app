@@ -1,10 +1,9 @@
 import 'package:blindbox_app/features/market/data/dto/ebay_item_summary_dto.dart';
 import 'package:http/http.dart' as http;
 
-/// Real eBay Browse API (or compatible gateway). Wire when OAuth + endpoints are available.
+/// Legacy direct HTTP hook — production uses [EbayGatewayMarketSource] → Firebase gateway.
 ///
-/// Not a [MarketSource] — [EbayMarketSource] maps DTOs to [MarketListing]. This class is
-/// wire-level only. Today [fetchBrowseSummaries] throws until response mapping exists.
+/// eBay OAuth and Browse run in `functions/` only. Do not call api.ebay.com from Flutter.
 class EbayHttpBrowseDataSource {
   EbayHttpBrowseDataSource({
     required this.client,

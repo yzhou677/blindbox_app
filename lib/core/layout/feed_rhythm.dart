@@ -24,11 +24,17 @@ abstract final class FeedRhythm {
   /// Space from section header block (including hairline) to horizontal rails / lists.
   static const double sectionHeaderToRail = 14;
 
-  /// Space between Market Trending block and Browse listings header.
-  static const double marketTrendingToBrowseHeaderGap = 16;
+  /// Space between Market Chasers block and Browse listings header.
+  static const double marketChasersToBrowseHeaderGap = 16;
 
-  /// Bottom closure after the Trending horizontal rail (before [marketTrendingToBrowseHeaderGap]).
-  static const double marketTrendingRailBottomClosure = 22;
+  /// Bottom closure after the Chasers horizontal rail (before [marketChasersToBrowseHeaderGap]).
+  static const double marketChasersRailBottomClosure = 22;
+
+  /// @deprecated Use [marketChasersToBrowseHeaderGap].
+  static const double marketTrendingToBrowseHeaderGap = marketChasersToBrowseHeaderGap;
+
+  /// @deprecated Use [marketChasersRailBottomClosure].
+  static const double marketTrendingRailBottomClosure = marketChasersRailBottomClosure;
 
   /// Space below the Browse listings section title before the first feed row.
   static const double marketBrowseHeaderToFeedGap = 18;
@@ -39,8 +45,11 @@ abstract final class FeedRhythm {
   /// Showcase thumb for Market browse rows.
   static const double marketListingThumbnailExtent = 96;
 
-  /// Trending rail height (image-first mini cards).
-  static const double marketTrendingRailHeight = 196;
+  /// Chasers rail height (image-first mini cards).
+  static const double marketChasersRailHeight = 196;
+
+  /// @deprecated Use [marketChasersRailHeight].
+  static const double marketTrendingRailHeight = marketChasersRailHeight;
 
   /// Home series rails (Latest drops / Trending series).
   static const double homeSeriesRailHeight = 448;

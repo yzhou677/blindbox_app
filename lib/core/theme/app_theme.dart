@@ -292,7 +292,7 @@ abstract final class AppTheme {
       bottomSheetTheme: BottomSheetThemeData(
         elevation: 0,
         backgroundColor: colorScheme.surface,
-        surfaceTintColor: colorScheme.surfaceTint.withValues(alpha: isLight ? 0.22 : 0.18),
+        surfaceTintColor: Colors.transparent,
         shape: AppRadii.sheetShape,
         dragHandleColor: colorScheme.onSurfaceVariant.withValues(alpha: 0.35),
       ),

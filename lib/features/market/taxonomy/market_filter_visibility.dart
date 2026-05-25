@@ -13,12 +13,24 @@ abstract final class MarketFilterVisibility {
     'duckoo',
     'anmoo',
     'liila',
+    // Collab line — retrieved under Nommi; not a stable marketplace identity.
+    'nommi_x_amarilith',
   };
 
   /// Parent IP chip suppressed when a more specific sibling IP is on the same brand rail.
   /// Canonical ids unchanged — filter UX only.
   static const Map<String, Set<String>> suppressParentIpWhenChildrenPresent = {
     'molly': {'baby_molly', 'space_molly'},
+  };
+
+  /// Brand rails that omit the “Any IP” chip (eBay aspect brand ≠ app label).
+  static const Set<String> hideAnyIpForBrandIds = {
+    'dpl',
+  };
+
+  /// When [hideAnyIpForBrandIds] applies, selecting the brand defaults to this IP.
+  static const Map<String, String> defaultIpWhenBrandSelected = {
+    'dpl': 'baby_three',
   };
 
   /// Whether [ipId] should appear on market/collection filter chip rails for [brandIpIds].

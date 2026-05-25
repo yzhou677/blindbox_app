@@ -7,7 +7,7 @@ abstract final class CollectibleMotion {
   // —— Durations ——
 
   static const Duration sheet = Duration(milliseconds: 360);
-  static const Duration sheetDismiss = Duration(milliseconds: 300);
+  static const Duration sheetDismiss = Duration(milliseconds: 280);
   static const Duration galleryOpen = Duration(milliseconds: 340);
   static const Duration galleryClose = Duration(milliseconds: 280);
   static const Duration crossfade = Duration(milliseconds: 260);

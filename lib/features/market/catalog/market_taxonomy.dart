@@ -1,5 +1,6 @@
 import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
 import 'package:blindbox_app/features/market/catalog/market_catalog_filters.dart';
+import 'package:blindbox_app/features/market/taxonomy/market_filter_visibility.dart';
 import 'package:blindbox_app/features/market/taxonomy/market_taxonomy_adapter.dart';
 import 'package:blindbox_app/models/market_listing.dart';
 import 'package:flutter/foundation.dart';
@@ -128,7 +129,8 @@ abstract final class MarketTaxonomy {
             const <MarketIpTaxon>[];
 
     return [
-      (id: MarketTaxonomyIds.anyIp, label: 'Any IP'),
+      if (!MarketFilterVisibility.hideAnyIpForBrandIds.contains(brandId))
+        (id: MarketTaxonomyIds.anyIp, label: 'Any IP'),
       for (final i in ips) (id: i.id, label: i.displayLabel),
     ];
   }
@@ -141,10 +143,16 @@ abstract final class MarketTaxonomy {
     return b != null && b.supportedIpIds.contains(ipId);
   }
 
-  /// If the current IP is not sold under [brandId], reset to Any IP.
+  /// If the current IP is not sold under [brandId], reset to Any IP (or brand default).
   static String clampIpToBrand(String brandId, String ipId) {
+    if (ipId == MarketTaxonomyIds.anyIp) {
+      final defaultIp =
+          MarketFilterVisibility.defaultIpWhenBrandSelected[brandId];
+      if (defaultIp != null) return defaultIp;
+    }
     if (ipAllowedForBrand(brandId, ipId)) return ipId;
-    return MarketTaxonomyIds.anyIp;
+    return MarketFilterVisibility.defaultIpWhenBrandSelected[brandId] ??
+        MarketTaxonomyIds.anyIp;
   }
 
   /// Listing filter using stable taxonomy keys from each row (API-ready).

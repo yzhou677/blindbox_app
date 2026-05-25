@@ -1,0 +1,6920 @@
+{
+  "fetchedAt": "2026-05-24T03:42:06.905Z",
+  "categoryId": "19007",
+  "marketplace": "EBAY_US",
+  "probes": [
+    "discover",
+    "pop_mart",
+    "labubu",
+    "sonny_angel",
+    "smiski",
+    "cureplaneta",
+    "rolife",
+    "toptoy",
+    "tntspace",
+    "finding_unicorn",
+    "skullpanda",
+    "hirono"
+  ],
+  "aspectNames": [
+    "Age Level",
+    "Animal Species",
+    "Animation Studio",
+    "Brand",
+    "Character",
+    "Color",
+    "Convention/Event",
+    "Country of Origin",
+    "Featured Person/Artist",
+    "Features",
+    "Franchise",
+    "Grade",
+    "Item Height",
+    "Material",
+    "Model",
+    "Movie",
+    "Original/Licensed Reproduction",
+    "Personalize",
+    "Professional Grader",
+    "Scale",
+    "Series",
+    "Signed",
+    "Sport",
+    "TV Show",
+    "Theme",
+    "Time Period Manufactured",
+    "Transformer Faction",
+    "Type",
+    "Vehicle Type",
+    "Vintage",
+    "Year Manufactured"
+  ],
+  "aspects": {
+    "Brand": [
+      {
+        "value": "Not Specified",
+        "matchCount": 7423
+      },
+      {
+        "value": "Unbranded",
+        "matchCount": 489
+      },
+      {
+        "value": "Sanrio",
+        "matchCount": 301
+      },
+      {
+        "value": "Disney",
+        "matchCount": 81
+      },
+      {
+        "value": "Mystery",
+        "matchCount": 74
+      },
+      {
+        "value": "Art Figures",
+        "matchCount": 59
+      },
+      {
+        "value": "Hot Toys",
+        "matchCount": 48
+      },
+      {
+        "value": "BBI",
+        "matchCount": 48
+      },
+      {
+        "value": "Kidrobot",
+        "matchCount": 28
+      },
+      {
+        "value": "Bandai",
+        "matchCount": 28
+      },
+      {
+        "value": "Marvel",
+        "matchCount": 24
+      },
+      {
+        "value": "tokidoki",
+        "matchCount": 15
+      },
+      {
+        "value": "Unbox Industries",
+        "matchCount": 8
+      },
+      {
+        "value": "Disney Pixar",
+        "matchCount": 6
+      },
+      {
+        "value": "Golden",
+        "matchCount": 6
+      },
+      {
+        "value": "How2work",
+        "matchCount": 5
+      },
+      {
+        "value": "Ignite",
+        "matchCount": 4
+      },
+      {
+        "value": "Nickelodeon",
+        "matchCount": 4
+      },
+      {
+        "value": "Ideal",
+        "matchCount": 3
+      },
+      {
+        "value": "RPM",
+        "matchCount": 2
+      },
+      {
+        "value": "Strangeco",
+        "matchCount": 2
+      },
+      {
+        "value": "Kenner",
+        "matchCount": 2
+      },
+      {
+        "value": "Powerpuff Girls",
+        "matchCount": 2
+      },
+      {
+        "value": "Blue Box",
+        "matchCount": 2
+      },
+      {
+        "value": "Coarsetoys",
+        "matchCount": 1
+      },
+      {
+        "value": "Kennyswork",
+        "matchCount": 1
+      },
+      {
+        "value": "Momiji",
+        "matchCount": 1
+      },
+      {
+        "value": "Toy2R",
+        "matchCount": 1
+      },
+      {
+        "value": "Fans Toys",
+        "matchCount": 1
+      },
+      {
+        "value": "Star Wars",
+        "matchCount": 1
+      },
+      {
+        "value": "Art Asylum",
+        "matchCount": 1
+      },
+      {
+        "value": "Aurora",
+        "matchCount": 1
+      },
+      {
+        "value": "Character",
+        "matchCount": 1
+      },
+      {
+        "value": "Crazy Toys",
+        "matchCount": 1
+      },
+      {
+        "value": "McDonald's",
+        "matchCount": 1
+      },
+      {
+        "value": "MEGA",
+        "matchCount": 1
+      }
+    ],
+    "Year Manufactured": [
+      {
+        "value": "Not Specified",
+        "matchCount": 31659
+      },
+      {
+        "value": "2025",
+        "matchCount": 12287
+      },
+      {
+        "value": "2024",
+        "matchCount": 7343
+      },
+      {
+        "value": "2023",
+        "matchCount": 1337
+      },
+      {
+        "value": "2022",
+        "matchCount": 1006
+      },
+      {
+        "value": "2026",
+        "matchCount": 953
+      },
+      {
+        "value": "2021",
+        "matchCount": 905
+      },
+      {
+        "value": "2020",
+        "matchCount": 303
+      },
+      {
+        "value": "2019",
+        "matchCount": 86
+      },
+      {
+        "value": "2017",
+        "matchCount": 77
+      },
+      {
+        "value": "2016",
+        "matchCount": 51
+      },
+      {
+        "value": "2018",
+        "matchCount": 36
+      },
+      {
+        "value": "2015",
+        "matchCount": 35
+      },
+      {
+        "value": "1900",
+        "matchCount": 17
+      },
+      {
+        "value": "1975",
+        "matchCount": 10
+      },
+      {
+        "value": "1996",
+        "matchCount": 10
+      },
+      {
+        "value": "1966",
+        "matchCount": 7
+      },
+      {
+        "value": "2006",
+        "matchCount": 6
+      },
+      {
+        "value": "2012",
+        "matchCount": 6
+      },
+      {
+        "value": "2007",
+        "matchCount": 6
+      },
+      {
+        "value": "1959",
+        "matchCount": 6
+      },
+      {
+        "value": "2001",
+        "matchCount": 6
+      },
+      {
+        "value": "1995",
+        "matchCount": 5
+      },
+      {
+        "value": "1962",
+        "matchCount": 5
+      },
+      {
+        "value": "2010",
+        "matchCount": 4
+      },
+      {
+        "value": "2008",
+        "matchCount": 4
+      },
+      {
+        "value": "1992",
+        "matchCount": 4
+      },
+      {
+        "value": "2011",
+        "matchCount": 4
+      },
+      {
+        "value": "2014",
+        "matchCount": 3
+      },
+      {
+        "value": "1970",
+        "matchCount": 2
+      },
+      {
+        "value": "2005",
+        "matchCount": 2
+      },
+      {
+        "value": "2013",
+        "matchCount": 1
+      },
+      {
+        "value": "1974",
+        "matchCount": 1
+      },
+      {
+        "value": "1980",
+        "matchCount": 1
+      },
+      {
+        "value": "1981",
+        "matchCount": 1
+      },
+      {
+        "value": "1984",
+        "matchCount": 1
+      },
+      {
+        "value": "1985",
+        "matchCount": 1
+      },
+      {
+        "value": "1997",
+        "matchCount": 1
+      },
+      {
+        "value": "1999",
+        "matchCount": 1
+      },
+      {
+        "value": "2002",
+        "matchCount": 1
+      },
+      {
+        "value": "2009",
+        "matchCount": 1
+      },
+      {
+        "value": "1991",
+        "matchCount": 1
+      },
+      {
+        "value": "2000",
+        "matchCount": 1
+      }
+    ],
+    "Franchise": [
+      {
+        "value": "Not Specified",
+        "matchCount": 31743
+      },
+      {
+        "value": "Monster",
+        "matchCount": 20856
+      },
+      {
+        "value": "Coca-Cola",
+        "matchCount": 1808
+      },
+      {
+        "value": "Big",
+        "matchCount": 1469
+      },
+      {
+        "value": "Angel",
+        "matchCount": 1335
+      },
+      {
+        "value": "Sanrio",
+        "matchCount": 1196
+      },
+      {
+        "value": "Disney",
+        "matchCount": 828
+      },
+      {
+        "value": "One Piece",
+        "matchCount": 818
+      },
+      {
+        "value": "Naruto",
+        "matchCount": 776
+      },
+      {
+        "value": "Charmed",
+        "matchCount": 510
+      },
+      {
+        "value": "Hello Kitty",
+        "matchCount": 415
+      },
+      {
+        "value": "The Little Prince",
+        "matchCount": 361
+      },
+      {
+        "value": "Mickey Mouse & Friends",
+        "matchCount": 282
+      },
+      {
+        "value": "League of Legends",
+        "matchCount": 262
+      },
+      {
+        "value": "My Little Pony",
+        "matchCount": 249
+      },
+      {
+        "value": "Gummi Bears",
+        "matchCount": 239
+      },
+      {
+        "value": "Cutie Pops",
+        "matchCount": 239
+      },
+      {
+        "value": "Care Bears",
+        "matchCount": 237
+      },
+      {
+        "value": "My Mini MixieQ's",
+        "matchCount": 211
+      },
+      {
+        "value": "SpongeBob SquarePants",
+        "matchCount": 202
+      },
+      {
+        "value": "H2",
+        "matchCount": 195
+      },
+      {
+        "value": "The Powerpuff Girls",
+        "matchCount": 188
+      },
+      {
+        "value": "Toy Story",
+        "matchCount": 182
+      },
+      {
+        "value": "Minions",
+        "matchCount": 139
+      },
+      {
+        "value": "Overwatch",
+        "matchCount": 139
+      },
+      {
+        "value": "Teletubbies",
+        "matchCount": 135
+      },
+      {
+        "value": "Free!",
+        "matchCount": 127
+      },
+      {
+        "value": "Cardcaptor Sakura",
+        "matchCount": 112
+      },
+      {
+        "value": "Jurassic Park",
+        "matchCount": 112
+      },
+      {
+        "value": "Star Wars",
+        "matchCount": 110
+      },
+      {
+        "value": "Marvel Universe",
+        "matchCount": 103
+      },
+      {
+        "value": "Friends",
+        "matchCount": 102
+      },
+      {
+        "value": "Slayers",
+        "matchCount": 96
+      },
+      {
+        "value": "Digimon",
+        "matchCount": 91
+      },
+      {
+        "value": "Universal Monsters",
+        "matchCount": 89
+      },
+      {
+        "value": "Harry Potter",
+        "matchCount": 79
+      },
+      {
+        "value": "Rainbow",
+        "matchCount": 72
+      },
+      {
+        "value": "Pixar",
+        "matchCount": 67
+      },
+      {
+        "value": "Barbie",
+        "matchCount": 64
+      },
+      {
+        "value": "Justice League",
+        "matchCount": 63
+      },
+      {
+        "value": "JoJo's Bizarre Adventure",
+        "matchCount": 59
+      },
+      {
+        "value": "Jujutsu Kaisen",
+        "matchCount": 58
+      },
+      {
+        "value": "Alien",
+        "matchCount": 58
+      },
+      {
+        "value": "Heroes",
+        "matchCount": 57
+      },
+      {
+        "value": "Winnie the Pooh & Friends",
+        "matchCount": 57
+      },
+      {
+        "value": "Conan",
+        "matchCount": 55
+      },
+      {
+        "value": "Gin Tama",
+        "matchCount": 52
+      },
+      {
+        "value": "The Conjuring Universe",
+        "matchCount": 52
+      },
+      {
+        "value": "Garfield",
+        "matchCount": 51
+      },
+      {
+        "value": "Halloween",
+        "matchCount": 51
+      },
+      {
+        "value": "Naruto Shippuden",
+        "matchCount": 46
+      },
+      {
+        "value": "Iron Man",
+        "matchCount": 45
+      },
+      {
+        "value": "Cinnamoroll",
+        "matchCount": 42
+      },
+      {
+        "value": "The Lord of the Rings",
+        "matchCount": 41
+      },
+      {
+        "value": "Sesame Street",
+        "matchCount": 39
+      },
+      {
+        "value": "Dragon Ball",
+        "matchCount": 38
+      },
+      {
+        "value": "Pingu",
+        "matchCount": 38
+      },
+      {
+        "value": "Persona",
+        "matchCount": 37
+      },
+      {
+        "value": "M.A.S.K.",
+        "matchCount": 36
+      },
+      {
+        "value": "Despicable Me",
+        "matchCount": 32
+      },
+      {
+        "value": "Pokémon",
+        "matchCount": 32
+      },
+      {
+        "value": "Lilo & Stitch",
+        "matchCount": 31
+      },
+      {
+        "value": "Peanuts",
+        "matchCount": 31
+      },
+      {
+        "value": "Action Man",
+        "matchCount": 30
+      },
+      {
+        "value": "Tom & Jerry",
+        "matchCount": 30
+      },
+      {
+        "value": "Demon Slayer: Kimetsu no Yaiba",
+        "matchCount": 29
+      },
+      {
+        "value": "Avengers",
+        "matchCount": 28
+      },
+      {
+        "value": "Child's Play",
+        "matchCount": 28
+      },
+      {
+        "value": "Little Robots",
+        "matchCount": 28
+      },
+      {
+        "value": "It",
+        "matchCount": 26
+      },
+      {
+        "value": "Black Cat",
+        "matchCount": 24
+      },
+      {
+        "value": "Adventure Time",
+        "matchCount": 24
+      },
+      {
+        "value": "Winnie the Pooh",
+        "matchCount": 23
+      },
+      {
+        "value": "Superman",
+        "matchCount": 19
+      },
+      {
+        "value": "Shi",
+        "matchCount": 18
+      },
+      {
+        "value": "Dragon",
+        "matchCount": 16
+      },
+      {
+        "value": "Kung Fu Panda",
+        "matchCount": 15
+      },
+      {
+        "value": "Marvel (MCU)",
+        "matchCount": 14
+      },
+      {
+        "value": "World of Warcraft",
+        "matchCount": 14
+      },
+      {
+        "value": "Monchhichi",
+        "matchCount": 14
+      },
+      {
+        "value": "Pink Panther",
+        "matchCount": 13
+      },
+      {
+        "value": "Hatsune Miku",
+        "matchCount": 13
+      },
+      {
+        "value": "LINE FRIENDS",
+        "matchCount": 13
+      },
+      {
+        "value": "Spider-Man",
+        "matchCount": 13
+      },
+      {
+        "value": "Toy Soldiers",
+        "matchCount": 13
+      },
+      {
+        "value": "Dinosaurs",
+        "matchCount": 13
+      },
+      {
+        "value": "The Shadow",
+        "matchCount": 12
+      },
+      {
+        "value": "Halo",
+        "matchCount": 12
+      },
+      {
+        "value": "Planes",
+        "matchCount": 11
+      },
+      {
+        "value": "Van Helsing",
+        "matchCount": 11
+      },
+      {
+        "value": "Captain America",
+        "matchCount": 10
+      },
+      {
+        "value": "Legend",
+        "matchCount": 10
+      },
+      {
+        "value": "Mega Man",
+        "matchCount": 10
+      },
+      {
+        "value": "Ultraman",
+        "matchCount": 10
+      },
+      {
+        "value": "Sweethearts",
+        "matchCount": 10
+      },
+      {
+        "value": "Inuyasha",
+        "matchCount": 9
+      },
+      {
+        "value": "Katekyo Hitman Reborn!",
+        "matchCount": 9
+      },
+      {
+        "value": "Astro Boy",
+        "matchCount": 8
+      },
+      {
+        "value": "Creature from the Black Lagoon",
+        "matchCount": 8
+      },
+      {
+        "value": "Haikyuu!!",
+        "matchCount": 8
+      },
+      {
+        "value": "Overlord",
+        "matchCount": 8
+      },
+      {
+        "value": "Destiny",
+        "matchCount": 8
+      },
+      {
+        "value": "Funko",
+        "matchCount": 8
+      },
+      {
+        "value": "The Mummy",
+        "matchCount": 7
+      },
+      {
+        "value": "The Phantom of the Opera",
+        "matchCount": 7
+      },
+      {
+        "value": "M&M",
+        "matchCount": 7
+      },
+      {
+        "value": "How to Train Your Dragon",
+        "matchCount": 7
+      },
+      {
+        "value": "Kingdom Hearts",
+        "matchCount": 7
+      },
+      {
+        "value": "Transformers",
+        "matchCount": 6
+      },
+      {
+        "value": "Little Twin Stars",
+        "matchCount": 6
+      },
+      {
+        "value": "Batgirl",
+        "matchCount": 5
+      },
+      {
+        "value": "Directors",
+        "matchCount": 5
+      },
+      {
+        "value": "Saga",
+        "matchCount": 5
+      },
+      {
+        "value": "Shoot!",
+        "matchCount": 5
+      },
+      {
+        "value": "The Outsiders",
+        "matchCount": 5
+      },
+      {
+        "value": "Toffee Dolls",
+        "matchCount": 5
+      },
+      {
+        "value": "Unicornos",
+        "matchCount": 4
+      },
+      {
+        "value": "Bearbrick",
+        "matchCount": 4
+      },
+      {
+        "value": "Catwoman",
+        "matchCount": 4
+      },
+      {
+        "value": "DC Universe",
+        "matchCount": 4
+      },
+      {
+        "value": "Tokidoki",
+        "matchCount": 3
+      },
+      {
+        "value": "Batman",
+        "matchCount": 3
+      },
+      {
+        "value": "Club Penguin",
+        "matchCount": 3
+      },
+      {
+        "value": "Dawn Dolls",
+        "matchCount": 3
+      },
+      {
+        "value": "Lost",
+        "matchCount": 3
+      },
+      {
+        "value": "Treasure X",
+        "matchCount": 3
+      },
+      {
+        "value": "Vagabond!",
+        "matchCount": 3
+      },
+      {
+        "value": "Babe",
+        "matchCount": 2
+      },
+      {
+        "value": "Big Boy",
+        "matchCount": 2
+      },
+      {
+        "value": "Game of Thrones",
+        "matchCount": 2
+      },
+      {
+        "value": "Happy Bunny",
+        "matchCount": 2
+      },
+      {
+        "value": "Neon Genesis Evangelion",
+        "matchCount": 2
+      },
+      {
+        "value": "Otter Pops",
+        "matchCount": 2
+      },
+      {
+        "value": "Saint Seiya",
+        "matchCount": 2
+      },
+      {
+        "value": "Scream",
+        "matchCount": 2
+      },
+      {
+        "value": "Shining Stars",
+        "matchCount": 2
+      },
+      {
+        "value": "Super Animals",
+        "matchCount": 2
+      },
+      {
+        "value": "The Nightmare Before Christmas",
+        "matchCount": 2
+      },
+      {
+        "value": "Moshi Monsters",
+        "matchCount": 2
+      },
+      {
+        "value": "The Office",
+        "matchCount": 2
+      },
+      {
+        "value": "Roblox",
+        "matchCount": 2
+      },
+      {
+        "value": "The Crow",
+        "matchCount": 2
+      },
+      {
+        "value": "Futurama",
+        "matchCount": 1
+      },
+      {
+        "value": "Archer",
+        "matchCount": 1
+      },
+      {
+        "value": "Beetlejuice",
+        "matchCount": 1
+      },
+      {
+        "value": "Casper the Friendly Ghost",
+        "matchCount": 1
+      },
+      {
+        "value": "Cherished Teddies",
+        "matchCount": 1
+      },
+      {
+        "value": "Deadpool",
+        "matchCount": 1
+      },
+      {
+        "value": "Evolve",
+        "matchCount": 1
+      },
+      {
+        "value": "Firefly",
+        "matchCount": 1
+      },
+      {
+        "value": "Gundam",
+        "matchCount": 1
+      },
+      {
+        "value": "Hunter x Hunter",
+        "matchCount": 1
+      },
+      {
+        "value": "Miffy",
+        "matchCount": 1
+      },
+      {
+        "value": "Sentinels",
+        "matchCount": 1
+      },
+      {
+        "value": "Star Trek",
+        "matchCount": 1
+      },
+      {
+        "value": "Street Fighter",
+        "matchCount": 1
+      },
+      {
+        "value": "The Incredibles",
+        "matchCount": 1
+      },
+      {
+        "value": "The Polar Express",
+        "matchCount": 1
+      },
+      {
+        "value": "The Three Musketeers",
+        "matchCount": 1
+      },
+      {
+        "value": "Thunderbirds",
+        "matchCount": 1
+      },
+      {
+        "value": "Wacky Packages",
+        "matchCount": 1
+      },
+      {
+        "value": "War Machine",
+        "matchCount": 1
+      },
+      {
+        "value": "Wonder Woman",
+        "matchCount": 1
+      },
+      {
+        "value": "20th Century Boys",
+        "matchCount": 1
+      },
+      {
+        "value": "A Certain Scientific Railgun S",
+        "matchCount": 1
+      },
+      {
+        "value": "Ad Icons",
+        "matchCount": 1
+      },
+      {
+        "value": "BattleBots",
+        "matchCount": 1
+      },
+      {
+        "value": "Dead or Alive",
+        "matchCount": 1
+      },
+      {
+        "value": "The Addams Family",
+        "matchCount": 1
+      },
+      {
+        "value": "Totoro",
+        "matchCount": 1
+      },
+      {
+        "value": "Super Mario Bros.",
+        "matchCount": 1
+      },
+      {
+        "value": "Sylvanian Families",
+        "matchCount": 1
+      },
+      {
+        "value": "Sweeney Todd",
+        "matchCount": 1
+      },
+      {
+        "value": "Arknights",
+        "matchCount": 1
+      }
+    ],
+    "Item Height": [
+      {
+        "value": "Not Specified",
+        "matchCount": 40840
+      },
+      {
+        "value": "5 - 10 in",
+        "matchCount": 11250
+      },
+      {
+        "value": "6 in",
+        "matchCount": 8654
+      },
+      {
+        "value": "7 in",
+        "matchCount": 1946
+      },
+      {
+        "value": "Less Than 5 in",
+        "matchCount": 1568
+      },
+      {
+        "value": "5 in",
+        "matchCount": 1499
+      },
+      {
+        "value": "11 - 15 in",
+        "matchCount": 729
+      },
+      {
+        "value": "21 - 25 in",
+        "matchCount": 166
+      },
+      {
+        "value": "16 - 20 in",
+        "matchCount": 49
+      },
+      {
+        "value": "12 in",
+        "matchCount": 34
+      },
+      {
+        "value": "31 - 35 in",
+        "matchCount": 34
+      },
+      {
+        "value": "More Than 50 in",
+        "matchCount": 16
+      },
+      {
+        "value": "10 in",
+        "matchCount": 15
+      },
+      {
+        "value": "46 - 50 in",
+        "matchCount": 7
+      },
+      {
+        "value": "26 - 30 in",
+        "matchCount": 6
+      },
+      {
+        "value": "36 - 40 in",
+        "matchCount": 1
+      },
+      {
+        "value": "41 - 45 in",
+        "matchCount": 1
+      },
+      {
+        "value": "11 in",
+        "matchCount": 1
+      },
+      {
+        "value": "18 in",
+        "matchCount": 1
+      }
+    ],
+    "Character": [
+      {
+        "value": "Labubu",
+        "matchCount": 36188
+      },
+      {
+        "value": "Pop",
+        "matchCount": 16096
+      },
+      {
+        "value": "The Monsters",
+        "matchCount": 14660
+      },
+      {
+        "value": "Skullpanda",
+        "matchCount": 12011
+      },
+      {
+        "value": "The Monster",
+        "matchCount": 8286
+      },
+      {
+        "value": "Hirono",
+        "matchCount": 8208
+      },
+      {
+        "value": "Not Specified",
+        "matchCount": 5609
+      },
+      {
+        "value": "Monster",
+        "matchCount": 4972
+      },
+      {
+        "value": "Molly",
+        "matchCount": 2929
+      },
+      {
+        "value": "Crybaby",
+        "matchCount": 2462
+      },
+      {
+        "value": "Nancy",
+        "matchCount": 1461
+      },
+      {
+        "value": "Happy",
+        "matchCount": 1313
+      },
+      {
+        "value": "Angel",
+        "matchCount": 1258
+      },
+      {
+        "value": "Pucky",
+        "matchCount": 1255
+      },
+      {
+        "value": "Bean",
+        "matchCount": 1195
+      },
+      {
+        "value": "Diego",
+        "matchCount": 993
+      },
+      {
+        "value": "Panda",
+        "matchCount": 911
+      },
+      {
+        "value": "My Melody",
+        "matchCount": 882
+      },
+      {
+        "value": "Hello Kitty",
+        "matchCount": 839
+      },
+      {
+        "value": "Stitch",
+        "matchCount": 730
+      },
+      {
+        "value": "Pochacco",
+        "matchCount": 710
+      },
+      {
+        "value": "The Rock",
+        "matchCount": 613
+      },
+      {
+        "value": "Beast",
+        "matchCount": 613
+      },
+      {
+        "value": "Cinnamoroll",
+        "matchCount": 610
+      },
+      {
+        "value": "Dream",
+        "matchCount": 573
+      },
+      {
+        "value": "Naruto Uzumaki",
+        "matchCount": 543
+      },
+      {
+        "value": "Sasuke Uchiha",
+        "matchCount": 495
+      },
+      {
+        "value": "Kakashi",
+        "matchCount": 486
+      },
+      {
+        "value": "Kubo",
+        "matchCount": 475
+      },
+      {
+        "value": "Sakura Haruno",
+        "matchCount": 447
+      },
+      {
+        "value": "Queen",
+        "matchCount": 405
+      },
+      {
+        "value": "Darkness",
+        "matchCount": 401
+      },
+      {
+        "value": "Disney",
+        "matchCount": 351
+      },
+      {
+        "value": "Space Molly",
+        "matchCount": 327
+      },
+      {
+        "value": "Crush",
+        "matchCount": 324
+      },
+      {
+        "value": "Mickey Mouse",
+        "matchCount": 297
+      },
+      {
+        "value": "Bunny",
+        "matchCount": 289
+      },
+      {
+        "value": "Chip",
+        "matchCount": 285
+      },
+      {
+        "value": "The Darkness",
+        "matchCount": 283
+      },
+      {
+        "value": "Winnie the Pooh",
+        "matchCount": 270
+      },
+      {
+        "value": "Princess",
+        "matchCount": 249
+      },
+      {
+        "value": "The King",
+        "matchCount": 247
+      },
+      {
+        "value": "Robin",
+        "matchCount": 235
+      },
+      {
+        "value": "Dawn",
+        "matchCount": 235
+      },
+      {
+        "value": "Harvester",
+        "matchCount": 233
+      },
+      {
+        "value": "Snuggle",
+        "matchCount": 221
+      },
+      {
+        "value": "L",
+        "matchCount": 209
+      },
+      {
+        "value": "Dale",
+        "matchCount": 200
+      },
+      {
+        "value": "Lucky",
+        "matchCount": 194
+      },
+      {
+        "value": "Judy",
+        "matchCount": 192
+      },
+      {
+        "value": "Donald Duck",
+        "matchCount": 190
+      },
+      {
+        "value": "Fairy",
+        "matchCount": 186
+      },
+      {
+        "value": "Roronoa Zoro",
+        "matchCount": 185
+      },
+      {
+        "value": "Toni",
+        "matchCount": 185
+      },
+      {
+        "value": "Peanut",
+        "matchCount": 184
+      },
+      {
+        "value": "Sandman",
+        "matchCount": 183
+      },
+      {
+        "value": "Prince",
+        "matchCount": 182
+      },
+      {
+        "value": "Goofy",
+        "matchCount": 175
+      },
+      {
+        "value": "Bob",
+        "matchCount": 160
+      },
+      {
+        "value": "B.O.B",
+        "matchCount": 159
+      },
+      {
+        "value": "Ares",
+        "matchCount": 158
+      },
+      {
+        "value": "Mime",
+        "matchCount": 155
+      },
+      {
+        "value": "Buddy",
+        "matchCount": 152
+      },
+      {
+        "value": "The Prince",
+        "matchCount": 149
+      },
+      {
+        "value": "Chucky",
+        "matchCount": 148
+      },
+      {
+        "value": "Jinx",
+        "matchCount": 147
+      },
+      {
+        "value": "Gummi Bear",
+        "matchCount": 143
+      },
+      {
+        "value": "Eevee",
+        "matchCount": 142
+      },
+      {
+        "value": "Dora",
+        "matchCount": 136
+      },
+      {
+        "value": "Gigi",
+        "matchCount": 134
+      },
+      {
+        "value": "Blue",
+        "matchCount": 134
+      },
+      {
+        "value": "Iron Man",
+        "matchCount": 132
+      },
+      {
+        "value": "SpongeBob SquarePants",
+        "matchCount": 127
+      },
+      {
+        "value": "Roo",
+        "matchCount": 124
+      },
+      {
+        "value": "Decorator",
+        "matchCount": 121
+      },
+      {
+        "value": "Pluto",
+        "matchCount": 120
+      },
+      {
+        "value": "Minnie Mouse",
+        "matchCount": 119
+      },
+      {
+        "value": "Ice",
+        "matchCount": 117
+      },
+      {
+        "value": "Dragon",
+        "matchCount": 117
+      },
+      {
+        "value": "Harry Potter",
+        "matchCount": 114
+      },
+      {
+        "value": "Boy",
+        "matchCount": 110
+      },
+      {
+        "value": "Elf",
+        "matchCount": 108
+      },
+      {
+        "value": "Itachi Uchiha",
+        "matchCount": 107
+      },
+      {
+        "value": "Clown",
+        "matchCount": 106
+      },
+      {
+        "value": "Hulk",
+        "matchCount": 105
+      },
+      {
+        "value": "Spider-Man",
+        "matchCount": 104
+      },
+      {
+        "value": "Snow White",
+        "matchCount": 101
+      },
+      {
+        "value": "Donald",
+        "matchCount": 99
+      },
+      {
+        "value": "Piglet",
+        "matchCount": 99
+      },
+      {
+        "value": "Rainbow Dash",
+        "matchCount": 96
+      },
+      {
+        "value": "Teemo",
+        "matchCount": 94
+      },
+      {
+        "value": "Yasuo",
+        "matchCount": 94
+      },
+      {
+        "value": "Rarity",
+        "matchCount": 93
+      },
+      {
+        "value": "Link",
+        "matchCount": 88
+      },
+      {
+        "value": "Tigger",
+        "matchCount": 87
+      },
+      {
+        "value": "Tom",
+        "matchCount": 86
+      },
+      {
+        "value": "Aurora",
+        "matchCount": 85
+      },
+      {
+        "value": "Luke Skywalker",
+        "matchCount": 85
+      },
+      {
+        "value": "Twilight Sparkle",
+        "matchCount": 82
+      },
+      {
+        "value": "Ted",
+        "matchCount": 80
+      },
+      {
+        "value": "Zero",
+        "matchCount": 78
+      },
+      {
+        "value": "Daisy",
+        "matchCount": 78
+      },
+      {
+        "value": "Cinderella",
+        "matchCount": 77
+      },
+      {
+        "value": "Riven",
+        "matchCount": 77
+      },
+      {
+        "value": "Lotso",
+        "matchCount": 75
+      },
+      {
+        "value": "Jerry",
+        "matchCount": 75
+      },
+      {
+        "value": "Rapunzel",
+        "matchCount": 72
+      },
+      {
+        "value": "Melody",
+        "matchCount": 72
+      },
+      {
+        "value": "Loki",
+        "matchCount": 71
+      },
+      {
+        "value": "Detective",
+        "matchCount": 70
+      },
+      {
+        "value": "Daisy Duck",
+        "matchCount": 69
+      },
+      {
+        "value": "Hero",
+        "matchCount": 67
+      },
+      {
+        "value": "The Flash",
+        "matchCount": 66
+      },
+      {
+        "value": "Pinkie Pie",
+        "matchCount": 66
+      },
+      {
+        "value": "Captain America",
+        "matchCount": 65
+      },
+      {
+        "value": "Pop Star",
+        "matchCount": 65
+      },
+      {
+        "value": "Thor",
+        "matchCount": 65
+      },
+      {
+        "value": "Barbie",
+        "matchCount": 63
+      },
+      {
+        "value": "Doctor Doom",
+        "matchCount": 62
+      },
+      {
+        "value": "Businessman",
+        "matchCount": 61
+      },
+      {
+        "value": "Penguin",
+        "matchCount": 59
+      },
+      {
+        "value": "Ant-Man",
+        "matchCount": 58
+      },
+      {
+        "value": "Guido",
+        "matchCount": 58
+      },
+      {
+        "value": "Rose",
+        "matchCount": 57
+      },
+      {
+        "value": "Guardian",
+        "matchCount": 57
+      },
+      {
+        "value": "Fluttershy",
+        "matchCount": 57
+      },
+      {
+        "value": "Becky",
+        "matchCount": 56
+      },
+      {
+        "value": "Ultraman",
+        "matchCount": 56
+      },
+      {
+        "value": "Wednesday Addams",
+        "matchCount": 56
+      },
+      {
+        "value": "Warrior",
+        "matchCount": 56
+      },
+      {
+        "value": "Knight",
+        "matchCount": 55
+      },
+      {
+        "value": "Superman",
+        "matchCount": 54
+      },
+      {
+        "value": "Belle",
+        "matchCount": 52
+      },
+      {
+        "value": "Little Twin Stars",
+        "matchCount": 51
+      },
+      {
+        "value": "Mercy",
+        "matchCount": 50
+      },
+      {
+        "value": "BASE",
+        "matchCount": 50
+      },
+      {
+        "value": "Bedtime Bear",
+        "matchCount": 48
+      },
+      {
+        "value": "Catman",
+        "matchCount": 48
+      },
+      {
+        "value": "Storm",
+        "matchCount": 48
+      },
+      {
+        "value": "Dash",
+        "matchCount": 48
+      },
+      {
+        "value": "Nori",
+        "matchCount": 46
+      },
+      {
+        "value": "The Mountain",
+        "matchCount": 46
+      },
+      {
+        "value": "Po",
+        "matchCount": 45
+      },
+      {
+        "value": "Bob the Minion",
+        "matchCount": 44
+      },
+      {
+        "value": "Kevin the Minion",
+        "matchCount": 44
+      },
+      {
+        "value": "Space Alien",
+        "matchCount": 44
+      },
+      {
+        "value": "Batman",
+        "matchCount": 43
+      },
+      {
+        "value": "Funshine Bear",
+        "matchCount": 43
+      },
+      {
+        "value": "Good Luck Bear",
+        "matchCount": 43
+      },
+      {
+        "value": "Snoopy",
+        "matchCount": 43
+      },
+      {
+        "value": "Amethyst",
+        "matchCount": 42
+      },
+      {
+        "value": "Widowmaker",
+        "matchCount": 41
+      },
+      {
+        "value": "Key",
+        "matchCount": 41
+      },
+      {
+        "value": "Anger",
+        "matchCount": 41
+      },
+      {
+        "value": "Devil",
+        "matchCount": 40
+      },
+      {
+        "value": "Wizard",
+        "matchCount": 39
+      },
+      {
+        "value": "Magician",
+        "matchCount": 39
+      },
+      {
+        "value": "Alice",
+        "matchCount": 37
+      },
+      {
+        "value": "Pingu",
+        "matchCount": 37
+      },
+      {
+        "value": "Explorer",
+        "matchCount": 36
+      },
+      {
+        "value": "Cheer Bear",
+        "matchCount": 35
+      },
+      {
+        "value": "Ghost",
+        "matchCount": 35
+      },
+      {
+        "value": "Scarlet Witch",
+        "matchCount": 35
+      },
+      {
+        "value": "Vision",
+        "matchCount": 35
+      },
+      {
+        "value": "Darksteel",
+        "matchCount": 35
+      },
+      {
+        "value": "Joker",
+        "matchCount": 34
+      },
+      {
+        "value": "Sakura Kinomoto",
+        "matchCount": 34
+      },
+      {
+        "value": "Bride",
+        "matchCount": 33
+      },
+      {
+        "value": "D.Va",
+        "matchCount": 33
+      },
+      {
+        "value": "Doctor Strange",
+        "matchCount": 33
+      },
+      {
+        "value": "Share Bear",
+        "matchCount": 33
+      },
+      {
+        "value": "Unicorn",
+        "matchCount": 32
+      },
+      {
+        "value": "Ariel",
+        "matchCount": 32
+      },
+      {
+        "value": "Simba",
+        "matchCount": 32
+      },
+      {
+        "value": "Sulley",
+        "matchCount": 32
+      },
+      {
+        "value": "Patience",
+        "matchCount": 32
+      },
+      {
+        "value": "Abe Sapien",
+        "matchCount": 31
+      },
+      {
+        "value": "Alien",
+        "matchCount": 31
+      },
+      {
+        "value": "Mei",
+        "matchCount": 31
+      },
+      {
+        "value": "Wish Bear",
+        "matchCount": 31
+      },
+      {
+        "value": "Michael",
+        "matchCount": 31
+      },
+      {
+        "value": "Cable",
+        "matchCount": 31
+      },
+      {
+        "value": "Skeleton",
+        "matchCount": 31
+      },
+      {
+        "value": "Reaper",
+        "matchCount": 30
+      },
+      {
+        "value": "Genji",
+        "matchCount": 30
+      },
+      {
+        "value": "Hanzo",
+        "matchCount": 30
+      },
+      {
+        "value": "Vibe",
+        "matchCount": 30
+      },
+      {
+        "value": "Mirage",
+        "matchCount": 30
+      },
+      {
+        "value": "Dumbo",
+        "matchCount": 29
+      },
+      {
+        "value": "Grumpy Bear",
+        "matchCount": 29
+      },
+      {
+        "value": "Lilo",
+        "matchCount": 29
+      },
+      {
+        "value": "Willy Wonka",
+        "matchCount": 29
+      },
+      {
+        "value": "Jasmine",
+        "matchCount": 28
+      },
+      {
+        "value": "Bugs Bunny",
+        "matchCount": 28
+      },
+      {
+        "value": "Draco Malfoy",
+        "matchCount": 28
+      },
+      {
+        "value": "Gizmo",
+        "matchCount": 28
+      },
+      {
+        "value": "Hazard",
+        "matchCount": 28
+      },
+      {
+        "value": "Hermione Granger",
+        "matchCount": 28
+      },
+      {
+        "value": "Tracer",
+        "matchCount": 28
+      },
+      {
+        "value": "Fisherman",
+        "matchCount": 28
+      },
+      {
+        "value": "Overload",
+        "matchCount": 28
+      },
+      {
+        "value": "Patrick Star",
+        "matchCount": 27
+      },
+      {
+        "value": "Mermaid",
+        "matchCount": 27
+      },
+      {
+        "value": "Pikachu",
+        "matchCount": 27
+      },
+      {
+        "value": "Witch",
+        "matchCount": 27
+      },
+      {
+        "value": "Lily",
+        "matchCount": 26
+      },
+      {
+        "value": "Friend Bear",
+        "matchCount": 26
+      },
+      {
+        "value": "Owl",
+        "matchCount": 25
+      },
+      {
+        "value": "Power Girl",
+        "matchCount": 25
+      },
+      {
+        "value": "Wolf",
+        "matchCount": 25
+      },
+      {
+        "value": "Lionel Messi",
+        "matchCount": 25
+      },
+      {
+        "value": "Robot",
+        "matchCount": 24
+      },
+      {
+        "value": "Dopey",
+        "matchCount": 24
+      },
+      {
+        "value": "Optimus Prime",
+        "matchCount": 24
+      },
+      {
+        "value": "Pinocchio",
+        "matchCount": 24
+      },
+      {
+        "value": "Keroppi",
+        "matchCount": 24
+      },
+      {
+        "value": "Vampire",
+        "matchCount": 24
+      },
+      {
+        "value": "Cowboy",
+        "matchCount": 23
+      },
+      {
+        "value": "Squidward Tentacles",
+        "matchCount": 23
+      },
+      {
+        "value": "Ruby",
+        "matchCount": 23
+      },
+      {
+        "value": "Chase",
+        "matchCount": 22
+      },
+      {
+        "value": "Woody",
+        "matchCount": 22
+      },
+      {
+        "value": "Mayor",
+        "matchCount": 22
+      },
+      {
+        "value": "Pirate",
+        "matchCount": 22
+      },
+      {
+        "value": "Birthday Bear",
+        "matchCount": 22
+      },
+      {
+        "value": "Grim Reaper",
+        "matchCount": 22
+      },
+      {
+        "value": "Aquaman",
+        "matchCount": 21
+      },
+      {
+        "value": "Crown King",
+        "matchCount": 21
+      },
+      {
+        "value": "Emma",
+        "matchCount": 21
+      },
+      {
+        "value": "Scorpio",
+        "matchCount": 21
+      },
+      {
+        "value": "Thanos",
+        "matchCount": 21
+      },
+      {
+        "value": "Nevermore",
+        "matchCount": 21
+      },
+      {
+        "value": "Cheshire Cat",
+        "matchCount": 20
+      },
+      {
+        "value": "Lulu",
+        "matchCount": 20
+      },
+      {
+        "value": "Peace",
+        "matchCount": 20
+      },
+      {
+        "value": "Pearl",
+        "matchCount": 20
+      },
+      {
+        "value": "Lucifer",
+        "matchCount": 20
+      },
+      {
+        "value": "Zoe",
+        "matchCount": 19
+      },
+      {
+        "value": "Soldier",
+        "matchCount": 19
+      },
+      {
+        "value": "Ashe",
+        "matchCount": 19
+      },
+      {
+        "value": "Groot",
+        "matchCount": 19
+      },
+      {
+        "value": "Silver",
+        "matchCount": 19
+      },
+      {
+        "value": "Steamboat Willie",
+        "matchCount": 19
+      },
+      {
+        "value": "Tenderheart Bear",
+        "matchCount": 19
+      },
+      {
+        "value": "Brain",
+        "matchCount": 18
+      },
+      {
+        "value": "Huey",
+        "matchCount": 18
+      },
+      {
+        "value": "The Beast",
+        "matchCount": 18
+      },
+      {
+        "value": "Cartoon Character",
+        "matchCount": 18
+      },
+      {
+        "value": "Sleepyhead",
+        "matchCount": 17
+      },
+      {
+        "value": "Marie",
+        "matchCount": 17
+      },
+      {
+        "value": "EVE",
+        "matchCount": 17
+      },
+      {
+        "value": "Buzz Lightyear",
+        "matchCount": 16
+      },
+      {
+        "value": "Deadpool",
+        "matchCount": 16
+      },
+      {
+        "value": "Elizabeth",
+        "matchCount": 16
+      },
+      {
+        "value": "Fairy Godmother",
+        "matchCount": 16
+      },
+      {
+        "value": "Professor X",
+        "matchCount": 16
+      },
+      {
+        "value": "Swan",
+        "matchCount": 16
+      },
+      {
+        "value": "Tiana",
+        "matchCount": 16
+      },
+      {
+        "value": "Boo",
+        "matchCount": 16
+      },
+      {
+        "value": "Asuka",
+        "matchCount": 16
+      },
+      {
+        "value": "Ikaris",
+        "matchCount": 16
+      },
+      {
+        "value": "Frankenstein",
+        "matchCount": 15
+      },
+      {
+        "value": "Garfield",
+        "matchCount": 15
+      },
+      {
+        "value": "Merida",
+        "matchCount": 15
+      },
+      {
+        "value": "Villager",
+        "matchCount": 15
+      },
+      {
+        "value": "Worker",
+        "matchCount": 15
+      },
+      {
+        "value": "Black Cat",
+        "matchCount": 14
+      },
+      {
+        "value": "Dan",
+        "matchCount": 14
+      },
+      {
+        "value": "Dracula",
+        "matchCount": 14
+      },
+      {
+        "value": "Ninja",
+        "matchCount": 14
+      },
+      {
+        "value": "Red Hood",
+        "matchCount": 14
+      },
+      {
+        "value": "Timon",
+        "matchCount": 14
+      },
+      {
+        "value": "Werewolf",
+        "matchCount": 14
+      },
+      {
+        "value": "Pawn",
+        "matchCount": 14
+      },
+      {
+        "value": "Alpha",
+        "matchCount": 13
+      },
+      {
+        "value": "Captain Hook",
+        "matchCount": 13
+      },
+      {
+        "value": "Dewey",
+        "matchCount": 13
+      },
+      {
+        "value": "Eeyore",
+        "matchCount": 13
+      },
+      {
+        "value": "Grumpy",
+        "matchCount": 13
+      },
+      {
+        "value": "Harley Quinn",
+        "matchCount": 13
+      },
+      {
+        "value": "Hatsune Miku",
+        "matchCount": 13
+      },
+      {
+        "value": "Kai",
+        "matchCount": 13
+      },
+      {
+        "value": "Louie",
+        "matchCount": 13
+      },
+      {
+        "value": "Phantom",
+        "matchCount": 13
+      },
+      {
+        "value": "Puggy",
+        "matchCount": 13
+      },
+      {
+        "value": "Scarecrow",
+        "matchCount": 13
+      },
+      {
+        "value": "Scout",
+        "matchCount": 13
+      },
+      {
+        "value": "Shock",
+        "matchCount": 13
+      },
+      {
+        "value": "Rook",
+        "matchCount": 13
+      },
+      {
+        "value": "Jazz",
+        "matchCount": 13
+      },
+      {
+        "value": "Hot Dog",
+        "matchCount": 13
+      },
+      {
+        "value": "Phoenix",
+        "matchCount": 13
+      },
+      {
+        "value": "Raven",
+        "matchCount": 13
+      },
+      {
+        "value": "Leafeon",
+        "matchCount": 13
+      },
+      {
+        "value": "Flareon",
+        "matchCount": 13
+      },
+      {
+        "value": "Umbreon",
+        "matchCount": 13
+      },
+      {
+        "value": "Wendy",
+        "matchCount": 13
+      },
+      {
+        "value": "Boba Fett",
+        "matchCount": 12
+      },
+      {
+        "value": "C-3PO",
+        "matchCount": 12
+      },
+      {
+        "value": "Cyborg",
+        "matchCount": 12
+      },
+      {
+        "value": "Drift",
+        "matchCount": 12
+      },
+      {
+        "value": "Han Solo",
+        "matchCount": 12
+      },
+      {
+        "value": "Mummy",
+        "matchCount": 12
+      },
+      {
+        "value": "Penny",
+        "matchCount": 12
+      },
+      {
+        "value": "Ursula",
+        "matchCount": 12
+      },
+      {
+        "value": "Vet",
+        "matchCount": 12
+      },
+      {
+        "value": "Yeti",
+        "matchCount": 12
+      },
+      {
+        "value": "David",
+        "matchCount": 12
+      },
+      {
+        "value": "Lisa",
+        "matchCount": 12
+      },
+      {
+        "value": "Carrie",
+        "matchCount": 12
+      },
+      {
+        "value": "Maid",
+        "matchCount": 12
+      },
+      {
+        "value": "Jolteon",
+        "matchCount": 12
+      },
+      {
+        "value": "Vaporeon",
+        "matchCount": 12
+      },
+      {
+        "value": "The Thing",
+        "matchCount": 12
+      },
+      {
+        "value": "Mulan",
+        "matchCount": 11
+      },
+      {
+        "value": "Jessie",
+        "matchCount": 11
+      },
+      {
+        "value": "Bullseye",
+        "matchCount": 11
+      },
+      {
+        "value": "Chewbacca",
+        "matchCount": 11
+      },
+      {
+        "value": "Kenny",
+        "matchCount": 11
+      },
+      {
+        "value": "Knockout",
+        "matchCount": 11
+      },
+      {
+        "value": "Love Puppy",
+        "matchCount": 11
+      },
+      {
+        "value": "Miles Morales",
+        "matchCount": 11
+      },
+      {
+        "value": "Pink Panther",
+        "matchCount": 11
+      },
+      {
+        "value": "Raider",
+        "matchCount": 11
+      },
+      {
+        "value": "Sad Clown",
+        "matchCount": 11
+      },
+      {
+        "value": "Scrooge McDuck",
+        "matchCount": 11
+      },
+      {
+        "value": "Circus Clown",
+        "matchCount": 11
+      },
+      {
+        "value": "Rosie",
+        "matchCount": 11
+      },
+      {
+        "value": "Gargoyle",
+        "matchCount": 11
+      },
+      {
+        "value": "Jeff",
+        "matchCount": 10
+      },
+      {
+        "value": "Rampage",
+        "matchCount": 10
+      },
+      {
+        "value": "Bo Peep",
+        "matchCount": 10
+      },
+      {
+        "value": "Carl",
+        "matchCount": 10
+      },
+      {
+        "value": "Cookie Monster",
+        "matchCount": 10
+      },
+      {
+        "value": "DJ",
+        "matchCount": 10
+      },
+      {
+        "value": "Leia Organa",
+        "matchCount": 10
+      },
+      {
+        "value": "R2-D2",
+        "matchCount": 10
+      },
+      {
+        "value": "Secret Bear",
+        "matchCount": 10
+      },
+      {
+        "value": "Jane",
+        "matchCount": 10
+      },
+      {
+        "value": "Rapper",
+        "matchCount": 10
+      },
+      {
+        "value": "Sailor Moon",
+        "matchCount": 10
+      },
+      {
+        "value": "Cinnamonroll",
+        "matchCount": 9
+      },
+      {
+        "value": "Nezuko Kamado",
+        "matchCount": 9
+      },
+      {
+        "value": "Phil",
+        "matchCount": 9
+      },
+      {
+        "value": "Poison Ivy",
+        "matchCount": 9
+      },
+      {
+        "value": "Ron Weasley",
+        "matchCount": 9
+      },
+      {
+        "value": "The Mandalorian",
+        "matchCount": 9
+      },
+      {
+        "value": "The Wanderer",
+        "matchCount": 9
+      },
+      {
+        "value": "Yoda",
+        "matchCount": 9
+      },
+      {
+        "value": "Stormtrooper",
+        "matchCount": 8
+      },
+      {
+        "value": "Slinky Dog",
+        "matchCount": 8
+      },
+      {
+        "value": "Elmo",
+        "matchCount": 8
+      },
+      {
+        "value": "Inosuke Hashibira",
+        "matchCount": 8
+      },
+      {
+        "value": "Jade",
+        "matchCount": 8
+      },
+      {
+        "value": "Santa Claus",
+        "matchCount": 8
+      },
+      {
+        "value": "Shazam",
+        "matchCount": 8
+      },
+      {
+        "value": "Sirius Black",
+        "matchCount": 8
+      },
+      {
+        "value": "Speedy",
+        "matchCount": 8
+      },
+      {
+        "value": "Pouch",
+        "matchCount": 8
+      },
+      {
+        "value": "God",
+        "matchCount": 8
+      },
+      {
+        "value": "Grandma",
+        "matchCount": 8
+      },
+      {
+        "value": "Astro Boy",
+        "matchCount": 7
+      },
+      {
+        "value": "Blue Beetle",
+        "matchCount": 7
+      },
+      {
+        "value": "Conan",
+        "matchCount": 7
+      },
+      {
+        "value": "Darth Vader",
+        "matchCount": 7
+      },
+      {
+        "value": "Green Arrow",
+        "matchCount": 7
+      },
+      {
+        "value": "Megatron",
+        "matchCount": 7
+      },
+      {
+        "value": "Minerva McGonagall",
+        "matchCount": 7
+      },
+      {
+        "value": "Rescue",
+        "matchCount": 7
+      },
+      {
+        "value": "Sally",
+        "matchCount": 7
+      },
+      {
+        "value": "Tanjiro Kamado",
+        "matchCount": 7
+      },
+      {
+        "value": "The Fly",
+        "matchCount": 7
+      },
+      {
+        "value": "The Queen of Hearts",
+        "matchCount": 7
+      },
+      {
+        "value": "WarGreymon",
+        "matchCount": 7
+      },
+      {
+        "value": "Zenitsu Agatsuma",
+        "matchCount": 7
+      },
+      {
+        "value": "Q",
+        "matchCount": 7
+      },
+      {
+        "value": "Shi",
+        "matchCount": 7
+      },
+      {
+        "value": "Scoop",
+        "matchCount": 7
+      },
+      {
+        "value": "Wong",
+        "matchCount": 6
+      },
+      {
+        "value": "Assassin",
+        "matchCount": 6
+      },
+      {
+        "value": "Black Canary",
+        "matchCount": 6
+      },
+      {
+        "value": "Blaze",
+        "matchCount": 6
+      },
+      {
+        "value": "Boost",
+        "matchCount": 6
+      },
+      {
+        "value": "D-O",
+        "matchCount": 6
+      },
+      {
+        "value": "Gingerbread Man",
+        "matchCount": 6
+      },
+      {
+        "value": "Ginny Weasley",
+        "matchCount": 6
+      },
+      {
+        "value": "Kevin",
+        "matchCount": 6
+      },
+      {
+        "value": "Luna Lovegood",
+        "matchCount": 6
+      },
+      {
+        "value": "Piccolo",
+        "matchCount": 6
+      },
+      {
+        "value": "Tarot",
+        "matchCount": 6
+      },
+      {
+        "value": "Harmony",
+        "matchCount": 6
+      },
+      {
+        "value": "Rocket",
+        "matchCount": 6
+      },
+      {
+        "value": "Kurama",
+        "matchCount": 6
+      },
+      {
+        "value": "Judge",
+        "matchCount": 6
+      },
+      {
+        "value": "Julie",
+        "matchCount": 5
+      },
+      {
+        "value": "Kronk",
+        "matchCount": 5
+      },
+      {
+        "value": "Rhino",
+        "matchCount": 5
+      },
+      {
+        "value": "Troll",
+        "matchCount": 5
+      },
+      {
+        "value": "Batgirl",
+        "matchCount": 5
+      },
+      {
+        "value": "Big Bird",
+        "matchCount": 5
+      },
+      {
+        "value": "Conan Edogawa",
+        "matchCount": 5
+      },
+      {
+        "value": "Forky",
+        "matchCount": 5
+      },
+      {
+        "value": "Gambit",
+        "matchCount": 5
+      },
+      {
+        "value": "Hamm",
+        "matchCount": 5
+      },
+      {
+        "value": "Imperial Guard",
+        "matchCount": 5
+      },
+      {
+        "value": "Iron Patriot",
+        "matchCount": 5
+      },
+      {
+        "value": "Love-a-Lot Bear",
+        "matchCount": 5
+      },
+      {
+        "value": "Outback",
+        "matchCount": 5
+      },
+      {
+        "value": "Pit",
+        "matchCount": 5
+      },
+      {
+        "value": "Red X",
+        "matchCount": 5
+      },
+      {
+        "value": "Road Runner",
+        "matchCount": 5
+      },
+      {
+        "value": "Royal Guard",
+        "matchCount": 5
+      },
+      {
+        "value": "Salty",
+        "matchCount": 5
+      },
+      {
+        "value": "Severus Snape",
+        "matchCount": 5
+      },
+      {
+        "value": "True Heart Bear",
+        "matchCount": 5
+      },
+      {
+        "value": "Victor",
+        "matchCount": 5
+      },
+      {
+        "value": "Walker",
+        "matchCount": 5
+      },
+      {
+        "value": "Wonder Woman",
+        "matchCount": 5
+      },
+      {
+        "value": "Garnet",
+        "matchCount": 5
+      },
+      {
+        "value": "The Shadow",
+        "matchCount": 5
+      },
+      {
+        "value": "Violet",
+        "matchCount": 5
+      },
+      {
+        "value": "Glory",
+        "matchCount": 5
+      },
+      {
+        "value": "Aqua",
+        "matchCount": 5
+      },
+      {
+        "value": "Curly",
+        "matchCount": 5
+      },
+      {
+        "value": "Ahsoka Tano",
+        "matchCount": 4
+      },
+      {
+        "value": "Albus Dumbledore",
+        "matchCount": 4
+      },
+      {
+        "value": "Alchemist",
+        "matchCount": 4
+      },
+      {
+        "value": "Baby Penguin",
+        "matchCount": 4
+      },
+      {
+        "value": "Bert",
+        "matchCount": 4
+      },
+      {
+        "value": "Bulma",
+        "matchCount": 4
+      },
+      {
+        "value": "Catwoman",
+        "matchCount": 4
+      },
+      {
+        "value": "Crusher",
+        "matchCount": 4
+      },
+      {
+        "value": "Desiree",
+        "matchCount": 4
+      },
+      {
+        "value": "Dr. Facilier",
+        "matchCount": 4
+      },
+      {
+        "value": "Kit",
+        "matchCount": 4
+      },
+      {
+        "value": "Mufasa",
+        "matchCount": 4
+      },
+      {
+        "value": "Niffler",
+        "matchCount": 4
+      },
+      {
+        "value": "Otto",
+        "matchCount": 4
+      },
+      {
+        "value": "Peacemaker",
+        "matchCount": 4
+      },
+      {
+        "value": "Samurai",
+        "matchCount": 4
+      },
+      {
+        "value": "Shopkeeper",
+        "matchCount": 4
+      },
+      {
+        "value": "Soundwave",
+        "matchCount": 4
+      },
+      {
+        "value": "Sparky",
+        "matchCount": 4
+      },
+      {
+        "value": "Swordsman",
+        "matchCount": 4
+      },
+      {
+        "value": "Valkyrie",
+        "matchCount": 4
+      },
+      {
+        "value": "Light Fury",
+        "matchCount": 4
+      },
+      {
+        "value": "Sheriff",
+        "matchCount": 4
+      },
+      {
+        "value": "Tutti",
+        "matchCount": 4
+      },
+      {
+        "value": "Ringmaster",
+        "matchCount": 4
+      },
+      {
+        "value": "Destiny",
+        "matchCount": 4
+      },
+      {
+        "value": "Clawful",
+        "matchCount": 4
+      },
+      {
+        "value": "Tammy",
+        "matchCount": 4
+      },
+      {
+        "value": "Lucy",
+        "matchCount": 3
+      },
+      {
+        "value": "Anya Stroud",
+        "matchCount": 3
+      },
+      {
+        "value": "Tinker Bell",
+        "matchCount": 3
+      },
+      {
+        "value": "Akane Isshiki",
+        "matchCount": 3
+      },
+      {
+        "value": "Anna",
+        "matchCount": 3
+      },
+      {
+        "value": "Billy",
+        "matchCount": 3
+      },
+      {
+        "value": "Crook",
+        "matchCount": 3
+      },
+      {
+        "value": "Digger",
+        "matchCount": 3
+      },
+      {
+        "value": "Diver",
+        "matchCount": 3
+      },
+      {
+        "value": "Drowsy",
+        "matchCount": 3
+      },
+      {
+        "value": "Ducky",
+        "matchCount": 3
+      },
+      {
+        "value": "Ernie",
+        "matchCount": 3
+      },
+      {
+        "value": "Evil Queen",
+        "matchCount": 3
+      },
+      {
+        "value": "Gimli",
+        "matchCount": 3
+      },
+      {
+        "value": "Green Lantern",
+        "matchCount": 3
+      },
+      {
+        "value": "Hades",
+        "matchCount": 3
+      },
+      {
+        "value": "Heiji Hattori",
+        "matchCount": 3
+      },
+      {
+        "value": "Hulkbuster",
+        "matchCount": 3
+      },
+      {
+        "value": "Ironhide",
+        "matchCount": 3
+      },
+      {
+        "value": "Jo-Jo",
+        "matchCount": 3
+      },
+      {
+        "value": "Legolas",
+        "matchCount": 3
+      },
+      {
+        "value": "Lifeline",
+        "matchCount": 3
+      },
+      {
+        "value": "Lord Voldemort",
+        "matchCount": 3
+      },
+      {
+        "value": "Maggie",
+        "matchCount": 3
+      },
+      {
+        "value": "Nebula",
+        "matchCount": 3
+      },
+      {
+        "value": "Onewa",
+        "matchCount": 3
+      },
+      {
+        "value": "Rebecca",
+        "matchCount": 3
+      },
+      {
+        "value": "Saruman",
+        "matchCount": 3
+      },
+      {
+        "value": "Skye",
+        "matchCount": 3
+      },
+      {
+        "value": "Starscream",
+        "matchCount": 3
+      },
+      {
+        "value": "Stormer",
+        "matchCount": 3
+      },
+      {
+        "value": "Tracks",
+        "matchCount": 3
+      },
+      {
+        "value": "Two-Face",
+        "matchCount": 3
+      },
+      {
+        "value": "Venom",
+        "matchCount": 3
+      },
+      {
+        "value": "War Machine",
+        "matchCount": 3
+      },
+      {
+        "value": "Toothless",
+        "matchCount": 3
+      },
+      {
+        "value": "Blade",
+        "matchCount": 3
+      },
+      {
+        "value": "Megazord",
+        "matchCount": 3
+      },
+      {
+        "value": "Mr. Krabs",
+        "matchCount": 3
+      },
+      {
+        "value": "Big Show",
+        "matchCount": 3
+      },
+      {
+        "value": "Plankton",
+        "matchCount": 3
+      },
+      {
+        "value": "Sprout",
+        "matchCount": 3
+      },
+      {
+        "value": "Ginger",
+        "matchCount": 3
+      },
+      {
+        "value": "Pete",
+        "matchCount": 3
+      },
+      {
+        "value": "Rex",
+        "matchCount": 3
+      },
+      {
+        "value": "Craft",
+        "matchCount": 3
+      },
+      {
+        "value": "Passenger",
+        "matchCount": 3
+      },
+      {
+        "value": "Spooky Girl",
+        "matchCount": 3
+      },
+      {
+        "value": "Max",
+        "matchCount": 3
+      },
+      {
+        "value": "Dalek",
+        "matchCount": 2
+      },
+      {
+        "value": "Frank",
+        "matchCount": 2
+      },
+      {
+        "value": "Stella",
+        "matchCount": 2
+      },
+      {
+        "value": "Tommy",
+        "matchCount": 2
+      },
+      {
+        "value": "Bambi",
+        "matchCount": 2
+      },
+      {
+        "value": "Bash",
+        "matchCount": 2
+      },
+      {
+        "value": "Batwoman",
+        "matchCount": 2
+      },
+      {
+        "value": "Baymax",
+        "matchCount": 2
+      },
+      {
+        "value": "Ben",
+        "matchCount": 2
+      },
+      {
+        "value": "Black Panther",
+        "matchCount": 2
+      },
+      {
+        "value": "Black Widow",
+        "matchCount": 2
+      },
+      {
+        "value": "Bumblebee",
+        "matchCount": 2
+      },
+      {
+        "value": "Centurion",
+        "matchCount": 2
+      },
+      {
+        "value": "Chuckles",
+        "matchCount": 2
+      },
+      {
+        "value": "Classic King",
+        "matchCount": 2
+      },
+      {
+        "value": "Eddie Brock",
+        "matchCount": 2
+      },
+      {
+        "value": "Falcon",
+        "matchCount": 2
+      },
+      {
+        "value": "Frodo Baggins",
+        "matchCount": 2
+      },
+      {
+        "value": "Galvatron",
+        "matchCount": 2
+      },
+      {
+        "value": "Gandalf",
+        "matchCount": 2
+      },
+      {
+        "value": "Gollum",
+        "matchCount": 2
+      },
+      {
+        "value": "Grendizer",
+        "matchCount": 2
+      },
+      {
+        "value": "Grey Wolf",
+        "matchCount": 2
+      },
+      {
+        "value": "Grimlock",
+        "matchCount": 2
+      },
+      {
+        "value": "Gus",
+        "matchCount": 2
+      },
+      {
+        "value": "Hawkeye",
+        "matchCount": 2
+      },
+      {
+        "value": "Iggy",
+        "matchCount": 2
+      },
+      {
+        "value": "Jack Skellington",
+        "matchCount": 2
+      },
+      {
+        "value": "Jedi",
+        "matchCount": 2
+      },
+      {
+        "value": "Lloyd",
+        "matchCount": 2
+      },
+      {
+        "value": "Love Kitten",
+        "matchCount": 2
+      },
+      {
+        "value": "Mia",
+        "matchCount": 2
+      },
+      {
+        "value": "Mojo",
+        "matchCount": 2
+      },
+      {
+        "value": "Ness",
+        "matchCount": 2
+      },
+      {
+        "value": "Newton",
+        "matchCount": 2
+      },
+      {
+        "value": "Newt Scamander",
+        "matchCount": 2
+      },
+      {
+        "value": "Oogie Boogie",
+        "matchCount": 2
+      },
+      {
+        "value": "Patti",
+        "matchCount": 2
+      },
+      {
+        "value": "Pocahontas",
+        "matchCount": 2
+      },
+      {
+        "value": "Rover",
+        "matchCount": 2
+      },
+      {
+        "value": "Rubeus Hagrid",
+        "matchCount": 2
+      },
+      {
+        "value": "Sam",
+        "matchCount": 2
+      },
+      {
+        "value": "Scar",
+        "matchCount": 2
+      },
+      {
+        "value": "Shinichi Kudo",
+        "matchCount": 2
+      },
+      {
+        "value": "Shockwave",
+        "matchCount": 2
+      },
+      {
+        "value": "Skydive",
+        "matchCount": 2
+      },
+      {
+        "value": "Sora",
+        "matchCount": 2
+      },
+      {
+        "value": "Sybill Trelawney",
+        "matchCount": 2
+      },
+      {
+        "value": "Take Care Bear",
+        "matchCount": 2
+      },
+      {
+        "value": "The Crow",
+        "matchCount": 2
+      },
+      {
+        "value": "The Spirit",
+        "matchCount": 2
+      },
+      {
+        "value": "Thunderbird",
+        "matchCount": 2
+      },
+      {
+        "value": "Joe",
+        "matchCount": 2
+      },
+      {
+        "value": "Abraham",
+        "matchCount": 2
+      },
+      {
+        "value": "Boots",
+        "matchCount": 2
+      },
+      {
+        "value": "Buffy",
+        "matchCount": 2
+      },
+      {
+        "value": "Admiral Janeway",
+        "matchCount": 2
+      },
+      {
+        "value": "Charmander",
+        "matchCount": 2
+      },
+      {
+        "value": "Puss in Boots",
+        "matchCount": 2
+      },
+      {
+        "value": "Scratch",
+        "matchCount": 2
+      },
+      {
+        "value": "Son Goku",
+        "matchCount": 2
+      },
+      {
+        "value": "Mira",
+        "matchCount": 2
+      },
+      {
+        "value": "Pharaoh",
+        "matchCount": 2
+      },
+      {
+        "value": "Nightwing",
+        "matchCount": 2
+      },
+      {
+        "value": "Lock",
+        "matchCount": 2
+      },
+      {
+        "value": "Moana",
+        "matchCount": 2
+      },
+      {
+        "value": "Holly",
+        "matchCount": 2
+      },
+      {
+        "value": "Ivy",
+        "matchCount": 2
+      },
+      {
+        "value": "Nikki",
+        "matchCount": 2
+      },
+      {
+        "value": "Pixie",
+        "matchCount": 2
+      },
+      {
+        "value": "Sheriff Woody",
+        "matchCount": 2
+      },
+      {
+        "value": "Pounce",
+        "matchCount": 2
+      },
+      {
+        "value": "Jester",
+        "matchCount": 2
+      },
+      {
+        "value": "Ash",
+        "matchCount": 2
+      },
+      {
+        "value": "Charlie Brown",
+        "matchCount": 2
+      },
+      {
+        "value": "Captain Action",
+        "matchCount": 1
+      },
+      {
+        "value": "Dummy",
+        "matchCount": 1
+      },
+      {
+        "value": "Godzilla",
+        "matchCount": 1
+      },
+      {
+        "value": "Kabuto",
+        "matchCount": 1
+      },
+      {
+        "value": "Lobo",
+        "matchCount": 1
+      },
+      {
+        "value": "Simon",
+        "matchCount": 1
+      },
+      {
+        "value": "Spaceman",
+        "matchCount": 1
+      },
+      {
+        "value": "Sub-Zero",
+        "matchCount": 1
+      },
+      {
+        "value": "Ace",
+        "matchCount": 1
+      },
+      {
+        "value": "Badtz Maru",
+        "matchCount": 1
+      },
+      {
+        "value": "Barricade",
+        "matchCount": 1
+      },
+      {
+        "value": "Battle Droid",
+        "matchCount": 1
+      },
+      {
+        "value": "Beetlejuice",
+        "matchCount": 1
+      },
+      {
+        "value": "Bellatrix Lestrange",
+        "matchCount": 1
+      },
+      {
+        "value": "Blackout",
+        "matchCount": 1
+      },
+      {
+        "value": "Blossom Fish",
+        "matchCount": 1
+      },
+      {
+        "value": "Boco",
+        "matchCount": 1
+      },
+      {
+        "value": "Bo-Katan Kryze",
+        "matchCount": 1
+      },
+      {
+        "value": "Bucky Barnes",
+        "matchCount": 1
+      },
+      {
+        "value": "Cannibal",
+        "matchCount": 1
+      },
+      {
+        "value": "Cha-Cha",
+        "matchCount": 1
+      },
+      {
+        "value": "Channel",
+        "matchCount": 1
+      },
+      {
+        "value": "Coca-Cola Polar Bear",
+        "matchCount": 1
+      },
+      {
+        "value": "Count von Count",
+        "matchCount": 1
+      },
+      {
+        "value": "Cyclone",
+        "matchCount": 1
+      },
+      {
+        "value": "Cyril Brooklyn",
+        "matchCount": 1
+      },
+      {
+        "value": "Daenerys Targaryen",
+        "matchCount": 1
+      },
+      {
+        "value": "Daisy Fields",
+        "matchCount": 1
+      },
+      {
+        "value": "Data",
+        "matchCount": 1
+      },
+      {
+        "value": "Diamond Doggy",
+        "matchCount": 1
+      },
+      {
+        "value": "Dizzy",
+        "matchCount": 1
+      },
+      {
+        "value": "Dove",
+        "matchCount": 1
+      },
+      {
+        "value": "Eraser",
+        "matchCount": 1
+      },
+      {
+        "value": "Ewok",
+        "matchCount": 1
+      },
+      {
+        "value": "Fortune Teller",
+        "matchCount": 1
+      },
+      {
+        "value": "Fred Weasley",
+        "matchCount": 1
+      },
+      {
+        "value": "Fun Bun",
+        "matchCount": 1
+      },
+      {
+        "value": "George Weasley",
+        "matchCount": 1
+      },
+      {
+        "value": "Groom",
+        "matchCount": 1
+      },
+      {
+        "value": "Holiday Elf",
+        "matchCount": 1
+      },
+      {
+        "value": "Jaime Lannister",
+        "matchCount": 1
+      },
+      {
+        "value": "Jannah",
+        "matchCount": 1
+      },
+      {
+        "value": "Jon Snow",
+        "matchCount": 1
+      },
+      {
+        "value": "Jungle Boy",
+        "matchCount": 1
+      },
+      {
+        "value": "Khal Drogo",
+        "matchCount": 1
+      },
+      {
+        "value": "Kotori Minami",
+        "matchCount": 1
+      },
+      {
+        "value": "Kyle",
+        "matchCount": 1
+      },
+      {
+        "value": "Lilli",
+        "matchCount": 1
+      },
+      {
+        "value": "Lots-o'-Huggin' Bear",
+        "matchCount": 1
+      },
+      {
+        "value": "Mad Hatter",
+        "matchCount": 1
+      },
+      {
+        "value": "Magenta",
+        "matchCount": 1
+      },
+      {
+        "value": "Maya",
+        "matchCount": 1
+      },
+      {
+        "value": "Mega Man",
+        "matchCount": 1
+      },
+      {
+        "value": "Miffy",
+        "matchCount": 1
+      },
+      {
+        "value": "Mike Wazowski",
+        "matchCount": 1
+      },
+      {
+        "value": "Ori",
+        "matchCount": 1
+      },
+      {
+        "value": "Pegasus Seiya",
+        "matchCount": 1
+      },
+      {
+        "value": "Peridot",
+        "matchCount": 1
+      },
+      {
+        "value": "Peter Pan",
+        "matchCount": 1
+      },
+      {
+        "value": "Peter Parker",
+        "matchCount": 1
+      },
+      {
+        "value": "Pirate Captain",
+        "matchCount": 1
+      },
+      {
+        "value": "Pumbaa",
+        "matchCount": 1
+      },
+      {
+        "value": "Rachel Green",
+        "matchCount": 1
+      },
+      {
+        "value": "Red Robin",
+        "matchCount": 1
+      },
+      {
+        "value": "Rock Star",
+        "matchCount": 1
+      },
+      {
+        "value": "Rose Quartz",
+        "matchCount": 1
+      },
+      {
+        "value": "Sailor Jupiter",
+        "matchCount": 1
+      },
+      {
+        "value": "Sailor Venus",
+        "matchCount": 1
+      },
+      {
+        "value": "Sapphire",
+        "matchCount": 1
+      },
+      {
+        "value": "Scorch",
+        "matchCount": 1
+      },
+      {
+        "value": "Sergeant",
+        "matchCount": 1
+      },
+      {
+        "value": "Shaggy",
+        "matchCount": 1
+      },
+      {
+        "value": "Space Scientist",
+        "matchCount": 1
+      },
+      {
+        "value": "Supergirl",
+        "matchCount": 1
+      },
+      {
+        "value": "Superhero",
+        "matchCount": 1
+      },
+      {
+        "value": "Suzie",
+        "matchCount": 1
+      },
+      {
+        "value": "The Child",
+        "matchCount": 1
+      },
+      {
+        "value": "The Riddler",
+        "matchCount": 1
+      },
+      {
+        "value": "Titans",
+        "matchCount": 1
+      },
+      {
+        "value": "Tom Riddle",
+        "matchCount": 1
+      },
+      {
+        "value": "Trendsetter",
+        "matchCount": 1
+      },
+      {
+        "value": "Ultron",
+        "matchCount": 1
+      },
+      {
+        "value": "Wanda Maximoff",
+        "matchCount": 1
+      },
+      {
+        "value": "Wicket",
+        "matchCount": 1
+      },
+      {
+        "value": "Woodstock",
+        "matchCount": 1
+      },
+      {
+        "value": "Aang",
+        "matchCount": 1
+      },
+      {
+        "value": "Abin Sur",
+        "matchCount": 1
+      },
+      {
+        "value": "Adam Strange",
+        "matchCount": 1
+      },
+      {
+        "value": "Admiral Cornwall",
+        "matchCount": 1
+      },
+      {
+        "value": "Airazor",
+        "matchCount": 1
+      },
+      {
+        "value": "America Cares Bear",
+        "matchCount": 1
+      },
+      {
+        "value": "Black Flash",
+        "matchCount": 1
+      },
+      {
+        "value": "Casey",
+        "matchCount": 1
+      },
+      {
+        "value": "Caveman",
+        "matchCount": 1
+      },
+      {
+        "value": "Cheetah",
+        "matchCount": 1
+      },
+      {
+        "value": "Clockwork Robot",
+        "matchCount": 1
+      },
+      {
+        "value": "Crown Princess",
+        "matchCount": 1
+      },
+      {
+        "value": "Dusty",
+        "matchCount": 1
+      },
+      {
+        "value": "Elvis",
+        "matchCount": 1
+      },
+      {
+        "value": "Imperial Soldier",
+        "matchCount": 1
+      },
+      {
+        "value": "Madison Fear",
+        "matchCount": 1
+      },
+      {
+        "value": "Makuta",
+        "matchCount": 1
+      },
+      {
+        "value": "Momo",
+        "matchCount": 1
+      },
+      {
+        "value": "Royal King",
+        "matchCount": 1
+      },
+      {
+        "value": "Bulbasaur",
+        "matchCount": 1
+      },
+      {
+        "value": "Easter Bunny",
+        "matchCount": 1
+      },
+      {
+        "value": "Luigi",
+        "matchCount": 1
+      },
+      {
+        "value": "Mario",
+        "matchCount": 1
+      },
+      {
+        "value": "Orca",
+        "matchCount": 1
+      },
+      {
+        "value": "Snorlax",
+        "matchCount": 1
+      },
+      {
+        "value": "Sonic the Hedgehog",
+        "matchCount": 1
+      },
+      {
+        "value": "Spider-Gwen",
+        "matchCount": 1
+      },
+      {
+        "value": "Surprise Bear",
+        "matchCount": 1
+      },
+      {
+        "value": "Maneki Neko",
+        "matchCount": 1
+      },
+      {
+        "value": "Arsenal",
+        "matchCount": 1
+      },
+      {
+        "value": "Classic Alien",
+        "matchCount": 1
+      },
+      {
+        "value": "Controller",
+        "matchCount": 1
+      },
+      {
+        "value": "Dragonite",
+        "matchCount": 1
+      },
+      {
+        "value": "Funny Animal",
+        "matchCount": 1
+      },
+      {
+        "value": "Olaf",
+        "matchCount": 1
+      },
+      {
+        "value": "Pathfinder",
+        "matchCount": 1
+      },
+      {
+        "value": "Pink Diamond",
+        "matchCount": 1
+      },
+      {
+        "value": "Squirt",
+        "matchCount": 1
+      },
+      {
+        "value": "Pogo",
+        "matchCount": 1
+      },
+      {
+        "value": "Star Girl",
+        "matchCount": 1
+      },
+      {
+        "value": "Duke",
+        "matchCount": 1
+      },
+      {
+        "value": "Archer",
+        "matchCount": 1
+      },
+      {
+        "value": "Artim",
+        "matchCount": 1
+      },
+      {
+        "value": "Flurry Bear",
+        "matchCount": 1
+      },
+      {
+        "value": "Hiro",
+        "matchCount": 1
+      },
+      {
+        "value": "Overlord",
+        "matchCount": 1
+      },
+      {
+        "value": "The Zombie",
+        "matchCount": 1
+      }
+    ],
+    "Type": [
+      {
+        "value": "Action Figure",
+        "matchCount": 42372
+      },
+      {
+        "value": "Not Specified",
+        "matchCount": 3743
+      },
+      {
+        "value": "Set",
+        "matchCount": 1679
+      },
+      {
+        "value": "Action Figure Collection",
+        "matchCount": 865
+      },
+      {
+        "value": "Prototype",
+        "matchCount": 38
+      }
+    ],
+    "Features": [
+      {
+        "value": "Boxed",
+        "matchCount": 45373
+      },
+      {
+        "value": "Not Specified",
+        "matchCount": 13397
+      },
+      {
+        "value": "Limited Edition",
+        "matchCount": 4971
+      },
+      {
+        "value": "Exclusive",
+        "matchCount": 4968
+      },
+      {
+        "value": "Unboxed",
+        "matchCount": 3678
+      },
+      {
+        "value": "Special Edition",
+        "matchCount": 2600
+      },
+      {
+        "value": "Collector's Edition",
+        "matchCount": 2311
+      },
+      {
+        "value": "1st Edition",
+        "matchCount": 1215
+      },
+      {
+        "value": "With Clothes",
+        "matchCount": 836
+      },
+      {
+        "value": "Miniature",
+        "matchCount": 712
+      },
+      {
+        "value": "Break/Chip Resistant",
+        "matchCount": 686
+      },
+      {
+        "value": "Chase",
+        "matchCount": 537
+      },
+      {
+        "value": "Oversized",
+        "matchCount": 474
+      },
+      {
+        "value": "Souvenir",
+        "matchCount": 425
+      },
+      {
+        "value": "Luxury Edition",
+        "matchCount": 378
+      },
+      {
+        "value": "Adjustable",
+        "matchCount": 365
+      },
+      {
+        "value": "Reissue",
+        "matchCount": 341
+      },
+      {
+        "value": "Singing",
+        "matchCount": 156
+      },
+      {
+        "value": "Light Up",
+        "matchCount": 92
+      },
+      {
+        "value": "Talking",
+        "matchCount": 66
+      },
+      {
+        "value": "Battery Powered",
+        "matchCount": 57
+      },
+      {
+        "value": "Batteries Included",
+        "matchCount": 44
+      },
+      {
+        "value": "Transforming",
+        "matchCount": 36
+      },
+      {
+        "value": "Civilian",
+        "matchCount": 16
+      },
+      {
+        "value": "Pre-Release",
+        "matchCount": 12
+      },
+      {
+        "value": "5-Way Jointed",
+        "matchCount": 12
+      },
+      {
+        "value": "Vaulted",
+        "matchCount": 7
+      },
+      {
+        "value": "With Sound",
+        "matchCount": 5
+      },
+      {
+        "value": "Unassembled Kit",
+        "matchCount": 4
+      },
+      {
+        "value": "Fully Jointed",
+        "matchCount": 3
+      },
+      {
+        "value": "Subscription Box Item",
+        "matchCount": 2
+      },
+      {
+        "value": "Remote Control",
+        "matchCount": 2
+      },
+      {
+        "value": "Special Needs",
+        "matchCount": 1
+      },
+      {
+        "value": "Reprint",
+        "matchCount": 1
+      }
+    ],
+    "Sport": [
+      {
+        "value": "Boxing",
+        "matchCount": 42840
+      },
+      {
+        "value": "Not Specified",
+        "matchCount": 21303
+      },
+      {
+        "value": "Soccer",
+        "matchCount": 174
+      },
+      {
+        "value": "Football",
+        "matchCount": 137
+      },
+      {
+        "value": "Baseball",
+        "matchCount": 132
+      },
+      {
+        "value": "Mixed Martial Arts",
+        "matchCount": 124
+      },
+      {
+        "value": "Cycling",
+        "matchCount": 118
+      },
+      {
+        "value": "Skateboarding",
+        "matchCount": 99
+      },
+      {
+        "value": "Basketball",
+        "matchCount": 99
+      },
+      {
+        "value": "Ice Hockey",
+        "matchCount": 93
+      },
+      {
+        "value": "Tennis",
+        "matchCount": 89
+      },
+      {
+        "value": "Golf",
+        "matchCount": 73
+      },
+      {
+        "value": "Cricket",
+        "matchCount": 72
+      },
+      {
+        "value": "Horse Racing",
+        "matchCount": 69
+      },
+      {
+        "value": "Australian Football League",
+        "matchCount": 66
+      },
+      {
+        "value": "Rugby",
+        "matchCount": 66
+      },
+      {
+        "value": "Racing-Formula 1",
+        "matchCount": 65
+      },
+      {
+        "value": "Wrestling",
+        "matchCount": 64
+      }
+    ],
+    "Country of Origin": [
+      {
+        "value": "Not Specified",
+        "matchCount": 27393
+      },
+      {
+        "value": "China",
+        "matchCount": 17892
+      },
+      {
+        "value": "United States",
+        "matchCount": 5447
+      },
+      {
+        "value": "Japan",
+        "matchCount": 1252
+      },
+      {
+        "value": "Thailand",
+        "matchCount": 132
+      },
+      {
+        "value": "Singapore",
+        "matchCount": 60
+      },
+      {
+        "value": "Hong Kong",
+        "matchCount": 55
+      },
+      {
+        "value": "South Korea (Republic of Korea)",
+        "matchCount": 47
+      },
+      {
+        "value": "Canada",
+        "matchCount": 43
+      },
+      {
+        "value": "Australia",
+        "matchCount": 37
+      },
+      {
+        "value": "Indonesia",
+        "matchCount": 33
+      },
+      {
+        "value": "Malaysia",
+        "matchCount": 17
+      },
+      {
+        "value": "Vietnam",
+        "matchCount": 17
+      },
+      {
+        "value": "Taiwan",
+        "matchCount": 8
+      },
+      {
+        "value": "Pakistan",
+        "matchCount": 4
+      },
+      {
+        "value": "Italy",
+        "matchCount": 4
+      },
+      {
+        "value": "France",
+        "matchCount": 3
+      },
+      {
+        "value": "United Kingdom",
+        "matchCount": 2
+      },
+      {
+        "value": "United Arab Emirates",
+        "matchCount": 2
+      },
+      {
+        "value": "Greece",
+        "matchCount": 1
+      },
+      {
+        "value": "Spain",
+        "matchCount": 1
+      },
+      {
+        "value": "Hungary",
+        "matchCount": 1
+      },
+      {
+        "value": "New Zealand",
+        "matchCount": 1
+      },
+      {
+        "value": "Panama",
+        "matchCount": 1
+      },
+      {
+        "value": "Portugal",
+        "matchCount": 1
+      },
+      {
+        "value": "Ireland",
+        "matchCount": 1
+      }
+    ],
+    "Featured Person/Artist": [
+      {
+        "value": "Not Specified",
+        "matchCount": 34095
+      },
+      {
+        "value": "Seal",
+        "matchCount": 15450
+      },
+      {
+        "value": "T.O.P",
+        "matchCount": 2839
+      },
+      {
+        "value": "Faces",
+        "matchCount": 2094
+      },
+      {
+        "value": "Salt",
+        "matchCount": 1120
+      },
+      {
+        "value": "Dada",
+        "matchCount": 755
+      },
+      {
+        "value": "Prince",
+        "matchCount": 718
+      },
+      {
+        "value": "Gong",
+        "matchCount": 575
+      },
+      {
+        "value": "Queen",
+        "matchCount": 548
+      },
+      {
+        "value": "The Darkness",
+        "matchCount": 457
+      },
+      {
+        "value": "Heart",
+        "matchCount": 449
+      },
+      {
+        "value": "Down",
+        "matchCount": 418
+      },
+      {
+        "value": "Amber",
+        "matchCount": 382
+      },
+      {
+        "value": "Riot",
+        "matchCount": 340
+      },
+      {
+        "value": "Snow",
+        "matchCount": 272
+      },
+      {
+        "value": "Journey",
+        "matchCount": 271
+      },
+      {
+        "value": "Run",
+        "matchCount": 262
+      },
+      {
+        "value": "Live",
+        "matchCount": 243
+      },
+      {
+        "value": "Monster Magnet",
+        "matchCount": 227
+      },
+      {
+        "value": "Nico",
+        "matchCount": 220
+      },
+      {
+        "value": "Baby Doll",
+        "matchCount": 208
+      },
+      {
+        "value": "War",
+        "matchCount": 203
+      },
+      {
+        "value": "Angel",
+        "matchCount": 198
+      },
+      {
+        "value": "Ride",
+        "matchCount": 164
+      },
+      {
+        "value": "Cream",
+        "matchCount": 156
+      },
+      {
+        "value": "Cold",
+        "matchCount": 154
+      },
+      {
+        "value": "Fun.",
+        "matchCount": 148
+      },
+      {
+        "value": "Bread",
+        "matchCount": 148
+      },
+      {
+        "value": "Future",
+        "matchCount": 121
+      },
+      {
+        "value": "Secret Garden",
+        "matchCount": 120
+      },
+      {
+        "value": "Ghost",
+        "matchCount": 115
+      },
+      {
+        "value": "Cake",
+        "matchCount": 112
+      },
+      {
+        "value": "Slayer",
+        "matchCount": 104
+      },
+      {
+        "value": "Sparks",
+        "matchCount": 102
+      },
+      {
+        "value": "Mint Condition",
+        "matchCount": 85
+      },
+      {
+        "value": "Rush",
+        "matchCount": 79
+      },
+      {
+        "value": "Spoon",
+        "matchCount": 79
+      },
+      {
+        "value": "Birdy",
+        "matchCount": 73
+      },
+      {
+        "value": "Jewel",
+        "matchCount": 68
+      },
+      {
+        "value": "Paradise Lost",
+        "matchCount": 62
+      },
+      {
+        "value": "Squeeze",
+        "matchCount": 57
+      },
+      {
+        "value": "Shinee",
+        "matchCount": 55
+      },
+      {
+        "value": "Ash",
+        "matchCount": 46
+      },
+      {
+        "value": "Lorde",
+        "matchCount": 44
+      },
+      {
+        "value": "Match",
+        "matchCount": 40
+      },
+      {
+        "value": "Muse",
+        "matchCount": 40
+      },
+      {
+        "value": "KISS",
+        "matchCount": 35
+      },
+      {
+        "value": "Passenger",
+        "matchCount": 33
+      },
+      {
+        "value": "Extreme",
+        "matchCount": 31
+      },
+      {
+        "value": "The Used",
+        "matchCount": 29
+      },
+      {
+        "value": "Poison",
+        "matchCount": 28
+      },
+      {
+        "value": "Helloween",
+        "matchCount": 26
+      },
+      {
+        "value": "Actor",
+        "matchCount": 25
+      },
+      {
+        "value": "Blind Guardian",
+        "matchCount": 23
+      },
+      {
+        "value": "Lionel Messi",
+        "matchCount": 23
+      },
+      {
+        "value": "In Flames",
+        "matchCount": 20
+      },
+      {
+        "value": "Cassidy",
+        "matchCount": 19
+      },
+      {
+        "value": "Gomez",
+        "matchCount": 19
+      },
+      {
+        "value": "Eve",
+        "matchCount": 18
+      },
+      {
+        "value": "Keith Haring",
+        "matchCount": 17
+      },
+      {
+        "value": "Egon Schiele",
+        "matchCount": 16
+      },
+      {
+        "value": "Jean-Michel Basquiat",
+        "matchCount": 14
+      },
+      {
+        "value": "Culture",
+        "matchCount": 14
+      },
+      {
+        "value": "Tiffany",
+        "matchCount": 12
+      },
+      {
+        "value": "The Jam",
+        "matchCount": 12
+      },
+      {
+        "value": "Tool",
+        "matchCount": 12
+      },
+      {
+        "value": "Leandro Paredes",
+        "matchCount": 12
+      },
+      {
+        "value": "Taylor Swift",
+        "matchCount": 12
+      },
+      {
+        "value": "Dr. Dre",
+        "matchCount": 11
+      },
+      {
+        "value": "Moby",
+        "matchCount": 11
+      },
+      {
+        "value": "Sergio Agüero",
+        "matchCount": 11
+      },
+      {
+        "value": "Blind Melon",
+        "matchCount": 11
+      },
+      {
+        "value": "Rex",
+        "matchCount": 10
+      },
+      {
+        "value": "Misfits",
+        "matchCount": 10
+      },
+      {
+        "value": "Pip",
+        "matchCount": 10
+      },
+      {
+        "value": "T. Rex",
+        "matchCount": 10
+      },
+      {
+        "value": "The Who",
+        "matchCount": 10
+      },
+      {
+        "value": "The Cure",
+        "matchCount": 9
+      },
+      {
+        "value": "Jin",
+        "matchCount": 8
+      },
+      {
+        "value": "Napoleon",
+        "matchCount": 8
+      },
+      {
+        "value": "Jojo",
+        "matchCount": 7
+      },
+      {
+        "value": "Oasis",
+        "matchCount": 7
+      },
+      {
+        "value": "Snap!",
+        "matchCount": 7
+      },
+      {
+        "value": "Edvard Munch",
+        "matchCount": 7
+      },
+      {
+        "value": "101 Strings Orchestra",
+        "matchCount": 7
+      },
+      {
+        "value": "Whitesnake",
+        "matchCount": 7
+      },
+      {
+        "value": "Smoothie",
+        "matchCount": 7
+      },
+      {
+        "value": "Aqua",
+        "matchCount": 6
+      },
+      {
+        "value": "Genesis",
+        "matchCount": 6
+      },
+      {
+        "value": "Scooter",
+        "matchCount": 6
+      },
+      {
+        "value": "DMC",
+        "matchCount": 5
+      },
+      {
+        "value": "Galactic",
+        "matchCount": 5
+      },
+      {
+        "value": "Venom",
+        "matchCount": 5
+      },
+      {
+        "value": "Lisa Leslie",
+        "matchCount": 5
+      },
+      {
+        "value": "Belly",
+        "matchCount": 5
+      },
+      {
+        "value": "Collective Soul",
+        "matchCount": 5
+      },
+      {
+        "value": "Atmosphere",
+        "matchCount": 4
+      },
+      {
+        "value": "Chilli",
+        "matchCount": 4
+      },
+      {
+        "value": "Tim Burton",
+        "matchCount": 4
+      },
+      {
+        "value": "50 Cent",
+        "matchCount": 4
+      },
+      {
+        "value": "George Lucas",
+        "matchCount": 4
+      },
+      {
+        "value": "Justin Bieber",
+        "matchCount": 4
+      },
+      {
+        "value": "Michael Jackson",
+        "matchCount": 4
+      },
+      {
+        "value": "V",
+        "matchCount": 4
+      },
+      {
+        "value": "Helmet",
+        "matchCount": 4
+      },
+      {
+        "value": "Destruction",
+        "matchCount": 4
+      },
+      {
+        "value": "Andy Warhol",
+        "matchCount": 3
+      },
+      {
+        "value": "JR",
+        "matchCount": 3
+      },
+      {
+        "value": "Takeoff",
+        "matchCount": 3
+      },
+      {
+        "value": "The Doors",
+        "matchCount": 3
+      },
+      {
+        "value": "Yao Ming",
+        "matchCount": 3
+      },
+      {
+        "value": "Filter",
+        "matchCount": 3
+      },
+      {
+        "value": "Bruno Mars",
+        "matchCount": 3
+      },
+      {
+        "value": "Chic",
+        "matchCount": 3
+      },
+      {
+        "value": "Wire",
+        "matchCount": 3
+      },
+      {
+        "value": "Mark Winters",
+        "matchCount": 3
+      },
+      {
+        "value": "America",
+        "matchCount": 2
+      },
+      {
+        "value": "Bob Friend",
+        "matchCount": 2
+      },
+      {
+        "value": "Bush",
+        "matchCount": 2
+      },
+      {
+        "value": "Cathedral",
+        "matchCount": 2
+      },
+      {
+        "value": "Hole",
+        "matchCount": 2
+      },
+      {
+        "value": "The Eagles",
+        "matchCount": 2
+      },
+      {
+        "value": "Wham!",
+        "matchCount": 2
+      },
+      {
+        "value": "Bram Stoker",
+        "matchCount": 2
+      },
+      {
+        "value": "G-Dragon",
+        "matchCount": 2
+      },
+      {
+        "value": "Joe Greene",
+        "matchCount": 2
+      },
+      {
+        "value": "Quietus",
+        "matchCount": 2
+      },
+      {
+        "value": "Robyn",
+        "matchCount": 2
+      },
+      {
+        "value": "Michelangelo",
+        "matchCount": 2
+      },
+      {
+        "value": "Nene",
+        "matchCount": 2
+      },
+      {
+        "value": "Tom Hanks",
+        "matchCount": 2
+      },
+      {
+        "value": "Autograph",
+        "matchCount": 2
+      },
+      {
+        "value": "Cherry Bomb",
+        "matchCount": 1
+      },
+      {
+        "value": "Accept",
+        "matchCount": 1
+      },
+      {
+        "value": "A-ha",
+        "matchCount": 1
+      },
+      {
+        "value": "Carus",
+        "matchCount": 1
+      },
+      {
+        "value": "Cher",
+        "matchCount": 1
+      },
+      {
+        "value": "Cinderella",
+        "matchCount": 1
+      },
+      {
+        "value": "Clash",
+        "matchCount": 1
+      },
+      {
+        "value": "Doves",
+        "matchCount": 1
+      },
+      {
+        "value": "Falcon",
+        "matchCount": 1
+      },
+      {
+        "value": "Garbage",
+        "matchCount": 1
+      },
+      {
+        "value": "Harrison Ford",
+        "matchCount": 1
+      },
+      {
+        "value": "Hironobu Yoshida",
+        "matchCount": 1
+      },
+      {
+        "value": "Tricky",
+        "matchCount": 1
+      },
+      {
+        "value": "Common",
+        "matchCount": 1
+      },
+      {
+        "value": "Ice Cube",
+        "matchCount": 1
+      },
+      {
+        "value": "KAWS",
+        "matchCount": 1
+      },
+      {
+        "value": "P!nk",
+        "matchCount": 1
+      },
+      {
+        "value": "T.I.",
+        "matchCount": 1
+      },
+      {
+        "value": "White Lion",
+        "matchCount": 1
+      },
+      {
+        "value": "Deep Forest",
+        "matchCount": 1
+      },
+      {
+        "value": "Foreigner",
+        "matchCount": 1
+      },
+      {
+        "value": "Nick Young",
+        "matchCount": 1
+      },
+      {
+        "value": "Scorpions",
+        "matchCount": 1
+      },
+      {
+        "value": "Beach Boys",
+        "matchCount": 1
+      },
+      {
+        "value": "Colonel Sanders",
+        "matchCount": 1
+      },
+      {
+        "value": "David Bowie",
+        "matchCount": 1
+      },
+      {
+        "value": "New York Dolls",
+        "matchCount": 1
+      },
+      {
+        "value": "Takashi Murakami",
+        "matchCount": 1
+      },
+      {
+        "value": "Vincent van Gogh",
+        "matchCount": 1
+      }
+    ],
+    "Animal Species": [
+      {
+        "value": "Not Specified",
+        "matchCount": 42252
+      },
+      {
+        "value": "Rabbit",
+        "matchCount": 4203
+      },
+      {
+        "value": "Bear",
+        "matchCount": 2379
+      },
+      {
+        "value": "Cat",
+        "matchCount": 632
+      },
+      {
+        "value": "Bird",
+        "matchCount": 545
+      },
+      {
+        "value": "Monkey",
+        "matchCount": 298
+      },
+      {
+        "value": "Mouse",
+        "matchCount": 180
+      },
+      {
+        "value": "Snake",
+        "matchCount": 176
+      },
+      {
+        "value": "Frog",
+        "matchCount": 156
+      },
+      {
+        "value": "Dog",
+        "matchCount": 114
+      },
+      {
+        "value": "Sheep",
+        "matchCount": 109
+      },
+      {
+        "value": "Elephant",
+        "matchCount": 105
+      },
+      {
+        "value": "Horse",
+        "matchCount": 85
+      },
+      {
+        "value": "Lion",
+        "matchCount": 68
+      },
+      {
+        "value": "Fox",
+        "matchCount": 65
+      },
+      {
+        "value": "Shark",
+        "matchCount": 63
+      },
+      {
+        "value": "Tiger",
+        "matchCount": 60
+      },
+      {
+        "value": "Cougar",
+        "matchCount": 60
+      },
+      {
+        "value": "Wolf",
+        "matchCount": 43
+      },
+      {
+        "value": "Turtle",
+        "matchCount": 42
+      },
+      {
+        "value": "Whale",
+        "matchCount": 39
+      },
+      {
+        "value": "Apatosaurus",
+        "matchCount": 35
+      },
+      {
+        "value": "Allosaurus",
+        "matchCount": 33
+      },
+      {
+        "value": "Squirrel",
+        "matchCount": 33
+      },
+      {
+        "value": "Baryonyx",
+        "matchCount": 33
+      },
+      {
+        "value": "Pig",
+        "matchCount": 32
+      },
+      {
+        "value": "Hedgehog",
+        "matchCount": 29
+      },
+      {
+        "value": "Giraffe",
+        "matchCount": 20
+      },
+      {
+        "value": "Goat",
+        "matchCount": 19
+      },
+      {
+        "value": "Bug",
+        "matchCount": 18
+      },
+      {
+        "value": "Pterosaur",
+        "matchCount": 18
+      },
+      {
+        "value": "Alligator",
+        "matchCount": 18
+      },
+      {
+        "value": "Ladybug",
+        "matchCount": 17
+      },
+      {
+        "value": "Lamb",
+        "matchCount": 17
+      },
+      {
+        "value": "Leopard",
+        "matchCount": 15
+      },
+      {
+        "value": "Brachiosaurus",
+        "matchCount": 13
+      },
+      {
+        "value": "Cow",
+        "matchCount": 12
+      },
+      {
+        "value": "Panther",
+        "matchCount": 9
+      },
+      {
+        "value": "Rhinoceros",
+        "matchCount": 9
+      },
+      {
+        "value": "Zebra",
+        "matchCount": 8
+      },
+      {
+        "value": "Donkey",
+        "matchCount": 6
+      },
+      {
+        "value": "Hippopotamus",
+        "matchCount": 4
+      },
+      {
+        "value": "Ankylosaurus",
+        "matchCount": 3
+      },
+      {
+        "value": "Bull",
+        "matchCount": 3
+      },
+      {
+        "value": "Metriacanthosaurus",
+        "matchCount": 3
+      },
+      {
+        "value": "Guinea Pig",
+        "matchCount": 2
+      },
+      {
+        "value": "Triceratops",
+        "matchCount": 2
+      },
+      {
+        "value": "Dolphin",
+        "matchCount": 2
+      },
+      {
+        "value": "Pteranodon",
+        "matchCount": 2
+      },
+      {
+        "value": "Insect",
+        "matchCount": 1
+      },
+      {
+        "value": "Buffalo",
+        "matchCount": 1
+      }
+    ],
+    "Scale": [
+      {
+        "value": "Not Specified",
+        "matchCount": 33678
+      },
+      {
+        "value": "1:12",
+        "matchCount": 7782
+      },
+      {
+        "value": "1:16",
+        "matchCount": 1165
+      },
+      {
+        "value": "1:1 (Life Size)",
+        "matchCount": 1053
+      },
+      {
+        "value": "1:6",
+        "matchCount": 247
+      },
+      {
+        "value": "1:10",
+        "matchCount": 224
+      },
+      {
+        "value": "1:4",
+        "matchCount": 137
+      },
+      {
+        "value": "1:50",
+        "matchCount": 65
+      },
+      {
+        "value": "1:55",
+        "matchCount": 56
+      },
+      {
+        "value": "1:20",
+        "matchCount": 18
+      },
+      {
+        "value": "2:00",
+        "matchCount": 17
+      },
+      {
+        "value": "1:18",
+        "matchCount": 16
+      },
+      {
+        "value": "1:8",
+        "matchCount": 14
+      },
+      {
+        "value": "2:04",
+        "matchCount": 14
+      },
+      {
+        "value": "2:12",
+        "matchCount": 14
+      },
+      {
+        "value": "1:9",
+        "matchCount": 14
+      },
+      {
+        "value": "1:24",
+        "matchCount": 11
+      },
+      {
+        "value": "1:25",
+        "matchCount": 10
+      },
+      {
+        "value": "2:20",
+        "matchCount": 10
+      },
+      {
+        "value": "1:32",
+        "matchCount": 9
+      },
+      {
+        "value": "2:27",
+        "matchCount": 8
+      },
+      {
+        "value": "1:48",
+        "matchCount": 5
+      },
+      {
+        "value": "1:26",
+        "matchCount": 3
+      },
+      {
+        "value": "1:34",
+        "matchCount": 2
+      },
+      {
+        "value": "1:43",
+        "matchCount": 2
+      },
+      {
+        "value": "1:22",
+        "matchCount": 1
+      }
+    ],
+    "Convention/Event": [
+      {
+        "value": "Not Specified",
+        "matchCount": 41930
+      },
+      {
+        "value": "Japan Expo",
+        "matchCount": 8706
+      },
+      {
+        "value": "San Diego Comic Con",
+        "matchCount": 2194
+      },
+      {
+        "value": "Anime Expo",
+        "matchCount": 2146
+      },
+      {
+        "value": "Nor Con",
+        "matchCount": 570
+      },
+      {
+        "value": "ChinaJoy Expo",
+        "matchCount": 96
+      },
+      {
+        "value": "Los Angeles Comic Con",
+        "matchCount": 26
+      },
+      {
+        "value": "Alamo City Comic Con",
+        "matchCount": 25
+      },
+      {
+        "value": "D23 Expo",
+        "matchCount": 11
+      },
+      {
+        "value": "MegaCon",
+        "matchCount": 5
+      },
+      {
+        "value": "AlienCon",
+        "matchCount": 5
+      },
+      {
+        "value": "Thailand Toy Expo",
+        "matchCount": 3
+      },
+      {
+        "value": "Angoulême International Comic Festival",
+        "matchCount": 3
+      },
+      {
+        "value": "New York Comic Con",
+        "matchCount": 2
+      },
+      {
+        "value": "Tampa Bay Comic Con",
+        "matchCount": 1
+      }
+    ],
+    "Age Level": [
+      {
+        "value": "Not Specified",
+        "matchCount": 39585
+      },
+      {
+        "value": "17 Years & Up",
+        "matchCount": 11127
+      },
+      {
+        "value": "12-16 Years",
+        "matchCount": 1385
+      },
+      {
+        "value": "8-11 Years",
+        "matchCount": 194
+      },
+      {
+        "value": "3-4 Years",
+        "matchCount": 71
+      },
+      {
+        "value": "5-7 Years",
+        "matchCount": 49
+      },
+      {
+        "value": "12 Months & Under",
+        "matchCount": 18
+      },
+      {
+        "value": "1-2 Years",
+        "matchCount": 9
+      }
+    ],
+    "Vehicle Type": [
+      {
+        "value": "Not Specified",
+        "matchCount": 41743
+      },
+      {
+        "value": "Ship",
+        "matchCount": 14046
+      },
+      {
+        "value": "Car",
+        "matchCount": 221
+      },
+      {
+        "value": "Airplane",
+        "matchCount": 89
+      },
+      {
+        "value": "Train",
+        "matchCount": 23
+      },
+      {
+        "value": "Boat",
+        "matchCount": 21
+      },
+      {
+        "value": "Submarine",
+        "matchCount": 10
+      },
+      {
+        "value": "Space Ship",
+        "matchCount": 9
+      },
+      {
+        "value": "Truck",
+        "matchCount": 5
+      },
+      {
+        "value": "Utility Vehicle",
+        "matchCount": 4
+      },
+      {
+        "value": "Jeep",
+        "matchCount": 3
+      },
+      {
+        "value": "Tank",
+        "matchCount": 1
+      },
+      {
+        "value": "Helicopter",
+        "matchCount": 1
+      }
+    ],
+    "Vintage": [
+      {
+        "value": "Not Specified",
+        "matchCount": 35436
+      },
+      {
+        "value": "No",
+        "matchCount": 21776
+      },
+      {
+        "value": "Yes",
+        "matchCount": 95
+      }
+    ],
+    "Material": [
+      {
+        "value": "PVC",
+        "matchCount": 27221
+      },
+      {
+        "value": "ABS",
+        "matchCount": 21637
+      },
+      {
+        "value": "Vinyl",
+        "matchCount": 20902
+      },
+      {
+        "value": "Plush",
+        "matchCount": 18352
+      },
+      {
+        "value": "Not Specified",
+        "matchCount": 8886
+      },
+      {
+        "value": "Polyester",
+        "matchCount": 3658
+      },
+      {
+        "value": "Plastic",
+        "matchCount": 3151
+      },
+      {
+        "value": "ABS Plastic",
+        "matchCount": 1946
+      },
+      {
+        "value": "Alloy",
+        "matchCount": 635
+      },
+      {
+        "value": "Zinc",
+        "matchCount": 635
+      },
+      {
+        "value": "Fabric",
+        "matchCount": 437
+      },
+      {
+        "value": "Silicone",
+        "matchCount": 404
+      },
+      {
+        "value": "Vinyl Plastic",
+        "matchCount": 355
+      },
+      {
+        "value": "Mixed Materials",
+        "matchCount": 336
+      },
+      {
+        "value": "Wire",
+        "matchCount": 269
+      },
+      {
+        "value": "PVC/Plastic",
+        "matchCount": 266
+      },
+      {
+        "value": "Glass",
+        "matchCount": 252
+      },
+      {
+        "value": "Acrylic",
+        "matchCount": 235
+      },
+      {
+        "value": "Metal",
+        "matchCount": 183
+      },
+      {
+        "value": "Foam",
+        "matchCount": 181
+      },
+      {
+        "value": "Crystal",
+        "matchCount": 125
+      },
+      {
+        "value": "Rubber",
+        "matchCount": 114
+      },
+      {
+        "value": "Copper",
+        "matchCount": 112
+      },
+      {
+        "value": "Acetate",
+        "matchCount": 111
+      },
+      {
+        "value": "Ethylene-vinyl Acetate (EVA)",
+        "matchCount": 105
+      },
+      {
+        "value": "Paper",
+        "matchCount": 82
+      },
+      {
+        "value": "Resin",
+        "matchCount": 52
+      },
+      {
+        "value": "Ceramic",
+        "matchCount": 49
+      },
+      {
+        "value": "TPE",
+        "matchCount": 41
+      },
+      {
+        "value": "Steel",
+        "matchCount": 38
+      },
+      {
+        "value": "Wood",
+        "matchCount": 36
+      },
+      {
+        "value": "Leather",
+        "matchCount": 33
+      },
+      {
+        "value": "Silver",
+        "matchCount": 28
+      },
+      {
+        "value": "Tin",
+        "matchCount": 22
+      },
+      {
+        "value": "Gold",
+        "matchCount": 20
+      },
+      {
+        "value": "Glass & Plastic",
+        "matchCount": 19
+      },
+      {
+        "value": "Hard Plastic",
+        "matchCount": 17
+      },
+      {
+        "value": "Acrylic Fiber",
+        "matchCount": 13
+      },
+      {
+        "value": "Stone",
+        "matchCount": 12
+      },
+      {
+        "value": "Aluminum",
+        "matchCount": 11
+      },
+      {
+        "value": "Clay",
+        "matchCount": 11
+      },
+      {
+        "value": "Lead",
+        "matchCount": 10
+      },
+      {
+        "value": "Die-cast",
+        "matchCount": 10
+      },
+      {
+        "value": "PVA",
+        "matchCount": 9
+      },
+      {
+        "value": "Bronze",
+        "matchCount": 8
+      },
+      {
+        "value": "Polyurethane",
+        "matchCount": 7
+      },
+      {
+        "value": "TPU",
+        "matchCount": 6
+      },
+      {
+        "value": "Terracotta",
+        "matchCount": 6
+      },
+      {
+        "value": "Chrome Vanadium Steel",
+        "matchCount": 5
+      },
+      {
+        "value": "Acrylic Resin",
+        "matchCount": 5
+      },
+      {
+        "value": "Alloy Steel",
+        "matchCount": 4
+      },
+      {
+        "value": "PVC/Aluminum",
+        "matchCount": 4
+      },
+      {
+        "value": "Rigid Plastic",
+        "matchCount": 4
+      },
+      {
+        "value": "Porcelain",
+        "matchCount": 3
+      },
+      {
+        "value": "Acetal",
+        "matchCount": 3
+      },
+      {
+        "value": "Polypropylene",
+        "matchCount": 3
+      },
+      {
+        "value": "Brass",
+        "matchCount": 2
+      },
+      {
+        "value": "Aluminum Alloy",
+        "matchCount": 2
+      },
+      {
+        "value": "Cast Iron",
+        "matchCount": 2
+      },
+      {
+        "value": "Rigid PVC",
+        "matchCount": 2
+      },
+      {
+        "value": "Alfa",
+        "matchCount": 2
+      },
+      {
+        "value": "Acrylic Blend",
+        "matchCount": 1
+      },
+      {
+        "value": "Acrylic Paint",
+        "matchCount": 1
+      },
+      {
+        "value": "Hard Rubber",
+        "matchCount": 1
+      },
+      {
+        "value": "Acrylic Glass",
+        "matchCount": 1
+      },
+      {
+        "value": "BPA-Free Plastic",
+        "matchCount": 1
+      },
+      {
+        "value": "Cast Metal",
+        "matchCount": 1
+      },
+      {
+        "value": "Chrome",
+        "matchCount": 1
+      }
+    ],
+    "Theme": [
+      {
+        "value": "Not Specified",
+        "matchCount": 29315
+      },
+      {
+        "value": "Animation",
+        "matchCount": 13508
+      },
+      {
+        "value": "TV, Movie & Video Games",
+        "matchCount": 8808
+      },
+      {
+        "value": "Movies",
+        "matchCount": 8530
+      },
+      {
+        "value": "Designer & Urban Vinyl",
+        "matchCount": 829
+      },
+      {
+        "value": "Cartoon & TV Character",
+        "matchCount": 723
+      },
+      {
+        "value": "Adventure",
+        "matchCount": 483
+      },
+      {
+        "value": "Fantasy",
+        "matchCount": 320
+      },
+      {
+        "value": "Anime & Manga",
+        "matchCount": 290
+      },
+      {
+        "value": "Celebrities",
+        "matchCount": 197
+      },
+      {
+        "value": "Sports",
+        "matchCount": 142
+      },
+      {
+        "value": "School",
+        "matchCount": 128
+      },
+      {
+        "value": "Comic Book Heroes",
+        "matchCount": 103
+      },
+      {
+        "value": "Transformers & Robots",
+        "matchCount": 47
+      },
+      {
+        "value": "Comics",
+        "matchCount": 45
+      },
+      {
+        "value": "Animals & Dinosaurs",
+        "matchCount": 39
+      },
+      {
+        "value": "Music",
+        "matchCount": 39
+      },
+      {
+        "value": "Abstract",
+        "matchCount": 20
+      },
+      {
+        "value": "History",
+        "matchCount": 18
+      },
+      {
+        "value": "Video Games",
+        "matchCount": 18
+      },
+      {
+        "value": "Wildlife",
+        "matchCount": 7
+      },
+      {
+        "value": "Pride",
+        "matchCount": 6
+      },
+      {
+        "value": "Cars & Vehicles",
+        "matchCount": 5
+      },
+      {
+        "value": "Advertising",
+        "matchCount": 3
+      },
+      {
+        "value": "Historical Figures",
+        "matchCount": 2
+      },
+      {
+        "value": "Botanical",
+        "matchCount": 1
+      }
+    ],
+    "Time Period Manufactured": [
+      {
+        "value": "Not Specified",
+        "matchCount": 36298
+      },
+      {
+        "value": "2020-Now",
+        "matchCount": 20414
+      },
+      {
+        "value": "2010-2019",
+        "matchCount": 152
+      },
+      {
+        "value": "2000-2009",
+        "matchCount": 31
+      },
+      {
+        "value": "1990-1999",
+        "matchCount": 2
+      }
+    ],
+    "Color": [
+      {
+        "value": "Not Specified",
+        "matchCount": 30548
+      },
+      {
+        "value": "Multicolor",
+        "matchCount": 18506
+      },
+      {
+        "value": "Green",
+        "matchCount": 1206
+      },
+      {
+        "value": "Yellow",
+        "matchCount": 1144
+      },
+      {
+        "value": "Pink",
+        "matchCount": 988
+      },
+      {
+        "value": "Brown",
+        "matchCount": 886
+      },
+      {
+        "value": "Blue",
+        "matchCount": 823
+      },
+      {
+        "value": "Purple",
+        "matchCount": 679
+      },
+      {
+        "value": "Orange",
+        "matchCount": 500
+      },
+      {
+        "value": "Gray",
+        "matchCount": 483
+      },
+      {
+        "value": "White",
+        "matchCount": 466
+      },
+      {
+        "value": "Red",
+        "matchCount": 373
+      },
+      {
+        "value": "Black",
+        "matchCount": 184
+      },
+      {
+        "value": "Beige",
+        "matchCount": 168
+      },
+      {
+        "value": "Clear",
+        "matchCount": 103
+      },
+      {
+        "value": "Silver",
+        "matchCount": 24
+      },
+      {
+        "value": "Gold",
+        "matchCount": 8
+      }
+    ],
+    "Movie": [
+      {
+        "value": "Not Specified",
+        "matchCount": 38405
+      },
+      {
+        "value": "Us",
+        "matchCount": 14204
+      },
+      {
+        "value": "Big",
+        "matchCount": 1219
+      },
+      {
+        "value": "Up",
+        "matchCount": 577
+      },
+      {
+        "value": "Winnie the Pooh",
+        "matchCount": 352
+      },
+      {
+        "value": "Zootopia",
+        "matchCount": 260
+      },
+      {
+        "value": "Cars",
+        "matchCount": 230
+      },
+      {
+        "value": "Toy Story",
+        "matchCount": 195
+      },
+      {
+        "value": "Halloween",
+        "matchCount": 144
+      },
+      {
+        "value": "Elf",
+        "matchCount": 144
+      },
+      {
+        "value": "Monsters University",
+        "matchCount": 114
+      },
+      {
+        "value": "Lilo & Stitch",
+        "matchCount": 113
+      },
+      {
+        "value": "Ted 2",
+        "matchCount": 105
+      },
+      {
+        "value": "Aliens",
+        "matchCount": 98
+      },
+      {
+        "value": "Tom and Jerry",
+        "matchCount": 83
+      },
+      {
+        "value": "Transformers",
+        "matchCount": 82
+      },
+      {
+        "value": "Alice in Wonderland",
+        "matchCount": 75
+      },
+      {
+        "value": "Jurassic Park",
+        "matchCount": 72
+      },
+      {
+        "value": "The Addams Family",
+        "matchCount": 67
+      },
+      {
+        "value": "Despicable Me",
+        "matchCount": 66
+      },
+      {
+        "value": "Iron Man",
+        "matchCount": 64
+      },
+      {
+        "value": "Bright",
+        "matchCount": 62
+      },
+      {
+        "value": "Jurassic World",
+        "matchCount": 60
+      },
+      {
+        "value": "Chip ’n’ Dale",
+        "matchCount": 59
+      },
+      {
+        "value": "The Shining",
+        "matchCount": 54
+      },
+      {
+        "value": "Jingle All the Way",
+        "matchCount": 54
+      },
+      {
+        "value": "Enchanted",
+        "matchCount": 50
+      },
+      {
+        "value": "Spider-Man",
+        "matchCount": 50
+      },
+      {
+        "value": "Soul",
+        "matchCount": 49
+      },
+      {
+        "value": "Rocky",
+        "matchCount": 49
+      },
+      {
+        "value": "Brave",
+        "matchCount": 47
+      },
+      {
+        "value": "Child's Play 2",
+        "matchCount": 47
+      },
+      {
+        "value": "Harry Potter and the Goblet of Fire",
+        "matchCount": 47
+      },
+      {
+        "value": "Snow White and the Seven Dwarfs",
+        "matchCount": 45
+      },
+      {
+        "value": "Justice League",
+        "matchCount": 42
+      },
+      {
+        "value": "Minions",
+        "matchCount": 42
+      },
+      {
+        "value": "Home Alone",
+        "matchCount": 40
+      },
+      {
+        "value": "Joker",
+        "matchCount": 39
+      },
+      {
+        "value": "Digimon - The Movie",
+        "matchCount": 38
+      },
+      {
+        "value": "Cinderella",
+        "matchCount": 35
+      },
+      {
+        "value": "Pinocchio",
+        "matchCount": 35
+      },
+      {
+        "value": "It",
+        "matchCount": 31
+      },
+      {
+        "value": "101 Dalmatians",
+        "matchCount": 24
+      },
+      {
+        "value": "Split",
+        "matchCount": 23
+      },
+      {
+        "value": "Twilight",
+        "matchCount": 23
+      },
+      {
+        "value": "Dumbo",
+        "matchCount": 22
+      },
+      {
+        "value": "The Witch",
+        "matchCount": 20
+      },
+      {
+        "value": "The Spongebob Movie: Sponge on the Run",
+        "matchCount": 19
+      },
+      {
+        "value": "Rapunzel",
+        "matchCount": 17
+      },
+      {
+        "value": "The Batman",
+        "matchCount": 17
+      },
+      {
+        "value": "X2",
+        "matchCount": 17
+      },
+      {
+        "value": "Eternals",
+        "matchCount": 16
+      },
+      {
+        "value": "Deadpool",
+        "matchCount": 15
+      },
+      {
+        "value": "Kung Fu Panda",
+        "matchCount": 15
+      },
+      {
+        "value": "Mulan",
+        "matchCount": 13
+      },
+      {
+        "value": "Alien",
+        "matchCount": 12
+      },
+      {
+        "value": "Frozen",
+        "matchCount": 12
+      },
+      {
+        "value": "Scream",
+        "matchCount": 12
+      },
+      {
+        "value": "Moana",
+        "matchCount": 11
+      },
+      {
+        "value": "Pokémon the Movie: I Choose You!",
+        "matchCount": 11
+      },
+      {
+        "value": "Captain Marvel",
+        "matchCount": 10
+      },
+      {
+        "value": "The Mummy",
+        "matchCount": 10
+      },
+      {
+        "value": "Annabelle",
+        "matchCount": 9
+      },
+      {
+        "value": "Batman",
+        "matchCount": 9
+      },
+      {
+        "value": "Pocahontas",
+        "matchCount": 9
+      },
+      {
+        "value": "Ready Player One",
+        "matchCount": 7
+      },
+      {
+        "value": "How to Train Your Dragon",
+        "matchCount": 7
+      },
+      {
+        "value": "Stripes",
+        "matchCount": 7
+      },
+      {
+        "value": "Minions: The Rise of Gru",
+        "matchCount": 6
+      },
+      {
+        "value": "Monsters, Inc.",
+        "matchCount": 6
+      },
+      {
+        "value": "Bambi",
+        "matchCount": 5
+      },
+      {
+        "value": "Avengers: Endgame",
+        "matchCount": 5
+      },
+      {
+        "value": "Harry Potter and the Chamber of Secrets",
+        "matchCount": 5
+      },
+      {
+        "value": "Sleeping Beauty",
+        "matchCount": 5
+      },
+      {
+        "value": "The Little Mermaid",
+        "matchCount": 5
+      },
+      {
+        "value": "Carrie",
+        "matchCount": 5
+      },
+      {
+        "value": "Maleficent",
+        "matchCount": 4
+      },
+      {
+        "value": "The Nightmare Before Christmas",
+        "matchCount": 4
+      },
+      {
+        "value": "20,000 Leagues Under the Sea",
+        "matchCount": 4
+      },
+      {
+        "value": "Gladiator",
+        "matchCount": 4
+      },
+      {
+        "value": "Ant-Man",
+        "matchCount": 3
+      },
+      {
+        "value": "Braveheart",
+        "matchCount": 3
+      },
+      {
+        "value": "Harry Potter and the Prisoner of Azkaban",
+        "matchCount": 3
+      },
+      {
+        "value": "Star Wars: Episode IV – A New Hope",
+        "matchCount": 3
+      },
+      {
+        "value": "Toy Story 4",
+        "matchCount": 3
+      },
+      {
+        "value": "Titanic",
+        "matchCount": 3
+      },
+      {
+        "value": "Toy Story 3",
+        "matchCount": 2
+      },
+      {
+        "value": "Beauty and the Beast",
+        "matchCount": 2
+      },
+      {
+        "value": "Avengers: Infinity War",
+        "matchCount": 2
+      },
+      {
+        "value": "Batman v Superman: Dawn of Justice",
+        "matchCount": 2
+      },
+      {
+        "value": "Harry Potter and the Deathly Hallows - Part 1",
+        "matchCount": 2
+      },
+      {
+        "value": "Marvel's The Avengers",
+        "matchCount": 2
+      },
+      {
+        "value": "National Lampoon's Christmas Vacation",
+        "matchCount": 2
+      },
+      {
+        "value": "Power Rangers",
+        "matchCount": 2
+      },
+      {
+        "value": "The Dark Knight",
+        "matchCount": 2
+      },
+      {
+        "value": "The Princess and the Frog",
+        "matchCount": 2
+      },
+      {
+        "value": "Thor",
+        "matchCount": 2
+      },
+      {
+        "value": "Warcraft",
+        "matchCount": 2
+      },
+      {
+        "value": "Bram Stoker's Dracula",
+        "matchCount": 2
+      },
+      {
+        "value": "Saw",
+        "matchCount": 2
+      },
+      {
+        "value": "300",
+        "matchCount": 1
+      },
+      {
+        "value": "Bolt",
+        "matchCount": 1
+      },
+      {
+        "value": "Aladdin",
+        "matchCount": 1
+      },
+      {
+        "value": "Avengers: Age of Ultron",
+        "matchCount": 1
+      },
+      {
+        "value": "Bride of Chucky",
+        "matchCount": 1
+      },
+      {
+        "value": "Finding Nemo",
+        "matchCount": 1
+      },
+      {
+        "value": "Harry Potter and the Sorcerer's Stone",
+        "matchCount": 1
+      },
+      {
+        "value": "Haunted Mansion",
+        "matchCount": 1
+      },
+      {
+        "value": "Incredibles 2",
+        "matchCount": 1
+      },
+      {
+        "value": "Peter Pan",
+        "matchCount": 1
+      },
+      {
+        "value": "Ralph Breaks the Internet",
+        "matchCount": 1
+      },
+      {
+        "value": "Star Wars: Episode I – The Phantom Menace",
+        "matchCount": 1
+      },
+      {
+        "value": "The Nun",
+        "matchCount": 1
+      },
+      {
+        "value": "WALL-E",
+        "matchCount": 1
+      },
+      {
+        "value": "Willy Wonka and the Chocolate Factory",
+        "matchCount": 1
+      },
+      {
+        "value": "Alice Through the Looking Glass",
+        "matchCount": 1
+      },
+      {
+        "value": "A Beautiful Day in the Neighborhood",
+        "matchCount": 1
+      },
+      {
+        "value": "Teenage Mutant Ninja Turtles",
+        "matchCount": 1
+      },
+      {
+        "value": "The Many Adventures of Winnie the Pooh",
+        "matchCount": 1
+      }
+    ],
+    "Original/Licensed Reproduction": [
+      {
+        "value": "Original",
+        "matchCount": 30082
+      },
+      {
+        "value": "Not Specified",
+        "matchCount": 23997
+      },
+      {
+        "value": "Licensed Reproduction",
+        "matchCount": 246
+      }
+    ],
+    "Signed": [
+      {
+        "value": "Not Specified",
+        "matchCount": 35889
+      },
+      {
+        "value": "No",
+        "matchCount": 16581
+      },
+      {
+        "value": "Yes",
+        "matchCount": 161
+      }
+    ],
+    "Personalize": [
+      {
+        "value": "Not Specified",
+        "matchCount": 38502
+      },
+      {
+        "value": "No",
+        "matchCount": 16072
+      },
+      {
+        "value": "Yes",
+        "matchCount": 28
+      }
+    ],
+    "Grade": [
+      {
+        "value": "Not Specified",
+        "matchCount": 35143
+      },
+      {
+        "value": "100",
+        "matchCount": 9479
+      },
+      {
+        "value": "95+",
+        "matchCount": 23
+      },
+      {
+        "value": "90+",
+        "matchCount": 11
+      },
+      {
+        "value": "70",
+        "matchCount": 11
+      },
+      {
+        "value": "90",
+        "matchCount": 5
+      },
+      {
+        "value": "80+",
+        "matchCount": 4
+      },
+      {
+        "value": "20",
+        "matchCount": 3
+      },
+      {
+        "value": "10",
+        "matchCount": 2
+      },
+      {
+        "value": "85+",
+        "matchCount": 1
+      },
+      {
+        "value": "85",
+        "matchCount": 1
+      },
+      {
+        "value": "75+",
+        "matchCount": 1
+      },
+      {
+        "value": "75",
+        "matchCount": 1
+      }
+    ],
+    "Model": [
+      {
+        "value": "Not Specified",
+        "matchCount": 41068
+      },
+      {
+        "value": "Animator Doll",
+        "matchCount": 11820
+      },
+      {
+        "value": "Mickey Mouse Clubhouse",
+        "matchCount": 11
+      },
+      {
+        "value": "Disney Princess Cinderella",
+        "matchCount": 4
+      },
+      {
+        "value": "Poké Ball",
+        "matchCount": 4
+      },
+      {
+        "value": "Fuzzy Felt",
+        "matchCount": 3
+      },
+      {
+        "value": "99401US01",
+        "matchCount": 2
+      },
+      {
+        "value": "Doorables",
+        "matchCount": 1
+      },
+      {
+        "value": "AfterShokz Air",
+        "matchCount": 1
+      },
+      {
+        "value": "B-100",
+        "matchCount": 1
+      },
+      {
+        "value": "B-Daman",
+        "matchCount": 1
+      }
+    ],
+    "TV Show": [
+      {
+        "value": "Not Specified",
+        "matchCount": 42333
+      },
+      {
+        "value": "The 100",
+        "matchCount": 3066
+      },
+      {
+        "value": "GLOW",
+        "matchCount": 1131
+      },
+      {
+        "value": "One Piece",
+        "matchCount": 932
+      },
+      {
+        "value": "Angel",
+        "matchCount": 634
+      },
+      {
+        "value": "Naruto Shippuden",
+        "matchCount": 556
+      },
+      {
+        "value": "Friends",
+        "matchCount": 520
+      },
+      {
+        "value": "Castle",
+        "matchCount": 247
+      },
+      {
+        "value": "Cheers",
+        "matchCount": 200
+      },
+      {
+        "value": "Naruto",
+        "matchCount": 180
+      },
+      {
+        "value": "The Powerpuff Girls",
+        "matchCount": 162
+      },
+      {
+        "value": "SpongeBob SquarePants",
+        "matchCount": 157
+      },
+      {
+        "value": "Teletubbies",
+        "matchCount": 117
+      },
+      {
+        "value": "Dinosaurs",
+        "matchCount": 93
+      },
+      {
+        "value": "Digimon Adventure",
+        "matchCount": 84
+      },
+      {
+        "value": "Jujutsu Kaisen",
+        "matchCount": 84
+      },
+      {
+        "value": "Aladdin",
+        "matchCount": 77
+      },
+      {
+        "value": "Card Captor Sakura",
+        "matchCount": 68
+      },
+      {
+        "value": "Gintama",
+        "matchCount": 67
+      },
+      {
+        "value": "Ultraman",
+        "matchCount": 66
+      },
+      {
+        "value": "New Girl",
+        "matchCount": 64
+      },
+      {
+        "value": "The Mandalorian",
+        "matchCount": 59
+      },
+      {
+        "value": "Jojo's Bizarre Adventure",
+        "matchCount": 58
+      },
+      {
+        "value": "Dragon Ball",
+        "matchCount": 54
+      },
+      {
+        "value": "American Horror Story",
+        "matchCount": 45
+      },
+      {
+        "value": "Demon Slayer: Kimetsu no Yaiba",
+        "matchCount": 38
+      },
+      {
+        "value": "Spider-Man",
+        "matchCount": 36
+      },
+      {
+        "value": "The Boys",
+        "matchCount": 33
+      },
+      {
+        "value": "The Addams Family",
+        "matchCount": 20
+      },
+      {
+        "value": "Sweethearts",
+        "matchCount": 19
+      },
+      {
+        "value": "Pokémon",
+        "matchCount": 19
+      },
+      {
+        "value": "V",
+        "matchCount": 18
+      },
+      {
+        "value": "Digimon",
+        "matchCount": 15
+      },
+      {
+        "value": "Frasier",
+        "matchCount": 15
+      },
+      {
+        "value": "Peanuts",
+        "matchCount": 13
+      },
+      {
+        "value": "Big Mouth",
+        "matchCount": 13
+      },
+      {
+        "value": "Inuyasha",
+        "matchCount": 9
+      },
+      {
+        "value": "Happy Days",
+        "matchCount": 8
+      },
+      {
+        "value": "Adventure Time",
+        "matchCount": 7
+      },
+      {
+        "value": "Monster Hunter",
+        "matchCount": 6
+      },
+      {
+        "value": "The Flash",
+        "matchCount": 6
+      },
+      {
+        "value": "Squid Game",
+        "matchCount": 5
+      },
+      {
+        "value": "Vikings",
+        "matchCount": 5
+      },
+      {
+        "value": "Saturday Night Live",
+        "matchCount": 5
+      },
+      {
+        "value": "Arrested Development",
+        "matchCount": 4
+      },
+      {
+        "value": "Hawkeye",
+        "matchCount": 4
+      },
+      {
+        "value": "Supergirl",
+        "matchCount": 4
+      },
+      {
+        "value": "Soul Eater",
+        "matchCount": 3
+      },
+      {
+        "value": "Power Rangers",
+        "matchCount": 3
+      },
+      {
+        "value": "Gundam",
+        "matchCount": 3
+      },
+      {
+        "value": "Lost",
+        "matchCount": 3
+      },
+      {
+        "value": "Case Closed",
+        "matchCount": 2
+      },
+      {
+        "value": "Game of Thrones",
+        "matchCount": 2
+      },
+      {
+        "value": "Star Wars: The Clone Wars",
+        "matchCount": 2
+      },
+      {
+        "value": "The Munsters",
+        "matchCount": 2
+      },
+      {
+        "value": "Buffy the Vampire Slayer",
+        "matchCount": 2
+      },
+      {
+        "value": "Sailor Moon",
+        "matchCount": 2
+      },
+      {
+        "value": "Batman and Robin",
+        "matchCount": 1
+      },
+      {
+        "value": "Community",
+        "matchCount": 1
+      },
+      {
+        "value": "Cowboy Bebop",
+        "matchCount": 1
+      },
+      {
+        "value": "Dragon Ball Z",
+        "matchCount": 1
+      },
+      {
+        "value": "Fairy Tail",
+        "matchCount": 1
+      },
+      {
+        "value": "Hunter X Hunter",
+        "matchCount": 1
+      },
+      {
+        "value": "Mr. Bean",
+        "matchCount": 1
+      },
+      {
+        "value": "To Heart",
+        "matchCount": 1
+      },
+      {
+        "value": "Alf",
+        "matchCount": 1
+      },
+      {
+        "value": "Scrubs",
+        "matchCount": 1
+      },
+      {
+        "value": "American Gods",
+        "matchCount": 1
+      }
+    ],
+    "Animation Studio": [
+      {
+        "value": "Not Specified",
+        "matchCount": 33616
+      },
+      {
+        "value": "Disney",
+        "matchCount": 8877
+      },
+      {
+        "value": "Toei Animation",
+        "matchCount": 1996
+      },
+      {
+        "value": "20th Century Animation",
+        "matchCount": 237
+      },
+      {
+        "value": "Illumination",
+        "matchCount": 19
+      },
+      {
+        "value": "Nickelodeon Animation Studio",
+        "matchCount": 7
+      },
+      {
+        "value": "Universal Animation Studios",
+        "matchCount": 7
+      },
+      {
+        "value": "DreamWorks Animation",
+        "matchCount": 3
+      },
+      {
+        "value": "Studio Ghibli",
+        "matchCount": 2
+      }
+    ],
+    "Series": [
+      {
+        "value": "Not Specified",
+        "matchCount": 36011
+      },
+      {
+        "value": "Animated Adventures",
+        "matchCount": 6885
+      },
+      {
+        "value": "The Animated Series",
+        "matchCount": 1372
+      },
+      {
+        "value": "Universe",
+        "matchCount": 432
+      },
+      {
+        "value": "Discovery",
+        "matchCount": 38
+      },
+      {
+        "value": "Transformers",
+        "matchCount": 33
+      },
+      {
+        "value": "The Original Series",
+        "matchCount": 6
+      },
+      {
+        "value": "Classics Illustrated",
+        "matchCount": 1
+      }
+    ],
+    "Transformer Faction": [
+      {
+        "value": "Not Specified",
+        "matchCount": 35256
+      },
+      {
+        "value": "Autobot",
+        "matchCount": 9441
+      },
+      {
+        "value": "Decepticon",
+        "matchCount": 2
+      },
+      {
+        "value": "Maximal",
+        "matchCount": 1
+      }
+    ],
+    "Professional Grader": [
+      {
+        "value": "Not Specified",
+        "matchCount": 36163
+      },
+      {
+        "value": "Action Figure Authority (AFA)",
+        "matchCount": 8529
+      },
+      {
+        "value": "The VGGS",
+        "matchCount": 6
+      },
+      {
+        "value": "Professional Sports Authenticator (PSA)",
+        "matchCount": 1
+      }
+    ]
+  }
+}

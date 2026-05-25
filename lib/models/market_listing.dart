@@ -22,6 +22,8 @@ class MarketListing {
     this.watchingCount = 0,
     this.hasSecretFigure = false,
     this.isHardToFind = false,
+    this.sellerUsername,
+    this.itemCreationDate,
   });
 
   final String id;
@@ -63,6 +65,12 @@ class MarketListing {
 
   /// Few listings vs collector attention — editorial scarcity (mock).
   final bool isHardToFind;
+
+  /// Seller username when gateway passes it (live eBay browse).
+  final String? sellerUsername;
+
+  /// Listing creation date when gateway passes it.
+  final DateTime? itemCreationDate;
 
   String get marketHeroTag => 'market-listing-image-$id';
 }

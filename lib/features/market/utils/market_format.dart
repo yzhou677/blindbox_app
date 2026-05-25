@@ -14,3 +14,14 @@ String formatPriceChangePercent(double percent) {
   if (percent < 0) return '-$abs%';
   return '0.0%';
 }
+
+/// User-facing listing date from gateway browse metadata.
+String? formatMarketListingDate(DateTime? date) {
+  if (date == null) return null;
+  const months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+  final local = date.toLocal();
+  return 'Listed ${months[local.month - 1]} ${local.day}, ${local.year}';
+}

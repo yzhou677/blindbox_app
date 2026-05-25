@@ -82,8 +82,9 @@ abstract final class CollectionSnapshotCodec {
     final displayName = (m['displayName'] as String?) ?? (m['name'] as String?);
     final brand = m['brand'] as String?;
     final ipName = m['ipName'] as String?;
-    if (id == null || displayName == null || brand == null || ipName == null)
+    if (id == null || displayName == null || brand == null || ipName == null) {
       return null;
+    }
     final accent = _colorFromArgb(m['shelfAccentArgb']);
     if (accent == null) return null;
     final figsRaw = m['figures'];
@@ -175,8 +176,9 @@ abstract final class CollectionSnapshotCodec {
     final label = rarityLabel?.trim();
     if (label != null && label.isNotEmpty) return label;
     final legacy = legacyRarity?.trim();
-    if (legacy != null && RegExp(r'^\d+\s*:\s*\d+\s*$').hasMatch(legacy))
+    if (legacy != null && RegExp(r'^\d+\s*:\s*\d+\s*$').hasMatch(legacy)) {
       return legacy;
+    }
     return null;
   }
 
@@ -205,16 +207,18 @@ abstract final class CollectionSnapshotCodec {
           state: FigureCollectionState.owned,
         );
       }
-      if (o)
+      if (o) {
         return TrackedFigure(
           figureId: figureId,
           state: FigureCollectionState.owned,
         );
-      if (w)
+      }
+      if (w) {
         return TrackedFigure(
           figureId: figureId,
           state: FigureCollectionState.wishlist,
         );
+      }
       return TrackedFigure(
         figureId: figureId,
         state: FigureCollectionState.none,

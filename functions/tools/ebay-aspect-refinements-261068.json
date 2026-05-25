@@ -1,0 +1,368 @@
+{
+  "categoryId": "261068",
+  "fetchedAt": "2026-05-24T03:45:42.482Z",
+  "counts": {
+    "Brand": 29,
+    "Character": 923
+  },
+  "topCharacter": [
+    {
+      "value": "Pop",
+      "matchCount": 51591
+    },
+    {
+      "value": "Labubu",
+      "matchCount": 36759
+    },
+    {
+      "value": "The Monsters",
+      "matchCount": 18166
+    },
+    {
+      "value": "Skullpanda",
+      "matchCount": 12446
+    },
+    {
+      "value": "The Monster",
+      "matchCount": 9884
+    },
+    {
+      "value": "Molly",
+      "matchCount": 9335
+    },
+    {
+      "value": "Angel",
+      "matchCount": 8752
+    },
+    {
+      "value": "Not Specified",
+      "matchCount": 8435
+    },
+    {
+      "value": "Hirono",
+      "matchCount": 7943
+    },
+    {
+      "value": "Crybaby",
+      "matchCount": 7114
+    },
+    {
+      "value": "Monster",
+      "matchCount": 5951
+    },
+    {
+      "value": "Bean",
+      "matchCount": 3483
+    },
+    {
+      "value": "Pucky",
+      "matchCount": 2587
+    },
+    {
+      "value": "Nancy",
+      "matchCount": 2526
+    },
+    {
+      "value": "Space Molly",
+      "matchCount": 2485
+    },
+    {
+      "value": "Happy",
+      "matchCount": 1859
+    },
+    {
+      "value": "Panda",
+      "matchCount": 1426
+    },
+    {
+      "value": "Kubo",
+      "matchCount": 1384
+    },
+    {
+      "value": "Diego",
+      "matchCount": 1139
+    },
+    {
+      "value": "Dream",
+      "matchCount": 1071
+    },
+    {
+      "value": "Bunny",
+      "matchCount": 919
+    },
+    {
+      "value": "My Melody",
+      "matchCount": 882
+    },
+    {
+      "value": "Mickey Mouse",
+      "matchCount": 850
+    },
+    {
+      "value": "Hello Kitty",
+      "matchCount": 839
+    },
+    {
+      "value": "Disney",
+      "matchCount": 829
+    },
+    {
+      "value": "Stitch",
+      "matchCount": 730
+    },
+    {
+      "value": "Pochacco",
+      "matchCount": 710
+    },
+    {
+      "value": "Chip",
+      "matchCount": 701
+    },
+    {
+      "value": "The Rock",
+      "matchCount": 682
+    },
+    {
+      "value": "Crush",
+      "matchCount": 664
+    },
+    {
+      "value": "Fairy",
+      "matchCount": 663
+    },
+    {
+      "value": "Beast",
+      "matchCount": 613
+    },
+    {
+      "value": "Cinnamoroll",
+      "matchCount": 610
+    },
+    {
+      "value": "Donald Duck",
+      "matchCount": 588
+    },
+    {
+      "value": "Dora",
+      "matchCount": 586
+    },
+    {
+      "value": "Gigi",
+      "matchCount": 579
+    },
+    {
+      "value": "Dale",
+      "matchCount": 577
+    },
+    {
+      "value": "Naruto Uzumaki",
+      "matchCount": 543
+    },
+    {
+      "value": "Princess",
+      "matchCount": 537
+    },
+    {
+      "value": "Sasuke Uchiha",
+      "matchCount": 495
+    },
+    {
+      "value": "Kakashi",
+      "matchCount": 486
+    },
+    {
+      "value": "Queen",
+      "matchCount": 481
+    },
+    {
+      "value": "Goofy",
+      "matchCount": 471
+    },
+    {
+      "value": "Unicorn",
+      "matchCount": 469
+    },
+    {
+      "value": "Clown",
+      "matchCount": 468
+    },
+    {
+      "value": "Sakura Haruno",
+      "matchCount": 447
+    },
+    {
+      "value": "Buddy",
+      "matchCount": 445
+    },
+    {
+      "value": "Dawn",
+      "matchCount": 412
+    },
+    {
+      "value": "The King",
+      "matchCount": 412
+    },
+    {
+      "value": "Pluto",
+      "matchCount": 405
+    },
+    {
+      "value": "Lucky",
+      "matchCount": 390
+    },
+    {
+      "value": "Snuggle",
+      "matchCount": 369
+    },
+    {
+      "value": "Harry Potter",
+      "matchCount": 362
+    },
+    {
+      "value": "Chucky",
+      "matchCount": 357
+    },
+    {
+      "value": "Ice",
+      "matchCount": 354
+    },
+    {
+      "value": "SpongeBob SquarePants",
+      "matchCount": 350
+    },
+    {
+      "value": "Gummi Bear",
+      "matchCount": 342
+    },
+    {
+      "value": "Harvester",
+      "matchCount": 336
+    },
+    {
+      "value": "Daisy",
+      "matchCount": 335
+    },
+    {
+      "value": "Minnie Mouse",
+      "matchCount": 323
+    }
+  ],
+  "topBrand": [
+    {
+      "value": "Not Specified",
+      "matchCount": 7423
+    },
+    {
+      "value": "Unbranded",
+      "matchCount": 411
+    },
+    {
+      "value": "Mystery",
+      "matchCount": 401
+    },
+    {
+      "value": "Sanrio",
+      "matchCount": 301
+    },
+    {
+      "value": "Disney",
+      "matchCount": 81
+    },
+    {
+      "value": "Art Figures",
+      "matchCount": 59
+    },
+    {
+      "value": "Hot Toys",
+      "matchCount": 48
+    },
+    {
+      "value": "BBI",
+      "matchCount": 48
+    },
+    {
+      "value": "Bandai",
+      "matchCount": 28
+    },
+    {
+      "value": "Marvel",
+      "matchCount": 24
+    },
+    {
+      "value": "tokidoki",
+      "matchCount": 20
+    },
+    {
+      "value": "Ideal",
+      "matchCount": 14
+    },
+    {
+      "value": "Disney Pixar",
+      "matchCount": 6
+    },
+    {
+      "value": "Golden",
+      "matchCount": 6
+    },
+    {
+      "value": "Kenner",
+      "matchCount": 4
+    },
+    {
+      "value": "Blue Box",
+      "matchCount": 2
+    },
+    {
+      "value": "Powerpuff Girls",
+      "matchCount": 2
+    },
+    {
+      "value": "Art Asylum",
+      "matchCount": 1
+    },
+    {
+      "value": "Aurora",
+      "matchCount": 1
+    },
+    {
+      "value": "Character",
+      "matchCount": 1
+    },
+    {
+      "value": "Crazy Toys",
+      "matchCount": 1
+    },
+    {
+      "value": "McDonald's",
+      "matchCount": 1
+    },
+    {
+      "value": "MEGA",
+      "matchCount": 1
+    },
+    {
+      "value": "McFarlane Toys",
+      "matchCount": 1
+    },
+    {
+      "value": "Daisy",
+      "matchCount": 1
+    },
+    {
+      "value": "Dragon",
+      "matchCount": 1
+    },
+    {
+      "value": "ENTERBAY",
+      "matchCount": 1
+    },
+    {
+      "value": "Handmade",
+      "matchCount": 1
+    },
+    {
+      "value": "Mirage",
+      "matchCount": 1
+    }
+  ]
+}

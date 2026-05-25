@@ -183,5 +183,12 @@ abstract final class IpTaxonomyRegistry {
       brandId: 'toptoy',
       aliases: ['MAYMEI'],
     ),
+    // DPL (eBay Brand aspect: Cureplaneta)
+    IpTaxonomy(
+      id: 'baby_three',
+      displayName: 'Baby Three',
+      brandId: 'dpl',
+      aliases: ['BABY THREE', 'BABYTHREE'],
+    ),
   ];
 }

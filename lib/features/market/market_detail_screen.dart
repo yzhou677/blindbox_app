@@ -4,11 +4,16 @@ import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/collectible_shelf_shadow.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/market/presentation/market_listing_image.dart';
-import 'package:blindbox_app/features/market/application/market_listings_providers.dart';
+import 'package:blindbox_app/features/market/application/market_listing_detail_provider.dart';
+import 'package:blindbox_app/features/market/application/market_listing_lookup.dart';
 import 'package:blindbox_app/features/market/presentation/collectible_market_mood_copy.dart';
+import 'package:blindbox_app/features/market/utils/open_market_listing_url.dart';
 import 'package:blindbox_app/features/market/utils/market_format.dart';
 import 'package:blindbox_app/features/collectible_relationship/application/collectible_relationship_providers.dart';
 import 'package:blindbox_app/features/collectible_relationship/widgets/collectible_relationship_line.dart';
+import 'package:blindbox_app/features/market/domain/chasers_heat_entry.dart';
+import 'package:blindbox_app/features/market/domain/market_listing_detail.dart';
+import 'package:blindbox_app/features/market/widgets/listing_description_section.dart';
 import 'package:blindbox_app/features/market/widgets/listing_market_signals.dart';
 import 'package:blindbox_app/models/market_listing.dart';
 import 'package:blindbox_app/shared/widgets/series_hero_meta_block.dart';
@@ -26,14 +31,8 @@ class MarketDetailScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final textTheme = theme.textTheme;
-    final all = ref.watch(marketBrowseListingsProvider);
-    MarketListing? listing;
-    for (final m in all) {
-      if (m.id == listingId) {
-        listing = m;
-        break;
-      }
-    }
+    final listing = ref.watch(marketListingByIdProvider(listingId));
+    final chaserEntry = ref.watch(chaserEntryByListingIdProvider(listingId));
 
     if (listing == null) {
       return Scaffold(
@@ -54,7 +53,8 @@ class MarketDetailScreen extends ConsumerWidget {
 
     final c = listing.collectible;
     final accent = c.shelfAccent ?? scheme.tertiaryContainer;
-    final appBarTitle = c.name.trim().isNotEmpty ? c.name : c.series;
+    final appBarTitle = chaserEntry?.identityLabel ??
+        (c.name.trim().isNotEmpty ? c.name : c.series);
 
     return Scaffold(
       backgroundColor: scheme.surface,
@@ -86,7 +86,7 @@ class MarketDetailScreen extends ConsumerWidget {
                 20,
                 0,
               ),
-              child: _MarketDetailHero(listing: listing, accent: accent),
+              child: _MarketDetailHero(listingId: listingId, listing: listing, accent: accent),
             ),
           ),
           SliverToBoxAdapter(
@@ -97,7 +97,11 @@ class MarketDetailScreen extends ConsumerWidget {
                 22,
                 FeedRhythm.detailBodyBottomGap,
               ),
-              child: _MarketDetailBody(listingId: listingId, listing: listing),
+              child: _MarketDetailBody(
+                listingId: listingId,
+                listing: listing,
+                chaserEntry: chaserEntry,
+              ),
             ),
           ),
         ],
@@ -106,17 +110,27 @@ class MarketDetailScreen extends ConsumerWidget {
   }
 }
 
-class _MarketDetailHero extends StatelessWidget {
-  const _MarketDetailHero({required this.listing, required this.accent});
+class _MarketDetailHero extends ConsumerWidget {
+  const _MarketDetailHero({
+    required this.listingId,
+    required this.listing,
+    required this.accent,
+  });
 
+  final String listingId;
   final MarketListing listing;
   final Color accent;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final c = listing.collectible;
+    final detail = ref.watch(marketListingDetailProvider(listingId));
+    final heroImage = detail.maybeWhen(
+      data: (value) => value?.imageUrl,
+      orElse: () => null,
+    );
     final aspect = CatalogImageDisplaySpec.aspectRatioFor(
           CatalogImageDisplayMode.seriesCoverHero,
         ) ??
@@ -164,6 +178,7 @@ class _MarketDetailHero extends StatelessWidget {
                     color: scheme.surface.withValues(alpha: 0.5),
                     child: MarketListingImage(
                       collectible: c,
+                      imageUrlOverride: heroImage,
                       heroTag: listing.marketHeroTag,
                       borderRadius: BorderRadius.zero,
                       fit: BoxFit.contain,
@@ -184,16 +199,20 @@ class _MarketDetailBody extends ConsumerWidget {
   const _MarketDetailBody({
     required this.listingId,
     required this.listing,
+    this.chaserEntry,
   });
 
   final String listingId;
   final MarketListing listing;
+  final ChasersHeatEntry? chaserEntry;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final c = listing.collectible;
+    final detailAsync = ref.watch(marketListingDetailProvider(listingId));
+    final detail = detailAsync.valueOrNull;
     final up = listing.priceChangePercent > 0;
     final down = listing.priceChangePercent < 0;
     final deltaColor = up
@@ -201,32 +220,35 @@ class _MarketDetailBody extends ConsumerWidget {
         : down
             ? scheme.error
             : scheme.onSurfaceVariant;
-    final figureName = c.name.trim();
-    final showFigureSubtitle =
-        figureName.isNotEmpty && figureName.toLowerCase() != c.series.trim().toLowerCase();
+    final listingTitle = c.name.trim();
+    final showFigureSubtitle = chaserEntry != null
+        ? listingTitle.isNotEmpty
+        : listingTitle.isNotEmpty &&
+            listingTitle.toLowerCase() != c.series.trim().toLowerCase();
     final release = c.releaseDateLabel.trim();
     final marketFacts = [
-      CollectibleMarketMoodCopy.sightingsLabel(listing.listingCount),
+      chaserEntry != null
+          ? CollectibleMarketMoodCopy.recentlyActiveLine()
+          : CollectibleMarketMoodCopy.listingDetailLine(listing),
       if (release.isNotEmpty) 'Released $release',
     ].join(' · ');
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          c.series,
+          chaserEntry?.identityLabel ?? c.series,
           style: CollectibleTypography.seriesHeroTitle(textTheme, scheme),
         ),
         if (showFigureSubtitle) ...[
           const SizedBox(height: 4),
           Text(
-            figureName,
+            listingTitle,
             style: CollectibleTypography.figureCaption(textTheme, scheme),
           ),
         ],
         SeriesHeroMetaBlock(
           brand: c.brand,
-          ipLine: c.ipLine?.trim() ?? '',
+          ipLine: chaserEntry?.ipLabel ?? c.ipLine?.trim() ?? '',
           density: SeriesHeroMetaDensity.compact,
         ),
         const SizedBox(height: 8),
@@ -235,14 +257,18 @@ class _MarketDetailBody extends ConsumerWidget {
           style: CollectibleTypography.figureMeta(textTheme, scheme),
         ),
         const SizedBox(height: 6),
-        Text(
-          CollectibleMarketMoodCopy.listingDetailLine(listing),
-          style: textTheme.bodyMedium?.copyWith(
-            color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
-            height: 1.3,
-          ),
-        ),
         ListingMarketSignals(listing: listing, dense: true),
+        const SizedBox(height: 12),
+        _MarketListingFacts(listing: listing, detail: detail),
+        if (detailAsync.isLoading && detail == null) ...[
+          const SizedBox(height: 12),
+          LinearProgressIndicator(
+            minHeight: 2,
+            color: scheme.primary.withValues(alpha: 0.55),
+            backgroundColor: scheme.surfaceContainerHighest,
+          ),
+        ],
+        ListingDescriptionSection(description: detail?.shortDescription),
         Builder(
           builder: (context) {
             final line = ref.watch(
@@ -280,6 +306,107 @@ class _MarketDetailBody extends ConsumerWidget {
             ],
           ],
         ),
+        if (_listingUrl(listing, detail) != null) ...[
+          const SizedBox(height: 18),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.tonalIcon(
+              onPressed: () => openMarketListingUrl(
+                context,
+                _listingUrl(listing, detail),
+              ),
+              icon: const Icon(Icons.open_in_new_rounded, size: 18),
+              label: Text(
+                listing.providerId == 'ebay' ? 'View on eBay' : 'View listing',
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+String? _listingUrl(MarketListing listing, MarketListingDetail? detail) {
+  final fromDetail = detail?.listingUrl.trim();
+  if (fromDetail != null && fromDetail.isNotEmpty) return fromDetail;
+  final fromListing = listing.externalListingUrl?.trim();
+  if (fromListing != null && fromListing.isNotEmpty) return fromListing;
+  return null;
+}
+
+class _MarketListingFacts extends StatelessWidget {
+  const _MarketListingFacts({
+    required this.listing,
+    required this.detail,
+  });
+
+  final MarketListing listing;
+  final MarketListingDetail? detail;
+
+  @override
+  Widget build(BuildContext context) {
+    final listed = formatMarketListingDate(listing.itemCreationDate);
+    final seller = _sellerLine(listing, detail);
+    final quantity =
+        detail == null ? null : formatMarketListingQuantityLine(detail!);
+    final rows = <({String label, String value})>[
+      if (detail?.condition case final condition?)
+        (label: 'Condition', value: condition),
+      if (quantity != null) (label: 'Quantity', value: quantity),
+      if (seller case final sellerLine?) (label: 'Seller', value: sellerLine),
+      if (listed case final listedLine?) (label: 'Listed', value: listedLine),
+      if (detail?.shippingSummary case final shipping?)
+        (label: 'Shipping', value: shipping),
+    ];
+
+    if (rows.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final row in rows) ...[
+          _MarketDetailFactRow(label: row.label, value: row.value),
+          const SizedBox(height: 8),
+        ],
+      ],
+    );
+  }
+
+  String? _sellerLine(MarketListing listing, MarketListingDetail? detail) {
+    final fromDetail = detail?.sellerLine?.trim();
+    if (fromDetail != null && fromDetail.isNotEmpty) return fromDetail;
+    final username = listing.sellerUsername?.trim();
+    if (username != null && username.isNotEmpty) return username;
+    return null;
+  }
+}
+
+class _MarketDetailFactRow extends StatelessWidget {
+  const _MarketDetailFactRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final labelStyle = CollectibleTypography.figureMeta(textTheme, scheme)
+        .copyWith(fontWeight: FontWeight.w600);
+    final valueStyle = textTheme.bodyMedium?.copyWith(
+      color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
+      height: 1.25,
+    );
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 84,
+          child: Text(label, style: labelStyle),
+        ),
+        Expanded(child: Text(value, style: valueStyle)),
       ],
     );
   }

@@ -2,7 +2,6 @@ import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
 import 'package:blindbox_app/features/home/application/home_feed_provider.dart';
-import 'package:blindbox_app/features/home/data/mock_latest_drops.dart';
 import 'package:blindbox_app/features/home/widgets/latest_drops_section.dart';
 import 'package:blindbox_app/features/home/widgets/trending_series_section.dart';
 import 'package:blindbox_app/shared/widgets/app_search_field.dart';
@@ -86,11 +85,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               child: feedAsync.when(
                 loading: () => const _HomeFeedLoading(),
-                error: (_, _) => _HomeFeedBody(
-                  feed: HomeFeedSnapshot(
-                    latest: mockSeriesReleases,
-                    trending: mockSeriesReleases.skip(1).take(4).toList(growable: false),
-                  ),
+                error: (_, _) => const _HomeFeedBody(
+                  feed: HomeFeedSnapshot(latest: [], trending: []),
                 ),
                 data: (feed) => _HomeFeedBody(feed: feed),
               ),

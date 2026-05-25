@@ -48,15 +48,13 @@ class CollectionSummarySection extends StatelessWidget {
           DecoratedBox(
             decoration: BoxDecoration(
               borderRadius: CollectibleShape.shellRadius,
-              color: scheme.surfaceContainerLow.withValues(
-                alpha: isDark ? 0.92 : 1,
-              ),
+              color: scheme.surfaceContainerLow,
               border: Border.all(
                 color: Color.lerp(
                   scheme.outlineVariant,
                   scheme.primary,
                   isDark ? 0.12 : 0.18,
-                )!.withValues(alpha: isDark ? 0.32 : 0.42),
+                )!,
               ),
             ),
             child: Padding(

@@ -10,6 +10,6 @@ MarketListing? mockMarketListingById(String id) {
   return MarketBrowseListingsSession.instance.findById(id);
 }
 
-List<MarketListing> mockTrendingMarketListings() {
-  return MarketBrowseListingsSession.instance.trending;
+List<MarketListing> mockChasersMarketListings() {
+  return MarketBrowseListingsSession.instance.chasers;
 }

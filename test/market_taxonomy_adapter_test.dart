@@ -44,6 +44,34 @@ void main() {
     expect(tnt.supportedIpIds, isNot(contains('liila')));
   });
 
+  test('filter chip TOPTOY IPs exclude nommi x amarilith collab line', () {
+    final bundle = CatalogSeedBundle(
+      brands: const [
+        CatalogBrand(id: 'toptoy', displayName: 'TOPTOY', aliases: []),
+      ],
+      ips: const [
+        CatalogIp(id: 'nommi', brandId: 'toptoy', displayName: 'Nommi', aliases: []),
+        CatalogIp(
+          id: 'nommi_x_amarilith',
+          brandId: 'toptoy',
+          displayName: 'Nommi x Amarilith',
+          aliases: ['Amarilith'],
+        ),
+        CatalogIp(id: 'maymei', brandId: 'toptoy', displayName: 'Maymei', aliases: []),
+      ],
+      series: const [],
+      figures: const [],
+    );
+    MarketTaxonomy.applyCatalogBundle(bundle);
+    final toptoy = MarketTaxonomy.brands.firstWhere((b) => b.id == 'toptoy');
+    expect(toptoy.supportedIpIds, contains('nommi'));
+    expect(toptoy.supportedIpIds, isNot(contains('nommi_x_amarilith')));
+    expect(
+      MarketTaxonomy.ipChipOptionsForBrand('toptoy').map((o) => o.id),
+      isNot(contains('nommi_x_amarilith')),
+    );
+  });
+
   test('brandById still resolves full registry for listings', () {
     final b = MarketTaxonomy.brandById('finding_unicorn');
     expect(b, isNotNull);

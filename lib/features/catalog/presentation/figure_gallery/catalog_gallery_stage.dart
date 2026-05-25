@@ -91,10 +91,10 @@ class CatalogGalleryStage extends StatelessWidget {
         decodeExtent: decode,
         fadeInDuration: spec.fadeInDuration,
         fadeOutDuration: spec.fadeOutDuration,
-        placeholder: (_, __) => AppImageShimmer(
+        placeholder: (_, _) => AppImageShimmer(
           borderRadius: AppRadii.figureGalleryRadius,
         ),
-        errorWidget: (_, __, ___) => CollectibleFigurePlaceholder(
+        errorWidget: (_, _, _) => CollectibleFigurePlaceholder(
           name: name,
           seedKey: seedKey,
           isSecret: isSecret,

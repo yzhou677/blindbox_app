@@ -4,6 +4,8 @@ import 'package:blindbox_app/shared/widgets/series_hero_meta_block.dart';
 import 'package:flutter/material.dart';
 
 /// Drag pill + optional series/editorial header for bottom sheets.
+///
+/// Intentionally no nested [Material] — lives in [CollectibleSheetScrollView.header].
 class CollectibleSheetChrome extends StatelessWidget {
   const CollectibleSheetChrome({
     super.key,

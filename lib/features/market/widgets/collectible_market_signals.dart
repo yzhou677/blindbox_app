@@ -1,4 +1,5 @@
 import 'package:blindbox_app/features/market/domain/collectible_market_snapshot.dart';
+import 'package:blindbox_app/features/market/domain/market_mood.dart';
 import 'package:blindbox_app/features/market/domain/rarity_presence.dart';
 import 'package:flutter/material.dart';
 
@@ -36,7 +37,7 @@ class CollectibleMarketSignals extends StatelessWidget {
 
   String? _chipLabel() {
     if (snapshot.rarityPresence == RarityPresence.observed) return 'Secret';
-    if (snapshot.listingCount >= 4) return 'Often spotted';
+    if (snapshot.marketMood == MarketMood.active) return 'Recently active';
     return null;
   }
 }

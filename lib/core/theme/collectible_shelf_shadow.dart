@@ -27,6 +27,24 @@ abstract final class CollectibleShelfShadow {
     ];
   }
 
+  /// Shelf list cards — flat in dark theme (border carries separation); one shadow in light.
+  static List<BoxShadow> shelfCard(BuildContext context, {required Color accent}) {
+    if (Theme.of(context).brightness == Brightness.dark) {
+      return const [];
+    }
+    final scheme = Theme.of(context).colorScheme;
+    final tokens = CollectibleTokens.of(context);
+    final core = Color.lerp(scheme.shadow, accent, tokens.shellShadowAccentMix)!;
+    return [
+      BoxShadow(
+        color: core.withValues(alpha: tokens.shellShadowLightAlpha),
+        blurRadius: tokens.shellShadowBlur * 0.72,
+        offset: Offset(0, tokens.shellShadowDy * 0.65),
+        spreadRadius: tokens.shellShadowSpread,
+      ),
+    ];
+  }
+
   /// Extra height a horizontal rail viewport needs below a product shell so
   /// [productShell] is not clipped. Uses the same [CollectibleTokens] fields as the shadow.
   static double horizontalRailShellBottomSlack(CollectibleTokens tokens) {

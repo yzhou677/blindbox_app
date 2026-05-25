@@ -4,6 +4,7 @@ import 'package:blindbox_app/features/home/drop_detail_screen.dart';
 import 'package:blindbox_app/features/home/home_screen.dart';
 import 'package:blindbox_app/features/market/market_detail_screen.dart';
 import 'package:blindbox_app/features/market/market_screen.dart';
+import 'package:blindbox_app/features/market/presentation/market_browse_search_screen.dart';
 import 'package:blindbox_app/shared/widgets/main_shell_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -94,6 +95,32 @@ final GoRouter appRouter = GoRouter(
                 child: const MarketScreen(),
               ),
               routes: [
+                GoRoute(
+                  path: 'search',
+                  pageBuilder: (context, state) => CustomTransitionPage<void>(
+                    key: state.pageKey,
+                    child: const MarketBrowseSearchScreen(),
+                    transitionDuration: const Duration(milliseconds: 320),
+                    transitionsBuilder:
+                        (context, animation, secondaryAnimation, child) {
+                      final curved = CurvedAnimation(
+                        parent: animation,
+                        curve: Curves.easeOutCubic,
+                        reverseCurve: Curves.easeInCubic,
+                      );
+                      return FadeTransition(
+                        opacity: curved,
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0, 0.04),
+                            end: Offset.zero,
+                          ).animate(curved),
+                          child: child,
+                        ),
+                      );
+                    },
+                  ),
+                ),
                 GoRoute(
                   path: 'listing/:id',
                   pageBuilder: (context, state) {

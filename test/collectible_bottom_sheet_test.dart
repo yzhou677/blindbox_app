@@ -5,17 +5,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('resolveCollectibleSheetDragSizes fills height-capped host at rest', () {
+  test('resolveCollectibleSheetExtents uses screen-height fractions', () {
     const open = 0.56;
     const minScreen = FeedRhythm.sheetMinScreenFraction;
-    final sizes = resolveCollectibleSheetDragSizes(heightFactor: open);
+    final extents = resolveCollectibleSheetExtents(
+      openScreenFraction: open,
+      minScreenFraction: minScreen,
+      maxScreenFraction: open,
+    );
 
-    expect(sizes.initialChildSize, 1.0);
-    expect(sizes.maxChildSize, 1.0);
-    expect(sizes.minChildSize, closeTo(minScreen / open, 0.01));
+    expect(extents.initialChildSize, open);
+    expect(extents.maxChildSize, open);
+    expect(extents.minChildSize, minScreen);
   });
 
-  testWidgets('showCollectibleBottomSheet uses linked DraggableScrollableSheet', (
+  testWidgets('showCollectibleBottomSheet uses fixed-height host and route Material', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -30,11 +34,10 @@ void main() {
                     showCollectibleBottomSheet<void>(
                       context: context,
                       heightFraction: 0.5,
-                      builder: (ctx, scroll) => ListView(
+                      builder: (ctx, scroll) => CollectibleSheetScrollView(
                         controller: scroll,
-                        physics: collectibleSheetScrollPhysics(),
-                        children: const [
-                          Text('Sheet body'),
+                        slivers: const [
+                          SliverToBoxAdapter(child: Text('Sheet body')),
                         ],
                       ),
                     );
@@ -51,8 +54,17 @@ void main() {
     await tester.tap(find.text('Open'));
     await tester.pumpAndSettle();
     expect(find.text('Sheet body'), findsOneWidget);
-    expect(find.byType(DraggableScrollableSheet), findsOneWidget);
-    expect(find.byType(FractionallySizedBox), findsWidgets);
+    expect(find.byType(DraggableScrollableSheet), findsNothing);
+    expect(find.byType(CollectibleSheetScrollView), findsOneWidget);
+
+    final sheetMaterial = tester.widget<Material>(
+      find.ancestor(
+        of: find.byType(CollectibleSheetScrollView),
+        matching: find.byType(Material),
+      ).first,
+    );
+    expect(sheetMaterial.color, AppTheme.light().colorScheme.surface);
+    expect(sheetMaterial.elevation, greaterThan(0));
 
     await tester.tapAt(const Offset(20, 20));
     await tester.pumpAndSettle();

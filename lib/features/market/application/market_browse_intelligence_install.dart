@@ -5,9 +5,15 @@ import 'package:blindbox_app/features/market/data/market_browse_listings_session
 import 'package:blindbox_app/models/market_listing.dart';
 
 /// Installs browse listings and derived collectible market snapshots.
-void installMarketBrowseIntelligence(List<MarketListing> listings) {
+void installMarketBrowseIntelligence(
+  List<MarketListing> listings, {
+  bool preserveFeedOrder = false,
+}) {
   MarketBrowseListingsSession.instance.install(listings);
-  final snapshots = buildCollectibleMarketSnapshots(listings);
+  final snapshots = buildCollectibleMarketSnapshots(
+    listings,
+    preserveFeedOrder: preserveFeedOrder,
+  );
   CollectibleMarketSession.instance.install(snapshots);
   final cache = CollectibleMarketSnapshotCache.instance;
   cache.writeMemory(snapshots);

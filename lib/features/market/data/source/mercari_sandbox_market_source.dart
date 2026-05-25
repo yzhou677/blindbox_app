@@ -144,7 +144,11 @@ class MercariSandboxMarketSource implements MarketSource {
     required bool replace,
   }) async {
     final pageListings =
-        items.map((e) => e.toMarketListing()).toList(growable: false);
+        items
+            .map(
+              (e) => e.toMarketListing(providerId: MarketProviderId.mercari),
+            )
+            .toList(growable: false);
 
     if (replace) {
       await _cache.write(

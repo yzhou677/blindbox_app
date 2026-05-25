@@ -124,7 +124,7 @@ void main() {
     await tester.pump(const Duration(seconds: 13));
   });
 
-  testWidgets('Market tab shows search and trending', (
+  testWidgets('Market tab shows search and browse filters', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -140,9 +140,9 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 600));
 
-    expect(find.text('Trending'), findsWidgets);
+    expect(find.text('Chasers'), findsNothing);
+    expect(find.text('Collectibles'), findsOneWidget);
     expect(find.text('Brand'), findsOneWidget);
-    expect(find.text('IP'), findsNothing);
     await tester.tap(find.text('POP MART'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));

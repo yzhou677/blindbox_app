@@ -1,5 +1,6 @@
 import 'package:blindbox_app/features/catalog/presentation/catalog_aspect_image.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
+import 'package:blindbox_app/features/market/utils/ebay_image_url.dart';
 import 'package:blindbox_app/models/collectible.dart';
 import 'package:flutter/material.dart';
 
@@ -12,6 +13,7 @@ class MarketListingImage extends StatelessWidget {
     super.key,
     required this.collectible,
     this.heroTag,
+    this.imageUrlOverride,
     required this.borderRadius,
     this.fit = BoxFit.contain,
     this.displayMode = CatalogImageDisplayMode.marketCatalogThumb,
@@ -19,6 +21,7 @@ class MarketListingImage extends StatelessWidget {
 
   final Collectible collectible;
   final String? heroTag;
+  final String? imageUrlOverride;
   final BorderRadius borderRadius;
   final BoxFit fit;
   final CatalogImageDisplayMode displayMode;
@@ -38,7 +41,11 @@ class MarketListingImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final ref = collectible.imageUrl.trim();
+    var ref = imageUrlOverride?.trim() ?? collectible.imageUrl.trim();
+    if (ref.isNotEmpty &&
+        displayMode == CatalogImageDisplayMode.seriesCoverHero) {
+      ref = upgradeEbayImageUrl(ref, size: EbayImageSize.detail);
+    }
     CatalogAspectImage.assertAspectPreservingFit(fit);
 
     final image = ClipRRect(

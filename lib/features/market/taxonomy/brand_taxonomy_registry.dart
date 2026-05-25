@@ -33,5 +33,10 @@ abstract final class BrandTaxonomyRegistry {
       displayName: 'TOPTOY',
       aliases: ['TOPTOY', 'TOP TOY'],
     ),
+    BrandTaxonomy(
+      id: 'dpl',
+      displayName: 'DPL',
+      aliases: ['DPL', 'CUREPLANETA'],
+    ),
   ];
 }
