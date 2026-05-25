@@ -21,6 +21,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
+import { validateOfficialFeedSeed } from './seed_validation.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, '../..');
@@ -141,6 +142,15 @@ async function main() {
     process.exit(1);
   }
 
+  const validation = validateOfficialFeedSeed(seed);
+  for (const w of validation.warnings) console.warn(`warn: ${w}`);
+  if (!validation.ok) {
+    console.error('Seed validation failed:');
+    for (const e of validation.errors) console.error(`  - ${e}`);
+    console.error('Fix popmart_us.seed.json (per-item officialUrl + imageUrl) then retry.');
+    process.exit(1);
+  }
+
   initAdmin();
   const db = admin.firestore();
   const batch = db.batch();
@@ -153,32 +163,32 @@ async function main() {
     const officialUrl = item.officialUrl?.trim();
     const publishedAtRaw = item.publishedAt?.trim();
     const status = item.status?.trim() ?? 'active';
+    const summary = item.summary?.trim();
 
     if (!id || !title || !imageUrl || !officialUrl || !publishedAtRaw) {
-      console.warn('Skipping incomplete item:', item);
-      continue;
+      console.error('Skipping incomplete item (should have been caught by validation):', item);
+      process.exit(1);
     }
 
     const publishedAt = admin.firestore.Timestamp.fromDate(new Date(publishedAtRaw));
     const ref = db.collection(COLLECTION).doc(id);
 
-    batch.set(
-      ref,
-      {
-        id,
-        sourceId,
-        sourceLabel,
-        title,
-        imageUrl,
-        officialUrl,
-        publishedAt,
-        ingestedAt: now,
-        status,
-        contentHash: contentHash(sourceId, officialUrl),
-        locale,
-      },
-      { merge: true },
-    );
+    const doc = {
+      id,
+      sourceId,
+      sourceLabel,
+      title,
+      imageUrl,
+      officialUrl,
+      publishedAt,
+      ingestedAt: now,
+      status,
+      contentHash: contentHash(sourceId, officialUrl),
+      locale,
+    };
+    if (summary) doc.summary = summary;
+
+    batch.set(ref, doc, { merge: true });
   }
 
   await batch.commit();

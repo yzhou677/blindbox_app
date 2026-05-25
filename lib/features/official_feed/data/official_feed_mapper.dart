@@ -3,6 +3,38 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 bool _hasText(String? value) => value != null && value.trim().isNotEmpty;
 
+/// POP MART site logo / favicon — never a per-item release image.
+bool _isPopMartPlaceholderImage(String imageUrl) {
+  final lower = imageUrl.toLowerCase();
+  return lower.contains('/images/192.png') ||
+      lower.contains('favicon.ico') ||
+      lower.contains('/images/logo');
+}
+
+/// Rejects storefront home (`/us`) when a product link exists in seed.
+bool _isPopMartUsHomepage(Uri uri) {
+  if (!uri.host.endsWith('popmart.com')) return false;
+  final path = uri.path.replaceAll(RegExp(r'/+$'), '');
+  return path.isEmpty || path == '/us';
+}
+
+/// Product, POP NOW set, or numbered collection — not the US landing page.
+bool _isPopMartUsItemPath(Uri uri) {
+  final path = uri.path;
+  if (path.startsWith('/us/products/')) {
+    final rest = path.substring('/us/products/'.length);
+    return rest.isNotEmpty;
+  }
+  if (path.startsWith('/us/pop-now/')) {
+    final rest = path.substring('/us/pop-now/'.length);
+    return rest.isNotEmpty;
+  }
+  if (path.startsWith('/us/collection/')) {
+    return RegExp(r'^/us/collection/\d+').hasMatch(path);
+  }
+  return false;
+}
+
 DateTime? _readPublishedAt(Map<String, dynamic> data) {
   final raw = data['publishedAt'];
   if (raw is Timestamp) {
@@ -46,6 +78,12 @@ OfficialFeedItem? mapOfficialFeedItem(String docId, Map<String, dynamic> data) {
       uri.scheme != 'https' ||
       imageUri == null ||
       imageUri.scheme != 'https') {
+    return null;
+  }
+
+  if (_isPopMartPlaceholderImage(imageUrl) ||
+      _isPopMartUsHomepage(uri) ||
+      !_isPopMartUsItemPath(uri)) {
     return null;
   }
 
