@@ -11,7 +11,6 @@ import 'package:blindbox_app/features/collection/application/catalog_series_shel
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/add_series_catalog_copy.dart';
-import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart';
 import 'package:blindbox_app/features/collection/widgets/catalog_series_preview_sheet.dart';
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
@@ -142,7 +141,11 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
 
     return CollectibleSheetInsets(
       extraBottom: AppSpacing.md,
-      child: Column(
+      child: CollectibleSheetScrollView(
+        controller: sheetScroll,
+        slivers: [
+          SliverToBoxAdapter(
+            child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             CollectibleSheetChrome(
@@ -194,26 +197,28 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
                   ),
                 ),
               ),
-            Expanded(
-              child: catalogActive
-                  ? _buildCatalogSearchBody(
-                      context,
-                      scheme,
-                      textTheme,
-                      snap,
-                      notifier,
-                      sheetScroll,
-                    )
-                  : _buildRecommendationsBody(
-                      context,
-                      scheme,
-                      textTheme,
-                      notifier,
-                      sheetScroll,
-                    ),
+          ],
             ),
-            const SizedBox(height: 8),
-            FilledButton.tonal(
+          ),
+          if (catalogActive)
+            _buildCatalogSearchSliver(
+              context,
+              scheme,
+              textTheme,
+              snap,
+              notifier,
+            )
+          else
+            _buildRecommendationsSliver(
+              context,
+              scheme,
+              textTheme,
+              notifier,
+            ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: FilledButton.tonal(
               onPressed: widget.onCreateCustom,
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
@@ -230,34 +235,41 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
                 ],
               ),
             ),
-          ],
-        ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildRecommendationsBody(
+  Widget _buildRecommendationsSliver(
     BuildContext context,
     ColorScheme scheme,
     TextTheme textTheme,
     CollectionNotifier notifier,
-    ScrollController? sheetScroll,
   ) {
     if (_catalogLoadFailed) {
-      return Center(
-        child: Text(
-          'Couldn’t load the catalog. Check your connection and try again.',
-          textAlign: TextAlign.center,
-          style: textTheme.bodyMedium?.copyWith(
-            color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: Center(
+          child: Text(
+            'Couldn’t load the catalog. Check your connection and try again.',
+            textAlign: TextAlign.center,
+            style: textTheme.bodyMedium?.copyWith(
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
+            ),
           ),
         ),
       );
     }
     if (_catalogBundle == null || _recommendationsFuture == null) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: CircularProgressIndicator(),
+      return const SliverFillRemaining(
+        hasScrollBody: false,
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: CircularProgressIndicator(),
+          ),
         ),
       );
     }
@@ -265,38 +277,44 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
       future: _recommendationsFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(child: CircularProgressIndicator()),
+          );
         }
         if (snapshot.hasError) {
-          return Center(
-            child: Text(
-              'Couldn’t load recommendations.',
-              style: textTheme.bodyMedium?.copyWith(
-                color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
+          return SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(
+              child: Text(
+                'Couldn’t load recommendations.',
+                style: textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
+                ),
               ),
             ),
           );
         }
         final recs = snapshot.data ?? const <CatalogSeries>[];
         if (recs.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Text(
-                'Every catalog series here is already on your shelf. Nice.',
-                textAlign: TextAlign.center,
-                style: textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
-                  height: 1.4,
+          return SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Text(
+                  'Every catalog series here is already on your shelf. Nice.',
+                  textAlign: TextAlign.center,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
+                    height: 1.4,
+                  ),
                 ),
               ),
             ),
           );
         }
-        return ListView.separated(
-          controller: sheetScroll,
-          physics: collectibleSheetScrollPhysics(),
-          padding: const EdgeInsets.only(bottom: 8),
+        return SliverList.separated(
           itemCount: recs.length,
           separatorBuilder: (context, index) => const SizedBox(height: 12),
           itemBuilder: (ctx, i) {
@@ -324,31 +342,36 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     );
   }
 
-  Widget _buildCatalogSearchBody(
+  Widget _buildCatalogSearchSliver(
     BuildContext context,
     ColorScheme scheme,
     TextTheme textTheme,
     CollectionSnapshot snap,
     CollectionNotifier notifier,
-    ScrollController? sheetScroll,
   ) {
     if (_catalogLoadFailed) {
-      return Center(
-        child: Text(
-          'Couldn’t load the catalog. Check your connection and try again.',
-          textAlign: TextAlign.center,
-          style: textTheme.bodyMedium?.copyWith(
-            color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: Center(
+          child: Text(
+            'Couldn’t load the catalog. Check your connection and try again.',
+            textAlign: TextAlign.center,
+            style: textTheme.bodyMedium?.copyWith(
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
+            ),
           ),
         ),
       );
     }
     final bundle = _catalogBundle;
     if (bundle == null) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: CircularProgressIndicator(),
+      return const SliverFillRemaining(
+        hasScrollBody: false,
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: CircularProgressIndicator(),
+          ),
         ),
       );
     }
@@ -359,20 +382,20 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
       excludeSeriesId: snap.hasTemplateOnShelf,
     );
     if (matches.isEmpty) {
-      return Center(
-        child: Text(
-          AddSeriesCatalogCopy.noSearchMatches,
-          style: textTheme.bodyMedium?.copyWith(
-            color: scheme.onSurfaceVariant.withValues(alpha: 0.8),
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: Center(
+          child: Text(
+            AddSeriesCatalogCopy.noSearchMatches,
+            style: textTheme.bodyMedium?.copyWith(
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.8),
+            ),
           ),
         ),
       );
     }
 
-    return ListView.separated(
-      controller: sheetScroll,
-      physics: collectibleSheetScrollPhysics(),
-      padding: const EdgeInsets.only(bottom: 8),
+    return SliverList.separated(
       itemCount: matches.length,
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (ctx, i) {
@@ -409,6 +432,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
       },
     );
   }
+
 }
 
 class _SuggestionCard extends StatelessWidget {

@@ -4,6 +4,8 @@ import 'package:blindbox_app/shared/widgets/series_hero_meta_block.dart';
 import 'package:flutter/material.dart';
 
 /// Drag pill + optional series/editorial header for bottom sheets.
+///
+/// Intentionally no nested [Material] — lives inside the sheet shell.
 class CollectibleSheetChrome extends StatelessWidget {
   const CollectibleSheetChrome({
     super.key,
@@ -29,14 +31,12 @@ class CollectibleSheetChrome extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    return Material(
-      color: scheme.surface,
-      child: Padding(
-        padding: padding,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Center(child: CollectibleSheetDragHandle()),
+    return Padding(
+      padding: padding,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Center(child: CollectibleSheetDragHandle()),
           if (editorialTitle != null) ...[
             SizedBox(height: FeedRhythm.sheetHeaderAfterHandle),
             Text(
@@ -74,7 +74,6 @@ class CollectibleSheetChrome extends StatelessWidget {
             ],
           ],
         ],
-        ),
       ),
     );
   }

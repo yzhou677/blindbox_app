@@ -17,7 +17,6 @@ void main() {
     expect(extents.initialChildSize, open);
     expect(extents.maxChildSize, open);
     expect(extents.minChildSize, minScreen);
-    expect(extents.sortedSnapSizes, [minScreen, open]);
   });
 
   testWidgets('showCollectibleBottomSheet uses linked DraggableScrollableSheet', (

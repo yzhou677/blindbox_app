@@ -43,6 +43,29 @@ ScrollPhysics collectibleSheetScrollPhysics([ScrollPhysics? parent]) {
   );
 }
 
+/// One [CustomScrollView] for the sheet — header, list, and footer share the
+/// linked controller so drag-from-handle and scroll-to-dismiss stay continuous.
+class CollectibleSheetScrollView extends StatelessWidget {
+  const CollectibleSheetScrollView({
+    super.key,
+    required this.slivers,
+    this.controller,
+  });
+
+  final List<Widget> slivers;
+  final ScrollController? controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final scroll = controller ?? CollectibleSheetScope.scrollControllerOf(context);
+    return CustomScrollView(
+      controller: scroll,
+      physics: collectibleSheetScrollPhysics(),
+      slivers: slivers,
+    );
+  }
+}
+
 /// Target visible height as a fraction of the full screen.
 double resolveCollectibleSheetHeightFactor({
   double openScreenFraction = FeedRhythm.sheetOpenScreenFraction,
@@ -65,14 +88,6 @@ final class CollectibleSheetExtents {
   final double initialChildSize;
   final double minChildSize;
   final double maxChildSize;
-
-  List<double> get sortedSnapSizes {
-    final sizes = <double>{minChildSize, initialChildSize};
-    if (maxChildSize > initialChildSize) {
-      sizes.add(maxChildSize);
-    }
-    return sizes.toList()..sort();
-  }
 }
 
 CollectibleSheetExtents resolveCollectibleSheetExtents({
@@ -118,11 +133,10 @@ class CollectibleSheetInsets extends StatelessWidget {
   }
 }
 
-/// Presents a collectible bottom sheet with forgiving drag / tap / back dismiss.
+/// Presents a collectible bottom sheet — single surface, native drag dismiss.
 ///
-/// A single [DraggableScrollableSheet] owns both height and drag — the rounded
-/// [Material] shell is built inside its [builder] so content, corners, and
-/// elevation move together (no fixed-height ghost host above the sheet).
+/// [showModalBottomSheet] [enableDrag] moves the whole route; [DraggableScrollableSheet]
+/// links list scroll to resize. One [Material] shell (no nested chrome layers).
 Future<T?> showCollectibleBottomSheet<T>({
   required BuildContext context,
   required CollectibleSheetWidgetBuilder builder,
@@ -156,7 +170,7 @@ Future<T?> showCollectibleBottomSheet<T>({
     isScrollControlled: true,
     useSafeArea: false,
     isDismissible: true,
-    enableDrag: false,
+    enableDrag: true,
     showDragHandle: false,
     barrierColor: CollectibleImmersion.sheetBarrier(scheme),
     sheetAnimationStyle: CollectibleMotion.sheetAnimationStyle(),
@@ -173,17 +187,12 @@ Future<T?> showCollectibleBottomSheet<T>({
           initialChildSize: extents.initialChildSize,
           minChildSize: extents.minChildSize,
           maxChildSize: extents.maxChildSize,
-          snap: true,
-          snapSizes: extents.sortedSnapSizes,
-          snapAnimationDuration: CollectibleMotion.sheetSnap,
+          snap: false,
           shouldCloseOnMinExtent: true,
           builder: (context, scrollController) {
-            return Material(
+            return _CollectibleSheetShell(
               color: surface,
-              elevation: isDark ? 10 : 12,
-              shadowColor: Colors.black.withValues(alpha: isDark ? 0.42 : 0.16),
-              clipBehavior: Clip.antiAlias,
-              shape: AppRadii.sheetShape,
+              isDark: isDark,
               child: CollectibleSheetScope(
                 scrollController: scrollController,
                 child: builder(context, scrollController),
@@ -194,4 +203,29 @@ Future<T?> showCollectibleBottomSheet<T>({
       );
     },
   );
+}
+
+/// Rounded elevated shell — the only [Material] in the sheet stack.
+class _CollectibleSheetShell extends StatelessWidget {
+  const _CollectibleSheetShell({
+    required this.color,
+    required this.isDark,
+    required this.child,
+  });
+
+  final Color color;
+  final bool isDark;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: color,
+      elevation: isDark ? 10 : 12,
+      shadowColor: Colors.black.withValues(alpha: isDark ? 0.42 : 0.16),
+      clipBehavior: Clip.antiAlias,
+      shape: AppRadii.sheetShape,
+      child: child,
+    );
+  }
 }
