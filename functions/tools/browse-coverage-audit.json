@@ -1,11 +1,11 @@
 {
-  "fetchedAt": "2026-05-25T05:09:14.806Z",
+  "fetchedAt": "2026-05-25T05:29:29.549Z",
   "categoryId": "261068",
   "sparseThreshold": 6,
   "summary": {
     "total": 38,
-    "healthy": 37,
-    "sparse": 1,
+    "healthy": 38,
+    "sparse": 0,
     "empty": 0,
     "titleFilteredEmpty": 0,
     "missingGatewayIp": 0
@@ -21,7 +21,7 @@
       "aspect_filter": null,
       "verifiedFacet": false,
       "retrievalMode": "discover",
-      "upstreamTotal": 16870,
+      "upstreamTotal": 16915,
       "rawSampleCount": 12,
       "afterTitleFilter": 12,
       "status": "healthy",
@@ -77,7 +77,7 @@
       "aspect_filter": "categoryId:261068,Character:{Labubu}",
       "verifiedFacet": true,
       "retrievalMode": "q_and_verified_character",
-      "upstreamTotal": 31520,
+      "upstreamTotal": 31536,
       "rawSampleCount": 12,
       "afterTitleFilter": 9,
       "status": "healthy",
@@ -113,12 +113,12 @@
       "sampleTitles": [
         "POP MART x Hirono Road Journal Series Plush Pendant Confirmed Figure in Open Box",
         "POP MART x Hirono Echo Series Confirmed Figure Doll in New Sealed Bag (Open Box)",
-        "POP MART Hirono Tamed Wildgrass Series Confirmed Figures Sealed Bag in Open Box"
+        "HIDDEN PILOT-HIRONO LE PETIT PRINCE SERIES BLIND BOX CONFIRMED AUTHENTIC FIGURE"
       ],
       "upstreamSampleTitles": [
         "POP MART x Hirono Road Journal Series Plush Pendant Confirmed Figure in Open Box",
-        "POP MART x Hirono Echo Series Confirmed Figure Doll in New Sealed Bag (Open Box)",
-        "POP MART Hirono Tamed Wildgrass Series Confirmed Figures Sealed Bag in Open Box"
+        "Pop Mart Dear Birds Series Plush Pendant - ALL CARACTORS - PRE-SALE",
+        "POP MART x Hirono Echo Series Confirmed Figure Doll in New Sealed Bag (Open Box)"
       ],
       "error": null,
       "taxonomyIpKnown": true
@@ -141,12 +141,12 @@
       "sampleTitles": [
         "POP MART x Skullpanda Petals In Four Acts Series Confirmed Figure in Open Box",
         "Skullpanda RED Crystal 400% FIGURE POP MART Authentic  Factory Sealed US SELLER",
-        "POP MART x Skullpanda The Feast Begins Series Figure Toys Sealed Bag in Open Box"
+        "Pop Mart SKULLPANDA × My Little Pony Series Pendant Figure Confirmed Plush Doll"
       ],
       "upstreamSampleTitles": [
         "POP MART x Skullpanda Petals In Four Acts Series Confirmed Figure in Open Box",
-        "Skullpanda RED Crystal 400% FIGURE POP MART Authentic  Factory Sealed US SELLER",
-        "POP MART x Skullpanda The Feast Begins Series Figure Toys Sealed Bag in Open Box"
+        "Pop Mart Dear Birds Series Plush Pendant - ALL CARACTORS - PRE-SALE",
+        "Skullpanda RED Crystal 400% FIGURE POP MART Authentic  Factory Sealed US SELLER"
       ],
       "error": null,
       "taxonomyIpKnown": true
@@ -163,7 +163,7 @@
       "retrievalMode": "q_and_verified_character",
       "upstreamTotal": 4576,
       "rawSampleCount": 12,
-      "afterTitleFilter": 11,
+      "afterTitleFilter": 12,
       "status": "healthy",
       "recommendedRetrievalMode": "q_and_verified_character",
       "sampleTitles": [
@@ -189,7 +189,7 @@
       "aspect_filter": null,
       "verifiedFacet": false,
       "retrievalMode": "q_only",
-      "upstreamTotal": 4791,
+      "upstreamTotal": 4784,
       "rawSampleCount": 12,
       "afterTitleFilter": 11,
       "status": "healthy",
@@ -217,20 +217,20 @@
       "aspect_filter": "categoryId:261068,Character:{Molly}",
       "verifiedFacet": true,
       "retrievalMode": "q_and_verified_character",
-      "upstreamTotal": 6115,
+      "upstreamTotal": 6116,
       "rawSampleCount": 12,
-      "afterTitleFilter": 5,
-      "status": "sparse",
+      "afterTitleFilter": 6,
+      "status": "healthy",
       "recommendedRetrievalMode": "q_and_verified_character",
       "sampleTitles": [
-        "POP MART x Kennyswork Mega Space Molly Series One Confirmed Box Figure Open Box",
         "POP MART 100% Mega Space Molly Series 2 Blind Box Confirmed Figure toy doll",
+        "POP MART x Kennyswork Mega Space Molly Series One Confirmed Box Figure Open Box",
         "POP MART 100% Mega Space Molly Series 4 Blind Box Confirmed Figure Toy Doll"
       ],
       "upstreamSampleTitles": [
         "Pop Mart Dear Birds Series Plush Pendant - ALL CARACTORS - PRE-SALE",
-        "POP MART x Kennyswork Mega Space Molly Series One Confirmed Box Figure Open Box",
-        "POP MART 100% Mega Space Molly Series 2 Blind Box Confirmed Figure toy doll"
+        "POP MART 100% Mega Space Molly Series 2 Blind Box Confirmed Figure toy doll",
+        "POP MART x Kennyswork Mega Space Molly Series One Confirmed Box Figure Open Box"
       ],
       "error": null,
       "taxonomyIpKnown": true
@@ -273,7 +273,7 @@
       "aspect_filter": "categoryId:261068,Character:{Space Molly}",
       "verifiedFacet": true,
       "retrievalMode": "q_and_verified_character",
-      "upstreamTotal": 2127,
+      "upstreamTotal": 2124,
       "rawSampleCount": 12,
       "afterTitleFilter": 12,
       "status": "healthy",
@@ -301,7 +301,7 @@
       "aspect_filter": null,
       "verifiedFacet": false,
       "retrievalMode": "q_only",
-      "upstreamTotal": 2046,
+      "upstreamTotal": 2045,
       "rawSampleCount": 12,
       "afterTitleFilter": 11,
       "status": "healthy",
@@ -357,7 +357,7 @@
       "aspect_filter": null,
       "verifiedFacet": false,
       "retrievalMode": "q_only",
-      "upstreamTotal": 60,
+      "upstreamTotal": 61,
       "rawSampleCount": 12,
       "afterTitleFilter": 12,
       "status": "healthy",
@@ -469,7 +469,7 @@
       "aspect_filter": "categoryId:261068,Character:{Pucky}",
       "verifiedFacet": true,
       "retrievalMode": "q_and_verified_character",
-      "upstreamTotal": 1434,
+      "upstreamTotal": 1435,
       "rawSampleCount": 12,
       "afterTitleFilter": 12,
       "status": "healthy",
@@ -637,7 +637,7 @@
       "aspect_filter": null,
       "verifiedFacet": false,
       "retrievalMode": "q_only",
-      "upstreamTotal": 1600,
+      "upstreamTotal": 1601,
       "rawSampleCount": 12,
       "afterTitleFilter": 12,
       "status": "healthy",
@@ -665,7 +665,7 @@
       "aspect_filter": null,
       "verifiedFacet": false,
       "retrievalMode": "q_only",
-      "upstreamTotal": 11647,
+      "upstreamTotal": 11636,
       "rawSampleCount": 12,
       "afterTitleFilter": 12,
       "status": "healthy",
@@ -721,7 +721,7 @@
       "aspect_filter": null,
       "verifiedFacet": false,
       "retrievalMode": "q_only",
-      "upstreamTotal": 1487,
+      "upstreamTotal": 1488,
       "rawSampleCount": 12,
       "afterTitleFilter": 12,
       "status": "healthy",
@@ -749,7 +749,7 @@
       "aspect_filter": null,
       "verifiedFacet": false,
       "retrievalMode": "q_only",
-      "upstreamTotal": 1170,
+      "upstreamTotal": 1171,
       "rawSampleCount": 12,
       "afterTitleFilter": 12,
       "status": "healthy",
@@ -785,12 +785,12 @@
       "sampleTitles": [
         "TNT SPACE Boy Rayan Otherworld Series Crimson Blaze Blind Box Figure Confirmed",
         "TNT Space x Rayan Wither 枯萎 All Life Blossoms Series 2 Designer Art Toy Figure",
-        "TNT Space Dijlang Plush Pendant"
+        "TNT SPACE Boy Rayan Time Rift Series Heat Beat Blind Box Figure Confirmed USA"
       ],
       "upstreamSampleTitles": [
         "TNT SPACE Boy Rayan Otherworld Series Crimson Blaze Blind Box Figure Confirmed",
         "TNT Space x Rayan Wither 枯萎 All Life Blossoms Series 2 Designer Art Toy Figure",
-        "TNT Space Dijlang Plush Pendant"
+        "TNT SPACE Boy Rayan Time Rift Series Heat Beat Blind Box Figure Confirmed USA"
       ],
       "error": null,
       "taxonomyIpKnown": true
@@ -945,9 +945,9 @@
       "aspect_filter": null,
       "verifiedFacet": false,
       "retrievalMode": "q_only",
-      "upstreamTotal": 13383,
+      "upstreamTotal": 13390,
       "rawSampleCount": 12,
-      "afterTitleFilter": 10,
+      "afterTitleFilter": 11,
       "status": "healthy",
       "recommendedRetrievalMode": "q_only",
       "sampleTitles": [
@@ -1009,12 +1009,12 @@
       "sampleTitles": [
         "AUTHENTIC Maymei 400% Forgotten Funfair Series TopToy Blind Box plush figure NIB",
         "Maymei Funfair Series TOPTOY Blind Box 400% Forgotten Tour Guide Edition",
-        "TOPTOY Maymei Kitten Academy Series Mini Figure Plush Doll Pendant Toy Cute Gift"
+        "Maymei Kitten Academy Series Plush Doll Blind Box All 6 Figures 2026"
       ],
       "upstreamSampleTitles": [
         "AUTHENTIC Maymei 400% Forgotten Funfair Series TopToy Blind Box plush figure NIB",
         "Maymei Funfair Series TOPTOY Blind Box 400% Forgotten Tour Guide Edition",
-        "TOPTOY Maymei Kitten Academy Series Mini Figure Plush Doll Pendant Toy Cute Gift"
+        "Maymei Kitten Academy Series Plush Doll Blind Box All 6 Figures 2026"
       ],
       "error": null,
       "taxonomyIpKnown": true
@@ -1029,7 +1029,7 @@
       "aspect_filter": null,
       "verifiedFacet": false,
       "retrievalMode": "q_only",
-      "upstreamTotal": 352,
+      "upstreamTotal": 353,
       "rawSampleCount": 12,
       "afterTitleFilter": 9,
       "status": "healthy",

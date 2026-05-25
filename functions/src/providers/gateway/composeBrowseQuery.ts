@@ -446,6 +446,10 @@ export const MARKET_TAXONOMY_IPS: TaxonomyIp[] = [
     ebayCategoryId: CANONICAL_EBAY_BROWSE_CATEGORY_ID,
     aspectVerified: false,
     ebayPreferredQuery: 'Nommi',
+    titleMatchAliases: ['AMARILITH', 'SWEET BITES', 'SWEETHEART'],
+    observedSellerNaming: ['TOPTOY', 'Top Toy', 'Nommi', 'Amarilith', 'Sweet Bites'],
+    retrievalMode: 'q_only',
+    titleNoiseRisk: 'low',
   },
   {
     id: 'maymei',

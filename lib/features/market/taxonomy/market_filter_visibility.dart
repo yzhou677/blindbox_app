@@ -13,6 +13,8 @@ abstract final class MarketFilterVisibility {
     'duckoo',
     'anmoo',
     'liila',
+    // Collab line — retrieved under Nommi; not a stable marketplace identity.
+    'nommi_x_amarilith',
   };
 
   /// Parent IP chip suppressed when a more specific sibling IP is on the same brand rail.

@@ -95,6 +95,16 @@ describe('titleTaxonomyFilter', () => {
     );
   });
 
+  it('Nommi title tier matches Amarilith collab line under broad Nommi IP', () => {
+    assert.equal(
+      listingTitleMatchesTaxonomy(
+        'TOPTOY Nommi x Amarilith Sweet Bites Series Blind Box Confirmed',
+        { brandId: 'toptoy', ipId: 'nommi' },
+      ),
+      true,
+    );
+  });
+
   it('Polar title tier rejects bare polar bear noise', () => {
     assert.equal(
       listingTitleMatchesTaxonomy(
