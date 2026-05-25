@@ -4,11 +4,11 @@ import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:flutter/material.dart';
 
-/// Builds sheet body content wired to the modal [ScrollController].
+/// Builds sheet body content wired to the sheet [ScrollController].
 typedef CollectibleSheetWidgetBuilder =
     Widget Function(BuildContext context, ScrollController scrollController);
 
-/// Exposes the [DraggableScrollableSheet] scroll controller to descendants.
+/// Exposes the sheet scroll controller to descendants.
 class CollectibleSheetScope extends InheritedWidget {
   const CollectibleSheetScope({
     super.key,
@@ -33,26 +33,26 @@ class CollectibleSheetScope extends InheritedWidget {
   }
 }
 
-/// Scroll physics for sheet lists — cooperates with [DraggableScrollableSheet].
-///
-/// [AlwaysScrollableScrollPhysics] keeps short sheets draggable at scroll top;
-/// [ClampingScrollPhysics] hands off downward pulls to sheet dismissal.
+/// Scroll physics for sheet lists.
 ScrollPhysics collectibleSheetScrollPhysics([ScrollPhysics? parent]) {
   return const ClampingScrollPhysics(
     parent: AlwaysScrollableScrollPhysics(),
   );
 }
 
-/// One [CustomScrollView] for the sheet — header, list, and footer share the
-/// linked controller so drag-from-handle and scroll-to-dismiss stay continuous.
+/// Sheet scroll body. Optional [header] (handle + title) sits above the list.
 class CollectibleSheetScrollView extends StatelessWidget {
   const CollectibleSheetScrollView({
     super.key,
     required this.slivers,
+    this.header,
     this.controller,
   });
 
   final List<Widget> slivers;
+
+  /// Drag handle + title — fixed height, not scrolled.
+  final Widget? header;
   final ScrollController? controller;
 
   @override
@@ -60,14 +60,27 @@ class CollectibleSheetScrollView extends StatelessWidget {
     final scroll = controller ?? CollectibleSheetScope.scrollControllerOf(context);
     assert(
       scroll != null,
-      'CollectibleSheetScrollView requires the DraggableScrollableSheet controller '
+      'CollectibleSheetScrollView requires a scroll controller '
       '(pass it explicitly or build under CollectibleSheetScope).',
     );
-    return CustomScrollView(
+
+    final scrollView = CustomScrollView(
       controller: scroll,
       physics: collectibleSheetScrollPhysics(),
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       slivers: slivers,
+    );
+
+    if (header == null) {
+      return scrollView;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        header!,
+        Expanded(child: scrollView),
+      ],
     );
   }
 }
@@ -83,7 +96,7 @@ double resolveCollectibleSheetHeightFactor({
   return open;
 }
 
-/// Screen-height fractions for [DraggableScrollableSheet] (parent = full screen).
+/// Screen-height fractions (used by tests and height helpers).
 final class CollectibleSheetExtents {
   const CollectibleSheetExtents({
     required this.initialChildSize,
@@ -139,10 +152,9 @@ class CollectibleSheetInsets extends StatelessWidget {
   }
 }
 
-/// Presents a collectible bottom sheet — single surface, native drag dismiss.
+/// Presents a collectible bottom sheet as one physical surface.
 ///
-/// [showModalBottomSheet] [enableDrag] moves the whole route; [DraggableScrollableSheet]
-/// links list scroll to resize. One [Material] shell (no nested chrome layers).
+/// One route [Material] + native [enableDrag]; fixed height via [_CollectibleSheetHost].
 Future<T?> showCollectibleBottomSheet<T>({
   required BuildContext context,
   required CollectibleSheetWidgetBuilder builder,
@@ -159,16 +171,10 @@ Future<T?> showCollectibleBottomSheet<T>({
         minHeightFraction ?? FeedRhythm.sheetMinScreenFraction,
     maxScreenFraction: maxHeightFraction ?? heightFraction,
   );
-  final extents = resolveCollectibleSheetExtents(
-    openScreenFraction: openFraction,
-    minScreenFraction:
-        minHeightFraction ?? FeedRhythm.sheetMinScreenFraction,
-    maxScreenFraction:
-        maxHeightFraction ?? openFraction,
-  );
 
   final surface = backgroundColor ?? scheme.surface;
   final isDark = Theme.of(context).brightness == Brightness.dark;
+  final sheetElevation = isDark ? 10.0 : 12.0;
 
   return showModalBottomSheet<T>(
     context: context,
@@ -180,58 +186,56 @@ Future<T?> showCollectibleBottomSheet<T>({
     showDragHandle: false,
     barrierColor: CollectibleImmersion.sheetBarrier(scheme),
     sheetAnimationStyle: CollectibleMotion.sheetAnimationStyle(),
-    backgroundColor: Colors.transparent,
-    elevation: 0,
-    clipBehavior: Clip.none,
+    backgroundColor: surface,
+    elevation: sheetElevation,
+    shape: AppRadii.sheetShape,
+    clipBehavior: Clip.antiAlias,
     builder: (ctx) {
       final viewInsets = MediaQuery.viewInsetsOf(ctx);
+      final sheetHeight = MediaQuery.sizeOf(ctx).height * openFraction;
 
       return Padding(
         padding: EdgeInsets.only(bottom: viewInsets.bottom),
-        child: DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: extents.initialChildSize,
-          minChildSize: extents.minChildSize,
-          maxChildSize: extents.maxChildSize,
-          snap: false,
-          shouldCloseOnMinExtent: true,
-          builder: (context, scrollController) {
-            return _CollectibleSheetShell(
-              color: surface,
-              isDark: isDark,
-              child: CollectibleSheetScope(
-                scrollController: scrollController,
-                child: builder(context, scrollController),
-              ),
-            );
-          },
+        child: _CollectibleSheetHost(
+          height: sheetHeight,
+          child: builder,
         ),
       );
     },
   );
 }
 
-/// Rounded elevated shell — the only [Material] in the sheet stack.
-class _CollectibleSheetShell extends StatelessWidget {
-  const _CollectibleSheetShell({
-    required this.color,
-    required this.isDark,
+/// Owns a [ScrollController] for the sheet body for the lifetime of the modal.
+class _CollectibleSheetHost extends StatefulWidget {
+  const _CollectibleSheetHost({
+    required this.height,
     required this.child,
   });
 
-  final Color color;
-  final bool isDark;
-  final Widget child;
+  final double height;
+  final CollectibleSheetWidgetBuilder child;
+
+  @override
+  State<_CollectibleSheetHost> createState() => _CollectibleSheetHostState();
+}
+
+class _CollectibleSheetHostState extends State<_CollectibleSheetHost> {
+  late final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: color,
-      elevation: isDark ? 10 : 12,
-      shadowColor: Colors.black.withValues(alpha: isDark ? 0.42 : 0.16),
-      clipBehavior: Clip.antiAlias,
-      shape: AppRadii.sheetShape,
-      child: child,
+    return SizedBox(
+      height: widget.height,
+      child: CollectibleSheetScope(
+        scrollController: _scrollController,
+        child: widget.child(context, _scrollController),
+      ),
     );
   }
 }

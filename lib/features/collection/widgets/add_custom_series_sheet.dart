@@ -128,18 +128,14 @@ class _AddCustomSeriesSheetState extends State<AddCustomSeriesSheet> {
         key: _formKey,
         child: CollectibleSheetScrollView(
           controller: sheetScroll,
+          header: const CollectibleSheetChrome(
+            editorialTitle: 'New series',
+          ),
           slivers: [
-            const SliverToBoxAdapter(
-              child: CollectibleSheetChrome(
-                editorialTitle: 'New series',
-                padding: EdgeInsets.zero,
-              ),
-            ),
             SliverToBoxAdapter(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: FeedRhythm.sheetSectionGap),
                   CustomSeriesCoverSlot(
                     imagePath: _coverUri,
                     onReplaceTap: _pickCover,

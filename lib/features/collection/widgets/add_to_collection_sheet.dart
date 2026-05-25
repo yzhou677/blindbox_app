@@ -11,6 +11,7 @@ import 'package:blindbox_app/features/collection/application/catalog_series_shel
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/add_series_catalog_copy.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart';
 import 'package:blindbox_app/features/collection/widgets/catalog_series_preview_sheet.dart';
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
@@ -122,9 +123,10 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     required CatalogSeries series,
     required VoidCallback onAdd,
   }) {
-    showCollectibleBottomSheet<void>(
+    // Same branch navigator as the parent sheet — root overlay stacks a second
+    // modal and leaves the parent drag handle visually pinned on dismiss.
+    showCollectionModalBottomSheet<void>(
       context: context,
-      useRootNavigator: true,
       heightFraction: FeedRhythm.sheetPreviewOpenScreenFraction,
       builder: (_, scroll) =>
           CatalogSeriesPreviewSheet(series: series, onAdd: onAdd),
@@ -144,17 +146,15 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
       extraBottom: AppSpacing.md,
       child: CollectibleSheetScrollView(
         controller: sheetScroll,
+        header: CollectibleSheetChrome(
+          editorialTitle: 'Add a series',
+          editorialSubtitle: AddSeriesCatalogCopy.sheetSubtitle,
+        ),
         slivers: [
           SliverToBoxAdapter(
             child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            CollectibleSheetChrome(
-              editorialTitle: 'Add a series',
-              editorialSubtitle: AddSeriesCatalogCopy.sheetSubtitle,
-              padding: EdgeInsets.zero,
-            ),
-            const SizedBox(height: FeedRhythm.sheetSectionGap),
             AppSearchField(
               controller: _search,
               padding: EdgeInsets.zero,

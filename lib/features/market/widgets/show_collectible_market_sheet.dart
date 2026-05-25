@@ -42,17 +42,17 @@ Future<void> showCollectibleMarketSheet({
           return CollectibleSheetInsets(
             child: CollectibleSheetScrollView(
               controller: scrollController,
+              header: CollectibleSheetChrome(
+                seriesTitle: display.title,
+                brand: c?.brand ?? '',
+                ipLine: c?.ipLine?.trim() ?? '',
+                trailingMeta: trailingMeta,
+              ),
               slivers: [
                 SliverToBoxAdapter(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      CollectibleSheetChrome(
-                        seriesTitle: display.title,
-                        brand: c?.brand ?? '',
-                        ipLine: c?.ipLine?.trim() ?? '',
-                        trailingMeta: trailingMeta,
-                      ),
                       const SizedBox(height: FeedRhythm.sheetEditorialBlockGap),
                       Text(
                         CollectibleMarketMoodCopy.subtitle(snapshot),

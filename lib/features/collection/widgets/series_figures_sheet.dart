@@ -59,15 +59,13 @@ class SeriesFiguresSheet extends ConsumerWidget {
     return CollectibleSheetInsets(
       child: CollectibleSheetScrollView(
         controller: scroll,
+        header: CollectibleSheetChrome(
+          seriesTitle: series.name,
+          brand: series.brand,
+          ipLine: series.ipName,
+          trailingMeta: trailingMeta,
+        ),
         slivers: [
-          SliverToBoxAdapter(
-            child: CollectibleSheetChrome(
-              seriesTitle: series.name,
-              brand: series.brand,
-              ipLine: series.ipName,
-              trailingMeta: trailingMeta,
-            ),
-          ),
           if (contextualLine != null && contextualLine.isNotEmpty)
             SliverToBoxAdapter(
               child: CollectibleRelationshipLine(

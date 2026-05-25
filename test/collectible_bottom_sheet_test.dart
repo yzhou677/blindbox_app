@@ -19,7 +19,7 @@ void main() {
     expect(extents.minChildSize, minScreen);
   });
 
-  testWidgets('showCollectibleBottomSheet uses linked DraggableScrollableSheet', (
+  testWidgets('showCollectibleBottomSheet uses fixed-height host and route Material', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -54,13 +54,12 @@ void main() {
     await tester.tap(find.text('Open'));
     await tester.pumpAndSettle();
     expect(find.text('Sheet body'), findsOneWidget);
-    expect(find.byType(DraggableScrollableSheet), findsOneWidget);
+    expect(find.byType(DraggableScrollableSheet), findsNothing);
     expect(find.byType(CollectibleSheetScrollView), findsOneWidget);
-    expect(find.descendant(of: find.byType(DraggableScrollableSheet), matching: find.byType(Material)), findsOneWidget);
 
     final sheetMaterial = tester.widget<Material>(
-      find.descendant(
-        of: find.byType(DraggableScrollableSheet),
+      find.ancestor(
+        of: find.byType(CollectibleSheetScrollView),
         matching: find.byType(Material),
       ).first,
     );

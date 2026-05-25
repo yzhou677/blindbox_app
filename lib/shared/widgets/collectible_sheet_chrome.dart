@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 
 /// Drag pill + optional series/editorial header for bottom sheets.
 ///
-/// Intentionally no nested [Material] — lives inside the sheet shell.
+/// Intentionally no nested [Material] — lives in [CollectibleSheetScrollView.header].
 class CollectibleSheetChrome extends StatelessWidget {
   const CollectibleSheetChrome({
     super.key,
