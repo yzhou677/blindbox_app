@@ -54,9 +54,9 @@ double resolveCollectibleSheetHeightFactor({
   return open;
 }
 
-/// Child-size ratios for [DraggableScrollableSheet] inside a height-capped host.
-final class CollectibleSheetDragSizes {
-  const CollectibleSheetDragSizes({
+/// Screen-height fractions for [DraggableScrollableSheet] (parent = full screen).
+final class CollectibleSheetExtents {
+  const CollectibleSheetExtents({
     required this.initialChildSize,
     required this.minChildSize,
     required this.maxChildSize,
@@ -65,22 +65,28 @@ final class CollectibleSheetDragSizes {
   final double initialChildSize;
   final double minChildSize;
   final double maxChildSize;
+
+  List<double> get sortedSnapSizes {
+    final sizes = <double>{minChildSize, initialChildSize};
+    if (maxChildSize > initialChildSize) {
+      sizes.add(maxChildSize);
+    }
+    return sizes.toList()..sort();
+  }
 }
 
-CollectibleSheetDragSizes resolveCollectibleSheetDragSizes({
-  required double heightFactor,
+CollectibleSheetExtents resolveCollectibleSheetExtents({
+  required double openScreenFraction,
   double minScreenFraction = FeedRhythm.sheetMinScreenFraction,
+  double maxScreenFraction = FeedRhythm.sheetMaxChildSize,
 }) {
-  final open = heightFactor.clamp(0.2, 0.98);
-  final min = minScreenFraction.clamp(0.18, open);
-
-  double ratio(double screenFraction) =>
-      (screenFraction / open).clamp(0.15, 1.0);
-
-  return CollectibleSheetDragSizes(
-    initialChildSize: 1.0,
-    minChildSize: ratio(min),
-    maxChildSize: 1.0,
+  final open = openScreenFraction.clamp(0.2, 0.98);
+  final min = minScreenFraction.clamp(0.12, open);
+  final max = maxScreenFraction.clamp(open, 0.98);
+  return CollectibleSheetExtents(
+    initialChildSize: open,
+    minChildSize: min,
+    maxChildSize: max,
   );
 }
 
@@ -113,6 +119,10 @@ class CollectibleSheetInsets extends StatelessWidget {
 }
 
 /// Presents a collectible bottom sheet with forgiving drag / tap / back dismiss.
+///
+/// A single [DraggableScrollableSheet] owns both height and drag — the rounded
+/// [Material] shell is built inside its [builder] so content, corners, and
+/// elevation move together (no fixed-height ghost host above the sheet).
 Future<T?> showCollectibleBottomSheet<T>({
   required BuildContext context,
   required CollectibleSheetWidgetBuilder builder,
@@ -123,16 +133,18 @@ Future<T?> showCollectibleBottomSheet<T>({
   Color? backgroundColor,
 }) {
   final scheme = Theme.of(context).colorScheme;
-  final heightFactor = resolveCollectibleSheetHeightFactor(
+  final openFraction = resolveCollectibleSheetHeightFactor(
     openScreenFraction: heightFraction,
     minScreenFraction:
         minHeightFraction ?? FeedRhythm.sheetMinScreenFraction,
     maxScreenFraction: maxHeightFraction ?? heightFraction,
   );
-  final dragSizes = resolveCollectibleSheetDragSizes(
-    heightFactor: heightFactor,
+  final extents = resolveCollectibleSheetExtents(
+    openScreenFraction: openFraction,
     minScreenFraction:
         minHeightFraction ?? FeedRhythm.sheetMinScreenFraction,
+    maxScreenFraction:
+        maxHeightFraction ?? openFraction,
   );
 
   final surface = backgroundColor ?? scheme.surface;
@@ -156,99 +168,30 @@ Future<T?> showCollectibleBottomSheet<T>({
 
       return Padding(
         padding: EdgeInsets.only(bottom: viewInsets.bottom),
-        child: FractionallySizedBox(
-          heightFactor: heightFactor,
-          alignment: Alignment.bottomCenter,
-          widthFactor: 1,
-          child: _CollectibleSheetSurface(
-            color: surface,
-            isDark: isDark,
-            child: _CollectibleDraggableSheetHost(
-              surfaceColor: surface,
-              initialChildSize: dragSizes.initialChildSize,
-              minChildSize: dragSizes.minChildSize,
-              maxChildSize: dragSizes.maxChildSize,
-              builder: builder,
-            ),
-          ),
-        ),
-      );
-    },
-  );
-}
-
-/// Rounded, elevated sheet shell — single opaque layer above the scrim.
-class _CollectibleSheetSurface extends StatelessWidget {
-  const _CollectibleSheetSurface({
-    required this.color,
-    required this.isDark,
-    required this.child,
-  });
-
-  final Color color;
-  final bool isDark;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: color,
-      elevation: isDark ? 10 : 12,
-      shadowColor: Colors.black.withValues(alpha: isDark ? 0.42 : 0.16),
-      clipBehavior: Clip.antiAlias,
-      shape: AppRadii.sheetShape,
-      child: child,
-    );
-  }
-}
-
-/// [FractionallySizedBox] caps modal height; [DraggableScrollableSheet] links
-/// scroll and drag so downward pulls at scroll top dismiss the sheet.
-class _CollectibleDraggableSheetHost extends StatelessWidget {
-  const _CollectibleDraggableSheetHost({
-    required this.surfaceColor,
-    required this.initialChildSize,
-    required this.minChildSize,
-    required this.maxChildSize,
-    required this.builder,
-  });
-
-  final Color surfaceColor;
-  final double initialChildSize;
-  final double minChildSize;
-  final double maxChildSize;
-  final CollectibleSheetWidgetBuilder builder;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        ColoredBox(color: surfaceColor),
-        DraggableScrollableSheet(
+        child: DraggableScrollableSheet(
           expand: false,
-          initialChildSize: initialChildSize,
-          minChildSize: minChildSize,
-          maxChildSize: maxChildSize,
+          initialChildSize: extents.initialChildSize,
+          minChildSize: extents.minChildSize,
+          maxChildSize: extents.maxChildSize,
           snap: true,
-          snapSizes: <double>{
-            minChildSize,
-            initialChildSize,
-            maxChildSize,
-          }.toList()
-            ..sort(),
-          snapAnimationDuration: CollectibleMotion.sheetDismiss,
+          snapSizes: extents.sortedSnapSizes,
+          snapAnimationDuration: CollectibleMotion.sheetSnap,
           shouldCloseOnMinExtent: true,
           builder: (context, scrollController) {
-            return CollectibleSheetScope(
-              scrollController: scrollController,
-              child: CollectibleSheetFocusFrame(
+            return Material(
+              color: surface,
+              elevation: isDark ? 10 : 12,
+              shadowColor: Colors.black.withValues(alpha: isDark ? 0.42 : 0.16),
+              clipBehavior: Clip.antiAlias,
+              shape: AppRadii.sheetShape,
+              child: CollectibleSheetScope(
+                scrollController: scrollController,
                 child: builder(context, scrollController),
               ),
             );
           },
         ),
-      ],
-    );
-  }
+      );
+    },
+  );
 }

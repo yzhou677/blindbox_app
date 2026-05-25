@@ -1,19 +1,23 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
-import 'package:blindbox_app/core/presentation/collectible_immersion.dart';
 import 'package:blindbox_app/core/theme/app_theme.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('resolveCollectibleSheetDragSizes fills height-capped host at rest', () {
+  test('resolveCollectibleSheetExtents uses screen-height fractions', () {
     const open = 0.56;
     const minScreen = FeedRhythm.sheetMinScreenFraction;
-    final sizes = resolveCollectibleSheetDragSizes(heightFactor: open);
+    final extents = resolveCollectibleSheetExtents(
+      openScreenFraction: open,
+      minScreenFraction: minScreen,
+      maxScreenFraction: open,
+    );
 
-    expect(sizes.initialChildSize, 1.0);
-    expect(sizes.maxChildSize, 1.0);
-    expect(sizes.minChildSize, closeTo(minScreen / open, 0.01));
+    expect(extents.initialChildSize, open);
+    expect(extents.maxChildSize, open);
+    expect(extents.minChildSize, minScreen);
+    expect(extents.sortedSnapSizes, [minScreen, open]);
   });
 
   testWidgets('showCollectibleBottomSheet uses linked DraggableScrollableSheet', (
@@ -53,11 +57,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Sheet body'), findsOneWidget);
     expect(find.byType(DraggableScrollableSheet), findsOneWidget);
-    expect(find.byType(FractionallySizedBox), findsWidgets);
-    expect(find.byType(CollectibleSheetFocusFrame), findsOneWidget);
+
     final sheetMaterial = tester.widget<Material>(
       find.descendant(
-        of: find.byType(FractionallySizedBox),
+        of: find.byType(DraggableScrollableSheet),
         matching: find.byType(Material),
       ).first,
     );
