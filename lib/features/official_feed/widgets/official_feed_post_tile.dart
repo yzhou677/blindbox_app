@@ -127,7 +127,10 @@ class OfficialFeedPostTile extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    OfficialFeedThumbnail(imageUrl: item.imageUrl),
+                    OfficialFeedThumbnail(
+                      imageUrl: item.imageUrl,
+                      sourceId: item.sourceId,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 10),

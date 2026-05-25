@@ -136,6 +136,9 @@ async function main() {
   const sourceLabel = seed.sourceLabel ?? 'POP MART';
   const locale = seed.locale ?? 'us';
   const items = seed.items ?? [];
+  const retiredItemIds = Array.isArray(seed.retiredItemIds)
+    ? seed.retiredItemIds.map((id) => id?.trim()).filter(Boolean)
+    : [];
 
   if (!Array.isArray(items) || items.length === 0) {
     console.error('No items in seed file.');
@@ -187,12 +190,33 @@ async function main() {
       locale,
     };
     if (summary) doc.summary = summary;
+    const releaseType = item.releaseType?.trim();
+    const productId = item.productId?.trim();
+    if (releaseType) doc.releaseType = releaseType;
+    if (productId) doc.productId = productId;
 
     batch.set(ref, doc, { merge: true });
   }
 
+  for (const retiredId of retiredItemIds) {
+    const ref = db.collection(COLLECTION).doc(retiredId);
+    batch.set(
+      ref,
+      {
+        status: 'archived',
+        ingestedAt: now,
+      },
+      { merge: true },
+    );
+  }
+
   await batch.commit();
-  console.log(`Wrote ${items.length} documents to ${COLLECTION} (source=${sourceId}).`);
+  console.log(
+    `Wrote ${items.length} active documents to ${COLLECTION} (source=${sourceId}).` +
+      (retiredItemIds.length > 0
+        ? ` Archived ${retiredItemIds.length} retired id(s).`
+        : ''),
+  );
 }
 
 main().catch((err) => {

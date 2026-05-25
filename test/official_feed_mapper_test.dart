@@ -100,4 +100,18 @@ void main() {
     );
     expect(item, isNotNull);
   });
+
+  test('mapOfficialFeedItem rejects slug-only product paths', () {
+    expect(
+      mapOfficialFeedItem(
+        'x',
+        _activeDoc(
+          imageUrl: 'https://cdn.example.com/a.png',
+          officialUrl:
+              'https://www.popmart.com/us/products/skullpanda-x-my-little-pony-series-plush-doll-pendant-blind-box',
+        ),
+      ),
+      isNull,
+    );
+  });
 }

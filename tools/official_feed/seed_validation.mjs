@@ -33,6 +33,14 @@ export function isPlaceholderImageUrl(imageUrl) {
   return POPMART_PLACEHOLDER_IMAGES.some((re) => re.test(imageUrl));
 }
 
+/** First segment after `/us/products/` must be numeric spuId (not a title slug). */
+export function isPopMartUsNumericProductUrl(url) {
+  if (!url.hostname.endsWith('popmart.com')) return false;
+  const match = url.pathname.match(/^\/us\/products\/([^/]+)/);
+  if (!match) return false;
+  return /^\d+$/.test(match[1]);
+}
+
 /**
  * POP MART US item link must be deeper than the storefront home.
  * @param {URL} url
@@ -44,8 +52,7 @@ export function isPopMartUsItemUrl(url) {
   if (!path.startsWith('/us/')) return false;
 
   if (path.startsWith('/us/products/')) {
-    const rest = path.slice('/us/products/'.length);
-    return rest.length > 0 && rest !== '/';
+    return isPopMartUsNumericProductUrl(url);
   }
   if (path.startsWith('/us/pop-now/')) {
     const rest = path.slice('/us/pop-now/'.length);
@@ -119,9 +126,26 @@ export function validateOfficialFeedSeed(seed) {
       errors.push(`${label}: officialUrl must be a valid https URL.`);
     } else {
       if (!isPopMartUsItemUrl(officialParsed)) {
+        const slugOnly =
+          officialParsed.pathname.startsWith('/us/products/') &&
+          !isPopMartUsNumericProductUrl(officialParsed);
         errors.push(
-          `${label}: officialUrl must be a POP MART US product, POP NOW set, or collection page — not the homepage (${officialUrl}).`,
+          slugOnly
+            ? `${label}: officialUrl must use a numeric POP MART product id (/us/products/{id}/slug) — do not invent slug-only paths (${officialUrl}).`
+            : `${label}: officialUrl must be a POP MART US product, POP NOW set, or collection page — not the homepage (${officialUrl}).`,
         );
+      }
+      const productId = item?.productId?.trim();
+      if (
+        officialParsed?.pathname.startsWith('/us/products/') &&
+        productId
+      ) {
+        const urlId = officialParsed.pathname.match(/^\/us\/products\/(\d+)/)?.[1];
+        if (urlId && urlId !== productId) {
+          errors.push(
+            `${label}: productId "${productId}" does not match officialUrl id "${urlId}".`,
+          );
+        }
       }
       if (seenOfficial.has(officialUrl)) {
         errors.push(`${label}: duplicate officialUrl across items.`);

@@ -18,12 +18,18 @@ bool _isPopMartUsHomepage(Uri uri) {
   return path.isEmpty || path == '/us';
 }
 
+/// `/us/products/{numericId}/…` — slug-only paths break POP MART client routing.
+bool _isPopMartUsNumericProductPath(Uri uri) {
+  final match = RegExp(r'^/us/products/([^/]+)').firstMatch(uri.path);
+  if (match == null) return false;
+  return RegExp(r'^\d+$').hasMatch(match.group(1)!);
+}
+
 /// Product, POP NOW set, or numbered collection — not the US landing page.
 bool _isPopMartUsItemPath(Uri uri) {
   final path = uri.path;
   if (path.startsWith('/us/products/')) {
-    final rest = path.substring('/us/products/'.length);
-    return rest.isNotEmpty;
+    return _isPopMartUsNumericProductPath(uri);
   }
   if (path.startsWith('/us/pop-now/')) {
     final rest = path.substring('/us/pop-now/'.length);
