@@ -72,10 +72,12 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(),
-        home: Scaffold(
-          body: ListView(
-            children: buildShelfSeriesFeed(
-              series: [
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: ListView(
+              children: buildShelfSeriesFeed(
+                context: context,
+                series: [
                 testShelfSeries(
                   id: 'cry_1',
                   taxonomyIpId: 'crybaby',
@@ -93,8 +95,9 @@ void main() {
                 ),
               ],
               figureStates: const {},
-              onOpen: (_) {},
-              onRemove: (_) {},
+                onOpen: (_) {},
+                onRemove: (_) {},
+              ),
             ),
           ),
         ),

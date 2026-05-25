@@ -87,6 +87,13 @@ class _SeriesShelfCardState extends State<SeriesShelfCard>
           0.35,
         )!.withValues(alpha: 0.14 * hump);
 
+        if (hump <= 0.02) {
+          return Transform.scale(
+            scale: scale,
+            alignment: Alignment.centerLeft,
+            child: child,
+          );
+        }
         return Transform.scale(
           scale: scale,
           alignment: Alignment.centerLeft,
@@ -94,17 +101,12 @@ class _SeriesShelfCardState extends State<SeriesShelfCard>
             decoration: BoxDecoration(
               borderRadius: CollectibleShape.shellRadius,
               boxShadow: [
-                ...CollectibleShelfShadow.productShell(
-                  context,
-                  accent: widget.series.shelfAccent,
+                BoxShadow(
+                  color: glow,
+                  blurRadius: 22 + 18 * hump,
+                  spreadRadius: -6,
+                  offset: const Offset(0, 8),
                 ),
-                if (hump > 0.02)
-                  BoxShadow(
-                    color: glow,
-                    blurRadius: 22 + 18 * hump,
-                    spreadRadius: -6,
-                    offset: const Offset(0, 8),
-                  ),
               ],
             ),
             child: child,
@@ -178,15 +180,7 @@ class _SeriesMatShell extends StatelessWidget {
       borderColor = const Color(0xFFE8C547).withValues(alpha: 0.35);
     }
 
-    final shadows = [
-      ...CollectibleShelfShadow.productShell(context, accent: accent),
-      if (sustainedComplete)
-        BoxShadow(
-          color: const Color(0xFFE8C547).withValues(alpha: 0.08),
-          blurRadius: 16,
-          offset: const Offset(0, 4),
-        ),
-    ];
+    final shadows = CollectibleShelfShadow.shelfCard(context, accent: accent);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: FeedRhythm.collectionShelfCardGap),
@@ -305,9 +299,9 @@ class _SeriesMatContent extends StatelessWidget {
           child: LinearProgressIndicator(
             value: completion.clamp(0.0, 1.0),
             minHeight: 6,
-            backgroundColor: scheme.surfaceContainerHighest.withValues(
-              alpha: 0.45,
-            ),
+            backgroundColor: Theme.of(context).brightness == Brightness.dark
+                ? scheme.surfaceContainerHighest
+                : scheme.surfaceContainerHighest.withValues(alpha: 0.45),
             color: isComplete
                 ? Color.lerp(
                     scheme.primary,

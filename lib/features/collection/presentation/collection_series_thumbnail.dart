@@ -31,14 +31,19 @@ class CollectionSeriesThumbnail extends StatelessWidget {
     final secret = false;
     final r = AppRadii.insetRadius;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SizedBox(
       width: size,
       height: size,
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: r,
-          border: Border.all(color: series.shelfAccent.withValues(alpha: 0.28)),
-          color: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
+          border: Border.all(
+            color: series.shelfAccent.withValues(alpha: isDark ? 0.32 : 0.28),
+          ),
+          color: isDark
+              ? scheme.surfaceContainerHigh
+              : scheme.surfaceContainerHighest.withValues(alpha: 0.5),
         ),
         child: ClipRRect(
           borderRadius: r,

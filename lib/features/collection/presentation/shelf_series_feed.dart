@@ -75,7 +75,11 @@ bool shouldShowShelfUniverseHeader({
 }
 
 /// Builds shelf series cards with explicit universe section ownership.
+///
+/// Each universe block sits on an opaque scaffold-colored plane so scroll does
+/// not stack card shadows into translucent horizontal bands between sections.
 List<Widget> buildShelfSeriesFeed({
+  required BuildContext context,
   required List<ShelfSeries> series,
   required Map<String, TrackedFigure> figureStates,
   required void Function(ShelfSeries series) onOpen,
@@ -87,15 +91,18 @@ List<Widget> buildShelfSeriesFeed({
   final shelfHarmony = profile?.themeIncludes(ShelfEditorialTheme.harmony) ?? false;
   final sections = groupShelfSeriesByUniverse(series);
   final universeCount = sections.length;
+  final sectionPlane = Theme.of(context).scaffoldBackgroundColor;
 
   final out = <Widget>[];
   for (var i = 0; i < sections.length; i++) {
     final section = sections[i];
-    if (shouldShowShelfUniverseHeader(
+    final showHeader = shouldShowShelfUniverseHeader(
       universeCount: universeCount,
       seriesInUniverse: section.series.length,
-    )) {
-      out.add(
+    );
+
+    final sectionChildren = <Widget>[
+      if (showHeader)
         Padding(
           padding: EdgeInsets.only(
             top: i == 0
@@ -107,29 +114,33 @@ List<Widget> buildShelfSeriesFeed({
             title: section.label,
             padding: EdgeInsets.zero,
           ),
-        ),
-      );
-    } else if (i > 0) {
-      out.add(const SizedBox(height: FeedRhythm.collectionUniverseSectionGap));
-    }
-
-    for (final s in section.series) {
-      final atmosphere = atmosphereForSeries(
-        s,
-        figureStates,
-        shelfHarmony: shelfHarmony,
-      );
-      out.add(
+        )
+      else if (i > 0)
+        const SizedBox(height: FeedRhythm.collectionUniverseSectionGap),
+      for (final s in section.series)
         SeriesShelfCard(
           series: s,
           progress: progressForSeries(s, figureStates),
           figureStates: figureStates,
-          atmosphere: atmosphere,
+          atmosphere: atmosphereForSeries(
+            s,
+            figureStates,
+            shelfHarmony: shelfHarmony,
+          ),
           onOpen: () => onOpen(s),
           onRemove: () => onRemove(s),
         ),
-      );
-    }
+    ];
+
+    out.add(
+      ColoredBox(
+        color: sectionPlane,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: sectionChildren,
+        ),
+      ),
+    );
   }
   return out;
 }
