@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 /// Index of the `/collection` branch in [StatefulShellRoute.indexedStack] (see [appRouter]).
 const int kCollectionShellBranchIndex = 2;
@@ -40,11 +43,41 @@ final class CollectionModalOverlayRegistry {
     if (_inFlightDismiss != null) return _inFlightDismiss!;
     final cb = _dismissBranchOverlays;
     if (cb == null) return Future<void>.value();
-    final op = cb();
-    _inFlightDismiss = op.whenComplete(() {
+    final op = _runDismissAfterFrame(cb);
+    _inFlightDismiss = op
+        .then((_) => _holdDismissFrames())
+        .whenComplete(() {
       _inFlightDismiss = null;
     });
     return _inFlightDismiss!;
+  }
+
+  Future<void> _runDismissAfterFrame(Future<void> Function() dismiss) {
+    if (SchedulerBinding.instance.schedulerPhase == SchedulerPhase.idle) {
+      return dismiss();
+    }
+    final completer = Completer<void>();
+    SchedulerBinding.instance.addPostFrameCallback((_) async {
+      try {
+        await dismiss();
+        completer.complete();
+      } catch (e, st) {
+        completer.completeError(e, st);
+      }
+    });
+    SchedulerBinding.instance.scheduleFrame();
+    return completer.future;
+  }
+
+  Future<void> _holdDismissFrames() async {
+    // Keep dismiss requests coalesced for a short transition window without
+    // using wall-clock timers (timer-based cooldowns create pending-timer
+    // invariants in widget tests). Two frames is enough to cover rapid
+    // same-gesture duplicate triggers.
+    SchedulerBinding.instance.scheduleFrame();
+    await SchedulerBinding.instance.endOfFrame;
+    SchedulerBinding.instance.scheduleFrame();
+    await SchedulerBinding.instance.endOfFrame;
   }
 
   /// Forces an immediate clear of the in-flight guard — intended for tests only.
@@ -69,15 +102,12 @@ Future<void> dismissCollectionModalOverlays(BuildContext context) async {
   // `userGestureInProgress == true` during which `popUntil` can complete a
   // route's pop-future twice.
   if (navigator.userGestureInProgress) return;
+  if (!navigator.canPop() || navigator.userGestureInProgress) return;
 
-  // Pop one route at a time and await each completion before attempting the
-  // next. This prevents double-completing a route's pop future during rapid
-  // repeated dismiss requests.
-  while (navigator.canPop()) {
-    if (navigator.userGestureInProgress) return;
-    final didPop = await navigator.maybePop();
-    if (!didPop) return;
-  }
+  // Use a single stack mutation so nested route animations are handled by the
+  // navigator internals, instead of manual maybePop loops that can re-enter
+  // during in-flight transitions.
+  navigator.popUntil((route) => route.isFirst);
 }
 
 /// Collection-branch sheets — same drag/dismiss behavior as [showCollectibleBottomSheet].

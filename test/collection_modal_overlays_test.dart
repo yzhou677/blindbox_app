@@ -64,7 +64,7 @@ void main() {
       expect(tester.takeException(), isNull);
 
       // The post-frame guard reset must allow a follow-up dismissAll later.
-      await CollectionModalOverlayRegistry.instance.dismissAll();
+      unawaited(CollectionModalOverlayRegistry.instance.dismissAll());
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
     },
@@ -99,7 +99,7 @@ void main() {
       await _pumpHostWithSheet(tester);
 
       CollectionModalOverlayRegistry.instance.unregister();
-      await CollectionModalOverlayRegistry.instance.dismissAll();
+      unawaited(CollectionModalOverlayRegistry.instance.dismissAll());
 
       await tester.pumpAndSettle();
       // Sheet stays open — no registered callback means no pop.
@@ -124,8 +124,8 @@ void main() {
         ),
       );
 
-      await dismissCollectionModalOverlays(hostContext);
-      await dismissCollectionModalOverlays(hostContext);
+      unawaited(dismissCollectionModalOverlays(hostContext));
+      unawaited(dismissCollectionModalOverlays(hostContext));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
     },
@@ -153,7 +153,9 @@ void main() {
       unawaited(CollectionModalOverlayRegistry.instance.dismissAll());
       unawaited(CollectionModalOverlayRegistry.instance.dismissAll());
 
-      // Guard collapses these into a single invocation.
+      // Dismiss runs on next frame; pump once, then verify guard collapsed
+      // three requests into one callback invocation.
+      await tester.pump();
       expect(dismissCallCount, 1);
 
       await tester.pumpAndSettle();
