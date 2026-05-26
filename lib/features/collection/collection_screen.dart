@@ -65,8 +65,13 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     if (router == null) return;
     _routerListener = () {
       final path = router.state.uri.path;
+      // Route the dismiss request through the registry so the reentrancy
+      // guard catches the case where MainShellScaffold has already requested
+      // a dismiss for the same tab switch (the router listener fires
+      // immediately after shell.goBranch() and would otherwise call popUntil
+      // a second time while the first pop animation is still in flight).
       if (!path.startsWith('/collection') && mounted) {
-        _dismissBranchOverlays();
+        CollectionModalOverlayRegistry.instance.dismissAll();
       }
     };
     router.routerDelegate.addListener(_routerListener!);
@@ -164,7 +169,11 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       builder: (ctx, scroll) => AddToCollectionSheet(
           onCreateCustom: () {
-            Navigator.of(ctx).pop();
+            // Guard against double-tap: only pop if the sheet route is still
+            // current.  Without this, a rapid second tap can call pop() on a
+            // route already mid-pop and complete its future twice.
+            final navigator = Navigator.of(ctx);
+            if (navigator.canPop()) navigator.pop();
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (context.mounted) {
                 _openAddCustom(context);
