@@ -38,7 +38,14 @@ final class MarketProviderBrowseCache {
 
   static final MarketProviderBrowseCache instance = MarketProviderBrowseCache._();
 
+  // Maximum number of distinct query-keyed entries kept in memory and on disk.
+  // Prevents unbounded growth when users explore many brand/IP filter combos.
+  static const _maxQueryEntries = 10;
+
   final Map<MarketProviderId, CachedBrowseBatch> _memory = {};
+
+  // LinkedHashMap (default in Dart) preserves insertion order → oldest first.
+  // FIFO eviction: when at capacity, _memoryByQuery.keys.first is the oldest.
   final Map<String, CachedBrowseBatch> _memoryByQuery = {};
 
   static String _queryKey(MarketProviderId id, String signature) =>
@@ -48,6 +55,46 @@ final class MarketProviderBrowseCache {
 
   static String _prefsKeyForQuery(MarketProviderId id, String signature) =>
       'market_browse_cache_${id.wireName}_${signature.hashCode.abs()}_v2';
+
+  // Prefs key that stores an ordered list of active disk query-cache keys for
+  // FIFO eviction.  Each element is a disk prefs key string.
+  static const _diskQueryIndexKey = 'market_browse_cache_query_index_v1';
+
+  /// Evicts the oldest in-memory query entry when at capacity.
+  void _evictMemoryIfNeeded(String incomingKey) {
+    // If already present the entry will just be overwritten — no eviction.
+    if (_memoryByQuery.containsKey(incomingKey)) return;
+    while (_memoryByQuery.length >= _maxQueryEntries) {
+      _memoryByQuery.remove(_memoryByQuery.keys.first);
+    }
+  }
+
+  /// Evicts the oldest disk query entry when at capacity and registers the new key.
+  Future<void> _evictDiskIfNeeded(
+    SharedPreferences prefs,
+    String newDiskKey,
+  ) async {
+    final index = List<String>.from(
+      prefs.getStringList(_diskQueryIndexKey) ?? const [],
+    );
+    if (index.contains(newDiskKey)) return; // already tracked
+    while (index.length >= _maxQueryEntries) {
+      final evicted = index.removeAt(0);
+      await prefs.remove(evicted);
+    }
+    index.add(newDiskKey);
+    await prefs.setStringList(_diskQueryIndexKey, index);
+  }
+
+  /// Removes [diskKey] from the on-disk eviction index (called on [clearQuery]).
+  Future<void> _removeDiskIndex(SharedPreferences prefs, String diskKey) async {
+    final index = List<String>.from(
+      prefs.getStringList(_diskQueryIndexKey) ?? const [],
+    );
+    if (index.remove(diskKey)) {
+      await prefs.setStringList(_diskQueryIndexKey, index);
+    }
+  }
 
   List<MarketListing>? readStale(
     MarketProviderId id, {
@@ -186,12 +233,14 @@ final class MarketProviderBrowseCache {
       nextCursor: nextCursor,
       hasMore: hasMore,
     );
-    _memoryByQuery[_queryKey(id, signature)] = batch;
+    final memKey = _queryKey(id, signature);
+    _evictMemoryIfNeeded(memKey);
+    _memoryByQuery[memKey] = batch;
+
+    final diskKey = _prefsKeyForQuery(id, signature);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      _prefsKeyForQuery(id, signature),
-      jsonEncode(_batchToJson(batch)),
-    );
+    await _evictDiskIfNeeded(prefs, diskKey);
+    await prefs.setString(diskKey, jsonEncode(_batchToJson(batch)));
   }
 
   Future<void> appendForQuery({
@@ -215,6 +264,10 @@ final class MarketProviderBrowseCache {
 
   void clearQuery(MarketProviderId id, String signature) {
     _memoryByQuery.remove(_queryKey(id, signature));
+    // Best-effort disk index cleanup; fire-and-forget.
+    SharedPreferences.getInstance().then((prefs) {
+      _removeDiskIndex(prefs, _prefsKeyForQuery(id, signature));
+    });
   }
 
   static Map<String, dynamic> _batchToJson(CachedBrowseBatch batch) => {
@@ -281,6 +334,9 @@ final class MarketProviderBrowseCache {
   void clear(MarketProviderId id) {
     _memory.remove(id);
   }
+
+  /// Clears all in-memory query entries.  Intended for use in tests only.
+  void clearAllQueryMemory() => _memoryByQuery.clear();
 
   static Map<String, dynamic> _marketListingToJson(MarketListing l) {
     return {

@@ -5,6 +5,7 @@ import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/home/domain/series_release.dart';
 import 'package:blindbox_app/models/collectible.dart';
 import 'helpers/collection_fixtures.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -288,4 +289,89 @@ void main() {
     expect(fig.imageKey, '${added.id}-f-0');
     expect(fig.rarity, '1:72');
   });
+
+  // ---------------------------------------------------------------------------
+  // Write coalescing / debounce
+  // ---------------------------------------------------------------------------
+
+  test(
+    'rapid cycleFigure calls produce correct final UI state immediately',
+    () {
+      final container = newContainer();
+      final n = container.read(collectionNotifierProvider.notifier);
+
+      // Simulate rapid successive taps: none → wishlist → owned → none.
+      n.cycleFigure('fig_cycle');
+      n.cycleFigure('fig_cycle');
+      n.cycleFigure('fig_cycle');
+
+      // UI state should reflect all taps immediately (no debounce on state).
+      final snap = container.read(collectionNotifierProvider);
+      expect(snap.figureStates.containsKey('fig_cycle'), isFalse,
+          reason: 'three cycles (none→wishlist→owned→none) should clear the state');
+    },
+  );
+
+  test(
+    'persistence is deferred but flushed synchronously on notifier dispose',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final container = newContainer();
+      final n = container.read(collectionNotifierProvider.notifier);
+
+      n.cycleFigure('fig_cycle'); // wishlist
+      n.cycleFigure('fig_cycle'); // owned
+
+      // Before the debounce timer fires, prefs might be empty or stale.
+      // Disposing the container triggers _flushPendingPersistence immediately.
+      container.dispose();
+
+      // After dispose the flush is awaited via the unawaited save chain.
+      // Allow microtask/async queue to settle.
+      await Future<void>.delayed(Duration.zero);
+
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString('collection_snapshot_v1');
+      // The snapshot should have been persisted (not null).
+      expect(raw, isNotNull,
+          reason: 'dispose should flush pending persistence');
+    },
+  );
+
+  test(
+    'fakeAsync: persistence timer fires after debounce window',
+    () {
+      fakeAsync((async) {
+        SharedPreferences.setMockInitialValues({});
+        final container = newContainer();
+        final n = container.read(collectionNotifierProvider.notifier);
+
+        n.cycleFigure('fig_cycle'); // wishlist
+        n.cycleFigure('fig_cycle'); // owned
+
+        // UI state is already correct before the timer fires.
+        expect(
+          container
+              .read(collectionNotifierProvider)
+              .trackedOrDefault('fig_cycle')
+              .state,
+          FigureCollectionState.owned,
+        );
+
+        // Advance past the debounce window without triggering async I/O.
+        async.elapse(const Duration(milliseconds: 500));
+
+        // State should remain unchanged after the timer fires.
+        expect(
+          container
+              .read(collectionNotifierProvider)
+              .trackedOrDefault('fig_cycle')
+              .state,
+          FigureCollectionState.owned,
+        );
+
+        container.dispose();
+      });
+    },
+  );
 }

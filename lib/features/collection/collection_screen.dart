@@ -191,6 +191,19 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       insights,
     );
 
+    // Compute filtered series and lazy feed items (data-only, no widgets).
+    // Off-screen cards are built on demand by the SliverList.builder below.
+    final visible = shelfSeriesVisibleForBrandFilter(
+      snap.shelfSeries,
+      _brandFilterId,
+    );
+    final feedItems = buildShelfFeedItems(
+      context: context,
+      series: visible,
+      figureStates: snap.figureStates,
+      profile: profile,
+    );
+
     if (snap.trackedSeriesCount == 0) {
       return Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -312,51 +325,37 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               ),
             ),
           ),
-          SliverToBoxAdapter(
-            child: Padding(
+          if (visible.isEmpty)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+              sliver: SliverToBoxAdapter(
+                child: Text(
+                  'Nothing on your shelf for this brand yet.',
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            )
+          else
+            SliverPadding(
               padding: const EdgeInsets.fromLTRB(
                 20,
                 FeedRhythm.collectionFilterToFirstCard,
                 20,
                 FeedRhythm.tabScrollTailPadding,
               ),
-              child: Builder(
-                builder: (context) {
-                  final visible = shelfSeriesVisibleForBrandFilter(
-                    snap.shelfSeries,
-                    _brandFilterId,
-                  );
-                  final scheme = Theme.of(context).colorScheme;
-                  final textTheme = Theme.of(context).textTheme;
-                  if (visible.isEmpty) {
-                    return Padding(
-                      padding: const EdgeInsets.fromLTRB(0, 12, 0, 24),
-                      child: Text(
-                        'Nothing on your shelf for this brand yet.',
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: scheme.onSurfaceVariant.withValues(
-                            alpha: 0.78,
-                          ),
-                          height: 1.4,
-                        ),
-                      ),
-                    );
-                  }
-                  return Column(
-                    children: buildShelfSeriesFeed(
-                      context: context,
-                      series: visible,
-                      figureStates: snap.figureStates,
-                      profile: profile,
-                      onOpen: (s) => _openFiguresSheet(context, s.id),
-                      onRemove: (s) =>
-                          _confirmRemoveSeries(context, s.id, s.name),
-                    ),
-                  );
-                },
+              sliver: SliverList.builder(
+                itemCount: feedItems.length,
+                itemBuilder: (context, i) => buildShelfFeedItemWidget(
+                  feedItems[i],
+                  onOpen: (s) => _openFiguresSheet(context, s.id),
+                  onRemove: (s) =>
+                      _confirmRemoveSeries(context, s.id, s.name),
+                ),
               ),
             ),
-          ),
         ],
       ),
     );

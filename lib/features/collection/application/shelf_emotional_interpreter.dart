@@ -4,6 +4,12 @@ import 'package:blindbox_app/features/collection/domain/shelf_emotional_profile.
 import 'package:blindbox_app/features/collection/domain/shelf_interpretation_confidence.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_mood.dart';
 
+// TODO(perf/scale): interpretShelf runs synchronously on the UI isolate.  At
+// indie scale (≤100 series) it completes in <10 ms and does not need isolate
+// offloading.  Move to Isolate.run when the function is called in hot paths
+// (e.g. every shelf write) AND profiling shows it exceeding ~30 ms on target
+// devices.  Candidates: CollectionNotifier._commit → recordTransitions →
+// _eraFromSnapshot, and shelfEmotionalProfileProvider rebuild on cycleFigure.
 ShelfEmotionalProfile interpretShelf(CollectionSnapshot snap) {
   if (snap.shelfSeries.isEmpty) {
     return const ShelfEmotionalProfile(

@@ -73,17 +73,33 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('All'), findsOneWidget);
+
+    // The shelf uses SliverList.builder (lazy) — scroll until the series card
+    // enters the viewport before asserting its text is present.
+    await tester.scrollUntilVisible(
+      find.text('The Other One'),
+      120,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('The Other One'), findsOneWidget);
 
     await tester.tap(find.text('Dreams Inc.'));
-    await tester.pump(const Duration(milliseconds: 200));
+    // pumpAndSettle lets the scroll physics clamp the position after the
+    // filter replaces the long list with the short empty-state sliver.
+    await tester.pumpAndSettle();
     expect(
       find.text('Nothing on your shelf for this brand yet.'),
       findsOneWidget,
     );
 
     await tester.tap(find.text('All'));
-    await tester.pump(const Duration(milliseconds: 200));
+    await tester.pumpAndSettle();
+    // Scroll back to where 'The Other One' card is after filter reset.
+    await tester.scrollUntilVisible(
+      find.text('The Other One'),
+      120,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('The Other One'), findsOneWidget);
   });
 

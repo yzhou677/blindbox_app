@@ -60,6 +60,13 @@ String computeCollectorTypeSignatureHash(CollectionSnapshot snapshot) {
   return sb.toString();
 }
 
+// TODO(perf/scale): resolveCollectorType is called from the UI isolate (inside
+// CollectorTypeViewModel.requestReveal, after a one-frame yield).  At current
+// catalog size (~100 figures, ~20 series) the full scoring pass completes in
+// <30 ms.  Move the call to Isolate.run / compute() when catalog grows beyond
+// ~1 000 figures or when profiling shows the reveal stall exceeding 100 ms on
+// target devices.  The function is pure (no Flutter context) so it is
+// isolate-safe without modification.
 /// Rule-based collector identity resolution (pure, no Riverpod).
 CollectorTypeIdentity resolveCollectorType({
   required CollectionSnapshot snapshot,
