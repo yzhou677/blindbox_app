@@ -5,6 +5,7 @@ import 'package:blindbox_app/features/collection/application/collection_evolutio
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_era.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_mood.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -20,6 +21,11 @@ class CollectionMemoryData {
     this.priorEraForEvolution,
     this.priorEraSetAtMs,
     this.ipSeriesDepth = const {},
+    this.collectorTypeArchetypeId,
+    this.collectorTypeRevealedAtMs,
+    this.collectorTypeSignatureHash,
+    this.collectorTypeStatsJson,
+    this.collectorTypeStatsVersion,
   });
 
   final int? firstSecretOwnedAtMs;
@@ -32,6 +38,34 @@ class CollectionMemoryData {
 
   /// Taxonomy IP id → count of series added over time (depth, not social score).
   final Map<String, int> ipSeriesDepth;
+
+  /// Persisted collector type (stable until user re-reveals).
+  final String? collectorTypeArchetypeId;
+  final int? collectorTypeRevealedAtMs;
+  final String? collectorTypeSignatureHash;
+  final String? collectorTypeStatsJson;
+  final int? collectorTypeStatsVersion;
+
+  CollectorTypeIdentity? get collectorTypeIdentity {
+    final idName = collectorTypeArchetypeId;
+    if (idName == null || idName.isEmpty) return null;
+    final revealedMs = collectorTypeRevealedAtMs;
+    if (revealedMs == null) return null;
+    try {
+      final statsRaw = collectorTypeStatsJson;
+      final statsMap = statsRaw != null && statsRaw.isNotEmpty
+          ? jsonDecode(statsRaw) as Map<String, dynamic>
+          : <String, dynamic>{};
+      return CollectorTypeIdentity.fromJson({
+        'archetypeId': idName,
+        'revealedAtMs': revealedMs,
+        'signatureHash': collectorTypeSignatureHash ?? '',
+        'stats': statsMap,
+      });
+    } catch (_) {
+      return null;
+    }
+  }
 
   DateTime? get priorEraSetAt => priorEraSetAtMs == null
       ? null
@@ -56,6 +90,7 @@ final class CollectionMemoryStore {
 
   static final CollectionMemoryStore instance = CollectionMemoryStore._();
 
+  static const _prefsKeyV3 = 'collection_memory_v3';
   static const _prefsKeyV2 = 'collection_memory_v2';
   static const _prefsKeyV1 = 'collection_memory_v1';
 
@@ -70,16 +105,47 @@ final class CollectionMemoryStore {
   Future<void> ensureLoaded() async {
     if (_loaded) return;
     final prefs = await SharedPreferences.getInstance();
-    final rawV2 = prefs.getString(_prefsKeyV2);
-    if (rawV2 != null && rawV2.isNotEmpty) {
-      _cached = _decode(rawV2);
+    final rawV3 = prefs.getString(_prefsKeyV3);
+    if (rawV3 != null && rawV3.isNotEmpty) {
+      _cached = _decode(rawV3);
     } else {
-      final rawV1 = prefs.getString(_prefsKeyV1);
-      if (rawV1 != null && rawV1.isNotEmpty) {
-        _cached = _decodeV1(rawV1);
+      final rawV2 = prefs.getString(_prefsKeyV2);
+      if (rawV2 != null && rawV2.isNotEmpty) {
+        _cached = _decode(rawV2);
+      } else {
+        final rawV1 = prefs.getString(_prefsKeyV1);
+        if (rawV1 != null && rawV1.isNotEmpty) {
+          _cached = _decodeV1(rawV1);
+        }
       }
     }
     _loaded = true;
+  }
+
+  Future<void> saveCollectorType(CollectorTypeIdentity identity) async {
+    await ensureLoaded();
+    _cached = _copy(
+      _cached,
+      collectorTypeArchetypeId: identity.archetypeId.name,
+      collectorTypeRevealedAtMs: identity.revealedAt.millisecondsSinceEpoch,
+      collectorTypeSignatureHash: identity.signatureHash,
+      collectorTypeStatsJson: jsonEncode(identity.stats.toJson()),
+      collectorTypeStatsVersion: 1,
+    );
+    await _persist();
+  }
+
+  Future<void> clearCollectorType() async {
+    await ensureLoaded();
+    _cached = _copy(
+      _cached,
+      collectorTypeArchetypeId: '',
+      collectorTypeRevealedAtMs: 0,
+      collectorTypeSignatureHash: '',
+      collectorTypeStatsJson: '',
+      collectorTypeStatsVersion: 0,
+    );
+    await _persist();
   }
 
   Future<void> recordTransitions({
@@ -167,7 +233,7 @@ final class CollectionMemoryStore {
     final prefs = await SharedPreferences.getInstance();
     final era = _cached.lastRecordedEra;
     await prefs.setString(
-      _prefsKeyV2,
+      _prefsKeyV3,
       jsonEncode({
         'firstSecretOwnedAtMs': _cached.firstSecretOwnedAtMs,
         'lastCompletedSeriesId': _cached.lastCompletedSeriesId,
@@ -178,6 +244,19 @@ final class CollectionMemoryStore {
         if (_cached.priorEraForEvolution != null)
           'priorEraForEvolution': _encodeEra(_cached.priorEraForEvolution!),
         'priorEraSetAtMs': _cached.priorEraSetAtMs,
+        if (_cached.collectorTypeArchetypeId != null &&
+            _cached.collectorTypeArchetypeId!.isNotEmpty)
+          'collectorTypeArchetypeId': _cached.collectorTypeArchetypeId,
+        if (_cached.collectorTypeRevealedAtMs != null)
+          'collectorTypeRevealedAtMs': _cached.collectorTypeRevealedAtMs,
+        if (_cached.collectorTypeSignatureHash != null &&
+            _cached.collectorTypeSignatureHash!.isNotEmpty)
+          'collectorTypeSignatureHash': _cached.collectorTypeSignatureHash,
+        if (_cached.collectorTypeStatsJson != null &&
+            _cached.collectorTypeStatsJson!.isNotEmpty)
+          'collectorTypeStatsJson': _cached.collectorTypeStatsJson,
+        if (_cached.collectorTypeStatsVersion != null)
+          'collectorTypeStatsVersion': _cached.collectorTypeStatsVersion,
       }),
     );
   }
@@ -202,6 +281,11 @@ final class CollectionMemoryStore {
         priorEraForEvolution: _decodeEra(m['priorEraForEvolution']),
         priorEraSetAtMs: m['priorEraSetAtMs'] as int?,
         ipSeriesDepth: _decodeDepth(m['ipSeriesDepth']),
+        collectorTypeArchetypeId: m['collectorTypeArchetypeId'] as String?,
+        collectorTypeRevealedAtMs: m['collectorTypeRevealedAtMs'] as int?,
+        collectorTypeSignatureHash: m['collectorTypeSignatureHash'] as String?,
+        collectorTypeStatsJson: m['collectorTypeStatsJson'] as String?,
+        collectorTypeStatsVersion: m['collectorTypeStatsVersion'] as int?,
       );
     } catch (_) {
       return const CollectionMemoryData();
@@ -254,6 +338,11 @@ final class CollectionMemoryStore {
     ShelfEra? priorEraForEvolution,
     int? priorEraSetAtMs,
     Map<String, int>? ipSeriesDepth,
+    String? collectorTypeArchetypeId,
+    int? collectorTypeRevealedAtMs,
+    String? collectorTypeSignatureHash,
+    String? collectorTypeStatsJson,
+    int? collectorTypeStatsVersion,
   }) {
     return CollectionMemoryData(
       firstSecretOwnedAtMs:
@@ -267,6 +356,24 @@ final class CollectionMemoryStore {
           priorEraForEvolution ?? data.priorEraForEvolution,
       priorEraSetAtMs: priorEraSetAtMs ?? data.priorEraSetAtMs,
       ipSeriesDepth: ipSeriesDepth ?? data.ipSeriesDepth,
+      collectorTypeArchetypeId: collectorTypeArchetypeId != null &&
+              collectorTypeArchetypeId.isEmpty
+          ? null
+          : (collectorTypeArchetypeId ?? data.collectorTypeArchetypeId),
+      collectorTypeRevealedAtMs: collectorTypeRevealedAtMs == 0
+          ? null
+          : (collectorTypeRevealedAtMs ?? data.collectorTypeRevealedAtMs),
+      collectorTypeSignatureHash: collectorTypeSignatureHash != null &&
+              collectorTypeSignatureHash.isEmpty
+          ? null
+          : (collectorTypeSignatureHash ?? data.collectorTypeSignatureHash),
+      collectorTypeStatsJson: collectorTypeStatsJson != null &&
+              collectorTypeStatsJson.isEmpty
+          ? null
+          : (collectorTypeStatsJson ?? data.collectorTypeStatsJson),
+      collectorTypeStatsVersion: collectorTypeStatsVersion == 0
+          ? null
+          : (collectorTypeStatsVersion ?? data.collectorTypeStatsVersion),
     );
   }
 

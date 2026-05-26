@@ -9,6 +9,7 @@ import 'package:blindbox_app/features/collection/widgets/add_to_collection_sheet
 import 'package:blindbox_app/features/collection/widgets/collection_brand_filter_row.dart';
 import 'package:blindbox_app/features/collectible_relationship/application/collectible_relationship_providers.dart';
 import 'package:blindbox_app/features/collection/application/shelf_emotional_providers.dart';
+import 'package:blindbox_app/features/collection/insights/application/collector_type_providers.dart';
 import 'package:blindbox_app/features/collection/presentation/shelf_editorial_voice.dart';
 import 'package:blindbox_app/features/collection/presentation/shelf_series_feed.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_empty_state.dart';
@@ -184,6 +185,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     final interpretationLine = ref.watch(shelfInterpretationLineProvider);
     final memoryWhisper = ref.watch(shelfMemoryWhisperProvider);
     final relationshipWhisper = ref.watch(shelfRelationshipWhisperProvider);
+    final collectorIdentity = ref.watch(collectorTypeIdentityProvider);
     final sectionSubtitle = ShelfEditorialVoice.sectionSubtitle(
       profile,
       insights,
@@ -250,6 +252,8 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                   ? interpretationLine
                   : ShelfEditorialVoice.shelfMoodLine(snap),
               memoryWhisper: memoryWhisper ?? relationshipWhisper,
+              collectorTypeName: collectorIdentity?.archetype.displayName,
+              onInsightsTap: () => context.push('/collection/insights'),
             ),
           ),
           SliverToBoxAdapter(

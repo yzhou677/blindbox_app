@@ -1,4 +1,5 @@
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/insights/application/collector_type_stat_keys.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_emotional_profile.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_interpretation_confidence.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_mood.dart';
@@ -27,17 +28,19 @@ ShelfEmotionalProfile interpretShelf(CollectionSnapshot snap) {
   for (final series in snap.shelfSeries) {
     if (series.taxonomyIpId != null && series.taxonomyIpId!.isNotEmpty) {
       taxonomySeries++;
-      ipCounts[series.taxonomyIpId!] =
-          (ipCounts[series.taxonomyIpId!] ?? 0) + 1;
+      final ipKey = canonicalizeStatKey(series.taxonomyIpId!);
+      if (ipKey.isNotEmpty) ipCounts[ipKey] = (ipCounts[ipKey] ?? 0) + 1;
     } else {
-      final fallback = series.ipName.trim().toLowerCase();
+      final fallback = canonicalizeStatKey(series.ipName);
       if (fallback.isNotEmpty) {
         ipCounts[fallback] = (ipCounts[fallback] ?? 0) + 1;
       }
     }
     if (series.taxonomyBrandId != null && series.taxonomyBrandId!.isNotEmpty) {
-      brandCounts[series.taxonomyBrandId!] =
-          (brandCounts[series.taxonomyBrandId!] ?? 0) + 1;
+      final brandKey = canonicalizeStatKey(series.taxonomyBrandId!);
+      if (brandKey.isNotEmpty) {
+        brandCounts[brandKey] = (brandCounts[brandKey] ?? 0) + 1;
+      }
     }
 
     final progress = progressForSeries(series, snap.figureStates);

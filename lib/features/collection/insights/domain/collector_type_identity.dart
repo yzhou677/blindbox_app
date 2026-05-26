@@ -1,0 +1,57 @@
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_archetype.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_archetypes.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_stats.dart';
+import 'package:flutter/foundation.dart';
+
+/// Persisted collector identity — stable until the user re-reveals.
+@immutable
+class CollectorTypeIdentity {
+  const CollectorTypeIdentity({
+    required this.archetypeId,
+    required this.revealedAt,
+    required this.signatureHash,
+    required this.stats,
+  });
+
+  final CollectorTypeArchetypeId archetypeId;
+  final DateTime revealedAt;
+  final String signatureHash;
+  final CollectorTypeStats stats;
+
+  CollectorTypeArchetype get archetype => CollectorTypeArchetypes.byId(archetypeId);
+
+  Map<String, dynamic> toJson() => {
+        'v': 1,
+        'archetypeId': archetypeId.name,
+        'revealedAtMs': revealedAt.millisecondsSinceEpoch,
+        'signatureHash': signatureHash,
+        'stats': stats.toJson(),
+      };
+
+  factory CollectorTypeIdentity.fromJson(Map<String, dynamic> json) {
+    final idName = json['archetypeId'] as String? ?? '';
+    final id = CollectorTypeArchetypeId.values.asNameMap()[idName] ??
+        CollectorTypeArchetypeId.wanderer;
+    final statsRaw = json['stats'];
+    final stats = statsRaw is Map<String, dynamic>
+        ? CollectorTypeStats.fromJson(statsRaw)
+        : const CollectorTypeStats(
+            totalOwned: 0,
+            totalWishlist: 0,
+            trackedSeries: 0,
+            completionPercent: 0,
+            secretOwned: 0,
+            secretSlots: 0,
+            brandBreakdown: {},
+            topSeries: [],
+            customSeriesRatio: 0,
+          );
+    final revealedMs = json['revealedAtMs'] as int? ?? 0;
+    return CollectorTypeIdentity(
+      archetypeId: id,
+      revealedAt: DateTime.fromMillisecondsSinceEpoch(revealedMs),
+      signatureHash: json['signatureHash'] as String? ?? '',
+      stats: stats,
+    );
+  }
+}

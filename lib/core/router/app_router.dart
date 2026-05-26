@@ -1,5 +1,6 @@
 import 'package:blindbox_app/features/catalog/presentation/catalog_browse_screen.dart';
 import 'package:blindbox_app/features/collection/collection_screen.dart';
+import 'package:blindbox_app/features/collection/insights/presentation/collection_insights_screen.dart';
 import 'package:blindbox_app/features/home/drop_detail_screen.dart';
 import 'package:blindbox_app/features/home/home_screen.dart';
 import 'package:blindbox_app/features/market/market_detail_screen.dart';
@@ -161,6 +162,34 @@ final GoRouter appRouter = GoRouter(
                 key: state.pageKey,
                 child: const CollectionScreen(),
               ),
+              routes: [
+                GoRoute(
+                  path: 'insights',
+                  pageBuilder: (context, state) => CustomTransitionPage<void>(
+                    key: state.pageKey,
+                    child: const CollectionInsightsScreen(),
+                    transitionDuration: const Duration(milliseconds: 320),
+                    transitionsBuilder:
+                        (context, animation, secondaryAnimation, child) {
+                      final curved = CurvedAnimation(
+                        parent: animation,
+                        curve: Curves.easeOutCubic,
+                        reverseCurve: Curves.easeInCubic,
+                      );
+                      return FadeTransition(
+                        opacity: curved,
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0, 0.04),
+                            end: Offset.zero,
+                          ).animate(curved),
+                          child: child,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
           ],
         ),

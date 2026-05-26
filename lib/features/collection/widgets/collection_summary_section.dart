@@ -1,6 +1,7 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/collectible_shape.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
 import 'package:flutter/material.dart';
 
 /// Soft glance at the shelf — not a stats dashboard.
@@ -28,11 +29,15 @@ class CollectionSummarySection extends StatelessWidget {
     required this.stats,
     this.shelfMoodLine,
     this.memoryWhisper,
+    this.onInsightsTap,
+    this.collectorTypeName,
   });
 
   final CollectionAggregateStats stats;
   final String? shelfMoodLine;
   final String? memoryWhisper;
+  final VoidCallback? onInsightsTap;
+  final String? collectorTypeName;
 
   @override
   Widget build(BuildContext context) {
@@ -110,7 +115,81 @@ class CollectionSummarySection extends StatelessWidget {
               ),
             ),
           ],
+          if (onInsightsTap != null) ...[
+            const SizedBox(height: 12),
+            _InsightsEntryRow(
+              scheme: scheme,
+              textTheme: textTheme,
+              collectorTypeName: collectorTypeName,
+              onTap: onInsightsTap!,
+            ),
+          ],
         ],
+      ),
+    );
+  }
+}
+
+class _InsightsEntryRow extends StatelessWidget {
+  const _InsightsEntryRow({
+    required this.scheme,
+    required this.textTheme,
+    required this.onTap,
+    this.collectorTypeName,
+  });
+
+  final ColorScheme scheme;
+  final TextTheme textTheme;
+  final VoidCallback onTap;
+  final String? collectorTypeName;
+
+  @override
+  Widget build(BuildContext context) {
+    final revealed = collectorTypeName?.trim().isNotEmpty == true;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: CollectibleShape.matRadius,
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: CollectibleShape.matRadius,
+            color: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
+            border: Border.all(
+              color: scheme.outlineVariant.withValues(alpha: 0.4),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.auto_awesome_outlined,
+                  size: 18,
+                  color: scheme.primary.withValues(alpha: 0.7),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    revealed
+                        ? '${CollectorTypeCopy.entryRevealedPrefix}: $collectorTypeName'
+                        : CollectorTypeCopy.entryCta,
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurface.withValues(alpha: 0.88),
+                      fontWeight: FontWeight.w500,
+                      height: 1.25,
+                    ),
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 20,
+                  color: scheme.onSurfaceVariant.withValues(alpha: 0.55),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
