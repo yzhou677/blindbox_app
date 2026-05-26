@@ -10,15 +10,16 @@ class CollectorTypeTotalsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final meta = textTheme.bodySmall?.copyWith(
-      color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
-      height: 1.2,
+    final meta = textTheme.bodyMedium?.copyWith(
+      color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
+      height: 1.3,
+      fontWeight: FontWeight.w500,
     );
 
     return Wrap(
       alignment: WrapAlignment.center,
-      spacing: 8,
-      runSpacing: 4,
+      spacing: 12,
+      runSpacing: 6,
       children: [
         _Chip(label: '${stats.totalOwned} owned', style: meta),
         _Dot(scheme: scheme),

@@ -30,6 +30,7 @@ final class CollectorTypeViewModel extends Notifier<CollectorTypeRevealStage> {
     final profile = interpretShelf(snap);
 
     await CollectionMemoryStore.instance.ensureLoaded();
+    if (state is! CollectorTypeRevealAnalyzing) return;
     final memory = CollectionMemoryStore.instance.cached;
 
     final identity = resolveCollectorType(
@@ -40,12 +41,14 @@ final class CollectorTypeViewModel extends Notifier<CollectorTypeRevealStage> {
     );
 
     await CollectionMemoryStore.instance.saveCollectorType(identity);
+    if (state is! CollectorTypeRevealAnalyzing) return;
 
     final elapsed = DateTime.now().difference(started);
     final remaining = Duration(milliseconds: collectorTypeAnalyzingHoldMs) -
         elapsed;
     if (remaining > Duration.zero) {
       await Future<void>.delayed(remaining);
+      if (state is! CollectorTypeRevealAnalyzing) return;
     }
 
     state = CollectorTypeRevealRevealed(identity);

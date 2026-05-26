@@ -8,7 +8,7 @@ class CollectorTypeBrandDonut extends StatefulWidget {
   const CollectorTypeBrandDonut({
     super.key,
     required this.brandBreakdown,
-    this.size = 96,
+    this.size = 132,
     this.onSectorTap,
   });
 
@@ -22,6 +22,9 @@ class CollectorTypeBrandDonut extends StatefulWidget {
 
 class _CollectorTypeBrandDonutState extends State<CollectorTypeBrandDonut>
     with SingleTickerProviderStateMixin {
+  static const double _tapTargetPadding = 16;
+  static const double _tapTolerance = 8;
+
   late final AnimationController _sweep;
   String? _selectedBrandId;
 
@@ -70,9 +73,12 @@ class _CollectorTypeBrandDonutState extends State<CollectorTypeBrandDonut>
       mainAxisSize: MainAxisSize.min,
       children: [
         GestureDetector(
+          behavior: HitTestBehavior.opaque,
           onTapUp: (details) {
+            final canvasOffset = details.localPosition -
+                const Offset(_tapTargetPadding, _tapTargetPadding);
             final brandId = _brandAtOffset(
-              details.localPosition,
+              canvasOffset,
               entries,
               total,
             );
@@ -81,30 +87,38 @@ class _CollectorTypeBrandDonutState extends State<CollectorTypeBrandDonut>
               widget.onSectorTap?.call(brandId);
             }
           },
-          child: AnimatedBuilder(
-            animation: _sweep,
-            builder: (context, _) {
-              return CustomPaint(
-                size: Size.square(widget.size),
-                painter: _BrandDonutPainter(
-                  entries: entries,
-                  total: total,
-                  sweep: Curves.easeOutCubic.transform(_sweep.value),
-                  colors: CollectorTypePalette.sectorColors,
-                  centerFill: scheme.surfaceContainerLow,
-                  centerTextColor: scheme.onSurface.withValues(alpha: 0.75),
-                ),
-              );
-            },
+          child: SizedBox.square(
+            dimension: widget.size + (_tapTargetPadding * 2),
+            child: Center(
+              child: AnimatedBuilder(
+                animation: _sweep,
+                builder: (context, _) {
+                  return CustomPaint(
+                    size: Size.square(widget.size),
+                    painter: _BrandDonutPainter(
+                      entries: entries,
+                      total: total,
+                      sweep: Curves.easeOutCubic.transform(_sweep.value),
+                      colors: CollectorTypePalette.sectorColors,
+                      centerFill: scheme.surfaceContainerLow,
+                      centerTextColor: scheme.onSurface.withValues(alpha: 0.88),
+                    ),
+                  );
+                },
+              ),
+            ),
           ),
         ),
         if (selectedLabel != null) ...[
-          const SizedBox(height: 6),
-          Text(
-            selectedLabel,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: scheme.onSurfaceVariant.withValues(alpha: 0.75),
-                ),
+          const SizedBox(height: 14),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Text(
+              selectedLabel,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.75),
+                  ),
+            ),
           ),
         ],
       ],
@@ -120,8 +134,8 @@ class _CollectorTypeBrandDonutState extends State<CollectorTypeBrandDonut>
     final v = local - center;
     final r = v.distance;
     final outer = widget.size / 2;
-    final inner = outer * 0.58;
-    if (r < inner || r > outer) return null;
+    final inner = outer * 0.52;
+    if (r < inner - _tapTolerance || r > outer + _tapTolerance) return null;
 
     var angle = math.atan2(v.dy, v.dx) + math.pi / 2;
     if (angle < 0) angle += 2 * math.pi;
@@ -157,7 +171,7 @@ class _BrandDonutPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final outer = size.width / 2;
-    final inner = outer * 0.58;
+    final inner = outer * 0.52;
     final rect = Rect.fromCircle(center: center, radius: outer);
 
     var start = -math.pi / 2;
@@ -181,7 +195,7 @@ class _BrandDonutPainter extends CustomPainter {
       text: TextSpan(
         text: '$total',
         style: TextStyle(
-          fontSize: size.width * 0.2,
+          fontSize: size.width * 0.22,
           fontWeight: FontWeight.w600,
           color: centerTextColor,
         ),
