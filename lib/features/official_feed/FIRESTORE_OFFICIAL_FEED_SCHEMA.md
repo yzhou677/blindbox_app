@@ -1,6 +1,7 @@
 # Firestore official feed schema
 
-Editorial external drops/news — **not** catalog, market, or shelf.
+Editorial official posts (news, campaigns, storefront links) — **not** the Home
+**Latest drops** commerce rail (catalog `releaseDate`), market, or shelf.
 
 ## Collection
 
@@ -21,6 +22,8 @@ Editorial external drops/news — **not** catalog, market, or shelf.
 | `status` | string | yes | `active` \| `archived` |
 | `contentHash` | string | yes | Dedup key (`sourceId` + `officialUrl` recommended) |
 | `locale` | string | no | e.g. `us` |
+| `releaseType` | string | no | Curator hint, e.g. `product`, `pop_now` — app infers deck label in UI |
+| `productId` | string | no | Numeric POP MART spu id when URL is a product page |
 
 ## Query (app)
 

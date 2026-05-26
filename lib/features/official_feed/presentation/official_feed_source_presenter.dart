@@ -1,11 +1,12 @@
 import 'package:blindbox_app/features/official_feed/domain/official_feed_item.dart';
 import 'package:blindbox_app/features/official_feed/domain/official_feed_sources.dart';
+import 'package:blindbox_app/features/official_feed/presentation/official_feed_content_type.dart';
 import 'package:flutter/material.dart';
 
-/// Secondary deck line under the source row (Phase 1 POP MART US).
+/// Secondary deck line under the source row — content-type label when known.
 String officialFeedDeckLine(OfficialFeedItem item) {
   if (item.sourceId == OfficialFeedSources.popmartUs) {
-    return 'POP MART New Releases';
+    return inferOfficialFeedContentTypeLabel(item);
   }
   return item.sourceLabel;
 }

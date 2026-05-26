@@ -1,6 +1,8 @@
 # Official feed — curated ingestion (Phase 1)
 
-Manual **POP MART US** drops for the Home **Official updates** section. No scraper, no multi-brand engine.
+Manual **POP MART US** posts for the Home **Official updates** section (news /
+campaign / link layer — **not** the catalog **Latest drops** release rail). No
+scraper, no multi-brand engine.
 
 ## Seed file
 

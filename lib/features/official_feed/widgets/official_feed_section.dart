@@ -1,12 +1,13 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/features/official_feed/application/official_feed_providers.dart';
 import 'package:blindbox_app/features/official_feed/domain/official_feed_item.dart';
+import 'package:blindbox_app/features/official_feed/presentation/official_feed_copy.dart';
 import 'package:blindbox_app/features/official_feed/widgets/official_feed_post_tile.dart';
 import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Home compact official updates feed — below Trending, hidden when empty.
+/// Official news/announcement feed — below Trending; not the commerce release rail.
 class OfficialFeedSection extends ConsumerWidget {
   const OfficialFeedSection({super.key});
 
@@ -35,8 +36,8 @@ class _OfficialUpdatesFeed extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const CollectibleSectionHeader(
-          title: 'Official updates',
-          subtitle: 'Verified posts from POP MART',
+          title: OfficialFeedCopy.sectionTitle,
+          subtitle: OfficialFeedCopy.sectionSubtitle,
         ),
         const SizedBox(height: FeedRhythm.sectionHeaderToRail),
         Padding(

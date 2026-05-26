@@ -14,6 +14,7 @@ class OfficialFeedItem {
     required this.contentHash,
     this.summary,
     this.locale,
+    this.releaseType,
   });
 
   final String id;
@@ -28,4 +29,7 @@ class OfficialFeedItem {
   /// Optional short deck copy under the title (Firestore `summary`).
   final String? summary;
   final String? locale;
+
+  /// Optional curator hint from seed push (`product`, `pop_now`, …).
+  final String? releaseType;
 }
