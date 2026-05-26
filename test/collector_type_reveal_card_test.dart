@@ -4,7 +4,6 @@ import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
-import 'package:blindbox_app/features/collection/insights/application/collector_type_providers.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_resolver.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_archetype.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
@@ -34,7 +33,7 @@ void main() {
     CollectionMemoryStore.instance.resetForTest();
   });
 
-  final _emptyCatalog = const CatalogSeedBundle(
+  final emptyCatalog = const CatalogSeedBundle(
     brands: [],
     ips: [],
     series: [],
@@ -45,7 +44,7 @@ void main() {
     return ProviderScope(
       overrides: [
         collectionNotifierProvider.overrideWith(RevealCardTestNotifier.new),
-        catalogBundleProvider.overrideWith((ref) async => _emptyCatalog),
+        catalogBundleProvider.overrideWith((ref) async => emptyCatalog),
         ...overrides,
       ],
       child: MaterialApp(
