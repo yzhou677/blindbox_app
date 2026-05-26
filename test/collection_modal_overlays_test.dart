@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:blindbox_app/core/theme/app_theme.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart';
 import 'package:flutter/material.dart';
@@ -34,7 +36,7 @@ void main() {
     final hostContext = await _pumpHostWithSheet(tester);
     expect(find.text('Add a series'), findsOneWidget);
 
-    dismissCollectionModalOverlays(hostContext);
+    await dismissCollectionModalOverlays(hostContext);
     await tester.pumpAndSettle();
     expect(find.text('Add a series'), findsNothing);
   });
@@ -52,9 +54,9 @@ void main() {
 
       // Simulate the documented race: two near-simultaneous dismiss triggers
       // (e.g. MainShellScaffold direct dismiss + GoRouter listener dismiss).
-      CollectionModalOverlayRegistry.instance.dismissAll();
-      CollectionModalOverlayRegistry.instance.dismissAll();
-      CollectionModalOverlayRegistry.instance.dismissAll();
+      unawaited(CollectionModalOverlayRegistry.instance.dismissAll());
+      unawaited(CollectionModalOverlayRegistry.instance.dismissAll());
+      unawaited(CollectionModalOverlayRegistry.instance.dismissAll());
 
       // Crucially, no exception should be thrown during the pop animation.
       await tester.pumpAndSettle();
@@ -62,7 +64,7 @@ void main() {
       expect(tester.takeException(), isNull);
 
       // The post-frame guard reset must allow a follow-up dismissAll later.
-      CollectionModalOverlayRegistry.instance.dismissAll();
+      await CollectionModalOverlayRegistry.instance.dismissAll();
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
     },
@@ -76,14 +78,14 @@ void main() {
       expect(find.text('Add a series'), findsOneWidget);
 
       // Begin pop animation but do not let it settle.
-      dismissCollectionModalOverlays(hostContext);
+      unawaited(dismissCollectionModalOverlays(hostContext));
       await tester.pump(const Duration(milliseconds: 16));
 
       // Hit dismiss again while the animation is in flight.  Without the
       // userGestureInProgress / canPop guards this was the path that
       // double-completed the route's `_popCompleter`.
-      dismissCollectionModalOverlays(hostContext);
-      dismissCollectionModalOverlays(hostContext);
+      unawaited(dismissCollectionModalOverlays(hostContext));
+      unawaited(dismissCollectionModalOverlays(hostContext));
 
       await tester.pumpAndSettle();
       expect(find.text('Add a series'), findsNothing);
@@ -97,7 +99,7 @@ void main() {
       await _pumpHostWithSheet(tester);
 
       CollectionModalOverlayRegistry.instance.unregister();
-      CollectionModalOverlayRegistry.instance.dismissAll();
+      await CollectionModalOverlayRegistry.instance.dismissAll();
 
       await tester.pumpAndSettle();
       // Sheet stays open — no registered callback means no pop.
@@ -122,8 +124,8 @@ void main() {
         ),
       );
 
-      dismissCollectionModalOverlays(hostContext);
-      dismissCollectionModalOverlays(hostContext);
+      await dismissCollectionModalOverlays(hostContext);
+      await dismissCollectionModalOverlays(hostContext);
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
     },
@@ -141,15 +143,15 @@ void main() {
       // actually lets the pop through.
       final existing = _capturedCallback;
       expect(existing, isNotNull);
-      CollectionModalOverlayRegistry.instance.register(() {
+      CollectionModalOverlayRegistry.instance.register(() async {
         dismissCallCount++;
-        existing!();
+        await existing!();
       });
 
       // Three rapid dismissAll() invocations in the same animation frame.
-      CollectionModalOverlayRegistry.instance.dismissAll();
-      CollectionModalOverlayRegistry.instance.dismissAll();
-      CollectionModalOverlayRegistry.instance.dismissAll();
+      unawaited(CollectionModalOverlayRegistry.instance.dismissAll());
+      unawaited(CollectionModalOverlayRegistry.instance.dismissAll());
+      unawaited(CollectionModalOverlayRegistry.instance.dismissAll());
 
       // Guard collapses these into a single invocation.
       expect(dismissCallCount, 1);
@@ -161,7 +163,7 @@ void main() {
   );
 }
 
-VoidCallback? _capturedCallback;
+Future<void> Function()? _capturedCallback;
 
 class _HostScaffold extends StatefulWidget {
   const _HostScaffold({required this.onContext});
@@ -186,9 +188,9 @@ class _HostScaffoldState extends State<_HostScaffold> {
     super.dispose();
   }
 
-  void _dismiss() {
+  Future<void> _dismiss() async {
     if (!mounted) return;
-    dismissCollectionModalOverlays(context);
+    await dismissCollectionModalOverlays(context);
   }
 
   @override

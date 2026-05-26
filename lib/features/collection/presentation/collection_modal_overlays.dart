@@ -1,7 +1,6 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 
 /// Index of the `/collection` branch in [StatefulShellRoute.indexedStack] (see [appRouter]).
 const int kCollectionShellBranchIndex = 2;
@@ -20,16 +19,14 @@ final class CollectionModalOverlayRegistry {
   static final CollectionModalOverlayRegistry instance =
       CollectionModalOverlayRegistry._();
 
-  VoidCallback? _dismissBranchOverlays;
+  Future<void> Function()? _dismissBranchOverlays;
 
-  // Reentrancy guard.  `Navigator.popUntil` is synchronous in stack mutation
-  // but the exit animation completes on the next frame.  Without this guard,
-  // a second dismiss arriving during the animation can call `pop()` on a
-  // route that's already mid-pop, triggering `Future already completed` when
-  // the route's `_popCompleter` resolves twice.
-  bool _dismissing = false;
+  // Reentrancy guard over the full async pop lifecycle.  While this future is
+  // non-null, repeated dismiss requests are folded into the same in-flight
+  // operation and cannot trigger duplicate pop completion.
+  Future<void>? _inFlightDismiss;
 
-  void register(VoidCallback dismiss) {
+  void register(Future<void> Function() dismiss) {
     _dismissBranchOverlays = dismiss;
   }
 
@@ -37,31 +34,23 @@ final class CollectionModalOverlayRegistry {
     _dismissBranchOverlays = null;
   }
 
-  /// Idempotent dismiss — subsequent calls within the same frame are no-ops
-  /// while the previous dismiss animation completes.  Safe to call from
-  /// multiple navigation triggers (tab switch, router listener, etc.).
-  void dismissAll() {
-    if (_dismissing) return;
+  /// Idempotent dismiss across the full async pop animation lifecycle. Safe to
+  /// call from multiple navigation triggers (tab switch, router listener, etc).
+  Future<void> dismissAll() {
+    if (_inFlightDismiss != null) return _inFlightDismiss!;
     final cb = _dismissBranchOverlays;
-    if (cb == null) return;
-    _dismissing = true;
-    try {
-      cb();
-    } finally {
-      // Clear the flag after the current frame settles so the next legitimate
-      // dismiss (e.g. user opens a sheet then switches tabs again) is allowed.
-      // Using SchedulerBinding (not WidgetsBinding) so tests without a
-      // widgets binding still receive the post-frame reset.
-      SchedulerBinding.instance.addPostFrameCallback((_) {
-        _dismissing = false;
-      });
-    }
+    if (cb == null) return Future<void>.value();
+    final op = cb();
+    _inFlightDismiss = op.whenComplete(() {
+      _inFlightDismiss = null;
+    });
+    return _inFlightDismiss!;
   }
 
-  /// Forces an immediate clear of the guard — intended for tests only.
+  /// Forces an immediate clear of the in-flight guard — intended for tests only.
   @visibleForTesting
   void resetGuardForTest() {
-    _dismissing = false;
+    _inFlightDismiss = null;
   }
 }
 
@@ -71,7 +60,7 @@ final class CollectionModalOverlayRegistry {
 /// low-level pop implementation invoked by the registered callback.  It
 /// already short-circuits when there is nothing to pop or when a user swipe
 /// gesture is in progress on the navigator.
-void dismissCollectionModalOverlays(BuildContext context) {
+Future<void> dismissCollectionModalOverlays(BuildContext context) async {
   final navigator = Navigator.of(context);
   // Nothing to dismiss.
   if (!navigator.canPop()) return;
@@ -80,7 +69,15 @@ void dismissCollectionModalOverlays(BuildContext context) {
   // `userGestureInProgress == true` during which `popUntil` can complete a
   // route's pop-future twice.
   if (navigator.userGestureInProgress) return;
-  navigator.popUntil((route) => route.isFirst);
+
+  // Pop one route at a time and await each completion before attempting the
+  // next. This prevents double-completing a route's pop future during rapid
+  // repeated dismiss requests.
+  while (navigator.canPop()) {
+    if (navigator.userGestureInProgress) return;
+    final didPop = await navigator.maybePop();
+    if (!didPop) return;
+  }
 }
 
 /// Collection-branch sheets — same drag/dismiss behavior as [showCollectibleBottomSheet].

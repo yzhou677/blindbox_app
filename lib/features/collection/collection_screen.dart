@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart';
@@ -71,15 +73,15 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       // immediately after shell.goBranch() and would otherwise call popUntil
       // a second time while the first pop animation is still in flight).
       if (!path.startsWith('/collection') && mounted) {
-        CollectionModalOverlayRegistry.instance.dismissAll();
+        unawaited(CollectionModalOverlayRegistry.instance.dismissAll());
       }
     };
     router.routerDelegate.addListener(_routerListener!);
   }
 
-  void _dismissBranchOverlays() {
+  Future<void> _dismissBranchOverlays() async {
     if (!mounted) return;
-    dismissCollectionModalOverlays(context);
+    await dismissCollectionModalOverlays(context);
   }
 
   @override

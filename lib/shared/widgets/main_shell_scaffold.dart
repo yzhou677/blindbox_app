@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart';
 import 'package:flutter/material.dart';
@@ -30,7 +32,7 @@ class MainShellScaffold extends StatelessWidget {
   void _onDestinationSelected(BuildContext context, int index) {
     if (shell.currentIndex == index) {
       if (index == kCollectionShellBranchIndex) {
-        CollectionModalOverlayRegistry.instance.dismissAll();
+        unawaited(CollectionModalOverlayRegistry.instance.dismissAll());
       }
       shell.goBranch(index, initialLocation: true);
       ShellTabReselectBus.instance.notify(index);
@@ -38,7 +40,7 @@ class MainShellScaffold extends StatelessWidget {
     }
     if (shell.currentIndex == kCollectionShellBranchIndex &&
         index != kCollectionShellBranchIndex) {
-      CollectionModalOverlayRegistry.instance.dismissAll();
+      unawaited(CollectionModalOverlayRegistry.instance.dismissAll());
     }
     shell.goBranch(index);
   }
