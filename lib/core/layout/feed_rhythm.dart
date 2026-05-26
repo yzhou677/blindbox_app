@@ -12,6 +12,9 @@ abstract final class FeedRhythm {
   /// Default gap between major Home feed sections (Latest drops ↔ Trending).
   static const double homeMajorSectionGap = 32;
 
+  /// Air between Discover search and the first feed section.
+  static const double homeSearchToFirstSection = 16;
+
   /// Space from section title row to subtitle / deck copy.
   static const double sectionTitleToSubtitle = 8;
 
@@ -56,6 +59,10 @@ abstract final class FeedRhythm {
 
   /// Horizontal showcase card width on Home series rails.
   static const double homeSeriesRailCardWidth = 272;
+
+  /// Compact official updates feed (stacked post tiles).
+  static const double homeOfficialFeedThumbnailExtent = 72;
+  static const double homeOfficialFeedPostGap = 10;
 
   /// Square series thumb on shelf cards (browse / recognition).
   static const double collectionShelfThumbnailExtent = 88;

@@ -4,6 +4,7 @@ import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
 import 'package:blindbox_app/features/home/application/home_feed_provider.dart';
 import 'package:blindbox_app/features/home/widgets/latest_drops_section.dart';
 import 'package:blindbox_app/features/home/widgets/trending_series_section.dart';
+import 'package:blindbox_app/features/official_feed/widgets/official_feed_section.dart';
 import 'package:blindbox_app/shared/widgets/app_search_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -80,7 +81,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.only(
-                top: 12,
+                top: FeedRhythm.homeSearchToFirstSection,
                 bottom: FeedRhythm.tabScrollTailPadding,
               ),
               child: feedAsync.when(
@@ -111,6 +112,8 @@ class _HomeFeedBody extends StatelessWidget {
         LatestDropsSection(releases: feed.latest),
         const SizedBox(height: FeedRhythm.homeMajorSectionGap),
         TrendingSeriesSection(releases: feed.trending),
+        const SizedBox(height: FeedRhythm.homeMajorSectionGap),
+        const OfficialFeedSection(),
       ],
     );
   }

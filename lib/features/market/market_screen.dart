@@ -18,6 +18,7 @@ import 'package:blindbox_app/features/market/application/chasers_phase1_scorer.d
 import 'package:blindbox_app/features/market/application/market_chasers_controller.dart';
 import 'package:blindbox_app/features/market/data/chasers/market_chasers_config.dart';
 import 'package:blindbox_app/features/market/widgets/chasers_market_section.dart';
+import 'package:blindbox_app/features/market/widgets/market_data_source_notice.dart';
 import 'package:blindbox_app/shared/widgets/app_search_field.dart';
 import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
 import 'package:flutter/material.dart';
@@ -145,6 +146,10 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                     onTap: () => context.push('/market/search'),
                     hintText: 'Search figures, series, brands…',
                   ),
+                  if (!immersive) ...[
+                    const SizedBox(height: FeedRhythm.blockGapMedium),
+                    const MarketDataSourceNotice(),
+                  ],
                   if (!immersive && showLiveChasersSlot) ...[
                     const SizedBox(height: FeedRhythm.blockGapMedium),
                     ChasersMarketSection(

@@ -1,0 +1,4 @@
+# Flutter tool-generated plugin registrants — keep LF on all platforms.
+linux/flutter/generated_* text eol=lf
+windows/flutter/generated_* text eol=lf
+macos/Flutter/GeneratedPluginRegistrant.swift text eol=lf

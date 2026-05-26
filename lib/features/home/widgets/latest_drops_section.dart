@@ -2,6 +2,7 @@ import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/features/home/data/home_section_zones.dart';
 import 'package:blindbox_app/features/home/domain/series_release.dart';
 import 'package:blindbox_app/features/home/widgets/latest_drop_card.dart';
+import 'package:blindbox_app/features/home/presentation/latest_drops_copy.dart';
 import 'package:flutter/material.dart';
 import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
 
@@ -22,7 +23,10 @@ class LatestDropsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const CollectibleSectionHeader(title: 'Latest drops'),
+        const CollectibleSectionHeader(
+          title: LatestDropsCopy.sectionTitle,
+          subtitle: LatestDropsCopy.sectionSubtitle,
+        ),
         const SizedBox(height: FeedRhythm.sectionHeaderToRail),
         ColoredBox(
           color: HomeSectionZones.latestDropsMat(scheme, brightness),
