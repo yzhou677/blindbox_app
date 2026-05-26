@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_series.dart' as seed;
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
@@ -46,14 +44,20 @@ String computeCollectorTypeSignatureHash(CollectionSnapshot snapshot) {
   final dominantBrand = _dominantKey(brandCounts);
   final dominantIp = _dominantKey(ipCounts);
 
-  final payload = {
-    'owned': owned,
-    'wishlist': wishlist,
-    'customSeries': customSeries,
-    'dominantBrand': dominantBrand,
-    'dominantIp': dominantIp,
-  };
-  return base64Url.encode(utf8.encode(jsonEncode(payload)));
+  // Build a deterministic lightweight signature without jsonEncode/base64.
+  // This avoids expensive codec work on the UI isolate when providers re-evaluate.
+  final sb = StringBuffer()
+    ..write('o:')
+    ..write(owned.join(','))
+    ..write('|w:')
+    ..write(wishlist.join(','))
+    ..write('|c:')
+    ..write(customSeries)
+    ..write('|b:')
+    ..write(dominantBrand ?? '')
+    ..write('|i:')
+    ..write(dominantIp ?? '');
+  return sb.toString();
 }
 
 /// Rule-based collector identity resolution (pure, no Riverpod).
@@ -65,6 +69,11 @@ CollectorTypeIdentity resolveCollectorType({
   DateTime? revealedAt,
 }) {
   final now = revealedAt ?? DateTime.now();
+  final catalogSeriesById = catalog == null
+      ? null
+      : {
+          for (final s in catalog.series) s.id: s,
+        };
   final stats = _buildStats(snapshot, profile, catalog);
   final signatureHash = computeCollectorTypeSignatureHash(snapshot);
 
@@ -84,6 +93,7 @@ CollectorTypeIdentity resolveCollectorType({
     profile: profile,
     stats: stats,
     catalog: catalog,
+    catalogSeriesById: catalogSeriesById,
     memory: memory,
     now: now,
   );
@@ -151,6 +161,7 @@ Map<CollectorTypeArchetypeId, double> _scoreArchetypes({
   required ShelfEmotionalProfile profile,
   required CollectorTypeStats stats,
   CatalogSeedBundle? catalog,
+  Map<String, seed.CatalogSeries>? catalogSeriesById,
   CollectionMemoryData? memory,
   required DateTime now,
 }) {
@@ -194,7 +205,11 @@ Map<CollectorTypeArchetypeId, double> _scoreArchetypes({
       }
     }
     if (catalog != null && series.catalogTemplateId != null) {
-      final cat = _catalogSeriesFor(catalog, series.catalogTemplateId!);
+      final cat = _catalogSeriesFor(
+        catalog,
+        series.catalogTemplateId!,
+        catalogSeriesById,
+      );
       if (cat != null && _isRecentRelease(cat, now)) recentCatalogSeries++;
     }
   }
@@ -350,7 +365,12 @@ double _dominantShare(
   return match / snapshot.shelfSeries.length;
 }
 
-seed.CatalogSeries? _catalogSeriesFor(CatalogSeedBundle catalog, String id) {
+seed.CatalogSeries? _catalogSeriesFor(
+  CatalogSeedBundle catalog,
+  String id,
+  Map<String, seed.CatalogSeries>? catalogSeriesById,
+) {
+  if (catalogSeriesById != null) return catalogSeriesById[id];
   for (final s in catalog.series) {
     if (s.id == id) return s;
   }

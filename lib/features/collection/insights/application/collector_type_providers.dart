@@ -9,20 +9,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// Cached collector identity from local memory store.
 final collectorTypeIdentityProvider = Provider<CollectorTypeIdentity?>((ref) {
   ref.watch(collectionMemoryBootstrapProvider);
-  return CollectionMemoryStore.instance.cached.collectorTypeIdentity;
+  return CollectionMemoryStore.instance.cachedCollectorTypeIdentity;
 });
 
 /// Whether the shelf signature drifted and an era transition was recorded.
 final collectorTypeEvolutionHintProvider = Provider<bool>((ref) {
-  ref.watch(collectionNotifierProvider);
+  final snap = ref.watch(collectionNotifierProvider);
   ref.watch(collectionMemoryBootstrapProvider);
   final cached = CollectionMemoryStore.instance.cached;
-  final identity = cached.collectorTypeIdentity;
-  if (identity == null) return false;
+  final hasRevealed = (cached.collectorTypeArchetypeId?.isNotEmpty ?? false) &&
+      cached.collectorTypeRevealedAtMs != null;
+  if (!hasRevealed) return false;
+  final storedHash = cached.collectorTypeSignatureHash;
+  if (storedHash == null || storedHash.isEmpty) return false;
 
-  final snap = ref.read(collectionNotifierProvider);
   final liveHash = computeCollectorTypeSignatureHash(snap);
-  if (liveHash == identity.signatureHash) return false;
+  if (liveHash == storedHash) return false;
 
   final prior = cached.priorEraForEvolution;
   final current = cached.lastRecordedEra;

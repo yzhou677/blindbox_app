@@ -15,6 +15,7 @@ class CollectorTypeAnalyzingPanel extends StatefulWidget {
 class _CollectorTypeAnalyzingPanelState extends State<CollectorTypeAnalyzingPanel>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+  Animation<double>? _routeAnimation;
 
   @override
   void initState() {
@@ -26,9 +27,36 @@ class _CollectorTypeAnalyzingPanelState extends State<CollectorTypeAnalyzingPane
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final nextRouteAnimation = ModalRoute.of(context)?.animation;
+    if (_routeAnimation == nextRouteAnimation) return;
+    _routeAnimation?.removeStatusListener(_handleRouteStatus);
+    _routeAnimation = nextRouteAnimation;
+    _routeAnimation?.addStatusListener(_handleRouteStatus);
+    final status = _routeAnimation?.status;
+    if (status == AnimationStatus.reverse) {
+      if (_controller.isAnimating) _controller.stop();
+    } else if (!_controller.isAnimating) {
+      _controller.repeat(reverse: true);
+    }
+  }
+
+  @override
   void dispose() {
+    _routeAnimation?.removeStatusListener(_handleRouteStatus);
     _controller.dispose();
     super.dispose();
+  }
+
+  void _handleRouteStatus(AnimationStatus status) {
+    if (status == AnimationStatus.reverse) {
+      if (_controller.isAnimating) _controller.stop();
+      return;
+    }
+    if (!_controller.isAnimating) {
+      _controller.repeat(reverse: true);
+    }
   }
 
   @override
@@ -36,27 +64,21 @@ class _CollectorTypeAnalyzingPanelState extends State<CollectorTypeAnalyzingPane
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        final t = _controller.value;
-        final haloAlpha = 0.06 + t * 0.08;
-        return DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: CollectibleShape.shellRadius,
-            color: scheme.surfaceContainerLow,
-            boxShadow: [
-              BoxShadow(
-                color: scheme.primary.withValues(alpha: haloAlpha),
-                blurRadius: 28 + t * 12,
-                spreadRadius: -4,
-              ),
-            ],
-          ),
-          child: child,
-        );
-      },
-      child: Padding(
+    return RepaintBoundary(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: CollectibleShape.shellRadius,
+          color: scheme.surfaceContainerLow,
+          boxShadow: [
+            // Static shadow to avoid continuous large-blur repaints.
+            BoxShadow(
+              color: scheme.primary.withValues(alpha: 0.08),
+              blurRadius: 20,
+              spreadRadius: -4,
+            ),
+          ],
+        ),
+        child: Padding(
         // Compact panel: wider horizontal breathing room than standard cards,
         // generous vertical to let the pulsing dots breathe.
         padding: const EdgeInsets.symmetric(
@@ -77,6 +99,7 @@ class _CollectorTypeAnalyzingPanelState extends State<CollectorTypeAnalyzingPane
               ),
             ),
           ],
+        ),
         ),
       ),
     );

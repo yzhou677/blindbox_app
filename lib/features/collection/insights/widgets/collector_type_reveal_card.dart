@@ -19,6 +19,12 @@ class CollectorTypeRevealCard extends ConsumerWidget {
     return 1.0;
   }
 
+  bool _shouldAnimateGlow(CollectorTypeRevealStage stage) {
+    // Keep the card calm during analyzing where there is already an active
+    // progress animation (pulsing dots). This reduces concurrent ticker load.
+    return stage is! CollectorTypeRevealAnalyzing;
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final stage = ref.watch(collectorTypeViewModelProvider);
@@ -34,39 +40,41 @@ class CollectorTypeRevealCard extends ConsumerWidget {
     return CollectorTypeAmbientGlow(
       accent: accent,
       intensity: _intensityForStage(stage),
+      animate: _shouldAnimateGlow(stage),
       child: AnimatedSwitcher(
-      duration: CollectibleMotion.sectionReveal,
-      switchInCurve: CollectibleMotion.easeOut,
-      switchOutCurve: CollectibleMotion.easeIn,
-      transitionBuilder: (child, animation) {
-        final curved = CurvedAnimation(
-          parent: animation,
-          curve: CollectibleMotion.easeOut,
-          reverseCurve: CollectibleMotion.easeIn,
-        );
-        return FadeTransition(
-          opacity: curved,
-          child: ScaleTransition(
-            scale: Tween<double>(begin: 0.98, end: 1).animate(curved),
-            child: child,
-          ),
-        );
-      },
-      child: switch (stage) {
-        CollectorTypeRevealIdle(:final cachedIdentity) => _IdleStage(
-            key: const ValueKey('idle'),
-            cachedIdentity: cachedIdentity,
-            onReveal: () =>
-                ref.read(collectorTypeViewModelProvider.notifier).requestReveal(),
-          ),
-        CollectorTypeRevealAnalyzing() => const CollectorTypeAnalyzingPanel(
-            key: ValueKey('analyzing'),
-          ),
-        CollectorTypeRevealRevealed(:final identity) => _RevealedStage(
-            key: ValueKey('revealed-${identity.archetypeId.name}'),
-            identity: identity,
-          ),
-      },
+        duration: CollectibleMotion.sectionReveal,
+        switchInCurve: CollectibleMotion.easeOut,
+        switchOutCurve: CollectibleMotion.easeIn,
+        transitionBuilder: (child, animation) {
+          final curved = CurvedAnimation(
+            parent: animation,
+            curve: CollectibleMotion.easeOut,
+            reverseCurve: CollectibleMotion.easeIn,
+          );
+          return FadeTransition(
+            opacity: curved,
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.98, end: 1).animate(curved),
+              child: child,
+            ),
+          );
+        },
+        child: switch (stage) {
+          CollectorTypeRevealIdle(:final cachedIdentity) => _IdleStage(
+              key: const ValueKey('idle'),
+              cachedIdentity: cachedIdentity,
+              onReveal: () => ref
+                  .read(collectorTypeViewModelProvider.notifier)
+                  .requestReveal(),
+            ),
+          CollectorTypeRevealAnalyzing() => const CollectorTypeAnalyzingPanel(
+              key: ValueKey('analyzing'),
+            ),
+          CollectorTypeRevealRevealed(:final identity) => _RevealedStage(
+              key: ValueKey('revealed-${identity.archetypeId.name}'),
+              identity: identity,
+            ),
+        },
       ),
     );
   }

@@ -15,7 +15,7 @@ final class CollectorTypeViewModel extends Notifier<CollectorTypeRevealStage> {
   CollectorTypeRevealStage build() {
     // Read-only: watching the bootstrap future would reset mid-reveal when it completes.
     ref.read(collectionMemoryBootstrapProvider);
-    final cached = CollectionMemoryStore.instance.cached.collectorTypeIdentity;
+    final cached = CollectionMemoryStore.instance.cachedCollectorTypeIdentity;
     return CollectorTypeRevealIdle(cachedIdentity: cached);
   }
 
@@ -24,6 +24,9 @@ final class CollectorTypeViewModel extends Notifier<CollectorTypeRevealStage> {
 
     state = const CollectorTypeRevealAnalyzing();
     final started = DateTime.now();
+    // Yield one frame so the analyzing UI paints before heavy sync scoring work.
+    await Future<void>.delayed(Duration.zero);
+    if (state is! CollectorTypeRevealAnalyzing) return;
 
     final snap = ref.read(collectionNotifierProvider);
     final catalog = ref.read(catalogBundleProvider).valueOrNull;
@@ -55,7 +58,7 @@ final class CollectorTypeViewModel extends Notifier<CollectorTypeRevealStage> {
   }
 
   void showCached() {
-    final cached = CollectionMemoryStore.instance.cached.collectorTypeIdentity;
+    final cached = CollectionMemoryStore.instance.cachedCollectorTypeIdentity;
     if (cached != null) {
       state = CollectorTypeRevealRevealed(cached);
     } else {
@@ -64,7 +67,7 @@ final class CollectorTypeViewModel extends Notifier<CollectorTypeRevealStage> {
   }
 
   void resetToIdle() {
-    final cached = CollectionMemoryStore.instance.cached.collectorTypeIdentity;
+    final cached = CollectionMemoryStore.instance.cachedCollectorTypeIdentity;
     state = CollectorTypeRevealIdle(cachedIdentity: cached);
   }
 }

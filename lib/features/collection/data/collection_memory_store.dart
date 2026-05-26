@@ -95,11 +95,17 @@ final class CollectionMemoryStore {
   static const _prefsKeyV1 = 'collection_memory_v1';
 
   CollectionMemoryData _cached = const CollectionMemoryData();
+  CollectorTypeIdentity? _cachedCollectorTypeIdentity;
   bool _loaded = false;
 
   CollectionMemoryData get cached {
     if (!_loaded) return const CollectionMemoryData();
     return _cached;
+  }
+
+  CollectorTypeIdentity? get cachedCollectorTypeIdentity {
+    if (!_loaded) return null;
+    return _cachedCollectorTypeIdentity;
   }
 
   Future<void> ensureLoaded() async {
@@ -119,6 +125,7 @@ final class CollectionMemoryStore {
         }
       }
     }
+    _cachedCollectorTypeIdentity = _cached.collectorTypeIdentity;
     _loaded = true;
   }
 
@@ -132,6 +139,7 @@ final class CollectionMemoryStore {
       collectorTypeStatsJson: jsonEncode(identity.stats.toJson()),
       collectorTypeStatsVersion: 1,
     );
+    _cachedCollectorTypeIdentity = identity;
     await _persist();
   }
 
@@ -145,6 +153,7 @@ final class CollectionMemoryStore {
       collectorTypeStatsJson: '',
       collectorTypeStatsVersion: 0,
     );
+    _cachedCollectorTypeIdentity = null;
     await _persist();
   }
 
@@ -403,6 +412,7 @@ final class CollectionMemoryStore {
 
   void resetForTest() {
     _cached = const CollectionMemoryData();
+    _cachedCollectorTypeIdentity = null;
     _loaded = true;
   }
 }
