@@ -1,4 +1,6 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/theme/app_spacing.dart';
+import 'package:blindbox_app/core/theme/app_typography.dart';
 import 'package:blindbox_app/core/theme/collectible_shape.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
@@ -46,7 +48,12 @@ class CollectionSummarySection extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 6, 20, 18),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.pageHorizontal,
+        AppSpacing.xs + 2, // 6 — tighter top than belowTabAppBar so card sits close to section header
+        AppSpacing.pageHorizontal,
+        FeedRhythm.blockGapMedium, // 18
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -63,7 +70,9 @@ class CollectionSummarySection extends StatelessWidget {
               ),
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              // Horizontal 18 is intentionally narrower than pageHorizontal (20)
+              // to give the metric strip a slightly inset look within the card.
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: AppSpacing.md),
               child: SizedBox(
                 height: FeedRhythm.collectionSummaryMetricStripHeight,
                 child: Row(
@@ -235,17 +244,16 @@ class _ShelfGlanceStat extends StatelessWidget {
       children: [
         Text(
           '$count',
-          style: textTheme.titleLarge?.copyWith(
+          style: AppTypography.insightsTotals(textTheme, scheme).copyWith(
             fontWeight: FontWeight.w600,
-            letterSpacing: -0.35,
             height: 1.05,
             color: scheme.onSurface.withValues(alpha: 0.92),
           ),
         ),
-        const SizedBox(width: 6),
+        const SizedBox(width: AppSpacing.xs + 2),
         Text(
           label,
-          style: textTheme.bodySmall?.copyWith(
+          style: AppTypography.deckText(textTheme, scheme).copyWith(
             color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
             fontWeight: FontWeight.w500,
             height: 1.1,

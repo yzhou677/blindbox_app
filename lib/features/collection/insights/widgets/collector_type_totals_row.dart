@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_stats.dart';
 import 'package:flutter/material.dart';
 
@@ -10,11 +11,10 @@ class CollectorTypeTotalsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final meta = textTheme.bodyMedium?.copyWith(
-      color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
-      height: 1.3,
-      fontWeight: FontWeight.w500,
-    );
+    // shelfProgressLine is bodyMedium w500 — matches the readable-but-quiet
+    // stat pill style used across shelf surfaces.
+    final meta = CollectibleTypography.shelfProgressLine(textTheme, scheme)
+        .copyWith(height: 1.3);
 
     return Wrap(
       alignment: WrapAlignment.center,

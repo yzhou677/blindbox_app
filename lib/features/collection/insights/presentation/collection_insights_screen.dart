@@ -1,4 +1,5 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_providers.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_view_model.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
@@ -16,47 +17,62 @@ class CollectionInsightsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final showEvolutionHint = ref.watch(collectorTypeEvolutionHintProvider);
     final stage = ref.watch(collectorTypeViewModelProvider);
+    final textTheme = Theme.of(context).textTheme;
+
+    final showRevealAgain = stage is CollectorTypeRevealRevealed ||
+        (stage is CollectorTypeRevealIdle && stage.cachedIdentity != null);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(CollectorTypeCopy.screenTitle),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.pop(),
-        ),
-        actions: [
-          if (stage is CollectorTypeRevealRevealed ||
-              (stage is CollectorTypeRevealIdle &&
-                  stage.cachedIdentity != null))
-            PopupMenuButton<String>(
-              onSelected: (value) {
-                if (value == 'reveal') {
-                  ref
-                      .read(collectorTypeViewModelProvider.notifier)
-                      .requestReveal();
-                }
-              },
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'reveal',
-                  child: Text(CollectorTypeCopy.revealAgain),
-                ),
-              ],
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            toolbarHeight: FeedRhythm.mainTabAppBarToolbarHeight,
+            titleSpacing: AppSpacing.pageHorizontal,
+            title: Text(
+              CollectorTypeCopy.screenTitle,
+              style: textTheme.titleLarge,
             ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.only(bottom: FeedRhythm.tabScrollTailPadding),
-        children: [
-          const CollectibleSectionHeader(
-            title: CollectorTypeCopy.screenTitle,
-            subtitle: CollectorTypeCopy.screenSubtitle,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_rounded),
+              onPressed: () => context.pop(),
+            ),
+            actions: [
+              if (showRevealAgain)
+                PopupMenuButton<String>(
+                  onSelected: (value) {
+                    if (value == 'reveal') {
+                      ref
+                          .read(collectorTypeViewModelProvider.notifier)
+                          .requestReveal();
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'reveal',
+                      child: Text(CollectorTypeCopy.revealAgain),
+                    ),
+                  ],
+                ),
+            ],
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+          SliverToBoxAdapter(
+            child: SizedBox(height: AppSpacing.belowTabAppBar),
+          ),
+          const SliverToBoxAdapter(
+            child: CollectibleSectionHeader(
+              title: CollectorTypeCopy.screenTitle,
+              subtitle: CollectorTypeCopy.screenSubtitle,
+            ),
+          ),
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.pageHorizontal,
+              AppSpacing.sm,
+              AppSpacing.pageHorizontal,
+              FeedRhythm.tabScrollTailPadding,
+            ),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
                 if (showEvolutionHint) ...[
                   CollectorTypeEvolutionHintBanner(
                     onRevealTap: () => ref
@@ -66,7 +82,7 @@ class CollectionInsightsScreen extends ConsumerWidget {
                   const SizedBox(height: FeedRhythm.blockGapMedium),
                 ],
                 const CollectorTypeRevealCard(),
-              ],
+              ]),
             ),
           ),
         ],

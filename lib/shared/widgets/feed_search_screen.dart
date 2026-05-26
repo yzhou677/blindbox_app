@@ -1,9 +1,25 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/shared/widgets/app_search_field.dart';
 import 'package:flutter/material.dart';
 
 /// Full-screen search shell shared by Discover catalog browse and Market browse.
+///
+/// ## Intentional deviations from the main-tab AppBar style
+///
+/// * `toolbarHeight: 72` — search overlays use a taller AppBar than main tabs
+///   (52) to give the headline-sized title more vertical breathing room and to
+///   visually distinguish the search context from a regular tab screen.
+/// * Title style: [CollectibleTypography.editorialScreenTitle] (headlineSmall
+///   w700) instead of the main-tab [textTheme.titleLarge] — the larger size
+///   reinforces that this is a focused search mode, not a browsing tab.
+/// * `top: FeedRhythm.headerToSearchField + 4` (18 vs 14) — an extra 4 px
+///   compensates for the taller AppBar so the search field sits at the same
+///   visual distance from the top of the content area as on the browse tabs.
+///
+/// Do NOT flatten these values to match main-tab constants; the differences
+/// are intentional UX decisions, not inconsistencies.
 class FeedSearchScreen extends StatelessWidget {
   const FeedSearchScreen({
     super.key,
@@ -38,9 +54,9 @@ class FeedSearchScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: scheme.surfaceContainerLow,
       appBar: AppBar(
-        toolbarHeight: 72,
+        toolbarHeight: 72, // Intentional — see class-level doc above
         centerTitle: false,
-        titleSpacing: 20,
+        titleSpacing: AppSpacing.pageHorizontal,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () {
@@ -85,7 +101,12 @@ class FeedSearchScreen extends StatelessWidget {
           ),
           if (hasSearchText)
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.pageHorizontal,
+                AppSpacing.lg,
+                AppSpacing.pageHorizontal,
+                AppSpacing.sm,
+              ),
               child: Text(
                 'Matches',
                 style: textTheme.labelLarge?.copyWith(
@@ -100,7 +121,9 @@ class FeedSearchScreen extends StatelessWidget {
                 ? results
                 : Center(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 28),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.emptyStateHorizontal,
+                      ),
                       child: Text(
                         emptyPrompt,
                         textAlign: TextAlign.center,

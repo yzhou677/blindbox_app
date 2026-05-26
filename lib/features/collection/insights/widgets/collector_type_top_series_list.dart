@@ -1,3 +1,5 @@
+import 'package:blindbox_app/core/theme/app_spacing.dart';
+import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:flutter/material.dart';
 
 class CollectorTypeTopSeriesList extends StatelessWidget {
@@ -19,14 +21,11 @@ class CollectorTypeTopSeriesList extends StatelessWidget {
       children: [
         for (final name in seriesNames)
           Padding(
-            padding: const EdgeInsets.only(bottom: 4),
+            padding: const EdgeInsets.only(bottom: AppSpacing.xs),
             child: Text(
               name,
-              style: textTheme.bodyMedium?.copyWith(
-                color: scheme.onSurfaceVariant.withValues(alpha: 0.86),
-                fontWeight: FontWeight.w500,
-                height: 1.35,
-              ),
+              style: CollectibleTypography.shelfProgressLine(textTheme, scheme)
+                  .copyWith(height: 1.35),
             ),
           ),
       ],

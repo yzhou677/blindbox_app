@@ -28,16 +28,22 @@ ShelfEmotionalProfile interpretShelf(CollectionSnapshot snap) {
   for (final series in snap.shelfSeries) {
     if (series.taxonomyIpId != null && series.taxonomyIpId!.isNotEmpty) {
       taxonomySeries++;
-      final ipKey = canonicalizeStatKey(series.taxonomyIpId!);
+      // Taxonomy IDs are already underscore-canonical — use them verbatim so
+      // dominantIpId retains the canonical form (e.g. 'the_monsters').
+      // canonicalizeStatKey is only for free-text display names below.
+      final ipKey = series.taxonomyIpId!;
       if (ipKey.isNotEmpty) ipCounts[ipKey] = (ipCounts[ipKey] ?? 0) + 1;
     } else {
+      // Free-text ipName may have capitalisation / spacing variants — normalise
+      // so that 'The Monsters' and 'the-monsters' map to the same bucket.
       final fallback = canonicalizeStatKey(series.ipName);
       if (fallback.isNotEmpty) {
         ipCounts[fallback] = (ipCounts[fallback] ?? 0) + 1;
       }
     }
     if (series.taxonomyBrandId != null && series.taxonomyBrandId!.isNotEmpty) {
-      final brandKey = canonicalizeStatKey(series.taxonomyBrandId!);
+      // Taxonomy brand IDs are already canonical — use verbatim.
+      final brandKey = series.taxonomyBrandId!;
       if (brandKey.isNotEmpty) {
         brandCounts[brandKey] = (brandCounts[brandKey] ?? 0) + 1;
       }

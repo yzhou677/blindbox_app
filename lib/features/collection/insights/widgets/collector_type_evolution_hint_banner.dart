@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/theme/app_typography.dart';
 import 'package:blindbox_app/core/theme/collectible_shape.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
 import 'package:flutter/material.dart';
@@ -38,7 +39,9 @@ class CollectorTypeEvolutionHintBanner extends StatelessWidget {
                 Expanded(
                   child: Text(
                     CollectorTypeCopy.evolutionHint,
-                    style: textTheme.bodySmall?.copyWith(
+                    style: AppTypography.deckText(textTheme, scheme).copyWith(
+                      // Banner sits on tertiary container — lift opacity slightly
+                      // above the default deckText alpha for legibility.
                       color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
                       height: 1.35,
                     ),

@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/core/theme/collectible_shape.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
@@ -56,12 +57,17 @@ class _CollectorTypeAnalyzingPanelState extends State<CollectorTypeAnalyzingPane
         );
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
+        // Compact panel: wider horizontal breathing room than standard cards,
+        // generous vertical to let the pulsing dots breathe.
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xxl, // 24
+          vertical: 36,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             _PulsingDots(animation: _controller, scheme: scheme),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             Text(
               CollectorTypeCopy.analyzingLine,
               style: textTheme.bodyMedium?.copyWith(
