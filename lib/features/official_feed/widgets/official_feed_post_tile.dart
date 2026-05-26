@@ -4,6 +4,7 @@ import 'package:blindbox_app/features/official_feed/domain/official_feed_item.da
 import 'package:blindbox_app/features/official_feed/presentation/official_feed_post_date.dart';
 import 'package:blindbox_app/features/official_feed/presentation/official_feed_source_presenter.dart';
 import 'package:blindbox_app/features/official_feed/utils/open_official_feed_url.dart';
+import 'package:blindbox_app/features/official_feed/widgets/official_feed_content_type_label.dart';
 import 'package:blindbox_app/features/official_feed/widgets/official_feed_thumbnail.dart';
 import 'package:flutter/material.dart';
 
@@ -74,18 +75,8 @@ class OfficialFeedPostTile extends StatelessWidget {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            officialFeedDeckLine(item),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: textTheme.bodySmall?.copyWith(
-                              color: scheme.onSurfaceVariant.withValues(
-                                alpha: 0.58,
-                              ),
-                              height: 1.25,
-                            ),
-                          ),
+                          const SizedBox(height: 3),
+                          OfficialFeedContentTypeLabel(item: item),
                         ],
                       ),
                     ),
