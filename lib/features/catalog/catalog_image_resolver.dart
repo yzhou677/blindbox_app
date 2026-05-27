@@ -38,6 +38,7 @@ abstract final class CatalogImageResolver {
   static Set<String>? _bundleAssetKeys;
   static final Map<String, String> _storageUrlCache = {};
   static final Set<String> _storageMissingCache = <String>{};
+  static final Map<String, Future<String?>> _storageResolveInFlight = {};
   static final Set<String> _debugLoggedMissingKeys = <String>{};
 
   static const String storageFiguresPrefix = 'catalog/figures';
@@ -159,13 +160,37 @@ abstract final class CatalogImageResolver {
     final cached = _storageUrlCache[primaryCacheKey];
     if (cached != null) return cached;
     if (_storageMissingCache.contains(primaryCacheKey)) return null;
+    final inFlight = _storageResolveInFlight[primaryCacheKey];
+    if (inFlight != null) return inFlight;
 
     if (!_firebaseStorageReady) return null;
 
+    final future = _resolveStorageDisplayRefUncached(
+      kind: kind,
+      imageKey: k,
+      primaryCacheKey: primaryCacheKey,
+    );
+    _storageResolveInFlight[primaryCacheKey] = future;
+    try {
+      return await future;
+    } finally {
+      _storageResolveInFlight.remove(primaryCacheKey);
+    }
+  }
+
+  static Future<String?> _resolveStorageDisplayRefUncached({
+    required CatalogImageKind kind,
+    required String imageKey,
+    required String primaryCacheKey,
+  }) async {
     var sawOnlyObjectNotFound = true;
     final root = FirebaseStorage.instance.ref();
     for (final ext in assetExtensions) {
-      final path = storageObjectPath(kind: kind, imageKey: k, extension: ext);
+      final path = storageObjectPath(
+        kind: kind,
+        imageKey: imageKey,
+        extension: ext,
+      );
       try {
         final url = await root
             .child(path)
@@ -191,7 +216,7 @@ abstract final class CatalogImageResolver {
       // Missing object for all known extensions: cache as absent so repeated
       // UI rebuilds do not keep probing Storage and spamming 404 logs.
       _storageMissingCache.add(primaryCacheKey);
-      _debugLogMissingKeyOnce(kind: kind, imageKey: k);
+      _debugLogMissingKeyOnce(kind: kind, imageKey: imageKey);
     }
     return null;
   }
