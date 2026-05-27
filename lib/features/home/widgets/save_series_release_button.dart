@@ -1,4 +1,6 @@
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
+import 'package:blindbox_app/features/collection/application/collection_series_identity.dart';
+import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/home/domain/series_release.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,6 +34,18 @@ class _SaveSeriesReleaseButtonState extends ConsumerState<SaveSeriesReleaseButto
   late final AnimationController _pulse;
 
   String get _catalogKey => 'drop-${widget.release.dropId}';
+
+  CollectionSeriesOwnershipMatch _ownership(CollectionSnapshot snap) {
+    return resolveCollectionSeriesOwnership(
+      snapshot: snap,
+      catalogTemplateId: _catalogKey,
+      alternateCatalogTemplateIds: [widget.release.dropId],
+      seriesName: widget.release.seriesName,
+      brandName: widget.release.brand,
+      taxonomyBrandId: widget.release.taxonomyBrandId,
+      taxonomyIpId: widget.release.taxonomyIpId,
+    );
+  }
 
   @override
   void initState() {
@@ -83,17 +97,40 @@ class _SaveSeriesReleaseButtonState extends ConsumerState<SaveSeriesReleaseButto
       ),
     );
     if (confirmed != true || !mounted) return;
+    final match = ref.read(
+      collectionNotifierProvider.select(
+        (s) => _ownership(s),
+      ),
+    );
+    final removableKey = match.matchedCatalogTemplateId ?? _catalogKey;
     ref
         .read(collectionNotifierProvider.notifier)
-        .removeSeriesByCatalogTemplate(_catalogKey);
+        .removeSeriesByCatalogTemplate(removableKey);
+  }
+
+  void _showOwnedManagedElsewhereHint() {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'This series is already in your collection. Manage it from My collection.',
+        ),
+      ),
+    );
   }
 
   void _handleTap() {
-    final onShelf = ref.read(
-      collectionNotifierProvider.select((s) => s.hasTemplateOnShelf(_catalogKey)),
+    final match = ref.read(
+      collectionNotifierProvider.select(
+        (s) => _ownership(s),
+      ),
     );
-    if (onShelf) {
-      _confirmRemoveFromShelf();
+    if (match.owned) {
+      if (match.removableViaReleaseCta) {
+        _confirmRemoveFromShelf();
+      } else {
+        _showOwnedManagedElsewhereHint();
+      }
     } else {
       _addToShelf();
     }
@@ -102,9 +139,12 @@ class _SaveSeriesReleaseButtonState extends ConsumerState<SaveSeriesReleaseButto
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final onShelf = ref.watch(
-      collectionNotifierProvider.select((s) => s.hasTemplateOnShelf(_catalogKey)),
+    final match = ref.watch(
+      collectionNotifierProvider.select(
+        (s) => _ownership(s),
+      ),
     );
+    final onShelf = match.owned;
 
     final scale = Tween<double>(begin: 1.0, end: 1.14).evaluate(
       CurvedAnimation(parent: _pulse, curve: Curves.easeOutCubic),
@@ -128,7 +168,7 @@ class _SaveSeriesReleaseButtonState extends ConsumerState<SaveSeriesReleaseButto
         alignment: Alignment.centerLeft,
         child: onShelf
             ? FilledButton.tonal(
-                onPressed: _handleTap,
+                onPressed: match.removableViaReleaseCta ? _handleTap : null,
                 style: filledStyle.copyWith(
                   foregroundColor: WidgetStatePropertyAll(
                     scheme.onSurfaceVariant.withValues(alpha: 0.85),
