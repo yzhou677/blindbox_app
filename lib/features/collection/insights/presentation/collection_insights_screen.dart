@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
-import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_providers.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_view_model.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
@@ -26,15 +25,15 @@ class CollectionInsightsScreen extends ConsumerWidget {
         (stage is CollectorTypeRevealIdle && stage.cachedIdentity != null);
 
     Future<void> exitInsights() async {
-      // Harden exit behavior for collection-insights navigation races:
-      // - If we are under GoRouter shell routing, always jump to collection root
-      //   instead of stack-pop (prevents layered-pop races when branch overlays
-      //   are already being dismissed).
-      // - In standalone widget tests / plain Navigator pushes, fall back to
-      //   Navigator.pop so behavior remains testable without GoRouter.
+      // Route taxonomy boundary:
+      // CollectionInsights is a branch-owned page route (not a transient
+      // overlay). Its exit path must only perform branch navigation, and must
+      // never participate in CollectionModalOverlayRegistry dismissal.
+      //
+      // Overlay dismissal remains owned by CollectionScreen/MainShell tab
+      // switching paths for true PopupRoutes (sheets/dialogs) only.
       final router = GoRouter.maybeOf(context);
       if (router != null) {
-        unawaited(CollectionModalOverlayRegistry.instance.dismissAll());
         if (context.mounted) context.go('/collection');
         return;
       }

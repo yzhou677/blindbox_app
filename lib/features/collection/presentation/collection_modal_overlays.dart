@@ -104,10 +104,15 @@ Future<void> dismissCollectionModalOverlays(BuildContext context) async {
   if (navigator.userGestureInProgress) return;
   if (!navigator.canPop() || navigator.userGestureInProgress) return;
 
-  // Use a single stack mutation so nested route animations are handled by the
-  // navigator internals, instead of manual maybePop loops that can re-enter
-  // during in-flight transitions.
-  navigator.popUntil((route) => route.isFirst);
+  // Critical: only dismiss modal overlays (PopupRoute), never page routes.
+  //
+  // Using `route.isFirst` can pop page routes like `/collection/insights`.
+  // If another navigation action (e.g. `context.go('/collection')`) runs in
+  // parallel, the same page route may be completed twice -> `Future already
+  // completed`.
+  //
+  // Stop as soon as we reach a PageRoute (Collection/Insights page layer).
+  navigator.popUntil((route) => route is PageRoute);
 }
 
 /// Collection-branch sheets — same drag/dismiss behavior as [showCollectibleBottomSheet].
