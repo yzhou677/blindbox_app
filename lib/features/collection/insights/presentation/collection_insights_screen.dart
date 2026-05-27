@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_providers.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_view_model.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
@@ -22,9 +25,31 @@ class CollectionInsightsScreen extends ConsumerWidget {
     final showRevealAgain = stage is CollectorTypeRevealRevealed ||
         (stage is CollectorTypeRevealIdle && stage.cachedIdentity != null);
 
-    return Scaffold(
-      body: CustomScrollView(
-        slivers: [
+    Future<void> exitInsights() async {
+      // Harden exit behavior for collection-insights navigation races:
+      // - If we are under GoRouter shell routing, always jump to collection root
+      //   instead of stack-pop (prevents layered-pop races when branch overlays
+      //   are already being dismissed).
+      // - In standalone widget tests / plain Navigator pushes, fall back to
+      //   Navigator.pop so behavior remains testable without GoRouter.
+      final router = GoRouter.maybeOf(context);
+      if (router != null) {
+        unawaited(CollectionModalOverlayRegistry.instance.dismissAll());
+        if (context.mounted) context.go('/collection');
+        return;
+      }
+      final navigator = Navigator.of(context);
+      if (navigator.canPop()) navigator.pop();
+    }
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) unawaited(exitInsights());
+      },
+      child: Scaffold(
+        body: CustomScrollView(
+          slivers: [
           SliverAppBar(
             toolbarHeight: FeedRhythm.mainTabAppBarToolbarHeight,
             titleSpacing: AppSpacing.pageHorizontal,
@@ -34,7 +59,7 @@ class CollectionInsightsScreen extends ConsumerWidget {
             ),
             leading: IconButton(
               icon: const Icon(Icons.arrow_back_rounded),
-              onPressed: () => context.pop(),
+              onPressed: () => unawaited(exitInsights()),
             ),
             actions: [
               if (showRevealAgain)
@@ -85,7 +110,8 @@ class CollectionInsightsScreen extends ConsumerWidget {
               ]),
             ),
           ),
-        ],
+          ],
+        ),
       ),
     );
   }
