@@ -18,6 +18,25 @@ import 'package:flutter/services.dart';
 /// + [assetExtensions], probes bundled assets first, then Storage. Download URLs exist
 /// only in memory for widgets — not written back to Firestore or shelf [imageKey].
 abstract final class CatalogImageResolver {
+  /// When false (default), never calls Firebase Storage for catalog art.
+  ///
+  /// Product builds should rely on bundled `assets/catalog/**` and placeholders.
+  /// Missing Storage objects otherwise trigger native `StorageException` 404 logs
+  /// on every new [imageKey] (not suppressible from Dart).
+  ///
+  /// Enable only when backfilling or validating bucket assets:
+  /// `flutter run --dart-define=CATALOG_STORAGE_FALLBACK=true`
+  static bool get storageFallbackEnabled {
+    if (storageFallbackOverride != null) return storageFallbackOverride!;
+    return const bool.fromEnvironment(
+      'CATALOG_STORAGE_FALLBACK',
+      defaultValue: false,
+    );
+  }
+
+  @visibleForTesting
+  static bool? storageFallbackOverride;
+
   static const Duration storageUrlTimeout = Duration(seconds: 8);
 
   static const String figuresRoot = 'assets/catalog/figures';
@@ -163,6 +182,7 @@ abstract final class CatalogImageResolver {
     final inFlight = _storageResolveInFlight[primaryCacheKey];
     if (inFlight != null) return inFlight;
 
+    if (!storageFallbackEnabled) return null;
     if (!_firebaseStorageReady) return null;
 
     final future = _resolveStorageDisplayRefUncached(
