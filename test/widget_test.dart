@@ -153,7 +153,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
-    await tester.tap(find.byIcon(Icons.home_outlined));
+    await tester.tap(find.byIcon(Icons.explore_outlined));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
@@ -241,7 +241,7 @@ void main() {
 
     expect(find.text('Add a series'), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.home_outlined));
+    await tester.tap(find.byIcon(Icons.explore_outlined));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
