@@ -3,6 +3,7 @@ import 'package:blindbox_app/features/catalog/presentation/catalog_image_display
 import 'package:blindbox_app/features/collection/widgets/collectible_figure_placeholder.dart';
 import 'package:blindbox_app/shared/widgets/app_image_shimmer.dart';
 import 'package:blindbox_app/shared/widgets/catalog_resolved_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 /// Stable [Key] for catalog image widgets in lists — ties [State] to [imageKey].
@@ -159,6 +160,12 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
     if (!_resolveCoordinator.shouldApply(generation) || !mounted) return;
 
     if (bundled != null && bundled.isNotEmpty) {
+      if (kDebugMode) {
+        debugPrint(
+          'CatalogImageFromKey: imageKey="$imageKey" provider=bundled_asset '
+          'path=$bundled',
+        );
+      }
       setState(() {
         _imageRef = bundled;
         _loading = false;
@@ -166,16 +173,24 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
       return;
     }
 
-    setState(() {
-      _loading = true;
-      _imageRef = null;
-    });
-
-    final ref = _isSeriesMode
-        ? await CatalogImageResolver.resolveSeriesDisplayRef(imageKey)
-        : await CatalogImageResolver.resolveFigureDisplayRef(imageKey);
+    String? ref;
+    if (CatalogImageResolver.storageFallbackEnabled) {
+      ref = _isSeriesMode
+          ? await CatalogImageResolver.resolveSeriesStorageRef(imageKey)
+          : await CatalogImageResolver.resolveFigureStorageRef(imageKey);
+    }
 
     if (!_resolveCoordinator.shouldApply(generation) || !mounted) return;
+
+    if (kDebugMode) {
+      final provider = ref == null || ref.isEmpty
+          ? 'placeholder'
+          : (ref.startsWith('assets/') ? 'bundled_asset' : 'network_url');
+      debugPrint(
+        'CatalogImageFromKey: imageKey="$imageKey" provider=$provider '
+        'storageFallback=${CatalogImageResolver.storageFallbackEnabled}',
+      );
+    }
 
     setState(() {
       _imageRef = ref;

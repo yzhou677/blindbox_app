@@ -18,19 +18,19 @@ import 'package:flutter/services.dart';
 /// + [assetExtensions], probes bundled assets first, then Storage. Download URLs exist
 /// only in memory for widgets — not written back to Firestore or shelf [imageKey].
 abstract final class CatalogImageResolver {
-  /// When false (default), never calls Firebase Storage for catalog art.
+  /// When true (default), after a bundled miss, resolve from Firebase Storage.
   ///
-  /// Product builds should rely on bundled `assets/catalog/**` and placeholders.
-  /// Missing Storage objects otherwise trigger native `StorageException` 404 logs
-  /// on every new [imageKey] (not suppressible from Dart).
+  /// Discover / catalog UI is designed around Firestore metadata + Storage art.
+  /// Bundled `assets/catalog/**` is offline-first cache for a small seed subset.
   ///
-  /// Enable only when backfilling or validating bucket assets:
-  /// `flutter run --dart-define=CATALOG_STORAGE_FALLBACK=true`
+  /// Set `CATALOG_STORAGE_FALLBACK=false` only to suppress Storage probes (e.g.
+  /// catalog-only dev with placeholders). Missing keys are negative-cached so
+  /// repeat 404 log spam is avoided without disabling Storage for valid keys.
   static bool get storageFallbackEnabled {
     if (storageFallbackOverride != null) return storageFallbackOverride!;
     return const bool.fromEnvironment(
       'CATALOG_STORAGE_FALLBACK',
-      defaultValue: false,
+      defaultValue: true,
     );
   }
 
@@ -55,6 +55,7 @@ abstract final class CatalogImageResolver {
   ];
 
   static Set<String>? _bundleAssetKeys;
+  static Future<void>? _ensureReadyFuture;
   static final Map<String, String> _storageUrlCache = {};
   static final Set<String> _storageMissingCache = <String>{};
   static final Map<String, Future<String?>> _storageResolveInFlight = {};
@@ -95,6 +96,11 @@ abstract final class CatalogImageResolver {
   /// Called from catalog loaders; safe to call multiple times.
   static Future<void> ensureReady() async {
     if (_bundleAssetKeys != null) return;
+    _ensureReadyFuture ??= _loadAssetManifest();
+    await _ensureReadyFuture;
+  }
+
+  static Future<void> _loadAssetManifest() async {
     final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
     _bundleAssetKeys = manifest.listAssets().toSet();
   }
@@ -110,32 +116,84 @@ abstract final class CatalogImageResolver {
 
   /// First existing figure asset for [imageKey], or null if none are bundled.
   static Future<String?> resolveFigureAsset(String imageKey) async {
+    final k = imageKey.trim();
+    if (k.isEmpty) return null;
     await ensureReady();
-    return _firstExisting(figuresRoot, imageKey);
+    final hit = _firstExisting(figuresRoot, k);
+    _traceResolution(
+      imageKey: k,
+      kind: CatalogImageKind.figure,
+      phase: 'bundled',
+      attemptedPath: _lastProbedBundledPath,
+      hit: hit != null,
+      storageSkipped: null,
+      outcome: hit != null ? 'bundled_asset' : 'bundled_miss',
+    );
+    return hit;
   }
 
   /// First existing series asset for [imageKey], or null if none are bundled.
   static Future<String?> resolveSeriesAsset(String imageKey) async {
+    final k = imageKey.trim();
+    if (k.isEmpty) return null;
     await ensureReady();
-    return _firstExisting(seriesRoot, imageKey);
+    final hit = _firstExisting(seriesRoot, k);
+    _traceResolution(
+      imageKey: k,
+      kind: CatalogImageKind.series,
+      phase: 'bundled',
+      attemptedPath: _lastProbedBundledPath,
+      hit: hit != null,
+      storageSkipped: null,
+      outcome: hit != null ? 'bundled_asset' : 'bundled_miss',
+    );
+    return hit;
   }
 
-  /// Bundled asset path, else first existing Storage object — for UI display.
+  /// Firebase Storage URL only — does not probe bundled assets.
+  static Future<String?> resolveFigureStorageRef(String imageKey) async {
+    final k = imageKey.trim();
+    if (k.isEmpty) return null;
+    return _resolveStorageDisplayRef(CatalogImageKind.figure, k);
+  }
+
+  /// Firebase Storage URL only — does not probe bundled assets.
+  static Future<String?> resolveSeriesStorageRef(String imageKey) async {
+    final k = imageKey.trim();
+    if (k.isEmpty) return null;
+    return _resolveStorageDisplayRef(CatalogImageKind.series, k);
+  }
+
+  /// Bundled asset path, else Storage when [storageFallbackEnabled].
   static Future<String?> resolveFigureDisplayRef(String imageKey) async {
     final k = imageKey.trim();
     if (k.isEmpty) return null;
     final asset = await resolveFigureAsset(k);
     if (asset != null) return asset;
-    return _resolveStorageDisplayRef(CatalogImageKind.figure, k);
+    final storage = await _resolveStorageDisplayRef(CatalogImageKind.figure, k);
+    _traceResolution(
+      imageKey: k,
+      kind: CatalogImageKind.figure,
+      phase: 'display_ref',
+      outcome: storage != null ? 'storage_url' : 'null',
+    );
+    return storage;
   }
 
-  /// Bundled asset path, else first existing Storage object — for UI display.
+  /// Bundled asset path, else Storage when [storageFallbackEnabled].
   static Future<String?> resolveSeriesDisplayRef(String imageKey) async {
     final k = imageKey.trim();
     if (k.isEmpty) return null;
     final asset = await resolveSeriesAsset(k);
     if (asset != null) return asset;
-    return _resolveStorageDisplayRef(CatalogImageKind.series, k);
+    final storage = await _resolveStorageDisplayRef(CatalogImageKind.series, k);
+    _traceResolution(
+      imageKey: k,
+      kind: CatalogImageKind.series,
+      phase: 'display_ref',
+      outcome: storage != null ? 'storage_url' : 'null',
+    );
+    return storage;
   }
 
   /// Bundled figure path for [imageKey].
@@ -158,12 +216,19 @@ abstract final class CatalogImageResolver {
     return '$seriesRoot/$k${assetExtensions.first}';
   }
 
+  static String? _lastProbedBundledPath;
+
   static String? _firstExisting(String root, String imageKey) {
     final keys = _bundleAssetKeys;
-    if (keys == null) return null;
+    if (keys == null) {
+      _lastProbedBundledPath = null;
+      return null;
+    }
     for (final path in candidatePaths(root, imageKey)) {
+      _lastProbedBundledPath = path;
       if (keys.contains(path)) return path;
     }
+    _lastProbedBundledPath = null;
     return null;
   }
 
@@ -182,8 +247,26 @@ abstract final class CatalogImageResolver {
     final inFlight = _storageResolveInFlight[primaryCacheKey];
     if (inFlight != null) return inFlight;
 
-    if (!storageFallbackEnabled) return null;
-    if (!_firebaseStorageReady) return null;
+    if (!storageFallbackEnabled) {
+      _traceResolution(
+        imageKey: k,
+        kind: kind,
+        phase: 'storage',
+        storageSkipped: true,
+        outcome: 'skipped_disabled',
+      );
+      return null;
+    }
+    if (!_firebaseStorageReady) {
+      _traceResolution(
+        imageKey: k,
+        kind: kind,
+        phase: 'storage',
+        storageSkipped: true,
+        outcome: 'skipped_firebase_unready',
+      );
+      return null;
+    }
 
     final future = _resolveStorageDisplayRefUncached(
       kind: kind,
@@ -218,6 +301,15 @@ abstract final class CatalogImageResolver {
             .timeout(storageUrlTimeout);
         _storageUrlCache[primaryCacheKey] = url;
         _storageMissingCache.remove(primaryCacheKey);
+        _traceResolution(
+          imageKey: imageKey,
+          kind: kind,
+          phase: 'storage',
+          attemptedPath: path,
+          hit: true,
+          storageSkipped: false,
+          outcome: 'storage_url',
+        );
         return url;
       } on TimeoutException {
         sawOnlyObjectNotFound = false;
@@ -238,7 +330,31 @@ abstract final class CatalogImageResolver {
       _storageMissingCache.add(primaryCacheKey);
       _debugLogMissingKeyOnce(kind: kind, imageKey: imageKey);
     }
+    _traceResolution(
+      imageKey: imageKey,
+      kind: kind,
+      phase: 'storage',
+      storageSkipped: false,
+      outcome: 'storage_miss',
+    );
     return null;
+  }
+
+  static void _traceResolution({
+    required String imageKey,
+    required CatalogImageKind kind,
+    required String phase,
+    String? attemptedPath,
+    bool? hit,
+    bool? storageSkipped,
+    String? outcome,
+  }) {
+    if (!kDebugMode) return;
+    debugPrint(
+      'CatalogImageResolver[$phase] imageKey="$imageKey" kind=${kind.name} '
+      'path=${attemptedPath ?? '-'} hit=${hit ?? '-'} '
+      'storageSkipped=${storageSkipped ?? '-'} outcome=${outcome ?? '-'}',
+    );
   }
 
   static bool _isObjectNotFound(FirebaseException e) {

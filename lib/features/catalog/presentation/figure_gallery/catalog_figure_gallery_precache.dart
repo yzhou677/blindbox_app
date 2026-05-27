@@ -58,7 +58,9 @@ abstract final class CatalogFigureGalleryPrecache {
         await precacheImage(AssetImage(bundled), context);
         return;
       }
-      final url = await CatalogImageResolver.resolveFigureDisplayRef(key);
+      final url = CatalogImageResolver.storageFallbackEnabled
+          ? await CatalogImageResolver.resolveFigureStorageRef(key)
+          : null;
       if (!context.mounted) return;
       if (url != null && url.isNotEmpty && _isNetworkUrl(url)) {
         await precacheImage(NetworkImage(url), context);
