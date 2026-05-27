@@ -21,7 +21,7 @@ class MainShellScaffold extends StatelessWidget {
     NavigationDestination(
       icon: Icon(Icons.home_outlined),
       selectedIcon: Icon(Icons.home_rounded),
-      label: 'Home',
+      label: 'Discover',
     ),
     NavigationDestination(
       icon: Icon(Icons.storefront_outlined),
