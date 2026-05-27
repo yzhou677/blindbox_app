@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 /// Resolves catalog art from [imageKey] only — never from Firestore paths or URLs.
@@ -36,6 +37,8 @@ abstract final class CatalogImageResolver {
 
   static Set<String>? _bundleAssetKeys;
   static final Map<String, String> _storageUrlCache = {};
+  static final Set<String> _storageMissingCache = <String>{};
+  static final Set<String> _debugLoggedMissingKeys = <String>{};
 
   static const String storageFiguresPrefix = 'catalog/figures';
   static const String storageSeriesPrefix = 'catalog/series';
@@ -155,9 +158,11 @@ abstract final class CatalogImageResolver {
     final primaryCacheKey = '${storagePrefixFor(kind)}/$k';
     final cached = _storageUrlCache[primaryCacheKey];
     if (cached != null) return cached;
+    if (_storageMissingCache.contains(primaryCacheKey)) return null;
 
     if (!_firebaseStorageReady) return null;
 
+    var sawOnlyObjectNotFound = true;
     final root = FirebaseStorage.instance.ref();
     for (final ext in assetExtensions) {
       final path = storageObjectPath(kind: kind, imageKey: k, extension: ext);
@@ -167,18 +172,86 @@ abstract final class CatalogImageResolver {
             .getDownloadURL()
             .timeout(storageUrlTimeout);
         _storageUrlCache[primaryCacheKey] = url;
+        _storageMissingCache.remove(primaryCacheKey);
         return url;
       } on TimeoutException {
+        sawOnlyObjectNotFound = false;
         continue;
       } on FirebaseException catch (e) {
-        if (e.code == 'object-not-found') continue;
+        if (_isObjectNotFound(e)) continue;
         if (e.code == 'no-app') return null;
+        sawOnlyObjectNotFound = false;
         return null;
       } on Object {
+        sawOnlyObjectNotFound = false;
         return null;
       }
     }
+    if (sawOnlyObjectNotFound) {
+      // Missing object for all known extensions: cache as absent so repeated
+      // UI rebuilds do not keep probing Storage and spamming 404 logs.
+      _storageMissingCache.add(primaryCacheKey);
+      _debugLogMissingKeyOnce(kind: kind, imageKey: k);
+    }
     return null;
+  }
+
+  static bool _isObjectNotFound(FirebaseException e) {
+    final code = e.code.toLowerCase();
+    if (code == 'object-not-found' || code == 'not-found' || code == '404') {
+      return true;
+    }
+    final msg = (e.message ?? '').toLowerCase();
+    // Android StorageException sometimes surfaces only as "-13010 / 404".
+    return msg.contains('not found') ||
+        msg.contains('"code": 404') ||
+        msg.contains('"code":404') ||
+        msg.contains('-13010');
+  }
+
+  static void _debugLogMissingKeyOnce({
+    required CatalogImageKind kind,
+    required String imageKey,
+  }) {
+    if (!kDebugMode) return;
+    final marker = '${kind.name}:$imageKey';
+    if (_debugLoggedMissingKeys.contains(marker)) return;
+    _debugLoggedMissingKeys.add(marker);
+    debugPrint(
+      'CatalogImageResolver: missing Storage asset for '
+      '${kind.name} imageKey="$imageKey" (all extensions probed).',
+    );
+  }
+
+  /// Debug helper to inspect all missing Storage image keys seen this session.
+  ///
+  /// Output is grouped by kind (`series` / `figure`) and sorted for quick
+  /// copy/paste into backfill scripts. No-op outside debug mode.
+  static void debugDumpMissingKeys() {
+    if (!kDebugMode) return;
+    if (_debugLoggedMissingKeys.isEmpty) {
+      debugPrint('CatalogImageResolver: no missing Storage image keys recorded.');
+      return;
+    }
+
+    final grouped = <String, List<String>>{};
+    for (final marker in _debugLoggedMissingKeys) {
+      final sep = marker.indexOf(':');
+      if (sep <= 0 || sep >= marker.length - 1) continue;
+      final kind = marker.substring(0, sep);
+      final key = marker.substring(sep + 1);
+      grouped.putIfAbsent(kind, () => <String>[]).add(key);
+    }
+    for (final keys in grouped.values) {
+      keys.sort();
+    }
+
+    debugPrint('CatalogImageResolver: missing Storage image keys snapshot:');
+    for (final kind in <String>['series', 'figure']) {
+      final keys = grouped[kind];
+      if (keys == null || keys.isEmpty) continue;
+      debugPrint('  $kind (${keys.length}): ${keys.join(', ')}');
+    }
   }
 
   static bool get _firebaseStorageReady {
