@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/router/app_router.dart';
 import 'package:blindbox_app/core/theme/app_theme.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/collection_screen.dart';
@@ -123,7 +124,12 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   SharedPreferences.setMockInitialValues({});
 
-  testWidgets('App shell shows Home tab', (WidgetTester tester) async {
+  setUp(() {
+    // [appRouter] is a process-wide singleton; reset the shell tab between tests.
+    appRouter.go('/collection');
+  });
+
+  testWidgets('App shell opens on Collection tab', (WidgetTester tester) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: _blindboxTestOverrides(),
@@ -131,7 +137,25 @@ void main() {
       ),
     );
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 200));
+
+    expect(find.text('My collection'), findsWidgets);
+    expect(find.text('Collection'), findsWidgets);
+  });
+
+  testWidgets('Discover tab shows home feed', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: _blindboxTestOverrides(),
+        child: const BlindboxApp(),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    await tester.tap(find.byIcon(Icons.home_outlined));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
 
     expect(find.text('Home'), findsWidgets);
     expect(find.text('Discover'), findsWidgets);
@@ -155,10 +179,6 @@ void main() {
       ),
     );
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 200));
-
-    await tester.tap(find.text('Collection'));
-    await tester.pump();
     await tester.pump(const Duration(milliseconds: 600));
 
     expect(find.text('My collection'), findsWidgets);
@@ -180,16 +200,16 @@ void main() {
     expect(find.text('The Other One'), findsOneWidget);
 
     await tester.tap(find.text('Dreams Inc.'));
-    // pumpAndSettle lets the scroll physics clamp the position after the
-    // filter replaces the long list with the short empty-state sliver.
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
     expect(
       find.text('Nothing on your shelf for this brand yet.'),
       findsOneWidget,
     );
 
     await tester.tap(find.text('All'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
     // Scroll back to where 'The Other One' card is after filter reset.
     await tester.scrollUntilVisible(
       find.text('The Other One'),
@@ -213,10 +233,6 @@ void main() {
         child: const BlindboxApp(),
       ),
     );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 200));
-
-    await tester.tap(find.text('Collection'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 600));
 

@@ -1,7 +1,8 @@
 import 'dart:async';
 
 import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
-import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart'
+    show CollectionModalOverlayRegistry;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -13,6 +14,11 @@ class MainShellScaffold extends StatelessWidget {
 
   static const List<NavigationDestination> _destinations = [
     NavigationDestination(
+      icon: Icon(Icons.collections_bookmark_outlined),
+      selectedIcon: Icon(Icons.collections_bookmark_rounded),
+      label: 'Collection',
+    ),
+    NavigationDestination(
       icon: Icon(Icons.home_outlined),
       selectedIcon: Icon(Icons.home_rounded),
       label: 'Home',
@@ -21,11 +27,6 @@ class MainShellScaffold extends StatelessWidget {
       icon: Icon(Icons.storefront_outlined),
       selectedIcon: Icon(Icons.storefront_rounded),
       label: 'Market',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.collections_bookmark_outlined),
-      selectedIcon: Icon(Icons.collections_bookmark_rounded),
-      label: 'Collection',
     ),
   ];
 

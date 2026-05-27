@@ -11,15 +11,55 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 final GoRouter appRouter = GoRouter(
-  initialLocation: '/home',
+  initialLocation: '/collection',
   routes: [
     GoRoute(
       path: '/',
-      redirect: (context, state) => '/home',
+      redirect: (context, state) => '/collection',
     ),
+    // Branch order matches bottom nav: Collection (0), Home/Discover (1), Market (2).
     StatefulShellRoute.indexedStack(
       builder: (context, state, shell) => MainShellScaffold(shell: shell),
       branches: [
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/collection',
+              pageBuilder: (context, state) => NoTransitionPage(
+                key: state.pageKey,
+                child: const CollectionScreen(),
+              ),
+              routes: [
+                GoRoute(
+                  path: 'insights',
+                  pageBuilder: (context, state) => CustomTransitionPage<void>(
+                    key: state.pageKey,
+                    child: const CollectionInsightsScreen(),
+                    transitionDuration: const Duration(milliseconds: 320),
+                    transitionsBuilder:
+                        (context, animation, secondaryAnimation, child) {
+                      final curved = CurvedAnimation(
+                        parent: animation,
+                        curve: Curves.easeOutCubic,
+                        reverseCurve: Curves.easeInCubic,
+                      );
+                      return FadeTransition(
+                        opacity: curved,
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0, 0.04),
+                            end: Offset.zero,
+                          ).animate(curved),
+                          child: child,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
         StatefulShellBranch(
           routes: [
             GoRoute(
@@ -149,45 +189,6 @@ final GoRouter appRouter = GoRouter(
                       },
                     );
                   },
-                ),
-              ],
-            ),
-          ],
-        ),
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: '/collection',
-              pageBuilder: (context, state) => NoTransitionPage(
-                key: state.pageKey,
-                child: const CollectionScreen(),
-              ),
-              routes: [
-                GoRoute(
-                  path: 'insights',
-                  pageBuilder: (context, state) => CustomTransitionPage<void>(
-                    key: state.pageKey,
-                    child: const CollectionInsightsScreen(),
-                    transitionDuration: const Duration(milliseconds: 320),
-                    transitionsBuilder:
-                        (context, animation, secondaryAnimation, child) {
-                      final curved = CurvedAnimation(
-                        parent: animation,
-                        curve: Curves.easeOutCubic,
-                        reverseCurve: Curves.easeInCubic,
-                      );
-                      return FadeTransition(
-                        opacity: curved,
-                        child: SlideTransition(
-                          position: Tween<Offset>(
-                            begin: const Offset(0, 0.04),
-                            end: Offset.zero,
-                          ).animate(curved),
-                          child: child,
-                        ),
-                      );
-                    },
-                  ),
                 ),
               ],
             ),
