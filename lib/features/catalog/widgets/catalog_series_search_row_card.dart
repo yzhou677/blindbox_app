@@ -14,18 +14,22 @@ class CatalogSeriesSearchRowCard extends StatelessWidget {
     required this.onOpenPreview,
     this.trailingLabel = 'View',
     this.onTrailingAction,
+    this.trailingIcon = Icons.chevron_right_rounded,
+    this.trailingEnabled = true,
   });
 
   final CatalogSeriesSearchRow row;
   final VoidCallback onOpenPreview;
   final String trailingLabel;
   final VoidCallback? onTrailingAction;
+  final IconData trailingIcon;
+  final bool trailingEnabled;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final onTrailing = onTrailingAction ?? onOpenPreview;
+    final onTrailing = trailingEnabled ? (onTrailingAction ?? onOpenPreview) : null;
     final secretTint = scheme.tertiary;
 
     return CollectibleBrowseCard(
@@ -108,7 +112,9 @@ class CatalogSeriesSearchRowCard extends StatelessWidget {
             ),
           ),
           Material(
-            color: scheme.primary.withValues(alpha: 0.14),
+            color: trailingEnabled
+                ? scheme.primary.withValues(alpha: 0.14)
+                : scheme.surfaceContainerHighest.withValues(alpha: 0.7),
             borderRadius: AppRadii.insetRadius,
             child: InkWell(
               onTap: onTrailing,
@@ -122,14 +128,18 @@ class CatalogSeriesSearchRowCard extends StatelessWidget {
                       trailingLabel,
                       style: textTheme.labelLarge?.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: scheme.primary,
+                        color: trailingEnabled
+                            ? scheme.primary
+                            : scheme.onSurfaceVariant.withValues(alpha: 0.82),
                       ),
                     ),
                     const SizedBox(width: 4),
                     Icon(
-                      Icons.chevron_right_rounded,
+                      trailingIcon,
                       size: 20,
-                      color: scheme.primary,
+                      color: trailingEnabled
+                          ? scheme.primary
+                          : scheme.onSurfaceVariant.withValues(alpha: 0.82),
                     ),
                   ],
                 ),

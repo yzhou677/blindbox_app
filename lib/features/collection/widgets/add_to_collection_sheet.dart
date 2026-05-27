@@ -9,6 +9,7 @@ import 'package:blindbox_app/features/catalog/presentation/catalog_series_search
 import 'package:blindbox_app/features/catalog/widgets/catalog_series_search_row_card.dart';
 import 'package:blindbox_app/features/collection/application/catalog_series_shelf_commit.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
+import 'package:blindbox_app/features/collection/application/collection_series_identity.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/add_series_catalog_copy.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart';
@@ -380,7 +381,6 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     final matches = buildCatalogSeriesSearchRows(
       bundle: bundle,
       query: _trimmedQuery,
-      excludeSeriesId: snap.hasTemplateOnShelf,
     );
     if (matches.isEmpty) {
       return SliverFillRemaining(
@@ -401,10 +401,21 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (ctx, i) {
         final row = matches[i];
+        final ownership = resolveCollectionSeriesOwnership(
+          snapshot: snap,
+          catalogTemplateId: row.seriesId,
+          seriesName: row.seriesTitle,
+          brandName: row.brand,
+          taxonomyBrandId: row.taxonomyBrandId,
+          taxonomyIpId: row.taxonomyIpId,
+        );
+        final onShelf = ownership.owned;
         return CatalogSeriesSearchRowCard(
           key: ValueKey<String>('add-series-search:${row.seriesId}'),
           row: row,
-          trailingLabel: 'Add',
+          trailingLabel: onShelf ? 'In collection' : 'Add',
+          trailingIcon: onShelf ? Icons.check_rounded : Icons.add_rounded,
+          trailingEnabled: !onShelf,
           onOpenPreview: () async {
             final template = await catalogTemplateFromSeedSeries(
               bundle,
@@ -419,6 +430,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
             );
           },
           onTrailingAction: () async {
+            if (onShelf) return;
             final template = await catalogTemplateFromSeedSeries(
               bundle,
               row.seriesId,
@@ -427,7 +439,6 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
             if (template != null) {
               commitCatalogSeriesToShelf(notifier, template);
             }
-            if (ctx.mounted) Navigator.of(ctx).pop();
           },
         );
       },
