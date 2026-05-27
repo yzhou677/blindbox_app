@@ -28,6 +28,97 @@ final class EmptyTestCollectionNotifier extends CollectionNotifier {
   CollectionSnapshot build() => CollectionSnapshot.emptyTest();
 }
 
+final class SeededTestCollectionNotifier extends CollectionNotifier {
+  @override
+  CollectionSnapshot build() {
+    const seriesId = 'series_hirono_other_one';
+    final series = ShelfSeries(
+      id: seriesId,
+      name: 'The Other One',
+      brand: 'POP MART',
+      ipName: 'Hirono',
+      figures: const [
+        ShelfFigure(
+          id: 'fig_hirono_1',
+          seriesId: seriesId,
+          name: 'The Fox',
+          rarity: 'Regular',
+          isSecret: false,
+        ),
+        ShelfFigure(
+          id: 'fig_hirono_2',
+          seriesId: seriesId,
+          name: 'The Bird',
+          rarity: 'Regular',
+          isSecret: false,
+        ),
+        ShelfFigure(
+          id: 'fig_hirono_3',
+          seriesId: seriesId,
+          name: 'The Star',
+          rarity: 'Regular',
+          isSecret: false,
+        ),
+        ShelfFigure(
+          id: 'fig_hirono_4',
+          seriesId: seriesId,
+          name: 'The Poem',
+          rarity: 'Regular',
+          isSecret: false,
+        ),
+        ShelfFigure(
+          id: 'fig_hirono_5',
+          seriesId: seriesId,
+          name: 'The Secret',
+          rarity: 'Regular',
+          isSecret: false,
+        ),
+        ShelfFigure(
+          id: 'fig_hirono_6',
+          seriesId: seriesId,
+          name: 'The Chase',
+          rarity: 'Secret',
+          isSecret: true,
+        ),
+      ],
+      shelfAccent: const Color(0xFFF2E8DC),
+      catalogTemplateId: 'series-hirono-other-one',
+      taxonomyBrandId: 'pop_mart',
+      taxonomyIpId: 'hirono',
+    );
+
+    return CollectionSnapshot(
+      shelfSeries: [series],
+      figureStates: const {
+        'fig_hirono_1': TrackedFigure(
+          figureId: 'fig_hirono_1',
+          state: FigureCollectionState.owned,
+        ),
+        'fig_hirono_2': TrackedFigure(
+          figureId: 'fig_hirono_2',
+          state: FigureCollectionState.owned,
+        ),
+        'fig_hirono_3': TrackedFigure(
+          figureId: 'fig_hirono_3',
+          state: FigureCollectionState.owned,
+        ),
+        'fig_hirono_4': TrackedFigure(
+          figureId: 'fig_hirono_4',
+          state: FigureCollectionState.owned,
+        ),
+        'fig_hirono_5': TrackedFigure(
+          figureId: 'fig_hirono_5',
+          state: FigureCollectionState.owned,
+        ),
+        'fig_hirono_6': TrackedFigure(
+          figureId: 'fig_hirono_6',
+          state: FigureCollectionState.wishlist,
+        ),
+      },
+    );
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   SharedPreferences.setMockInitialValues({});
@@ -54,7 +145,12 @@ void main() {
   ) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: _blindboxTestOverrides(),
+        overrides: [
+          ..._blindboxTestOverrides(),
+          collectionNotifierProvider.overrideWith(
+            SeededTestCollectionNotifier.new,
+          ),
+        ],
         child: const BlindboxApp(),
       ),
     );
@@ -108,7 +204,12 @@ void main() {
   ) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: _blindboxTestOverrides(),
+        overrides: [
+          ..._blindboxTestOverrides(),
+          collectionNotifierProvider.overrideWith(
+            SeededTestCollectionNotifier.new,
+          ),
+        ],
         child: const BlindboxApp(),
       ),
     );
