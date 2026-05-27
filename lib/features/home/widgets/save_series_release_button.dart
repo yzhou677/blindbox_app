@@ -1,6 +1,7 @@
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/application/collection_series_identity.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_series_shelf_cta_presentation.dart';
 import 'package:blindbox_app/features/home/domain/series_release.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -46,6 +47,11 @@ class _SaveSeriesReleaseButtonState extends ConsumerState<SaveSeriesReleaseButto
       taxonomyIpId: widget.release.taxonomyIpId,
     );
   }
+
+  CollectionSeriesShelfCtaLayout get _layout =>
+      widget.variant == SeriesReleaseShelfCtaVariant.filled
+      ? CollectionSeriesShelfCtaLayout.homeReleaseFilled
+      : CollectionSeriesShelfCtaLayout.homeReleaseIcon;
 
   @override
   void initState() {
@@ -119,12 +125,7 @@ class _SaveSeriesReleaseButtonState extends ConsumerState<SaveSeriesReleaseButto
     );
   }
 
-  void _handleTap() {
-    final match = ref.read(
-      collectionNotifierProvider.select(
-        (s) => _ownership(s),
-      ),
-    );
+  void _handleTap(CollectionSeriesOwnershipMatch match) {
     if (match.owned) {
       if (match.removableViaReleaseCta) {
         _confirmRemoveFromShelf();
@@ -144,7 +145,10 @@ class _SaveSeriesReleaseButtonState extends ConsumerState<SaveSeriesReleaseButto
         (s) => _ownership(s),
       ),
     );
-    final onShelf = match.owned;
+    final cta = CollectionSeriesShelfCtaPresentation.fromOwnership(
+      match,
+      layout: _layout,
+    );
 
     final scale = Tween<double>(begin: 1.0, end: 1.14).evaluate(
       CurvedAnimation(parent: _pulse, curve: Curves.easeOutCubic),
@@ -166,39 +170,46 @@ class _SaveSeriesReleaseButtonState extends ConsumerState<SaveSeriesReleaseButto
       return Transform.scale(
         scale: scale,
         alignment: Alignment.centerLeft,
-        child: onShelf
+        child: cta.isOwned
             ? FilledButton.tonal(
-                onPressed: match.removableViaReleaseCta ? _handleTap : null,
+                onPressed: cta.enabled ? () => _handleTap(match) : null,
                 style: filledStyle.copyWith(
                   foregroundColor: WidgetStatePropertyAll(
                     scheme.onSurfaceVariant.withValues(alpha: 0.85),
                   ),
                 ),
-                child: const Text('In your collection'),
+                child: Text(cta.label),
               )
             : FilledButton.icon(
-                onPressed: _handleTap,
-                icon: const Icon(Icons.add_rounded, size: 21),
-                label: const Text('Add to my collection'),
+                onPressed: () => _handleTap(match),
+                icon: Icon(cta.icon, size: 21),
+                label: Text(cta.label),
                 style: filledStyle,
               ),
       );
     }
 
+    final iconColor = cta.usePrimaryTint
+        ? scheme.primary.withValues(alpha: 0.92)
+        : scheme.onSurfaceVariant.withValues(alpha: 0.72);
+
     return Transform.scale(
       scale: scale,
-      child: IconButton(
-        tooltip: onShelf ? 'Remove from collection' : 'Add to my collection',
-        visualDensity: VisualDensity.compact,
-        padding: EdgeInsets.zero,
-        constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-        onPressed: _handleTap,
-        icon: Icon(
-          onShelf ? Icons.bookmark_added_rounded : Icons.add_circle_outline_rounded,
-          size: 22,
-          color: onShelf
-              ? scheme.primary.withValues(alpha: 0.45)
-              : scheme.primary.withValues(alpha: 0.92),
+      child: Semantics(
+        button: true,
+        enabled: cta.enabled,
+        label: cta.semanticsLabel,
+        child: IconButton(
+          tooltip: cta.semanticsLabel,
+          visualDensity: VisualDensity.compact,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+          onPressed: cta.enabled ? () => _handleTap(match) : null,
+          icon: Icon(
+            cta.icon,
+            size: 22,
+            color: iconColor,
+          ),
         ),
       ),
     );

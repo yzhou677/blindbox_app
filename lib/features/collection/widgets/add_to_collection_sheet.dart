@@ -9,7 +9,8 @@ import 'package:blindbox_app/features/catalog/presentation/catalog_series_search
 import 'package:blindbox_app/features/catalog/widgets/catalog_series_search_row_card.dart';
 import 'package:blindbox_app/features/collection/application/catalog_series_shelf_commit.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
-import 'package:blindbox_app/features/collection/application/collection_series_identity.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_series_shelf_cta_presentation.dart';
+import 'package:blindbox_app/features/collection/widgets/collection_series_shelf_cta_trailing.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/add_series_catalog_copy.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart';
@@ -119,18 +120,38 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     return '';
   }
 
+  CollectionSeriesShelfCtaPresentation _previewShelfCta(
+    CollectionSnapshot snap,
+    CatalogSeries series,
+  ) {
+    return CollectionSeriesShelfCtaPresentation.resolve(
+      snapshot: snap,
+      layout: CollectionSeriesShelfCtaLayout.previewSticky,
+      catalogTemplateId: series.templateId,
+      seriesName: series.name,
+      brandName: series.brand,
+      taxonomyBrandId: series.taxonomyBrandId,
+      taxonomyIpId: series.taxonomyIpId,
+    );
+  }
+
   void _openCatalogSeriesPreview(
     BuildContext context, {
     required CatalogSeries series,
+    required CollectionSnapshot snap,
     required VoidCallback onAdd,
   }) {
+    final shelfCta = _previewShelfCta(snap, series);
     // Same branch navigator as the parent sheet — root overlay stacks a second
     // modal and leaves the parent drag handle visually pinned on dismiss.
     showCollectionModalBottomSheet<void>(
       context: context,
       heightFraction: FeedRhythm.sheetPreviewOpenScreenFraction,
-      builder: (_, scroll) =>
-          CatalogSeriesPreviewSheet(series: series, onAdd: onAdd),
+      builder: (_, scroll) => CatalogSeriesPreviewSheet(
+        series: series,
+        shelfCta: shelfCta,
+        onAdd: onAdd,
+      ),
     );
   }
 
@@ -305,7 +326,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Text(
-                  'Every catalog series here is already on your shelf. Nice.',
+                  'No catalog series to show yet.',
                   textAlign: TextAlign.center,
                   style: textTheme.bodyMedium?.copyWith(
                     color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
@@ -316,6 +337,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
             ),
           );
         }
+        final snap = ref.watch(collectionNotifierProvider);
         return SliverList.separated(
           itemCount: recs.length,
           separatorBuilder: (context, index) => const SizedBox(height: 12),
@@ -325,14 +347,25 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
               _catalogBundle!,
               s.templateId,
             );
+            final shelfCta = CollectionSeriesShelfCtaPresentation.resolve(
+              snapshot: snap,
+              layout: CollectionSeriesShelfCtaLayout.compactTrailing,
+              catalogTemplateId: s.templateId,
+              seriesName: s.name,
+              brandName: s.brand,
+              taxonomyBrandId: s.taxonomyBrandId,
+              taxonomyIpId: s.taxonomyIpId,
+            );
             return _SuggestionCard(
               key: ValueKey<String>('add-series-rec:${s.templateId}'),
               series: s,
               coverImageKey: coverKey,
+              shelfCta: shelfCta,
               onOpenPreview: () {
                 _openCatalogSeriesPreview(
                   ctx,
                   series: s,
+                  snap: snap,
                   onAdd: () => commitCatalogSeriesToShelf(notifier, s),
                 );
               },
@@ -401,21 +434,19 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (ctx, i) {
         final row = matches[i];
-        final ownership = resolveCollectionSeriesOwnership(
+        final shelfCta = CollectionSeriesShelfCtaPresentation.resolve(
           snapshot: snap,
+          layout: CollectionSeriesShelfCtaLayout.compactTrailing,
           catalogTemplateId: row.seriesId,
           seriesName: row.seriesTitle,
           brandName: row.brand,
           taxonomyBrandId: row.taxonomyBrandId,
           taxonomyIpId: row.taxonomyIpId,
         );
-        final onShelf = ownership.owned;
         return CatalogSeriesSearchRowCard(
           key: ValueKey<String>('add-series-search:${row.seriesId}'),
           row: row,
-          trailingLabel: onShelf ? 'In collection' : 'Add',
-          trailingIcon: onShelf ? Icons.check_rounded : Icons.add_rounded,
-          trailingEnabled: !onShelf,
+          shelfCta: shelfCta,
           onOpenPreview: () async {
             final template = await catalogTemplateFromSeedSeries(
               bundle,
@@ -426,11 +457,12 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
             _openCatalogSeriesPreview(
               ctx,
               series: template,
+              snap: snap,
               onAdd: () => commitCatalogSeriesToShelf(notifier, template),
             );
           },
-          onTrailingAction: () async {
-            if (onShelf) return;
+          onShelfCtaPressed: () async {
+            if (!shelfCta.isAddable) return;
             final template = await catalogTemplateFromSeedSeries(
               bundle,
               row.seriesId,
@@ -452,12 +484,14 @@ class _SuggestionCard extends StatelessWidget {
     super.key,
     required this.series,
     required this.coverImageKey,
+    required this.shelfCta,
     required this.onOpenPreview,
     required this.onAdd,
   });
 
   final CatalogSeries series;
   final String coverImageKey;
+  final CollectionSeriesShelfCtaPresentation shelfCta;
   final VoidCallback onOpenPreview;
   final VoidCallback onAdd;
 
@@ -533,30 +567,9 @@ class _SuggestionCard extends StatelessWidget {
                     ],
                   ),
                 ),
-          Material(
-            color: scheme.primary.withValues(alpha: 0.14),
-            borderRadius: AppRadii.insetRadius,
-            child: InkWell(
-              onTap: onAdd,
-              borderRadius: AppRadii.insetRadius,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Add',
-                      style: textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: scheme.primary,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(Icons.add_rounded, size: 20, color: scheme.primary),
-                  ],
-                ),
-              ),
-            ),
+          CollectionSeriesShelfCtaTrailing(
+            presentation: shelfCta,
+            onPressed: shelfCta.isAddable ? onAdd : null,
           ),
         ],
       ),

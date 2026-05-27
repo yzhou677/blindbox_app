@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
+import 'package:blindbox_app/features/catalog/catalog_image_resolver.dart';
+import 'package:blindbox_app/features/catalog/data/catalog_image_disk_cache.dart';
 import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_brand.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_figure.dart';
@@ -82,7 +86,8 @@ Future<void> _pumpSheet(
       ),
     ),
   );
-  await tester.pumpAndSettle();
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 100));
 }
 
 Finder _row(String seriesId) =>
@@ -95,8 +100,22 @@ Finder _inRow(String seriesId, Finder finder) {
 void main() {
   const seriesId = 'where_moments_meet';
 
-  setUp(() {
+  late Directory tempCacheRoot;
+
+  setUp(() async {
+    tempCacheRoot = await Directory.systemTemp.createTemp('add_sheet_own_test_');
+    CatalogImageDiskCache.testRootOverride = tempCacheRoot;
+    CatalogImageResolver.storageFallbackOverride = false;
+    CatalogImageResolver.resetSessionCachesForTest();
     CatalogBundleCache.prime(_bundle());
+  });
+
+  tearDown(() async {
+    CatalogImageResolver.resetSessionCachesForTest();
+    CatalogImageDiskCache.resetForTest();
+    if (await tempCacheRoot.exists()) {
+      await tempCacheRoot.delete(recursive: true);
+    }
   });
 
   testWidgets('add from search keeps result visible and switches CTA to owned', (

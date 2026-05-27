@@ -1,5 +1,7 @@
 import 'package:blindbox_app/features/collectible_relationship/application/collectible_relationship_providers.dart';
+import 'package:blindbox_app/features/collection/application/collection_series_identity.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_series_shelf_cta_presentation.dart';
 import 'package:blindbox_app/features/collection/widgets/catalog_series_preview_sheet.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:flutter/material.dart';
@@ -29,6 +31,7 @@ CatalogSeries _series({int figureCount = 24}) {
 Future<void> _pumpPreview(
   WidgetTester tester, {
   required CatalogSeries series,
+  required CollectionSeriesShelfCtaPresentation shelfCta,
   double bottomInset = 0,
 }) async {
   await tester.pumpWidget(
@@ -52,6 +55,7 @@ Future<void> _pumpPreview(
                   scrollController: ScrollController(),
                   child: CatalogSeriesPreviewSheet(
                     series: series,
+                    shelfCta: shelfCta,
                     onAdd: () {},
                   ),
                 ),
@@ -66,8 +70,13 @@ Future<void> _pumpPreview(
 }
 
 void main() {
+  final addableCta = CollectionSeriesShelfCtaPresentation.fromOwnership(
+    const CollectionSeriesOwnershipMatch.notOwned(),
+    layout: CollectionSeriesShelfCtaLayout.previewSticky,
+  );
+
   testWidgets('sticky CTA remains visible while content scrolls', (tester) async {
-    await _pumpPreview(tester, series: _series());
+    await _pumpPreview(tester, series: _series(), shelfCta: addableCta);
 
     expect(find.byKey(const ValueKey<String>('catalog-preview-add-cta')), findsOneWidget);
     expect(find.text('Cry Me an Ocean Series'), findsOneWidget);
@@ -80,7 +89,11 @@ void main() {
   });
 
   testWidgets('figure content remains accessible with sticky CTA', (tester) async {
-    await _pumpPreview(tester, series: _series(figureCount: 28));
+    await _pumpPreview(
+      tester,
+      series: _series(figureCount: 28),
+      shelfCta: addableCta,
+    );
 
     await tester.scrollUntilVisible(
       find.text('Figure 27'),
@@ -93,10 +106,36 @@ void main() {
     expect(find.byKey(const ValueKey<String>('catalog-preview-add-cta')), findsOneWidget);
   });
 
+  testWidgets('owned preview shows disabled In collection CTA', (tester) async {
+    final ownedCta = CollectionSeriesShelfCtaPresentation.fromOwnership(
+      const CollectionSeriesOwnershipMatch.owned(
+        kind: CollectionSeriesOwnershipMatchKind.canonicalBrandSeries,
+        matchedSeriesId: 'user-row',
+      ),
+      layout: CollectionSeriesShelfCtaLayout.previewSticky,
+    );
+    await _pumpPreview(
+      tester,
+      series: _series(figureCount: 4),
+      shelfCta: ownedCta,
+    );
+
+    expect(
+      find.byKey(const ValueKey<String>('catalog-preview-owned-cta')),
+      findsOneWidget,
+    );
+    expect(find.text('In collection'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('catalog-preview-add-cta')),
+      findsNothing,
+    );
+  });
+
   testWidgets('sticky CTA respects safe-area bottom inset', (tester) async {
     await _pumpPreview(
       tester,
       series: _series(figureCount: 8),
+      shelfCta: addableCta,
       bottomInset: 32,
     );
 

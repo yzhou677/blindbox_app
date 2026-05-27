@@ -2,7 +2,10 @@ import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_series.dart' as catalog;
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 
-/// Picks up to [limit] series not already on shelf, newest releaseDate first.
+/// Picks up to [limit] newest catalog series (newest [releaseDate] first).
+///
+/// Ownership is **not** filtered here — callers render [CollectionSeriesShelfCtaPresentation]
+/// so owned rows stay visible with consistent "In collection" chrome.
 List<catalog.CatalogSeries> pickLatestSeriesRecommendations(
   CatalogSeedBundle bundle,
   CollectionSnapshot snap, {
@@ -12,9 +15,7 @@ List<catalog.CatalogSeries> pickLatestSeriesRecommendations(
     for (var i = 0; i < bundle.series.length; i++) bundle.series[i].id: i,
   };
 
-  final candidates = bundle.series
-      .where((s) => !snap.hasTemplateOnShelf(s.id))
-      .toList(growable: false);
+  final candidates = bundle.series.toList(growable: false);
   candidates.sort((a, b) => _compareNewestFirst(a, b, orderIndex));
   return candidates.take(limit).toList(growable: false);
 }

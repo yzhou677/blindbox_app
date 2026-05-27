@@ -1,3 +1,5 @@
+import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+import 'package:blindbox_app/features/catalog/models/catalog_series.dart' as catalog;
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 
 /// Deterministic canonicalization for cross-surface ownership identity.
@@ -143,4 +145,27 @@ CollectionSeriesOwnershipMatch resolveCollectionSeriesOwnership({
   }
 
   return const CollectionSeriesOwnershipMatch.notOwned();
+}
+
+/// Whether [series] is already on shelf per [resolveCollectionSeriesOwnership].
+bool isCatalogSeriesOwnedOnShelf({
+  required CatalogSeedBundle bundle,
+  required CollectionSnapshot snapshot,
+  required catalog.CatalogSeries series,
+}) {
+  var brandName = series.brandId;
+  for (final b in bundle.brands) {
+    if (b.id == series.brandId) {
+      brandName = b.displayName;
+      break;
+    }
+  }
+  return resolveCollectionSeriesOwnership(
+    snapshot: snapshot,
+    catalogTemplateId: series.id,
+    seriesName: series.displayName,
+    brandName: brandName,
+    taxonomyBrandId: series.brandId,
+    taxonomyIpId: series.ipId,
+  ).owned;
 }

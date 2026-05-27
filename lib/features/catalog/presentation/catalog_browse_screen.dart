@@ -6,6 +6,7 @@ import 'package:blindbox_app/features/catalog/presentation/catalog_series_search
 import 'package:blindbox_app/features/catalog/widgets/catalog_series_search_row_card.dart';
 import 'package:blindbox_app/features/collection/application/catalog_series_shelf_commit.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_series_shelf_cta_presentation.dart';
 import 'package:blindbox_app/features/collection/widgets/catalog_series_preview_sheet.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:blindbox_app/shared/widgets/feed_search_screen.dart';
@@ -52,7 +53,15 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
 
     final notifier = ref.read(collectionNotifierProvider.notifier);
     final snap = ref.read(collectionNotifierProvider);
-    final onShelf = snap.hasTemplateOnShelf(seriesId);
+    final shelfCta = CollectionSeriesShelfCtaPresentation.resolve(
+      snapshot: snap,
+      layout: CollectionSeriesShelfCtaLayout.previewSticky,
+      catalogTemplateId: seriesId,
+      seriesName: template.name,
+      brandName: template.brand,
+      taxonomyBrandId: template.taxonomyBrandId,
+      taxonomyIpId: template.taxonomyIpId,
+    );
 
     await showCollectibleBottomSheet<void>(
       context: context,
@@ -60,10 +69,8 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
       heightFraction: FeedRhythm.sheetPreviewOpenScreenFraction,
       builder: (ctx, scroll) => CatalogSeriesPreviewSheet(
         series: template,
-        onAdd: onShelf
-            ? () {}
-            : () => commitCatalogSeriesToShelf(notifier, template),
-        showAddButton: !onShelf,
+        shelfCta: shelfCta,
+        onAdd: () => commitCatalogSeriesToShelf(notifier, template),
       ),
     );
   }
@@ -139,19 +146,27 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
                       const SizedBox(height: 12),
                   itemBuilder: (ctx, i) {
                     final row = matches[i];
-                    final onShelf = snap.hasTemplateOnShelf(row.seriesId);
+                    final shelfCta = CollectionSeriesShelfCtaPresentation.resolve(
+                      snapshot: snap,
+                      layout: CollectionSeriesShelfCtaLayout.catalogBrowse,
+                      catalogTemplateId: row.seriesId,
+                      seriesName: row.seriesTitle,
+                      brandName: row.brand,
+                      taxonomyBrandId: row.taxonomyBrandId,
+                      taxonomyIpId: row.taxonomyIpId,
+                    );
                     return CatalogSeriesSearchRowCard(
                       key: ValueKey<String>(
                         'catalog-browse:${row.seriesId}',
                       ),
                       row: row,
-                      trailingLabel: onShelf ? 'View' : 'Browse',
+                      shelfCta: shelfCta,
                       onOpenPreview: () => _openSeriesPreview(
                         ctx,
                         bundle,
                         row.seriesId,
                       ),
-                      onTrailingAction: () => _openSeriesPreview(
+                      onShelfCtaPressed: () => _openSeriesPreview(
                         ctx,
                         bundle,
                         row.seriesId,
