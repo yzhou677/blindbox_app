@@ -242,29 +242,38 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                       filterActive: browse.filtersActive,
                     ),
             )
-          else
-            SliverPadding(
-              padding: EdgeInsets.fromLTRB(
-                20,
-                immersive
-                    ? FeedRhythm.blockGapMedium
-                    : FeedRhythm.marketBrowseHeaderToFeedGap,
-                20,
-                FeedRhythm.tabScrollTailPadding,
+          else ...[
+            // Session-transition loading indicator floats above the list as a
+            // separate sliver so the card list below can remain lazy.
+            if (sessionTransitioning)
+              const SliverToBoxAdapter(
+                child: _MarketSessionTransitionIndicator(),
               ),
-              sliver: SliverToBoxAdapter(
-                child: MarketBrowseSessionTransition(
-                  active: sessionTransitioning,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      for (final snapshot in sorted)
-                        CollectibleMarketCard(snapshot: snapshot),
-                    ],
+            // Lazy card list: only visible cards are built and laid out.
+            // SliverOpacity dims stale results while a new session loads,
+            // matching the previous MarketBrowseSessionTransition behaviour.
+            SliverOpacity(
+              opacity: sessionTransitioning ? 0.34 : 1.0,
+              sliver: SliverIgnorePointer(
+                ignoring: sessionTransitioning,
+                sliver: SliverPadding(
+                  padding: EdgeInsets.fromLTRB(
+                    20,
+                    immersive
+                        ? FeedRhythm.blockGapMedium
+                        : FeedRhythm.marketBrowseHeaderToFeedGap,
+                    20,
+                    FeedRhythm.tabScrollTailPadding,
+                  ),
+                  sliver: SliverList.builder(
+                    itemCount: sorted.length,
+                    itemBuilder: (context, i) =>
+                        CollectibleMarketCard(snapshot: sorted[i]),
                   ),
                 ),
               ),
             ),
+          ],
           if ((MarketGatewayConfig.isActive || MarketSandboxConfig.isActive) &&
               liveHasMore &&
               !immersive)
@@ -277,6 +286,65 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Compact loading pill shown while a new browse session loads (live gateway).
+///
+/// Rendered as a separate sliver above the dimmed card list so that the list
+/// can remain a lazy [SliverList] without needing an animated wrapper.
+class _MarketSessionTransitionIndicator extends StatelessWidget {
+  const _MarketSessionTransitionIndicator();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Center(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: scheme.surface.withValues(alpha: 0.92),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: scheme.outlineVariant.withValues(alpha: 0.45),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: scheme.shadow.withValues(alpha: 0.08),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: scheme.primary.withValues(alpha: 0.72),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'Updating listings',
+                  style: textTheme.labelMedium?.copyWith(
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

@@ -1,0 +1,68 @@
+import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_archetype.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_stats.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+    CollectionMemoryStore.instance.resetForTest();
+  });
+
+  test('saveCollectorType persists and reloads', () async {
+    final store = CollectionMemoryStore.instance;
+    const stats = CollectorTypeStats(
+      totalOwned: 3,
+      totalWishlist: 1,
+      trackedSeries: 1,
+      completionPercent: 50,
+      secretOwned: 0,
+      secretSlots: 0,
+      brandBreakdown: {},
+      topSeries: [],
+      customSeriesRatio: 0,
+    );
+    final identity = CollectorTypeIdentity(
+      archetypeId: CollectorTypeArchetypeId.curator,
+      revealedAt: DateTime(2026, 5, 1),
+      signatureHash: 'hash',
+      stats: stats,
+    );
+
+    await store.saveCollectorType(identity);
+    expect(store.cached.collectorTypeIdentity?.archetypeId,
+        CollectorTypeArchetypeId.curator);
+
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.containsKey('collection_memory_v3'), isTrue);
+    final raw = prefs.getString('collection_memory_v3');
+    expect(raw, contains('curator'));
+    expect(raw, contains('hash'));
+  });
+
+  test('clearCollectorType removes identity fields', () async {
+    final store = CollectionMemoryStore.instance;
+    await store.saveCollectorType(
+      CollectorTypeIdentity(
+        archetypeId: CollectorTypeArchetypeId.wanderer,
+        revealedAt: DateTime(2026, 1, 1),
+        signatureHash: 'x',
+        stats: const CollectorTypeStats(
+          totalOwned: 0,
+          totalWishlist: 0,
+          trackedSeries: 0,
+          completionPercent: 0,
+          secretOwned: 0,
+          secretSlots: 0,
+          brandBreakdown: {},
+          topSeries: [],
+          customSeriesRatio: 0,
+        ),
+      ),
+    );
+    await store.clearCollectorType();
+    expect(store.cached.collectorTypeIdentity, isNull);
+  });
+}

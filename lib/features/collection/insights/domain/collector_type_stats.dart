@@ -1,0 +1,67 @@
+import 'package:flutter/foundation.dart';
+
+/// Lightweight stats captured at reveal time (not a live dashboard).
+@immutable
+class CollectorTypeStats {
+  const CollectorTypeStats({
+    required this.totalOwned,
+    required this.totalWishlist,
+    required this.trackedSeries,
+    required this.completionPercent,
+    required this.secretOwned,
+    required this.secretSlots,
+    required this.brandBreakdown,
+    required this.topSeries,
+    required this.customSeriesRatio,
+  });
+
+  final int totalOwned;
+  final int totalWishlist;
+  final int trackedSeries;
+  final int completionPercent;
+  final int secretOwned;
+  final int secretSlots;
+  final Map<String, int> brandBreakdown;
+  final List<String> topSeries;
+  final double customSeriesRatio;
+
+  Map<String, dynamic> toJson() => {
+        'totalOwned': totalOwned,
+        'totalWishlist': totalWishlist,
+        'trackedSeries': trackedSeries,
+        'completionPercent': completionPercent,
+        'secretOwned': secretOwned,
+        'secretSlots': secretSlots,
+        'brandBreakdown': brandBreakdown,
+        'topSeries': topSeries,
+        'customSeriesRatio': customSeriesRatio,
+      };
+
+  factory CollectorTypeStats.fromJson(Map<String, dynamic> json) {
+    final breakdownRaw = json['brandBreakdown'];
+    final breakdown = <String, int>{};
+    if (breakdownRaw is Map) {
+      for (final e in breakdownRaw.entries) {
+        if (e.key is String && e.value is int) {
+          breakdown[e.key as String] = e.value as int;
+        }
+      }
+    }
+    final topRaw = json['topSeries'];
+    final top = topRaw is List
+        ? [for (final v in topRaw) if (v is String) v]
+        : <String>[];
+
+    return CollectorTypeStats(
+      totalOwned: (json['totalOwned'] as int?) ?? 0,
+      totalWishlist: (json['totalWishlist'] as int?) ?? 0,
+      trackedSeries: (json['trackedSeries'] as int?) ?? 0,
+      completionPercent: (json['completionPercent'] as int?) ?? 0,
+      secretOwned: (json['secretOwned'] as int?) ?? 0,
+      secretSlots: (json['secretSlots'] as int?) ?? 0,
+      brandBreakdown: breakdown,
+      topSeries: top,
+      customSeriesRatio: (json['customSeriesRatio'] as num?)?.toDouble() ?? 0,
+    );
+  }
+}

@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/features/market/application/collectible_market_providers.dart';
 import 'package:blindbox_app/features/market/application/market_browse_notifier.dart';
 import 'package:blindbox_app/features/market/application/market_browse_load_more_controller.dart';
@@ -157,10 +159,19 @@ class _MarketBrowseSearchScreenState
                 : MarketBrowseSessionTransition(
                     active: sessionTransitioning,
                     child: ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.pageHorizontal,
+                        AppSpacing.xs,
+                        AppSpacing.pageHorizontal,
+                        AppSpacing.xxl,
+                      ),
                       itemCount: sorted.length +
                           (MarketGatewayConfig.isActive && liveHasMore ? 1 : 0),
-                      separatorBuilder: (_, _) => const SizedBox(height: 12),
+                      // Use the same gap as the main market feed for visual
+                      // consistency when results carry over from the browse tab.
+                      separatorBuilder: (_, _) => const SizedBox(
+                        height: FeedRhythm.marketListingFeedCardVerticalGap,
+                      ),
                       itemBuilder: (context, index) {
                         if (index >= sorted.length) {
                           return MarketLoadMoreFooter(

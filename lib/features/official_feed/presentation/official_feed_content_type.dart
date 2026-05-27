@@ -47,16 +47,16 @@ final List<_ContentTypeRule> _rules = [
   ),
   _ContentTypeRule(
     'Giveaway',
-    (_, __, hay) => _containsAny(hay, ['giveaway', 'contest', 'sweepstakes']),
+    (_, _, hay) => _containsAny(hay, ['giveaway', 'contest', 'sweepstakes']),
   ),
   _ContentTypeRule(
     'Store Opening',
-    (_, __, hay) =>
+    (_, _, hay) =>
         _containsAny(hay, ['store opening', 'grand opening', 'flagship store']),
   ),
   _ContentTypeRule(
     'Event',
-    (_, __, hay) => _containsAny(hay, [
+    (_, _, hay) => _containsAny(hay, [
       'pop-up',
       'pop up',
       'popup',
@@ -67,7 +67,7 @@ final List<_ContentTypeRule> _rules = [
   ),
   _ContentTypeRule(
     'Restock',
-    (_, __, hay) =>
+    (_, _, hay) =>
         _containsAny(hay, ['restock', 'back in stock', 'available again']),
   ),
   _ContentTypeRule(
@@ -81,11 +81,11 @@ final List<_ContentTypeRule> _rules = [
   ),
   _ContentTypeRule(
     'Campaign',
-    (_, __, hay) => _containsAny(hay, ['campaign', 'collaboration collection']),
+    (_, _, hay) => _containsAny(hay, ['campaign', 'collaboration collection']),
   ),
   _ContentTypeRule(
     'Launch Reminder',
-    (_, __, hay) => _containsAny(hay, [
+    (_, _, hay) => _containsAny(hay, [
       'reminder',
       'last chance',
       'notify me',
@@ -95,7 +95,7 @@ final List<_ContentTypeRule> _rules = [
   ),
   _ContentTypeRule(
     'Limited Release',
-    (_, __, hay) => _containsAny(hay, [
+    (_, _, hay) => _containsAny(hay, [
       'limited release',
       'limited edition',
       'exclusive drop',
@@ -103,7 +103,7 @@ final List<_ContentTypeRule> _rules = [
   ),
   _ContentTypeRule(
     'Announcement',
-    (_, __, hay) => _containsAny(hay, [
+    (_, _, hay) => _containsAny(hay, [
       'launch project',
       'online release',
       ' online ',
@@ -119,7 +119,7 @@ final List<_ContentTypeRule> _rules = [
   ),
   _ContentTypeRule(
     'Product Spotlight',
-    (_, path, __) =>
+    (_, path, _) =>
         path.contains('/products/') || path.contains('/collection/'),
   ),
 ];

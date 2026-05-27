@@ -1,7 +1,5 @@
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/shelf_editorial_voice.dart';
-import 'package:blindbox_app/features/collection/presentation/shelf_mood_legacy.dart'
-    show legacyShelfMoodLine;
 
 /// Human, shelf-first language for progress — not spreadsheet rows.
 abstract final class CollectionProgressVoice {

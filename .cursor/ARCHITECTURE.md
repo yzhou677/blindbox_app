@@ -234,9 +234,71 @@ Security rules live in the Firebase console or your infra repo — catalog read 
 ### UI / UX
 
 - **Tone:** Cozy, collectible, shelf-oriented — not enterprise or search-engine debug copy.
-- **Spacing:** Use [`FeedRhythm`](../lib/core/layout/feed_rhythm.dart) constants for tab feeds and collection shelf rhythm.
+- **Spacing:** Use [`FeedRhythm`](../lib/core/layout/feed_rhythm.dart) constants for tab feeds and collection shelf rhythm. Use [`AppSpacing`](../lib/core/theme/app_spacing.dart) for component-level insets (page gutter, card padding).
 - **Imagery:** Large thumbnails, soft cards, placeholders on failure — never broken-image chaos.
 - **Add-to-collection:** Series-centric search rows; tap row → preview sheet; **Add** button → commit. Subtitle: `Includes {figure}` or `{n} figures` (+ chase suffix) — not `Matched: …` lists.
+
+### Design tokens
+
+The app uses a **lightweight, two-layer token system**. Do not introduce a third layer.
+
+#### Spacing
+
+| Token file | Scope | Use for |
+|---|---|---|
+| [`AppSpacing`](../lib/core/theme/app_spacing.dart) | Component-level insets | Page horizontal gutter (`pageHorizontal`=20), card padding (`cardPadding`), below-AppBar gaps, empty-state horizontal |
+| [`FeedRhythm`](../lib/core/layout/feed_rhythm.dart) | Compositional layout | Section-to-rail gaps, block gaps, rail heights, sheet constants, tab scroll tail |
+
+**Key `AppSpacing` constants:**
+
+| Constant | Value | Use |
+|---|---|---|
+| `pageHorizontal` | 20 | All feed content horizontal padding |
+| `pageHorizontalCompact` | 16 | Rails, official feed column, sheet body |
+| `emptyStateHorizontal` | 28 | Centred empty prompts |
+| `cardPadding` | 20×12 | Default card body (`EdgeInsets.symmetric`) |
+| `cardPaddingCompact` | 16×12 | Market listing tiles, official feed tiles |
+| `belowTabAppBar` | 10 | Gap after main-tab AppBar (no search) |
+| `belowTabAppBarToSearch` | 14 | Gap after main-tab AppBar to search field |
+
+#### Typography
+
+Named text roles live in [`AppTypography`](../lib/core/theme/app_typography.dart) (thin wrapper over [`CollectibleTypography`](../lib/core/theme/collectible_typography.dart)):
+
+| Role | Base style | Screens |
+|---|---|---|
+| `tabTitle` | titleLarge w700 | Home / Market / Collection AppBar |
+| `screenTitle` | headlineSmall w700 | Search overlay AppBars |
+| `sectionTitle` | titleMedium w600 | Section headers (all tabs) |
+| `sectionLabel` | labelSmall w600 ls:0.35 | Chip rails, taxonomy labels |
+| `cardTitle` | titleSmall w600 | Market rows, official feed, search |
+| `cardMeta` / `supportive` | labelSmall w500 muted | Meta lines, dates |
+| `deckText` | bodySmall w400 muted | Section subtitles, quiet copy |
+| `insightsTotals` | titleLarge w700 ls:-0.4 | Collection Insights counts |
+| `insightsFlavor` | bodyLarge italic α0.72 | Archetype flavor / deck copy |
+| `insightsCaption` | labelSmall w600 ls:0.5 α0.65 | Strip section labels |
+
+**Rules:**
+- Use `AppTypography.*` for any text role that appears on two or more screens — do not repeat inline `copyWith` chains.
+- `CollectibleTypography` continues to be the canonical implementation; `AppTypography` is the stable API layer.
+- Feature-local palette and art-direction colors (e.g. Insights donut colors) stay local — do **not** try to centralize them.
+
+#### Intentional deviations (do not flatten)
+
+| Screen | Value | Why |
+|---|---|---|
+| Search overlay AppBar | `toolbarHeight: 72` (not 52) | Taller AppBar emphasises focused search mode vs browsing tab |
+| Search overlay title | `editorialScreenTitle` (headlineSmall) | Larger title reinforces search context |
+| Detail body horizontal | 22 (not 20) | Extra breathing room in hero detail contexts |
+| Empty-state horizontal | 28 (not 20) | Centred copy reads better with narrower line length |
+
+#### AppBar checklist (pre-merge)
+
+- Main tabs: `toolbarHeight: FeedRhythm.mainTabAppBarToolbarHeight` (52), title `textTheme.titleLarge`, `titleSpacing: AppSpacing.pageHorizontal`
+- Search overlays: `toolbarHeight: 72`, title `AppTypography.screenTitle`, `titleSpacing: AppSpacing.pageHorizontal`
+- Sub-routes: use `SliverAppBar` with `FeedRhythm.mainTabAppBarToolbarHeight` + `AppSpacing.belowTabAppBar` gap; `CollectibleSectionHeader` below (no extra top gap)
+
+See also: [`docs/DESIGN_SYSTEM_CHECKLIST.md`](../docs/DESIGN_SYSTEM_CHECKLIST.md) (the UI audit checklist from the design-system consistency pass).
 
 ### Catalog vs shelf images
 

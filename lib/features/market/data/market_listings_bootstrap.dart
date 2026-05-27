@@ -24,5 +24,7 @@ Future<void> bootstrapMarketBrowseListings() async {
 
   final repo = MarketListingsRepository(productionMarketSources());
   final listings = enrichBrowseListingsIdentity(await repo.loadBrowseListings());
+  // In product mode without gateway, productionMarketSources() is intentionally
+  // empty so the Market tab renders its empty state instead of fixture data.
   installMarketBrowseIntelligence(listings);
 }

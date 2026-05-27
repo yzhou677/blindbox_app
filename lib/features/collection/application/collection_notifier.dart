@@ -18,19 +18,67 @@ final collectionNotifierProvider =
     );
 
 class CollectionNotifier extends Notifier<CollectionSnapshot> {
+  // Debounce window for persistence writes.  Rapid figure-state cycling (e.g.
+  // tapping slots quickly) produces many successive commits; coalescing them
+  // into one disk write reduces snapshot-encode + SharedPreferences churn
+  // without any perceived lag (UI state updates are still instant).
+  static const _persistenceDebounce = Duration(milliseconds: 350);
+
+  Timer? _persistenceTimer;
+
+  // The snapshot state *before* the current pending debounce window began.
+  // Passed to recordTransitions as the "true previous" so that the net change
+  // across the entire rapid-tap sequence is correctly detected.
+  CollectionSnapshot? _pendingPersistencePrevious;
+
   @override
-  CollectionSnapshot build() => CollectionAppBootstrap.takeInitialSnapshot();
+  CollectionSnapshot build() {
+    ref.onDispose(_flushPendingPersistence);
+    return CollectionAppBootstrap.takeInitialSnapshot();
+  }
 
   void _commit(CollectionSnapshot next) {
+    // UI state update is instant — providers and widgets rebuild immediately.
     final previous = state;
     state = next;
-    unawaited(CollectionSnapshotStorage.save(next));
-    unawaited(
-      CollectionMemoryStore.instance.recordTransitions(
-        previous: previous,
-        next: next,
-      ),
-    );
+
+    // Capture the snapshot that preceded this debounce window on first tap.
+    _pendingPersistencePrevious ??= previous;
+
+    // Cancel any scheduled persistence flush and reschedule.
+    _persistenceTimer?.cancel();
+    _persistenceTimer = Timer(_persistenceDebounce, () {
+      final current = state;
+      final truePrevious = _pendingPersistencePrevious!;
+      _pendingPersistencePrevious = null;
+      _persistenceTimer = null;
+
+      // TODO(perf/scale): move CollectionSnapshotCodec.encode (jsonEncode of
+      // entire shelf) and CollectionMemoryStore.recordTransitions
+      // (interpretShelf) to Isolate.run once shelf sizes commonly exceed
+      // ~100 series / ~1000 figures. At indie scale the encode completes in
+      // <50 ms and does not require isolate offloading.
+      unawaited(CollectionSnapshotStorage.save(current));
+      unawaited(
+        CollectionMemoryStore.instance.recordTransitions(
+          previous: truePrevious,
+          next: current,
+        ),
+      );
+    });
+  }
+
+  /// Cancels any pending debounce timer and immediately flushes to disk.
+  ///
+  /// Called from [ref.onDispose] so no writes are lost when the notifier is
+  /// torn down (e.g. app termination or hot-restart in dev).
+  void _flushPendingPersistence() {
+    _persistenceTimer?.cancel();
+    _persistenceTimer = null;
+    if (_pendingPersistencePrevious != null) {
+      _pendingPersistencePrevious = null;
+      unawaited(CollectionSnapshotStorage.save(state));
+    }
   }
 
   void cycleFigure(String figureId) {

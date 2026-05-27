@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart';
@@ -9,6 +11,7 @@ import 'package:blindbox_app/features/collection/widgets/add_to_collection_sheet
 import 'package:blindbox_app/features/collection/widgets/collection_brand_filter_row.dart';
 import 'package:blindbox_app/features/collectible_relationship/application/collectible_relationship_providers.dart';
 import 'package:blindbox_app/features/collection/application/shelf_emotional_providers.dart';
+import 'package:blindbox_app/features/collection/insights/application/collector_type_providers.dart';
 import 'package:blindbox_app/features/collection/presentation/shelf_editorial_voice.dart';
 import 'package:blindbox_app/features/collection/presentation/shelf_series_feed.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_empty_state.dart';
@@ -64,16 +67,21 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     if (router == null) return;
     _routerListener = () {
       final path = router.state.uri.path;
+      // Route the dismiss request through the registry so the reentrancy
+      // guard catches the case where MainShellScaffold has already requested
+      // a dismiss for the same tab switch (the router listener fires
+      // immediately after shell.goBranch() and would otherwise call popUntil
+      // a second time while the first pop animation is still in flight).
       if (!path.startsWith('/collection') && mounted) {
-        _dismissBranchOverlays();
+        unawaited(CollectionModalOverlayRegistry.instance.dismissAll());
       }
     };
     router.routerDelegate.addListener(_routerListener!);
   }
 
-  void _dismissBranchOverlays() {
+  Future<void> _dismissBranchOverlays() async {
     if (!mounted) return;
-    dismissCollectionModalOverlays(context);
+    await dismissCollectionModalOverlays(context);
   }
 
   @override
@@ -163,7 +171,11 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       builder: (ctx, scroll) => AddToCollectionSheet(
           onCreateCustom: () {
-            Navigator.of(ctx).pop();
+            // Guard against double-tap: only pop if the sheet route is still
+            // current.  Without this, a rapid second tap can call pop() on a
+            // route already mid-pop and complete its future twice.
+            final navigator = Navigator.of(ctx);
+            if (navigator.canPop()) navigator.pop();
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (context.mounted) {
                 _openAddCustom(context);
@@ -184,9 +196,23 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     final interpretationLine = ref.watch(shelfInterpretationLineProvider);
     final memoryWhisper = ref.watch(shelfMemoryWhisperProvider);
     final relationshipWhisper = ref.watch(shelfRelationshipWhisperProvider);
+    final collectorIdentity = ref.watch(collectorTypeIdentityProvider);
     final sectionSubtitle = ShelfEditorialVoice.sectionSubtitle(
       profile,
       insights,
+    );
+
+    // Compute filtered series and lazy feed items (data-only, no widgets).
+    // Off-screen cards are built on demand by the SliverList.builder below.
+    final visible = shelfSeriesVisibleForBrandFilter(
+      snap.shelfSeries,
+      _brandFilterId,
+    );
+    final feedItems = buildShelfFeedItems(
+      context: context,
+      series: visible,
+      figureStates: snap.figureStates,
+      profile: profile,
     );
 
     if (snap.trackedSeriesCount == 0) {
@@ -250,6 +276,8 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                   ? interpretationLine
                   : ShelfEditorialVoice.shelfMoodLine(snap),
               memoryWhisper: memoryWhisper ?? relationshipWhisper,
+              collectorTypeName: collectorIdentity?.archetype.displayName,
+              onInsightsTap: () => context.push('/collection/insights'),
             ),
           ),
           SliverToBoxAdapter(
@@ -308,51 +336,37 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               ),
             ),
           ),
-          SliverToBoxAdapter(
-            child: Padding(
+          if (visible.isEmpty)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+              sliver: SliverToBoxAdapter(
+                child: Text(
+                  'Nothing on your shelf for this brand yet.',
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            )
+          else
+            SliverPadding(
               padding: const EdgeInsets.fromLTRB(
                 20,
                 FeedRhythm.collectionFilterToFirstCard,
                 20,
                 FeedRhythm.tabScrollTailPadding,
               ),
-              child: Builder(
-                builder: (context) {
-                  final visible = shelfSeriesVisibleForBrandFilter(
-                    snap.shelfSeries,
-                    _brandFilterId,
-                  );
-                  final scheme = Theme.of(context).colorScheme;
-                  final textTheme = Theme.of(context).textTheme;
-                  if (visible.isEmpty) {
-                    return Padding(
-                      padding: const EdgeInsets.fromLTRB(0, 12, 0, 24),
-                      child: Text(
-                        'Nothing on your shelf for this brand yet.',
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: scheme.onSurfaceVariant.withValues(
-                            alpha: 0.78,
-                          ),
-                          height: 1.4,
-                        ),
-                      ),
-                    );
-                  }
-                  return Column(
-                    children: buildShelfSeriesFeed(
-                      context: context,
-                      series: visible,
-                      figureStates: snap.figureStates,
-                      profile: profile,
-                      onOpen: (s) => _openFiguresSheet(context, s.id),
-                      onRemove: (s) =>
-                          _confirmRemoveSeries(context, s.id, s.name),
-                    ),
-                  );
-                },
+              sliver: SliverList.builder(
+                itemCount: feedItems.length,
+                itemBuilder: (context, i) => buildShelfFeedItemWidget(
+                  feedItems[i],
+                  onOpen: (s) => _openFiguresSheet(context, s.id),
+                  onRemove: (s) =>
+                      _confirmRemoveSeries(context, s.id, s.name),
+                ),
               ),
             ),
-          ),
         ],
       ),
     );

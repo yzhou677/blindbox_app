@@ -1,8 +1,15 @@
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/insights/application/collector_type_stat_keys.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_emotional_profile.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_interpretation_confidence.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_mood.dart';
 
+// TODO(perf/scale): interpretShelf runs synchronously on the UI isolate.  At
+// indie scale (≤100 series) it completes in <10 ms and does not need isolate
+// offloading.  Move to Isolate.run when the function is called in hot paths
+// (e.g. every shelf write) AND profiling shows it exceeding ~30 ms on target
+// devices.  Candidates: CollectionNotifier._commit → recordTransitions →
+// _eraFromSnapshot, and shelfEmotionalProfileProvider rebuild on cycleFigure.
 ShelfEmotionalProfile interpretShelf(CollectionSnapshot snap) {
   if (snap.shelfSeries.isEmpty) {
     return const ShelfEmotionalProfile(
@@ -27,17 +34,25 @@ ShelfEmotionalProfile interpretShelf(CollectionSnapshot snap) {
   for (final series in snap.shelfSeries) {
     if (series.taxonomyIpId != null && series.taxonomyIpId!.isNotEmpty) {
       taxonomySeries++;
-      ipCounts[series.taxonomyIpId!] =
-          (ipCounts[series.taxonomyIpId!] ?? 0) + 1;
+      // Taxonomy IDs are already underscore-canonical — use them verbatim so
+      // dominantIpId retains the canonical form (e.g. 'the_monsters').
+      // canonicalizeStatKey is only for free-text display names below.
+      final ipKey = series.taxonomyIpId!;
+      if (ipKey.isNotEmpty) ipCounts[ipKey] = (ipCounts[ipKey] ?? 0) + 1;
     } else {
-      final fallback = series.ipName.trim().toLowerCase();
+      // Free-text ipName may have capitalisation / spacing variants — normalise
+      // so that 'The Monsters' and 'the-monsters' map to the same bucket.
+      final fallback = canonicalizeStatKey(series.ipName);
       if (fallback.isNotEmpty) {
         ipCounts[fallback] = (ipCounts[fallback] ?? 0) + 1;
       }
     }
     if (series.taxonomyBrandId != null && series.taxonomyBrandId!.isNotEmpty) {
-      brandCounts[series.taxonomyBrandId!] =
-          (brandCounts[series.taxonomyBrandId!] ?? 0) + 1;
+      // Taxonomy brand IDs are already canonical — use verbatim.
+      final brandKey = series.taxonomyBrandId!;
+      if (brandKey.isNotEmpty) {
+        brandCounts[brandKey] = (brandCounts[brandKey] ?? 0) + 1;
+      }
     }
 
     final progress = progressForSeries(series, snap.figureStates);

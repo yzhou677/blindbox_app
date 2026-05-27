@@ -97,7 +97,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     );
     return [
       for (final t in templates)
-        if (t != null) t,
+        ?t,
     ];
   }
 
