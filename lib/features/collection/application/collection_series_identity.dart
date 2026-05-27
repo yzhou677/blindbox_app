@@ -17,9 +17,15 @@ String canonicalizeCollectionIdentity(String raw) {
   return compact.replaceAll(RegExp(r'[^a-z0-9]'), '');
 }
 
+/// How a catalog-facing surface matched a shelf row.
+///
+/// Ownership is **series-entity specific**. Brand/IP taxonomy ids are never
+/// sufficient on their own (see [resolveCollectionSeriesOwnership]).
 enum CollectionSeriesOwnershipMatchKind {
+  /// Shelf [ShelfSeries.catalogTemplateId] (or row id) equals catalog/drop key.
   exactCatalogTemplate,
-  taxonomyBrandIp,
+
+  /// Canonicalized display [series name + brand] both match a shelf row.
   canonicalBrandSeries,
 }
 
@@ -55,7 +61,36 @@ class CollectionSeriesOwnershipMatch {
       matchedCatalogTemplateId != null;
 }
 
-/// Shared ownership matcher for Home/Discovery surfaces against Collection.
+/// Shared ownership matcher for Home/Discovery/Search surfaces against Collection.
+///
+/// ## Fields that participate in matching
+///
+/// | Input | Used for |
+/// |-------|----------|
+/// | [catalogTemplateId], [alternateCatalogTemplateIds] | Exact template/drop id (step 1) |
+/// | [seriesName] | Canonical series leg (step 2) |
+/// | [brandName] | Canonical brand leg (step 2) |
+/// | [taxonomyBrandId], [taxonomyIpId] | **Not used** for owned=true (metadata only at call sites) |
+///
+/// Shelf row fields: [ShelfSeries.catalogTemplateId], [ShelfSeries.id],
+/// [ShelfSeries.name], [ShelfSeries.brand].
+///
+/// ## Precedence (first hit wins)
+///
+/// 1. **Exact catalog template** — `catalogTemplateId` / alternates vs
+///    `ShelfSeries.catalogTemplateId` or shelf row `id`.
+/// 2. **Canonical brand + series** — both canonicalized strings must match the
+///    same shelf row. Custom user entries without a template id rely on this.
+///
+/// ## What never produces owned=true
+///
+/// - Taxonomy brand id alone
+/// - Taxonomy IP / creator id alone
+/// - Brand + IP without series name equality
+/// - Same maker universe with a different series title
+///
+/// False-negative (custom entry not linked) is acceptable; false-positive
+/// (whole IP marked owned) is not.
 CollectionSeriesOwnershipMatch resolveCollectionSeriesOwnership({
   required CollectionSnapshot snapshot,
   required String catalogTemplateId,
@@ -65,18 +100,16 @@ CollectionSeriesOwnershipMatch resolveCollectionSeriesOwnership({
   String? taxonomyBrandId,
   String? taxonomyIpId,
 }) {
+  // taxonomyBrandId / taxonomyIpId: not used for owned=true (see class doc).
+
   final templateKeys = <String>{
     catalogTemplateId.trim(),
     ...alternateCatalogTemplateIds.map((e) => e.trim()),
   }..removeWhere((k) => k.isEmpty);
   final canonicalSeries = canonicalizeCollectionIdentity(seriesName);
   final canonicalBrand = canonicalizeCollectionIdentity(brandName);
-  final canonicalTaxonomyBrand = canonicalizeCollectionIdentity(
-    taxonomyBrandId ?? '',
-  );
-  final canonicalTaxonomyIp = canonicalizeCollectionIdentity(taxonomyIpId ?? '');
 
-  // 1) Exact catalog/drop template key match (high confidence).
+  // 1) Exact catalog/drop template key match (series-entity specific).
   for (final row in snapshot.shelfSeries) {
     final rowTemplate = row.catalogTemplateId?.trim() ?? '';
     String? matchedTemplate;
@@ -95,24 +128,7 @@ CollectionSeriesOwnershipMatch resolveCollectionSeriesOwnership({
     }
   }
 
-  // 2) Taxonomy match when both sides have canonical brand+ip ids.
-  if (canonicalTaxonomyBrand.isNotEmpty && canonicalTaxonomyIp.isNotEmpty) {
-    for (final row in snapshot.shelfSeries) {
-      final rowBrand = canonicalizeCollectionIdentity(row.taxonomyBrandId ?? '');
-      final rowIp = canonicalizeCollectionIdentity(row.taxonomyIpId ?? '');
-      if (rowBrand.isNotEmpty &&
-          rowIp.isNotEmpty &&
-          rowBrand == canonicalTaxonomyBrand &&
-          rowIp == canonicalTaxonomyIp) {
-        return CollectionSeriesOwnershipMatch.owned(
-          kind: CollectionSeriesOwnershipMatchKind.taxonomyBrandIp,
-          matchedSeriesId: row.id,
-        );
-      }
-    }
-  }
-
-  // 3) Best-effort canonical brand+series match (includes custom rows).
+  // 2) Canonical brand + series name (both required — not IP/universe level).
   if (canonicalSeries.isNotEmpty && canonicalBrand.isNotEmpty) {
     for (final row in snapshot.shelfSeries) {
       final rowSeries = canonicalizeCollectionIdentity(row.name);

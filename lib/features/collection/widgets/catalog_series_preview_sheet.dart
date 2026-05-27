@@ -28,6 +28,7 @@ class CatalogSeriesPreviewSheet extends ConsumerWidget {
   final CatalogSeries series;
   final VoidCallback onAdd;
   final bool showAddButton;
+  static const double _stickyActionBarReserve = 92;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -45,51 +46,63 @@ class CatalogSeriesPreviewSheet extends ConsumerWidget {
 
     return CollectibleSheetInsets(
       extraBottom: 0,
-      child: CollectibleSheetScrollView(
-        controller: scroll,
-        header: CollectibleSheetChrome(
-          seriesTitle: series.name,
-          brand: series.brand,
-          ipLine: series.ipName,
-          trailingMeta: figureLine,
-        ),
-        slivers: [
-        if (relationshipLine != null && relationshipLine.isNotEmpty)
-          SliverToBoxAdapter(
-            child: CollectibleRelationshipLine(
-              text: relationshipLine,
-              padding: const EdgeInsets.only(top: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: CollectibleSheetScrollView(
+              controller: scroll,
+              slivers: [
+                SliverToBoxAdapter(
+                  child: CollectibleSheetChrome(
+                    seriesTitle: series.name,
+                    brand: series.brand,
+                    ipLine: series.ipName,
+                    trailingMeta: figureLine,
+                  ),
+                ),
+                if (relationshipLine != null && relationshipLine.isNotEmpty)
+                  SliverToBoxAdapter(
+                    child: CollectibleRelationshipLine(
+                      text: relationshipLine,
+                      padding: const EdgeInsets.only(top: 10),
+                    ),
+                  ),
+                SliverPadding(
+                  padding: const EdgeInsets.only(
+                    top: FeedRhythm.sheetFigureRailGap,
+                    bottom: AppSpacing.sm,
+                  ),
+                  sliver: SliverList.separated(
+                    itemCount: series.figures.length,
+                    separatorBuilder: (context, index) => const SizedBox(height: 14),
+                    itemBuilder: (context, i) {
+                      final f = series.figures[i];
+                      return _PreviewFigureRow(
+                        figure: f,
+                        accent: series.shelfAccent,
+                        onTap: () {
+                          final items = catalogGalleryItemsFromCatalogSeries(series);
+                          showCatalogFigureGallery(
+                            context,
+                            items: items,
+                            initialIndex: i,
+                            seriesTitle: series.name,
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+                if (showAddButton)
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: _stickyActionBarReserve),
+                  ),
+              ],
             ),
           ),
-        SliverPadding(
-          padding: const EdgeInsets.only(
-            top: FeedRhythm.sheetFigureRailGap,
-            bottom: AppSpacing.sm,
-          ),
-          sliver: SliverList.separated(
-            itemCount: series.figures.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 14),
-            itemBuilder: (context, i) {
-              final f = series.figures[i];
-              return _PreviewFigureRow(
-                figure: f,
-                accent: series.shelfAccent,
-                onTap: () {
-                  final items = catalogGalleryItemsFromCatalogSeries(series);
-                  showCatalogFigureGallery(
-                    context,
-                    items: items,
-                    initialIndex: i,
-                    seriesTitle: series.name,
-                  );
-                },
-              );
-            },
-          ),
-        ),
-        if (showAddButton)
-          SliverToBoxAdapter(
-            child: Material(
+          if (showAddButton)
+            Material(
               color: scheme.surface,
               child: DecoratedBox(
                 decoration: BoxDecoration(
@@ -100,13 +113,9 @@ class CatalogSeriesPreviewSheet extends ConsumerWidget {
                   ),
                 ),
                 child: Padding(
-                  padding: EdgeInsets.only(
-                    left: 0,
-                    right: 0,
-                    top: 10,
-                    bottom: MediaQuery.paddingOf(context).bottom + 8,
-                  ),
+                  padding: const EdgeInsets.only(top: 10, bottom: 8),
                   child: FilledButton(
+                    key: const ValueKey<String>('catalog-preview-add-cta'),
                     onPressed: () {
                       onAdd();
                       Navigator.of(context).pop();
@@ -122,7 +131,6 @@ class CatalogSeriesPreviewSheet extends ConsumerWidget {
                 ),
               ),
             ),
-          ),
         ],
       ),
     );
