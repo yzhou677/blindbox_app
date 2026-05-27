@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/media/device_local_ref.dart';
 import 'package:blindbox_app/features/catalog/catalog_image_resolver.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/collection/widgets/collectible_figure_placeholder.dart';
@@ -185,7 +186,11 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
     if (kDebugMode) {
       final provider = ref == null || ref.isEmpty
           ? 'placeholder'
-          : (ref.startsWith('assets/') ? 'bundled_asset' : 'network_url');
+          : (ref.startsWith('assets/')
+                ? 'bundled_asset'
+                : DeviceLocalImageRef.looksLikeDevicePath(ref)
+                ? 'disk_cache'
+                : 'network_url');
       debugPrint(
         'CatalogImageFromKey: imageKey="$imageKey" provider=$provider '
         'storageFallback=${CatalogImageResolver.storageFallbackEnabled}',

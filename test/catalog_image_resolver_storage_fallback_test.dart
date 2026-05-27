@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:blindbox_app/features/catalog/catalog_image_resolver.dart';
+import 'package:blindbox_app/features/catalog/data/catalog_image_disk_cache.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/collectible_relationship/application/collectible_relationship_providers.dart';
 import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
@@ -16,8 +19,22 @@ const _bundledSeriesKey = 'the_monsters_exciting_macaron';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  tearDown(() {
+  late Directory tempCacheRoot;
+
+  setUp(() async {
+    tempCacheRoot = await Directory.systemTemp.createTemp(
+      'catalog_fallback_test_',
+    );
+    CatalogImageDiskCache.testRootOverride = tempCacheRoot;
+  });
+
+  tearDown(() async {
+    CatalogImageResolver.resetSessionCachesForTest();
     CatalogImageResolver.storageFallbackOverride = null;
+    CatalogImageDiskCache.resetForTest();
+    if (await tempCacheRoot.exists()) {
+      await tempCacheRoot.delete(recursive: true);
+    }
   });
 
   group('resolver contract', () {
@@ -26,9 +43,9 @@ void main() {
       expect(CatalogImageResolver.storageFallbackEnabled, isTrue);
     });
 
-    testWidgets(
+    test(
       '1) storageFallback=false + local asset exists → bundled path',
-      (tester) async {
+      () async {
         CatalogImageResolver.storageFallbackOverride = false;
         await CatalogImageResolver.ensureReady();
 
@@ -40,9 +57,9 @@ void main() {
       },
     );
 
-    testWidgets(
+    test(
       '2) storageFallback=false + local asset missing → null',
-      (tester) async {
+      () async {
         CatalogImageResolver.storageFallbackOverride = false;
         await CatalogImageResolver.ensureReady();
 
@@ -54,10 +71,11 @@ void main() {
       },
     );
 
-    testWidgets(
+    test(
       '3) storageFallback=true + local missing + no Firebase → null',
-      (tester) async {
+      () async {
         CatalogImageResolver.storageFallbackOverride = true;
+        CatalogImageResolver.firebaseStorageReadyOverride = false;
         await CatalogImageResolver.ensureReady();
 
         final ref = await CatalogImageResolver.resolveFigureStorageRef(
@@ -68,9 +86,9 @@ void main() {
       },
     );
 
-    testWidgets(
+    test(
       '4) storageFallback=true does not block bundled asset resolution',
-      (tester) async {
+      () async {
         CatalogImageResolver.storageFallbackOverride = true;
         await CatalogImageResolver.ensureReady();
 
@@ -82,9 +100,7 @@ void main() {
       },
     );
 
-    testWidgets('series bundled asset resolves with storage fallback off', (
-      tester,
-    ) async {
+    test('series bundled asset resolves with storage fallback off', () async {
       CatalogImageResolver.storageFallbackOverride = false;
       await CatalogImageResolver.ensureReady();
 

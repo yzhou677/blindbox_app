@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:blindbox_app/features/catalog/data/catalog_image_disk_cache.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
@@ -14,9 +15,16 @@ import 'package:flutter/services.dart';
 /// - `catalog/series/<imageKey>.<ext>`
 /// - `catalog/figures/<imageKey>.<ext>`
 ///
-/// **Runtime:** this resolver builds Storage paths from [imageKey] + [CatalogImageKind]
-/// + [assetExtensions], probes bundled assets first, then Storage. Download URLs exist
-/// only in memory for widgets — not written back to Firestore or shelf [imageKey].
+/// **Runtime resolution order:**
+/// 1. Bundled `assets/catalog/**` (stable offline seed)
+/// 2. Bounded disk cache (resilience — LRU + TTL staleness)
+/// 3. Firebase Storage (freshness / enrichment; stale disk renders immediately)
+/// 4. Placeholder (null ref)
+///
+/// Disk cache is **not** canonical storage. Stale entries still paint offline while
+/// a deduped background refresh runs when network + Storage are available.
+///
+/// Download URLs are not written back to Firestore or shelf [imageKey].
 abstract final class CatalogImageResolver {
   /// When true (default), after a bundled miss, resolve from Firebase Storage.
   ///
@@ -37,6 +45,50 @@ abstract final class CatalogImageResolver {
   @visibleForTesting
   static bool? storageFallbackOverride;
 
+  @visibleForTesting
+  static bool? firebaseStorageReadyOverride;
+
+  /// When set, replaces Firebase [Reference.getDownloadURL] in tests.
+  @visibleForTesting
+  static Future<String?> Function(String storageObjectPath)?
+      getDownloadUrlOverride;
+
+  /// Counts Storage extension probes in the current test session.
+  @visibleForTesting
+  static int storageExtensionProbeCount = 0;
+
+  @visibleForTesting
+  static int backgroundRefreshCount = 0;
+
+  /// Cap for simultaneous stale-while-revalidate background refreshes.
+  static const int maxConcurrentStaleRefreshes = 4;
+
+  @visibleForTesting
+  static int? maxConcurrentStaleRefreshesOverride;
+
+  @visibleForTesting
+  static int get activeStaleRefreshCount => _activeStaleRefreshCount;
+
+  @visibleForTesting
+  static int get queuedStaleRefreshCount => _staleRefreshQueue.length;
+
+  @visibleForTesting
+  static void resetSessionCachesForTest() {
+    _storageDisplayRefCache.clear();
+    _storageMissingCache.clear();
+    _storageResolveInFlight.clear();
+    _storageRefreshInFlight.clear();
+    _staleRefreshQueue.clear();
+    _staleRefreshQueuedKeys.clear();
+    _activeStaleRefreshCount = 0;
+    _debugLoggedMissingKeys.clear();
+    storageExtensionProbeCount = 0;
+    backgroundRefreshCount = 0;
+    maxConcurrentStaleRefreshesOverride = null;
+    firebaseStorageReadyOverride = null;
+    getDownloadUrlOverride = null;
+  }
+
   static const Duration storageUrlTimeout = Duration(seconds: 8);
 
   static const String figuresRoot = 'assets/catalog/figures';
@@ -56,10 +108,18 @@ abstract final class CatalogImageResolver {
 
   static Set<String>? _bundleAssetKeys;
   static Future<void>? _ensureReadyFuture;
-  static final Map<String, String> _storageUrlCache = {};
+  /// Session memory for disk paths or network URLs resolved from Storage tier.
+  static final Map<String, String> _storageDisplayRefCache = {};
   static final Set<String> _storageMissingCache = <String>{};
   static final Map<String, Future<String?>> _storageResolveInFlight = {};
+  static final Map<String, Future<void>> _storageRefreshInFlight = {};
+  static final List<_StaleRefreshJob> _staleRefreshQueue = [];
+  static final Set<String> _staleRefreshQueuedKeys = <String>{};
+  static int _activeStaleRefreshCount = 0;
   static final Set<String> _debugLoggedMissingKeys = <String>{};
+
+  static int get _staleRefreshConcurrencyCap =>
+      maxConcurrentStaleRefreshesOverride ?? maxConcurrentStaleRefreshes;
 
   static const String storageFiguresPrefix = 'catalog/figures';
   static const String storageSeriesPrefix = 'catalog/series';
@@ -150,14 +210,14 @@ abstract final class CatalogImageResolver {
     return hit;
   }
 
-  /// Firebase Storage URL only — does not probe bundled assets.
+  /// Disk cache or Firebase Storage — does not probe bundled assets.
   static Future<String?> resolveFigureStorageRef(String imageKey) async {
     final k = imageKey.trim();
     if (k.isEmpty) return null;
     return _resolveStorageDisplayRef(CatalogImageKind.figure, k);
   }
 
-  /// Firebase Storage URL only — does not probe bundled assets.
+  /// Disk cache or Firebase Storage — does not probe bundled assets.
   static Future<String?> resolveSeriesStorageRef(String imageKey) async {
     final k = imageKey.trim();
     if (k.isEmpty) return null;
@@ -241,8 +301,33 @@ abstract final class CatalogImageResolver {
     if (k.isEmpty) return null;
 
     final primaryCacheKey = '${storagePrefixFor(kind)}/$k';
-    final cached = _storageUrlCache[primaryCacheKey];
-    if (cached != null) return cached;
+
+    final sessionCached = _storageDisplayRefCache[primaryCacheKey];
+    if (sessionCached != null) return sessionCached;
+
+    final diskHit = await CatalogImageDiskCache.lookup(
+      kind: kind,
+      imageKey: k,
+    );
+    if (diskHit != null) {
+      _storageDisplayRefCache[primaryCacheKey] = diskHit.localPath;
+      _traceResolution(
+        imageKey: k,
+        kind: kind,
+        phase: 'disk_cache',
+        hit: true,
+        outcome: diskHit.isStale ? 'disk_cache_stale' : 'disk_cache_hit',
+      );
+      if (diskHit.isStale) {
+        _scheduleStaleRefresh(
+          kind: kind,
+          imageKey: k,
+          primaryCacheKey: primaryCacheKey,
+        );
+      }
+      return diskHit.localPath;
+    }
+
     if (_storageMissingCache.contains(primaryCacheKey)) return null;
     final inFlight = _storageResolveInFlight[primaryCacheKey];
     if (inFlight != null) return inFlight;
@@ -268,10 +353,11 @@ abstract final class CatalogImageResolver {
       return null;
     }
 
-    final future = _resolveStorageDisplayRefUncached(
+    final future = _fetchAndPersistFromStorage(
       kind: kind,
       imageKey: k,
       primaryCacheKey: primaryCacheKey,
+      recordMissingOnFailure: true,
     );
     _storageResolveInFlight[primaryCacheKey] = future;
     try {
@@ -281,13 +367,92 @@ abstract final class CatalogImageResolver {
     }
   }
 
-  static Future<String?> _resolveStorageDisplayRefUncached({
+  static void _scheduleStaleRefresh({
+    required CatalogImageKind kind,
+    required String imageKey,
+    required String primaryCacheKey,
+  }) {
+    if (!storageFallbackEnabled || !_firebaseStorageReady) return;
+    if (_storageRefreshInFlight.containsKey(primaryCacheKey)) return;
+    if (_staleRefreshQueuedKeys.contains(primaryCacheKey)) return;
+
+    _staleRefreshQueue.add(
+      _StaleRefreshJob(
+        kind: kind,
+        imageKey: imageKey,
+        primaryCacheKey: primaryCacheKey,
+      ),
+    );
+    _staleRefreshQueuedKeys.add(primaryCacheKey);
+    _pumpStaleRefreshQueue();
+  }
+
+  static void _pumpStaleRefreshQueue() {
+    while (_activeStaleRefreshCount < _staleRefreshConcurrencyCap &&
+        _staleRefreshQueue.isNotEmpty) {
+      final job = _staleRefreshQueue.removeAt(0);
+      _staleRefreshQueuedKeys.remove(job.primaryCacheKey);
+      _activeStaleRefreshCount++;
+      unawaited(_runQueuedStaleRefresh(job));
+    }
+  }
+
+  static Future<void> _runQueuedStaleRefresh(_StaleRefreshJob job) async {
+    try {
+      if (_storageRefreshInFlight.containsKey(job.primaryCacheKey)) return;
+
+      final mayRefresh = await CatalogImageDiskCache.shouldAttemptBackgroundRefresh(
+        kind: job.kind,
+        imageKey: job.imageKey,
+      );
+      if (!mayRefresh) return;
+      if (_storageRefreshInFlight.containsKey(job.primaryCacheKey)) return;
+
+      await CatalogImageDiskCache.markRefreshAttempted(
+        kind: job.kind,
+        imageKey: job.imageKey,
+      );
+
+      final refresh = _refreshFromStorage(
+        kind: job.kind,
+        imageKey: job.imageKey,
+        primaryCacheKey: job.primaryCacheKey,
+      );
+      _storageRefreshInFlight[job.primaryCacheKey] = refresh;
+      await refresh;
+    } finally {
+      _storageRefreshInFlight.remove(job.primaryCacheKey);
+      _activeStaleRefreshCount--;
+      _pumpStaleRefreshQueue();
+    }
+  }
+
+  static Future<void> _refreshFromStorage({
     required CatalogImageKind kind,
     required String imageKey,
     required String primaryCacheKey,
   }) async {
+    backgroundRefreshCount++;
+    final updated = await _fetchAndPersistFromStorage(
+      kind: kind,
+      imageKey: imageKey,
+      primaryCacheKey: primaryCacheKey,
+      recordMissingOnFailure: false,
+    );
+    if (updated != null) {
+      _storageDisplayRefCache[primaryCacheKey] = updated;
+    }
+  }
+
+  static Future<String?> _fetchAndPersistFromStorage({
+    required CatalogImageKind kind,
+    required String imageKey,
+    required String primaryCacheKey,
+    required bool recordMissingOnFailure,
+  }) async {
     var sawOnlyObjectNotFound = true;
-    final root = FirebaseStorage.instance.ref();
+    final useOverride = getDownloadUrlOverride != null;
+    Reference? storageRoot;
     for (final ext in assetExtensions) {
       final path = storageObjectPath(
         kind: kind,
@@ -295,11 +460,29 @@ abstract final class CatalogImageResolver {
         extension: ext,
       );
       try {
-        final url = await root
-            .child(path)
-            .getDownloadURL()
-            .timeout(storageUrlTimeout);
-        _storageUrlCache[primaryCacheKey] = url;
+        storageExtensionProbeCount++;
+        final String url;
+        if (useOverride) {
+          final resolved = await getDownloadUrlOverride!(path);
+          if (resolved == null || resolved.isEmpty) {
+            continue;
+          }
+          url = resolved;
+        } else {
+          storageRoot ??= FirebaseStorage.instance.ref();
+          url = await storageRoot
+              .child(path)
+              .getDownloadURL()
+              .timeout(storageUrlTimeout);
+        }
+        final localPath = await CatalogImageDiskCache.persistFromUrl(
+          kind: kind,
+          imageKey: imageKey,
+          downloadUrl: url,
+          extension: ext,
+        );
+        final displayRef = localPath ?? url;
+        _storageDisplayRefCache[primaryCacheKey] = displayRef;
         _storageMissingCache.remove(primaryCacheKey);
         _traceResolution(
           imageKey: imageKey,
@@ -308,9 +491,9 @@ abstract final class CatalogImageResolver {
           attemptedPath: path,
           hit: true,
           storageSkipped: false,
-          outcome: 'storage_url',
+          outcome: localPath != null ? 'disk_cache_persisted' : 'storage_url',
         );
-        return url;
+        return displayRef;
       } on TimeoutException {
         sawOnlyObjectNotFound = false;
         continue;
@@ -324,7 +507,7 @@ abstract final class CatalogImageResolver {
         return null;
       }
     }
-    if (sawOnlyObjectNotFound) {
+    if (sawOnlyObjectNotFound && recordMissingOnFailure) {
       // Missing object for all known extensions: cache as absent so repeated
       // UI rebuilds do not keep probing Storage and spamming 404 logs.
       _storageMissingCache.add(primaryCacheKey);
@@ -416,6 +599,9 @@ abstract final class CatalogImageResolver {
   }
 
   static bool get _firebaseStorageReady {
+    if (firebaseStorageReadyOverride != null) {
+      return firebaseStorageReadyOverride!;
+    }
     try {
       return Firebase.apps.isNotEmpty;
     } catch (_) {
@@ -440,6 +626,18 @@ abstract final class CatalogImageResolver {
     );
     return stem.trim();
   }
+}
+
+final class _StaleRefreshJob {
+  const _StaleRefreshJob({
+    required this.kind,
+    required this.imageKey,
+    required this.primaryCacheKey,
+  });
+
+  final CatalogImageKind kind;
+  final String imageKey;
+  final String primaryCacheKey;
 }
 
 /// Catalog art subtree — maps to `catalog/series/` or `catalog/figures/` in Storage.
