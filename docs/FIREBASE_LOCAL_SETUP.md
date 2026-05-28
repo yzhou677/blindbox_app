@@ -2,6 +2,16 @@
 
 Client config files are **gitignored** so API keys are not pushed to GitHub. Each developer (and CI, if needed) supplies their own copies.
 
+## Firebase CLI config (`firebase.json`)
+
+Copy the tracked template (rules + indexes + market functions codebase):
+
+```bash
+cp firebase.json.example firebase.json
+```
+
+Edit `firebase.json` locally if your project needs extra emulators or deploy targets — do not commit it (see `.gitignore`).
+
 ## Android (required for Firestore on device)
 
 1. Firebase console → Project settings → Your apps → Android (`com.example.blindbox_app`).
@@ -53,7 +63,7 @@ Never commit `*-firebase-adminsdk-*.json` or service account keys — patterns a
 
 ## Security rules (draft in repo)
 
-Baseline rules live at repo root: `firestore.rules`, `storage.rules` (wired in `firebase.json`).
+Baseline rules live at repo root: `firestore.rules`, `storage.rules` (wired via `firebase.json.example` → local `firebase.json`).
 
 - **Client:** read-only `brands` / `ips` / `series` / `figures` / `official_feed_items`; read-only `catalog/**` Storage; no client writes.
 - **Ingestion:** `tools/official_feed/push_official_feed.mjs` and external catalog pipelines must use **Admin SDK** or service account (bypass client rules).
