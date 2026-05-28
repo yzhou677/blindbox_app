@@ -69,6 +69,79 @@ void main() {
     expect(find.text('Show less'), findsNothing);
   });
 
+  testWidgets('expanded description removes line clamp, overflow, and fade', (
+    tester,
+  ) async {
+    final long = List.filled(140, 'market detail copy').join(' ');
+
+    await tester.pumpWidget(
+      wrap(ExpandableDescription(text: long, style: bodyStyle)),
+    );
+    await tester.pumpAndSettle();
+
+    final bodyFinder = find.descendant(
+      of: find.byType(ExpandableDescription),
+      matching: find.byWidgetPredicate(
+        (w) => w is Text && w.data == long,
+      ),
+    );
+    expect(bodyFinder, findsOneWidget);
+
+    final collapsedText = tester.widget<Text>(bodyFinder);
+    expect(collapsedText.maxLines, 5);
+    expect(collapsedText.overflow, TextOverflow.clip);
+    expect(find.byType(DecoratedBox), findsWidgets);
+
+    await tester.tap(find.text('Read more'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 320));
+
+    final expandedText = tester.widget<Text>(bodyFinder);
+    expect(expandedText.maxLines, isNull);
+    expect(expandedText.overflow, isNull);
+    expect(find.text('Show less'), findsOneWidget);
+  });
+
+  testWidgets('expanded description keeps literal ellipsis from source text', (
+    tester,
+  ) async {
+    final withLiteralEllipsis = [
+      'Line one with details...',
+      'Line two has more source copy...',
+      'Line three continues normally.',
+      'Line four closes the paragraph.',
+      'Line five keeps going with collector notes...',
+      'Line six final sentence.',
+    ].join('\n');
+
+    await tester.pumpWidget(
+      wrap(
+        ExpandableDescription(
+          text: withLiteralEllipsis,
+          style: bodyStyle,
+          collapsedMaxLines: 2,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Read more'), findsOneWidget);
+    await tester.tap(find.text('Read more'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 320));
+
+    final bodyFinder = find.descendant(
+      of: find.byType(ExpandableDescription),
+      matching: find.byWidgetPredicate(
+        (w) => w is Text && w.data == withLiteralEllipsis,
+      ),
+    );
+    final expandedText = tester.widget<Text>(bodyFinder);
+    expect(expandedText.maxLines, isNull);
+    expect(expandedText.overflow, isNull);
+    expect(find.textContaining('details...'), findsOneWidget);
+  });
+
   testWidgets('expanded state persists until collapse', (tester) async {
     final long = List.filled(90, 'vinyl').join(' ');
 
