@@ -1,0 +1,43 @@
+rules_version = '2';
+
+// Production baseline (draft — not deployed until explicitly released).
+// Client: read-only catalog + official feed. Writes via Admin SDK / tooling only.
+// See docs/FIREBASE_LOCAL_SETUP.md for deploy notes.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Catalog metadata (brands, ips, series, figures)
+    match /brands/{brandId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /ips/{ipId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /series/{seriesId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /figures/{figureId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Home official updates (not Latest drops commerce rail)
+    match /official_feed_items/{itemId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Reserved for future cloud shelf sync (app uses local prefs today).
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

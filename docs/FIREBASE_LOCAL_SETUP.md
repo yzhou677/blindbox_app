@@ -50,3 +50,18 @@ Then commit the `.gitignore` update. Rotate API keys in Google Cloud Console if 
 ## Admin / server credentials
 
 Never commit `*-firebase-adminsdk-*.json` or service account keys — patterns are in `.gitignore`.
+
+## Security rules (draft in repo)
+
+Baseline rules live at repo root: `firestore.rules`, `storage.rules` (wired in `firebase.json`).
+
+- **Client:** read-only `brands` / `ips` / `series` / `figures` / `official_feed_items`; read-only `catalog/**` Storage; no client writes.
+- **Ingestion:** `tools/official_feed/push_official_feed.mjs` and external catalog pipelines must use **Admin SDK** or service account (bypass client rules).
+
+Deploy only after staging validation:
+
+```bash
+firebase deploy --only firestore:rules,storage:rules
+```
+
+Do not deploy rules as part of routine app releases until the release hardening checklist is signed off.
