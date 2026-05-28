@@ -277,7 +277,7 @@ Simulate impatient collector behavior for **≥15 minutes** on a physical Androi
 
 ## 6. Firebase production hardening verification
 
-**Prerequisite:** Rules deployed from repo draft to **staging**, then production — `firebase deploy --only firestore:rules,storage:rules`.  
+**Prerequisite:** Rules deployed from repo draft to **staging**, then production — `npx --prefix functions firebase deploy --only firestore:rules,storage --project <project-id>` (not `storage:rules`; see `docs/FIREBASE_LOCAL_SETUP.md`).  
 **Do not** conflate “rules in git” with “rules live in console.”
 
 ### 6.1 Read paths (client, unauthenticated)

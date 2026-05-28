@@ -68,10 +68,12 @@ Baseline rules live at repo root: `firestore.rules`, `storage.rules` (wired via 
 - **Client:** read-only `brands` / `ips` / `series` / `figures` / `official_feed_items`; read-only `catalog/**` Storage; no client writes.
 - **Ingestion:** `tools/official_feed/push_official_feed.mjs` and external catalog pipelines must use **Admin SDK** or service account (bypass client rules).
 
-Deploy only after staging validation:
+Deploy only after staging validation (from repo root; local `firebase.json` required — see above):
 
 ```bash
-firebase deploy --only firestore:rules,storage:rules
+npx --prefix functions firebase deploy --only firestore:rules,storage --project blindbox-collection
 ```
+
+Use `storage`, not `storage:rules`: with a single default bucket in `firebase.json` (no named targets), `storage:rules` fails with *Could not find rules for the following storage targets: rules*.
 
 Do not deploy rules as part of routine app releases until the release hardening checklist is signed off.
