@@ -85,7 +85,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey<String>('catalog-preview-add-cta')), findsOneWidget);
-    expect(find.text('Cry Me an Ocean Series'), findsNothing);
+    expect(find.text('Cry Me an Ocean Series'), findsOneWidget);
   });
 
   testWidgets('figure content remains accessible with sticky CTA', (tester) async {

@@ -53,15 +53,13 @@ class CatalogSeriesPreviewSheet extends ConsumerWidget {
           Expanded(
             child: CollectibleSheetScrollView(
               controller: scroll,
+              header: CollectibleSheetChrome(
+                seriesTitle: series.name,
+                brand: series.brand,
+                ipLine: series.ipName,
+                trailingMeta: figureLine,
+              ),
               slivers: [
-                SliverToBoxAdapter(
-                  child: CollectibleSheetChrome(
-                    seriesTitle: series.name,
-                    brand: series.brand,
-                    ipLine: series.ipName,
-                    trailingMeta: figureLine,
-                  ),
-                ),
                 if (relationshipLine != null && relationshipLine.isNotEmpty)
                   SliverToBoxAdapter(
                     child: CollectibleRelationshipLine(
