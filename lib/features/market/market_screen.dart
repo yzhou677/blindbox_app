@@ -40,6 +40,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
   List<String> _displayOrderIds = const [];
   MarketPriceSort _displayOrderPriceSort = MarketPriceSort.lowToHigh;
   String? _displayOrderBrowseSignature;
+  String? _lastReconciledRoutePath;
 
   @override
   void initState() {
@@ -54,11 +55,32 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
     super.dispose();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _reconcileSearchSessionWithRoute();
+  }
+
+  /// Drops immersive search when the Market root is visible without `/market/search`.
+  ///
+  /// Covers tab reselect (`goBranch` + `initialLocation`) and other pops that skip
+  /// [MarketBrowseSearchScreen._exitSearch].
+  void _reconcileSearchSessionWithRoute() {
+    final path = GoRouterState.of(context).uri.path;
+    if (path == _lastReconciledRoutePath) return;
+    _lastReconciledRoutePath = path;
+    if (!isMarketBrowseRootPath(path)) return;
+    final browse = ref.read(marketBrowseNotifierProvider);
+    if (!browse.searchResultsActive) return;
+    ref.read(marketBrowseNotifierProvider.notifier).clearSearchSession();
+  }
+
   void _onTabReselected() {
     if (ShellTabReselectBus.instance.reselectedBranch.value !=
         kMarketShellBranchIndex) {
       return;
     }
+    ref.read(marketBrowseNotifierProvider.notifier).clearSearchSession();
     if (!_scrollController.hasClients) return;
     _scrollController.animateTo(
       0,

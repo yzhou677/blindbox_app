@@ -42,6 +42,9 @@ class MarketBrowseState {
 final marketBrowseNotifierProvider =
     NotifierProvider<MarketBrowseNotifier, MarketBrowseState>(MarketBrowseNotifier.new);
 
+/// True when the Market tab shows its root feed (not `/market/search` or a child).
+bool isMarketBrowseRootPath(String path) => path == '/market';
+
 class MarketBrowseNotifier extends Notifier<MarketBrowseState> {
   @override
   MarketBrowseState build() => const MarketBrowseState();

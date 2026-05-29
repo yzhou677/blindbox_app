@@ -28,6 +28,12 @@ void main() {
     expect(s.searchResultsActive, false);
   });
 
+  test('isMarketBrowseRootPath matches market tab root only', () {
+    expect(isMarketBrowseRootPath('/market'), isTrue);
+    expect(isMarketBrowseRootPath('/market/search'), isFalse);
+    expect(isMarketBrowseRootPath('/market/listing/abc'), isFalse);
+  });
+
   test('clearSearchSession clears query and exits search mode', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);
