@@ -60,13 +60,6 @@ class CollectorJourneyCard extends ConsumerWidget {
                 label: 'IPs explored over time',
                 value: summary.ipUniversesExplored.toString(),
               ),
-              if (summary.seriesExploredOverTime > 0) ...[
-                const SizedBox(height: AppSpacing.xs),
-                _MetricLine(
-                  label: 'Series explored over time',
-                  value: summary.seriesExploredOverTime.toString(),
-                ),
-              ],
               if (summary.topIps.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.md),
                 Text(
