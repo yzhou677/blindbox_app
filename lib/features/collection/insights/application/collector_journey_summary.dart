@@ -1,6 +1,9 @@
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 
+const int substantialJourneyUniverseCount = 8;
+const int misleadingRecentJourneyDays = 3;
+
 class CollectorJourneyTopIp {
   const CollectorJourneyTopIp({
     required this.id,
@@ -59,15 +62,23 @@ CollectorJourneySummary buildCollectorJourneySummary({
         ),
       )
       .toList(growable: false);
+  final startedAt = memory.firstSeriesAddedAt;
+  final ageDays = startedAt == null
+      ? null
+      : current.difference(startedAt).inDays;
+  final shouldSuppressAge =
+      ageDays != null &&
+      ageDays >= 0 &&
+      ageDays <= misleadingRecentJourneyDays &&
+      universeCount >= substantialJourneyUniverseCount;
 
   return CollectorJourneySummary(
     ipUniversesExplored: universeCount,
     seriesExploredOverTime: totalSeries,
     topIps: topIps,
-    journeyAgeLabel: formatJourneyAgeLabel(
-      startedAt: memory.firstSeriesAddedAt,
-      now: current,
-    ),
+    journeyAgeLabel: shouldSuppressAge
+        ? null
+        : formatJourneyAgeLabel(startedAt: startedAt, now: current),
   );
 }
 
