@@ -122,17 +122,13 @@ class MarketBrowseResultsSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return ListView.separated(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-      child: Column(
-        children: [
-          for (var i = 0; i < count; i++) ...[
-            if (i > 0)
-              const SizedBox(height: FeedRhythm.marketListingFeedCardVerticalGap),
-            const _MarketBrowseSkeletonCard(),
-          ],
-        ],
+      itemCount: count,
+      separatorBuilder: (_, _) => const SizedBox(
+        height: FeedRhythm.marketListingFeedCardVerticalGap,
       ),
+      itemBuilder: (_, _) => const _MarketBrowseSkeletonCard(),
     );
   }
 }

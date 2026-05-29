@@ -6,6 +6,7 @@ import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/market/presentation/market_browse_search_screen.dart';
+import 'package:blindbox_app/features/market/widgets/market_browse_session_transition.dart';
 import 'package:blindbox_app/shared/widgets/feed_search_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -102,6 +103,27 @@ void main() {
       // The screen should show the empty-state prompt, not results.
       // (Verifies the screen starts in its idle state.)
       expect(find.byType(MarketBrowseSearchScreen), findsOneWidget);
+    });
+  });
+
+  group('MarketBrowseResultsSkeleton — constrained viewport', () {
+    testWidgets('does not overflow when height is shorter than card stack', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light(),
+          home: Scaffold(
+            body: SizedBox(
+              height: 280,
+              child: const MarketBrowseResultsSkeleton(),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
     });
   });
 
