@@ -10,6 +10,7 @@ import 'package:blindbox_app/features/market/presentation/collectible_market_dis
 import 'package:blindbox_app/features/market/presentation/market_price_sort.dart';
 import 'package:blindbox_app/features/market/widgets/market_browse_session_transition.dart';
 import 'package:blindbox_app/features/market/widgets/collectible_market_card.dart';
+import 'package:blindbox_app/features/market/debug/market_search_trace.dart';
 import 'package:blindbox_app/features/market/widgets/market_load_more_footer.dart';
 import 'package:blindbox_app/shared/widgets/feed_search_screen.dart';
 import 'package:flutter/material.dart';
@@ -60,6 +61,9 @@ class _MarketBrowseSearchScreenState
   bool get _hasSearchText => _trimmedQuery.isNotEmpty;
 
   void _onSearchChanged(String value) {
+    MarketSearchTrace.event(
+      'TextField.onChanged len=${value.length} (local setState)',
+    );
     setState(() {});
     _debounce?.cancel();
     if (value.trim().isEmpty) {
@@ -68,6 +72,7 @@ class _MarketBrowseSearchScreenState
     }
     _debounce = Timer(const Duration(milliseconds: 400), () {
       if (!mounted) return;
+      MarketSearchTrace.event('debounce fired → setQuery "${value.trim()}"');
       ref.read(marketBrowseNotifierProvider.notifier).setQuery(value);
     });
   }
@@ -85,6 +90,9 @@ class _MarketBrowseSearchScreenState
 
   @override
   Widget build(BuildContext context) {
+    MarketSearchTrace.event(
+      'MarketBrowseSearchScreen.build hasText=$_hasSearchText',
+    );
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final browse = ref.watch(marketBrowseNotifierProvider);
@@ -108,8 +116,12 @@ class _MarketBrowseSearchScreenState
     if (display.orderIds != _displayOrderIds ||
         _displayOrderPriceSort != _priceSort ||
         _displayOrderBrowseSignature != browseSignature) {
+      MarketSearchTrace.event(
+        'schedule postFrame setState sig=$browseSignature order=${display.orderIds.length}',
+      );
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
+        MarketSearchTrace.event('postFrame setState (display order cache)');
         setState(() {
           _displayOrderIds = display.orderIds;
           _displayOrderPriceSort = _priceSort;

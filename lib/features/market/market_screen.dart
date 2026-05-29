@@ -1,6 +1,7 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
 import 'package:blindbox_app/features/market/application/collectible_market_providers.dart';
+import 'package:blindbox_app/features/market/debug/market_search_trace.dart';
 import 'package:blindbox_app/features/market/application/market_browse_notifier.dart';
 import 'package:blindbox_app/features/market/application/market_browse_load_more_controller.dart';
 import 'package:blindbox_app/features/market/application/market_browse_refresh_controller.dart';
@@ -94,6 +95,9 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final browse = ref.watch(marketBrowseNotifierProvider);
+    MarketSearchTrace.event(
+      'MarketScreen.build immersive=${browse.searchResultsActive} query="${browse.query.trim()}"',
+    );
     final notifier = ref.read(marketBrowseNotifierProvider.notifier);
     final snapshots = ref.watch(visibleCollectibleMarketSnapshotsProvider);
     final browseSignature = collectibleMarketBrowseSignature(
@@ -258,7 +262,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
             SliverFillRemaining(
               hasScrollBody: false,
               child: sessionTransitioning && MarketGatewayConfig.isActive
-                  ? const MarketBrowseResultsSkeleton()
+                  ? const MarketBrowseSliverResultsSkeleton()
                   : _MarketEmptySearch(
                       query: browse.query.trim(),
                       filterActive: browse.filtersActive,

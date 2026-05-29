@@ -114,7 +114,14 @@ class _MarketBrowseTransitionIndicator extends StatelessWidget {
   }
 }
 
-/// Placeholder cards while the first page of a new session loads.
+/// Shared padding for browse loading placeholders (search + market tab).
+EdgeInsets get _marketBrowseSkeletonPadding =>
+    const EdgeInsets.fromLTRB(20, 8, 20, 24);
+
+/// Scrollable placeholders for bounded boxes (e.g. search overlay [Expanded]).
+///
+/// Do not place inside [SliverFillRemaining] with `hasScrollBody: false` — use
+/// [MarketBrowseSliverResultsSkeleton] instead.
 class MarketBrowseResultsSkeleton extends StatelessWidget {
   const MarketBrowseResultsSkeleton({super.key, this.count = 4});
 
@@ -123,12 +130,40 @@ class MarketBrowseResultsSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+      padding: _marketBrowseSkeletonPadding,
       itemCount: count,
       separatorBuilder: (_, _) => const SizedBox(
         height: FeedRhythm.marketListingFeedCardVerticalGap,
       ),
       itemBuilder: (_, _) => const _MarketBrowseSkeletonCard(),
+    );
+  }
+}
+
+/// Intrinsic-safe placeholders for [SliverFillRemaining] (no scroll viewport).
+class MarketBrowseSliverResultsSkeleton extends StatelessWidget {
+  const MarketBrowseSliverResultsSkeleton({super.key, this.count = 4});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.topCenter,
+      child: Padding(
+        padding: _marketBrowseSkeletonPadding,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (var i = 0; i < count; i++) ...[
+              if (i > 0)
+                const SizedBox(height: FeedRhythm.marketListingFeedCardVerticalGap),
+              const _MarketBrowseSkeletonCard(),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

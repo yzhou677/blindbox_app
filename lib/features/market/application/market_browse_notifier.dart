@@ -1,4 +1,5 @@
 import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
+import 'package:blindbox_app/features/market/debug/market_search_trace.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -52,6 +53,10 @@ class MarketBrowseNotifier extends Notifier<MarketBrowseState> {
   /// Draft query from the field; activates live search when non-empty.
   void setQuery(String value) {
     final empty = value.trim().isEmpty;
+    MarketSearchTrace.event(
+      'marketBrowseNotifier.setQuery active=${!empty}',
+      signature: value.trim().toLowerCase(),
+    );
     state = state.copyWith(
       query: value,
       searchResultsActive: !empty,

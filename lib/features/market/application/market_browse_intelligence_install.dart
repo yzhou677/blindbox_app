@@ -1,4 +1,5 @@
 import 'package:blindbox_app/features/market/application/collectible_market_aggregator.dart';
+import 'package:blindbox_app/features/market/debug/market_search_trace.dart';
 import 'package:blindbox_app/features/market/data/cache/collectible_market_snapshot_cache.dart';
 import 'package:blindbox_app/features/market/data/collectible_market_session.dart';
 import 'package:blindbox_app/features/market/data/market_browse_listings_session.dart';
@@ -10,9 +11,13 @@ void installMarketBrowseIntelligence(
   bool preserveFeedOrder = false,
 }) {
   MarketBrowseListingsSession.instance.install(listings);
-  final snapshots = buildCollectibleMarketSnapshots(
-    listings,
-    preserveFeedOrder: preserveFeedOrder,
+  final snapshots = MarketSearchTrace.sync(
+    'buildCollectibleMarketSnapshots',
+    () => buildCollectibleMarketSnapshots(
+      listings,
+      preserveFeedOrder: preserveFeedOrder,
+    ),
+    warnMs: 12,
   );
   CollectibleMarketSession.instance.install(snapshots);
   final cache = CollectibleMarketSnapshotCache.instance;
