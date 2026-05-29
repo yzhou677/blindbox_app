@@ -1,6 +1,7 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/collectible_shape.dart';
+import 'package:blindbox_app/features/collection/insights/application/collector_journey_summary.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_providers.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
 import 'package:flutter/material.dart';
@@ -70,7 +71,7 @@ class CollectorJourneyCard extends ConsumerWidget {
               if (summary.topIps.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.md),
                 Text(
-                  'Most explored',
+                  CollectorTypeCopy.journeyMostExploredIpsTitle,
                   style: textTheme.labelLarge?.copyWith(
                     color: scheme.onSurfaceVariant,
                     fontWeight: FontWeight.w700,
@@ -81,7 +82,10 @@ class CollectorJourneyCard extends ConsumerWidget {
                   Padding(
                     padding: const EdgeInsets.only(bottom: AppSpacing.xs),
                     child: Text(
-                      '${entry.label} (${entry.seriesCount})',
+                      formatCollectorJourneyTopIpLine(
+                        entry.label,
+                        entry.seriesCount,
+                      ),
                       style: textTheme.bodyMedium,
                     ),
                   ),

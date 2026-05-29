@@ -82,6 +82,11 @@ CollectorJourneySummary buildCollectorJourneySummary({
   );
 }
 
+/// Display line for a top-explored IP row (presentation only).
+String formatCollectorJourneyTopIpLine(String label, int seriesCount) {
+  return '$label · $seriesCount series';
+}
+
 String? formatJourneyAgeLabel({
   required DateTime? startedAt,
   required DateTime now,
