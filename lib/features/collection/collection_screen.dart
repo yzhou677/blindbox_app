@@ -5,7 +5,7 @@ import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
-import 'package:blindbox_app/features/collection/presentation/collection_shelf_series_filter.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_shelf_brand_facets.dart';
 import 'package:blindbox_app/features/collection/widgets/add_custom_series_sheet.dart';
 import 'package:blindbox_app/features/collection/widgets/add_to_collection_sheet.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_brand_filter_row.dart';
@@ -18,7 +18,6 @@ import 'package:blindbox_app/features/collection/widgets/collection_empty_state.
 import 'package:blindbox_app/features/collection/widgets/collection_summary_section.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_warm_start_banner.dart';
 import 'package:blindbox_app/features/collection/widgets/series_figures_sheet.dart';
-import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
 import 'package:flutter/material.dart';
@@ -33,8 +32,8 @@ class CollectionScreen extends ConsumerStatefulWidget {
 }
 
 class _CollectionScreenState extends ConsumerState<CollectionScreen> {
-  /// Presentation-only brand facet; aligns with [MarketTaxonomyIds.anyBrand] / brand ids.
-  String _brandFilterId = MarketTaxonomyIds.anyBrand;
+  /// Presentation-only Collection shelf brand facet.
+  String _brandFilterId = collectionAnyBrandFilterId;
 
   final ScrollController _scrollController = ScrollController();
   VoidCallback? _routerListener;
@@ -201,12 +200,25 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       profile,
       insights,
     );
+    final brandFilterOptions = buildCollectionShelfBrandFilterOptions(
+      snap.shelfSeries,
+    );
+    final activeBrandFilterId = resolveCollectionBrandFilterSelection(
+      selectedBrandFilterId: _brandFilterId,
+      options: brandFilterOptions,
+    );
+    if (activeBrandFilterId != _brandFilterId) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() => _brandFilterId = activeBrandFilterId);
+      });
+    }
 
     // Compute filtered series and lazy feed items (data-only, no widgets).
     // Off-screen cards are built on demand by the SliverList.builder below.
     final visible = shelfSeriesVisibleForBrandFilter(
       snap.shelfSeries,
-      _brandFilterId,
+      activeBrandFilterId,
     );
     final feedItems = buildShelfFeedItems(
       context: context,
@@ -331,7 +343,8 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
             child: Padding(
               padding: const EdgeInsets.only(top: 2),
               child: CollectionBrandFilterRow(
-                selectedBrandId: _brandFilterId,
+                options: brandFilterOptions,
+                selectedBrandId: activeBrandFilterId,
                 onBrandSelected: (id) => setState(() => _brandFilterId = id),
               ),
             ),
