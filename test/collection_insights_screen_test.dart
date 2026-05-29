@@ -104,9 +104,11 @@ void main() {
     expect(find.text('IPs explored over time'), findsOneWidget);
     expect(find.text('3'), findsWidgets);
     expect(find.text('Most explored IPs'), findsOneWidget);
-    expect(find.text('Smiski · 8 series'), findsOneWidget);
-    expect(find.text('Dora · 3 series'), findsOneWidget);
-    expect(find.text('Maymei · 3 series'), findsOneWidget);
+    expect(find.text('Smiski'), findsOneWidget);
+    expect(find.text('Dora'), findsOneWidget);
+    expect(find.text('Maymei'), findsOneWidget);
+    expect(find.textContaining('8 series'), findsNothing);
+    expect(find.textContaining('3 series'), findsNothing);
     expect(find.textContaining('months ago'), findsOneWidget);
   });
 }

@@ -51,21 +51,7 @@ void main() {
       'Maymei',
     ]);
     expect(summary.topIps.map((entry) => entry.seriesCount), [8, 3, 3]);
-    expect(
-      summary.topIps.map(
-        (entry) => formatCollectorJourneyTopIpLine(
-          entry.label,
-          entry.seriesCount,
-        ),
-      ),
-      ['Smiski · 8 series', 'Dora · 3 series', 'Maymei · 3 series'],
-    );
     expect(summary.journeyAgeLabel, '2 years ago');
-  });
-
-  test('top IP line uses singular series count label', () {
-    expect(formatCollectorJourneyTopIpLine('Smiski', 1), 'Smiski · 1 series');
-    expect(formatCollectorJourneyTopIpLine('Dora', 3), 'Dora · 3 series');
   });
 
   test('journey age formatting uses days, months, and years', () {
