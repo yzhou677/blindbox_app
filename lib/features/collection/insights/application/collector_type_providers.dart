@@ -1,6 +1,7 @@
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/application/shelf_emotional_providers.dart';
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
+import 'package:blindbox_app/features/collection/insights/application/collector_journey_summary.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_resolver.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_view_model.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
@@ -17,7 +18,8 @@ final collectorTypeEvolutionHintProvider = Provider<bool>((ref) {
   final snap = ref.watch(collectionNotifierProvider);
   ref.watch(collectionMemoryBootstrapProvider);
   final cached = CollectionMemoryStore.instance.cached;
-  final hasRevealed = (cached.collectorTypeArchetypeId?.isNotEmpty ?? false) &&
+  final hasRevealed =
+      (cached.collectorTypeArchetypeId?.isNotEmpty ?? false) &&
       cached.collectorTypeRevealedAtMs != null;
   if (!hasRevealed) return false;
   final storedHash = cached.collectorTypeSignatureHash;
@@ -36,5 +38,14 @@ final collectorTypeEvolutionHintProvider = Provider<bool>((ref) {
 
 final collectorTypeViewModelProvider =
     NotifierProvider<CollectorTypeViewModel, CollectorTypeRevealStage>(
-  CollectorTypeViewModel.new,
-);
+      CollectorTypeViewModel.new,
+    );
+
+final collectorJourneySummaryProvider = Provider<CollectorJourneySummary>((
+  ref,
+) {
+  final snapshot = ref.watch(collectionNotifierProvider);
+  ref.watch(collectionMemoryBootstrapProvider);
+  final memory = CollectionMemoryStore.instance.cached;
+  return buildCollectorJourneySummary(memory: memory, snapshot: snapshot);
+});

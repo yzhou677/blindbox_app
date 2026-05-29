@@ -1,6 +1,8 @@
 import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
-import 'package:blindbox_app/features/catalog/models/catalog_series.dart' as seed;
+import 'package:blindbox_app/features/catalog/models/catalog_series.dart'
+    as seed;
 import 'package:blindbox_app/features/collection/application/shelf_emotional_interpreter.dart';
+import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_resolver.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_stat_keys.dart';
@@ -34,15 +36,11 @@ ShelfSeries _seriesWithFigures({
   );
 }
 
-TrackedFigure _owned(String id) => TrackedFigure(
-      figureId: id,
-      state: FigureCollectionState.owned,
-    );
+TrackedFigure _owned(String id) =>
+    TrackedFigure(figureId: id, state: FigureCollectionState.owned);
 
-TrackedFigure _wish(String id) => TrackedFigure(
-      figureId: id,
-      state: FigureCollectionState.wishlist,
-    );
+TrackedFigure _wish(String id) =>
+    TrackedFigure(figureId: id, state: FigureCollectionState.wishlist);
 
 void main() {
   test('empty shelf resolves to wanderer', () {
@@ -130,11 +128,7 @@ void main() {
     );
     final snap = CollectionSnapshot(
       shelfSeries: [series, series2],
-      figureStates: {
-        'a': _owned('a'),
-        'b': _owned('b'),
-        'c': _owned('c'),
-      },
+      figureStates: {'a': _owned('a'), 'b': _owned('b'), 'c': _owned('c')},
     );
     final identity = resolveCollectorType(
       snapshot: snap,
@@ -148,10 +142,34 @@ void main() {
     final series = _seriesWithFigures(
       id: 's1',
       figures: [
-        const ShelfFigure(id: 'a', seriesId: 's1', name: 'A', rarity: 'R', isSecret: false),
-        const ShelfFigure(id: 'b', seriesId: 's1', name: 'B', rarity: 'R', isSecret: false),
-        const ShelfFigure(id: 'c', seriesId: 's1', name: 'C', rarity: 'R', isSecret: false),
-        const ShelfFigure(id: 'd', seriesId: 's1', name: 'D', rarity: 'R', isSecret: false),
+        const ShelfFigure(
+          id: 'a',
+          seriesId: 's1',
+          name: 'A',
+          rarity: 'R',
+          isSecret: false,
+        ),
+        const ShelfFigure(
+          id: 'b',
+          seriesId: 's1',
+          name: 'B',
+          rarity: 'R',
+          isSecret: false,
+        ),
+        const ShelfFigure(
+          id: 'c',
+          seriesId: 's1',
+          name: 'C',
+          rarity: 'R',
+          isSecret: false,
+        ),
+        const ShelfFigure(
+          id: 'd',
+          seriesId: 's1',
+          name: 'D',
+          rarity: 'R',
+          isSecret: false,
+        ),
       ],
     );
     final snap = CollectionSnapshot(
@@ -277,5 +295,201 @@ void main() {
       revealedAt: DateTime(2026, 5, 1),
     );
     expect(identity.archetypeId, CollectorTypeArchetypeId.trendChaser);
+  });
+
+  test('single-IP shelf does not become curator from memory alone', () {
+    final s1 = _seriesWithFigures(
+      id: 's1',
+      brandId: 'dreams_inc',
+      ipId: 'smiski',
+      figures: const [
+        ShelfFigure(
+          id: 'a',
+          seriesId: 's1',
+          name: 'A',
+          rarity: 'Regular',
+          isSecret: false,
+        ),
+      ],
+    );
+    final s2 = _seriesWithFigures(
+      id: 's2',
+      brandId: 'dreams_inc',
+      ipId: 'smiski',
+      figures: const [
+        ShelfFigure(
+          id: 'b',
+          seriesId: 's2',
+          name: 'B',
+          rarity: 'Regular',
+          isSecret: false,
+        ),
+      ],
+    );
+    final s3 = _seriesWithFigures(
+      id: 's3',
+      brandId: 'dreams_inc',
+      ipId: 'smiski',
+      figures: const [
+        ShelfFigure(
+          id: 'c',
+          seriesId: 's3',
+          name: 'C',
+          rarity: 'Regular',
+          isSecret: false,
+        ),
+      ],
+    );
+    final snap = CollectionSnapshot(
+      shelfSeries: [s1, s2, s3],
+      figureStates: const {},
+    );
+    final memory = CollectionMemoryData(
+      ipSeriesDepth: const {
+        'baby_three': 1,
+        'crybaby': 1,
+        'nyota': 1,
+        'nommi': 2,
+        'pucky': 1,
+        'maymei': 3,
+        'the_monsters': 1,
+        'zsiga': 1,
+        'skullpanda': 1,
+        'nanci': 2,
+        'dora': 3,
+        'sonny_angel': 3,
+        'smiski': 8,
+        'chicken_nihao': 2,
+        'cc': 1,
+        'twinkle_twinkle': 1,
+      },
+    );
+    final identity = resolveCollectorType(
+      snapshot: snap,
+      profile: interpretShelf(snap),
+      memory: memory,
+      revealedAt: DateTime(2026, 5, 29),
+    );
+    expect(identity.archetypeId, isNot(CollectorTypeArchetypeId.curator));
+  });
+
+  test('curator can win when current shelf has IP diversity', () {
+    final s1 = _seriesWithFigures(
+      id: 's1',
+      brandId: 'pop_mart',
+      ipId: 'the_monsters',
+      catalogTemplateId: 'series_1',
+      figures: const [
+        ShelfFigure(
+          id: 'a',
+          seriesId: 's1',
+          name: 'A',
+          rarity: 'Regular',
+          isSecret: false,
+        ),
+      ],
+    );
+    final s2 = _seriesWithFigures(
+      id: 's2',
+      brandId: 'toptoy',
+      ipId: 'hirono',
+      catalogTemplateId: 'series_2',
+      figures: const [
+        ShelfFigure(
+          id: 'b',
+          seriesId: 's2',
+          name: 'B',
+          rarity: 'Regular',
+          isSecret: false,
+        ),
+      ],
+    );
+    final snap = CollectionSnapshot(
+      shelfSeries: [s1, s2],
+      figureStates: const {},
+    );
+    final identity = resolveCollectorType(
+      snapshot: snap,
+      profile: interpretShelf(snap),
+      memory: const CollectionMemoryData(ipSeriesDepth: {'smiski': 8}),
+      revealedAt: DateTime(2026, 5, 29),
+    );
+    expect(identity.archetypeId, CollectorTypeArchetypeId.curator);
+  });
+
+  test('Smiski-only shelf now resolves to loyalist', () {
+    final s1 = _seriesWithFigures(
+      id: 's1',
+      brandId: 'dreams_inc',
+      ipId: 'smiski',
+      figures: const [
+        ShelfFigure(
+          id: 'a',
+          seriesId: 's1',
+          name: 'A',
+          rarity: 'Regular',
+          isSecret: false,
+        ),
+      ],
+    );
+    final s2 = _seriesWithFigures(
+      id: 's2',
+      brandId: 'dreams_inc',
+      ipId: 'smiski',
+      figures: const [
+        ShelfFigure(
+          id: 'b',
+          seriesId: 's2',
+          name: 'B',
+          rarity: 'Regular',
+          isSecret: false,
+        ),
+      ],
+    );
+    final s3 = _seriesWithFigures(
+      id: 's3',
+      brandId: 'dreams_inc',
+      ipId: 'smiski',
+      figures: const [
+        ShelfFigure(
+          id: 'c',
+          seriesId: 's3',
+          name: 'C',
+          rarity: 'Regular',
+          isSecret: false,
+        ),
+      ],
+    );
+    final snap = CollectionSnapshot(
+      shelfSeries: [s1, s2, s3],
+      figureStates: const {},
+    );
+    final memory = CollectionMemoryData(
+      ipSeriesDepth: const {
+        'baby_three': 1,
+        'crybaby': 1,
+        'nyota': 1,
+        'nommi': 2,
+        'pucky': 1,
+        'maymei': 3,
+        'the_monsters': 1,
+        'zsiga': 1,
+        'skullpanda': 1,
+        'nanci': 2,
+        'dora': 3,
+        'sonny_angel': 3,
+        'smiski': 8,
+        'chicken_nihao': 2,
+        'cc': 1,
+        'twinkle_twinkle': 1,
+      },
+    );
+    final identity = resolveCollectorType(
+      snapshot: snap,
+      profile: interpretShelf(snap),
+      memory: memory,
+      revealedAt: DateTime(2026, 5, 29),
+    );
+    expect(identity.archetypeId, CollectorTypeArchetypeId.loyalist);
   });
 }

@@ -5,6 +5,7 @@ import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_providers.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_view_model.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
+import 'package:blindbox_app/features/collection/insights/widgets/collector_journey_card.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_evolution_hint_banner.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_reveal_card.dart';
 import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
@@ -21,7 +22,8 @@ class CollectionInsightsScreen extends ConsumerWidget {
     final stage = ref.watch(collectorTypeViewModelProvider);
     final textTheme = Theme.of(context).textTheme;
 
-    final showRevealAgain = stage is CollectorTypeRevealRevealed ||
+    final showRevealAgain =
+        stage is CollectorTypeRevealRevealed ||
         (stage is CollectorTypeRevealIdle && stage.cachedIdentity != null);
 
     Future<void> exitInsights() async {
@@ -49,66 +51,68 @@ class CollectionInsightsScreen extends ConsumerWidget {
       child: Scaffold(
         body: CustomScrollView(
           slivers: [
-          SliverAppBar(
-            toolbarHeight: FeedRhythm.mainTabAppBarToolbarHeight,
-            titleSpacing: AppSpacing.pageHorizontal,
-            title: Text(
-              CollectorTypeCopy.screenTitle,
-              style: textTheme.titleLarge,
-            ),
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back_rounded),
-              onPressed: () => unawaited(exitInsights()),
-            ),
-            actions: [
-              if (showRevealAgain)
-                PopupMenuButton<String>(
-                  onSelected: (value) {
-                    if (value == 'reveal') {
-                      ref
-                          .read(collectorTypeViewModelProvider.notifier)
-                          .requestReveal();
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(
-                      value: 'reveal',
-                      child: Text(CollectorTypeCopy.revealAgain),
-                    ),
-                  ],
-                ),
-            ],
-          ),
-          SliverToBoxAdapter(
-            child: SizedBox(height: AppSpacing.belowTabAppBar),
-          ),
-          const SliverToBoxAdapter(
-            child: CollectibleSectionHeader(
-              title: CollectorTypeCopy.screenTitle,
-              subtitle: CollectorTypeCopy.screenSubtitle,
-            ),
-          ),
-          SliverPadding(
-            padding: EdgeInsets.fromLTRB(
-              AppSpacing.pageHorizontal,
-              AppSpacing.sm,
-              AppSpacing.pageHorizontal,
-              FeedRhythm.tabScrollTailPadding,
-            ),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                if (showEvolutionHint) ...[
-                  CollectorTypeEvolutionHintBanner(
-                    onRevealTap: () => ref
-                        .read(collectorTypeViewModelProvider.notifier)
-                        .requestReveal(),
+            SliverAppBar(
+              toolbarHeight: FeedRhythm.mainTabAppBarToolbarHeight,
+              titleSpacing: AppSpacing.pageHorizontal,
+              title: Text(
+                CollectorTypeCopy.screenTitle,
+                style: textTheme.titleLarge,
+              ),
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back_rounded),
+                onPressed: () => unawaited(exitInsights()),
+              ),
+              actions: [
+                if (showRevealAgain)
+                  PopupMenuButton<String>(
+                    onSelected: (value) {
+                      if (value == 'reveal') {
+                        ref
+                            .read(collectorTypeViewModelProvider.notifier)
+                            .requestReveal();
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'reveal',
+                        child: Text(CollectorTypeCopy.revealAgain),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: FeedRhythm.blockGapMedium),
-                ],
-                const CollectorTypeRevealCard(),
-              ]),
+              ],
             ),
-          ),
+            SliverToBoxAdapter(
+              child: SizedBox(height: AppSpacing.belowTabAppBar),
+            ),
+            const SliverToBoxAdapter(
+              child: CollectibleSectionHeader(
+                title: CollectorTypeCopy.screenTitle,
+                subtitle: CollectorTypeCopy.screenSubtitle,
+              ),
+            ),
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.pageHorizontal,
+                AppSpacing.sm,
+                AppSpacing.pageHorizontal,
+                FeedRhythm.tabScrollTailPadding,
+              ),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  if (showEvolutionHint) ...[
+                    CollectorTypeEvolutionHintBanner(
+                      onRevealTap: () => ref
+                          .read(collectorTypeViewModelProvider.notifier)
+                          .requestReveal(),
+                    ),
+                    const SizedBox(height: FeedRhythm.blockGapMedium),
+                  ],
+                  const CollectorTypeRevealCard(),
+                  const SizedBox(height: FeedRhythm.blockGapMedium),
+                  const CollectorJourneyCard(),
+                ]),
+              ),
+            ),
           ],
         ),
       ),
