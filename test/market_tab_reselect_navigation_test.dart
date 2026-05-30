@@ -4,6 +4,7 @@ import 'package:blindbox_app/features/home/application/home_feed_provider.dart';
 import 'package:blindbox_app/features/home/data/mock_latest_drops.dart';
 import 'package:blindbox_app/features/market/application/market_browse_root_navigation.dart';
 import 'package:blindbox_app/features/market/application/market_search_browse_notifier.dart';
+import 'package:blindbox_app/features/market/market_detail_screen.dart';
 import 'package:blindbox_app/features/market/presentation/market_browse_search_screen.dart';
 import 'package:blindbox_app/features/official_feed/application/official_feed_providers.dart';
 import 'package:blindbox_app/main.dart';
@@ -133,6 +134,39 @@ void main() {
       expect(appRouter.state.uri.path, kMarketBrowseRootPath);
       expect(find.text('Search market'), findsNothing);
       expect(find.text('Brand'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'Market tab reselect from listing detail restores browse root',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: _marketNavTestOverrides(),
+          child: const BlindboxApp(),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.tap(find.text('Market'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 600));
+
+      appRouter.push('/market/listing/mock-listing-1');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.byType(MarketDetailScreen), findsOneWidget);
+
+      await tester.tap(_marketNavTab());
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(appRouter.state.uri.path, kMarketBrowseRootPath);
+      expect(find.byType(MarketDetailScreen), findsNothing);
+      expect(find.text('Brand'), findsOneWidget);
+      expect(find.text('Collectibles'), findsOneWidget);
     },
   );
 }

@@ -90,9 +90,10 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
         kMarketShellBranchIndex) {
       return;
     }
+    if (!mounted) return;
+    resetMarketBrowseToRoot(ref: ref, context: context);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      resetMarketBrowseToRoot(ref: ref, context: context);
       if (!_scrollController.hasClients) return;
       _scrollController.animateTo(
         0,

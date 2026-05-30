@@ -1,5 +1,6 @@
+import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
 import 'package:blindbox_app/features/market/application/market_search_browse_notifier.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -29,11 +30,37 @@ void goToMarketBrowseRoot(BuildContext context) {
   GoRouter.of(context).go(kMarketBrowseRootPath);
 }
 
-/// Tab reselect / shell reset: restore feed session and pop off `/market/search`.
+/// Pops collectible preview sheets on the Market branch navigator only.
+void dismissMarketBranchModalOverlays(BuildContext context) {
+  final navigator = Navigator.maybeOf(context);
+  if (navigator == null || !navigator.canPop() || navigator.userGestureInProgress) {
+    return;
+  }
+  navigator.popUntil((route) => route is PageRoute);
+}
+
+/// Tab reselect on a Market sub-route: dismiss sheets, clear search, go `/market`.
 void resetMarketBrowseToRoot({
   required WidgetRef ref,
   required BuildContext context,
 }) {
+  dismissMarketBranchModalOverlays(context);
   clearMarketSearchOverlaySession(ref);
   goToMarketBrowseRoot(context);
+}
+
+/// [ShellTabReselectBus] hook for Market sub-routes (listing, search).
+///
+/// Runs synchronously on notify — after [goBranch] is requested but before the
+/// sub-route is disposed, so [go('/market')] and sheet dismiss still apply.
+void handleMarketShellTabReselected({
+  required WidgetRef ref,
+  required BuildContext context,
+}) {
+  if (ShellTabReselectBus.instance.reselectedBranch.value !=
+      kMarketShellBranchIndex) {
+    return;
+  }
+  if (!context.mounted) return;
+  resetMarketBrowseToRoot(ref: ref, context: context);
 }

@@ -1,4 +1,6 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
+import 'package:blindbox_app/features/market/application/market_browse_root_navigation.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/collectible_shelf_shadow.dart';
@@ -21,16 +23,37 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class MarketDetailScreen extends ConsumerWidget {
+class MarketDetailScreen extends ConsumerStatefulWidget {
   const MarketDetailScreen({super.key, required this.listingId});
 
   final String listingId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MarketDetailScreen> createState() => _MarketDetailScreenState();
+}
+
+class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
+  @override
+  void initState() {
+    super.initState();
+    ShellTabReselectBus.instance.reselectedBranch.addListener(_onTabReselected);
+  }
+
+  @override
+  void dispose() {
+    ShellTabReselectBus.instance.reselectedBranch.removeListener(_onTabReselected);
+    super.dispose();
+  }
+
+  void _onTabReselected() =>
+      handleMarketShellTabReselected(ref: ref, context: context);
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final listingId = widget.listingId;
     final listing = ref.watch(marketListingByIdProvider(listingId));
     final chaserEntry = ref.watch(chaserEntryByListingIdProvider(listingId));
 

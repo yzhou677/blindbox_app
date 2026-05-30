@@ -1,5 +1,6 @@
 import 'package:blindbox_app/features/market/application/market_browse_root_navigation.dart';
 import 'package:blindbox_app/features/market/application/market_search_browse_notifier.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -15,6 +16,40 @@ void main() {
       expect(isMarketSearchRoutePath('/market/search'), isTrue);
       expect(isMarketSearchRoutePath('/market'), isFalse);
       expect(isMarketSearchRoutePath('/market/listing/x'), isFalse);
+    });
+  });
+
+  group('dismissMarketBranchModalOverlays', () {
+    testWidgets('pops modal routes but not the page below', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: Center(
+                child: ElevatedButton(
+                  onPressed: () => showModalBottomSheet<void>(
+                    context: context,
+                    builder: (_) => const SizedBox(height: 120),
+                  ),
+                  child: const Text('open'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('open'));
+      await tester.pump();
+      expect(find.byType(BottomSheet), findsOneWidget);
+
+      dismissMarketBranchModalOverlays(
+        tester.element(find.text('open')),
+      );
+      await tester.pump();
+
+      expect(find.byType(BottomSheet), findsNothing);
+      expect(find.text('open'), findsOneWidget);
     });
   });
 
