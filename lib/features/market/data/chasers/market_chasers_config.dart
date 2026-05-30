@@ -1,6 +1,6 @@
 import 'package:blindbox_app/features/market/data/gateway/market_gateway_config.dart';
 
-/// Chasers rail + Phase 1 heat scoring — off until explicitly enabled.
+/// Chasers rail + Phase 1 heat scoring for live eBay browse.
 abstract final class MarketChasersConfig {
   /// Show the Chasers horizontal rail from fixture rows (non-live dev).
   static const bool enableChasersRail = bool.fromEnvironment(
@@ -9,10 +9,16 @@ abstract final class MarketChasersConfig {
   );
 
   /// Phase 1 identity-level heat scoring via IP-specific gateway probes.
-  static const bool enablePhase1Scoring = bool.fromEnvironment(
-    'MARKET_CHASERS_SCORING',
-    defaultValue: false,
-  );
+  ///
+  /// Defaults **on** when [MarketGatewayConfig.enableEbayGateway] is compiled in
+  /// (same `flutter run` flags as live browse). Override with
+  /// `--dart-define=MARKET_CHASERS_SCORING=false`.
+  static bool get enablePhase1Scoring {
+    if (bool.hasEnvironment('MARKET_CHASERS_SCORING')) {
+      return const bool.fromEnvironment('MARKET_CHASERS_SCORING');
+    }
+    return MarketGatewayConfig.enableEbayGateway;
+  }
 
   /// IP-specific probes per refresh (rate-limited).
   static const int maxProbesPerRefresh = 8;
