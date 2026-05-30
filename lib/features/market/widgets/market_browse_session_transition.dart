@@ -1,28 +1,28 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_radii.dart';
-import 'package:blindbox_app/features/market/application/market_browse_notifier.dart';
+import 'package:blindbox_app/features/market/application/active_market_browse_query.dart';
 import 'package:blindbox_app/features/market/application/market_live_browse_controller.dart';
 import 'package:blindbox_app/features/market/application/market_live_browse_session.dart';
+import 'package:blindbox_app/features/market/domain/market_browse_query.dart';
 import 'package:blindbox_app/features/market/data/gateway/market_gateway_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// True while a new browse session is loading — not pagination [loadMore].
 bool marketBrowseSessionTransitionActive(
-  MarketBrowseState browse,
+  MarketBrowseQuery uiQuery,
   MarketLiveBrowseState live, {
   bool? gatewayActive,
 }) {
   if (!(gatewayActive ?? MarketGatewayConfig.isActive)) return false;
   if (live.isLoadingInitial || live.isRefreshing) return true;
-  final uiQuery = marketBrowseQueryFromUi(browse);
   return uiQuery.signature != live.querySignature;
 }
 
 final marketBrowseSessionTransitionProvider = Provider<bool>((ref) {
-  final browse = ref.watch(marketBrowseNotifierProvider);
+  final uiQuery = ref.watch(activeMarketBrowseQueryProvider);
   final live = ref.watch(marketLiveBrowseControllerProvider);
-  return marketBrowseSessionTransitionActive(browse, live);
+  return marketBrowseSessionTransitionActive(uiQuery, live);
 });
 
 /// Dims stale rows and shows a lightweight spinner during browse context changes.

@@ -1,7 +1,7 @@
 import 'dart:async';
 
+import 'package:blindbox_app/features/market/application/active_market_browse_query.dart';
 import 'package:blindbox_app/features/market/application/collectible_market_providers.dart';
-import 'package:blindbox_app/features/market/application/market_browse_notifier.dart';
 import 'package:blindbox_app/features/market/application/market_live_browse_install.dart';
 import 'package:blindbox_app/features/market/application/market_live_browse_session.dart';
 import 'package:blindbox_app/features/market/application/market_listings_providers.dart';
@@ -59,42 +59,31 @@ class MarketLiveBrowseController extends Notifier<MarketLiveBrowseState> {
       return const MarketLiveBrowseState();
     }
 
-    ref.listen(marketBrowseNotifierProvider, _onBrowseUiChanged);
+    ref.listen(activeMarketBrowseQueryProvider, _onActiveQueryChanged);
 
     if (!_initialScheduled) {
       _initialScheduled = true;
       Future.microtask(() {
         if (!_isActive) return;
-        final browse = ref.read(marketBrowseNotifierProvider);
-        _startQuery(_queryFromBrowse(browse), reason: 'bootstrap');
+        _startQuery(
+          ref.read(activeMarketBrowseQueryProvider),
+          reason: 'bootstrap',
+        );
       });
     }
 
     return _session.state;
   }
 
-  void _onBrowseUiChanged(MarketBrowseState? prev, MarketBrowseState next) {
+  void _onActiveQueryChanged(MarketBrowseQuery? prev, MarketBrowseQuery next) {
     if (!MarketGatewayConfig.isActive) return;
+    if (prev?.signature == next.signature) return;
 
-    final prevQuery = prev != null ? _queryFromBrowse(prev) : null;
-    final nextQuery = _queryFromBrowse(next);
-    if (prevQuery?.signature == nextQuery.signature) return;
-
-    final brandIpChanged = prev == null ||
-        prev.brandId != next.brandId ||
-        prev.ipId != next.ipId;
-    final searchCommitted = next.searchResultsActive &&
-        (prev?.searchResultsActive != true || prev?.query != next.query);
-    final searchCleared =
-        prev?.searchResultsActive == true && !next.searchResultsActive;
-
-    if (brandIpChanged || searchCommitted || searchCleared) {
-      MarketSearchTrace.event(
-        '_onBrowseUiChanged → _startQuery',
-        signature: nextQuery.signature,
-      );
-      _startQuery(nextQuery, reason: 'filters');
-    }
+    MarketSearchTrace.event(
+      '_onActiveQueryChanged → _startQuery',
+      signature: next.signature,
+    );
+    _startQuery(next, reason: 'filters');
   }
 
   /// Synchronous handoff — bumps generation before any await so latest filters win.
@@ -171,8 +160,7 @@ class MarketLiveBrowseController extends Notifier<MarketLiveBrowseState> {
 
   Future<void> refresh() async {
     if (!MarketGatewayConfig.isActive) return;
-    final browse = ref.read(marketBrowseNotifierProvider);
-    final query = marketBrowseQueryFromUi(browse);
+    final query = ref.read(activeMarketBrowseQueryProvider);
     final batch = await _ebay.resolveCachedBatchFor(query);
     if (batch != null &&
         batch.isFresh(ttl: MarketGatewayConfig.cacheTtl) &&
@@ -365,17 +353,4 @@ class MarketLiveBrowseController extends Notifier<MarketLiveBrowseState> {
       ref.invalidate(collectibleMarketSnapshotsProvider);
     });
   }
-
-  static MarketBrowseQuery _queryFromBrowse(MarketBrowseState browse) {
-    return MarketBrowseQuery(
-      brandId: browse.brandId,
-      ipId: browse.ipId,
-      searchText: browse.searchResultsActive ? browse.query.trim() : '',
-      limit: MarketGatewayConfig.initialPageSize,
-    );
-  }
 }
-
-/// Bridges UI browse chips/search to upstream query facets.
-MarketBrowseQuery marketBrowseQueryFromUi(MarketBrowseState browse) =>
-    MarketLiveBrowseController._queryFromBrowse(browse);

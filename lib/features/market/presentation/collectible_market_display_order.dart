@@ -57,12 +57,3 @@ import 'package:blindbox_app/features/market/presentation/market_price_sort.dart
   ];
   return (snapshots: sorted, orderIds: orderIds);
 }
-
-String collectibleMarketBrowseSignature({
-  required String brandId,
-  required String ipId,
-  required String query,
-  required bool searchResultsActive,
-}) {
-  return '$brandId|$ipId|$searchResultsActive|$query';
-}

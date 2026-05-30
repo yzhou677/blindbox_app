@@ -3,7 +3,8 @@ import 'dart:async';
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/features/market/application/collectible_market_providers.dart';
-import 'package:blindbox_app/features/market/application/market_browse_notifier.dart';
+import 'package:blindbox_app/features/market/application/active_market_browse_query.dart';
+import 'package:blindbox_app/features/market/application/market_search_browse_notifier.dart';
 import 'package:blindbox_app/features/market/application/market_browse_load_more_controller.dart';
 import 'package:blindbox_app/features/market/data/gateway/market_gateway_config.dart';
 import 'package:blindbox_app/features/market/presentation/collectible_market_display_order.dart';
@@ -38,15 +39,10 @@ class _MarketBrowseSearchScreenState
   @override
   void initState() {
     super.initState();
-    final draft = ref.read(marketBrowseNotifierProvider).query;
-    if (draft.isNotEmpty) {
-      _search.text = draft;
-    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      if (_search.text.trim().isNotEmpty) {
-        ref.read(marketBrowseNotifierProvider.notifier).setQuery(_search.text);
-      }
+      ref.read(marketSearchOverlayOpenProvider.notifier).setOpen(true);
+      ref.read(marketSearchBrowseNotifierProvider.notifier).beginOverlay();
     });
   }
 
@@ -72,8 +68,8 @@ class _MarketBrowseSearchScreenState
     }
     _debounce = Timer(const Duration(milliseconds: 400), () {
       if (!mounted) return;
-      MarketSearchTrace.event('debounce fired → setQuery "${value.trim()}"');
-      ref.read(marketBrowseNotifierProvider.notifier).setQuery(value);
+      MarketSearchTrace.event('debounce fired → commitQuery "${value.trim()}"');
+      ref.read(marketSearchBrowseNotifierProvider.notifier).commitQuery(value);
     });
   }
 
@@ -81,7 +77,8 @@ class _MarketBrowseSearchScreenState
   void _exitSearch({bool clearField = true}) {
     _debounce?.cancel();
     if (clearField) _search.clear();
-    ref.read(marketBrowseNotifierProvider.notifier).clearSearchSession();
+    ref.read(marketSearchBrowseNotifierProvider.notifier).clearSession();
+    ref.read(marketSearchOverlayOpenProvider.notifier).setOpen(false);
     if (!mounted) return;
     if (context.canPop()) context.pop();
   }
@@ -95,14 +92,10 @@ class _MarketBrowseSearchScreenState
     );
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final browse = ref.watch(marketBrowseNotifierProvider);
+    final search = ref.watch(marketSearchBrowseNotifierProvider);
+    final activeQuery = ref.watch(activeMarketBrowseQueryProvider);
     final snapshots = ref.watch(visibleCollectibleMarketSnapshotsProvider);
-    final browseSignature = collectibleMarketBrowseSignature(
-      brandId: browse.brandId,
-      ipId: browse.ipId,
-      query: browse.query.trim(),
-      searchResultsActive: browse.searchResultsActive,
-    );
+    final browseSignature = collectibleMarketBrowseSignatureFromQuery(activeQuery);
     final display = resolveCollectibleMarketDisplaySnapshots(
       snapshots: snapshots,
       browseSignature: browseSignature,
@@ -129,6 +122,7 @@ class _MarketBrowseSearchScreenState
         });
       });
     }
+    final showResults = search.isCommitted;
     final liveHasMore = ref.watch(marketLiveBrowseHasMoreProvider);
     final loadingMore = ref.watch(marketBrowseLoadMoreProvider);
     final sessionTransitioning = ref.watch(marketBrowseSessionTransitionProvider);
@@ -157,7 +151,9 @@ class _MarketBrowseSearchScreenState
               backgroundColor: scheme.surfaceContainerHighest,
             ),
           Expanded(
-            child: sorted.isEmpty
+            child: !showResults
+                ? const SizedBox.shrink()
+                : sorted.isEmpty
                 ? sessionTransitioning
                     ? const MarketBrowseResultsSkeleton()
                     : Center(
@@ -178,7 +174,11 @@ class _MarketBrowseSearchScreenState
                         AppSpacing.xxl,
                       ),
                       itemCount: sorted.length +
-                          (MarketGatewayConfig.isActive && liveHasMore ? 1 : 0),
+                          (MarketGatewayConfig.isActive &&
+                                  liveHasMore &&
+                                  showResults
+                              ? 1
+                              : 0),
                       // Use the same gap as the main market feed for visual
                       // consistency when results carry over from the browse tab.
                       separatorBuilder: (_, _) => const SizedBox(

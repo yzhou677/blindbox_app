@@ -2,7 +2,9 @@ import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
 import 'package:blindbox_app/features/market/application/collectible_market_providers.dart';
 import 'package:blindbox_app/features/market/debug/market_search_trace.dart';
-import 'package:blindbox_app/features/market/application/market_browse_notifier.dart';
+import 'package:blindbox_app/features/market/application/active_market_browse_query.dart';
+import 'package:blindbox_app/features/market/application/market_feed_browse_notifier.dart';
+import 'package:blindbox_app/features/market/application/market_search_browse_notifier.dart';
 import 'package:blindbox_app/features/market/application/market_browse_load_more_controller.dart';
 import 'package:blindbox_app/features/market/application/market_browse_refresh_controller.dart';
 import 'package:blindbox_app/features/market/data/gateway/market_gateway_config.dart';
@@ -36,8 +38,6 @@ class MarketScreen extends ConsumerStatefulWidget {
 class _MarketScreenState extends ConsumerState<MarketScreen> {
   final ScrollController _scrollController = ScrollController();
 
-  /// Presentation-only; browse list is derived from filters + this order.
-  MarketPriceSort _priceSort = MarketPriceSort.lowToHigh;
   List<String> _displayOrderIds = const [];
   MarketPriceSort _displayOrderPriceSort = MarketPriceSort.lowToHigh;
   String? _displayOrderBrowseSignature;
@@ -71,9 +71,10 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
     if (path == _lastReconciledRoutePath) return;
     _lastReconciledRoutePath = path;
     if (!isMarketBrowseRootPath(path)) return;
-    final browse = ref.read(marketBrowseNotifierProvider);
-    if (!browse.searchResultsActive) return;
-    ref.read(marketBrowseNotifierProvider.notifier).clearSearchSession();
+    final search = ref.read(marketSearchBrowseNotifierProvider);
+    if (!search.isCommitted) return;
+    ref.read(marketSearchBrowseNotifierProvider.notifier).clearSession();
+    ref.read(marketSearchOverlayOpenProvider.notifier).setOpen(false);
   }
 
   void _onTabReselected() {
@@ -81,7 +82,8 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
         kMarketShellBranchIndex) {
       return;
     }
-    ref.read(marketBrowseNotifierProvider.notifier).clearSearchSession();
+    ref.read(marketSearchBrowseNotifierProvider.notifier).clearSession();
+    ref.read(marketSearchOverlayOpenProvider.notifier).setOpen(false);
     if (!_scrollController.hasClients) return;
     _scrollController.animateTo(
       0,
@@ -94,22 +96,21 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final browse = ref.watch(marketBrowseNotifierProvider);
+    final feed = ref.watch(marketFeedBrowseNotifierProvider);
+    final search = ref.watch(marketSearchBrowseNotifierProvider);
+    final overlayOpen = ref.watch(marketSearchOverlayOpenProvider);
+    final activeQuery = ref.watch(activeMarketBrowseQueryProvider);
     MarketSearchTrace.event(
-      'MarketScreen.build immersive=${browse.searchResultsActive} query="${browse.query.trim()}"',
+      'MarketScreen.build immersive=${overlayOpen && search.isCommitted} '
+      'query="${search.query.trim()}"',
     );
-    final notifier = ref.read(marketBrowseNotifierProvider.notifier);
+    final feedNotifier = ref.read(marketFeedBrowseNotifierProvider.notifier);
     final snapshots = ref.watch(visibleCollectibleMarketSnapshotsProvider);
-    final browseSignature = collectibleMarketBrowseSignature(
-      brandId: browse.brandId,
-      ipId: browse.ipId,
-      query: browse.query.trim(),
-      searchResultsActive: browse.searchResultsActive,
-    );
+    final browseSignature = collectibleMarketBrowseSignatureFromQuery(activeQuery);
     final display = resolveCollectibleMarketDisplaySnapshots(
       snapshots: snapshots,
       browseSignature: browseSignature,
-      priceSort: _priceSort,
+      priceSort: feed.priceSort,
       stablePagination: MarketGatewayConfig.isActive,
       previousOrderIds: _displayOrderIds,
       previousPriceSort: _displayOrderPriceSort,
@@ -117,18 +118,18 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
     );
     final sorted = display.snapshots;
     if (display.orderIds != _displayOrderIds ||
-        _displayOrderPriceSort != _priceSort ||
+        _displayOrderPriceSort != feed.priceSort ||
         _displayOrderBrowseSignature != browseSignature) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         setState(() {
           _displayOrderIds = display.orderIds;
-          _displayOrderPriceSort = _priceSort;
+          _displayOrderPriceSort = feed.priceSort;
           _displayOrderBrowseSignature = browseSignature;
         });
       });
     }
-    final immersive = browse.searchResultsActive;
+    final immersive = overlayOpen && search.isCommitted;
     final liveHasMore = ref.watch(marketLiveBrowseHasMoreProvider);
     final loadingMore = ref.watch(marketBrowseLoadMoreProvider);
     final sessionTransitioning = ref.watch(marketBrowseSessionTransitionProvider);
@@ -195,12 +196,12 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                     const SizedBox(height: FeedRhythm.blockGapMedium),
                     MarketDiscoveryChips(
                       brandOptions: MarketTaxonomy.brandChipOptions(),
-                      ipOptions: MarketTaxonomy.ipChipOptionsForBrand(browse.brandId),
-                      brandId: browse.brandId,
-                      ipId: browse.ipId,
-                      showIpRail: browse.brandId != MarketTaxonomyIds.anyBrand,
-                      onBrandSelected: notifier.setBrand,
-                      onIpSelected: notifier.setIp,
+                      ipOptions: MarketTaxonomy.ipChipOptionsForBrand(feed.brandId),
+                      brandId: feed.brandId,
+                      ipId: feed.ipId,
+                      showIpRail: feed.brandId != MarketTaxonomyIds.anyBrand,
+                      onBrandSelected: feedNotifier.setBrand,
+                      onIpSelected: feedNotifier.setIp,
                     ),
                   ],
                 ],
@@ -221,13 +222,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                 padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
                 trailing: TextButton(
                   key: const Key('market_browse_price_sort'),
-                  onPressed: () {
-                    setState(() {
-                      _priceSort = _priceSort == MarketPriceSort.lowToHigh
-                          ? MarketPriceSort.highToLow
-                          : MarketPriceSort.lowToHigh;
-                    });
-                  },
+                  onPressed: feedNotifier.togglePriceSort,
                   style: TextButton.styleFrom(
                     backgroundColor: Color.lerp(
                       scheme.surface,
@@ -246,7 +241,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                     ),
                   ),
                   child: Text(
-                    _priceSort.browseHeaderLabel,
+                    feed.priceSort.browseHeaderLabel,
                     style: textTheme.labelMedium?.copyWith(
                       fontWeight: FontWeight.w500,
                       letterSpacing: 0.02,
@@ -264,8 +259,8 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
               child: sessionTransitioning && MarketGatewayConfig.isActive
                   ? const MarketBrowseSliverResultsSkeleton()
                   : _MarketEmptySearch(
-                      query: browse.query.trim(),
-                      filterActive: browse.filtersActive,
+                      query: activeQuery.searchText.trim(),
+                      filterActive: feed.filtersActive,
                     ),
             )
           else ...[

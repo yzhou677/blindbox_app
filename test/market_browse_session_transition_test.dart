@@ -1,4 +1,3 @@
-import 'package:blindbox_app/features/market/application/market_browse_notifier.dart';
 import 'package:blindbox_app/features/market/application/market_live_browse_session.dart';
 import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
 import 'package:blindbox_app/features/market/domain/market_browse_query.dart';
@@ -7,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('marketBrowseSessionTransitionActive', () {
-    const browseDefault = MarketBrowseState();
+    const uiDefault = MarketBrowseQuery();
 
     test('is false when UI and live query signatures match and idle', () {
       const live = MarketLiveBrowseState(
@@ -15,7 +14,7 @@ void main() {
       );
       expect(
         marketBrowseSessionTransitionActive(
-          browseDefault,
+          uiDefault,
           live,
           gatewayActive: true,
         ),
@@ -30,7 +29,7 @@ void main() {
       );
       expect(
         marketBrowseSessionTransitionActive(
-          browseDefault,
+          uiDefault,
           live,
           gatewayActive: true,
         ),
@@ -39,7 +38,7 @@ void main() {
     });
 
     test('is true when UI filter changed before live session caught up', () {
-      const browse = MarketBrowseState(
+      const uiQuery = MarketBrowseQuery(
         brandId: 'pop_mart',
         ipId: MarketTaxonomyIds.anyIp,
       );
@@ -48,7 +47,7 @@ void main() {
       );
       expect(
         marketBrowseSessionTransitionActive(
-          browse,
+          uiQuery,
           live,
           gatewayActive: true,
         ),
@@ -57,7 +56,7 @@ void main() {
     });
 
     test('is false during loadMore only', () {
-      const browse = MarketBrowseState(
+      const uiQuery = MarketBrowseQuery(
         brandId: 'pop_mart',
       );
       const live = MarketLiveBrowseState(
@@ -66,7 +65,7 @@ void main() {
       );
       expect(
         marketBrowseSessionTransitionActive(
-          browse,
+          uiQuery,
           live,
           gatewayActive: true,
         ),

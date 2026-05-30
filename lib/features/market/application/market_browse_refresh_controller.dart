@@ -1,6 +1,6 @@
 import 'package:blindbox_app/features/market/application/collectible_market_providers.dart';
 import 'package:blindbox_app/features/market/application/market_browse_intelligence_install.dart';
-import 'package:blindbox_app/features/market/application/market_browse_notifier.dart';
+import 'package:blindbox_app/features/market/application/market_feed_browse_notifier.dart';
 import 'package:blindbox_app/features/market/application/market_live_browse_controller.dart';
 import 'package:blindbox_app/features/market/application/market_listing_identity_enricher.dart';
 import 'package:blindbox_app/features/market/application/market_listings_providers.dart';
@@ -28,7 +28,7 @@ class MarketBrowseRefreshNotifier extends Notifier<bool> {
         await ref.read(marketLiveBrowseControllerProvider.notifier).refresh();
       } else if (MarketSandboxConfig.isActive) {
         ref
-            .read(marketBrowseNotifierProvider.notifier)
+            .read(marketFeedBrowseNotifierProvider.notifier)
             .resetTaxonomyFiltersForSandbox();
         final mercari = MercariSandboxMarketSource();
         mercari.resetPagination();
