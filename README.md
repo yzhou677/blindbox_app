@@ -3,6 +3,18 @@
 Shelfy is a Flutter app for designer toy and blind box collectors.  
 It focuses on an image-first, calm browsing experience with local-first collection tracking.
 
+## Demo
+
+<p align="center">
+  <a href="https://youtube.com/shorts/iEzrFSuXeew">
+    <img src="https://img.youtube.com/vi/iEzrFSuXeew/hqdefault.jpg" alt="Shelfy app demo" width="480">
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://youtube.com/shorts/iEzrFSuXeew"><strong>▶ Watch demo on YouTube</strong></a>
+</p>
+
 ## What The App Includes
 
 - `Collection` tab: your private shelf, custom series, figure status tracking
