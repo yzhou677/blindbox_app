@@ -4,6 +4,7 @@ import 'package:blindbox_app/features/catalog/presentation/catalog_image_display
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_adapters.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_sheet.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_series_shelf_cta_presentation.dart';
 import 'package:blindbox_app/features/collection/presentation/catalog_search_row_summary.dart';
 import 'package:blindbox_app/features/collection/presentation/figure_secret_rarity_style.dart';
 import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
@@ -21,13 +22,14 @@ class CatalogSeriesPreviewSheet extends ConsumerWidget {
   const CatalogSeriesPreviewSheet({
     super.key,
     required this.series,
+    required this.shelfCta,
     required this.onAdd,
-    this.showAddButton = true,
   });
 
   final CatalogSeries series;
+  final CollectionSeriesShelfCtaPresentation shelfCta;
   final VoidCallback onAdd;
-  final bool showAddButton;
+  static const double _stickyActionBarReserve = 92;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -45,80 +47,113 @@ class CatalogSeriesPreviewSheet extends ConsumerWidget {
 
     return CollectibleSheetInsets(
       extraBottom: 0,
-      child: CollectibleSheetScrollView(
-        controller: scroll,
-        header: CollectibleSheetChrome(
-          seriesTitle: series.name,
-          brand: series.brand,
-          ipLine: series.ipName,
-          trailingMeta: figureLine,
-        ),
-        slivers: [
-        if (relationshipLine != null && relationshipLine.isNotEmpty)
-          SliverToBoxAdapter(
-            child: CollectibleRelationshipLine(
-              text: relationshipLine,
-              padding: const EdgeInsets.only(top: 10),
-            ),
-          ),
-        SliverPadding(
-          padding: const EdgeInsets.only(
-            top: FeedRhythm.sheetFigureRailGap,
-            bottom: AppSpacing.sm,
-          ),
-          sliver: SliverList.separated(
-            itemCount: series.figures.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 14),
-            itemBuilder: (context, i) {
-              final f = series.figures[i];
-              return _PreviewFigureRow(
-                figure: f,
-                accent: series.shelfAccent,
-                onTap: () {
-                  final items = catalogGalleryItemsFromCatalogSeries(series);
-                  showCatalogFigureGallery(
-                    context,
-                    items: items,
-                    initialIndex: i,
-                    seriesTitle: series.name,
-                  );
-                },
-              );
-            },
-          ),
-        ),
-        if (showAddButton)
-          SliverToBoxAdapter(
-            child: Material(
-              color: scheme.surface,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  border: Border(
-                    top: BorderSide(
-                      color: scheme.outlineVariant.withValues(alpha: 0.28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: CollectibleSheetScrollView(
+              controller: scroll,
+              header: CollectibleSheetChrome(
+                seriesTitle: series.name,
+                brand: series.brand,
+                ipLine: series.ipName,
+                trailingMeta: figureLine,
+              ),
+              slivers: [
+                if (relationshipLine != null && relationshipLine.isNotEmpty)
+                  SliverToBoxAdapter(
+                    child: CollectibleRelationshipLine(
+                      text: relationshipLine,
+                      padding: const EdgeInsets.only(top: 10),
                     ),
+                  ),
+                SliverPadding(
+                  padding: const EdgeInsets.only(
+                    top: FeedRhythm.sheetFigureRailGap,
+                    bottom: AppSpacing.sm,
+                  ),
+                  sliver: SliverList.separated(
+                    itemCount: series.figures.length,
+                    separatorBuilder: (context, index) => const SizedBox(height: 14),
+                    itemBuilder: (context, i) {
+                      final f = series.figures[i];
+                      return _PreviewFigureRow(
+                        figure: f,
+                        accent: series.shelfAccent,
+                        onTap: () {
+                          final items = catalogGalleryItemsFromCatalogSeries(series);
+                          showCatalogFigureGallery(
+                            context,
+                            items: items,
+                            initialIndex: i,
+                            seriesTitle: series.name,
+                          );
+                        },
+                      );
+                    },
                   ),
                 ),
-                child: Padding(
-                  padding: EdgeInsets.only(
-                    left: 0,
-                    right: 0,
-                    top: 10,
-                    bottom: MediaQuery.paddingOf(context).bottom + 8,
+                const SliverToBoxAdapter(
+                  child: SizedBox(height: _stickyActionBarReserve),
+                ),
+              ],
+            ),
+          ),
+          Material(
+            color: scheme.surface,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(
+                    color: scheme.outlineVariant.withValues(alpha: 0.28),
                   ),
-                  child: FilledButton(
-                    onPressed: () {
-                      onAdd();
-                      Navigator.of(context).pop();
-                    },
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: AppRadii.matRadius,
-                      ),
-                    ),
-                    child: const Text('Add to shelf'),
-                  ),
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.only(top: 10, bottom: 8),
+                child: Semantics(
+                  button: true,
+                  enabled: shelfCta.enabled,
+                  label: shelfCta.semanticsLabel,
+                  child: shelfCta.isAddable
+                      ? FilledButton.icon(
+                          key: const ValueKey<String>('catalog-preview-add-cta'),
+                          onPressed: () {
+                            onAdd();
+                            Navigator.of(context).pop();
+                          },
+                          icon: Icon(shelfCta.icon, size: 20),
+                          label: Text(shelfCta.label),
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: AppRadii.matRadius,
+                            ),
+                          ),
+                        )
+                      : FilledButton.tonal(
+                          key: const ValueKey<String>(
+                            'catalog-preview-owned-cta',
+                          ),
+                          onPressed: null,
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            foregroundColor: scheme.onSurfaceVariant.withValues(
+                              alpha: 0.85,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: AppRadii.matRadius,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(shelfCta.icon, size: 20),
+                              const SizedBox(width: 8),
+                              Text(shelfCta.label),
+                            ],
+                          ),
+                        ),
                 ),
               ),
             ),

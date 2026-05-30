@@ -1,4 +1,4 @@
-import 'package:blindbox_app/features/market/application/market_browse_notifier.dart';
+import 'package:blindbox_app/features/market/application/active_market_browse_query.dart';
 import 'package:blindbox_app/features/market/application/market_live_browse_controller.dart';
 import 'package:blindbox_app/features/market/catalog/collectible_market_filters.dart';
 import 'package:blindbox_app/features/market/data/collectible_market_session.dart';
@@ -14,7 +14,7 @@ final collectibleMarketSnapshotsProvider =
 
 final visibleCollectibleMarketSnapshotsProvider =
     Provider<List<CollectibleMarketSnapshot>>((ref) {
-  final browse = ref.watch(marketBrowseNotifierProvider);
+  final query = ref.watch(activeMarketBrowseQueryProvider);
   final snapshots = ref.watch(collectibleMarketSnapshotsProvider);
 
   if (MarketGatewayConfig.isActive) {
@@ -22,14 +22,14 @@ final visibleCollectibleMarketSnapshotsProvider =
     return snapshots;
   }
 
-  final q = browse.query.trim().toLowerCase();
+  final facets = activeMarketBrowseVisibleFilterFacets(query);
   return snapshots
       .where(
         (s) => collectibleMarketSnapshotVisible(
           s,
-          brandId: browse.brandId,
-          ipId: browse.ipId,
-          queryLower: q,
+          brandId: facets.brandId,
+          ipId: facets.ipId,
+          queryLower: facets.queryLower,
         ),
       )
       .toList(growable: false);

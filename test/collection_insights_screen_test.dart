@@ -4,6 +4,8 @@ import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/insights/application/collector_journey_summary.dart';
+import 'package:blindbox_app/features/collection/insights/application/collector_type_providers.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collection_insights_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,9 +17,9 @@ import 'helpers/collection_fixtures.dart';
 final class InsightsTestCollectionNotifier extends CollectionNotifier {
   @override
   CollectionSnapshot build() => CollectionSnapshot(
-        shelfSeries: [testShelfSeries()],
-        figureStates: const {},
-      );
+    shelfSeries: [testShelfSeries()],
+    figureStates: const {},
+  );
 }
 
 void main() {
@@ -54,5 +56,61 @@ void main() {
 
     expect(find.text('Reveal collector type'), findsOneWidget);
     expect(find.text('Collection insights'), findsWidgets);
+    expect(find.text('Collector journey'), findsOneWidget);
+    expect(
+      find.text('Your journey starts the moment you add your first series.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('Collection insights shows populated journey highlights', (
+    tester,
+  ) async {
+    final summary = CollectorJourneySummary(
+      ipUniversesExplored: 3,
+      seriesExploredOverTime: 14,
+      topIps: const [
+        CollectorJourneyTopIp(id: 'smiski', label: 'Smiski', seriesCount: 8),
+        CollectorJourneyTopIp(id: 'dora', label: 'Dora', seriesCount: 3),
+        CollectorJourneyTopIp(id: 'maymei', label: 'Maymei', seriesCount: 3),
+      ],
+      journeyAgeLabel: '8 months ago',
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          collectionNotifierProvider.overrideWith(
+            InsightsTestCollectionNotifier.new,
+          ),
+          catalogBundleProvider.overrideWith(
+            (ref) async => const CatalogSeedBundle(
+              brands: [],
+              ips: [],
+              series: [],
+              figures: [],
+            ),
+          ),
+          collectorJourneySummaryProvider.overrideWithValue(summary),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: const CollectionInsightsScreen(),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('IPs explored over time'), findsOneWidget);
+    expect(find.text('3'), findsWidgets);
+    expect(find.text('Series explored over time'), findsNothing);
+    expect(find.text('14'), findsNothing);
+    expect(find.text('Most explored IPs'), findsOneWidget);
+    expect(find.text('Smiski'), findsOneWidget);
+    expect(find.text('Dora'), findsOneWidget);
+    expect(find.text('Maymei'), findsOneWidget);
+    expect(find.textContaining('8 series'), findsNothing);
+    expect(find.textContaining('3 series'), findsNothing);
+    expect(find.textContaining('months ago'), findsOneWidget);
   });
 }

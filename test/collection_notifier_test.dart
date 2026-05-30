@@ -1,5 +1,6 @@
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/bootstrap/collection_app_bootstrap.dart';
+import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
 import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/home/domain/series_release.dart';
@@ -41,7 +42,16 @@ void main() {
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
+    CollectionMemoryStore.instance.resetForTest();
   });
+
+  /// Empty shelf container without auto-dispose — for memory flush scenarios.
+  ProviderContainer newEmptyMemoryContainer() {
+    CollectionAppBootstrap.prime(CollectionSnapshot.emptyTest());
+    final container = ProviderContainer();
+    container.read(collectionNotifierProvider);
+    return container;
+  }
 
   test('cycleFigure advances none → wishlist → owned → clears', () {
     final container = newContainer();
@@ -374,4 +384,104 @@ void main() {
       });
     },
   );
+
+  // ---------------------------------------------------------------------------
+  // Memory flush on dispose (journey / collector type milestones)
+  // ---------------------------------------------------------------------------
+
+  group('pending memory transitions on persistence flush', () {
+    test('scenario A: debounce fires then dispose records transition once', () {
+      fakeAsync((async) {
+        CollectionMemoryStore.instance.resetForTest();
+        final container = newEmptyMemoryContainer();
+        addTearDown(container.dispose);
+        final n = container.read(collectionNotifierProvider.notifier);
+
+        n.addSeriesFromTemplate(
+          testCatalogTemplate(templateId: 'memory_tpl_a'),
+        );
+        async.elapse(const Duration(milliseconds: 400));
+        async.flushMicrotasks();
+
+        final depthAfterDebounce =
+            CollectionMemoryStore.instance.cached.ipSeriesDepth;
+        expect(depthAfterDebounce['the_monsters'], 1);
+        expect(
+          CollectionMemoryStore.instance.cached.firstSeriesAddedAtMs,
+          isNotNull,
+        );
+
+        container.dispose();
+        async.flushMicrotasks();
+
+        expect(
+          CollectionMemoryStore.instance.cached.ipSeriesDepth['the_monsters'],
+          1,
+          reason: 'dispose after debounce must not duplicate ip depth',
+        );
+      });
+    });
+
+    test('scenario B: dispose before debounce still records transition', () {
+      fakeAsync((async) {
+        CollectionMemoryStore.instance.resetForTest();
+        final container = newEmptyMemoryContainer();
+        final n = container.read(collectionNotifierProvider.notifier);
+
+        n.addSeriesFromTemplate(
+          testCatalogTemplate(templateId: 'memory_tpl_b'),
+        );
+
+        container.dispose();
+        async.flushMicrotasks();
+
+        expect(
+          CollectionMemoryStore.instance.cached.firstSeriesAddedAtMs,
+          isNotNull,
+          reason: 'dispose should flush pending recordTransitions',
+        );
+        expect(
+          CollectionMemoryStore.instance.cached.ipSeriesDepth['the_monsters'],
+          1,
+        );
+      });
+    });
+
+    test(
+      'scenario C: multiple mutations in debounce window record one net transition',
+      () {
+        fakeAsync((async) {
+          CollectionMemoryStore.instance.resetForTest();
+          final container = newEmptyMemoryContainer();
+          final n = container.read(collectionNotifierProvider.notifier);
+
+          n.addCustomSeries(
+            seriesName: 'Custom A',
+            figures: const [CustomFigureDraft(displayName: 'Fig A')],
+          );
+          n.addCustomSeries(
+            seriesName: 'Custom B',
+            ipDisplayName: 'Other IP',
+            figures: const [CustomFigureDraft(displayName: 'Fig B')],
+          );
+
+          expect(
+            container.read(collectionNotifierProvider).shelfSeries.length,
+            2,
+          );
+
+          container.dispose();
+          async.flushMicrotasks();
+          final depth =
+              CollectionMemoryStore.instance.cached.ipSeriesDepth;
+          expect(
+            depth.values.fold<int>(0, (sum, c) => sum + c),
+            2,
+            reason: 'two new series in one coalesced transition',
+          );
+          expect(depth.length, 2);
+        });
+      },
+    );
+  });
 }

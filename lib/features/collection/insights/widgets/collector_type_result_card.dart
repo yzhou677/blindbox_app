@@ -11,9 +11,11 @@ class CollectorTypeResultCard extends StatelessWidget {
   const CollectorTypeResultCard({
     super.key,
     required this.identity,
+    this.helperLine,
   });
 
   final CollectorTypeIdentity identity;
+  final String? helperLine;
 
   @override
   Widget build(BuildContext context) {
@@ -31,10 +33,11 @@ class CollectorTypeResultCard extends StatelessWidget {
             accent,
             Theme.of(context).brightness == Brightness.dark ? 0.08 : 0.06,
           ),
-          border: Border.all(
-            color: accent.withValues(alpha: 0.22),
+          border: Border.all(color: accent.withValues(alpha: 0.22)),
+          boxShadow: CollectibleShelfShadow.productShell(
+            context,
+            accent: accent,
           ),
-          boxShadow: CollectibleShelfShadow.productShell(context, accent: accent),
         ),
         child: Padding(
           // Intentionally wider than pageHorizontal — the result card is a
@@ -43,7 +46,7 @@ class CollectorTypeResultCard extends StatelessWidget {
             AppSpacing.xl + AppSpacing.xs, // 22
             AppSpacing.xl + AppSpacing.sm, // 28
             AppSpacing.xl + AppSpacing.xs, // 22
-            AppSpacing.xxl,               // 24
+            AppSpacing.xxl, // 24
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -53,8 +56,10 @@ class CollectorTypeResultCard extends StatelessWidget {
               Text(
                 archetype.displayName,
                 textAlign: TextAlign.center,
-                style: CollectibleTypography.seriesHeroTitle(textTheme, scheme)
-                    .copyWith(letterSpacing: -0.3),
+                style: CollectibleTypography.seriesHeroTitle(
+                  textTheme,
+                  scheme,
+                ).copyWith(letterSpacing: -0.3),
               ),
               const SizedBox(height: AppSpacing.sm + AppSpacing.xs),
               Text(
@@ -62,6 +67,16 @@ class CollectorTypeResultCard extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: AppTypography.insightsFlavor(textTheme, scheme),
               ),
+              if (helperLine != null && helperLine!.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  helperLine!,
+                  textAlign: TextAlign.center,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
             ],
           ),
         ),

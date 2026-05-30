@@ -5,9 +5,6 @@ import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
-/// Index of the `/collection` branch in [StatefulShellRoute.indexedStack] (see [appRouter]).
-const int kCollectionShellBranchIndex = 2;
-
 /// Dismisses Collection-branch modal routes when the user leaves the Collection tab.
 ///
 /// All external dismiss requests **must** go through [dismissAll] — never call

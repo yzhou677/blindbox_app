@@ -16,7 +16,7 @@ Treat these as **ongoing product and architecture law**, not a single refactor t
 | **Canonical identity** | Firebase catalog (`brands` / `ips` / `series` / `figures`, `imageKey`, aliases, rarity) is truth; Collection/Market **adapt** via mappers — no parallel per-screen DTOs or title/image logic |
 | **Three universes** | Catalog (read-only), Shelf (local-first), Market/Home (discover + listings) — do not mix persistence or media keys |
 | **imageKey** | UI renders through shared primitives + `CatalogImageResolver`; never construct Storage URLs in widgets; `imageUrl` is optional cache only |
-| **Offline-first** | Usable on bad network — bundled/cached catalog, local shelf codec, placeholders; browse/search/gallery without blocking on Firebase |
+| **Offline-first** | Usable on bad network — bundled catalog art, persistent disk cache for previously seen Storage images, local shelf codec, placeholders; browse/search/gallery without blocking on Firebase |
 | **Async** | Optimistic mutations; background hydration; no `await` resolve before shelf `_commit` or modal dismiss |
 | **Reuse** | `commitCatalogSeriesToShelf`, `showCollectibleBottomSheet`, `showCatalogFigureGallery`, shared cards/typography — extend before forking |
 | **Layers** | Widgets = render; application = rules/mutations; data/media = Firebase, codec, resolver, DTOs |
@@ -36,7 +36,7 @@ These must stay separate. Do not merge persistence, media keys, or loading paths
 - **Location:** `lib/features/catalog/`
 - **In-memory shape:** `CatalogSeedBundle` ([`catalog_seed_loader.dart`](../lib/features/catalog/catalog_seed_loader.dart))
 - **Default source:** `loadCatalogBundle()` — Firestore (`brands`, `ips`, `series`, `figures`) with seed JSON fallback ([`catalog_bundle_loader.dart`](../lib/features/catalog/catalog_bundle_loader.dart))
-- **Media:** Opaque `imageKey` on catalog models; resolve via [`CatalogImageResolver`](../lib/features/catalog/catalog_image_resolver.dart) — bundled assets first, then Firebase Storage (see [Firebase](#firebase-firestore--storage)); [`CatalogImageFromKey`](../lib/shared/widgets/catalog_image_from_key.dart) for catalog UI
+- **Media:** Opaque `imageKey` on catalog models; resolve via [`CatalogImageResolver`](../lib/features/catalog/catalog_image_resolver.dart) — **bundled → bounded disk cache (LRU + TTL) → Firebase Storage → placeholder** (see [Firebase](#firebase-firestore--storage)); [`CatalogImageFromKey`](../lib/shared/widgets/catalog_image_from_key.dart) for catalog UI. Disk cache is intermediate resilience; Storage is the freshness source when online.
 - **Search:** Pure Dart [`CatalogSearchService`](../lib/features/catalog/search/catalog_search_service.dart) over a bundle — no Riverpod inside search
 - **Into shelf:** Only through adapters + `CollectionNotifier` (e.g. [`catalog_seed_to_collection_template.dart`](../lib/features/catalog/adapters/catalog_seed_to_collection_template.dart)) — catalog does **not** own shelf rows
 
@@ -84,7 +84,7 @@ Catalog universe (read-only) — NOT used for market listing bodies
   tools/seed JSON (fallback) ────────────┼──> loadCatalogBundle() ──> CatalogSeedBundle
   Storage catalog/series|figures/* ──────┘         │
         imageKey → CatalogImageResolver            ├──> CatalogSearchService
-        (bundled asset → Storage URL, runtime)     ├──> Add Series / recommendations (add_to_collection_sheet)
+        (bundled → disk cache → Storage, runtime)  ├──> Add Series / recommendations (add_to_collection_sheet)
                                                    ├──> catalog_seed_to_collection_template → collectionNotifier
                                                    └──> MarketTaxonomy.applyCatalogBundle (filter chip ids/labels only)
 
@@ -205,7 +205,22 @@ Firebase is for the **catalog universe only** in the current roadmap. Collection
 
 - **Scope:** read-only catalog thumbnails keyed by `imageKey`. Deterministic paths: `catalog/series/<imageKey>.<ext>`, `catalog/figures/<imageKey>.<ext>` — probe `.avif`, `.webp`, `.png`, `.jpg`, `.jpeg` until one exists. See [`FIREBASE_STORAGE_CATALOG.md`](../lib/features/catalog/firestore/FIREBASE_STORAGE_CATALOG.md).
 - **Not in scope for MVP agents:** uploading `localImageUri` / `customCoverImageUri` (private shelf photos).
-- **Resolver:** bundled asset first, then Storage download URL — used inside `CatalogImageFromKey` / media layer at **display time**. Do not write Storage URLs onto Firestore catalog docs. Shelf codec may store optional `imageUrl` cache; UI still renders from `imageKey`.
+- **Resolver:** four-tier display strategy at **display time** (see [`catalog_image_resolver.dart`](../lib/features/catalog/catalog_image_resolver.dart), [`catalog_image_disk_cache.dart`](../lib/features/catalog/data/catalog_image_disk_cache.dart), [`catalog_image_cache_policy.dart`](../lib/features/catalog/data/catalog_image_cache_policy.dart)):
+  1. Bundled `assets/catalog/**` (stable offline seed subset)
+  2. Bounded disk cache (`ApplicationSupport/catalog_image_cache/`) — **resilience layer**, not canonical storage
+  3. Firebase Storage — freshness / enrichment (network when available)
+  4. Placeholder when all tiers miss
+
+  **Offline-first ≠ offline-only.** The app degrades gracefully without network (bundled + any disk bytes still on device). When online, Storage opportunistically refreshes stale cache entries without blocking UI.
+
+  **Disk cache lifecycle** ([`CatalogImageCachePolicy`](../lib/features/catalog/data/catalog_image_cache_policy.dart)):
+  - **LRU eviction:** ~150 MB cap; oldest-accessed files removed first (`cache_index.json` tracks access + size)
+  - **Freshness TTL:** entries older than **14 days** are *stale* — still rendered immediately; background refresh attempted at most once per **24 h** per key (deduped in-flight, no launch-wide re-download storms)
+  - **Refresh concurrency:** stale-while-revalidate uses a FIFO queue with at most **4** simultaneous Storage refreshes (feeds do not burst-refresh every visible stale tile at once)
+  - **Session negative cache:** missing Storage keys probed once per app session (no repeat 404 spam)
+  - **Not permanent truth:** remote Storage changes propagate via background refresh; failed refresh keeps last local bytes until evicted
+
+  Do not write Storage URLs onto Firestore catalog docs. Shelf codec may store optional `imageUrl` cache; UI still renders from `imageKey`.
 - **Code location:** `lib/features/catalog/` and `lib/core/firebase/` — no `lib/services/`. Uses `firebase_storage` for catalog art reads.
 
 ### What not to do (Firebase integration)

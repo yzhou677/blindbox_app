@@ -37,7 +37,7 @@ void main() {
     expect(picks.map((s) => s.id), ['new', 'old']);
   });
 
-  test('pickLatestSeriesRecommendations skips series already on shelf', () {
+  test('pickLatestSeriesRecommendations includes series already on shelf', () {
     final bundle = CatalogSeedBundle(
       brands: const [],
       ips: const [],
@@ -78,7 +78,8 @@ void main() {
       figureStates: const {},
     );
     final picks = pickLatestSeriesRecommendations(bundle, snap);
-    expect(picks, hasLength(1));
-    expect(picks.single.id, 'free');
+    expect(picks, hasLength(2));
+    expect(picks.first.id, 'on_shelf');
+    expect(picks.map((s) => s.id), contains('free'));
   });
 }

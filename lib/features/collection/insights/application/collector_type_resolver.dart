@@ -1,5 +1,6 @@
 import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
-import 'package:blindbox_app/features/catalog/models/catalog_series.dart' as seed;
+import 'package:blindbox_app/features/catalog/models/catalog_series.dart'
+    as seed;
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_emotional_profile.dart';
@@ -78,9 +79,7 @@ CollectorTypeIdentity resolveCollectorType({
   final now = revealedAt ?? DateTime.now();
   final catalogSeriesById = catalog == null
       ? null
-      : {
-          for (final s in catalog.series) s.id: s,
-        };
+      : {for (final s in catalog.series) s.id: s};
   final stats = _buildStats(snapshot, profile, catalog);
   final signatureHash = computeCollectorTypeSignatureHash(snapshot);
 
@@ -172,16 +171,13 @@ Map<CollectorTypeArchetypeId, double> _scoreArchetypes({
   CollectionMemoryData? memory,
   required DateTime now,
 }) {
-  final scores = {
-    for (final id in CollectorTypeArchetypeId.values) id: 0.0,
-  };
+  final scores = {for (final id in CollectorTypeArchetypeId.values) id: 0.0};
 
   final seriesCount = snapshot.shelfSeries.length;
   final owned = stats.totalOwned;
   final wishlist = stats.totalWishlist;
   final totalTracked = owned + wishlist;
-  final wishlistRatio =
-      totalTracked == 0 ? 0.0 : wishlist / totalTracked;
+  final wishlistRatio = totalTracked == 0 ? 0.0 : wishlist / totalTracked;
   final secretOwnedRatio = stats.secretSlots == 0
       ? 0.0
       : stats.secretOwned / stats.secretSlots;
@@ -195,9 +191,7 @@ Map<CollectorTypeArchetypeId, double> _scoreArchetypes({
   for (final series in snapshot.shelfSeries) {
     final progress = progressForSeries(series, snapshot.figureStates);
     final total = series.figureCount;
-    if (total > 0 &&
-        progress.owned < total &&
-        progress.owned / total >= 0.85) {
+    if (total > 0 && progress.owned < total && progress.owned / total >= 0.85) {
       nearComplete++;
     }
     if (series.notes != null && series.notes!.trim().isNotEmpty) notesCount++;
@@ -222,6 +216,7 @@ Map<CollectorTypeArchetypeId, double> _scoreArchetypes({
   }
 
   final brandSpread = stats.brandBreakdown.length;
+  final shelfIpSpread = _shelfIpSpread(snapshot);
   final ipDepthKeys = memory?.ipSeriesDepth.length ?? 0;
 
   // Completionist
@@ -241,24 +236,20 @@ Map<CollectorTypeArchetypeId, double> _scoreArchetypes({
   }
 
   // Lucky One — high secret hit rate with modest shelf
-  if (stats.secretOwned >= 1 &&
-      secretOwnedRatio >= 0.5 &&
-      seriesCount <= 4) {
-    scores[CollectorTypeArchetypeId.luckyOne] =
-        30 + secretOwnedRatio * 40;
+  if (stats.secretOwned >= 1 && secretOwnedRatio >= 0.5 && seriesCount <= 4) {
+    scores[CollectorTypeArchetypeId.luckyOne] = 30 + secretOwnedRatio * 40;
   }
 
   // Loyalist — dominant brand/IP
   if (profile.dominantBrandId != null || profile.dominantIpId != null) {
     final dominantShare = _dominantShare(snapshot, profile);
     if (dominantShare >= 0.6) {
-      scores[CollectorTypeArchetypeId.loyalist] =
-          35 + dominantShare * 40;
+      scores[CollectorTypeArchetypeId.loyalist] = 35 + dominantShare * 40;
     }
   }
 
   // Curator — spread across brands/IPs
-  if (brandSpread >= 3 || ipDepthKeys >= 3) {
+  if (brandSpread >= 2 || shelfIpSpread >= 2) {
     scores[CollectorTypeArchetypeId.curator] =
         25 + brandSpread * 8 + ipDepthKeys * 5;
   }
@@ -271,8 +262,7 @@ Map<CollectorTypeArchetypeId, double> _scoreArchetypes({
 
   // Minimalist — small shelf, high completion
   if (seriesCount <= 3 && owned <= 12 && avgCompletion >= 0.75) {
-    scores[CollectorTypeArchetypeId.minimalist] =
-        35 + avgCompletion * 25;
+    scores[CollectorTypeArchetypeId.minimalist] = 35 + avgCompletion * 25;
   }
 
   // Archivist — notes, photos, long tenure
@@ -294,8 +284,7 @@ Map<CollectorTypeArchetypeId, double> _scoreArchetypes({
 
   // Dreamer — wishlist leaning
   if (wishlistRatio >= 0.45 && wishlist >= 2) {
-    scores[CollectorTypeArchetypeId.dreamer] =
-        30 + wishlistRatio * 35;
+    scores[CollectorTypeArchetypeId.dreamer] = 30 + wishlistRatio * 35;
   }
 
   // Daydream Collector — wishlist >> owned (stronger than dreamer when gap is wide)
@@ -315,7 +304,9 @@ Map<CollectorTypeArchetypeId, double> _scoreArchetypes({
   return scores;
 }
 
-CollectorTypeArchetypeId _pickWinner(Map<CollectorTypeArchetypeId, double> scores) {
+CollectorTypeArchetypeId _pickWinner(
+  Map<CollectorTypeArchetypeId, double> scores,
+) {
   var bestScore = -1.0;
   CollectorTypeArchetypeId? bestId;
   for (final e in scores.entries) {
@@ -412,4 +403,18 @@ String? _dominantKey(Map<String, int> counts) {
     }
   }
   return bestCount >= 2 ? best : null;
+}
+
+int _shelfIpSpread(CollectionSnapshot snapshot) {
+  final keys = <String>{};
+  for (final series in snapshot.shelfSeries) {
+    final taxonomyIp = series.taxonomyIpId?.trim();
+    if (taxonomyIp != null && taxonomyIp.isNotEmpty) {
+      keys.add(canonicalizeStatKey(taxonomyIp));
+      continue;
+    }
+    final fallback = canonicalizeStatKey(series.ipName);
+    if (fallback.isNotEmpty) keys.add(fallback);
+  }
+  return keys.length;
 }

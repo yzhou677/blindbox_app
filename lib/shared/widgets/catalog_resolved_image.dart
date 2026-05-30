@@ -1,10 +1,13 @@
+import 'dart:io';
+import 'dart:ui' show ImageFilter;
+
+import 'package:blindbox_app/core/media/device_local_ref.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_aspect_image.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/collection/widgets/collectible_figure_placeholder.dart';
 import 'package:blindbox_app/shared/widgets/app_image_shimmer.dart';
 import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
-import 'dart:ui' show ImageFilter;
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 /// Renders a resolved catalog asset path or Storage URL with adaptive presentation rules.
@@ -214,6 +217,21 @@ class CatalogResolvedImage extends StatelessWidget {
         fillBounds: expansive,
         errorBuilder: (context, error, stackTrace) {
           debugPrint('CatalogResolvedImage: asset "$ref" failed: $error');
+          return onError();
+        },
+      );
+    }
+
+    if (!kIsWeb && DeviceLocalImageRef.looksLikeDevicePath(ref)) {
+      final path = DeviceLocalImageRef.normalizeToFilePath(ref);
+      return CatalogAspectImage.coverFile(
+        file: File(path),
+        fit: resolvedFit,
+        alignment: spec.alignment,
+        filterQuality: spec.filterQuality,
+        fillBounds: expansive,
+        errorBuilder: (context, error, stackTrace) {
+          debugPrint('CatalogResolvedImage: disk cache "$ref" failed: $error');
           return onError();
         },
       );

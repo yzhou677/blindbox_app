@@ -41,16 +41,43 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('renders archetype name and flavor in light theme', (tester) async {
+  testWidgets('renders archetype name and flavor in light theme', (
+    tester,
+  ) async {
     await pumpCard(tester, AppTheme.light());
     expect(find.text(archetype.displayName), findsOneWidget);
     expect(find.textContaining('Rare pulls'), findsOneWidget);
     expect(find.byIcon(archetype.icon!), findsOneWidget);
   });
 
-  testWidgets('renders archetype name and flavor in dark theme', (tester) async {
+  testWidgets('renders archetype name and flavor in dark theme', (
+    tester,
+  ) async {
     await pumpCard(tester, AppTheme.dark());
     expect(find.text(archetype.displayName), findsOneWidget);
     expect(find.textContaining('Rare pulls'), findsOneWidget);
+  });
+
+  testWidgets('renders helper line when provided', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: CollectorTypeResultCard(
+            identity: _sampleIdentity(),
+            helperLine:
+                'While your current shelf is focused around a few favorites, your collecting journey has explored many different worlds.',
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(
+      find.textContaining(
+        'your collecting journey has explored many different worlds',
+      ),
+      findsOneWidget,
+    );
   });
 }

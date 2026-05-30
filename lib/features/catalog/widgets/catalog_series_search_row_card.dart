@@ -2,6 +2,8 @@ import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_series_search_rows.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_series_shelf_cta_presentation.dart';
+import 'package:blindbox_app/features/collection/widgets/collection_series_shelf_cta_trailing.dart';
 import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
 import 'package:blindbox_app/shared/widgets/collectible_browse_card.dart';
 import 'package:flutter/material.dart';
@@ -12,21 +14,23 @@ class CatalogSeriesSearchRowCard extends StatelessWidget {
     super.key,
     required this.row,
     required this.onOpenPreview,
-    this.trailingLabel = 'View',
-    this.onTrailingAction,
+    required this.shelfCta,
+    this.onShelfCtaPressed,
   });
 
   final CatalogSeriesSearchRow row;
   final VoidCallback onOpenPreview;
-  final String trailingLabel;
-  final VoidCallback? onTrailingAction;
+  final CollectionSeriesShelfCtaPresentation shelfCta;
+  final VoidCallback? onShelfCtaPressed;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final onTrailing = onTrailingAction ?? onOpenPreview;
     final secretTint = scheme.tertiary;
+    final onTrailing = shelfCta.enabled
+        ? (onShelfCtaPressed ?? onOpenPreview)
+        : null;
 
     return CollectibleBrowseCard(
       onTap: onOpenPreview,
@@ -107,34 +111,9 @@ class CatalogSeriesSearchRowCard extends StatelessWidget {
               ],
             ),
           ),
-          Material(
-            color: scheme.primary.withValues(alpha: 0.14),
-            borderRadius: AppRadii.insetRadius,
-            child: InkWell(
-              onTap: onTrailing,
-              borderRadius: AppRadii.insetRadius,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      trailingLabel,
-                      style: textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: scheme.primary,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      size: 20,
-                      color: scheme.primary,
-                    ),
-                  ],
-                ),
-              ),
-            ),
+          CollectionSeriesShelfCtaTrailing(
+            presentation: shelfCta,
+            onPressed: onTrailing,
           ),
         ],
       ),

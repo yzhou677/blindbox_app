@@ -17,6 +17,8 @@ class CatalogSeriesSearchRow {
     required this.summaryLine,
     required this.ipLine,
     required this.brand,
+    required this.taxonomyBrandId,
+    required this.taxonomyIpId,
     required this.hasAnySecret,
   });
 
@@ -26,6 +28,8 @@ class CatalogSeriesSearchRow {
   final String summaryLine;
   final String ipLine;
   final String brand;
+  final String taxonomyBrandId;
+  final String taxonomyIpId;
   final bool hasAnySecret;
 }
 
@@ -95,6 +99,8 @@ List<CatalogSeriesSearchRow> buildCatalogSeriesSearchRows({
           summaryLine: summaryLine,
           ipLine: _seriesIpLine(bundle, series),
           brand: _seriesBrandLine(bundle, series),
+          taxonomyBrandId: series.brandId,
+          taxonomyIpId: series.ipId,
           hasAnySecret: agg.hasAnySecret,
         );
       })

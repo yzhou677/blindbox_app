@@ -1,4 +1,6 @@
 import 'package:blindbox_app/core/theme/collectible_motion.dart';
+import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
+import 'package:blindbox_app/features/collection/insights/application/collector_type_explainability.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_providers.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_view_model.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
@@ -28,7 +30,26 @@ class CollectorTypeRevealCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final stage = ref.watch(collectorTypeViewModelProvider);
+    final snapshot = ref.watch(collectionNotifierProvider);
+    final journey = ref.watch(collectorJourneySummaryProvider);
     final brightness = Theme.of(context).brightness;
+    final helperLine = switch (stage) {
+      CollectorTypeRevealRevealed(:final identity) =>
+        resolveCollectorTypeHelperLine(
+          identity: identity,
+          journey: journey,
+          snapshot: snapshot,
+        ),
+      CollectorTypeRevealIdle(:final cachedIdentity) =>
+        cachedIdentity == null
+            ? null
+            : resolveCollectorTypeHelperLine(
+                identity: cachedIdentity,
+                journey: journey,
+                snapshot: snapshot,
+              ),
+      _ => null,
+    };
     final accent = switch (stage) {
       CollectorTypeRevealRevealed(:final identity) =>
         identity.archetype.accentFor(brightness),
@@ -61,19 +82,21 @@ class CollectorTypeRevealCard extends ConsumerWidget {
         },
         child: switch (stage) {
           CollectorTypeRevealIdle(:final cachedIdentity) => _IdleStage(
-              key: const ValueKey('idle'),
-              cachedIdentity: cachedIdentity,
-              onReveal: () => ref
-                  .read(collectorTypeViewModelProvider.notifier)
-                  .requestReveal(),
-            ),
+            key: const ValueKey('idle'),
+            cachedIdentity: cachedIdentity,
+            helperLine: helperLine,
+            onReveal: () => ref
+                .read(collectorTypeViewModelProvider.notifier)
+                .requestReveal(),
+          ),
           CollectorTypeRevealAnalyzing() => const CollectorTypeAnalyzingPanel(
-              key: ValueKey('analyzing'),
-            ),
+            key: ValueKey('analyzing'),
+          ),
           CollectorTypeRevealRevealed(:final identity) => _RevealedStage(
-              key: ValueKey('revealed-${identity.archetypeId.name}'),
-              identity: identity,
-            ),
+            key: ValueKey('revealed-${identity.archetypeId.name}'),
+            identity: identity,
+            helperLine: helperLine,
+          ),
         },
       ),
     );
@@ -84,10 +107,12 @@ class _IdleStage extends StatelessWidget {
   const _IdleStage({
     super.key,
     required this.cachedIdentity,
+    required this.helperLine,
     required this.onReveal,
   });
 
   final CollectorTypeIdentity? cachedIdentity;
+  final String? helperLine;
   final VoidCallback onReveal;
 
   @override
@@ -97,7 +122,7 @@ class _IdleStage extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          CollectorTypeResultCard(identity: cached),
+          CollectorTypeResultCard(identity: cached, helperLine: helperLine),
           const SizedBox(height: 12),
           CollectorTypeRevealButton(
             label: CollectorTypeCopy.revealAgain,
@@ -111,16 +136,21 @@ class _IdleStage extends StatelessWidget {
 }
 
 class _RevealedStage extends StatelessWidget {
-  const _RevealedStage({super.key, required this.identity});
+  const _RevealedStage({
+    super.key,
+    required this.identity,
+    required this.helperLine,
+  });
 
   final CollectorTypeIdentity identity;
+  final String? helperLine;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        CollectorTypeResultCard(identity: identity),
+        CollectorTypeResultCard(identity: identity, helperLine: helperLine),
         CollectorTypeStatsStrip(stats: identity.stats),
       ],
     );

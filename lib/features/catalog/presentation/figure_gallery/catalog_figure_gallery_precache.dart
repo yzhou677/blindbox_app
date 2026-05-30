@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:blindbox_app/core/media/device_local_ref.dart';
 import 'package:blindbox_app/features/catalog/catalog_image_resolver.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_item.dart';
 import 'package:flutter/material.dart';
@@ -58,10 +59,21 @@ abstract final class CatalogFigureGalleryPrecache {
         await precacheImage(AssetImage(bundled), context);
         return;
       }
-      final url = await CatalogImageResolver.resolveFigureDisplayRef(key);
+      final remote = CatalogImageResolver.storageFallbackEnabled
+          ? await CatalogImageResolver.resolveFigureStorageRef(key)
+          : null;
       if (!context.mounted) return;
-      if (url != null && url.isNotEmpty && _isNetworkUrl(url)) {
-        await precacheImage(NetworkImage(url), context);
+      if (remote == null || remote.isEmpty) return;
+      if (_isNetworkUrl(remote)) {
+        await precacheImage(NetworkImage(remote), context);
+        return;
+      }
+      if (DeviceLocalImageRef.looksLikeDevicePath(remote)) {
+        final path = DeviceLocalImageRef.normalizeToFilePath(remote);
+        final file = File(path);
+        if (await file.exists() && context.mounted) {
+          await precacheImage(FileImage(file), context);
+        }
       }
       return;
     }

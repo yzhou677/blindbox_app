@@ -1,15 +1,9 @@
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
-import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_shelf_brand_facets.dart'
+    as facets;
 
-/// Local shelf filtering by canonical brand id (aligned with [MarketTaxonomy]).
+/// Backward-compatible shim for Collection shelf filter imports.
 List<ShelfSeries> shelfSeriesVisibleForBrandFilter(
   List<ShelfSeries> shelfSeries,
   String brandFilterId,
-) {
-  if (brandFilterId == MarketTaxonomyIds.anyBrand) {
-    return shelfSeries;
-  }
-  return shelfSeries
-      .where((s) => s.taxonomyBrandId == brandFilterId)
-      .toList(growable: false);
-}
+) => facets.shelfSeriesVisibleForBrandFilter(shelfSeries, brandFilterId);

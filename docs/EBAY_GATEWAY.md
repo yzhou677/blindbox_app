@@ -28,6 +28,8 @@ flutter run \
   --dart-define=MARKET_GATEWAY_BASE_URL=https://us-central1-blindbox-collection.cloudfunctions.net/market
 ```
 
+With those flags, the Market **Chasers** rail probes automatically (no extra define). Disable with `--dart-define=MARKET_CHASERS_SCORING=false`.
+
 Emulator:
 
 ```bash

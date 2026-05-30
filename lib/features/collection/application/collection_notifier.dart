@@ -47,25 +47,36 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
 
     // Cancel any scheduled persistence flush and reschedule.
     _persistenceTimer?.cancel();
-    _persistenceTimer = Timer(_persistenceDebounce, () {
-      final current = state;
-      final truePrevious = _pendingPersistencePrevious!;
-      _pendingPersistencePrevious = null;
-      _persistenceTimer = null;
+    _persistenceTimer = Timer(
+      _persistenceDebounce,
+      () => unawaited(_persistPendingSnapshot()),
+    );
+  }
 
-      // TODO(perf/scale): move CollectionSnapshotCodec.encode (jsonEncode of
-      // entire shelf) and CollectionMemoryStore.recordTransitions
-      // (interpretShelf) to Isolate.run once shelf sizes commonly exceed
-      // ~100 series / ~1000 figures. At indie scale the encode completes in
-      // <50 ms and does not require isolate offloading.
-      unawaited(CollectionSnapshotStorage.save(current));
-      unawaited(
-        CollectionMemoryStore.instance.recordTransitions(
-          previous: truePrevious,
-          next: current,
-        ),
-      );
-    });
+  /// Persists the coalesced debounce window — snapshot + journey memory.
+  ///
+  /// Clears [_pendingPersistencePrevious] before awaiting I/O so a concurrent
+  /// timer tick or [ref.onDispose] flush cannot record the same transition twice.
+  Future<void> _persistPendingSnapshot() async {
+    final truePrevious = _pendingPersistencePrevious;
+    if (truePrevious == null) return;
+
+    _persistenceTimer?.cancel();
+    _persistenceTimer = null;
+    _pendingPersistencePrevious = null;
+
+    final current = state;
+
+    // TODO(perf/scale): move CollectionSnapshotCodec.encode (jsonEncode of
+    // entire shelf) and CollectionMemoryStore.recordTransitions
+    // (interpretShelf) to Isolate.run once shelf sizes commonly exceed
+    // ~100 series / ~1000 figures. At indie scale the encode completes in
+    // <50 ms and does not require isolate offloading.
+    await CollectionSnapshotStorage.save(current);
+    await CollectionMemoryStore.instance.recordTransitions(
+      previous: truePrevious,
+      next: current,
+    );
   }
 
   /// Cancels any pending debounce timer and immediately flushes to disk.
@@ -73,12 +84,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
   /// Called from [ref.onDispose] so no writes are lost when the notifier is
   /// torn down (e.g. app termination or hot-restart in dev).
   void _flushPendingPersistence() {
-    _persistenceTimer?.cancel();
-    _persistenceTimer = null;
-    if (_pendingPersistencePrevious != null) {
-      _pendingPersistencePrevious = null;
-      unawaited(CollectionSnapshotStorage.save(state));
-    }
+    unawaited(_persistPendingSnapshot());
   }
 
   void cycleFigure(String figureId) {
