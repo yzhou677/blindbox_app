@@ -4,6 +4,7 @@ import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/features/market/application/collectible_market_providers.dart';
 import 'package:blindbox_app/features/market/application/active_market_browse_query.dart';
+import 'package:blindbox_app/features/market/application/market_browse_root_navigation.dart';
 import 'package:blindbox_app/features/market/application/market_search_browse_notifier.dart';
 import 'package:blindbox_app/features/market/application/market_browse_load_more_controller.dart';
 import 'package:blindbox_app/features/market/data/gateway/market_gateway_config.dart';
@@ -16,7 +17,6 @@ import 'package:blindbox_app/features/market/widgets/market_load_more_footer.dar
 import 'package:blindbox_app/shared/widgets/feed_search_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 /// Market tab entry: same full-screen search flow as Discover catalog browse.
 class MarketBrowseSearchScreen extends ConsumerStatefulWidget {
@@ -75,10 +75,9 @@ class _MarketBrowseSearchScreenState
   void _exitSearch({bool clearField = true}) {
     _debounce?.cancel();
     if (clearField) _search.clear();
-    ref.read(marketSearchBrowseNotifierProvider.notifier).clearSession();
-    ref.read(marketSearchOverlayOpenProvider.notifier).setOpen(false);
+    clearMarketSearchOverlaySession(ref);
     if (!mounted) return;
-    if (context.canPop()) context.pop();
+    goToMarketBrowseRoot(context);
   }
 
   void _clearSearch() => _exitSearch();

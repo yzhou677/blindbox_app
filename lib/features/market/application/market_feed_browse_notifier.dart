@@ -3,6 +3,8 @@ import 'package:blindbox_app/features/market/presentation/market_price_sort.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+export 'market_browse_root_navigation.dart' show isMarketBrowseRootPath, kMarketBrowseRootPath;
+
 /// Market tab browse filters — independent from Search Market overlay state.
 @immutable
 class MarketFeedBrowseState {
@@ -36,9 +38,6 @@ final marketFeedBrowseNotifierProvider =
     NotifierProvider<MarketFeedBrowseNotifier, MarketFeedBrowseState>(
   MarketFeedBrowseNotifier.new,
 );
-
-/// True when the Market tab shows its root feed (not `/market/search` or a child).
-bool isMarketBrowseRootPath(String path) => path == '/market';
 
 class MarketFeedBrowseNotifier extends Notifier<MarketFeedBrowseState> {
   @override

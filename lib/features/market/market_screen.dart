@@ -3,6 +3,7 @@ import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
 import 'package:blindbox_app/features/market/application/collectible_market_providers.dart';
 import 'package:blindbox_app/features/market/debug/market_search_trace.dart';
 import 'package:blindbox_app/features/market/application/active_market_browse_query.dart';
+import 'package:blindbox_app/features/market/application/market_browse_root_navigation.dart';
 import 'package:blindbox_app/features/market/application/market_feed_browse_notifier.dart';
 import 'package:blindbox_app/features/market/application/market_search_browse_notifier.dart';
 import 'package:blindbox_app/features/market/application/market_browse_load_more_controller.dart';
@@ -65,16 +66,23 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
   /// Drops immersive search when the Market root is visible without `/market/search`.
   ///
   /// Covers tab reselect (`goBranch` + `initialLocation`) and other pops that skip
-  /// [MarketBrowseSearchScreen._exitSearch].
+  /// [MarketBrowseSearchScreen._exitSearch]. Provider writes are deferred — this
+  /// runs from [didChangeDependencies] during shell navigation rebuilds.
   void _reconcileSearchSessionWithRoute() {
     final path = GoRouterState.of(context).uri.path;
     if (path == _lastReconciledRoutePath) return;
     _lastReconciledRoutePath = path;
     if (!isMarketBrowseRootPath(path)) return;
+
     final search = ref.read(marketSearchBrowseNotifierProvider);
-    if (!search.isCommitted) return;
-    ref.read(marketSearchBrowseNotifierProvider.notifier).clearSession();
-    ref.read(marketSearchOverlayOpenProvider.notifier).setOpen(false);
+    final overlayOpen = ref.read(marketSearchOverlayOpenProvider);
+    if (!search.isCommitted && !overlayOpen) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (!isMarketBrowseRootPath(GoRouterState.of(context).uri.path)) return;
+      clearMarketSearchOverlaySession(ref);
+    });
   }
 
   void _onTabReselected() {
@@ -82,14 +90,16 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
         kMarketShellBranchIndex) {
       return;
     }
-    ref.read(marketSearchBrowseNotifierProvider.notifier).clearSession();
-    ref.read(marketSearchOverlayOpenProvider.notifier).setOpen(false);
-    if (!_scrollController.hasClients) return;
-    _scrollController.animateTo(
-      0,
-      duration: const Duration(milliseconds: 320),
-      curve: Curves.easeOutCubic,
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      resetMarketBrowseToRoot(ref: ref, context: context);
+      if (!_scrollController.hasClients) return;
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeOutCubic,
+      );
+    });
   }
 
   @override
