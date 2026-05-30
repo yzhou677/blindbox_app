@@ -100,6 +100,18 @@ Use one catalog series you can add from **search** and **Latest releases** if po
 | P0-16 | Open listing detail | Hero, facts, price; description **Read more** expands fully (no UI ellipsis clamp when expanded) |
 | P0-17 | Back from detail | Returns to Market without stuck overlay |
 
+#### Optional — Market device smoke (`tools/*.py`, adb)
+
+Requires a connected Android device (`adb devices`), the app already running with live Market gateway flags (see `docs/EBAY_GATEWAY.md`), and Python 3 on the host. Scripts use `uiautomator` dumps — unlock the device; layout coordinates assume a typical phone resolution.
+
+| Script | Command | Use |
+|--------|---------|-----|
+| Full release checklist | `python tools/market_release_smoke.py` | Chasers/feed/search/route/pagination heuristics; prints PASS/MINOR/FAIL summary |
+| Quick price-sort + load-more | `python tools/device_smoke_run.py` | Short POP MART / Price ↓ / Load more / Nommi search pass |
+| Minimal adb taps + logs | `python tools/market_smoke_adb.py` | Tap Market → filter → load more; prints recent `MarketSearch` / `MarketPriceSort` logcat lines |
+
+These are **optional** QA helpers (not CI); failures may be flaky if OEM UI or screen size differs.
+
 ### 2.6 Preview sheets & drag dismiss
 
 | # | Steps | Pass criteria |
