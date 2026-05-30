@@ -112,11 +112,13 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
       browseSignature: browseSignature,
       priceSort: feed.priceSort,
       stablePagination: MarketGatewayConfig.isActive,
+      sortByPrice: true,
       previousOrderIds: _displayOrderIds,
       previousPriceSort: _displayOrderPriceSort,
       previousBrowseSignature: _displayOrderBrowseSignature,
     );
     final sorted = display.snapshots;
+    final liveHasMore = ref.watch(marketLiveBrowseHasMoreProvider);
     if (display.orderIds != _displayOrderIds ||
         _displayOrderPriceSort != feed.priceSort ||
         _displayOrderBrowseSignature != browseSignature) {
@@ -130,7 +132,6 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
       });
     }
     final immersive = overlayOpen && search.isCommitted;
-    final liveHasMore = ref.watch(marketLiveBrowseHasMoreProvider);
     final loadingMore = ref.watch(marketBrowseLoadMoreProvider);
     final sessionTransitioning = ref.watch(marketBrowseSessionTransitionProvider);
     final chasersState = ref.watch(marketChasersControllerProvider);

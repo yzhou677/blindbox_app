@@ -4,13 +4,16 @@ import 'package:blindbox_app/features/market/presentation/market_price_sort.dart
 
 /// Stable collectibles feed order for paginated live browse.
 ///
-/// Price sort applies on filter/sort changes; load-more appends at the bottom.
+/// When [sortByPrice] is true, every call globally sorts all loaded snapshots
+/// (including after load-more). When false, gateway relevance order is kept and
+/// load-more appends new ids at the bottom.
 ({List<CollectibleMarketSnapshot> snapshots, List<String> orderIds})
     resolveCollectibleMarketDisplaySnapshots({
   required List<CollectibleMarketSnapshot> snapshots,
   required String browseSignature,
   required MarketPriceSort priceSort,
   required bool stablePagination,
+  required bool sortByPrice,
   required List<String> previousOrderIds,
   required MarketPriceSort previousPriceSort,
   required String? previousBrowseSignature,
@@ -23,11 +26,23 @@ import 'package:blindbox_app/features/market/presentation/market_price_sort.dart
     for (final snapshot in snapshots) snapshot.identity.snapshotId: snapshot,
   };
 
-  if (!stablePagination) {
+  if (sortByPrice) {
     final sorted = sortCollectibleMarketSnapshots(
       snapshots,
       priceSort,
       sortByPrice: true,
+    );
+    return (
+      snapshots: sorted,
+      orderIds: sorted.map((s) => s.identity.snapshotId).toList(),
+    );
+  }
+
+  if (!stablePagination) {
+    final sorted = sortCollectibleMarketSnapshots(
+      snapshots,
+      priceSort,
+      sortByPrice: false,
     );
     return (
       snapshots: sorted,
@@ -41,11 +56,7 @@ import 'package:blindbox_app/features/market/presentation/market_price_sort.dart
       previousPriceSort != priceSort;
 
   final orderIds = resetOrder
-      ? sortCollectibleMarketSnapshots(
-          snapshots,
-          priceSort,
-          sortByPrice: true,
-        ).map((s) => s.identity.snapshotId).toList()
+      ? feedIds
       : [
           ...previousOrderIds.where(byId.containsKey),
           ...feedIds.where((id) => !previousOrderIds.contains(id)),

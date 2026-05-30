@@ -31,9 +31,7 @@ class _MarketBrowseSearchScreenState
     extends ConsumerState<MarketBrowseSearchScreen> {
   final _search = TextEditingController();
   Timer? _debounce;
-  final MarketPriceSort _priceSort = MarketPriceSort.lowToHigh;
   List<String> _displayOrderIds = const [];
-  MarketPriceSort _displayOrderPriceSort = MarketPriceSort.lowToHigh;
   String? _displayOrderBrowseSignature;
 
   @override
@@ -99,15 +97,15 @@ class _MarketBrowseSearchScreenState
     final display = resolveCollectibleMarketDisplaySnapshots(
       snapshots: snapshots,
       browseSignature: browseSignature,
-      priceSort: _priceSort,
+      priceSort: MarketPriceSort.lowToHigh,
       stablePagination: MarketGatewayConfig.isActive,
+      sortByPrice: false,
       previousOrderIds: _displayOrderIds,
-      previousPriceSort: _displayOrderPriceSort,
+      previousPriceSort: MarketPriceSort.lowToHigh,
       previousBrowseSignature: _displayOrderBrowseSignature,
     );
     final sorted = display.snapshots;
     if (display.orderIds != _displayOrderIds ||
-        _displayOrderPriceSort != _priceSort ||
         _displayOrderBrowseSignature != browseSignature) {
       MarketSearchTrace.event(
         'schedule postFrame setState sig=$browseSignature order=${display.orderIds.length}',
@@ -117,7 +115,6 @@ class _MarketBrowseSearchScreenState
         MarketSearchTrace.event('postFrame setState (display order cache)');
         setState(() {
           _displayOrderIds = display.orderIds;
-          _displayOrderPriceSort = _priceSort;
           _displayOrderBrowseSignature = browseSignature;
         });
       });
