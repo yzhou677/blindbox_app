@@ -1,3 +1,6 @@
+# Local adb audit captures (regenerate via tools/market_dora_reselect_audit_adb.py)
+tools/*_audit_run.txt
+
 # Miscellaneous
 *.class
 *.log
