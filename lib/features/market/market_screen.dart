@@ -1,8 +1,10 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
 import 'package:blindbox_app/features/market/application/collectible_market_providers.dart';
+import 'package:blindbox_app/features/market/debug/market_browse_state_diagnostic.dart';
 import 'package:blindbox_app/features/market/debug/market_search_trace.dart';
 import 'package:blindbox_app/features/market/application/active_market_browse_query.dart';
+import 'package:blindbox_app/features/market/application/market_browse_feed_session_handoff.dart';
 import 'package:blindbox_app/features/market/application/market_browse_root_navigation.dart';
 import 'package:blindbox_app/features/market/application/market_feed_browse_notifier.dart';
 import 'package:blindbox_app/features/market/application/market_search_browse_notifier.dart';
@@ -43,6 +45,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
   MarketPriceSort _displayOrderPriceSort = MarketPriceSort.lowToHigh;
   String? _displayOrderBrowseSignature;
   String? _lastReconciledRoutePath;
+  bool _loggedFirstRootFrameAfterReselect = false;
 
   @override
   void initState() {
@@ -83,8 +86,20 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      if (!isMarketBrowseRootPath(GoRouterState.of(context).uri.path)) return;
+      final path = GoRouterState.of(context).uri.path;
+      if (!isMarketBrowseRootPath(path)) return;
+      MarketBrowseStateDiagnostic.log(
+        ref,
+        phase: 'reconcile_before_clear',
+        routePath: path,
+      );
       clearMarketSearchOverlaySession(ref);
+      beginFeedBrowseSessionHandoff(ref, reason: 'route_reconcile');
+      MarketBrowseStateDiagnostic.log(
+        ref,
+        phase: 'reconcile_after_clear',
+        routePath: path,
+      );
     });
   }
 
@@ -140,6 +155,15 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
       previousBrowseSignature: _displayOrderBrowseSignature,
     );
     final sorted = display.snapshots;
+    final immersive = overlayOpen && search.isCommitted;
+    final sessionTransitioning = ref.watch(marketBrowseSessionTransitionProvider);
+    final feedResults = marketBrowseFeedResultsForDisplay(
+      sorted: sorted,
+      sessionTransitioning: sessionTransitioning,
+      immersive: immersive,
+      activeSearchText: activeQuery.searchText,
+      gatewayActive: MarketGatewayConfig.isActive,
+    );
     final liveHasMore = ref.watch(marketLiveBrowseHasMoreProvider);
     if (display.orderIds != _displayOrderIds ||
         _displayOrderPriceSort != feed.priceSort ||
@@ -153,9 +177,24 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
         });
       });
     }
-    final immersive = overlayOpen && search.isCommitted;
     final loadingMore = ref.watch(marketBrowseLoadMoreProvider);
-    final sessionTransitioning = ref.watch(marketBrowseSessionTransitionProvider);
+    final routePath = GoRouterState.of(context).uri.path;
+    if (isMarketBrowseRootPath(routePath) && !_loggedFirstRootFrameAfterReselect) {
+      _loggedFirstRootFrameAfterReselect = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (!isMarketBrowseRootPath(GoRouterState.of(context).uri.path)) {
+          return;
+        }
+        MarketBrowseStateDiagnostic.log(
+          ref,
+          phase: 'market_root_first_frame',
+          routePath: GoRouterState.of(context).uri.path,
+        );
+      });
+    } else if (!isMarketBrowseRootPath(routePath)) {
+      _loggedFirstRootFrameAfterReselect = false;
+    }
     final chasersState = ref.watch(marketChasersControllerProvider);
     final showLiveChasersSlot = MarketChasersConfig.showLiveChasersSlot(
       isLoading: chasersState.isLoading,
@@ -276,7 +315,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
               ),
             ),
           ],
-          if (sorted.isEmpty)
+          if (feedResults.isEmpty)
             SliverFillRemaining(
               hasScrollBody: false,
               child: sessionTransitioning && MarketGatewayConfig.isActive
@@ -287,34 +326,19 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                     ),
             )
           else ...[
-            // Session-transition loading indicator floats above the list as a
-            // separate sliver so the card list below can remain lazy.
-            if (sessionTransitioning)
-              const SliverToBoxAdapter(
-                child: _MarketSessionTransitionIndicator(),
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(
+                20,
+                immersive
+                    ? FeedRhythm.blockGapMedium
+                    : FeedRhythm.marketBrowseHeaderToFeedGap,
+                20,
+                FeedRhythm.tabScrollTailPadding,
               ),
-            // Lazy card list: only visible cards are built and laid out.
-            // SliverOpacity dims stale results while a new session loads,
-            // matching the previous MarketBrowseSessionTransition behaviour.
-            SliverOpacity(
-              opacity: sessionTransitioning ? 0.34 : 1.0,
-              sliver: SliverIgnorePointer(
-                ignoring: sessionTransitioning,
-                sliver: SliverPadding(
-                  padding: EdgeInsets.fromLTRB(
-                    20,
-                    immersive
-                        ? FeedRhythm.blockGapMedium
-                        : FeedRhythm.marketBrowseHeaderToFeedGap,
-                    20,
-                    FeedRhythm.tabScrollTailPadding,
-                  ),
-                  sliver: SliverList.builder(
-                    itemCount: sorted.length,
-                    itemBuilder: (context, i) =>
-                        CollectibleMarketCard(snapshot: sorted[i]),
-                  ),
-                ),
+              sliver: SliverList.builder(
+                itemCount: feedResults.length,
+                itemBuilder: (context, i) =>
+                    CollectibleMarketCard(snapshot: feedResults[i]),
               ),
             ),
           ],
@@ -330,65 +354,6 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Compact loading pill shown while a new browse session loads (live gateway).
-///
-/// Rendered as a separate sliver above the dimmed card list so that the list
-/// can remain a lazy [SliverList] without needing an animated wrapper.
-class _MarketSessionTransitionIndicator extends StatelessWidget {
-  const _MarketSessionTransitionIndicator();
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Center(
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: scheme.surface.withValues(alpha: 0.92),
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(
-              color: scheme.outlineVariant.withValues(alpha: 0.45),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: scheme.shadow.withValues(alpha: 0.08),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: scheme.primary.withValues(alpha: 0.72),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  'Updating listings',
-                  style: textTheme.labelMedium?.copyWith(
-                    color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
         ),
       ),
     );

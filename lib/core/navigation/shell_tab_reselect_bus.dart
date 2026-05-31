@@ -1,3 +1,4 @@
+import 'package:blindbox_app/features/market/debug/market_search_trace.dart';
 import 'package:flutter/foundation.dart';
 
 /// Shell branch index for the Collection tab in [StatefulShellRoute.indexedStack].
@@ -25,6 +26,9 @@ final class ShellTabReselectBus {
   void notify(int branchIndex) {
     if (branchIndex == kMarketShellBranchIndex) {
       _marketBrowseRootResetPending = true;
+      MarketSearchTrace.event(
+        'shell ShellTabReselectBus.notify(market) after goBranch',
+      );
     }
     reselectedBranch.value = branchIndex;
   }

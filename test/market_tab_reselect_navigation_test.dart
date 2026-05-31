@@ -6,10 +6,13 @@ import 'package:blindbox_app/features/collection/data/series_release_lookup.dart
 import 'package:blindbox_app/features/home/application/home_feed_provider.dart';
 import 'package:blindbox_app/features/home/data/mock_latest_drops.dart';
 import 'package:blindbox_app/features/market/application/active_market_browse_query.dart';
+import 'package:blindbox_app/features/market/application/market_browse_feed_session_handoff.dart';
 import 'package:blindbox_app/features/market/application/market_browse_intelligence_install.dart';
+import 'package:blindbox_app/features/market/data/gateway/market_gateway_config.dart';
 import 'package:blindbox_app/features/market/application/market_browse_root_navigation.dart';
 import 'package:blindbox_app/features/market/application/market_search_browse_notifier.dart';
 import 'package:blindbox_app/features/market/data/collectible_market_session.dart';
+import 'package:blindbox_app/models/collectible.dart';
 import 'package:blindbox_app/features/market/data/market_browse_listings_session.dart';
 import 'package:blindbox_app/features/market/market_detail_screen.dart';
 import 'package:blindbox_app/features/market/presentation/market_browse_search_screen.dart';
@@ -301,6 +304,45 @@ void main() {
         container: container,
         routePath: appRouter.state.uri.path,
       );
+
+      if (MarketGatewayConfig.isActive) {
+        expect(
+          CollectibleMarketSession.instance.isInstalled,
+          isFalse,
+          reason: 'browse_root_reset must clear stale Dora session',
+        );
+      }
+    },
+  );
+
+  testWidgets(
+    'scenario 1 dora: feed handoff hides stale rows while session transitions',
+    (WidgetTester tester) async {
+      installMarketBrowseIntelligence([
+        MarketListing(
+          id: 'mkt-dora-stale',
+          collectible: Collectible(
+            id: 'mkt-dora-stale',
+            name: 'Dora Stale Row',
+            series: 'S',
+            brand: 'B',
+            releaseDate: DateTime.utc(2026),
+            imageUrl: '',
+          ),
+          currentPriceUsd: 9,
+          priceChangePercent: 0,
+          listingCount: 1,
+        ),
+      ]);
+
+      final hidden = marketBrowseFeedResultsForDisplay(
+        sorted: CollectibleMarketSession.instance.list,
+        sessionTransitioning: true,
+        immersive: false,
+        activeSearchText: '',
+        gatewayActive: true,
+      );
+      expect(hidden, isEmpty);
     },
   );
 

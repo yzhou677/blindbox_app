@@ -1,6 +1,7 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
 import 'package:blindbox_app/features/market/application/market_browse_root_navigation.dart';
+import 'package:blindbox_app/features/market/debug/market_browse_state_diagnostic.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/collectible_shelf_shadow.dart';
@@ -37,6 +38,14 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
   void initState() {
     super.initState();
     ShellTabReselectBus.instance.reselectedBranch.addListener(_onTabReselected);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      MarketBrowseStateDiagnostic.log(
+        ref,
+        phase: 'listing_detail_opened',
+        routePath: GoRouterState.of(context).uri.path,
+      );
+    });
   }
 
   @override
@@ -45,8 +54,14 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
     super.dispose();
   }
 
-  void _onTabReselected() =>
-      handleMarketShellTabReselected(ref: ref, context: context);
+  void _onTabReselected() {
+    MarketBrowseStateDiagnostic.log(
+      ref,
+      phase: 'listing_detail_before_reselect',
+      routePath: GoRouterState.of(context).uri.path,
+    );
+    handleMarketShellTabReselected(ref: ref, context: context);
+  }
 
   @override
   Widget build(BuildContext context) {
