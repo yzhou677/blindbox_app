@@ -48,6 +48,9 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
   void initState() {
     super.initState();
     ShellTabReselectBus.instance.reselectedBranch.addListener(_onTabReselected);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _consumePendingMarketBrowseRootReselect();
+    });
   }
 
   @override
@@ -85,13 +88,21 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
     });
   }
 
+  void _consumePendingMarketBrowseRootReselect() {
+    if (!mounted) return;
+    if (!ShellTabReselectBus.instance.takeMarketBrowseRootResetPending()) {
+      return;
+    }
+    completeMarketBrowseRootReselect(ref: ref, context: context);
+  }
+
   void _onTabReselected() {
     if (ShellTabReselectBus.instance.reselectedBranch.value !=
         kMarketShellBranchIndex) {
       return;
     }
     if (!mounted) return;
-    resetMarketBrowseToRoot(ref: ref, context: context);
+    completeMarketBrowseRootReselect(ref: ref, context: context);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       if (!_scrollController.hasClients) return;

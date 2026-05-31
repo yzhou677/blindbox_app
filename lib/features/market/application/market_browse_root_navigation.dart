@@ -46,7 +46,18 @@ void resetMarketBrowseToRoot({
 }) {
   dismissMarketBranchModalOverlays(context);
   clearMarketSearchOverlaySession(ref);
-  goToMarketBrowseRoot(context);
+  // Always go — parent [MarketScreen] can report `/market` while listing/search
+  // child routes are still on the branch stack.
+  GoRouter.of(context).go(kMarketBrowseRootPath);
+}
+
+/// Marks a Market tab reselect as handled (search session cleared + routed).
+void completeMarketBrowseRootReselect({
+  required WidgetRef ref,
+  required BuildContext context,
+}) {
+  resetMarketBrowseToRoot(ref: ref, context: context);
+  ShellTabReselectBus.instance.takeMarketBrowseRootResetPending();
 }
 
 /// [ShellTabReselectBus] hook for Market sub-routes (listing, search).
@@ -62,5 +73,5 @@ void handleMarketShellTabReselected({
     return;
   }
   if (!context.mounted) return;
-  resetMarketBrowseToRoot(ref: ref, context: context);
+  completeMarketBrowseRootReselect(ref: ref, context: context);
 }

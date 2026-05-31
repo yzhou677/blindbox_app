@@ -17,7 +17,29 @@ final class ShellTabReselectBus {
 
   final ValueNotifier<int?> reselectedBranch = ValueNotifier<int?>(null);
 
+  /// Set when Market is re-tapped; consumed when [MarketScreen] or a sub-route
+  /// handles [resetMarketBrowseToRoot]. Covers search → listing → reselect where
+  /// [goBranch] disposes listeners before [MarketScreen] mounts.
+  bool _marketBrowseRootResetPending = false;
+
   void notify(int branchIndex) {
+    if (branchIndex == kMarketShellBranchIndex) {
+      _marketBrowseRootResetPending = true;
+    }
     reselectedBranch.value = branchIndex;
+  }
+
+  bool get isMarketBrowseRootResetPending => _marketBrowseRootResetPending;
+
+  /// Returns whether a Market browse-root reset was requested and clears the flag.
+  bool takeMarketBrowseRootResetPending() {
+    final pending = _marketBrowseRootResetPending;
+    _marketBrowseRootResetPending = false;
+    return pending;
+  }
+
+  /// Drops a stale reselect request when the Market branch is left without handling.
+  void clearMarketBrowseRootResetPending() {
+    _marketBrowseRootResetPending = false;
   }
 }
