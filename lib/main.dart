@@ -8,6 +8,7 @@ import 'package:blindbox_app/features/collection/data/collection_seed_data.dart'
 import 'package:blindbox_app/features/collection/data/series_release_lookup.dart';
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
 import 'package:blindbox_app/features/collection/persistence/collection_snapshot_storage.dart';
+import 'package:blindbox_app/features/home/application/catalog_bundle_refresh_bridge.dart';
 import 'package:blindbox_app/features/home/application/home_feed_provider.dart';
 import 'package:blindbox_app/features/market/data/market_catalog_identity_cache.dart';
 import 'package:blindbox_app/features/market/data/market_listings_bootstrap.dart';
@@ -39,7 +40,7 @@ Future<void> main() async {
           (ref) => ref.watch(homeSeriesReleaseLookupProvider),
         ),
       ],
-      child: const BlindboxApp(),
+      child: const CatalogBundleRefreshBridge(child: BlindboxApp()),
     ),
   );
 }

@@ -22,6 +22,16 @@ abstract final class CatalogBundleCache {
     _bundle = bundle;
   }
 
+  /// Optional hook after a successful Firestore refresh replaces [_bundle].
+  ///
+  /// Registered by [CatalogBundleRefreshBridge] to invalidate Discover feed.
+  static void Function()? onBundleReplaced;
+
+  static void _notifyBundleReplaced() => onBundleReplaced?.call();
+
+  @visibleForTesting
+  static void triggerBundleReplacedForTest() => _notifyBundleReplaced();
+
   /// Bundled seed immediately, then optional background Firestore refresh.
   static Future<CatalogSeedBundle> loadOfflineFirst() async {
     if (_bundle != null) {
@@ -56,6 +66,7 @@ abstract final class CatalogBundleCache {
     try {
       final fresh = await loadFirestoreCatalogBundle().timeout(firestoreTimeout);
       _bundle = fresh;
+      _notifyBundleReplaced();
     } catch (e, st) {
       debugPrint('CatalogBundleCache: Firestore refresh skipped: $e\n$st');
     }
