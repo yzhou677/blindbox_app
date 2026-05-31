@@ -42,8 +42,6 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
   List<String> _displayOrderIds = const [];
   MarketPriceSort _displayOrderPriceSort = MarketPriceSort.lowToHigh;
   String? _displayOrderBrowseSignature;
-  String? _lastReconciledRoutePath;
-
   @override
   void initState() {
     super.initState();
@@ -66,26 +64,20 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
     _reconcileSearchSessionWithRoute();
   }
 
-  /// Drops immersive search when the Market root is visible without `/market/search`.
+  /// Drops immersive search when the router location is browse root only.
   ///
-  /// Covers tab reselect (`goBranch` + `initialLocation`) and other pops that skip
-  /// [MarketBrowseSearchScreen._exitSearch]. Provider writes are deferred — this
-  /// runs from [didChangeDependencies] during shell navigation rebuilds.
+  /// Uses [GoRouter.of] full location (not the parent match) so we do not clear
+  /// while `/market/search` is active. Backup when pop/exit skips [_exitSearch].
   void _reconcileSearchSessionWithRoute() {
-    final path = GoRouterState.of(context).uri.path;
-    if (path == _lastReconciledRoutePath) return;
-    _lastReconciledRoutePath = path;
+    final path = GoRouter.of(context).state.uri.path;
     if (!isMarketBrowseRootPath(path)) return;
 
     final search = ref.read(marketSearchBrowseNotifierProvider);
     final overlayOpen = ref.read(marketSearchOverlayOpenProvider);
     if (!search.isCommitted && !overlayOpen) return;
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      if (!isMarketBrowseRootPath(GoRouterState.of(context).uri.path)) return;
-      clearMarketSearchOverlaySession(ref);
-    });
+    logMarketBrowseChromeState(ref, phase: 'reconcile_clear', routePath: path);
+    clearMarketSearchOverlaySession(ref);
   }
 
   void _consumePendingMarketBrowseRootReselect() {

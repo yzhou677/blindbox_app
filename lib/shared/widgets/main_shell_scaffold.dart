@@ -1,13 +1,15 @@
 import 'dart:async';
 
 import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
+import 'package:blindbox_app/features/market/application/market_browse_root_navigation.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart'
     show CollectionModalOverlayRegistry;
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 /// Anchored main navigation — full-width dock (no ambiguous “floating” hit target).
-class MainShellScaffold extends StatelessWidget {
+class MainShellScaffold extends ConsumerWidget {
   const MainShellScaffold({super.key, required this.shell});
 
   final StatefulNavigationShell shell;
@@ -30,10 +32,16 @@ class MainShellScaffold extends StatelessWidget {
     ),
   ];
 
-  void _onDestinationSelected(BuildContext context, int index) {
+  void _onDestinationSelected(WidgetRef ref, BuildContext context, int index) {
     if (shell.currentIndex == index) {
       if (index == kCollectionShellBranchIndex) {
         unawaited(CollectionModalOverlayRegistry.instance.dismissAll());
+      }
+      if (index == kMarketShellBranchIndex) {
+        prepareMarketShellTabReselectToBrowseRoot(
+          ref,
+          routePath: GoRouter.of(context).state.uri.path,
+        );
       }
       shell.goBranch(index, initialLocation: true);
       ShellTabReselectBus.instance.notify(index);
@@ -47,7 +55,7 @@ class MainShellScaffold extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
     final isLight = Theme.of(context).brightness == Brightness.light;
 
@@ -82,7 +90,8 @@ class MainShellScaffold extends StatelessWidget {
             ),
             NavigationBar(
               selectedIndex: shell.currentIndex,
-              onDestinationSelected: (index) => _onDestinationSelected(context, index),
+              onDestinationSelected: (index) =>
+                  _onDestinationSelected(ref, context, index),
               height: 64,
               elevation: 0,
               shadowColor: Colors.transparent,

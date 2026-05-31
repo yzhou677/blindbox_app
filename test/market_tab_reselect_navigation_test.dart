@@ -123,18 +123,38 @@ Future<void> _marketTabReselect(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 500));
 }
 
+void _expectBrowseChromeNotImmersive(ProviderContainer container) {
+  expect(container.read(marketSearchOverlayOpenProvider), isFalse);
+  expect(
+    container.read(marketSearchBrowseNotifierProvider).isCommitted,
+    isFalse,
+  );
+}
+
 void _expectFullBrowseRoot({
   required ProviderContainer container,
   required String routePath,
 }) {
   expect(routePath, kMarketBrowseRootPath);
-  expect(
-    container.read(marketSearchBrowseNotifierProvider).isCommitted,
-    isFalse,
-  );
+  _expectBrowseChromeNotImmersive(container);
   expect(container.read(marketSearchBrowseNotifierProvider).query, isEmpty);
-  expect(container.read(marketSearchOverlayOpenProvider), isFalse);
   expect(container.read(activeMarketBrowseQueryProvider).searchText, isEmpty);
+}
+
+/// After shell reselect, overlay session must clear before/at first root build.
+Future<void> _assertBrowseChromeAfterFirstReselectPump(
+  WidgetTester tester,
+) async {
+  await tester.tap(_marketNavTab());
+  await tester.pump();
+  final container = ProviderScope.containerOf(
+    tester.element(find.byType(NavigationBar)),
+  );
+  _expectBrowseChromeNotImmersive(container);
+  await tester.pump(const Duration(milliseconds: 400));
+  expect(appRouter.state.uri.path, kMarketBrowseRootPath);
+  expect(find.text('Brand'), findsOneWidget);
+  expect(find.text('Collectibles'), findsOneWidget);
 }
 
 void _expectSearchSessionPreserved({
@@ -287,12 +307,10 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
       expect(find.byType(MarketDetailScreen), findsOneWidget);
 
-      await _marketTabReselect(tester);
+      await _assertBrowseChromeAfterFirstReselectPump(tester);
 
       expect(find.byType(MarketDetailScreen), findsNothing);
       expect(find.text('Search market'), findsNothing);
-      expect(find.text('Brand'), findsOneWidget);
-      expect(find.text('Collectibles'), findsOneWidget);
 
       final container = ProviderScope.containerOf(
         tester.element(find.text('Collectibles')),
@@ -312,12 +330,10 @@ void main() {
       await _openMarketSearchWithQuery(tester, 'labubu');
       await _tapFirstMarketSearchPreviewSheet(tester);
 
-      await _marketTabReselect(tester);
+      await _assertBrowseChromeAfterFirstReselectPump(tester);
 
       expect(find.byType(BottomSheet), findsNothing);
       expect(find.text('Search market'), findsNothing);
-      expect(find.text('Brand'), findsOneWidget);
-      expect(find.text('Collectibles'), findsOneWidget);
 
       final container = ProviderScope.containerOf(
         tester.element(find.text('Collectibles')),
@@ -390,14 +406,15 @@ void main() {
 
       expect(find.byType(MarketDetailScreen), findsOneWidget);
 
-      await tester.tap(_marketNavTab());
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 500));
+      await _assertBrowseChromeAfterFirstReselectPump(tester);
 
-      expect(appRouter.state.uri.path, kMarketBrowseRootPath);
       expect(find.byType(MarketDetailScreen), findsNothing);
-      expect(find.text('Brand'), findsOneWidget);
-      expect(find.text('Collectibles'), findsOneWidget);
+      _expectFullBrowseRoot(
+        container: ProviderScope.containerOf(
+          tester.element(find.text('Collectibles')),
+        ),
+        routePath: appRouter.state.uri.path,
+      );
     },
   );
 }
