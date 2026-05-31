@@ -13,13 +13,11 @@ import 'package:blindbox_app/features/market/presentation/collectible_market_dis
 import 'package:blindbox_app/features/market/presentation/market_price_sort.dart';
 import 'package:blindbox_app/features/market/widgets/market_browse_session_transition.dart';
 import 'package:blindbox_app/features/market/widgets/collectible_market_card.dart';
-import 'package:blindbox_app/features/market/debug/market_browse_state_diagnostic.dart';
 import 'package:blindbox_app/features/market/debug/market_search_trace.dart';
 import 'package:blindbox_app/features/market/widgets/market_load_more_footer.dart';
 import 'package:blindbox_app/shared/widgets/feed_search_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 /// Market tab entry: same full-screen search flow as Discover catalog browse.
 class MarketBrowseSearchScreen extends ConsumerStatefulWidget {
@@ -36,7 +34,6 @@ class _MarketBrowseSearchScreenState
   Timer? _debounce;
   List<String> _displayOrderIds = const [];
   String? _displayOrderBrowseSignature;
-  String? _lastAuditLoggedSearchSig;
 
   @override
   void initState() {
@@ -128,19 +125,6 @@ class _MarketBrowseSearchScreenState
       });
     }
     final showResults = search.isCommitted;
-    if (showResults &&
-        search.query.trim().isNotEmpty &&
-        _lastAuditLoggedSearchSig != browseSignature) {
-      _lastAuditLoggedSearchSig = browseSignature;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        MarketBrowseStateDiagnostic.log(
-          ref,
-          phase: 'search_results_after_commit',
-          routePath: GoRouterState.of(context).uri.path,
-        );
-      });
-    }
     final liveHasMore = ref.watch(marketLiveBrowseHasMoreProvider);
     final loadingMore = ref.watch(marketBrowseLoadMoreProvider);
     final sessionTransitioning = ref.watch(marketBrowseSessionTransitionProvider);

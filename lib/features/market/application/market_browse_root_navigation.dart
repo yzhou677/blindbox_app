@@ -1,7 +1,5 @@
 import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
-import 'package:blindbox_app/features/market/application/market_browse_feed_session_handoff.dart';
 import 'package:blindbox_app/features/market/application/market_search_browse_notifier.dart';
-import 'package:blindbox_app/features/market/debug/market_browse_state_diagnostic.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -46,42 +44,11 @@ void resetMarketBrowseToRoot({
   required WidgetRef ref,
   required BuildContext context,
 }) {
-  final routePath = GoRouterState.of(context).uri.path;
-  MarketBrowseStateDiagnostic.log(
-    ref,
-    phase: 'reset_before_clear',
-    routePath: routePath,
-  );
   dismissMarketBranchModalOverlays(context);
   clearMarketSearchOverlaySession(ref);
-  beginFeedBrowseSessionHandoff(ref, reason: 'browse_root_reset');
-  MarketBrowseStateDiagnostic.log(
-    ref,
-    phase: 'reset_after_clear',
-    routePath: routePath,
-  );
   // Always go — parent [MarketScreen] can report `/market` while listing/search
   // child routes are still on the branch stack.
   GoRouter.of(context).go(kMarketBrowseRootPath);
-  MarketBrowseStateDiagnostic.log(
-    ref,
-    phase: 'reset_after_go',
-    routePath: kMarketBrowseRootPath,
-  );
-  MarketBrowseStateDiagnostic.log(
-    ref,
-    phase: 'reset_market_browse_to_root_done',
-    routePath: kMarketBrowseRootPath,
-  );
-}
-
-/// Called from [handleMarketShellTabReselected] after [resetMarketBrowseToRoot].
-void logAfterMarketTabReselect(WidgetRef ref, BuildContext context) {
-  MarketBrowseStateDiagnostic.log(
-    ref,
-    phase: 'after_reset_handler',
-    routePath: GoRouterState.of(context).uri.path,
-  );
 }
 
 /// Marks a Market tab reselect as handled (search session cleared + routed).
@@ -107,5 +74,4 @@ void handleMarketShellTabReselected({
   }
   if (!context.mounted) return;
   completeMarketBrowseRootReselect(ref: ref, context: context);
-  logAfterMarketTabReselect(ref, context);
 }

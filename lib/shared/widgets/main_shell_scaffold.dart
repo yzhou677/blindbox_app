@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
-import 'package:blindbox_app/features/market/debug/market_search_trace.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart'
     show CollectionModalOverlayRegistry;
 import 'package:flutter/material.dart';
@@ -37,11 +36,6 @@ class MainShellScaffold extends StatelessWidget {
         unawaited(CollectionModalOverlayRegistry.instance.dismissAll());
       }
       shell.goBranch(index, initialLocation: true);
-      if (index == kMarketShellBranchIndex) {
-        MarketSearchTrace.event(
-          'shell goBranch(initialLocation: true) market branch',
-        );
-      }
       ShellTabReselectBus.instance.notify(index);
       return;
     }

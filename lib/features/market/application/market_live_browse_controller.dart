@@ -5,7 +5,6 @@ import 'package:blindbox_app/features/market/application/collectible_market_prov
 import 'package:blindbox_app/features/market/application/market_live_browse_install.dart';
 import 'package:blindbox_app/features/market/application/market_live_browse_session.dart';
 import 'package:blindbox_app/features/market/application/market_listings_providers.dart';
-import 'package:blindbox_app/features/market/debug/market_browse_state_diagnostic.dart';
 import 'package:blindbox_app/features/market/debug/market_search_trace.dart';
 import 'package:blindbox_app/features/market/data/gateway/market_gateway_config.dart';
 import 'package:blindbox_app/features/market/data/source/ebay_gateway_market_source.dart';
@@ -81,26 +80,10 @@ class MarketLiveBrowseController extends Notifier<MarketLiveBrowseState> {
     if (prev?.signature == next.signature) return;
 
     MarketSearchTrace.event(
-      '_onActiveQueryChanged prev=${prev?.signature} → _startQuery',
+      '_onActiveQueryChanged → _startQuery',
       signature: next.signature,
     );
     _startQuery(next, reason: 'filters');
-  }
-
-  /// Forces a live session handoff to [activeMarketBrowseQueryProvider].
-  ///
-  /// Tab reselect clears search Riverpod state but [CollectibleMarketSession] can
-  /// still hold the previous search rows until install completes. Call after
-  /// [clearMarketSearchOverlaySession] so UI query and gateway session realign.
-  void rehandoffActiveQuery({required String reason}) {
-    if (!MarketGatewayConfig.isActive) return;
-    final query = ref.read(activeMarketBrowseQueryProvider);
-    MarketSearchTrace.event(
-      'rehandoffActiveQuery reason=$reason',
-      signature: query.signature,
-    );
-    _lastHandoffSignature = null;
-    _startQuery(query, reason: reason);
   }
 
   /// Synchronous handoff — bumps generation before any await so latest filters win.
@@ -351,13 +334,6 @@ class MarketLiveBrowseController extends Notifier<MarketLiveBrowseState> {
       listings: listings.length,
       gapWarnMs: 1000,
     );
-    if (_ownsGeneration(generation, query) && !_session.state.isBusy) {
-      MarketBrowseStateDiagnostic.logNotifier(
-        ref,
-        phase: 'live_controller_settled',
-        routePath: null,
-      );
-    }
   }
 
   /// Refresh browse-derived providers after session singletons update.
