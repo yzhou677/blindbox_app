@@ -14,11 +14,22 @@ abstract final class MarketTaxonomyAdapter {
           (id: ip.id, displayLabel: ip.displayName),
       ];
 
-  /// IPs shown on market/collection filter chip rails (subset of [buildIpRows]).
-  static List<({String id, String displayLabel})> buildFilterIpRows() => [
-        for (final row in buildIpRows())
-          if (!MarketFilterVisibility.hiddenIpIds.contains(row.id)) row,
-      ];
+  /// IPs shown on market filter chip rails (subset of [buildIpRows]).
+  static List<({String id, String displayLabel})> buildFilterIpRows() {
+    final byBrand = <String, Set<String>>{};
+    for (final ip in IpTaxonomyRegistry.all) {
+      (byBrand[ip.brandId] ??= {}).add(ip.id);
+    }
+    return [
+      for (final ip in IpTaxonomyRegistry.all)
+        if (!MarketFilterVisibility.hiddenIpIds.contains(ip.id))
+          if (MarketFilterVisibility.shouldShowIpOnFilterRail(
+            ip.id,
+            byBrand[ip.brandId] ?? const {},
+          ))
+            (id: ip.id, displayLabel: ip.displayName),
+    ];
+  }
 
   /// One row per brand in [BrandTaxonomyRegistry.all] declaration order;
   /// [supportedIpIds] follow first occurrence in [IpTaxonomyRegistry.all].
@@ -57,11 +68,18 @@ abstract final class MarketTaxonomyAdapter {
           (
             id: row.id,
             displayLabel: row.displayLabel,
-            supportedIpIds: List<String>.unmodifiable([
-              for (final ipId in row.supportedIpIds)
-                if (!MarketFilterVisibility.hiddenIpIds.contains(ipId)) ipId,
-            ]),
+            supportedIpIds: _filterRailIpIdsForBrand(row.supportedIpIds),
           ),
     ];
+  }
+
+  static List<String> _filterRailIpIdsForBrand(List<String> brandIpIds) {
+    final brandIpIdSet = brandIpIds.toSet();
+    return List<String>.unmodifiable([
+      for (final ipId in brandIpIds)
+        if (!MarketFilterVisibility.hiddenIpIds.contains(ipId))
+          if (MarketFilterVisibility.shouldShowIpOnFilterRail(ipId, brandIpIdSet))
+            ipId,
+    ]);
   }
 }

@@ -4,7 +4,6 @@ import 'package:blindbox_app/features/catalog/catalog_bundle_loader.dart';
 import 'package:blindbox_app/features/catalog/catalog_latest_series.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
-import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_series_search_rows.dart';
 import 'package:blindbox_app/features/catalog/widgets/catalog_series_search_row_card.dart';
 import 'package:blindbox_app/features/collection/application/catalog_series_shelf_commit.dart';
@@ -75,7 +74,6 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
 
   void _applyCatalogBundle(CatalogSeedBundle b) {
     final snap = ref.read(collectionNotifierProvider);
-    MarketTaxonomy.applyCatalogBundle(b);
     setState(() {
       _catalogBundle = b;
       _catalogLoadFailed = false;

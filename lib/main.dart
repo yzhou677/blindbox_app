@@ -1,6 +1,5 @@
 import 'package:blindbox_app/core/firebase/ensure_firebase_initialized.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
-import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
 import 'package:blindbox_app/core/router/app_router.dart';
 import 'package:blindbox_app/core/theme/app_theme.dart';
 import 'package:blindbox_app/features/collection/bootstrap/collection_app_bootstrap.dart';
@@ -24,7 +23,6 @@ Future<void> main() async {
   }
   try {
     final catalogBundle = await CatalogBundleCache.loadOfflineFirst();
-    MarketTaxonomy.applyCatalogBundle(catalogBundle);
     MarketCatalogIdentityCache.install(catalogBundle);
   } catch (e, st) {
     debugPrint('Catalog seed bootstrap skipped: $e\n$st');

@@ -1,6 +1,3 @@
-import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
-import 'package:blindbox_app/features/catalog/models/catalog_brand.dart';
-import 'package:blindbox_app/features/catalog/models/catalog_ip.dart';
 import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
 import 'package:blindbox_app/features/market/taxonomy/brand_taxonomy_registry.dart';
 import 'package:blindbox_app/features/market/taxonomy/ip_taxonomy_registry.dart';
@@ -12,6 +9,16 @@ void main() {
   test('adapter rows mirror registry sizes and ids', () {
     expect(MarketTaxonomyAdapter.buildIpRows().length, IpTaxonomyRegistry.all.length);
     expect(MarketTaxonomyAdapter.buildBrandRows().length, BrandTaxonomyRegistry.all.length);
+  });
+
+  test('filter chips mirror adapter filter rows only (not catalog)', () {
+    final adapterIpIds =
+        MarketTaxonomyAdapter.buildFilterIpRows().map((e) => e.id).toSet();
+    final adapterBrandIds =
+        MarketTaxonomyAdapter.buildFilterBrandRows().map((e) => e.id).toSet();
+
+    expect(MarketTaxonomy.allIps.map((e) => e.id).toSet(), adapterIpIds);
+    expect(MarketTaxonomy.brands.map((e) => e.id).toSet(), adapterBrandIds);
   });
 
   test('filter chip brands exclude Finding Unicorn', () {
@@ -44,25 +51,7 @@ void main() {
     expect(tnt.supportedIpIds, isNot(contains('liila')));
   });
 
-  test('filter chip TOPTOY IPs exclude nommi x amarilith collab line', () {
-    final bundle = CatalogSeedBundle(
-      brands: const [
-        CatalogBrand(id: 'toptoy', displayName: 'TOPTOY', aliases: []),
-      ],
-      ips: const [
-        CatalogIp(id: 'nommi', brandId: 'toptoy', displayName: 'Nommi', aliases: []),
-        CatalogIp(
-          id: 'nommi_x_amarilith',
-          brandId: 'toptoy',
-          displayName: 'Nommi x Amarilith',
-          aliases: ['Amarilith'],
-        ),
-        CatalogIp(id: 'maymei', brandId: 'toptoy', displayName: 'Maymei', aliases: []),
-      ],
-      series: const [],
-      figures: const [],
-    );
-    MarketTaxonomy.applyCatalogBundle(bundle);
+  test('filter chip TOPTOY IPs exclude hidden nommi_x_amarilith collab line', () {
     final toptoy = MarketTaxonomy.brands.firstWhere((b) => b.id == 'toptoy');
     expect(toptoy.supportedIpIds, contains('nommi'));
     expect(toptoy.supportedIpIds, isNot(contains('nommi_x_amarilith')));
@@ -70,6 +59,18 @@ void main() {
       MarketTaxonomy.ipChipOptionsForBrand('toptoy').map((o) => o.id),
       isNot(contains('nommi_x_amarilith')),
     );
+    expect(MarketTaxonomy.allIps.map((i) => i.id), isNot(contains('nommi_x_amarilith')));
+  });
+
+  test('catalog-only ip ids never appear on market filter rails', () {
+    const catalogOnlyIpIds = {'1001moons', '1001_moons'};
+    for (final id in catalogOnlyIpIds) {
+      expect(MarketTaxonomy.allIps.map((i) => i.id), isNot(contains(id)));
+      expect(
+        MarketTaxonomy.ipChipOptionsForBrand('pop_mart').map((o) => o.id),
+        isNot(contains(id)),
+      );
+    }
   });
 
   test('brandById still resolves full registry for listings', () {
@@ -83,81 +84,7 @@ void main() {
     expect(ids.toSet().length, ids.length);
   });
 
-  test('applyCatalogBundle uses Firestore brand and ip ids', () {
-    final bundle = CatalogSeedBundle(
-      brands: const [
-        CatalogBrand(id: 'pop_mart', displayName: 'POP MART', aliases: []),
-      ],
-      ips: const [
-        CatalogIp(
-          id: 'the_monsters',
-          brandId: 'pop_mart',
-          displayName: 'THE MONSTERS',
-          aliases: ['Labubu'],
-        ),
-        CatalogIp(
-          id: 'peach_riot',
-          brandId: 'pop_mart',
-          displayName: 'Peach Riot',
-          aliases: [],
-        ),
-      ],
-      series: const [],
-      figures: const [],
-    );
-    MarketTaxonomy.applyCatalogBundle(bundle);
-    final pop = MarketTaxonomy.brands.firstWhere((b) => b.id == 'pop_mart');
-    expect(pop.displayLabel, 'POP MART');
-    expect(pop.supportedIpIds, contains('the_monsters'));
-    expect(pop.supportedIpIds, isNot(contains('peach_riot')));
-    expect(MarketTaxonomy.allIps.map((i) => i.id), contains('the_monsters'));
-  });
-
-  test('filter chips hide generic molly when baby_molly or space_molly present', () {
-    final bundle = CatalogSeedBundle(
-      brands: const [
-        CatalogBrand(id: 'pop_mart', displayName: 'POP MART', aliases: []),
-      ],
-      ips: const [
-        CatalogIp(id: 'molly', brandId: 'pop_mart', displayName: 'Molly', aliases: []),
-        CatalogIp(id: 'baby_molly', brandId: 'pop_mart', displayName: 'Baby Molly', aliases: []),
-        CatalogIp(id: 'space_molly', brandId: 'pop_mart', displayName: 'Space Molly', aliases: []),
-      ],
-      series: const [],
-      figures: const [],
-    );
-    MarketTaxonomy.applyCatalogBundle(bundle);
-    final ipIds = MarketTaxonomy.allIps.map((i) => i.id).toSet();
-    expect(ipIds, containsAll(['baby_molly', 'space_molly']));
-    expect(ipIds, isNot(contains('molly')));
-    final popIpIds = MarketTaxonomy.ipChipOptionsForBrand('pop_mart').map((o) => o.id);
-    expect(popIpIds, containsAll(['baby_molly', 'space_molly']));
-    expect(popIpIds, isNot(contains('molly')));
-  });
-
-  test('ipChipOptionsForBrand uses Firestore-backed filter rows not adapter registry', () {
-    final bundle = CatalogSeedBundle(
-      brands: const [
-        CatalogBrand(id: 'pop_mart', displayName: 'POP MART', aliases: []),
-      ],
-      ips: const [
-        CatalogIp(
-          id: 'the_monsters',
-          brandId: 'pop_mart',
-          displayName: 'THE MONSTERS',
-          aliases: ['Labubu'],
-        ),
-        CatalogIp(
-          id: 'peach_riot',
-          brandId: 'pop_mart',
-          displayName: 'Peach Riot',
-          aliases: [],
-        ),
-      ],
-      series: const [],
-      figures: const [],
-    );
-    MarketTaxonomy.applyCatalogBundle(bundle);
+  test('ipChipOptionsForBrand uses registry-backed filter rows', () {
     final ipIds = MarketTaxonomy.ipChipOptionsForBrand('pop_mart').map((o) => o.id);
     expect(ipIds, contains('the_monsters'));
     expect(ipIds, isNot(contains('peach_riot')));

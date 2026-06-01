@@ -1,5 +1,3 @@
-import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
-import 'package:blindbox_app/features/market/catalog/market_catalog_filters.dart';
 import 'package:blindbox_app/features/market/taxonomy/market_filter_visibility.dart';
 import 'package:blindbox_app/features/market/taxonomy/market_taxonomy_adapter.dart';
 import 'package:blindbox_app/models/market_listing.dart';
@@ -39,17 +37,17 @@ class MarketBrandTaxon {
   final List<String> supportedIpIds;
 }
 
-/// Central catalog: brands ↔ IPs, chip rows, and listing filter predicates.
+/// Market browse taxonomy: filter chip rows and listing filter predicates.
 ///
-/// Filter chip rows use [_catalogBrands] / [_catalogIps] (Firestore bundle when applied).
+/// Filter chips use the curated [MarketTaxonomyAdapter] registry only — not Firestore catalog.
 /// [brandById] / [ipById] use the full adapter registry for listing copy and title resolution.
 abstract final class MarketTaxonomy {
-  static final List<MarketIpTaxon> _defaultIps = [
+  static final List<MarketIpTaxon> _filterIps = [
     for (final row in MarketTaxonomyAdapter.buildFilterIpRows())
       MarketIpTaxon(id: row.id, displayLabel: row.displayLabel),
   ];
 
-  static final List<MarketBrandTaxon> _defaultBrands = [
+  static final List<MarketBrandTaxon> _filterBrands = [
     for (final row in MarketTaxonomyAdapter.buildFilterBrandRows())
       MarketBrandTaxon(
         id: row.id,
@@ -58,30 +56,18 @@ abstract final class MarketTaxonomy {
       ),
   ];
 
-  static List<MarketIpTaxon> _catalogIps = _defaultIps;
-  static List<MarketBrandTaxon> _catalogBrands = _defaultBrands;
-
-  static List<MarketIpTaxon> get allIps => _catalogIps;
-  static List<MarketBrandTaxon> get brands => _catalogBrands;
-
-  /// Aligns market/collection filter chips with Firestore catalog ids (display names only for UI).
-  static void applyCatalogBundle(CatalogSeedBundle bundle) {
-    final fromCatalog = MarketCatalogFilters.brandsFromBundle(bundle);
-    if (fromCatalog.isNotEmpty) {
-      _catalogBrands = fromCatalog;
-      _catalogIps = MarketCatalogFilters.ipsFromBundle(bundle);
-    }
-  }
+  static List<MarketIpTaxon> get allIps => _filterIps;
+  static List<MarketBrandTaxon> get brands => _filterBrands;
 
   static MarketBrandTaxon? _filterBrandById(String id) {
-    for (final b in _catalogBrands) {
+    for (final b in _filterBrands) {
       if (b.id == id) return b;
     }
     return null;
   }
 
   static MarketIpTaxon? _filterIpById(String id) {
-    for (final ip in _catalogIps) {
+    for (final ip in _filterIps) {
       if (ip.id == id) return ip;
     }
     return null;
