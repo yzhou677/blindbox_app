@@ -198,13 +198,21 @@ void main() {
     );
     expect(find.text('The Other One'), findsOneWidget);
 
-    await tester.tap(find.text('Dreams Inc.'));
+    // Brand chips are built from shelf brands only (POP MART for this seed).
+    await tester.scrollUntilVisible(
+      find.text('POP MART'),
+      80,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('POP MART'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    expect(
-      find.text('Nothing on your shelf for this brand yet.'),
-      findsOneWidget,
+    await tester.scrollUntilVisible(
+      find.text('The Other One'),
+      120,
+      scrollable: find.byType(Scrollable).first,
     );
+    expect(find.text('The Other One'), findsOneWidget);
 
     await tester.tap(find.text('All'));
     await tester.pump();
