@@ -68,3 +68,6 @@ ui-debug.log
 **/*-firebase-adminsdk-*.json
 **/serviceAccount*.json
 **/service-account*.json
+
+# Android keystore
+*.jks
