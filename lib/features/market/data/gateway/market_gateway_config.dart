@@ -2,13 +2,13 @@
 abstract final class MarketGatewayConfig {
   static const bool enableEbayGateway = bool.fromEnvironment(
     'MARKET_GATEWAY_EBAY',
-    defaultValue: false,
+    defaultValue: true,
   );
 
   /// Gateway function root, e.g. `https://…/market` or emulator `http://127.0.0.1:5001/…/market`.
   static const String gatewayBaseUrl = String.fromEnvironment(
     'MARKET_GATEWAY_BASE_URL',
-    defaultValue: '',
+    defaultValue: 'https://us-central1-blindbox-collection.cloudfunctions.net/market',
   );
 
   /// @deprecated Use [gatewayBaseUrl].
