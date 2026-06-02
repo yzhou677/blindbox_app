@@ -100,10 +100,10 @@ abstract final class FeedRhythm {
   // —— Sheets & modals (shared chrome) ——
 
   /// Target visible height as a fraction of the full screen (not the draggable host).
-  static const double sheetOpenScreenFraction = 0.58;
-  static const double sheetAddSeriesOpenScreenFraction = 0.64;
-  static const double sheetPreviewOpenScreenFraction = 0.52;
-  static const double sheetFiguresOpenScreenFraction = 0.56;
+  static const double sheetOpenScreenFraction = 0.75;
+  static const double sheetAddSeriesOpenScreenFraction = 0.80;
+  static const double sheetPreviewOpenScreenFraction = 0.75;
+  static const double sheetFiguresOpenScreenFraction = 0.80;
 
   /// Legacy aliases — prefer the `sheet*OpenScreenFraction` names above.
   static const double sheetHeightFraction = sheetOpenScreenFraction;
