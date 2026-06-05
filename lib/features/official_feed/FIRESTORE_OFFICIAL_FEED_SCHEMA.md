@@ -17,7 +17,7 @@ Editorial official posts (news, campaigns, storefront links) — **not** the Hom
 | `title` | string | yes | Headline |
 | `imageUrl` | string | yes | HTTPS image URL (official CDN or hosted mirror) |
 | `officialUrl` | string | yes | HTTPS link opened in system browser |
-| `publishedAt` | Timestamp | yes | Display sort key |
+| `publishedAt` | Timestamp | yes | Official announcement day (UTC); also feed sort key |
 | `ingestedAt` | Timestamp | yes | Set on write (ingestion / push script) |
 | `status` | string | yes | `active` \| `archived` |
 | `contentHash` | string | yes | Dedup key (`sourceId` + `officialUrl` recommended) |

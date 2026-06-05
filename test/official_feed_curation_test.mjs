@@ -118,24 +118,24 @@ describe('seed_validation curation sync rules', () => {
     assert.ok(result.errors.some((e) => e.includes('must end with "_1234"')));
   });
 
-  it('warns when summary date and publishedAt diverge beyond PT slip', () => {
+  it('does not warn when summary release date differs from announcement publishedAt', () => {
     const seed = {
       sourceId: 'popmart_us',
       items: [
         {
           ...baseItem,
           summary: 'Blind box figures — online June 5, 7:00 PM PT',
-          publishedAt: '2026-06-27T12:00:00Z',
+          publishedAt: '2026-05-29T00:00:00Z',
         },
       ],
     };
     const result = validateOfficialFeedSeed(seed);
     assert.ok(
-      result.warnings.some((w) => w.includes('summary date and publishedAt')),
+      !result.warnings.some((w) => w.includes('summary date and publishedAt')),
     );
   });
 
-  it('allows one-day drift for June 4 PT evening vs June 5 UTC', () => {
+  it('parses summary release dates for curator helpers', () => {
     assert.equal(
       summaryPublishedAtDateDriftDays(
         'Blind box figures — online June 4, 7:00 PM PT',

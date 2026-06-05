@@ -399,16 +399,6 @@ export function validateOfficialFeedSeed(seed) {
 
     if (!publishedAt || Number.isNaN(Date.parse(publishedAt))) {
       errors.push(`${label}: publishedAt must be ISO-8601 UTC.`);
-    } else if (summary) {
-      const drift = summaryPublishedAtDateDriftDays(summary, publishedAt);
-      if (
-        drift != null &&
-        drift > SUMMARY_PUBLISHED_AT_MAX_DAY_DRIFT
-      ) {
-        warnings.push(
-          `${label}: summary date and publishedAt calendar day differ by ${drift} day(s) — align after checking the official US announcement (scripts cannot verify release date).`,
-        );
-      }
     }
 
     if (status !== 'active') {

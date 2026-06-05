@@ -16,7 +16,11 @@
     "popmart_us_crybaby_ocean_vinyl_plush",
     "popmart_us_crybaby_tears_launch",
     "popmart_us_monsters_have_a_seat",
-    "popmart_us_hirono_behind_time_6440"
+    "popmart_us_hirono_behind_time_6440",
+    "popmart_us_bikini_bottom_6098",
+    "popmart_us_skullpanda_paradox_2885",
+    "popmart_us_hirono_living_wild_2883",
+    "popmart_us_twinkle_create_your_taste_pop_now"
   ],
   "items": [
     {
@@ -25,34 +29,34 @@
       "productId": "6476",
       "productIdConfirmed": true,
       "title": "Peach Riot Fruit Punch Series — Plush Doll Pendant",
-      "summary": "First Peach Riot plush pendants — online June 5, 7:00 PM PT",
+      "summary": "New Peach Riot Fruit Punch plush pendants. Online June 4, 7:00 PM PT.",
       "imageUrl": "https://cdn.shopify.com/s/files/1/0737/5506/6686/files/c680af0f949a018b10ef23404d1289ad.jpg",
       "officialUrl": "https://www.popmart.com/us/products/6476/peach-riot-fruit-punch-series-plush-doll-pendant",
-      "publishedAt": "2026-06-05T12:00:00Z",
+      "publishedAt": "2026-05-29T00:00:00Z",
       "status": "active"
     },
     {
-      "id": "popmart_us_haikyu_off_court_7608",
+      "id": "popmart_us_haikyu_off_court_6287",
       "releaseType": "product",
-      "productId": "7608",
+      "productId": "6287",
       "productIdConfirmed": true,
       "title": "Haikyu!! Off-Court Vibes Series Figures",
-      "summary": "Blind box figures — online June 4, 7:00 PM PT",
+      "summary": "New Haikyu!! Off-Court Vibes blind box figures. Online June 4, 7:00 PM PT.",
       "imageUrl": "https://prod-server-r2.popmart.com/uploads/BVpibjM982GYSP6wpdwjh4gLtGFs66Vy/jr-jzhi4kIQQ2VLy-1779952492-7c309d4656b38d0ecddb309ebdb5ca0a_1200x1200.jpg",
-      "officialUrl": "https://www.popmart.com/us/products/7608/haikyu-off-court-vibes-series-figures",
-      "publishedAt": "2026-06-05T11:00:00Z",
+      "officialUrl": "https://www.popmart.com/us/products/6287/haikyu-off-court-vibes-series-figures",
+      "publishedAt": "2026-05-29T00:00:00Z",
       "status": "active"
     },
     {
-      "id": "popmart_us_zsiga_im_zsiga_6430",
+      "id": "popmart_us_zsiga_im_zsiga_6479",
       "releaseType": "product",
-      "productId": "6430",
+      "productId": "6479",
       "productIdConfirmed": true,
       "title": "Zsiga I'm Zsiga Series — Vinyl Plush Pendant Blind Box",
-      "summary": "Vinyl plush pendants — online June 5, 7:00 PM PT",
+      "summary": "New Zsiga vinyl plush pendant blind box. Online June 4, 7:00 PM PT.",
       "imageUrl": "https://cdn.shopify.com/s/files/1/0737/5506/6686/files/d5310525ae66dd15001936d1684f8fe9.jpg",
-      "officialUrl": "https://www.popmart.com/us/products/6430/zsiga-i-m-zsiga-series-vinyl-plush-pendant-blind-box",
-      "publishedAt": "2026-06-05T10:00:00Z",
+      "officialUrl": "https://www.popmart.com/us/products/6479/zsiga-i-m-zsiga-series-vinyl-plush-pendant-blind-box",
+      "publishedAt": "2026-05-29T00:00:00Z",
       "status": "active"
     },
     {
@@ -61,56 +65,10 @@
       "productId": "6267",
       "productIdConfirmed": true,
       "title": "Hirono Behind Time Figure",
-      "summary": "Designer figure — online June 5, 7:00 PM PT",
+      "summary": "New Hirono Behind Time figure. Online June 4, 7:00 PM PT.",
       "imageUrl": "https://cdn.shopify.com/s/files/1/0737/5506/6686/files/3a19497e33a1f52711ad9b00a68c60ef.jpg",
       "officialUrl": "https://www.popmart.com/us/products/6267/hirono-behind-time-figure",
-      "publishedAt": "2026-06-05T09:00:00Z",
-      "status": "active"
-    },
-    {
-      "id": "popmart_us_bikini_bottom_7617",
-      "releaseType": "product",
-      "productId": "7617",
-      "productIdConfirmed": true,
-      "title": "Residents of Bikini Bottom — Whimsical Plush Part 2",
-      "summary": "Plush blind box — featured on POP MART US",
-      "imageUrl": "https://cdn.shopify.com/s/files/1/0737/5506/6686/files/1_5baf3623-a708-4368-9c4f-73d1139c332a.webp",
-      "officialUrl": "https://www.popmart.com/us/products/7617/residents-of-bikini-bottom-whimsical-plush-part-2",
-      "publishedAt": "2026-06-10T12:00:00Z",
-      "status": "active"
-    },
-    {
-      "id": "popmart_us_skullpanda_paradox_6400",
-      "releaseType": "product",
-      "productId": "6400",
-      "productIdConfirmed": true,
-      "title": "SKULLPANDA The Paradox Series Figures",
-      "summary": "Blind box figures — online June 27, 7:00 PM PT",
-      "imageUrl": "https://cdn.shopify.com/s/files/1/0737/5506/6686/files/e89282a88f8b04829aae317abdc07161.png",
-      "officialUrl": "https://www.popmart.com/us/products/6400/skullpanda-the-paradox-series-figures",
-      "publishedAt": "2026-06-27T12:00:00Z",
-      "status": "active"
-    },
-    {
-      "id": "popmart_us_hirono_living_wild_2883",
-      "releaseType": "product",
-      "productId": "2883",
-      "productIdConfirmed": true,
-      "title": "Hirono Living Wild-Fight for Joy Plush Doll",
-      "summary": "Vinyl plush doll — online June 27, 7:00 PM PT",
-      "imageUrl": "https://cdn.shopify.com/s/files/1/0737/5506/6686/files/5_e01b396ebb7f3d157753d8d5fd15f143.jpg",
-      "officialUrl": "https://www.popmart.com/us/products/2883/hirono-living-wild-fight-for-joy-plush-doll",
-      "publishedAt": "2026-06-27T11:00:00Z",
-      "status": "active"
-    },
-    {
-      "id": "popmart_us_twinkle_create_your_taste_pop_now",
-      "releaseType": "pop_now",
-      "title": "Twinkle Twinkle Create Your Taste Series Figures — A",
-      "summary": "POP NOW blind box figures — online June 27, 7:00 PM PT",
-      "imageUrl": "https://cdn.shopify.com/s/files/1/0737/5506/6686/files/4_705f1d5915cab11892ee7503affad671.jpg",
-      "officialUrl": "https://www.popmart.com/us/pop-now/set/296",
-      "publishedAt": "2026-06-27T10:00:00Z",
+      "publishedAt": "2026-05-29T00:00:00Z",
       "status": "active"
     }
   ]
