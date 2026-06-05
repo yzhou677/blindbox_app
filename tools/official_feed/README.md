@@ -33,7 +33,9 @@ announcement times. Before every push:
    - `summary` — see **Summary policy** below
    - `publishedAt` — see **publishedAt policy** below
 5. **Set** `productIdConfirmed: true` on product rows only after step 3.
-6. **Edit** `popmart_us.seed.json`; retire old ids via `retiredItemIds`.
+6. **Edit** `popmart_us.seed.json`; retire old ids via `retiredItemIds` (required when
+   correcting `productId` — the document `id` changes, so the old id must be
+   listed or push will auto-archive stale actives).
 7. **Run** `node tools/official_feed/curate_check.mjs` — fix ERRORS.
 8. **Push** `node tools/official_feed/push_official_feed.mjs`.
 

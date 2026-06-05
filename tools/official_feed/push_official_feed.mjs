@@ -185,6 +185,9 @@ async function main() {
   const db = admin.firestore();
   const batch = db.batch();
   const now = admin.firestore.FieldValue.serverTimestamp();
+  const activeItemIds = new Set(
+    items.map((item) => item.id?.trim()).filter(Boolean),
+  );
 
   for (const item of items) {
     const id = item.id?.trim();
@@ -238,12 +241,36 @@ async function main() {
     );
   }
 
+  // Product-id corrections change document ids — retire any still-active orphans.
+  const staleSnap = await db
+    .collection(COLLECTION)
+    .where('sourceId', '==', sourceId)
+    .where('status', '==', 'active')
+    .get();
+  const staleArchivedIds = [];
+  for (const doc of staleSnap.docs) {
+    if (activeItemIds.has(doc.id)) continue;
+    staleArchivedIds.push(doc.id);
+    batch.set(
+      doc.ref,
+      { status: 'archived', ingestedAt: now },
+      { merge: true },
+    );
+  }
+
   await batch.commit();
+  const retiredNote =
+    retiredItemIds.length > 0
+      ? ` Archived ${retiredItemIds.length} retired id(s).`
+      : '';
+  const staleNote =
+    staleArchivedIds.length > 0
+      ? ` Auto-archived ${staleArchivedIds.length} stale active id(s): ${staleArchivedIds.join(', ')}.`
+      : '';
   console.log(
     `Wrote ${items.length} active documents to ${COLLECTION} (source=${sourceId}).` +
-      (retiredItemIds.length > 0
-        ? ` Archived ${retiredItemIds.length} retired id(s).`
-        : ''),
+      retiredNote +
+      staleNote,
   );
 }
 
