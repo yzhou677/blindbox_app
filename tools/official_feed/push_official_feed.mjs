@@ -21,6 +21,10 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
+import {
+  printCurationReport,
+  validateOfficialFeedCuration,
+} from './official_feed_curation.mjs';
 import { validateOfficialFeedSeed } from './seed_validation.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -146,11 +150,34 @@ async function main() {
   }
 
   const validation = validateOfficialFeedSeed(seed);
-  for (const w of validation.warnings) console.warn(`warn: ${w}`);
   if (!validation.ok) {
-    console.error('Seed validation failed:');
-    for (const e of validation.errors) console.error(`  - ${e}`);
-    console.error('Fix popmart_us.seed.json (per-item officialUrl + imageUrl) then retry.');
+    printCurationReport({
+      errors: validation.errors.map((message) => ({ level: 'error', message })),
+      warnings: validation.warnings.map((message) => ({ level: 'warning', message })),
+      infos: [],
+    });
+    console.error('Seed validation failed. Fix popmart_us.seed.json then retry.');
+    process.exit(1);
+  }
+
+  console.log('Running curation probes before Firestore write…');
+  const curation = await validateOfficialFeedCuration(seed);
+  const report = {
+    errors: [
+      ...validation.errors.map((message) => ({ level: 'error', message })),
+      ...curation.errors,
+    ],
+    warnings: [
+      ...validation.warnings.map((message) => ({ level: 'warning', message })),
+      ...curation.warnings,
+    ],
+    infos: curation.infos,
+  };
+  printCurationReport(report);
+
+  if (!curation.ok) {
+    console.error('Push blocked: curation ERRORS must be resolved before Firestore write.');
+    console.error('Run: node tools/official_feed/curate_check.mjs');
     process.exit(1);
   }
 
@@ -167,6 +194,7 @@ async function main() {
     const publishedAtRaw = item.publishedAt?.trim();
     const status = item.status?.trim() ?? 'active';
     const summary = item.summary?.trim();
+    // curationOverride / productIdConfirmed are seed-only (auditable); never written to Firestore.
 
     if (!id || !title || !imageUrl || !officialUrl || !publishedAtRaw) {
       console.error('Skipping incomplete item (should have been caught by validation):', item);
