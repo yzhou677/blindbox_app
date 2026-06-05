@@ -9,7 +9,6 @@
     "popmart_us_pucky_flying_babies",
     "popmart_us_monsters_macaron",
     "popmart_us_why_so_serious_blister",
-    "popmart_us_crybaby_ocean_figures_6284",
     "popmart_us_crybaby_ocean_lamp_6285",
     "popmart_us_pucky_flying_babies_6197",
     "popmart_us_pucky_dreamy_wishes_6097",
@@ -24,9 +23,39 @@
     "popmart_us_bikini_bottom_6098",
     "popmart_us_skullpanda_paradox_2885",
     "popmart_us_hirono_living_wild_2883",
-    "popmart_us_twinkle_create_your_taste_pop_now"
+    "popmart_us_twinkle_create_your_taste_pop_now",
+    "popmart_us_skullpanda_mlp_5812",
+    "popmart_us_nyota_where_moments_meet_6368",
+    "popmart_us_aespa_fluffy_club_pendant_6271",
+    "popmart_us_aespa_fluffy_club_card_holder_6272",
+    "popmart_us_aespa_fluffy_club_lanyard_6273",
+    "popmart_us_monsters_chasing_mermaids_6270"
   ],
   "items": [
+    {
+      "id": "popmart_us_crybaby_ocean_figures_6284",
+      "releaseType": "product",
+      "productId": "6284",
+      "productIdConfirmed": true,
+      "title": "CRYBABY Cry Me an Ocean Series Figures",
+      "summary": "New CRYBABY Cry Me an Ocean blind box figures. Online May 14, 7:00 PM PT.",
+      "imageUrl": "https://cdn.shopify.com/s/files/1/0709/9449/3615/files/4a7a9004c068615d2de5c30d0da635b5_06e13b8c-0b1d-45fb-baf5-b9411be12624.jpg",
+      "officialUrl": "https://www.popmart.com/us/products/6284/crybaby-cry-me-an-ocean-series-figures",
+      "publishedAt": "2026-05-08T00:00:00Z",
+      "status": "active"
+    },
+    {
+      "id": "popmart_us_crybaby_ocean_vinyl_plush_6278",
+      "releaseType": "product",
+      "productId": "6278",
+      "productIdConfirmed": true,
+      "title": "CRYBABY Cry Me an Ocean Series — Vinyl Plush Pendant Blind Box",
+      "summary": "New CRYBABY Cry Me an Ocean vinyl plush pendant. Online May 14, 7:00 PM PT.",
+      "imageUrl": "https://cdn.shopify.com/s/files/1/0737/5506/6686/files/93e8ff77700c1d171dcbfe485273ec0f.jpg?v=1778238377",
+      "officialUrl": "https://www.popmart.com/us/products/6278/crybaby-cry-me-an-ocean-series-vinyl-plush-pendant-blind-box",
+      "publishedAt": "2026-05-08T00:00:00Z",
+      "status": "active"
+    },
     {
       "id": "popmart_us_peach_riot_fruit_punch_6476",
       "releaseType": "product",
