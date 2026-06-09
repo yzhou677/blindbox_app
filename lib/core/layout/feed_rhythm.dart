@@ -85,7 +85,10 @@ abstract final class FeedRhythm {
   /// Header deck to first owned series card in a universe group.
   static const double collectionUniverseHeaderToCards = 10;
 
-  /// Air between collection brand filter chips and the first shelf card.
+  /// Vertical gap between collection brand and IP filter chip rails.
+  static const double collectionBrandToIpFilterGap = 6;
+
+  /// Air between collection filter chips and the first shelf card.
   static const double collectionFilterToFirstCard = 12;
 
   /// Horizontal gap between cards in home/market rails.

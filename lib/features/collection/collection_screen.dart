@@ -6,9 +6,11 @@ import 'package:blindbox_app/features/collection/presentation/collection_modal_o
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_brand_facets.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_shelf_ip_facets.dart';
 import 'package:blindbox_app/features/collection/widgets/add_custom_series_sheet.dart';
 import 'package:blindbox_app/features/collection/widgets/add_to_collection_sheet.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_brand_filter_row.dart';
+import 'package:blindbox_app/features/collection/widgets/collection_ip_filter_row.dart';
 import 'package:blindbox_app/features/collectible_relationship/application/collectible_relationship_providers.dart';
 import 'package:blindbox_app/features/collection/application/shelf_emotional_providers.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_providers.dart';
@@ -34,6 +36,9 @@ class CollectionScreen extends ConsumerStatefulWidget {
 class _CollectionScreenState extends ConsumerState<CollectionScreen> {
   /// Presentation-only Collection shelf brand facet.
   String _brandFilterId = collectionAnyBrandFilterId;
+
+  /// Presentation-only Collection shelf IP facet (scoped to brand-filtered series).
+  String _ipFilterId = collectionAnyIpFilterId;
 
   final ScrollController _scrollController = ScrollController();
   VoidCallback? _routerListener;
@@ -214,11 +219,27 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       });
     }
 
-    // Compute filtered series and lazy feed items (data-only, no widgets).
-    // Off-screen cards are built on demand by the SliverList.builder below.
-    final visible = shelfSeriesVisibleForBrandFilter(
+    final brandFiltered = shelfSeriesVisibleForBrandFilter(
       snap.shelfSeries,
       activeBrandFilterId,
+    );
+    final ipFilterOptions = buildCollectionShelfIpFilterOptions(brandFiltered);
+    final activeIpFilterId = resolveCollectionIpFilterSelection(
+      selectedIpFilterId: _ipFilterId,
+      options: ipFilterOptions,
+    );
+    if (activeIpFilterId != _ipFilterId) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() => _ipFilterId = activeIpFilterId);
+      });
+    }
+
+    // Compute filtered series and lazy feed items (data-only, no widgets).
+    // Off-screen cards are built on demand by the SliverList.builder below.
+    final visible = shelfSeriesVisibleForIpFilter(
+      brandFiltered,
+      activeIpFilterId,
     );
     final feedItems = buildShelfFeedItems(
       context: context,
@@ -226,6 +247,8 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       figureStates: snap.figureStates,
       profile: profile,
     );
+    final brandFilterExhausted = brandFiltered.isEmpty;
+    final ipFilterExhausted = !brandFilterExhausted && visible.isEmpty;
 
     if (snap.trackedSeriesCount == 0) {
       return Scaffold(
@@ -342,19 +365,32 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.only(top: 2),
-              child: CollectionBrandFilterRow(
-                options: brandFilterOptions,
-                selectedBrandId: activeBrandFilterId,
-                onBrandSelected: (id) => setState(() => _brandFilterId = id),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  CollectionBrandFilterRow(
+                    options: brandFilterOptions,
+                    selectedBrandId: activeBrandFilterId,
+                    onBrandSelected: (id) => setState(() => _brandFilterId = id),
+                  ),
+                  const SizedBox(height: FeedRhythm.collectionBrandToIpFilterGap),
+                  CollectionIpFilterRow(
+                    options: ipFilterOptions,
+                    selectedIpId: activeIpFilterId,
+                    onIpSelected: (id) => setState(() => _ipFilterId = id),
+                  ),
+                ],
               ),
             ),
           ),
-          if (visible.isEmpty)
+          if (brandFilterExhausted || ipFilterExhausted)
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
               sliver: SliverToBoxAdapter(
                 child: Text(
-                  'Nothing on your shelf for this brand yet.',
+                  brandFilterExhausted
+                      ? 'Nothing on your shelf for this brand yet.'
+                      : 'Nothing on your shelf for this IP yet.',
                   style: textTheme.bodyMedium?.copyWith(
                     color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
                     height: 1.4,
