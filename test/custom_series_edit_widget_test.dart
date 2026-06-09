@@ -3,8 +3,11 @@ import 'package:blindbox_app/features/catalog/application/catalog_bundle_provide
 import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
-import 'package:blindbox_app/features/collection/collection_screen.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_shelf_brand_facets.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_shelf_ip_facets.dart';
+import 'package:blindbox_app/features/collection/widgets/collection_brand_filter_row.dart';
+import 'package:blindbox_app/features/collection/widgets/collection_ip_filter_row.dart';
 import 'package:blindbox_app/features/collection/widgets/custom_series_form_sheet.dart';
 import 'package:blindbox_app/features/collection/widgets/series_figures_sheet.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
@@ -172,11 +175,13 @@ void main() {
         ],
         child: MaterialApp(
           theme: AppTheme.light(),
-          home: Scaffold(
-            body: CollectibleSheetScope(
-              scrollController: ScrollController(),
-              child: Builder(
-                builder: (ctx) => CustomSeriesFormSheet.edit(
+          initialRoute: '/edit',
+          routes: {
+            '/': (_) => const Scaffold(body: SizedBox.shrink()),
+            '/edit': (ctx) => Scaffold(
+              body: CollectibleSheetScope(
+                scrollController: ScrollController(),
+                child: CustomSeriesFormSheet.edit(
                   initialSeries: series,
                   onSubmit:
                       ({
@@ -200,7 +205,7 @@ void main() {
                 ),
               ),
             ),
-          ),
+          },
         ),
       ),
     );
@@ -212,18 +217,23 @@ void main() {
     expect(find.text('Edit series'), findsOneWidget);
     expect(find.byType(CustomSeriesFormSheet), findsOneWidget);
 
+    await tester.ensureVisible(find.text(customSeriesEditAdvancedOptionsTitle));
+    await tester.tap(find.text(customSeriesEditAdvancedOptionsTitle));
+    await tester.pumpAndSettle();
+
     await tester.enterText(_textFieldAt(1), 'POP MART');
     await tester.enterText(_textFieldAt(2), 'THE MONSTERS');
 
     await tester.ensureVisible(find.text('Save changes'));
     await tester.tap(find.text('Save changes'));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 200));
+    await tester.pump(const Duration(milliseconds: 400));
 
     final container = ProviderScope.containerOf(
       tester.element(find.byType(MaterialApp)),
     );
-    final updated = container.read(collectionNotifierProvider).shelfSeries.single;
+    final snapAfterEdit = container.read(collectionNotifierProvider);
+    final updated = snapAfterEdit.shelfSeries.single;
     expect(updated.brand, 'POP MART');
     expect(updated.taxonomyBrandId, 'pop_mart');
     expect(updated.ipName, 'THE MONSTERS');
@@ -231,22 +241,50 @@ void main() {
     expect(updated.figures.single.taxonomyBrandId, 'pop_mart');
     expect(updated.figures.single.taxonomyIpId, 'the_monsters');
 
+    final brandOptions = buildCollectionShelfBrandFilterOptions(
+      snapAfterEdit.shelfSeries,
+    );
+    final ipOptions = buildCollectionShelfIpFilterOptions(
+      snapAfterEdit.shelfSeries,
+    );
+    expect(
+      brandOptions.map((o) => o.label),
+      contains('POP MART'),
+    );
+    expect(
+      brandOptions.map((o) => o.label),
+      isNot(contains('DPL')),
+    );
+    expect(
+      ipOptions.map((o) => o.label),
+      contains('THE MONSTERS'),
+    );
+
     await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          ..._sheetOverrides(() => notifier),
-        ],
-        child: MaterialApp(
-          theme: AppTheme.light(),
-          home: const CollectionScreen(),
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: Column(
+            children: [
+              CollectionBrandFilterRow(
+                options: brandOptions,
+                selectedBrandId: collectionAnyBrandFilterId,
+                onBrandSelected: (_) {},
+              ),
+              CollectionIpFilterRow(
+                options: ipOptions,
+                selectedIpId: collectionAnyIpFilterId,
+                onIpSelected: (_) {},
+              ),
+            ],
+          ),
         ),
       ),
     );
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 200));
 
-    expect(find.text('POP MART'), findsAtLeastNWidgets(1));
-    expect(find.text('THE MONSTERS'), findsAtLeastNWidgets(1));
+    expect(find.text('POP MART'), findsOneWidget);
+    expect(find.text('THE MONSTERS'), findsOneWidget);
     expect(find.text('DPL'), findsNothing);
     expect(find.byType(TaxonomyBrandChipRail), findsNWidgets(2));
   });

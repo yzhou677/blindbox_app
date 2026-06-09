@@ -1,5 +1,6 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_radii.dart';
+import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/collection/data/collection_input_formatters.dart';
 import 'package:blindbox_app/features/collection/data/collection_input_limits.dart';
 import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
@@ -32,6 +33,16 @@ typedef CustomSeriesMetadataSubmit = void Function({
 });
 
 enum CustomSeriesFormMode { create, edit }
+
+/// Collapsed by default on edit — brand/IP are power-user taxonomy changes.
+const String customSeriesEditAdvancedOptionsTitle = 'Advanced options';
+
+const String customSeriesEditTaxonomyWarning =
+    'Changing brand or universe may affect:\n'
+    '• Filters\n'
+    '• Grouping\n'
+    '• Collection insights\n'
+    '• Journey history';
 
 /// Shared create/edit form for custom series metadata (figures only on create).
 class CustomSeriesFormSheet extends StatefulWidget {
@@ -72,6 +83,7 @@ class _CustomSeriesFormSheetState extends State<CustomSeriesFormSheet> {
 
   final List<CustomFigureDraft> _figures = [];
   String? _coverUri;
+  bool _advancedTaxonomyExpanded = false;
 
   bool get _isCreate => widget.mode == CustomSeriesFormMode.create;
 
@@ -181,9 +193,73 @@ class _CustomSeriesFormSheetState extends State<CustomSeriesFormSheet> {
     Navigator.of(context).pop();
   }
 
+  Widget _brandField(ColorScheme scheme) {
+    return TextFormField(
+      controller: _brand,
+      textInputAction: TextInputAction.next,
+      maxLength: CollectionInputLimits.brandMaxLength,
+      inputFormatters: CollectionInputFormatters.brand(),
+      decoration: quietCustomSeriesField(
+        scheme,
+        hintText: 'Brand',
+      ),
+    );
+  }
+
+  Widget _ipField(ColorScheme scheme) {
+    return TextFormField(
+      controller: _ip,
+      textInputAction: TextInputAction.next,
+      maxLength: CollectionInputLimits.ipMaxLength,
+      inputFormatters: CollectionInputFormatters.ip(),
+      decoration: quietCustomSeriesField(
+        scheme,
+        hintText: 'Universe',
+      ),
+    );
+  }
+
+  Widget _editAdvancedTaxonomySection(
+    ColorScheme scheme,
+    TextTheme textTheme,
+  ) {
+    return Semantics(
+      expanded: _advancedTaxonomyExpanded,
+      child: ExpansionTile(
+        key: const Key('custom-series-edit-advanced'),
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: const EdgeInsets.only(bottom: 4),
+        title: Text(
+          customSeriesEditAdvancedOptionsTitle,
+          style: CollectibleTypography.figureMeta(textTheme, scheme).copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        initiallyExpanded: false,
+        onExpansionChanged: (expanded) {
+          setState(() => _advancedTaxonomyExpanded = expanded);
+        },
+        children: [
+          Text(
+            customSeriesEditTaxonomyWarning,
+            style: textTheme.bodySmall?.copyWith(
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 14),
+          _brandField(scheme),
+          const SizedBox(height: 12),
+          _ipField(scheme),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     final sheetScroll = CollectibleSheetScope.scrollControllerOf(context);
 
     return CollectibleSheetInsets(
@@ -222,28 +298,15 @@ class _CustomSeriesFormSheetState extends State<CustomSeriesFormSheet> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _brand,
-                    textInputAction: TextInputAction.next,
-                    maxLength: CollectionInputLimits.brandMaxLength,
-                    inputFormatters: CollectionInputFormatters.brand(),
-                    decoration: quietCustomSeriesField(
-                      scheme,
-                      hintText: 'Brand',
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _ip,
-                    textInputAction: TextInputAction.next,
-                    maxLength: CollectionInputLimits.ipMaxLength,
-                    inputFormatters: CollectionInputFormatters.ip(),
-                    decoration: quietCustomSeriesField(
-                      scheme,
-                      hintText: 'Universe',
-                    ),
-                  ),
+                  if (_isCreate) ...[
+                    const SizedBox(height: 12),
+                    _brandField(scheme),
+                    const SizedBox(height: 12),
+                    _ipField(scheme),
+                  ] else ...[
+                    const SizedBox(height: FeedRhythm.sheetSectionGap),
+                    _editAdvancedTaxonomySection(scheme, textTheme),
+                  ],
                   if (_isCreate) ...[
                     const SizedBox(height: FeedRhythm.sheetSectionGap + 8),
                     FigureNameChipsEditor(

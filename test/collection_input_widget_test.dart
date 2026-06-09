@@ -62,7 +62,7 @@ void main() {
     await tester.enterText(formFieldAt(2), 'hello\nworld');
     expect(fieldText(tester, 2), 'helloworld');
 
-    await tester.enterText(formFieldAt(3), 'note\nline\n' + 'z' * 600);
+    await tester.enterText(formFieldAt(3), 'note\nline\n${'z' * 600}');
     final notes = fieldText(tester, 3);
     expect(notes.contains('\n'), isTrue);
     expect(notes.length, CollectionInputLimits.notesMaxLength);

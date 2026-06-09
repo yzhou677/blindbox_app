@@ -5,6 +5,7 @@ Human-oriented notes for the Blindbox app. **Agent rules and architecture live u
 ## In this folder
 
 - [`PROJECT_OVERVIEW.md`](PROJECT_OVERVIEW.md) — product goals and feature outline
+- [`COLLECTION_ARCHITECTURE_NOTES.md`](COLLECTION_ARCHITECTURE_NOTES.md) — intentional Collection decisions, tradeoffs, and scaling triggers (maintenance mode)
 - [`FIREBASE_LOCAL_SETUP.md`](FIREBASE_LOCAL_SETUP.md) — Firebase / emulator setup for local dev
 - [`CURSOR_RULES.md`](CURSOR_RULES.md) — pointer to where Cursor rules and architecture actually live
 
