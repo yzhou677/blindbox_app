@@ -229,6 +229,54 @@ void main() {
     expect(_repPrices(afterLoadMore.snapshots), [239, 29, 15, 200, 130, 300]);
   });
 
+  test('displayOrderCacheNeedsUpdate compares order ids by value', () {
+    const signature = 'sig';
+    final first = resolveCollectibleMarketDisplaySnapshots(
+      snapshots: _snapshotsForPrices({'a': 30, 'b': 10}),
+      browseSignature: signature,
+      priceSort: MarketPriceSort.lowToHigh,
+      stablePagination: true,
+      sortByPrice: true,
+      previousOrderIds: const [],
+      previousPriceSort: MarketPriceSort.lowToHigh,
+      previousBrowseSignature: null,
+    );
+    final second = resolveCollectibleMarketDisplaySnapshots(
+      snapshots: _snapshotsForPrices({'a': 30, 'b': 10}),
+      browseSignature: signature,
+      priceSort: MarketPriceSort.lowToHigh,
+      stablePagination: true,
+      sortByPrice: true,
+      previousOrderIds: first.orderIds,
+      previousPriceSort: MarketPriceSort.lowToHigh,
+      previousBrowseSignature: signature,
+    );
+
+    expect(first.orderIds, isNot(same(second.orderIds)));
+    expect(
+      displayOrderCacheNeedsUpdate(
+        orderIds: second.orderIds,
+        previousOrderIds: first.orderIds,
+        priceSort: MarketPriceSort.lowToHigh,
+        previousPriceSort: MarketPriceSort.lowToHigh,
+        browseSignature: signature,
+        previousBrowseSignature: signature,
+      ),
+      isFalse,
+    );
+    expect(
+      displayOrderCacheNeedsUpdate(
+        orderIds: second.orderIds,
+        previousOrderIds: const [],
+        priceSort: MarketPriceSort.lowToHigh,
+        previousPriceSort: MarketPriceSort.lowToHigh,
+        browseSignature: signature,
+        previousBrowseSignature: signature,
+      ),
+      isTrue,
+    );
+  });
+
   test('search with sortByPrice true would re-sort load-more (market feed only)', () {
     const signature = 'any_brand|any_ip|labubu|relevance';
     final pageOne = _snapshotsForPrices({'a': 239, 'b': 29, 'c': 15});
