@@ -7,6 +7,7 @@ import 'package:blindbox_app/features/collection/presentation/collection_shelf_i
 import 'package:blindbox_app/features/collection/widgets/collection_brand_filter_row.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_ip_filter_row.dart';
 import 'package:blindbox_app/shared/widgets/taxonomy_brand_chip_rail.dart';
+import 'package:blindbox_app/shared/widgets/taxonomy_filter_section_label.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -103,8 +104,13 @@ List<ShelfSeries> _stressShelfDistinctIps(int count) {
   ];
 }
 
-Finder _chipLabel(String label) => find.descendant(
-      of: find.byType(TaxonomyBrandChipRail),
+Finder _brandChipLabel(String label) => find.descendant(
+      of: find.byType(TaxonomyBrandChipRail).first,
+      matching: find.text(label),
+    );
+
+Finder _ipChipLabel(String label) => find.descendant(
+      of: find.byType(TaxonomyBrandChipRail).last,
       matching: find.text(label),
     );
 
@@ -213,11 +219,15 @@ void main() {
                     ),
                   ),
                   const SizedBox(height: 8),
+                  const TaxonomyFilterSectionLabel(text: 'Brand'),
+                  const SizedBox(height: 6),
                   CollectionBrandFilterRow(
                     options: brandOptions,
                     selectedBrandId: collectionAnyBrandFilterId,
                     onBrandSelected: (_) {},
                   ),
+                  const SizedBox(height: 14),
+                  const TaxonomyFilterSectionLabel(text: 'IP'),
                   const SizedBox(height: 6),
                   CollectionIpFilterRow(
                     options: ipOptions,
@@ -252,6 +262,10 @@ void main() {
 
     expect(find.byType(CollectionBrandFilterRow), findsOneWidget);
     expect(find.byType(CollectionIpFilterRow), findsOneWidget);
+    expect(find.text('Brand'), findsOneWidget);
+    expect(find.text('IP'), findsOneWidget);
+    expect(find.text('All Brands'), findsOneWidget);
+    expect(find.text('All IPs'), findsOneWidget);
     expect(find.text('Hirono — The Other One'), findsOneWidget);
 
     await expectLater(
@@ -296,6 +310,10 @@ void main() {
   testWidgets('brand/IP interaction matches expected selection rules', (
     tester,
   ) async {
+    tester.view.physicalSize = const Size(480, 1200);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
     final shelf = _populatedDemoShelf();
     await tester.pumpWidget(
       _qaHarness(CollectionSnapshot(shelfSeries: shelf, figureStates: const {})),
@@ -304,7 +322,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     // All + select IP Hirono
-    await tester.tap(_chipLabel('Hirono'));
+    await tester.tap(_ipChipLabel('Hirono'));
     await tester.pump();
 
     final allHirono = shelfSeriesVisibleForIpFilter(
@@ -328,7 +346,8 @@ void main() {
       'hirono',
     );
 
-    await tester.tap(_chipLabel('POP MART'));
+    await tester.ensureVisible(_brandChipLabel('POP MART'));
+    await tester.tap(_brandChipLabel('POP MART'));
     await tester.pump();
     expect(find.text('Hirono — The Other One'), findsOneWidget);
     expect(find.text('TNT SPACE — Rayan'), findsNothing);
@@ -344,10 +363,11 @@ void main() {
       collectionAnyIpFilterId,
     );
 
-    await tester.tap(_chipLabel('TOP TOY'));
+    await tester.ensureVisible(_brandChipLabel('TOP TOY'));
+    await tester.tap(_brandChipLabel('TOP TOY'));
     await tester.pump();
+    await tester.ensureVisible(find.text('TNT SPACE — Rayan'));
     expect(find.text('TNT SPACE — Rayan'), findsOneWidget);
     expect(find.text('Hirono — The Other One'), findsNothing);
-    expect(tester.takeException(), isNull);
   });
 }

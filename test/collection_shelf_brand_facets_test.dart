@@ -28,7 +28,7 @@ void main() {
     expect(
       options,
       [
-        (id: collectionAnyBrandFilterId, label: 'All'),
+        (id: collectionAnyBrandFilterId, label: 'All Brands'),
         (id: 'popmart', label: 'POP MART'),
         (id: 'toptoy', label: 'TOP TOY'),
         (id: 'mywifebrand', label: 'My Wife Brand'),
@@ -89,7 +89,7 @@ void main() {
     expect(
       options,
       [
-        (id: collectionAnyBrandFilterId, label: 'All'),
+        (id: collectionAnyBrandFilterId, label: 'All Brands'),
         (id: 'randomfigureclub', label: 'Random Figure Club'),
       ],
     );
@@ -97,7 +97,7 @@ void main() {
 
   test('stale selected chip resets to All', () {
     final options = [
-      (id: collectionAnyBrandFilterId, label: 'All'),
+      (id: collectionAnyBrandFilterId, label: 'All Brands'),
       (id: 'popmart', label: 'POP MART'),
     ];
 

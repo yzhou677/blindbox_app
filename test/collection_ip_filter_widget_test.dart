@@ -70,6 +70,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
 
     expect(find.text('Nyota'), findsAtLeastNWidgets(1));
+    expect(find.text('Brand'), findsOneWidget);
+    expect(find.text('IP'), findsOneWidget);
+    expect(find.text('All Brands'), findsOneWidget);
+    expect(find.text('All IPs'), findsOneWidget);
     expect(find.byType(TaxonomyBrandChipRail), findsNWidgets(2));
 
     // Flush CollectionNotifier persistence debounce timer.

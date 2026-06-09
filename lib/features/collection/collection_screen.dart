@@ -22,6 +22,7 @@ import 'package:blindbox_app/features/collection/widgets/collection_warm_start_b
 import 'package:blindbox_app/features/collection/widgets/series_figures_sheet.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
+import 'package:blindbox_app/shared/widgets/taxonomy_filter_section_label.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -368,12 +369,22 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  const TaxonomyFilterSectionLabel(text: 'Brand'),
+                  const SizedBox(
+                    height: FeedRhythm.collectionFilterSectionLabelToRail,
+                  ),
                   CollectionBrandFilterRow(
                     options: brandFilterOptions,
                     selectedBrandId: activeBrandFilterId,
                     onBrandSelected: (id) => setState(() => _brandFilterId = id),
                   ),
-                  const SizedBox(height: FeedRhythm.collectionBrandToIpFilterGap),
+                  const SizedBox(
+                    height: FeedRhythm.collectionBrandToIpFilterSectionGap,
+                  ),
+                  const TaxonomyFilterSectionLabel(text: 'IP'),
+                  const SizedBox(
+                    height: FeedRhythm.collectionFilterSectionLabelToRail,
+                  ),
                   CollectionIpFilterRow(
                     options: ipFilterOptions,
                     selectedIpId: activeIpFilterId,

@@ -53,7 +53,7 @@ List<CollectionBrandFilterOption> buildCollectionShelfBrandFilterOptions(
   List<ShelfSeries> shelfSeries,
 ) {
   final options = <CollectionBrandFilterOption>[
-    (id: collectionAnyBrandFilterId, label: 'All'),
+    (id: collectionAnyBrandFilterId, label: 'All Brands'),
   ];
   final seen = <String>{collectionAnyBrandFilterId};
 

@@ -55,7 +55,7 @@ List<CollectionIpFilterOption> buildCollectionShelfIpFilterOptions(
   List<ShelfSeries> shelfSeries,
 ) {
   final options = <CollectionIpFilterOption>[
-    (id: collectionAnyIpFilterId, label: 'All'),
+    (id: collectionAnyIpFilterId, label: 'All IPs'),
   ];
   final seen = <String>{collectionAnyIpFilterId};
 

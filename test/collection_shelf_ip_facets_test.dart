@@ -101,7 +101,7 @@ void main() {
     expect(
       options,
       [
-        (id: collectionAnyIpFilterId, label: 'All'),
+        (id: collectionAnyIpFilterId, label: 'All IPs'),
         (id: 'moonbears', label: 'Moon Bears'),
       ],
     );
@@ -163,7 +163,7 @@ void main() {
 
   test('stale IP selection resets to All', () {
     final options = [
-      (id: collectionAnyIpFilterId, label: 'All'),
+      (id: collectionAnyIpFilterId, label: 'All IPs'),
       (id: 'hirono', label: 'Hirono'),
     ];
 

@@ -1,4 +1,5 @@
 import 'package:blindbox_app/shared/widgets/taxonomy_brand_chip_rail.dart';
+import 'package:blindbox_app/shared/widgets/taxonomy_filter_section_label.dart';
 import 'package:flutter/material.dart';
 
 /// Brand taxonomy rail; optional IP rail when a brand is selected.
@@ -24,15 +25,12 @@ class MarketDiscoveryChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SectionLabel(text: 'Brand', scheme: scheme, textTheme: textTheme),
+          const TaxonomyFilterSectionLabel(text: 'Brand'),
           const SizedBox(height: 6),
           TaxonomyBrandChipRail(
             options: brandOptions,
@@ -41,7 +39,7 @@ class MarketDiscoveryChips extends StatelessWidget {
           ),
           if (showIpRail) ...[
             const SizedBox(height: 14),
-            _SectionLabel(text: 'IP', scheme: scheme, textTheme: textTheme),
+            const TaxonomyFilterSectionLabel(text: 'IP'),
             const SizedBox(height: 6),
             TaxonomyBrandChipRail(
               options: ipOptions,
@@ -50,33 +48,6 @@ class MarketDiscoveryChips extends StatelessWidget {
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel({
-    required this.text,
-    required this.scheme,
-    required this.textTheme,
-  });
-
-  final String text;
-  final ColorScheme scheme;
-  final TextTheme textTheme;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Text(
-        text,
-        style: textTheme.labelSmall?.copyWith(
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.35,
-          color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
-        ),
       ),
     );
   }
