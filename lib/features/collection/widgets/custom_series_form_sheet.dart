@@ -5,7 +5,9 @@ import 'package:blindbox_app/features/collection/data/collection_input_formatter
 import 'package:blindbox_app/features/collection/data/collection_input_limits.dart';
 import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/widgets/custom_series_cover_slot.dart';
+import 'package:blindbox_app/features/collection/widgets/custom_series_edit_figures_section.dart';
 import 'package:blindbox_app/features/collection/widgets/custom_series_quiet_field.dart';
 import 'package:blindbox_app/features/collection/widgets/edit_custom_figure_dialog.dart';
 import 'package:blindbox_app/features/collection/widgets/figure_name_chips_editor.dart';
@@ -13,6 +15,7 @@ import 'package:blindbox_app/features/collection/widgets/shelf_gallery_pick.dart
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 typedef CustomSeriesFormSubmit =
     void Function({
@@ -32,6 +35,14 @@ typedef CustomSeriesMetadataSubmit = void Function({
   String? notes,
 });
 
+typedef CustomSeriesFigureSubmit = void Function({
+  required String figureId,
+  required String name,
+  required bool isSecret,
+  String? rarityLabel,
+  String? localImageUri,
+});
+
 enum CustomSeriesFormMode { create, edit }
 
 /// Collapsed by default on edit — brand/IP are power-user taxonomy changes.
@@ -45,34 +56,39 @@ const String customSeriesEditTaxonomyWarning =
     '• Journey history';
 
 /// Shared create/edit form for custom series metadata (figures only on create).
-class CustomSeriesFormSheet extends StatefulWidget {
+class CustomSeriesFormSheet extends ConsumerStatefulWidget {
   const CustomSeriesFormSheet.create({
     super.key,
     required CustomSeriesFormSubmit onSubmit,
   })  : mode = CustomSeriesFormMode.create,
         initialSeries = null,
         onCreateSubmit = onSubmit,
-        onEditSubmit = null;
+        onEditSubmit = null,
+        onFigureSubmit = null;
 
   const CustomSeriesFormSheet.edit({
     super.key,
     required ShelfSeries initialSeries,
     required CustomSeriesMetadataSubmit onSubmit,
+    required CustomSeriesFigureSubmit onFigureSubmit,
   })  : mode = CustomSeriesFormMode.edit,
         initialSeries = initialSeries,
         onCreateSubmit = null,
-        onEditSubmit = onSubmit;
+        onEditSubmit = onSubmit,
+        onFigureSubmit = onFigureSubmit;
 
   final CustomSeriesFormMode mode;
   final ShelfSeries? initialSeries;
   final CustomSeriesFormSubmit? onCreateSubmit;
   final CustomSeriesMetadataSubmit? onEditSubmit;
+  final CustomSeriesFigureSubmit? onFigureSubmit;
 
   @override
-  State<CustomSeriesFormSheet> createState() => _CustomSeriesFormSheetState();
+  ConsumerState<CustomSeriesFormSheet> createState() =>
+      _CustomSeriesFormSheetState();
 }
 
-class _CustomSeriesFormSheetState extends State<CustomSeriesFormSheet> {
+class _CustomSeriesFormSheetState extends ConsumerState<CustomSeriesFormSheet> {
   final _seriesName = TextEditingController();
   final _brand = TextEditingController();
   final _ip = TextEditingController();
@@ -162,6 +178,34 @@ class _CustomSeriesFormSheetState extends State<CustomSeriesFormSheet> {
         rarityLabel: f.rarityLabel,
       );
     });
+  }
+
+  ShelfSeries _seriesForEditFigures() {
+    final initial = widget.initialSeries!;
+    final snap = ref.watch(collectionNotifierProvider);
+    for (final series in snap.shelfSeries) {
+      if (series.id == initial.id) return series;
+    }
+    return initial;
+  }
+
+  Future<void> _editShelfFigure(ShelfFigure figure) async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final next = await showDialog<CustomFigureDraft>(
+      context: context,
+      builder: (ctx) => EditCustomFigureDialog(
+        initial: customFigureDraftFromShelfFigure(figure),
+        dialogTitle: editCustomFigureDialogTitle,
+      ),
+    );
+    if (!mounted || next == null) return;
+    widget.onFigureSubmit!(
+      figureId: figure.id,
+      name: next.displayName,
+      isSecret: next.isSecret,
+      rarityLabel: next.rarityLabel,
+      localImageUri: next.localImageUri,
+    );
   }
 
   void _save() {
@@ -331,6 +375,13 @@ class _CustomSeriesFormSheetState extends State<CustomSeriesFormSheet> {
                       hintText: 'Note',
                     ),
                   ),
+                  if (!_isCreate) ...[
+                    const SizedBox(height: FeedRhythm.sheetSectionGap),
+                    CustomSeriesEditFiguresSection(
+                      figures: _seriesForEditFigures().figures,
+                      onFigureTap: _editShelfFigure,
+                    ),
+                  ],
                   const SizedBox(height: 22),
                   FilledButton(
                     onPressed: _save,

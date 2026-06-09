@@ -414,6 +414,80 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
     );
   }
 
+  void updateCustomFigure({
+    required String seriesId,
+    required String figureId,
+    required String name,
+    required bool isSecret,
+    String? rarityLabel,
+    String? localImageUri,
+  }) {
+    final existing = _findSeries(seriesId);
+    if (existing == null || !existing.isCustomLocal) return;
+
+    final index = existing.figures.indexWhere((f) => f.id == figureId);
+    if (index < 0) return;
+
+    final figName = CollectionInputSanitizer.figureName(name);
+    if (figName == null || figName.isEmpty) return;
+
+    final old = existing.figures[index];
+    final sanitizedRarity = isSecret
+        ? CollectionInputSanitizer.rarityLabel(rarityLabel)
+        : null;
+    final trimmedUri = localImageUri?.trim();
+    final resolvedUri =
+        (trimmedUri != null && trimmedUri.isNotEmpty) ? trimmedUri : null;
+
+    final updatedFigure = ShelfFigure(
+      id: old.id,
+      seriesId: old.seriesId,
+      name: figName,
+      imageUrl: old.imageUrl,
+      localImageUri: resolvedUri,
+      imageKey: old.imageKey,
+      rarity: CustomSeriesConventions.rarityLine(
+        isSecret: isSecret,
+        rarityLabel: sanitizedRarity,
+      ),
+      isSecret: isSecret,
+      rarityLabel: (sanitizedRarity != null && sanitizedRarity.isNotEmpty)
+          ? sanitizedRarity
+          : null,
+      catalogFigureTemplateId: old.catalogFigureTemplateId,
+      taxonomyBrandId: old.taxonomyBrandId,
+      taxonomyIpId: old.taxonomyIpId,
+    );
+
+    final updatedFigures = List<ShelfFigure>.from(existing.figures);
+    updatedFigures[index] = updatedFigure;
+
+    final updatedSeries = ShelfSeries(
+      id: existing.id,
+      name: existing.name,
+      brand: existing.brand,
+      ipName: existing.ipName,
+      figures: updatedFigures,
+      shelfAccent: existing.shelfAccent,
+      notes: existing.notes,
+      catalogTemplateId: existing.catalogTemplateId,
+      taxonomyBrandId: existing.taxonomyBrandId,
+      taxonomyIpId: existing.taxonomyIpId,
+      imageKey: existing.imageKey,
+      customCoverImageUri: existing.customCoverImageUri,
+    );
+
+    _commit(
+      CollectionSnapshot(
+        shelfSeries: [
+          for (final s in state.shelfSeries)
+            if (s.id == seriesId) updatedSeries else s,
+        ],
+        figureStates: state.figureStates,
+      ),
+    );
+  }
+
   ({
     String displayName,
     String? brand,

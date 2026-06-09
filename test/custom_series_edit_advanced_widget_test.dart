@@ -46,6 +46,26 @@ final class _EditAdvancedTestNotifier extends CollectionNotifier {
     );
     _snap = state;
   }
+
+  @override
+  void updateCustomFigure({
+    required String seriesId,
+    required String figureId,
+    required String name,
+    required bool isSecret,
+    String? rarityLabel,
+    String? localImageUri,
+  }) {
+    super.updateCustomFigure(
+      seriesId: seriesId,
+      figureId: figureId,
+      name: name,
+      isSecret: isSecret,
+      rarityLabel: rarityLabel,
+      localImageUri: localImageUri,
+    );
+    _snap = state;
+  }
 }
 
 ShelfSeries _editableSeries({
@@ -131,6 +151,25 @@ Future<ProviderContainer> _pumpEditForm(
                               ipDisplayName: ipDisplayName,
                               customCoverImageUri: customCoverImageUri,
                               notes: notes,
+                            );
+                      },
+                  onFigureSubmit:
+                      ({
+                        required String figureId,
+                        required String name,
+                        required bool isSecret,
+                        String? rarityLabel,
+                        String? localImageUri,
+                      }) {
+                        container
+                            .read(collectionNotifierProvider.notifier)
+                            .updateCustomFigure(
+                              seriesId: series.id,
+                              figureId: figureId,
+                              name: name,
+                              isSecret: isSecret,
+                              rarityLabel: rarityLabel,
+                              localImageUri: localImageUri,
                             );
                       },
                 ),

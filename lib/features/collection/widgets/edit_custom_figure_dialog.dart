@@ -3,13 +3,26 @@ import 'package:blindbox_app/features/collection/data/collection_input_formatter
 import 'package:blindbox_app/features/collection/data/collection_input_limits.dart';
 import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
 import 'package:blindbox_app/features/collection/widgets/custom_series_quiet_field.dart';
+import 'package:blindbox_app/features/collection/widgets/shelf_gallery_pick.dart';
+import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
 import 'package:flutter/material.dart';
+
+const String editCustomFigureDialogTitle = 'Edit Figure';
 
 /// Edit one custom figure draft — dialog owns controllers (safe cancel).
 class EditCustomFigureDialog extends StatefulWidget {
-  const EditCustomFigureDialog({super.key, required this.initial});
+  const EditCustomFigureDialog({
+    super.key,
+    required this.initial,
+    this.dialogTitle = 'Figure',
+    this.pickImage,
+  });
 
   final CustomFigureDraft initial;
+  final String dialogTitle;
+
+  /// Optional gallery pick override (widget tests).
+  final Future<String?> Function(BuildContext context)? pickImage;
 
   @override
   State<EditCustomFigureDialog> createState() => _EditCustomFigureDialogState();
@@ -19,6 +32,7 @@ class _EditCustomFigureDialogState extends State<EditCustomFigureDialog> {
   late final TextEditingController _name;
   late final TextEditingController _rarity;
   late bool _isSecret;
+  String? _localImageUri;
 
   @override
   void initState() {
@@ -26,6 +40,7 @@ class _EditCustomFigureDialogState extends State<EditCustomFigureDialog> {
     _name = TextEditingController(text: widget.initial.displayName);
     _isSecret = widget.initial.isSecret;
     _rarity = TextEditingController(text: widget.initial.rarityLabel ?? '');
+    _localImageUri = widget.initial.localImageUri;
   }
 
   @override
@@ -35,6 +50,15 @@ class _EditCustomFigureDialogState extends State<EditCustomFigureDialog> {
     super.dispose();
   }
 
+  Future<void> _replaceImage() async {
+    final pick = widget.pickImage ?? pickShelfGalleryImage;
+    final path = await pick(context);
+    if (!mounted || path == null) return;
+    setState(() => _localImageUri = path);
+  }
+
+  void _removeImage() => setState(() => _localImageUri = null);
+
   void _save() {
     final name = _name.text.trim();
     if (name.isEmpty) return;
@@ -42,7 +66,7 @@ class _EditCustomFigureDialogState extends State<EditCustomFigureDialog> {
     Navigator.of(context).pop(
       CustomFigureDraft(
         displayName: name,
-        localImageUri: widget.initial.localImageUri,
+        localImageUri: _localImageUri,
         isSecret: _isSecret,
         rarityLabel: _isSecret && rarity.isNotEmpty ? rarity : null,
       ),
@@ -53,10 +77,11 @@ class _EditCustomFigureDialogState extends State<EditCustomFigureDialog> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final hasPhoto = _localImageUri?.trim().isNotEmpty ?? false;
 
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: AppRadii.cardRadius),
-      title: const Text('Figure'),
+      title: Text(widget.dialogTitle),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -86,13 +111,50 @@ class _EditCustomFigureDialogState extends State<EditCustomFigureDialog> {
               const SizedBox(height: 4),
               TextField(
                 controller: _rarity,
-                textInputAction: TextInputAction.done,
+                textInputAction: TextInputAction.next,
                 maxLength: CollectionInputLimits.rarityLabelMaxLength,
                 inputFormatters: CollectionInputFormatters.rarityLabel(),
-                onSubmitted: (_) => _save(),
                 decoration: quietCustomSeriesField(scheme, hintText: '1:72'),
               ),
             ],
+            const SizedBox(height: 16),
+            Text(
+              'Image',
+              style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 10),
+            if (hasPhoto) ...[
+              ClipRRect(
+                borderRadius: AppRadii.insetRadius,
+                child: SizedBox(
+                  height: 120,
+                  width: double.infinity,
+                  child: CollectibleThumbImage(
+                    imageRef: _localImageUri,
+                    name: _name.text,
+                    seedKey: 'fig-dialog-${_name.text}',
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+            Row(
+              children: [
+                TextButton.icon(
+                  onPressed: _replaceImage,
+                  icon: const Icon(Icons.image_outlined, size: 18),
+                  label: Text(hasPhoto ? 'Replace' : 'Add photo'),
+                ),
+                if (hasPhoto) ...[
+                  const SizedBox(width: 8),
+                  TextButton(
+                    onPressed: _removeImage,
+                    child: const Text('Remove'),
+                  ),
+                ],
+              ],
+            ),
           ],
         ),
       ),

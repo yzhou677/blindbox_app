@@ -52,6 +52,26 @@ final class _CustomSeriesEditTestNotifier extends CollectionNotifier {
     );
     _snap = state;
   }
+
+  @override
+  void updateCustomFigure({
+    required String seriesId,
+    required String figureId,
+    required String name,
+    required bool isSecret,
+    String? rarityLabel,
+    String? localImageUri,
+  }) {
+    super.updateCustomFigure(
+      seriesId: seriesId,
+      figureId: figureId,
+      name: name,
+      isSecret: isSecret,
+      rarityLabel: rarityLabel,
+      localImageUri: localImageUri,
+    );
+    _snap = state;
+  }
 }
 
 ShelfSeries _customSeries() {
@@ -200,6 +220,25 @@ void main() {
                               ipDisplayName: ipDisplayName,
                               customCoverImageUri: customCoverImageUri,
                               notes: notes,
+                            );
+                      },
+                  onFigureSubmit:
+                      ({
+                        required String figureId,
+                        required String name,
+                        required bool isSecret,
+                        String? rarityLabel,
+                        String? localImageUri,
+                      }) {
+                        ProviderScope.containerOf(ctx)
+                            .read(collectionNotifierProvider.notifier)
+                            .updateCustomFigure(
+                              seriesId: series.id,
+                              figureId: figureId,
+                              name: name,
+                              isSecret: isSecret,
+                              rarityLabel: rarityLabel,
+                              localImageUri: localImageUri,
                             );
                       },
                 ),

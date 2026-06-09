@@ -50,6 +50,23 @@ void _openEditCustomSeries(
                   notes: notes,
                 );
           },
+      onFigureSubmit:
+          ({
+            required String figureId,
+            required String name,
+            required bool isSecret,
+            String? rarityLabel,
+            String? localImageUri,
+          }) {
+            ref.read(collectionNotifierProvider.notifier).updateCustomFigure(
+                  seriesId: series.id,
+                  figureId: figureId,
+                  name: name,
+                  isSecret: isSecret,
+                  rarityLabel: rarityLabel,
+                  localImageUri: localImageUri,
+                );
+          },
     ),
   );
 }
