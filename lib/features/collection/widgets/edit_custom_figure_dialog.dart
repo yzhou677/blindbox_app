@@ -1,4 +1,6 @@
 import 'package:blindbox_app/core/theme/app_radii.dart';
+import 'package:blindbox_app/features/collection/data/collection_input_formatters.dart';
+import 'package:blindbox_app/features/collection/data/collection_input_limits.dart';
 import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
 import 'package:blindbox_app/features/collection/widgets/custom_series_quiet_field.dart';
 import 'package:flutter/material.dart';
@@ -64,6 +66,8 @@ class _EditCustomFigureDialogState extends State<EditCustomFigureDialog> {
               controller: _name,
               autofocus: true,
               textInputAction: TextInputAction.next,
+              maxLength: CollectionInputLimits.figureNameMaxLength,
+              inputFormatters: CollectionInputFormatters.figureName(),
               decoration: quietCustomSeriesField(scheme, hintText: 'Name'),
             ),
             const SizedBox(height: 16),
@@ -83,6 +87,8 @@ class _EditCustomFigureDialogState extends State<EditCustomFigureDialog> {
               TextField(
                 controller: _rarity,
                 textInputAction: TextInputAction.done,
+                maxLength: CollectionInputLimits.rarityLabelMaxLength,
+                inputFormatters: CollectionInputFormatters.rarityLabel(),
                 onSubmitted: (_) => _save(),
                 decoration: quietCustomSeriesField(scheme, hintText: '1:72'),
               ),

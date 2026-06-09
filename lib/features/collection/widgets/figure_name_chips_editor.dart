@@ -1,5 +1,7 @@
 import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
+import 'package:blindbox_app/features/collection/data/collection_input_formatters.dart';
+import 'package:blindbox_app/features/collection/data/collection_input_limits.dart';
 import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
 import 'package:blindbox_app/features/collection/widgets/custom_series_quiet_field.dart';
 import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
@@ -76,6 +78,8 @@ class FigureNameChipsEditor extends StatelessWidget {
           controller: addFieldController,
           focusNode: addFieldFocusNode,
           textInputAction: TextInputAction.done,
+          maxLength: CollectionInputLimits.figureNameMaxLength,
+          inputFormatters: CollectionInputFormatters.figureName(),
           onSubmitted: (_) => onAddSubmitted(),
           style: CollectibleTypography.figureCaption(textTheme, scheme),
           decoration: quietCustomSeriesField(

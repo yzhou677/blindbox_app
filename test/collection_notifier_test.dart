@@ -264,6 +264,59 @@ void main() {
     expect(snap.figureStates, isEmpty);
   });
 
+  test('addCustomSeries truncates over-length metadata at save time', () {
+    CollectionAppBootstrap.prime(CollectionSnapshot.emptyTest());
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final n = container.read(collectionNotifierProvider.notifier);
+
+    n.addCustomSeries(
+      seriesName: 'S' * 120,
+      brand: 'B' * 60,
+      ipDisplayName: 'I' * 90,
+      notes: 'N' * 600,
+      figures: [
+        CustomFigureDraft(
+          displayName: 'F' * 90,
+          isSecret: true,
+          rarityLabel: '1' * 30,
+        ),
+      ],
+    );
+
+    final added = container.read(collectionNotifierProvider).shelfSeries.single;
+    expect(added.name.length, 80);
+    expect(added.brand.length, lessThanOrEqualTo(48));
+    expect(added.ipName.length, lessThanOrEqualTo(64));
+    expect(added.notes!.length, 500);
+    final fig = added.figures.single;
+    expect(fig.name.length, 64);
+    expect(fig.rarityLabel!.length, 16);
+  });
+
+  test('addCustomSeries canonicalizes after sanitizing messy brand and IP', () {
+    CollectionAppBootstrap.prime(CollectionSnapshot.emptyTest());
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final n = container.read(collectionNotifierProvider.notifier);
+
+    n.addCustomSeries(
+      seriesName: 'My Baby Three Set',
+      brand: '  dpl  ',
+      ipDisplayName: ' babythree\n',
+      figures: const [
+        CustomFigureDraft(displayName: 'Fig 1'),
+        CustomFigureDraft(displayName: 'Fig 2'),
+      ],
+    );
+
+    final added = container.read(collectionNotifierProvider).shelfSeries.single;
+    expect(added.brand, 'DPL');
+    expect(added.taxonomyBrandId, 'dpl');
+    expect(added.ipName, 'Baby Three');
+    expect(added.taxonomyIpId, 'baby_three');
+  });
+
   test('addCustomSeries canonicalizes known brand and IP at save time', () {
     CollectionAppBootstrap.prime(CollectionSnapshot.emptyTest());
     final container = ProviderContainer();
@@ -413,6 +466,30 @@ void main() {
     container.read(collectionNotifierProvider);
     return container;
   }
+
+  test('updateCustomSeries truncates over-length metadata at save time', () {
+    final container = newEditableCustomContainer();
+    final n = container.read(collectionNotifierProvider.notifier);
+
+    n.updateCustomSeries(
+      seriesId: 'custom_edit_1',
+      seriesName: 'R' * 120,
+      brand: 'B' * 60,
+      ipDisplayName: 'I' * 90,
+      notes: 'E' * 700,
+    );
+
+    final updated = container.read(collectionNotifierProvider).shelfSeries.single;
+    expect(updated.name.length, 80);
+    expect(updated.brand.length, lessThanOrEqualTo(48));
+    expect(updated.ipName.length, lessThanOrEqualTo(64));
+    expect(updated.notes!.length, 500);
+    expect(updated.figures.length, 2);
+    expect(
+      container.read(collectionNotifierProvider).trackedOrDefault('custom_edit_1-f-0').state,
+      FigureCollectionState.owned,
+    );
+  });
 
   test('updateCustomSeries edits brand only and syncs figure taxonomy', () {
     final container = newEditableCustomContainer();

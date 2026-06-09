@@ -1,5 +1,7 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_radii.dart';
+import 'package:blindbox_app/features/collection/data/collection_input_formatters.dart';
+import 'package:blindbox_app/features/collection/data/collection_input_limits.dart';
 import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/widgets/custom_series_cover_slot.dart';
@@ -207,6 +209,8 @@ class _CustomSeriesFormSheetState extends State<CustomSeriesFormSheet> {
                     controller: _seriesName,
                     style: Theme.of(context).textTheme.titleMedium,
                     textInputAction: TextInputAction.next,
+                    maxLength: CollectionInputLimits.seriesNameMaxLength,
+                    inputFormatters: CollectionInputFormatters.seriesName(),
                     decoration: quietCustomSeriesField(
                       scheme,
                       hintText: 'Series name',
@@ -222,6 +226,8 @@ class _CustomSeriesFormSheetState extends State<CustomSeriesFormSheet> {
                   TextFormField(
                     controller: _brand,
                     textInputAction: TextInputAction.next,
+                    maxLength: CollectionInputLimits.brandMaxLength,
+                    inputFormatters: CollectionInputFormatters.brand(),
                     decoration: quietCustomSeriesField(
                       scheme,
                       hintText: 'Brand',
@@ -231,6 +237,8 @@ class _CustomSeriesFormSheetState extends State<CustomSeriesFormSheet> {
                   TextFormField(
                     controller: _ip,
                     textInputAction: TextInputAction.next,
+                    maxLength: CollectionInputLimits.ipMaxLength,
+                    inputFormatters: CollectionInputFormatters.ip(),
                     decoration: quietCustomSeriesField(
                       scheme,
                       hintText: 'Universe',
@@ -252,6 +260,8 @@ class _CustomSeriesFormSheetState extends State<CustomSeriesFormSheet> {
                   TextFormField(
                     controller: _notes,
                     maxLines: 2,
+                    maxLength: CollectionInputLimits.notesMaxLength,
+                    inputFormatters: CollectionInputFormatters.notes(),
                     textInputAction: TextInputAction.done,
                     decoration: quietCustomSeriesField(
                       scheme,

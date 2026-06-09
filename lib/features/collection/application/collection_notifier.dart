@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:blindbox_app/features/collection/bootstrap/collection_app_bootstrap.dart';
+import 'package:blindbox_app/features/collection/data/collection_input_sanitizer.dart';
 import 'package:blindbox_app/features/collection/data/collection_taxonomy_canonicalizer.dart';
 import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
 import 'package:blindbox_app/features/collection/data/series_release_lookup.dart';
@@ -263,11 +264,18 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       Color(0xFFEAF6FB),
     ];
     final accent = accents[seriesId.hashCode.abs() % accents.length];
-    final displayName = seriesName.trim();
+    final meta = _sanitizeCustomSeriesMetadata(
+      seriesName: seriesName,
+      brand: brand,
+      ipDisplayName: ipDisplayName,
+      notes: notes,
+    );
+    final displayName = meta.displayName;
+    if (displayName.isEmpty) return;
     final taxonomy = _resolveCustomSeriesTaxonomy(
       displayName: displayName,
-      trimmedBrand: brand?.trim(),
-      ipDisplayName: ipDisplayName,
+      trimmedBrand: meta.brand,
+      ipDisplayName: meta.ipDisplayName,
     );
     final brandLine = taxonomy.brandLine;
     final brandId = taxonomy.brandId;
@@ -276,12 +284,14 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
     final shelfFigures = <ShelfFigure>[];
     var i = 0;
     for (final draft in figures) {
-      final figName = draft.displayName.trim();
-      if (figName.isEmpty) continue;
+      final figName = CollectionInputSanitizer.figureName(draft.displayName);
+      if (figName == null || figName.isEmpty) continue;
       final figId = CustomSeriesConventions.figureImageKey(seriesId, i);
       final imageKey = CustomSeriesConventions.figureImageKey(seriesId, i);
       final local = draft.localImageUri?.trim();
-      final rarityLabel = draft.isSecret ? draft.rarityLabel?.trim() : null;
+      final rarityLabel = draft.isSecret
+          ? CollectionInputSanitizer.rarityLabel(draft.rarityLabel)
+          : null;
       shelfFigures.add(
         ShelfFigure(
           id: figId,
@@ -305,7 +315,6 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       i++;
     }
     if (shelfFigures.isEmpty) return;
-    final trimmedNotes = notes?.trim();
     final trimmedCover = customCoverImageUri?.trim();
     final series = ShelfSeries(
       id: seriesId,
@@ -314,9 +323,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       ipName: resolvedIpName,
       figures: shelfFigures,
       shelfAccent: accent,
-      notes: (trimmedNotes == null || trimmedNotes.isEmpty)
-          ? null
-          : trimmedNotes,
+      notes: meta.notes,
       catalogTemplateId: null,
       taxonomyBrandId: brandId,
       taxonomyIpId: ipId,
@@ -344,16 +351,21 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
     final existing = _findSeries(seriesId);
     if (existing == null || !existing.isCustomLocal) return;
 
-    final displayName = seriesName.trim();
+    final meta = _sanitizeCustomSeriesMetadata(
+      seriesName: seriesName,
+      brand: brand,
+      ipDisplayName: ipDisplayName,
+      notes: notes,
+    );
+    final displayName = meta.displayName;
     if (displayName.isEmpty) return;
 
     final taxonomy = _resolveCustomSeriesTaxonomy(
       displayName: displayName,
-      trimmedBrand: brand?.trim(),
-      ipDisplayName: ipDisplayName,
+      trimmedBrand: meta.brand,
+      ipDisplayName: meta.ipDisplayName,
     );
 
-    final trimmedNotes = notes?.trim();
     final trimmedCover = customCoverImageUri?.trim();
 
     final updatedFigures = [
@@ -381,7 +393,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       ipName: taxonomy.ipName,
       figures: updatedFigures,
       shelfAccent: existing.shelfAccent,
-      notes: (trimmedNotes == null || trimmedNotes.isEmpty) ? null : trimmedNotes,
+      notes: meta.notes,
       catalogTemplateId: null,
       taxonomyBrandId: taxonomy.brandId,
       taxonomyIpId: taxonomy.ipId,
@@ -399,6 +411,25 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
         ],
         figureStates: state.figureStates,
       ),
+    );
+  }
+
+  ({
+    String displayName,
+    String? brand,
+    String? ipDisplayName,
+    String? notes,
+  }) _sanitizeCustomSeriesMetadata({
+    required String seriesName,
+    String? brand,
+    String? ipDisplayName,
+    String? notes,
+  }) {
+    return (
+      displayName: CollectionInputSanitizer.seriesName(seriesName),
+      brand: CollectionInputSanitizer.brand(brand),
+      ipDisplayName: CollectionInputSanitizer.ip(ipDisplayName),
+      notes: CollectionInputSanitizer.notes(notes),
     );
   }
 
