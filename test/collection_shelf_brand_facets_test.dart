@@ -109,6 +109,26 @@ void main() {
     expect(next, collectionAnyBrandFilterId);
   });
 
+  test('canonical custom brand uses registry display label with stable filter id', () {
+    final series = testShelfSeries(
+      id: 'custom_dpl',
+      brand: 'DPL',
+      taxonomyBrandId: 'dpl',
+      catalogTemplateId: null,
+    );
+
+    final options = buildCollectionShelfBrandFilterOptions([series]);
+
+    expect(options, [
+      (id: collectionAnyBrandFilterId, label: 'All Brands'),
+      (id: 'dpl', label: 'DPL'),
+    ]);
+    expect(
+      shelfSeriesVisibleForBrandFilter([series], 'dpl'),
+      [series],
+    );
+  });
+
   test('filtering by normalized key returns grouped brand rows', () {
     final pop1 = testShelfSeries(
       id: 'p1',

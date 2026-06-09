@@ -7,7 +7,7 @@ import 'package:blindbox_app/features/collection/application/collection_notifier
 import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_brand_facets.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_ip_facets.dart';
-import 'package:blindbox_app/features/collection/widgets/add_custom_series_sheet.dart';
+import 'package:blindbox_app/features/collection/widgets/custom_series_form_sheet.dart';
 import 'package:blindbox_app/features/collection/widgets/add_to_collection_sheet.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_brand_filter_row.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_ip_filter_row.dart';
@@ -145,7 +145,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     showCollectionModalBottomSheet<void>(
       context: context,
       backgroundColor: Theme.of(context).colorScheme.surface,
-      builder: (_, scroll) => AddCustomSeriesSheet(
+      builder: (_, scroll) => CustomSeriesFormSheet.create(
           onSubmit:
               ({
                 required String seriesName,

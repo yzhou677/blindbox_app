@@ -107,6 +107,28 @@ void main() {
     );
   });
 
+  test('canonical custom IP uses registry display label with stable filter id', () {
+    final series = testShelfSeries(
+      id: 'custom_baby_three',
+      brand: 'DPL',
+      ipName: 'Baby Three',
+      taxonomyBrandId: 'dpl',
+      taxonomyIpId: 'baby_three',
+      catalogTemplateId: null,
+    );
+
+    final options = buildCollectionShelfIpFilterOptions([series]);
+
+    expect(options, [
+      (id: collectionAnyIpFilterId, label: 'All IPs'),
+      (id: 'babythree', label: 'Baby Three'),
+    ]);
+    expect(
+      shelfSeriesVisibleForIpFilter([series], 'babythree'),
+      [series],
+    );
+  });
+
   test('custom POP MART fan-art IP uses shelf label when registry misses', () {
     final series = testShelfSeries(
       id: 'fan',

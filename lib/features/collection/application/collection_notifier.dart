@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:blindbox_app/features/collection/bootstrap/collection_app_bootstrap.dart';
+import 'package:blindbox_app/features/collection/data/collection_taxonomy_canonicalizer.dart';
 import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
 import 'package:blindbox_app/features/collection/data/series_release_lookup.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
@@ -263,18 +264,15 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
     ];
     final accent = accents[seriesId.hashCode.abs() % accents.length];
     final displayName = seriesName.trim();
-    final trimmedBrand = brand?.trim();
-    final brandLine = (trimmedBrand == null || trimmedBrand.isEmpty)
-        ? 'Independent'
-        : trimmedBrand;
-    final ipLine = (ipDisplayName?.trim().isEmpty ?? true)
-        ? displayName
-        : ipDisplayName!.trim();
-    final brandId = CustomSeriesConventions.brandIdFromDisplay(trimmedBrand);
-    final ipId = CustomSeriesConventions.ipIdFromDisplay(
-      seriesDisplayName: displayName,
+    final taxonomy = _resolveCustomSeriesTaxonomy(
+      displayName: displayName,
+      trimmedBrand: brand?.trim(),
       ipDisplayName: ipDisplayName,
     );
+    final brandLine = taxonomy.brandLine;
+    final brandId = taxonomy.brandId;
+    final ipId = taxonomy.ipId;
+    final resolvedIpName = taxonomy.ipName;
     final shelfFigures = <ShelfFigure>[];
     var i = 0;
     for (final draft in figures) {
@@ -313,7 +311,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       id: seriesId,
       name: displayName,
       brand: brandLine,
-      ipName: ipLine,
+      ipName: resolvedIpName,
       figures: shelfFigures,
       shelfAccent: accent,
       notes: (trimmedNotes == null || trimmedNotes.isEmpty)
@@ -332,6 +330,98 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
         shelfSeries: [series, ...state.shelfSeries],
         figureStates: state.figureStates,
       ),
+    );
+  }
+
+  void updateCustomSeries({
+    required String seriesId,
+    required String seriesName,
+    String? brand,
+    String? ipDisplayName,
+    String? customCoverImageUri,
+    String? notes,
+  }) {
+    final existing = _findSeries(seriesId);
+    if (existing == null || !existing.isCustomLocal) return;
+
+    final displayName = seriesName.trim();
+    if (displayName.isEmpty) return;
+
+    final taxonomy = _resolveCustomSeriesTaxonomy(
+      displayName: displayName,
+      trimmedBrand: brand?.trim(),
+      ipDisplayName: ipDisplayName,
+    );
+
+    final trimmedNotes = notes?.trim();
+    final trimmedCover = customCoverImageUri?.trim();
+
+    final updatedFigures = [
+      for (final f in existing.figures)
+        ShelfFigure(
+          id: f.id,
+          seriesId: f.seriesId,
+          name: f.name,
+          imageUrl: f.imageUrl,
+          localImageUri: f.localImageUri,
+          imageKey: f.imageKey,
+          rarity: f.rarity,
+          isSecret: f.isSecret,
+          rarityLabel: f.rarityLabel,
+          catalogFigureTemplateId: f.catalogFigureTemplateId,
+          taxonomyBrandId: taxonomy.brandId,
+          taxonomyIpId: taxonomy.ipId,
+        ),
+    ];
+
+    final updated = ShelfSeries(
+      id: existing.id,
+      name: displayName,
+      brand: taxonomy.brandLine,
+      ipName: taxonomy.ipName,
+      figures: updatedFigures,
+      shelfAccent: existing.shelfAccent,
+      notes: (trimmedNotes == null || trimmedNotes.isEmpty) ? null : trimmedNotes,
+      catalogTemplateId: null,
+      taxonomyBrandId: taxonomy.brandId,
+      taxonomyIpId: taxonomy.ipId,
+      imageKey: existing.imageKey,
+      customCoverImageUri: (trimmedCover != null && trimmedCover.isNotEmpty)
+          ? trimmedCover
+          : null,
+    );
+
+    _commit(
+      CollectionSnapshot(
+        shelfSeries: [
+          for (final s in state.shelfSeries)
+            if (s.id == seriesId) updated else s,
+        ],
+        figureStates: state.figureStates,
+      ),
+    );
+  }
+
+  ({String brandLine, String brandId, String ipName, String ipId})
+  _resolveCustomSeriesTaxonomy({
+    required String displayName,
+    String? trimmedBrand,
+    String? ipDisplayName,
+  }) {
+    final brandCanon = CollectionTaxonomyCanonicalizer.resolveBrandFromUserInput(
+      trimmedBrand,
+    );
+    final ipLine = (ipDisplayName?.trim().isEmpty ?? true)
+        ? displayName
+        : ipDisplayName!.trim();
+    final ipCanon = CollectionTaxonomyCanonicalizer.resolveIpFromUserInput(
+      ipLine,
+    );
+    return (
+      brandLine: brandCanon.displayLabel,
+      brandId: brandCanon.taxonomyId,
+      ipName: ipCanon.displayLabel,
+      ipId: ipCanon.taxonomyId,
     );
   }
 

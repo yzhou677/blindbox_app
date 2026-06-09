@@ -264,6 +264,54 @@ void main() {
     expect(snap.figureStates, isEmpty);
   });
 
+  test('addCustomSeries canonicalizes known brand and IP at save time', () {
+    CollectionAppBootstrap.prime(CollectionSnapshot.emptyTest());
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final n = container.read(collectionNotifierProvider.notifier);
+
+    n.addCustomSeries(
+      seriesName: 'My Baby Three Set',
+      brand: 'dpl',
+      ipDisplayName: 'babythree',
+      figures: const [
+        CustomFigureDraft(displayName: 'Fig 1'),
+        CustomFigureDraft(displayName: 'Fig 2'),
+      ],
+    );
+
+    final added = container.read(collectionNotifierProvider).shelfSeries.single;
+    expect(added.brand, 'DPL');
+    expect(added.taxonomyBrandId, 'dpl');
+    expect(added.ipName, 'Baby Three');
+    expect(added.taxonomyIpId, 'baby_three');
+
+    for (final fig in added.figures) {
+      expect(fig.taxonomyBrandId, 'dpl');
+      expect(fig.taxonomyIpId, 'baby_three');
+    }
+  });
+
+  test('addCustomSeries keeps unmatched custom brand and IP unchanged', () {
+    CollectionAppBootstrap.prime(CollectionSnapshot.emptyTest());
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final n = container.read(collectionNotifierProvider.notifier);
+
+    n.addCustomSeries(
+      seriesName: 'Fan Art',
+      brand: 'POP',
+      ipDisplayName: 'Custom Labubu Fan Art',
+      figures: const [CustomFigureDraft(displayName: 'One')],
+    );
+
+    final added = container.read(collectionNotifierProvider).shelfSeries.single;
+    expect(added.brand, 'POP');
+    expect(added.taxonomyBrandId, 'pop');
+    expect(added.ipName, 'Custom Labubu Fan Art');
+    expect(added.taxonomyIpId, 'custom_labubu_fan_art');
+  });
+
   test('addCustomSeries skips empty figure names', () {
     CollectionAppBootstrap.prime(CollectionSnapshot.emptyTest());
     final container = ProviderContainer();
@@ -298,6 +346,212 @@ void main() {
     expect(fig.rarityLabel, '1:72');
     expect(fig.imageKey, '${added.id}-f-0');
     expect(fig.rarity, '1:72');
+  });
+
+  // ---------------------------------------------------------------------------
+  // updateCustomSeries
+  // ---------------------------------------------------------------------------
+
+  ShelfSeries editableCustomSeries() {
+    const seriesId = 'custom_edit_1';
+    return ShelfSeries(
+      id: seriesId,
+      name: 'My Baby Three Set',
+      brand: 'DPL',
+      ipName: 'Baby Three',
+      taxonomyBrandId: 'dpl',
+      taxonomyIpId: 'baby_three',
+      catalogTemplateId: null,
+      imageKey: seriesId,
+      notes: 'Original note',
+      figures: const [
+        ShelfFigure(
+          id: 'custom_edit_1-f-0',
+          seriesId: seriesId,
+          name: 'Fig A',
+          rarity: 'Regular',
+          isSecret: false,
+          imageKey: 'custom_edit_1-f-0',
+          taxonomyBrandId: 'dpl',
+          taxonomyIpId: 'baby_three',
+        ),
+        ShelfFigure(
+          id: 'custom_edit_1-f-1',
+          seriesId: seriesId,
+          name: 'Fig B',
+          rarity: '1:72',
+          isSecret: true,
+          rarityLabel: '1:72',
+          imageKey: 'custom_edit_1-f-1',
+          taxonomyBrandId: 'dpl',
+          taxonomyIpId: 'baby_three',
+        ),
+      ],
+      shelfAccent: Color(0xFFE4F2EA),
+    );
+  }
+
+  ProviderContainer newEditableCustomContainer() {
+    final series = editableCustomSeries();
+    CollectionAppBootstrap.prime(
+      CollectionSnapshot(
+        shelfSeries: [series],
+        figureStates: const {
+          'custom_edit_1-f-0': TrackedFigure(
+            figureId: 'custom_edit_1-f-0',
+            state: FigureCollectionState.owned,
+          ),
+          'custom_edit_1-f-1': TrackedFigure(
+            figureId: 'custom_edit_1-f-1',
+            state: FigureCollectionState.wishlist,
+          ),
+        },
+      ),
+    );
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    container.read(collectionNotifierProvider);
+    return container;
+  }
+
+  test('updateCustomSeries edits brand only and syncs figure taxonomy', () {
+    final container = newEditableCustomContainer();
+    final n = container.read(collectionNotifierProvider.notifier);
+
+    n.updateCustomSeries(
+      seriesId: 'custom_edit_1',
+      seriesName: 'My Baby Three Set',
+      brand: 'POP MART',
+      ipDisplayName: 'Baby Three',
+    );
+
+    final updated = container.read(collectionNotifierProvider).shelfSeries.single;
+    expect(updated.id, 'custom_edit_1');
+    expect(updated.brand, 'POP MART');
+    expect(updated.taxonomyBrandId, 'pop_mart');
+    expect(updated.ipName, 'Baby Three');
+    expect(updated.taxonomyIpId, 'baby_three');
+
+    for (final fig in updated.figures) {
+      expect(fig.taxonomyBrandId, 'pop_mart');
+      expect(fig.taxonomyIpId, 'baby_three');
+    }
+  });
+
+  test('updateCustomSeries edits IP only and syncs figure taxonomy', () {
+    final container = newEditableCustomContainer();
+    final n = container.read(collectionNotifierProvider.notifier);
+
+    n.updateCustomSeries(
+      seriesId: 'custom_edit_1',
+      seriesName: 'My Baby Three Set',
+      brand: 'DPL',
+      ipDisplayName: 'the monsters',
+    );
+
+    final updated = container.read(collectionNotifierProvider).shelfSeries.single;
+    expect(updated.brand, 'DPL');
+    expect(updated.taxonomyBrandId, 'dpl');
+    expect(updated.ipName, 'THE MONSTERS');
+    expect(updated.taxonomyIpId, 'the_monsters');
+
+    for (final fig in updated.figures) {
+      expect(fig.taxonomyBrandId, 'dpl');
+      expect(fig.taxonomyIpId, 'the_monsters');
+    }
+  });
+
+  test('updateCustomSeries edits brand and IP together', () {
+    final container = newEditableCustomContainer();
+    final n = container.read(collectionNotifierProvider.notifier);
+
+    n.updateCustomSeries(
+      seriesId: 'custom_edit_1',
+      seriesName: 'Renamed Set',
+      brand: 'dpl',
+      ipDisplayName: 'babythree',
+    );
+
+    final updated = container.read(collectionNotifierProvider).shelfSeries.single;
+    expect(updated.name, 'Renamed Set');
+    expect(updated.brand, 'DPL');
+    expect(updated.taxonomyBrandId, 'dpl');
+    expect(updated.ipName, 'Baby Three');
+    expect(updated.taxonomyIpId, 'baby_three');
+  });
+
+  test('updateCustomSeries keeps unknown custom brand and IP unchanged', () {
+    final container = newEditableCustomContainer();
+    final n = container.read(collectionNotifierProvider.notifier);
+
+    n.updateCustomSeries(
+      seriesId: 'custom_edit_1',
+      seriesName: 'My Baby Three Set',
+      brand: 'POP',
+      ipDisplayName: 'Custom Labubu Fan Art',
+    );
+
+    final updated = container.read(collectionNotifierProvider).shelfSeries.single;
+    expect(updated.brand, 'POP');
+    expect(updated.taxonomyBrandId, 'pop');
+    expect(updated.ipName, 'Custom Labubu Fan Art');
+    expect(updated.taxonomyIpId, 'custom_labubu_fan_art');
+  });
+
+  test('updateCustomSeries preserves figure ids and collection states', () {
+    final container = newEditableCustomContainer();
+    final n = container.read(collectionNotifierProvider.notifier);
+
+    n.updateCustomSeries(
+      seriesId: 'custom_edit_1',
+      seriesName: 'My Baby Three Set',
+      brand: 'POP MART',
+      ipDisplayName: 'THE MONSTERS',
+      notes: 'Updated note',
+    );
+
+    final snap = container.read(collectionNotifierProvider);
+    final updated = snap.shelfSeries.single;
+    expect(updated.figures.map((f) => f.id), ['custom_edit_1-f-0', 'custom_edit_1-f-1']);
+    expect(updated.figures[0].name, 'Fig A');
+    expect(updated.figures[1].name, 'Fig B');
+    expect(updated.figures[1].isSecret, isTrue);
+    expect(updated.figures[1].rarityLabel, '1:72');
+    expect(updated.figures[0].imageKey, 'custom_edit_1-f-0');
+    expect(updated.notes, 'Updated note');
+    expect(updated.imageKey, 'custom_edit_1');
+
+    expect(
+      snap.trackedOrDefault('custom_edit_1-f-0').state,
+      FigureCollectionState.owned,
+    );
+    expect(
+      snap.trackedOrDefault('custom_edit_1-f-1').state,
+      FigureCollectionState.wishlist,
+    );
+  });
+
+  test('updateCustomSeries ignores catalog-backed series', () {
+    CollectionAppBootstrap.prime(
+      CollectionSnapshot(
+        shelfSeries: [testShelfSeries()],
+        figureStates: const {},
+      ),
+    );
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final n = container.read(collectionNotifierProvider.notifier);
+
+    n.updateCustomSeries(
+      seriesId: 'series_test',
+      seriesName: 'Hacked',
+      brand: 'DPL',
+      ipDisplayName: 'Baby Three',
+    );
+
+    final unchanged = container.read(collectionNotifierProvider).shelfSeries.single;
+    expect(unchanged.name, 'Test Series');
+    expect(unchanged.brand, 'POP MART');
   });
 
   // ---------------------------------------------------------------------------
