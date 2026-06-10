@@ -1,6 +1,11 @@
 # Local adb audit captures (regenerate via tools/market_dora_reselect_audit_adb.py)
 tools/*_audit_run.txt
 
+# Local machine / doc artifacts (not part of the repo)
+.tools/
+build_env.txt
+docs/screenshots/
+
 # Miscellaneous
 *.class
 *.log
