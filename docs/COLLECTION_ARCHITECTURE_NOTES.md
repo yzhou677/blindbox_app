@@ -14,13 +14,13 @@ Collection is considered:
 
 **Stable / Maintenance Mode**
 
-Core functionality is complete:
+Core functionality is complete (see also [`ARCHITECTURE_NOTES.md`](ARCHITECTURE_NOTES.md) § Collection Feature Status for the current feature matrix and low-priority deferrals):
 
 * Collection shelf
 * Ownership tracking
 * Wishlist tracking
 * Custom series
-* Custom figure support
+* Custom figure support (create, edit, **add figure** from edit sheet)
 * Brand filter
 * IP filter
 * Collection insights

@@ -41,7 +41,7 @@ flutter run \
 
 Without flags, Market uses bundled asset feed only. Gateway failure falls back to asset rows (and optional stale eBay cache).
 
-Live gateway browse skips catalog identity matching (listing-level cards use eBay titles directly). Catalog matching remains available for offline/mock paths only.
+Live gateway browse skips catalog identity matching (listing-level cards use eBay titles directly). Catalog matching remains available for offline/mock paths only. See [`ARCHITECTURE_NOTES.md`](ARCHITECTURE_NOTES.md) § Market Identity Architecture for runtime audit details and retention rationale.
 
 ## Probe
 
