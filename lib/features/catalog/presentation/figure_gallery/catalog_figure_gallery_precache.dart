@@ -39,15 +39,13 @@ abstract final class CatalogFigureGalleryPrecache {
 
     final local = item.localImageUri?.trim();
     if (local != null && local.isNotEmpty) {
-      final path = local.startsWith('file:')
-          ? Uri.parse(local).toFilePath()
-          : local;
-      final file = File(path);
-      if (await file.exists()) {
-        if (context.mounted) {
-          await precacheImage(FileImage(file), context);
-        }
-      }
+      await _precacheLocalUri(context, local);
+      return;
+    }
+
+    final seriesCover = item.seriesCoverImageUri?.trim();
+    if (seriesCover != null && seriesCover.isNotEmpty) {
+      await _precacheLocalUri(context, seriesCover);
       return;
     }
 
@@ -82,5 +80,16 @@ abstract final class CatalogFigureGalleryPrecache {
   static bool _isNetworkUrl(String ref) {
     final lower = ref.toLowerCase();
     return lower.startsWith('http://') || lower.startsWith('https://');
+  }
+
+  static Future<void> _precacheLocalUri(
+    BuildContext context,
+    String uri,
+  ) async {
+    final path = uri.startsWith('file:') ? Uri.parse(uri).toFilePath() : uri;
+    final file = File(path);
+    if (await file.exists() && context.mounted) {
+      await precacheImage(FileImage(file), context);
+    }
   }
 }

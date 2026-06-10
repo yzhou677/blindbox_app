@@ -101,17 +101,19 @@ class _GalleryArt extends StatelessWidget {
   Widget build(BuildContext context) {
     final local = item.localImageUri?.trim();
     if (local != null && local.isNotEmpty) {
-      final path = local.startsWith('file:')
-          ? Uri.parse(local).toFilePath()
-          : local;
-      return CatalogGalleryStage(
+      return _localGalleryStage(
+        uri: local,
         width: width,
         height: height,
-        imageRef: path,
-        name: item.name,
-        seedKey: item.id,
-        isSecret: item.isSecret,
-        file: File(path),
+      );
+    }
+
+    final seriesCover = item.seriesCoverImageUri?.trim();
+    if (seriesCover != null && seriesCover.isNotEmpty) {
+      return _localGalleryStage(
+        uri: seriesCover,
+        width: width,
+        height: height,
       );
     }
 
@@ -145,6 +147,23 @@ class _GalleryArt extends StatelessWidget {
         seedKey: item.id,
         isSecret: item.isSecret,
       ),
+    );
+  }
+
+  Widget _localGalleryStage({
+    required String uri,
+    required double width,
+    required double height,
+  }) {
+    final path = uri.startsWith('file:') ? Uri.parse(uri).toFilePath() : uri;
+    return CatalogGalleryStage(
+      width: width,
+      height: height,
+      imageRef: path,
+      name: item.name,
+      seedKey: item.id,
+      isSecret: item.isSecret,
+      file: File(path),
     );
   }
 }
