@@ -103,6 +103,54 @@
       "officialUrl": "https://www.popmart.com/us/products/6267/hirono-behind-time-figure",
       "publishedAt": "2026-05-29T00:00:00Z",
       "status": "active"
+    },
+    {
+      "id": "popmart_us_mini_zimomo_maia_7792",
+      "releaseType": "product",
+      "productId": "7792",
+      "productIdConfirmed": true,
+      "title": "Mini ZIMOMO Maia",
+      "summary": "Mini ZIMOMO Maia. Website and TikTok Shop exclusive.",
+      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1780632633043_75357acedab9bbb21b258f5de9c4f191.jpg?x-oss-process=image/format,webp",
+      "officialUrl": "https://www.popmart.com/us/products/7792/Mini-ZIMOMO-Maia",
+      "publishedAt": "2026-06-05T00:00:00Z",
+      "status": "active"
+    },
+    {
+      "id": "popmart_us_tycoco_goud_7794",
+      "releaseType": "product",
+      "productId": "7794",
+      "productIdConfirmed": true,
+      "title": "TYCOCO Goud",
+      "summary": "TYCOCO Goud. Website and TikTok Shop exclusive.",
+      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1780634152206_ed4ae3fffba86655a91be5a5acb06289.jpg?x-oss-process=image/format,webp",
+      "officialUrl": "https://www.popmart.com/us/products/7794/TYCOCO-Goud",
+      "publishedAt": "2026-06-05T00:00:00Z",
+      "status": "active"
+    },
+    {
+      "id": "popmart_us_pixar_pop_cube_cubiec_6274",
+      "releaseType": "product",
+      "productId": "6274",
+      "productIdConfirmed": true,
+      "title": "Disney/Pixar POP CUBE CUBIEC Series Figures",
+      "summary": "New Disney/Pixar POP CUBE CUBIEC blind box figures. Online June 11, 7:00 PM PT.",
+      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1780653055753_2403e80c05ec2f164ca2f413328866bc__1200x1874.jpg?x-oss-process=image/format,webp",
+      "officialUrl": "https://www.popmart.com/us/products/6274/Disney%2FPixar-POP-CUBE-CUBIEC-Series-Figures",
+      "publishedAt": "2026-06-05T00:00:00Z",
+      "status": "active"
+    },
+    {
+      "id": "popmart_us_winnie_pooh_treehouse_theatre_7596",
+      "releaseType": "product",
+      "productId": "7596",
+      "productIdConfirmed": true,
+      "title": "Winnie-the-Pooh Treehouse Theatre Series Figures",
+      "summary": "New Winnie-the-Pooh Treehouse Theatre blind box figures. Online June 11, 7:00 PM PT.",
+      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1780653298924_96284cce884ff90ea60e02369b17ddee.jpg?x-oss-process=image/format,webp",
+      "officialUrl": "https://www.popmart.com/us/products/7596/Winnie-the-Pooh-Treehouse-Theatre-Series-Figures",
+      "publishedAt": "2026-06-05T00:00:00Z",
+      "status": "active"
     }
   ]
 }
