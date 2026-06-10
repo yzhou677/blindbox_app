@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 /// One swipeable page in [CatalogFigureGallerySheet].
 ///
-/// UI renders via [catalogImageKey] ([CatalogImageFromKey]) or [localImageUri] only.
+/// UI renders via [localImageUri], optional [seriesCoverImageUri] fallback,
+/// then [catalogImageKey] ([CatalogImageFromKey]) — matching [ShelfFigureThumb].
 @immutable
 class CatalogFigureGalleryItem {
   const CatalogFigureGalleryItem({
@@ -10,6 +11,7 @@ class CatalogFigureGalleryItem {
     required this.name,
     this.catalogImageKey,
     this.localImageUri,
+    this.seriesCoverImageUri,
     this.rarityLabel,
     this.isSecret = false,
   });
@@ -21,6 +23,9 @@ class CatalogFigureGalleryItem {
   /// Canonical catalog [imageKey] for [CatalogImageResolver].
   final String? catalogImageKey;
   final String? localImageUri;
+
+  /// User series cover when the figure has no dedicated photo (shelf parity).
+  final String? seriesCoverImageUri;
   final String? rarityLabel;
   final bool isSecret;
 

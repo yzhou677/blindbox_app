@@ -30,7 +30,7 @@ void main() {
       expect(items.single.catalogImageKey, 'the_monsters_exciting_macaron_soymilk');
     });
 
-    test('does not pass series cover as gallery item field', () {
+    test('passes series cover when figure has no local photo', () {
       const series = ShelfSeries(
         id: 'series_b',
         name: 'Ocean',
@@ -52,6 +52,32 @@ void main() {
       final items = catalogGalleryItemsFromShelfSeries(series);
       expect(items.single.catalogImageKey, isNull);
       expect(items.single.localImageUri, isNull);
+      expect(items.single.seriesCoverImageUri, '/covers/ocean.jpg');
+    });
+
+    test('omits series cover when figure has its own photo', () {
+      const series = ShelfSeries(
+        id: 'series_d',
+        name: 'Ocean',
+        brand: 'POP MART',
+        ipName: 'Crybaby',
+        customCoverImageUri: '/covers/ocean.jpg',
+        figures: [
+          ShelfFigure(
+            id: 'fig_d',
+            seriesId: 'series_d',
+            name: 'Whale',
+            localImageUri: '/photos/whale.jpg',
+            rarity: 'Regular',
+            isSecret: false,
+          ),
+        ],
+        shelfAccent: Color(0xFFFCE4EC),
+      );
+
+      final items = catalogGalleryItemsFromShelfSeries(series);
+      expect(items.single.localImageUri, '/photos/whale.jpg');
+      expect(items.single.seriesCoverImageUri, isNull);
     });
 
     test('keeps catalogImageKey when imageUrl is missing on shelf row', () {
