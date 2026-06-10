@@ -17,7 +17,7 @@ const Map<String, String> _collectionBrandAliasDisplayByKey = {
 /// - lowercase
 /// - remove spaces / underscores
 /// - remove punctuation and other non [a-z0-9]
-String normalizeCollectionBrandFilterKey(String input) {
+String normalizeCollectionFacetFilterKey(String input) {
   final lower = input.trim().toLowerCase();
   if (lower.isEmpty) return '';
   final compact = lower.replaceAll(RegExp(r'[\s_]'), '');
@@ -32,7 +32,7 @@ String _seriesBrandRawKey(ShelfSeries series) {
 
 /// Canonical collection filter key for a shelf series.
 String collectionBrandFilterKeyForSeries(ShelfSeries series) {
-  return normalizeCollectionBrandFilterKey(_seriesBrandRawKey(series));
+  return normalizeCollectionFacetFilterKey(_seriesBrandRawKey(series));
 }
 
 /// Returns shelf series visible under [brandFilterId].
@@ -53,7 +53,7 @@ List<CollectionBrandFilterOption> buildCollectionShelfBrandFilterOptions(
   List<ShelfSeries> shelfSeries,
 ) {
   final options = <CollectionBrandFilterOption>[
-    (id: collectionAnyBrandFilterId, label: 'All'),
+    (id: collectionAnyBrandFilterId, label: 'All Brands'),
   ];
   final seen = <String>{collectionAnyBrandFilterId};
 

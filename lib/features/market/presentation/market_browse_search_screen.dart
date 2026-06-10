@@ -110,8 +110,14 @@ class _MarketBrowseSearchScreenState
       previousBrowseSignature: _displayOrderBrowseSignature,
     );
     final sorted = display.snapshots;
-    if (display.orderIds != _displayOrderIds ||
-        _displayOrderBrowseSignature != browseSignature) {
+    if (displayOrderCacheNeedsUpdate(
+      orderIds: display.orderIds,
+      previousOrderIds: _displayOrderIds,
+      priceSort: MarketPriceSort.lowToHigh,
+      previousPriceSort: MarketPriceSort.lowToHigh,
+      browseSignature: browseSignature,
+      previousBrowseSignature: _displayOrderBrowseSignature,
+    )) {
       MarketSearchTrace.event(
         'schedule postFrame setState sig=$browseSignature order=${display.orderIds.length}',
       );

@@ -4,6 +4,7 @@ import 'package:blindbox_app/features/catalog/models/catalog_brand.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_ip.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_series.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 CatalogSeedBundle _tinyBundle() => CatalogSeedBundle(
       brands: const [CatalogBrand(id: 'b', displayName: 'B')],
@@ -23,6 +24,13 @@ CatalogSeedBundle _tinyBundle() => CatalogSeedBundle(
     );
 
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+    CatalogBundleCache.resetForTest();
+  });
+
+  tearDown(CatalogBundleCache.resetForTest);
+
   test('prime and current return same bundle without reload', () async {
     final b = _tinyBundle();
     CatalogBundleCache.prime(b);

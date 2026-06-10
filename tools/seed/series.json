@@ -979,16 +979,6 @@
     ]
   },
   {
-    "id": "smiski_series_1",
-    "brandId": "dreams_inc",
-    "ipId": "smiski",
-    "displayName": "SMISKI Series 1",
-    "releaseDate": null,
-    "isBlindBox": true,
-    "imageKey": "smiski_series_1",
-    "aliases": []
-  },
-  {
     "id": "smiski_series_2",
     "brandId": "dreams_inc",
     "ipId": "smiski",

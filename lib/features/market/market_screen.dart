@@ -114,7 +114,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
     final search = ref.watch(marketSearchBrowseNotifierProvider);
     final overlayOpen = ref.watch(marketSearchOverlayOpenProvider);
     final activeQuery = ref.watch(activeMarketBrowseQueryProvider);
-    MarketSearchTrace.event(
+    MarketSearchTrace.buildEvent(
       'MarketScreen.build immersive=${overlayOpen && search.isCommitted} '
       'query="${search.query.trim()}"',
     );
@@ -133,9 +133,14 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
     );
     final sorted = display.snapshots;
     final liveHasMore = ref.watch(marketLiveBrowseHasMoreProvider);
-    if (display.orderIds != _displayOrderIds ||
-        _displayOrderPriceSort != feed.priceSort ||
-        _displayOrderBrowseSignature != browseSignature) {
+    if (displayOrderCacheNeedsUpdate(
+      orderIds: display.orderIds,
+      previousOrderIds: _displayOrderIds,
+      priceSort: feed.priceSort,
+      previousPriceSort: _displayOrderPriceSort,
+      browseSignature: browseSignature,
+      previousBrowseSignature: _displayOrderBrowseSignature,
+    )) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         setState(() {

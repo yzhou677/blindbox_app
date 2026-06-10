@@ -14,6 +14,21 @@ Edit `firebase.json` locally if your project needs extra emulators or deploy tar
 
 ## Android (required for Firestore on device)
 
+### SHA fingerprints (fixes `GoogleApiManager` / `DEVELOPER_ERROR` on device)
+
+Debug/release builds must register signing SHA-1 **and** SHA-256 in Firebase. Without them, Play Services logs `DEVELOPER_ERROR` even when `google-services.json` exists.
+
+Automated (logged into Firebase CLI):
+
+```powershell
+nvm use 22.21.1   # global firebase-tools may be broken on Node 24
+.\tools\android\sync_firebase_android_sha.ps1
+```
+
+Manual: `cd android && .\gradlew signingReport` → add **debug** + **release** SHA-1/SHA-256 in Firebase console → re-download `google-services.json` → `flutter clean && flutter run` (reinstall on device).
+
+### Config files
+
 1. Firebase console → Project settings → Your apps → Android (`com.example.blindbox_app`).
 2. Download **`google-services.json`** into:
 
@@ -31,9 +46,11 @@ Edit `firebase.json` locally if your project needs extra emulators or deploy tar
 
    ```bash
    dart pub global activate flutterfire_cli
-   firebase login
-   flutterfire configure
+   npx firebase-tools@14.11.0 login
+   dart pub global run flutterfire_cli:flutterfire configure
    ```
+
+   On Windows, prefer `npx firebase-tools@14.11.0` if the global `firebase` command fails with missing `hosting/init.js`.
 
 ## iOS (optional)
 

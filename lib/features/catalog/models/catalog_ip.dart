@@ -24,4 +24,11 @@ class CatalogIp {
       aliases: catalogReadStringList(json['aliases']),
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'brandId': brandId,
+        'displayName': displayName,
+        if (aliases.isNotEmpty) 'aliases': aliases,
+      };
 }

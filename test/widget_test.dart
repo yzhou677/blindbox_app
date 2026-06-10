@@ -187,7 +187,8 @@ void main() {
       find.byKey(const Key('collection_header_add_series')),
       findsOneWidget,
     );
-    expect(find.text('All'), findsOneWidget);
+    expect(find.text('All Brands'), findsOneWidget);
+    expect(find.text('All IPs'), findsOneWidget);
 
     // The shelf uses SliverList.builder (lazy) — scroll until the series card
     // enters the viewport before asserting its text is present.
@@ -214,7 +215,7 @@ void main() {
     );
     expect(find.text('The Other One'), findsOneWidget);
 
-    await tester.tap(find.text('All'));
+    await tester.tap(find.text('All Brands'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     // Scroll back to where 'The Other One' card is after filter reset.

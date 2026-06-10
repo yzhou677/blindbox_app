@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <WindowsSdkDir Condition="'$(WindowsSdkDir)' == '' or '$(WindowsSdkDir)' == '\'">C:\Program Files (x86)\Windows Kits\10\</WindowsSdkDir>
+    <WindowsTargetPlatformVersion Condition="'$(WindowsTargetPlatformVersion)' == ''">10.0.18362.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(WindowsSdkDir)include\$(WindowsTargetPlatformVersion)\um;$(WindowsSdkDir)include\$(WindowsTargetPlatformVersion)\shared;$(WindowsSdkDir)include\$(WindowsTargetPlatformVersion)\ucrt;$(WindowsSdkDir)include\$(WindowsTargetPlatformVersion)\winrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(VCToolsInstallDir)lib\x64;$(WindowsSdkDir)lib\$(WindowsTargetPlatformVersion)\um\x64;$(WindowsSdkDir)lib\$(WindowsTargetPlatformVersion)\ucrt\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>$(WindowsSdkDir)include\$(WindowsTargetPlatformVersion)\um;$(WindowsSdkDir)include\$(WindowsTargetPlatformVersion)\shared;$(WindowsSdkDir)include\$(WindowsTargetPlatformVersion)\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+</Project>

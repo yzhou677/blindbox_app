@@ -5,6 +5,8 @@ abstract final class MarketSearchTrace {
   static final Stopwatch _clock = Stopwatch()..start();
   static int _seq = 0;
   static int _lastEventMs = 0;
+  static int _lastBuildTraceMs = 0;
+  static int _buildBurstCount = 0;
 
   static void event(
     String message, {
@@ -29,6 +31,49 @@ abstract final class MarketSearchTrace {
         '[MarketSearch +${now}ms] *** GAP ${gap}ms since previous event ***',
       );
     }
+  }
+
+  /// High-frequency widget rebuild tracing without logcat floods.
+  ///
+  /// Logs when the screen idles/resumes, stalls, or enters a rapid rebuild burst
+  /// (sampled every [sampleEvery] frames during bursts).
+  static void buildEvent(
+    String message, {
+    int stormGapMs = 32,
+    int slowGapMs = 250,
+    int idleGapMs = 500,
+    int sampleEvery = 120,
+  }) {
+    if (!kDebugMode) return;
+    final now = _clock.elapsedMilliseconds;
+    final gap = _lastBuildTraceMs == 0 ? idleGapMs : now - _lastBuildTraceMs;
+    _lastBuildTraceMs = now;
+
+    final inBurst = gap <= stormGapMs;
+    if (inBurst) {
+      _buildBurstCount++;
+    } else {
+      if (_buildBurstCount >= sampleEvery) {
+        event(
+          '$message [burst ended after $_buildBurstCount rebuilds]',
+          gapWarnMs: slowGapMs,
+        );
+      }
+      _buildBurstCount = 1;
+    }
+
+    final shouldLog = gap >= idleGapMs ||
+        gap >= slowGapMs ||
+        (inBurst && (_buildBurstCount == 1 || _buildBurstCount % sampleEvery == 0));
+
+    if (!shouldLog) return;
+
+    final tag = gap >= slowGapMs
+        ? 'slow'
+        : gap >= idleGapMs
+            ? 'idle'
+            : 'burst';
+    event('$message [$tag gap=${gap}ms n=$_buildBurstCount]');
   }
 
   /// Wraps synchronous UI-isolate work; always logs start/end and flags slow runs.

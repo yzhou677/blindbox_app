@@ -28,7 +28,7 @@ void main() {
     expect(
       options,
       [
-        (id: collectionAnyBrandFilterId, label: 'All'),
+        (id: collectionAnyBrandFilterId, label: 'All Brands'),
         (id: 'popmart', label: 'POP MART'),
         (id: 'toptoy', label: 'TOP TOY'),
         (id: 'mywifebrand', label: 'My Wife Brand'),
@@ -89,7 +89,7 @@ void main() {
     expect(
       options,
       [
-        (id: collectionAnyBrandFilterId, label: 'All'),
+        (id: collectionAnyBrandFilterId, label: 'All Brands'),
         (id: 'randomfigureclub', label: 'Random Figure Club'),
       ],
     );
@@ -97,7 +97,7 @@ void main() {
 
   test('stale selected chip resets to All', () {
     final options = [
-      (id: collectionAnyBrandFilterId, label: 'All'),
+      (id: collectionAnyBrandFilterId, label: 'All Brands'),
       (id: 'popmart', label: 'POP MART'),
     ];
 
@@ -107,6 +107,26 @@ void main() {
     );
 
     expect(next, collectionAnyBrandFilterId);
+  });
+
+  test('canonical custom brand uses registry display label with stable filter id', () {
+    final series = testShelfSeries(
+      id: 'custom_dpl',
+      brand: 'DPL',
+      taxonomyBrandId: 'dpl',
+      catalogTemplateId: null,
+    );
+
+    final options = buildCollectionShelfBrandFilterOptions([series]);
+
+    expect(options, [
+      (id: collectionAnyBrandFilterId, label: 'All Brands'),
+      (id: 'dpl', label: 'DPL'),
+    ]);
+    expect(
+      shelfSeriesVisibleForBrandFilter([series], 'dpl'),
+      [series],
+    );
   });
 
   test('filtering by normalized key returns grouped brand rows', () {

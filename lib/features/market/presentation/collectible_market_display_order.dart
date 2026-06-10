@@ -1,6 +1,24 @@
 import 'package:blindbox_app/features/market/domain/collectible_market_snapshot.dart';
 import 'package:blindbox_app/features/market/presentation/collectible_market_sort.dart';
 import 'package:blindbox_app/features/market/presentation/market_price_sort.dart';
+import 'package:flutter/foundation.dart';
+
+/// Whether the widget-local display-order cache should be updated.
+///
+/// Compares [orderIds] by value — [resolveCollectibleMarketDisplaySnapshots]
+/// allocates a fresh list each build even when contents are unchanged.
+bool displayOrderCacheNeedsUpdate({
+  required List<String> orderIds,
+  required List<String> previousOrderIds,
+  required MarketPriceSort priceSort,
+  required MarketPriceSort previousPriceSort,
+  required String browseSignature,
+  required String? previousBrowseSignature,
+}) {
+  return !listEquals(orderIds, previousOrderIds) ||
+      priceSort != previousPriceSort ||
+      browseSignature != previousBrowseSignature;
+}
 
 /// Stable collectibles feed order for paginated live browse.
 ///

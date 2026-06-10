@@ -1,0 +1,445 @@
+import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/theme/app_radii.dart';
+import 'package:blindbox_app/core/theme/collectible_typography.dart';
+import 'package:blindbox_app/features/collection/data/collection_input_formatters.dart';
+import 'package:blindbox_app/features/collection/data/collection_input_limits.dart';
+import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
+import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
+import 'package:blindbox_app/features/collection/widgets/custom_series_cover_slot.dart';
+import 'package:blindbox_app/features/collection/widgets/custom_series_edit_figures_section.dart';
+import 'package:blindbox_app/features/collection/widgets/custom_series_quiet_field.dart';
+import 'package:blindbox_app/features/collection/widgets/edit_custom_figure_dialog.dart';
+import 'package:blindbox_app/features/collection/widgets/figure_name_chips_editor.dart';
+import 'package:blindbox_app/features/collection/widgets/shelf_gallery_pick.dart';
+import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
+import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+typedef CustomSeriesFormSubmit =
+    void Function({
+      required String seriesName,
+      String? brand,
+      String? ipDisplayName,
+      required List<CustomFigureDraft> figures,
+      String? customCoverImageUri,
+      String? notes,
+    });
+
+typedef CustomSeriesMetadataSubmit = void Function({
+  required String seriesName,
+  String? brand,
+  String? ipDisplayName,
+  String? customCoverImageUri,
+  String? notes,
+});
+
+typedef CustomSeriesFigureSubmit = void Function({
+  required String figureId,
+  required String name,
+  required bool isSecret,
+  String? rarityLabel,
+  String? localImageUri,
+});
+
+typedef CustomSeriesFigureAddSubmit = void Function({
+  required String name,
+  required bool isSecret,
+  String? rarityLabel,
+  String? localImageUri,
+});
+
+enum CustomSeriesFormMode { create, edit }
+
+/// Collapsed by default on edit — brand/IP are power-user taxonomy changes.
+const String customSeriesEditAdvancedOptionsTitle = 'Advanced options';
+
+const String customSeriesEditTaxonomyWarning =
+    'Changing brand or universe may affect:\n'
+    '• Filters\n'
+    '• Grouping\n'
+    '• Collection insights\n'
+    '• Journey history';
+
+/// Shared create/edit form for custom series metadata.
+class CustomSeriesFormSheet extends ConsumerStatefulWidget {
+  const CustomSeriesFormSheet.create({
+    super.key,
+    required CustomSeriesFormSubmit onSubmit,
+  })  : mode = CustomSeriesFormMode.create,
+        initialSeries = null,
+        onCreateSubmit = onSubmit,
+        onEditSubmit = null,
+        onFigureSubmit = null,
+        onFigureAdd = null,
+        pickFigureImage = null;
+
+  const CustomSeriesFormSheet.edit({
+    super.key,
+    required ShelfSeries initialSeries,
+    required CustomSeriesMetadataSubmit onSubmit,
+    required CustomSeriesFigureSubmit onFigureSubmit,
+    required CustomSeriesFigureAddSubmit onFigureAdd,
+    this.pickFigureImage,
+  })  : mode = CustomSeriesFormMode.edit,
+        initialSeries = initialSeries,
+        onCreateSubmit = null,
+        onEditSubmit = onSubmit,
+        onFigureSubmit = onFigureSubmit,
+        onFigureAdd = onFigureAdd;
+
+  final CustomSeriesFormMode mode;
+  final ShelfSeries? initialSeries;
+  final CustomSeriesFormSubmit? onCreateSubmit;
+  final CustomSeriesMetadataSubmit? onEditSubmit;
+  final CustomSeriesFigureSubmit? onFigureSubmit;
+  final CustomSeriesFigureAddSubmit? onFigureAdd;
+  final Future<String?> Function(BuildContext context)? pickFigureImage;
+
+  @override
+  ConsumerState<CustomSeriesFormSheet> createState() =>
+      _CustomSeriesFormSheetState();
+}
+
+class _CustomSeriesFormSheetState extends ConsumerState<CustomSeriesFormSheet> {
+  final _seriesName = TextEditingController();
+  final _brand = TextEditingController();
+  final _ip = TextEditingController();
+  final _notes = TextEditingController();
+  final _newFigure = TextEditingController();
+  final _newFigureFocus = FocusNode();
+  final _formKey = GlobalKey<FormState>();
+
+  final List<CustomFigureDraft> _figures = [];
+  String? _coverUri;
+  bool _advancedTaxonomyExpanded = false;
+
+  bool get _isCreate => widget.mode == CustomSeriesFormMode.create;
+
+  @override
+  void initState() {
+    super.initState();
+    final series = widget.initialSeries;
+    if (series != null) {
+      _seriesName.text = series.name;
+      _brand.text = _brandFieldFromSeries(series);
+      _ip.text = series.ipName;
+      _notes.text = series.notes ?? '';
+      _coverUri = series.customCoverImageUri;
+    }
+  }
+
+  static String _brandFieldFromSeries(ShelfSeries series) {
+    if (series.taxonomyBrandId == CustomSeriesConventions.independentBrandId) {
+      return '';
+    }
+    return series.brand;
+  }
+
+  @override
+  void dispose() {
+    _seriesName.dispose();
+    _brand.dispose();
+    _ip.dispose();
+    _notes.dispose();
+    _newFigure.dispose();
+    _newFigureFocus.dispose();
+    super.dispose();
+  }
+
+  void _addFigureFromField() {
+    final raw = _newFigure.text.trim();
+    if (raw.isEmpty) return;
+    setState(() {
+      _figures.add(CustomFigureDraft(displayName: raw));
+      _newFigure.clear();
+    });
+  }
+
+  Future<void> _editAt(int index) async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final current = _figures[index];
+    final next = await showDialog<CustomFigureDraft>(
+      context: context,
+      builder: (ctx) => EditCustomFigureDialog(initial: current),
+    );
+    if (!mounted || next == null) return;
+    setState(() => _figures[index] = next);
+  }
+
+  void _removeAt(int i) {
+    setState(() => _figures.removeAt(i));
+  }
+
+  Future<void> _pickCover() async {
+    final path = await pickShelfGalleryImage(context);
+    if (!mounted || path == null) return;
+    setState(() => _coverUri = path);
+  }
+
+  void _clearCover() => setState(() => _coverUri = null);
+
+  Future<void> _pickFigurePhoto(int i) async {
+    final path = await pickShelfGalleryImage(context);
+    if (!mounted || path == null) return;
+    setState(() {
+      final f = _figures[i];
+      _figures[i] = CustomFigureDraft(
+        displayName: f.displayName,
+        localImageUri: path,
+        isSecret: f.isSecret,
+        rarityLabel: f.rarityLabel,
+      );
+    });
+  }
+
+  ShelfSeries _seriesForEditFigures() {
+    final initial = widget.initialSeries!;
+    final snap = ref.watch(collectionNotifierProvider);
+    for (final series in snap.shelfSeries) {
+      if (series.id == initial.id) return series;
+    }
+    return initial;
+  }
+
+  Future<void> _editShelfFigure(ShelfFigure figure) async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final next = await showDialog<CustomFigureDraft>(
+      context: context,
+      builder: (ctx) => EditCustomFigureDialog(
+        initial: customFigureDraftFromShelfFigure(figure),
+        dialogTitle: editCustomFigureDialogTitle,
+        pickImage: widget.pickFigureImage,
+      ),
+    );
+    if (!mounted || next == null) return;
+    widget.onFigureSubmit!(
+      figureId: figure.id,
+      name: next.displayName,
+      isSecret: next.isSecret,
+      rarityLabel: next.rarityLabel,
+      localImageUri: next.localImageUri,
+    );
+  }
+
+  Future<void> _addShelfFigureFromField() async {
+    final raw = _newFigure.text.trim();
+    if (raw.isEmpty) return;
+    FocusManager.instance.primaryFocus?.unfocus();
+    final next = await showDialog<CustomFigureDraft>(
+      context: context,
+      builder: (ctx) => EditCustomFigureDialog(
+        initial: CustomFigureDraft(displayName: raw),
+        dialogTitle: addCustomFigureDialogTitle,
+        pickImage: widget.pickFigureImage,
+      ),
+    );
+    if (!mounted || next == null) return;
+    _newFigure.clear();
+    widget.onFigureAdd!(
+      name: next.displayName,
+      isSecret: next.isSecret,
+      rarityLabel: next.rarityLabel,
+      localImageUri: next.localImageUri,
+    );
+  }
+
+  void _save() {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (_isCreate) {
+      if (_figures.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Add a figure')),
+        );
+        return;
+      }
+      widget.onCreateSubmit!(
+        seriesName: _seriesName.text.trim(),
+        brand: _brand.text.trim().isEmpty ? null : _brand.text.trim(),
+        ipDisplayName: _ip.text.trim().isEmpty ? null : _ip.text.trim(),
+        figures: List<CustomFigureDraft>.from(_figures),
+        customCoverImageUri: _coverUri,
+        notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
+      );
+    } else {
+      widget.onEditSubmit!(
+        seriesName: _seriesName.text.trim(),
+        brand: _brand.text.trim().isEmpty ? null : _brand.text.trim(),
+        ipDisplayName: _ip.text.trim().isEmpty ? null : _ip.text.trim(),
+        customCoverImageUri: _coverUri,
+        notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
+      );
+    }
+    Navigator.of(context).pop();
+  }
+
+  Widget _brandField(ColorScheme scheme) {
+    return TextFormField(
+      controller: _brand,
+      textInputAction: TextInputAction.next,
+      maxLength: CollectionInputLimits.brandMaxLength,
+      inputFormatters: CollectionInputFormatters.brand(),
+      decoration: quietCustomSeriesField(
+        scheme,
+        hintText: 'Brand',
+      ),
+    );
+  }
+
+  Widget _ipField(ColorScheme scheme) {
+    return TextFormField(
+      controller: _ip,
+      textInputAction: TextInputAction.next,
+      maxLength: CollectionInputLimits.ipMaxLength,
+      inputFormatters: CollectionInputFormatters.ip(),
+      decoration: quietCustomSeriesField(
+        scheme,
+        hintText: 'Universe',
+      ),
+    );
+  }
+
+  Widget _editAdvancedTaxonomySection(
+    ColorScheme scheme,
+    TextTheme textTheme,
+  ) {
+    return Semantics(
+      expanded: _advancedTaxonomyExpanded,
+      child: ExpansionTile(
+        key: const Key('custom-series-edit-advanced'),
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: const EdgeInsets.only(bottom: 4),
+        title: Text(
+          customSeriesEditAdvancedOptionsTitle,
+          style: CollectibleTypography.figureMeta(textTheme, scheme).copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        initiallyExpanded: false,
+        onExpansionChanged: (expanded) {
+          setState(() => _advancedTaxonomyExpanded = expanded);
+        },
+        children: [
+          Text(
+            customSeriesEditTaxonomyWarning,
+            style: textTheme.bodySmall?.copyWith(
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 14),
+          _brandField(scheme),
+          const SizedBox(height: 12),
+          _ipField(scheme),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final sheetScroll = CollectibleSheetScope.scrollControllerOf(context);
+
+    return CollectibleSheetInsets(
+      child: Form(
+        key: _formKey,
+        child: CollectibleSheetScrollView(
+          controller: sheetScroll,
+          header: CollectibleSheetChrome(
+            editorialTitle: _isCreate ? 'New series' : 'Edit series',
+          ),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  CustomSeriesCoverSlot(
+                    imagePath: _coverUri,
+                    onReplaceTap: _pickCover,
+                    onClearTap: _clearCover,
+                  ),
+                  const SizedBox(height: FeedRhythm.sheetSectionGap + 6),
+                  TextFormField(
+                    controller: _seriesName,
+                    style: Theme.of(context).textTheme.titleMedium,
+                    textInputAction: TextInputAction.next,
+                    maxLength: CollectionInputLimits.seriesNameMaxLength,
+                    inputFormatters: CollectionInputFormatters.seriesName(),
+                    decoration: quietCustomSeriesField(
+                      scheme,
+                      hintText: 'Series name',
+                    ),
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return 'Name required';
+                      }
+                      return null;
+                    },
+                  ),
+                  if (_isCreate) ...[
+                    const SizedBox(height: 12),
+                    _brandField(scheme),
+                    const SizedBox(height: 12),
+                    _ipField(scheme),
+                  ] else ...[
+                    const SizedBox(height: FeedRhythm.sheetSectionGap),
+                    _editAdvancedTaxonomySection(scheme, textTheme),
+                  ],
+                  if (_isCreate) ...[
+                    const SizedBox(height: FeedRhythm.sheetSectionGap + 8),
+                    FigureNameChipsEditor(
+                      figures: _figures,
+                      onRemoveAt: _removeAt,
+                      onEditAt: _editAt,
+                      addFieldController: _newFigure,
+                      addFieldFocusNode: _newFigureFocus,
+                      onAddSubmitted: _addFigureFromField,
+                      onPickFigurePhoto: _pickFigurePhoto,
+                    ),
+                  ],
+                  const SizedBox(height: FeedRhythm.sheetSectionGap),
+                  TextFormField(
+                    controller: _notes,
+                    maxLines: 2,
+                    maxLength: CollectionInputLimits.notesMaxLength,
+                    inputFormatters: CollectionInputFormatters.notes(),
+                    textInputAction: TextInputAction.done,
+                    decoration: quietCustomSeriesField(
+                      scheme,
+                      hintText: 'Note',
+                    ),
+                  ),
+                  if (!_isCreate) ...[
+                    const SizedBox(height: FeedRhythm.sheetSectionGap),
+                    CustomSeriesEditFiguresSection(
+                      figures: _seriesForEditFigures().figures,
+                      onFigureTap: _editShelfFigure,
+                      addFieldController: _newFigure,
+                      addFieldFocusNode: _newFigureFocus,
+                      onAddSubmitted: _addShelfFigureFromField,
+                    ),
+                  ],
+                  const SizedBox(height: 22),
+                  FilledButton(
+                    onPressed: _save,
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: AppRadii.fieldRadius,
+                      ),
+                    ),
+                    child: Text(_isCreate ? 'Add to shelf' : 'Save changes'),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

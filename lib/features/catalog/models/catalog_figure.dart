@@ -47,4 +47,16 @@ class CatalogFigure {
       ),
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'seriesId': seriesId,
+        'brandId': brandId,
+        'ipId': ipId,
+        'displayName': displayName,
+        'isSecret': isSecret,
+        if (rarityLabel != null) 'rarityLabel': rarityLabel,
+        'sortOrder': sortOrder,
+        'imageKey': imageKey,
+      };
 }

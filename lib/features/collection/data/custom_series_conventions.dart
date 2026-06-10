@@ -1,3 +1,5 @@
+import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+
 /// Local-only id / [imageKey] conventions aligned with Firestore catalog shape.
 abstract final class CustomSeriesConventions {
   static const String independentBrandId = 'independent';
@@ -53,6 +55,16 @@ abstract final class CustomSeriesConventions {
     if (label != null && label.isNotEmpty) return label;
     return isSecret ? 'Secret' : 'Regular';
   }
+}
+
+/// Maps a persisted shelf figure into a dialog-editable draft.
+CustomFigureDraft customFigureDraftFromShelfFigure(ShelfFigure figure) {
+  return CustomFigureDraft(
+    displayName: figure.name,
+    localImageUri: figure.localImageUri,
+    isSecret: figure.isSecret,
+    rarityLabel: figure.rarityLabel,
+  );
 }
 
 /// One user-authored figure slot before commit to the shelf.
