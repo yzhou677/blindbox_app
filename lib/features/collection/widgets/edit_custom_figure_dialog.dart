@@ -8,6 +8,7 @@ import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
 import 'package:flutter/material.dart';
 
 const String editCustomFigureDialogTitle = 'Edit Figure';
+const String addCustomFigureDialogTitle = 'Add Figure';
 
 /// Edit one custom figure draft — dialog owns controllers (safe cancel).
 class EditCustomFigureDialog extends StatefulWidget {

@@ -7,6 +7,7 @@ import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_journey_summary.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_brand_facets.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_ip_facets.dart';
+import 'package:blindbox_app/features/collection/persistence/collection_snapshot_storage.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_summary_section.dart';
 import 'package:blindbox_app/features/home/domain/series_release.dart';
 import 'package:blindbox_app/models/collectible.dart';
@@ -847,6 +848,234 @@ void main() {
       CollectionAggregateStats.fromSnapshot(afterSnap).wantListCount,
       summaryBefore.wantListCount,
     );
+  });
+
+  // ---------------------------------------------------------------------------
+  // addCustomFigure
+  // ---------------------------------------------------------------------------
+
+  ProviderContainer newEmptyCustomContainer() {
+    const seriesId = 'custom_empty_1';
+    final series = ShelfSeries(
+      id: seriesId,
+      name: 'Solo Drop',
+      brand: 'DPL',
+      ipName: 'Baby Three',
+      taxonomyBrandId: 'dpl',
+      taxonomyIpId: 'baby_three',
+      catalogTemplateId: null,
+      imageKey: seriesId,
+      figures: const [],
+      shelfAccent: const Color(0xFFE4F2EA),
+    );
+    CollectionAppBootstrap.prime(
+      CollectionSnapshot(shelfSeries: [series], figureStates: const {}),
+    );
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    return container;
+  }
+
+  test('addCustomFigure appends to populated series with next index id', () {
+    final container = newEditableCustomContainer();
+    final n = container.read(collectionNotifierProvider.notifier);
+
+    n.addCustomFigure(
+      seriesId: 'custom_edit_1',
+      name: 'Fig C',
+      isSecret: false,
+    );
+
+    final series = container.read(collectionNotifierProvider).shelfSeries.single;
+    expect(series.figures.length, 3);
+    expect(series.figures[2].id, 'custom_edit_1-f-2');
+    expect(series.figures[2].name, 'Fig C');
+    expect(series.figures[2].imageKey, 'custom_edit_1-f-2');
+    expect(series.imageKey, 'custom_edit_1');
+  });
+
+  test('addCustomFigure appends first figure to empty custom series', () {
+    final container = newEmptyCustomContainer();
+    final n = container.read(collectionNotifierProvider.notifier);
+
+    n.addCustomFigure(
+      seriesId: 'custom_empty_1',
+      name: 'Only One',
+      isSecret: false,
+    );
+
+    final series = container.read(collectionNotifierProvider).shelfSeries.single;
+    expect(series.figures.length, 1);
+    expect(series.figures.single.id, 'custom_empty_1-f-0');
+    expect(series.figures.single.name, 'Only One');
+  });
+
+  test('addCustomFigure supports secret figure with rarity', () {
+    final container = newEditableCustomContainer();
+    final n = container.read(collectionNotifierProvider.notifier);
+
+    n.addCustomFigure(
+      seriesId: 'custom_edit_1',
+      name: 'Secret Chase',
+      isSecret: true,
+      rarityLabel: '1:144',
+    );
+
+    final fig = container.read(collectionNotifierProvider).shelfSeries.single.figures.last;
+    expect(fig.isSecret, isTrue);
+    expect(fig.rarityLabel, '1:144');
+    expect(fig.rarity, '1:144');
+  });
+
+  test('addCustomFigure supports local image uri', () {
+    final container = newEditableCustomContainer();
+    final n = container.read(collectionNotifierProvider.notifier);
+
+    n.addCustomFigure(
+      seriesId: 'custom_edit_1',
+      name: 'Photo Fig',
+      isSecret: false,
+      localImageUri: '/tmp/photo_fig.jpg',
+    );
+
+    final fig = container.read(collectionNotifierProvider).shelfSeries.single.figures.last;
+    expect(fig.localImageUri, '/tmp/photo_fig.jpg');
+  });
+
+  test('addCustomFigure copies series taxonomy and preserves siblings', () {
+    final container = newEditableCustomContainer();
+    final n = container.read(collectionNotifierProvider.notifier);
+    final before = container.read(collectionNotifierProvider).shelfSeries.single.figures;
+
+    n.addCustomFigure(
+      seriesId: 'custom_edit_1',
+      name: 'Fig C',
+      isSecret: false,
+    );
+
+    final series = container.read(collectionNotifierProvider).shelfSeries.single;
+    expect(series.brand, 'DPL');
+    expect(series.taxonomyBrandId, 'dpl');
+    expect(series.taxonomyIpId, 'baby_three');
+    expect(series.figures[0].name, before[0].name);
+    expect(series.figures[1].name, before[1].name);
+    expect(series.figures[2].taxonomyBrandId, 'dpl');
+    expect(series.figures[2].taxonomyIpId, 'baby_three');
+  });
+
+  test('addCustomFigure preserves owned and wishlist figure states', () {
+    final container = newEditableCustomContainer();
+    final n = container.read(collectionNotifierProvider.notifier);
+
+    n.addCustomFigure(
+      seriesId: 'custom_edit_1',
+      name: 'Fig C',
+      isSecret: false,
+    );
+
+    final snap = container.read(collectionNotifierProvider);
+    expect(
+      snap.trackedOrDefault('custom_edit_1-f-0').state,
+      FigureCollectionState.owned,
+    );
+    expect(
+      snap.trackedOrDefault('custom_edit_1-f-1').state,
+      FigureCollectionState.wishlist,
+    );
+    expect(snap.figureStates.containsKey('custom_edit_1-f-2'), isFalse);
+  });
+
+  test('addCustomFigure ignores catalog-backed series', () {
+    CollectionAppBootstrap.prime(
+      CollectionSnapshot(
+        shelfSeries: [testShelfSeries()],
+        figureStates: const {},
+      ),
+    );
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final before = container.read(collectionNotifierProvider).shelfSeries.single;
+
+    container.read(collectionNotifierProvider.notifier).addCustomFigure(
+          seriesId: 'series_test',
+          name: 'Injected',
+          isSecret: false,
+        );
+
+    final after = container.read(collectionNotifierProvider).shelfSeries.single;
+    expect(after.figures.length, before.figures.length);
+  });
+
+  test('addCustomFigure no-ops on empty name', () {
+    final container = newEditableCustomContainer();
+    final n = container.read(collectionNotifierProvider.notifier);
+
+    n.addCustomFigure(
+      seriesId: 'custom_edit_1',
+      name: '   ',
+      isSecret: false,
+    );
+
+    expect(
+      container.read(collectionNotifierProvider).shelfSeries.single.figures.length,
+      2,
+    );
+  });
+
+  test('addCustomFigure survives persistence round-trip', () async {
+    SharedPreferences.setMockInitialValues({});
+    final container = newEditableCustomContainer();
+    final n = container.read(collectionNotifierProvider.notifier);
+
+    n.addCustomFigure(
+      seriesId: 'custom_edit_1',
+      name: 'Persisted Fig',
+      isSecret: true,
+      rarityLabel: '1:96',
+      localImageUri: '/tmp/persisted.jpg',
+    );
+
+    final snap = container.read(collectionNotifierProvider);
+    await CollectionSnapshotStorage.save(snap);
+    final loaded = await CollectionSnapshotStorage.load();
+
+    final series = loaded!.shelfSeries.single;
+    expect(series.figures.length, 3);
+    final fig = series.figures[2];
+    expect(fig.id, 'custom_edit_1-f-2');
+    expect(fig.name, 'Persisted Fig');
+    expect(fig.isSecret, isTrue);
+    expect(fig.rarityLabel, '1:96');
+    expect(fig.localImageUri, '/tmp/persisted.jpg');
+    expect(fig.taxonomyBrandId, 'dpl');
+  });
+
+  test('addCustomFigure leaves filters insights and journey unchanged', () {
+    CollectionMemoryStore.instance.resetForTest();
+    final container = newEditableCustomContainer();
+    final beforeSnap = container.read(collectionNotifierProvider);
+    final brandBefore = buildCollectionShelfBrandFilterOptions(beforeSnap.shelfSeries);
+    final ipBefore = buildCollectionShelfIpFilterOptions(beforeSnap.shelfSeries);
+    final profileBefore = interpretShelf(beforeSnap);
+
+    container.read(collectionNotifierProvider.notifier).addCustomFigure(
+          seriesId: 'custom_edit_1',
+          name: 'Extra Fig',
+          isSecret: false,
+        );
+
+    final afterSnap = container.read(collectionNotifierProvider);
+    expect(
+      buildCollectionShelfBrandFilterOptions(afterSnap.shelfSeries),
+      brandBefore,
+    );
+    expect(
+      buildCollectionShelfIpFilterOptions(afterSnap.shelfSeries),
+      ipBefore,
+    );
+    final profileAfter = interpretShelf(afterSnap);
+    expect(profileAfter.dominantIpId, profileBefore.dominantIpId);
+    expect(profileAfter.dominantBrandId, profileBefore.dominantBrandId);
   });
 
   // ---------------------------------------------------------------------------

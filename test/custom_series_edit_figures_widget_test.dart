@@ -47,6 +47,24 @@ final class _FigureEditTestNotifier extends CollectionNotifier {
     );
     _snap = state;
   }
+
+  @override
+  void addCustomFigure({
+    required String seriesId,
+    required String name,
+    required bool isSecret,
+    String? rarityLabel,
+    String? localImageUri,
+  }) {
+    super.addCustomFigure(
+      seriesId: seriesId,
+      name: name,
+      isSecret: isSecret,
+      rarityLabel: rarityLabel,
+      localImageUri: localImageUri,
+    );
+    _snap = state;
+  }
 }
 
 ShelfSeries _seriesWithFigures() {
@@ -101,6 +119,7 @@ ShelfSeries _seriesWithFigures() {
 Future<_FigureEditTestNotifier> _pumpEditForm(
   WidgetTester tester, {
   required ShelfSeries series,
+  Future<String?> Function(BuildContext context)? pickFigureImage,
 }) async {
   tester.view.physicalSize = const Size(400, 1200);
   tester.view.devicePixelRatio = 1.0;
@@ -127,6 +146,7 @@ Future<_FigureEditTestNotifier> _pumpEditForm(
                 scrollController: ScrollController(),
                 child: CustomSeriesFormSheet.edit(
                   initialSeries: series,
+                  pickFigureImage: pickFigureImage,
                   onSubmit: ({
                     required String seriesName,
                     String? brand,
@@ -146,6 +166,22 @@ Future<_FigureEditTestNotifier> _pumpEditForm(
                         .updateCustomFigure(
                           seriesId: series.id,
                           figureId: figureId,
+                          name: name,
+                          isSecret: isSecret,
+                          rarityLabel: rarityLabel,
+                          localImageUri: localImageUri,
+                        );
+                  },
+                  onFigureAdd: ({
+                    required String name,
+                    required bool isSecret,
+                    String? rarityLabel,
+                    String? localImageUri,
+                  }) {
+                    container
+                        .read(collectionNotifierProvider.notifier)
+                        .addCustomFigure(
+                          seriesId: series.id,
                           name: name,
                           isSecret: isSecret,
                           rarityLabel: rarityLabel,
@@ -187,6 +223,34 @@ Future<void> _tapFigure(WidgetTester tester, String figureId) async {
   );
   await tester.ensureVisible(target);
   await tester.tap(target);
+  await tester.pumpAndSettle();
+}
+
+ShelfSeries _emptyCustomSeries() {
+  const seriesId = 'custom_empty_figure_edit';
+  return ShelfSeries(
+    id: seriesId,
+    name: 'Starter Set',
+    brand: 'DPL',
+    ipName: 'Baby Three',
+    taxonomyBrandId: 'dpl',
+    taxonomyIpId: 'baby_three',
+    catalogTemplateId: null,
+    imageKey: seriesId,
+    figures: const [],
+    shelfAccent: Color(0xFFE4F2EA),
+  );
+}
+
+Future<void> _startAddFigure(WidgetTester tester, String name) async {
+  final field = find.byKey(const Key('custom-series-edit-add-figure-field'));
+  await tester.scrollUntilVisible(
+    field,
+    120,
+    scrollable: find.byType(Scrollable).first,
+  );
+  await tester.enterText(field, name);
+  await tester.tap(find.byKey(const Key('custom-series-edit-add-figure-button')));
   await tester.pumpAndSettle();
 }
 
@@ -288,6 +352,135 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(saved?.localImageUri, '/tmp/rabbit_black_new.jpg');
+  });
+
+  testWidgets('shows add figure field below existing figures', (tester) async {
+    final series = _seriesWithFigures();
+    await _pumpEditForm(tester, series: series);
+
+    expect(
+      find.byKey(const Key('custom-series-edit-add-figure-field')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('custom-series-edit-add-figure-button')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('add figure to populated series updates list immediately', (
+    tester,
+  ) async {
+    final series = _seriesWithFigures();
+    await _pumpEditForm(tester, series: series);
+
+    await _startAddFigure(tester, 'Rabbit Gold');
+    expect(find.byType(EditCustomFigureDialog), findsOneWidget);
+    expect(find.text(addCustomFigureDialogTitle), findsOneWidget);
+
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Rabbit Gold'), findsOneWidget);
+    expect(find.text('4'), findsOneWidget);
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(MaterialApp)),
+    );
+    final figs = container.read(collectionNotifierProvider).shelfSeries.single.figures;
+    expect(figs.length, 4);
+    expect(figs.last.id, 'custom_figure_edit_test-f-3');
+    expect(figs.last.name, 'Rabbit Gold');
+  });
+
+  testWidgets('add figure to empty series shows first lineup row', (
+    tester,
+  ) async {
+    final series = _emptyCustomSeries();
+    await _pumpEditForm(tester, series: series);
+
+    await _startAddFigure(tester, 'First Fig');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('First Fig'), findsOneWidget);
+    expect(find.text('1'), findsOneWidget);
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(MaterialApp)),
+    );
+    final figs = container.read(collectionNotifierProvider).shelfSeries.single.figures;
+    expect(figs.single.id, 'custom_empty_figure_edit-f-0');
+  });
+
+  testWidgets('add secret figure via dialog saves rarity metadata', (
+    tester,
+  ) async {
+    final series = _seriesWithFigures();
+    await _pumpEditForm(tester, series: series);
+
+    await _startAddFigure(tester, 'Hidden Rabbit');
+    await tester.tap(find.byType(SwitchListTile));
+    await tester.pumpAndSettle();
+    await tester.enterText(_dialogRarityField(), '1:288');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('1:288'), findsOneWidget);
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(MaterialApp)),
+    );
+    final fig = container.read(collectionNotifierProvider).shelfSeries.single.figures.last;
+    expect(fig.isSecret, isTrue);
+    expect(fig.rarityLabel, '1:288');
+  });
+
+  testWidgets('add figure with image via dialog saves local uri', (
+    tester,
+  ) async {
+    final series = _seriesWithFigures();
+    await _pumpEditForm(
+      tester,
+      series: series,
+      pickFigureImage: (_) async => '/tmp/rabbit_gold.jpg',
+    );
+
+    await _startAddFigure(tester, 'Rabbit Gold');
+    await tester.tap(find.text('Add photo'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(MaterialApp)),
+    );
+    final fig = container.read(collectionNotifierProvider).shelfSeries.single.figures.last;
+    expect(fig.name, 'Rabbit Gold');
+    expect(fig.localImageUri, '/tmp/rabbit_gold.jpg');
+  });
+
+  testWidgets('cancel add figure dialog does not append figure', (tester) async {
+    final series = _seriesWithFigures();
+    await _pumpEditForm(tester, series: series);
+
+    await _startAddFigure(tester, 'Discarded Fig');
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('fig-edit-custom_figure_edit_test-f-3')),
+      findsNothing,
+    );
+    expect(find.text('3'), findsOneWidget);
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(MaterialApp)),
+    );
+    expect(
+      container.read(collectionNotifierProvider).shelfSeries.single.figures.length,
+      3,
+    );
   });
 
   testWidgets('Test 5b: remove figure image from edit form saves to shelf', (

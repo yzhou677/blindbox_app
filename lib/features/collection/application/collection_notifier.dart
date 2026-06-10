@@ -414,6 +414,73 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
     );
   }
 
+  void addCustomFigure({
+    required String seriesId,
+    required String name,
+    required bool isSecret,
+    String? rarityLabel,
+    String? localImageUri,
+  }) {
+    final existing = _findSeries(seriesId);
+    if (existing == null || !existing.isCustomLocal) return;
+
+    final figName = CollectionInputSanitizer.figureName(name);
+    if (figName == null || figName.isEmpty) return;
+
+    final index = existing.figures.length;
+    final figId = CustomSeriesConventions.figureImageKey(seriesId, index);
+    final sanitizedRarity = isSecret
+        ? CollectionInputSanitizer.rarityLabel(rarityLabel)
+        : null;
+    final trimmedUri = localImageUri?.trim();
+    final resolvedUri =
+        (trimmedUri != null && trimmedUri.isNotEmpty) ? trimmedUri : null;
+
+    final newFigure = ShelfFigure(
+      id: figId,
+      seriesId: seriesId,
+      name: figName,
+      imageUrl: null,
+      localImageUri: resolvedUri,
+      imageKey: figId,
+      rarity: CustomSeriesConventions.rarityLine(
+        isSecret: isSecret,
+        rarityLabel: sanitizedRarity,
+      ),
+      isSecret: isSecret,
+      rarityLabel: (sanitizedRarity != null && sanitizedRarity.isNotEmpty)
+          ? sanitizedRarity
+          : null,
+      taxonomyBrandId: existing.taxonomyBrandId,
+      taxonomyIpId: existing.taxonomyIpId,
+    );
+
+    final updatedSeries = ShelfSeries(
+      id: existing.id,
+      name: existing.name,
+      brand: existing.brand,
+      ipName: existing.ipName,
+      figures: [...existing.figures, newFigure],
+      shelfAccent: existing.shelfAccent,
+      notes: existing.notes,
+      catalogTemplateId: existing.catalogTemplateId,
+      taxonomyBrandId: existing.taxonomyBrandId,
+      taxonomyIpId: existing.taxonomyIpId,
+      imageKey: existing.imageKey,
+      customCoverImageUri: existing.customCoverImageUri,
+    );
+
+    _commit(
+      CollectionSnapshot(
+        shelfSeries: [
+          for (final s in state.shelfSeries)
+            if (s.id == seriesId) updatedSeries else s,
+        ],
+        figureStates: state.figureStates,
+      ),
+    );
+  }
+
   void updateCustomFigure({
     required String seriesId,
     required String figureId,

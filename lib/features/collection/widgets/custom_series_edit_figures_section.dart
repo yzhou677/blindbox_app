@@ -1,19 +1,28 @@
 import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
+import 'package:blindbox_app/features/collection/data/collection_input_formatters.dart';
+import 'package:blindbox_app/features/collection/data/collection_input_limits.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/widgets/custom_series_quiet_field.dart';
 import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
 import 'package:flutter/material.dart';
 
-/// Read-only figure lineup on custom series edit — tap a row to edit metadata.
+/// Figure lineup on custom series edit — tap a row to edit; add new below.
 class CustomSeriesEditFiguresSection extends StatelessWidget {
   const CustomSeriesEditFiguresSection({
     super.key,
     required this.figures,
     required this.onFigureTap,
+    required this.addFieldController,
+    required this.addFieldFocusNode,
+    required this.onAddSubmitted,
   });
 
   final List<ShelfFigure> figures;
   final ValueChanged<ShelfFigure> onFigureTap;
+  final TextEditingController addFieldController;
+  final FocusNode addFieldFocusNode;
+  final VoidCallback onAddSubmitted;
 
   @override
   Widget build(BuildContext context) {
@@ -42,9 +51,7 @@ class CustomSeriesEditFiguresSection extends StatelessWidget {
             ],
           ],
         ),
-        if (figures.isEmpty)
-          const SizedBox(height: 4)
-        else ...[
+        if (figures.isNotEmpty) ...[
           const SizedBox(height: 14),
           ListView.separated(
             shrinkWrap: true,
@@ -61,6 +68,36 @@ class CustomSeriesEditFiguresSection extends StatelessWidget {
             },
           ),
         ],
+        const SizedBox(height: 14),
+        TextField(
+          key: const Key('custom-series-edit-add-figure-field'),
+          controller: addFieldController,
+          focusNode: addFieldFocusNode,
+          textInputAction: TextInputAction.done,
+          maxLength: CollectionInputLimits.figureNameMaxLength,
+          inputFormatters: CollectionInputFormatters.figureName(),
+          onSubmitted: (_) => onAddSubmitted(),
+          style: CollectibleTypography.figureCaption(textTheme, scheme),
+          decoration: quietCustomSeriesField(
+            scheme,
+            hintText: 'Figure name',
+          ).copyWith(
+            suffixIcon: IconButton(
+              key: const Key('custom-series-edit-add-figure-button'),
+              onPressed: onAddSubmitted,
+              tooltip: 'Add figure',
+              icon: Icon(
+                Icons.add_rounded,
+                color: scheme.onSurfaceVariant.withValues(alpha: 0.55),
+              ),
+              visualDensity: VisualDensity.compact,
+            ),
+            suffixIconConstraints: const BoxConstraints(
+              minWidth: 44,
+              minHeight: 44,
+            ),
+          ),
+        ),
       ],
     );
   }

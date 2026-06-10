@@ -43,6 +43,13 @@ typedef CustomSeriesFigureSubmit = void Function({
   String? localImageUri,
 });
 
+typedef CustomSeriesFigureAddSubmit = void Function({
+  required String name,
+  required bool isSecret,
+  String? rarityLabel,
+  String? localImageUri,
+});
+
 enum CustomSeriesFormMode { create, edit }
 
 /// Collapsed by default on edit — brand/IP are power-user taxonomy changes.
@@ -55,7 +62,7 @@ const String customSeriesEditTaxonomyWarning =
     '• Collection insights\n'
     '• Journey history';
 
-/// Shared create/edit form for custom series metadata (figures only on create).
+/// Shared create/edit form for custom series metadata.
 class CustomSeriesFormSheet extends ConsumerStatefulWidget {
   const CustomSeriesFormSheet.create({
     super.key,
@@ -64,24 +71,31 @@ class CustomSeriesFormSheet extends ConsumerStatefulWidget {
         initialSeries = null,
         onCreateSubmit = onSubmit,
         onEditSubmit = null,
-        onFigureSubmit = null;
+        onFigureSubmit = null,
+        onFigureAdd = null,
+        pickFigureImage = null;
 
   const CustomSeriesFormSheet.edit({
     super.key,
     required ShelfSeries initialSeries,
     required CustomSeriesMetadataSubmit onSubmit,
     required CustomSeriesFigureSubmit onFigureSubmit,
+    required CustomSeriesFigureAddSubmit onFigureAdd,
+    this.pickFigureImage,
   })  : mode = CustomSeriesFormMode.edit,
         initialSeries = initialSeries,
         onCreateSubmit = null,
         onEditSubmit = onSubmit,
-        onFigureSubmit = onFigureSubmit;
+        onFigureSubmit = onFigureSubmit,
+        onFigureAdd = onFigureAdd;
 
   final CustomSeriesFormMode mode;
   final ShelfSeries? initialSeries;
   final CustomSeriesFormSubmit? onCreateSubmit;
   final CustomSeriesMetadataSubmit? onEditSubmit;
   final CustomSeriesFigureSubmit? onFigureSubmit;
+  final CustomSeriesFigureAddSubmit? onFigureAdd;
+  final Future<String?> Function(BuildContext context)? pickFigureImage;
 
   @override
   ConsumerState<CustomSeriesFormSheet> createState() =>
@@ -196,11 +210,34 @@ class _CustomSeriesFormSheetState extends ConsumerState<CustomSeriesFormSheet> {
       builder: (ctx) => EditCustomFigureDialog(
         initial: customFigureDraftFromShelfFigure(figure),
         dialogTitle: editCustomFigureDialogTitle,
+        pickImage: widget.pickFigureImage,
       ),
     );
     if (!mounted || next == null) return;
     widget.onFigureSubmit!(
       figureId: figure.id,
+      name: next.displayName,
+      isSecret: next.isSecret,
+      rarityLabel: next.rarityLabel,
+      localImageUri: next.localImageUri,
+    );
+  }
+
+  Future<void> _addShelfFigureFromField() async {
+    final raw = _newFigure.text.trim();
+    if (raw.isEmpty) return;
+    FocusManager.instance.primaryFocus?.unfocus();
+    final next = await showDialog<CustomFigureDraft>(
+      context: context,
+      builder: (ctx) => EditCustomFigureDialog(
+        initial: CustomFigureDraft(displayName: raw),
+        dialogTitle: addCustomFigureDialogTitle,
+        pickImage: widget.pickFigureImage,
+      ),
+    );
+    if (!mounted || next == null) return;
+    _newFigure.clear();
+    widget.onFigureAdd!(
       name: next.displayName,
       isSecret: next.isSecret,
       rarityLabel: next.rarityLabel,
@@ -380,6 +417,9 @@ class _CustomSeriesFormSheetState extends ConsumerState<CustomSeriesFormSheet> {
                     CustomSeriesEditFiguresSection(
                       figures: _seriesForEditFigures().figures,
                       onFigureTap: _editShelfFigure,
+                      addFieldController: _newFigure,
+                      addFieldFocusNode: _newFigureFocus,
+                      onAddSubmitted: _addShelfFigureFromField,
                     ),
                   ],
                   const SizedBox(height: 22),
