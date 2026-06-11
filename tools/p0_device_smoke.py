@@ -7,7 +7,7 @@ import sys
 import time
 from dataclasses import dataclass, field
 
-PKG = "com.example.blindbox_app"
+PKG = "app.shelfy.collector"
 SERIAL = None  # set via -s if needed
 
 

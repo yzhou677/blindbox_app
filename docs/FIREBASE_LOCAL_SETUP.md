@@ -29,7 +29,7 @@ Manual: `cd android && .\gradlew signingReport` → add **debug** + **release** 
 
 ### Config files
 
-1. Firebase console → Project settings → Your apps → Android (`com.example.blindbox_app`).
+1. Firebase console → Project settings → Your apps → Android (`app.shelfy.collector`).
 2. Download **`google-services.json`** into:
 
    `android/app/google-services.json`

@@ -1,4 +1,4 @@
-package com.example.blindbox_app
+package app.shelfy.collector
 
 import io.flutter.embedding.android.FlutterActivity
 

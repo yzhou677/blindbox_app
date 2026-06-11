@@ -23,7 +23,7 @@ Recurring logcat / debug console output that is **not** an actionable bug until 
 
 - **Firestore catalog refresh and Storage may still function normally** while these appear.
 - Observed: `CatalogBundleCache: refresh source=firestore` succeeds alongside `DEVELOPER_ERROR`.
-- Likely causes: debug SHA-1 not registered in Firebase Console, `com.example.blindbox_app` package vs production signing, or partial Play Services API registration — not necessarily broken Firestore reads.
+- Likely causes: debug SHA-1 not registered in Firebase Console, `app.shelfy.collector` package vs production signing, or partial Play Services API registration — not necessarily broken Firestore reads.
 
 ### How to treat
 
@@ -36,7 +36,7 @@ Recurring logcat / debug console output that is **not** an actionable bug until 
 
 ### Dev checklist (before release)
 
-- Replace `com.example.blindbox_app` application id for production
+- Production application id: `app.shelfy.collector` (Play Store / Firebase Android app **Shelfy Android**)
 - Run `tools/android/sync_firebase_android_sha.ps1`; confirm debug/release SHA in Firebase Console
 - Local `google-services.json` matches project (gitignored locally)
 

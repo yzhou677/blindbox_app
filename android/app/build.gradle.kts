@@ -15,7 +15,8 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
-android {    namespace = "com.example.blindbox_app"
+android {
+    namespace = "app.shelfy.collector"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -30,7 +31,7 @@ android {    namespace = "com.example.blindbox_app"
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.blindbox_app"
+        applicationId = "app.shelfy.collector"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

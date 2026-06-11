@@ -1,7 +1,7 @@
 # Shelfy — Release Candidate Test Plan
 
 **Branch / build under test:** `feature/bug-fix` (or tagged RC build)  
-**Display name:** Shelfy (package id / Firebase project unchanged: `com.example.blindbox_app`, `blindbox-collection`)  
+**Display name:** Shelfy (package id: `app.shelfy.collector`, Firebase project: `blindbox-collection`)  
 **Tester mindset:** Collector app — image-first, local shelf, messy navigation, poor network.
 
 This plan is **architecture-aware** and targets regressions that unit tests do not catch: overlay lifecycle, router races, ownership semantics, cache behavior, and Android gesture edge cases.

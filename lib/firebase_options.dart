@@ -52,7 +52,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyCjD8A5Mwp_dck6oIkuWnLuohfgoKc1KWs',
-    appId: '1:1094225908408:android:f6c0224f6ddd7ad2c81a4d',
+    appId: '1:1094225908408:android:73c90529f8d1a923c81a4d',
     messagingSenderId: '1094225908408',
     projectId: 'blindbox-collection',
     storageBucket: 'blindbox-collection.firebasestorage.app',
@@ -64,7 +64,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '1094225908408',
     projectId: 'blindbox-collection',
     storageBucket: 'blindbox-collection.firebasestorage.app',
-    iosBundleId: 'com.example.blindboxApp',
+    iosBundleId: 'app.shelfy.collector',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -73,7 +73,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '1094225908408',
     projectId: 'blindbox-collection',
     storageBucket: 'blindbox-collection.firebasestorage.app',
-    iosBundleId: 'com.example.blindboxApp',
+    iosBundleId: 'app.shelfy.collector',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(

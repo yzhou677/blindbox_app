@@ -2,7 +2,7 @@
 # android/app/google-services.json. Requires: npx firebase-tools login.
 param(
   [string]$ProjectId = "blindbox-collection",
-  [string]$AndroidAppId = "1:1094225908408:android:f6c0224f6ddd7ad2c81a4d"
+  [string]$AndroidAppId = "1:1094225908408:android:73c90529f8d1a923c81a4d"
 )
 
 $ErrorActionPreference = "Stop"

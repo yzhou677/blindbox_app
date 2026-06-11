@@ -49,7 +49,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: 'CONFIGURE_SENDER_ID',
     projectId: 'your-project-id',
     storageBucket: 'your-project-id.firebasestorage.app',
-    iosBundleId: 'com.example.blindboxApp',
+    iosBundleId: 'app.shelfy.collector',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -58,6 +58,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: 'CONFIGURE_SENDER_ID',
     projectId: 'your-project-id',
     storageBucket: 'your-project-id.firebasestorage.app',
-    iosBundleId: 'com.example.blindboxApp',
+    iosBundleId: 'app.shelfy.collector',
   );
 }
