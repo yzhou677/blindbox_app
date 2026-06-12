@@ -10,6 +10,9 @@ Human-oriented notes for the Blindbox app. **Agent rules and architecture live u
 - [`TECH_DEBT.md`](TECH_DEBT.md) — non-blocking debt items (analyzer warnings, cleanup when convenient)
 - [`COLLECTION_ARCHITECTURE_NOTES.md`](COLLECTION_ARCHITECTURE_NOTES.md) — intentional Collection decisions, tradeoffs, and scaling triggers (maintenance mode)
 - [`FIREBASE_LOCAL_SETUP.md`](FIREBASE_LOCAL_SETUP.md) — Firebase / emulator setup for local dev
+- [`PRIVACY_POLICY.md`](PRIVACY_POLICY.md) — consumer privacy policy (Play Store / GitHub Pages)
+- [`privacy-policy.html`](privacy-policy.html) — HTML version for GitHub Pages
+- [`PRIVACY_POLICY_DATA_SAFETY.md`](PRIVACY_POLICY_DATA_SAFETY.md) — Google Play Data safety alignment notes
 - [`CURSOR_RULES.md`](CURSOR_RULES.md) — pointer to where Cursor rules and architecture actually live
 
 ## For Cursor agents and contributors
