@@ -13,6 +13,7 @@ Human-oriented notes for the Blindbox app. **Agent rules and architecture live u
 - [`PRIVACY_POLICY.md`](PRIVACY_POLICY.md) — consumer privacy policy (Play Store / GitHub Pages)
 - [`privacy-policy.html`](privacy-policy.html) — HTML version for GitHub Pages
 - [`PRIVACY_POLICY_DATA_SAFETY.md`](PRIVACY_POLICY_DATA_SAFETY.md) — Google Play Data safety alignment notes
+- [`PLAY_STORE_ASSETS.md`](PLAY_STORE_ASSETS.md) — Play listing icons, feature graphic, screenshot plan
 - [`CURSOR_RULES.md`](CURSOR_RULES.md) — pointer to where Cursor rules and architecture actually live
 
 ## For Cursor agents and contributors
