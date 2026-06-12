@@ -42,12 +42,29 @@ See [`assets/play_store/screenshots/phone/README.md`](../assets/play_store/scree
 
 ---
 
-## Optional Play assets
+## Tablet screenshots (captured)
 
-| Asset | Spec | Suggested filename | Notes |
-|-------|------|-------------------|--------|
-| 7" tablet screenshot | 1080 × 1920 min | `assets/play_store/screenshots/tablet_7/01_….png` | Optional; same five scenes |
-| 10" tablet screenshot | 1200 × 1920 min | `assets/play_store/screenshots/tablet_10/01_….png` | Optional |
+**Emulator:** Pixel Tablet · Android 15 (API 35) · landscape **2560 × 1600**
+
+| Upload order | 10" file (`tablet_10/`) | 7" file (`tablet_7/`) | Screen |
+|--------------|-------------------------|------------------------|--------|
+| 1 | `01_collection.png` | `01_collection.png` | Collection |
+| 2 | `02_insights.png` | `02_insights.png` | Insights |
+| 3 | `03_discover.png` | `03_discover.png` | Discover |
+| 4 | `04_market.png` | `04_market.png` | Market |
+| 5 | `05_figure_detail.png` | `05_figure_detail.png` | Figure detail |
+
+| Slot | Spec | Status |
+|------|------|--------|
+| **10-inch tablet** | shortest side ≥ 1200 px | ✅ `2560 × 1600` native |
+| **7-inch tablet** | shortest side ≥ 1080 px | ✅ `1920 × 1080` export |
+
+Regenerate: `python tools/play_store/capture_tablet_screenshots.py`
+
+## Other optional Play assets
+
+| Asset | Spec | Notes |
+|-------|------|--------|
 | Promo video | YouTube URL | — | Optional; 30s max recommended |
 | TV banner | 1280 × 720 | `tv_banner_1280x720.png` | Only if Android TV listed |
 
@@ -59,7 +76,9 @@ See [`assets/play_store/screenshots/phone/README.md`](../assets/play_store/scree
 |-----------------|------------------|
 | **Main store listing → App icon** | `assets/play_store/icon_512.png` |
 | **Main store listing → Feature graphic** | `assets/play_store/feature_graphic_1024x500.png` |
-| **Main store listing → Phone screenshots** | `01_collection.png` … `05_figure_detail.png` |
+| **Main store listing → Phone screenshots** | `screenshots/phone/01_…` … `05_…` |
+| **Store listing → 10-inch tablet** | `screenshots/tablet_10/01_…` … `05_…` |
+| **Store listing → 7-inch tablet** | `screenshots/tablet_7/01_…` … `05_…` |
 | **Privacy policy** | `https://yzhou677.github.io/blindbox_app/privacy-policy.html` |
 | **Short description** (80 chars) | See release notes / listing copy in prior session |
 | **Full description** | See release notes / listing copy |
@@ -105,16 +124,13 @@ assets/play_store/
 ├── icon_512.png                    # Play Console app icon
 ├── feature_graphic_1024x500.png    # Play Console feature graphic
 └── screenshots/
-    └── phone/
-        ├── README.md               # Capture instructions
-        ├── 01_collection.png       # ← capture from device
-        ├── 02_insights.png
-        ├── 03_discover.png
-        ├── 04_market.png
-        └── 05_figure_detail.png
+    ├── phone/                      # Phone (capture from device)
+    ├── tablet_10/                  # 2560×1600 — 10" Play slot
+    └── tablet_7/                   # 1920×1080 — 7" Play slot
 
 tools/play_store/
-└── generate_listing_assets.py      # Regenerate icon + feature graphic
+├── generate_listing_assets.py      # Icon + feature graphic
+└── capture_tablet_screenshots.py   # Tablet emulator captures
 ```
 
 ---
