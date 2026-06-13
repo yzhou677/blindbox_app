@@ -13,6 +13,7 @@ import {
   hasResellerImageOverride,
   imageHostTier,
   isBatchCarouselImageUrl,
+  isOfficialInstagramPostUrl,
   isResellerImageHost,
   itemIdEndsWithProductId,
   parseSummaryReleaseDate,
@@ -102,7 +103,7 @@ describe('seed_validation curation sync rules', () => {
     assert.ok(isResellerImageHost('toysez.com'));
   });
 
-  it('requires productId and matching id suffix for releaseType product', () => {
+  it('requires productId and matching id suffix when productId is set', () => {
     const seed = {
       sourceId: 'popmart_us',
       items: [
@@ -154,6 +155,30 @@ describe('seed_validation curation sync rules', () => {
       '6267',
     );
     assert.equal(itemIdEndsWithProductId('popmart_us_hirono_behind_time_6267', '6267'), true);
+  });
+
+  it('allows official Instagram post as officialUrl without productId', () => {
+    assert.equal(
+      isOfficialInstagramPostUrl(new URL('https://www.instagram.com/p/DZhdyd6m984/')),
+      true,
+    );
+    const seed = {
+      sourceId: 'popmart_us',
+      items: [
+        {
+          id: 'popmart_us_monsters_fifa_world_cup_2026',
+          title: 'THE MONSTERS × FIFA World Cup 2026',
+          summary: 'Official FIFA World Cup collaboration announcement.',
+          imageUrl:
+            'https://scontent.cdninstagram.com/v/t51.82787-15/example_n.jpg',
+          officialUrl: 'https://www.instagram.com/p/DZhdyd6m984/',
+          publishedAt: '2026-05-29T00:00:00Z',
+          status: 'active',
+        },
+      ],
+    };
+    const result = validateOfficialFeedSeed(seed);
+    assert.equal(result.ok, true);
   });
 
   it('hasResellerImageOverride only accepts reseller_image_ok', () => {

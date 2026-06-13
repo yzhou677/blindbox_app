@@ -12,7 +12,15 @@ code paths; only the quality of what you push to `official_feed_items`.
 ## Data sources (allowed)
 
 1. **POP MART US official website** — `popmart.com/us` product and POP NOW pages
-2. **POP MART US official Instagram** — `@popmart_us`
+   (when a numeric product URL exists, include it)
+2. **POP MART official Instagram** — `@popmart_us` or global `@popmart` posts
+
+**`officialUrl` destinations:** POP MART US product / POP NOW / collection pages
+**or** an official Instagram post URL (`instagram.com/p/…`, `/reel/…`) when no
+product or campaign page exists (e.g. FIFA collabs announced on IG only).
+
+`productId` is **optional** — include it when you have a verified
+`/us/products/{id}/` link; skip it for Instagram-only announcements.
 
 **Do not use Facebook** (or Dealmoon, Reddit, reseller sites) to discover
 products, product IDs, release dates, summaries, or `publishedAt`.
@@ -24,15 +32,18 @@ announcement times. Before every push:
 
 1. **Discover** — scan `@popmart_us` for US announcements; skip restocks /
    non-US.
-2. **Match each candidate** to a POP MART US `officialUrl` (product or POP NOW).
-3. **Open each link in a browser** — wait for the page to hydrate.
-4. **Copy from the live page**
-   - `officialUrl` — numeric `/us/products/{id}/{slug}` or `/us/pop-now/set/…`
-   - `productId` — the `{id}` in that URL (products only)
-   - `imageUrl` — single-product art (official CDN or POP MART Shopify store)
+2. **Match each candidate** to an `officialUrl` — POP MART US product/POP NOW when
+   available, otherwise the official Instagram post link.
+3. **Open product links in a browser** when present — wait for the page to hydrate.
+4. **Copy from the live page or post**
+   - `officialUrl` — `/us/products/{id}/{slug}`, `/us/pop-now/set/…`, or
+     `https://www.instagram.com/p/{shortcode}/`
+   - `productId` — optional; the `{id}` in a product URL when you have one
+   - `imageUrl` — single-product art (official CDN, Shopify store, or IG post art)
    - `summary` — see **Summary policy** below
    - `publishedAt` — see **publishedAt policy** below
-5. **Set** `productIdConfirmed: true` on product rows only after step 3.
+5. **Set** `productIdConfirmed: true` on product rows when you copied the id from a
+   hydrated browser session (skip for Instagram-only rows).
 6. **Edit** `popmart_us.seed.json`; retire old ids via `retiredItemIds` (required when
    correcting `productId` — the document `id` changes, so the old id must be
    listed or push will auto-archive stale actives).
@@ -47,6 +58,9 @@ announcement times. Before every push:
 official POP MART announcement when no IG post exists).
 
 - Day-level accuracy is enough — use midnight UTC: `2026-05-29T00:00:00Z`
+- For Instagram posts, derive the calendar day from the post shortcode:
+  `node tools/official_feed/_ig_shortcode_date.mjs DZbgLVcDIDW`
+  (decodes media id → UTC post day; no browser or embed scrape needed)
 - **Do not** use release-day sort buckets, manual hour stagger, or PT→UTC release
   conversions
 
@@ -110,9 +124,9 @@ Optional: `node tools/official_feed/check_url.mjs "<officialUrl>"` — shows
 
 | Field | Rule |
 | --- | --- |
-| `officialUrl` | Canonical POP MART US link from the browser. Products: `/us/products/{numericId}/{slug}`. POP NOW: `/us/pop-now/set/…`. |
+| `officialUrl` | POP MART US product/POP NOW/collection **or** official Instagram post URL. |
 | `imageUrl` | Per-item product art. No reseller hosts unless `curationOverride: "reseller_image_ok"`. No `A_`/`B_`/`C_` carousel filenames. |
-| `productId` | Required for `releaseType: "product"`. Must match `officialUrl` and `id` suffix `…_{productId}`. |
+| `productId` | Optional. When set, must match `officialUrl` and `id` suffix `…_{productId}`. |
 | `productIdConfirmed` | Seed only. `true` after copying id from a hydrated browser session. |
 | `summary` | ≤ ~80 chars. Descriptive only, or `… Online June 4, 7:00 PM PT.` when copied from official product page Online Release block. |
 | `publishedAt` | ISO-8601 UTC — **Instagram / official announcement day** at `T00:00:00Z`. |

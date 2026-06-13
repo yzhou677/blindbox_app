@@ -41,6 +41,18 @@ bool _isPopMartUsItemPath(Uri uri) {
   return false;
 }
 
+/// Official POP MART Instagram post (`/p/`, `/reel/`, `/tv/`).
+bool _isOfficialInstagramPostPath(Uri uri) {
+  if (!uri.host.endsWith('instagram.com')) return false;
+  final path = uri.path.replaceAll(RegExp(r'/+$'), '');
+  return RegExp(r'^/(p|reel|tv)/[^/]+').hasMatch(path);
+}
+
+/// POP MART US item page or official Instagram announcement link.
+bool _isValidOfficialFeedDestination(Uri uri) {
+  return _isPopMartUsItemPath(uri) || _isOfficialInstagramPostPath(uri);
+}
+
 DateTime? _readPublishedAt(Map<String, dynamic> data) {
   final raw = data['publishedAt'];
   if (raw is Timestamp) {
@@ -89,7 +101,7 @@ OfficialFeedItem? mapOfficialFeedItem(String docId, Map<String, dynamic> data) {
 
   if (_isPopMartPlaceholderImage(imageUrl) ||
       _isPopMartUsHomepage(uri) ||
-      !_isPopMartUsItemPath(uri)) {
+      !_isValidOfficialFeedDestination(uri)) {
     return null;
   }
 

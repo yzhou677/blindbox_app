@@ -233,6 +233,22 @@ export function imageHostTier(imageUrl) {
   return 'other';
 }
 
+/** Official POP MART Instagram post (global or @popmart_us). */
+export function isOfficialInstagramPostUrl(url) {
+  if (!url.hostname.endsWith('instagram.com')) return false;
+  const path = url.pathname.replace(/\/+$/, '');
+  return /^\/(p|reel|tv)\/[^/]+/.test(path);
+}
+
+/**
+ * Valid tap-through destination for an official feed card.
+ * POP MART US pages when available; otherwise official Instagram posts.
+ * @param {URL} url
+ */
+export function isValidOfficialFeedDestinationUrl(url) {
+  return isPopMartUsItemUrl(url) || isOfficialInstagramPostUrl(url);
+}
+
 /** First segment after `/us/products/` must be numeric spuId (not a title slug). */
 export function isPopMartUsNumericProductUrl(url) {
   if (!url.hostname.endsWith('popmart.com')) return false;
@@ -361,26 +377,20 @@ export function validateOfficialFeedSeed(seed) {
     if (!officialParsed) {
       errors.push(`${label}: officialUrl must be a valid https URL.`);
     } else {
-      if (!isPopMartUsItemUrl(officialParsed)) {
+      if (!isValidOfficialFeedDestinationUrl(officialParsed)) {
         const slugOnly =
           officialParsed.pathname.startsWith('/us/products/') &&
           !isPopMartUsNumericProductUrl(officialParsed);
         errors.push(
           slugOnly
             ? `${label}: officialUrl must use a numeric POP MART product id (/us/products/{id}/slug) — do not invent slug-only paths (${officialUrl}).`
-            : `${label}: officialUrl must be a POP MART US product, POP NOW set, or collection page — not the homepage (${officialUrl}).`,
+            : `${label}: officialUrl must be a POP MART US product/POP NOW/collection page or an official Instagram post — not the homepage (${officialUrl}).`,
         );
       }
-      const releaseType = item?.releaseType?.trim();
       const productId = item?.productId?.trim();
       const urlProductId = productIdFromOfficialUrl(officialUrl);
 
       if (officialParsed?.pathname.startsWith('/us/products/')) {
-        if (releaseType === 'product' && !productId) {
-          errors.push(
-            `${label}: releaseType "product" requires productId (copy numeric id from browser after page loads — HTTP 200 alone is not proof).`,
-          );
-        }
         if (productId && urlProductId && productId !== urlProductId) {
           errors.push(
             `${label}: productId "${productId}" does not match officialUrl id "${urlProductId}".`,

@@ -101,6 +101,19 @@ void main() {
     expect(item, isNotNull);
   });
 
+  test('mapOfficialFeedItem accepts official Instagram post urls', () {
+    final item = mapOfficialFeedItem(
+      'ig_post',
+      _activeDoc(
+        imageUrl:
+            'https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Fpopmart_us%2Ffifa-matchday-giveaway.png?alt=media&token=abc',
+        officialUrl: 'https://www.instagram.com/p/DZbgLVcDIDW/',
+      ),
+    );
+    expect(item, isNotNull);
+    expect(item!.officialUrl, contains('instagram.com/p/DZbgLVcDIDW'));
+  });
+
   test('mapOfficialFeedItem rejects slug-only product paths', () {
     expect(
       mapOfficialFeedItem(

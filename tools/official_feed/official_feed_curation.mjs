@@ -7,7 +7,9 @@ import {
   hasProductIdConfirmed,
   hasResellerImageOverride,
   imageHostTier,
+  isOfficialInstagramPostUrl,
   isPopMartUsItemUrl,
+  isValidOfficialFeedDestinationUrl,
   parseHttpsUrl,
   productIdFromOfficialUrl,
 } from './seed_validation.mjs';
@@ -354,6 +356,7 @@ export function collectAsyncCurationIssues(item, index, pageProbe, imageProbe, o
   const productId = item.productId?.trim();
   const title = item.title?.trim() ?? '';
   const override = hasResellerImageOverride(item);
+  const tier = imageHostTier(imageUrl);
 
   if (pageProbe.error) {
     issues.push({
@@ -381,10 +384,12 @@ export function collectAsyncCurationIssues(item, index, pageProbe, imageProbe, o
   }
 
   const finalParsed = pageProbe.finalParsed;
-  if (!finalParsed || !isPopMartUsItemUrl(finalParsed)) {
+  const isInstagramPost =
+    finalParsed != null && isOfficialInstagramPostUrl(finalParsed);
+  if (!finalParsed || !isValidOfficialFeedDestinationUrl(finalParsed)) {
     issues.push({
       level: 'error',
-      message: `${label}: final URL is not a POP MART US item page (${pageProbe.finalUrl})`,
+      message: `${label}: final URL is not a POP MART US item page or official Instagram post (${pageProbe.finalUrl})`,
       itemId,
     });
   } else if (
@@ -414,7 +419,7 @@ export function collectAsyncCurationIssues(item, index, pageProbe, imageProbe, o
   const urlProductId = isProductPage ? productIdFromOfficialUrl(officialUrl) : null;
 
   if (isProductPage && pageProbe.spaShell) {
-    if (options.acceptsPhantomProductId) {
+    if (options.acceptsPhantomProductId && productId) {
       if (!hasProductIdConfirmed(item)) {
         issues.push({
           level: 'error',
@@ -423,7 +428,11 @@ export function collectAsyncCurationIssues(item, index, pageProbe, imageProbe, o
         });
       }
     }
-  } else if (pageProbe.candidates.length === 0 && !pageProbe.spaShell) {
+  } else if (
+    pageProbe.candidates.length === 0 &&
+    !pageProbe.spaShell &&
+    !isInstagramPost
+  ) {
     issues.push({
       level: 'warning',
       message: `${label}: no product images extracted from officialUrl HTML`,
@@ -454,7 +463,7 @@ export function collectAsyncCurationIssues(item, index, pageProbe, imageProbe, o
 
   // Reseller / Shopify tier errors and override notices are enforced in seed_validation.mjs (sync).
 
-  if (pageProbe.candidates.length > 0) {
+  if (pageProbe.candidates.length > 0 && !isInstagramPost) {
     if (imageMatchesCandidates(imageUrl, pageProbe.candidates)) {
       issues.push({
         level: 'info',
@@ -468,6 +477,12 @@ export function collectAsyncCurationIssues(item, index, pageProbe, imageProbe, o
         itemId,
       });
     }
+  } else if (isInstagramPost && tier === 'other') {
+    issues.push({
+      level: 'info',
+      message: `${label}: Instagram post uses hosted mirror image (not IG CDN art)`,
+      itemId,
+    });
   }
 
   return issues;
@@ -532,13 +547,17 @@ export async function validateOfficialFeedCuration(seed, options = {}) {
     const imageUrl = item?.imageUrl?.trim();
     if (!officialUrl || !imageUrl) continue;
 
+    const parsed = parseHttpsUrl(officialUrl);
     const slug = productSlugFromOfficialUrl(officialUrl);
-    const isProduct = officialUrl.includes('/us/products/');
+    const isProduct = parsed?.pathname.startsWith('/us/products/') ?? false;
+    const isInstagram = parsed != null && isOfficialInstagramPostUrl(parsed);
 
     const [pageProbe, imageProbe, acceptsPhantomProductId] = await Promise.all([
       probeOfficialPage(officialUrl),
       probeImageReachability(imageUrl),
-      isProduct && slug ? popMartUsAcceptsPhantomProductId(slug) : Promise.resolve(false),
+      isProduct && slug && !isInstagram
+        ? popMartUsAcceptsPhantomProductId(slug)
+        : Promise.resolve(false),
     ]);
 
     allIssues.push(
