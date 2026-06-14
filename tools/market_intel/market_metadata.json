@@ -1,0 +1,26 @@
+{
+  "_comment": "Admin pipeline inputs only. Never loaded by the Flutter app.",
+  "figures": {
+    "lucky_big_into_energy_popmart": {
+      "searchTerms": [
+        "POP MART Lucky Big Into Energy",
+        "POPMART LUCKY BIG ENERGY"
+      ],
+      "excludeTerms": ["custom", "lot", "bootleg", "replica"],
+      "marketAliases": [],
+      "matchThreshold": null,
+      "disabled": false,
+      "notes": ""
+    }
+  },
+  "series": {
+    "big_into_energy_popmart": {
+      "searchTerms": ["POP MART Big Into Energy"],
+      "excludeTerms": ["lot", "custom"],
+      "marketAliases": [],
+      "matchThreshold": null,
+      "disabled": false,
+      "notes": ""
+    }
+  }
+}
