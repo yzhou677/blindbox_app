@@ -1,0 +1,33 @@
+{
+  "_comment": "DEV ONLY — mock market snapshots for architecture validation. Not production data.",
+  "snapshots": [
+    {
+      "id": "the_monsters_big_into_energy_vinyl_plush_pendant_luck",
+      "level": "figure",
+      "figureId": "the_monsters_big_into_energy_vinyl_plush_pendant_luck",
+      "seriesId": "the_monsters_big_into_energy_vinyl_plush_pendant",
+      "estimatedValueUsd": 42,
+      "trend": "rising",
+      "confidence": "high",
+      "recentSalesCount": 18,
+      "priceRangeMinUsd": 38,
+      "priceRangeMaxUsd": 48
+    },
+    {
+      "id": "the_monsters_big_into_energy_vinyl_plush_pendant",
+      "level": "series",
+      "seriesId": "the_monsters_big_into_energy_vinyl_plush_pendant",
+      "estimatedValueUsd": 37,
+      "trend": "stable",
+      "confidence": "low",
+      "recentSalesCount": 4,
+      "priceRangeMinUsd": 30,
+      "priceRangeMaxUsd": 45
+    }
+  ],
+  "_validationNotes": {
+    "caseA_figureSnapshot": "the_monsters_big_into_energy_vinyl_plush_pendant_luck",
+    "caseB_seriesFallback": "the_monsters_big_into_energy_vinyl_plush_pendant_hope (no figure doc; series doc above)",
+    "caseC_missing": "the_monsters_big_into_energy_vinyl_plush_pendant_serenity (no docs)"
+  }
+}

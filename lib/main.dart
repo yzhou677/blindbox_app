@@ -11,6 +11,10 @@ import 'package:blindbox_app/features/home/application/catalog_bundle_refresh_br
 import 'package:blindbox_app/features/home/application/home_feed_provider.dart';
 import 'package:blindbox_app/features/market/data/market_catalog_identity_cache.dart';
 import 'package:blindbox_app/features/market/data/market_listings_bootstrap.dart';
+import 'package:blindbox_app/features/market_intel/dev/dev_mock_market_snapshot_repository.dart';
+import 'package:blindbox_app/features/market_intel/dev/market_snapshot_dev_config.dart';
+import 'package:blindbox_app/features/market_intel/dev/market_snapshot_dev_screen.dart';
+import 'package:blindbox_app/features/market_intel/application/market_snapshot_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -37,10 +41,33 @@ Future<void> main() async {
         seriesReleaseLookupProvider.overrideWith(
           (ref) => ref.watch(homeSeriesReleaseLookupProvider),
         ),
+        if (kMarketSnapshotDevValidation && !kMarketSnapshotDevLive)
+          marketSnapshotRepositoryProvider.overrideWithValue(
+            DevMockMarketSnapshotRepository(),
+          ),
       ],
-      child: const CatalogBundleRefreshBridge(child: BlindboxApp()),
+      child: kMarketSnapshotDevValidation
+          ? const CatalogBundleRefreshBridge(child: _MarketSnapshotDevApp())
+          : const CatalogBundleRefreshBridge(child: BlindboxApp()),
     ),
   );
+}
+
+// DEV ONLY — temporary shell for market snapshot validation.
+class _MarketSnapshotDevApp extends StatelessWidget {
+  const _MarketSnapshotDevApp();
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Market Snapshot Dev',
+      debugShowCheckedModeBanner: false,
+      themeMode: ThemeMode.system,
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      home: const MarketSnapshotDevScreen(),
+    );
+  }
 }
 
 class BlindboxApp extends StatelessWidget {
