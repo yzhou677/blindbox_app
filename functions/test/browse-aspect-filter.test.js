@@ -144,7 +144,7 @@ describe('composeBrowseUpstreamQ (q-first retrieval)', () => {
 
 
 
-  it('uses DPL + Baby Three q for non-verified IP', () => {
+  it('uses Cureplaneta + Baby Three q for non-verified IP', () => {
 
     assert.equal(
 

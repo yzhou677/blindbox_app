@@ -13,7 +13,7 @@ const {
   composeTier2AspectFilter,
 } = require('../lib/providers/gateway/composeBrowseTier2');
 
-describe('DPL / Baby Three (q-first, no aspect)', () => {
+describe('Cureplaneta / Baby Three (q-first, no aspect)', () => {
   it('does not apply Brand or Character aspect for Baby Three', () => {
     const plan = composeBrowseAspectPlan({
       brandId: 'dpl',

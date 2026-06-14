@@ -37,7 +37,12 @@
   },
   {
     "id": "dpl",
-    "displayName": "DPL",
-    "aliases": []
+    "displayName": "Cureplaneta",
+    "aliases": [
+      "CurePlaneta",
+      "Cure Planeta",
+      "CUREPLANETA",
+      "DPL"
+    ]
   }
 ]

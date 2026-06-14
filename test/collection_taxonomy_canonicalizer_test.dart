@@ -24,22 +24,40 @@ void main() {
       expect(result.matchedRegistry, matchedRegistry);
     }
 
-    test('dpl variants resolve to DPL', () {
+    test('dpl variants resolve to Cureplaneta', () {
       expectBrand(
         'dpl',
-        displayLabel: 'DPL',
+        displayLabel: 'Cureplaneta',
         taxonomyId: 'dpl',
         matchedRegistry: true,
       );
       expectBrand(
         'DPL',
-        displayLabel: 'DPL',
+        displayLabel: 'Cureplaneta',
         taxonomyId: 'dpl',
         matchedRegistry: true,
       );
       expectBrand(
         'CUREPLANETA',
-        displayLabel: 'DPL',
+        displayLabel: 'Cureplaneta',
+        taxonomyId: 'dpl',
+        matchedRegistry: true,
+      );
+      expectBrand(
+        'Cureplaneta',
+        displayLabel: 'Cureplaneta',
+        taxonomyId: 'dpl',
+        matchedRegistry: true,
+      );
+      expectBrand(
+        'CurePlaneta',
+        displayLabel: 'Cureplaneta',
+        taxonomyId: 'dpl',
+        matchedRegistry: true,
+      );
+      expectBrand(
+        'Cure Planeta',
+        displayLabel: 'Cureplaneta',
         taxonomyId: 'dpl',
         matchedRegistry: true,
       );

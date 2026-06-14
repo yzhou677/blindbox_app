@@ -35,8 +35,8 @@ abstract final class BrandTaxonomyRegistry {
     ),
     BrandTaxonomy(
       id: 'dpl',
-      displayName: 'DPL',
-      aliases: ['DPL', 'CUREPLANETA'],
+      displayName: 'Cureplaneta',
+      aliases: ['CurePlaneta', 'Cure Planeta', 'CUREPLANETA', 'DPL'],
     ),
   ];
 }

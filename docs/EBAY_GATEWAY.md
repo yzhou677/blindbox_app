@@ -78,7 +78,7 @@ With `brandId` / `ipId`, the gateway uses eBay **aspect_filter** (not keyword st
 - Category defaults to `261068` (live-calibrated blind box collectibles); override with `EBAY_BROWSE_CATEGORY_ID`
 - **Tier 2:** when strict aspect rows &lt; 6, supplement with Brand aspect + IP keywords in `q`
 - **Tier 3:** gateway drops rows whose titles contradict selected brand/IP
-- **DPL:** in-app brand `dpl` maps to eBay aspect `Cureplaneta`; filter rail shows only `baby_three` (no “Any IP”)
+- **Cureplaneta:** in-app brand `dpl` maps to eBay aspect `Cureplaneta`; filter rail shows only `baby_three` (no “Any IP”)
 
 ## eBay Browse wire (integration notes)
 

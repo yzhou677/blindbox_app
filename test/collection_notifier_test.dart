@@ -317,7 +317,7 @@ void main() {
     );
 
     final added = container.read(collectionNotifierProvider).shelfSeries.single;
-    expect(added.brand, 'DPL');
+    expect(added.brand, 'Cureplaneta');
     expect(added.taxonomyBrandId, 'dpl');
     expect(added.ipName, 'Baby Three');
     expect(added.taxonomyIpId, 'baby_three');
@@ -340,7 +340,7 @@ void main() {
     );
 
     final added = container.read(collectionNotifierProvider).shelfSeries.single;
-    expect(added.brand, 'DPL');
+    expect(added.brand, 'Cureplaneta');
     expect(added.taxonomyBrandId, 'dpl');
     expect(added.ipName, 'Baby Three');
     expect(added.taxonomyIpId, 'baby_three');
@@ -533,7 +533,7 @@ void main() {
     );
 
     final updated = container.read(collectionNotifierProvider).shelfSeries.single;
-    expect(updated.brand, 'DPL');
+    expect(updated.brand, 'Cureplaneta');
     expect(updated.taxonomyBrandId, 'dpl');
     expect(updated.ipName, 'THE MONSTERS');
     expect(updated.taxonomyIpId, 'the_monsters');
@@ -557,7 +557,7 @@ void main() {
 
     final updated = container.read(collectionNotifierProvider).shelfSeries.single;
     expect(updated.name, 'Renamed Set');
-    expect(updated.brand, 'DPL');
+    expect(updated.brand, 'Cureplaneta');
     expect(updated.taxonomyBrandId, 'dpl');
     expect(updated.ipName, 'Baby Three');
     expect(updated.taxonomyIpId, 'baby_three');

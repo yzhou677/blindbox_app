@@ -94,8 +94,8 @@ export const MARKET_TAXONOMY_BRANDS: TaxonomyBrand[] = [
   },
   {
     id: 'dpl',
-    displayName: 'DPL',
-    aliases: ['DPL', 'CUREPLANETA'],
+    displayName: 'Cureplaneta',
+    aliases: ['CurePlaneta', 'Cure Planeta', 'CUREPLANETA', 'DPL'],
     ebayBrandQuery: 'cureplaneta',
     ebayAspectBrand: 'Cureplaneta',
   },

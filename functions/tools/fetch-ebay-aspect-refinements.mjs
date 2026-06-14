@@ -171,7 +171,7 @@ const TAXONOMY_BRANDS = [
   },
   { id: 'tntspace', displayName: 'TNT SPACE', ebayAspectBrand: 'TNT SPACE' },
   { id: 'toptoy', displayName: 'TOPTOY', ebayAspectBrand: 'TOPTOY' },
-  { id: 'dpl', displayName: 'DPL', ebayAspectBrand: 'Cureplaneta' },
+  { id: 'dpl', displayName: 'Cureplaneta', ebayAspectBrand: 'Cureplaneta' },
 ];
 
 const TAXONOMY_IPS = [
