@@ -1,0 +1,322 @@
+# Edge-case corpus for market_intel title normalization.
+# Sources: functions/tools/ecosystem-calibration-audit.json (eBay browse audit),
+# test/market_listing_title_signals_test.dart, test/market_title_clusterer_test.dart,
+# test/mercari_listing_mapper_test.dart, and MATCHING_DESIGN.md failure-mode targets.
+#
+# Distribution target (~125 titles):
+#   40% valid_sale | 30% excluded_sale | 20% normalization_stress | 10% multilingual
+
+# --- valid_sale ---
+# @category=valid_sale @excluded=false @source=user_examples @mustContain=pop mart|lucky
+POP MART THE MONSTERS Big Into Energy Lucky Vinyl Plush Sealed
+# @mustContain=labubu|secret
+POP MART LABUBU Have A Seat Lucky Secret Figure
+# @mustContain=popmart|lucky
+POPMART Big Into Energy Lucky Confirmed Figure
+# @mustContain=labubu|1/144|hidden @subcategory=secret_preservation
+THE MONSTERS LABUBU Lucky Hidden Edition 1/144
+# @source=audit
+POP MART x Labubu The Monsters One Piece Series Figure Sealed Bag in Open Box
+# @source=audit @subcategory=size_preservation @mustContain=400%
+Skullpanda RED Crystal 400% FIGURE POP MART Authentic  Factory Sealed US SELLER
+# @source=audit @subcategory=secret_preservation @mustContain=secret
+AUTHENTIC POP MART SPACE MOLLY SERIES 3 TEAM COCA-COLA SECRET 100%
+# @source=audit @subcategory=secret_preservation @mustContain=secret
+Pop Mart Baby Molly Pocket Friends SECRET EDITION Don't Mess With Me RARE
+# @source=audit
+POP MART x Skullpanda The Feast Begins Series Figure Toys Sealed Bag in Open Box
+# @source=audit @mustNotContain=free shipping|us seller|fast ship
+POP MART Twinkle Twinkle Crush On You Series Figure - US SELLER - SHIP FAST
+# @source=audit
+POP MART 100% Mega Space Molly Series 2 Blind Box Confirmed Figure toy doll
+# @source=audit @subcategory=size_preservation @mustContain=400%
+Pop Mart Mega Space Molly Minions Collectible Figure 400% Banana Edition
+# @source=audit @subcategory=size_preservation @mustContain=1000%
+Cureplaneta Baby Three BB3 1000% V2 Plush SCENTED 100% Confirmed Glass Eyes NEW
+# @source=audit
+POP MART x Kennyswork Mega Space Molly Series 2 Meilin Panda Figure SEALED BAG
+# @source=audit @subcategory=secret_preservation @mustContain=secret
+POP MART Kennyswork Mega Space Molly Series 2 Figure - Wish Bear (Secret C)
+# @source=audit
+POP MART x Dimoo Moments In Bloom Series Confirmed Figure Sealed Bag in Open Box
+# @source=audit
+POP MART x Twinkle Twinkle Savor the Moment Series Confirmed Figure NEW in OpenBox
+# @source=audit
+POP MART x Peach Riot Rush Hour Series Confirmed Figure Dolls Toy
+# @source=audit
+POP MART Nyota Where Moments Meet Series Plush Doll - US SHIPPING
+# @source=audit
+Authentic - POP MART Nyota I Am The Seasons Series Figure - Forest Tapestry
+# @source=audit
+POP MART Azura Warm Christmas Series Figures Dessert Fairy Confirmed Blind Box
+# @source=audit
+Pop Mart SWEET BEAN Akihabara Series Blind Box AKIBA BUILDING Figure No Access.
+# @source=audit
+POP MART x Sweet Bean I Want a Hug Series Figure - When I Get Something
+# @source=audit
+POP MART x Hacipupu Snuggle with You Series Confirmed Box Figure Toy Open Box
+# @source=audit
+Authentic Pop Mart The Constellation Hacipupu Confirmed Leo New ￼
+# @source=audit
+POP MART Pucky Dreamy Wishes Series Confirmed Figure Doll Sealed Bag in Open Box
+# @source=audit
+POP MART Pucky Milk Babies Series Dairy Confirmed Blind Box Figure Art Toys Gift
+# @source=audit
+POP MART x Lil Peach Riot Sleepover Series Confirmed Figure Doll NEW in Open Box
+# @source=audit
+POP MART SpongeBob Bikini Bottom Buddies Series 2 Plush Blind Box Confirmed Toys
+# @source=audit
+POP MART POLAR-Season 3 Polar In Monster Village Series Figures Authentic
+# @source=audit
+Pop mart Polar Season 3 Polar in Monster Village Series Figures
+# @source=audit
+POP MART x Skullpanda Petals In Four Acts Series Confirmed Figure in Open Box
+# @source=audit
+POP MART Skullpanda The Warmth Series Blind Box Confirmed Figure Gift Toy Doll
+# @source=audit
+POP MART x Dimoo The Missing Day Series Confirmed Figure Sealed Bag in Open Box
+# @source=audit
+POP MART x Kennyswork Mega Space Molly Series One Confirmed Box Figure Open Box
+# @source=audit
+POP MART 100% Mega Space Molly x Emoji Series Confirmed Figure Doll in Open Box
+# @source=audit @subcategory=brand_spelling @mustContain=pop mart|labubu
+POP MART Labubu Exciting Macaron Series Blind Box Confirmed
+# @source=clusterer_test @subcategory=brand_spelling @mustContain=pop mart|labubu
+Pop Mart LABUBU Macaron Vinyl Figure Sealed
+# @source=audit @subcategory=brand_spelling @mustContain=popmart
+PopMart Lucky | Monsters | Big Into Energy | Vinyl | New
+# @source=audit
+POP MART x Skullpanda You Found Me Series Plush Doll Figure in Open Box
+# @source=audit
+POP MART Baby Molly My Huggable Discovery Series Sealed Blind Box
+# @source=audit
+POP MART x Skullpanda The Ink Plum Blossom Series Figure Sealed Bag in Open Box
+# @source=audit
+Pop Mart Baby Molly Huggable Discovery Series Figurine In HUG THE OCEAN-Used
+# @source=audit
+POP MART x Crybaby Crying in the Woods Series Blind Box Confirmed Figure Toy Gift
+# @source=audit
+POP MART x Twinkle Twinkle Sweet Dreams Forecast Figure Toys Dolls
+# @source=audit
+POP MART Twinkle Twinkle Savor the Moment Fresh Baked Mini Cookies Figure
+# @source=audit
+POP MART x Peach Riot Rush Hour Series Figure Dolls Toy - Poppy Scientist
+# @source=audit
+POP MART Peach Riot Rise Up Series Blind Box Confirmed Figure Toy Doll
+# @source=audit
+Popmart x Nyota Growing Up By Your Way Series Figure - Feeling
+# @source=audit
+POP MART Nyota's Fluffy Life Series Blind Box Confirmed Figure Toys Gifts
+# @source=audit
+Pop Mart AZURA Fantasy Nature Series Blind Box Series - Confirmed Figure
+# @source=audit
+POP MART Sweet Bean Love Afternoon Tea Series Confirmed Blind Box Figure Hot Toy
+# @source=audit
+POP MART x Pucky Animal Tea Party Confirmed Figure Poker Rabbit Baby
+# @source=audit
+POP MART x Aespa Fluffy Club Purple NINGNING Confirmed NIB US Seller
+# @source=audit
+Pop Mart Aespa Fluffy Club Purple NINGNING (Fluffy RWE) Confirmed NIB US Seller
+
+# --- excluded_sale ---
+# @category=excluded_sale @excluded=true
+# @term=pendant @source=audit
+Pop Mart Labubu The Monsters x Hello Kitty And Friends Sanrio Plush Pendant
+# @term=pendant @source=audit
+POP MART Labubu The Monsters Pin For Love Series Mini Vinyl Plush Doll Pendant Q
+# @term=pendant @source=audit
+Pop Mart The Monsters x Sanrio Labubu Kuromi Plush Doll Pendant New In Open Box
+# @term=pendant @source=audit
+POP MART The Monsters Big Intero Energy Loyalty Labubu Plush Pendant Open Box
+# @term=lot @source=signals_test
+Pop Mart Labubu Macaron Keychain Charm Lot
+# @term=lot @source=signals_test
+Labubu Keychain Lot of 5
+# @term=set of
+POP MART Big Into Energy Lucky Set Of 12 Blind Boxes
+# @term=full case
+POP MART Big Into Energy Lucky Full Case 12pcs Sealed
+# @term=display case
+POP MART THE MONSTERS Big Into Energy Display Case With Lucky Figure
+# @term=bundle
+POP MART Big Into Energy Lucky Hope Serenity Bundle 3 Figures
+# @term=lot
+POP MART THE MONSTERS Lucky Lot of 6 Blind Box Figures
+# @term=lot
+POP MART Labubu Macaron Wholesale Lot Authentic Seller
+# @term=custom
+POP MART Lucky Big Into Energy Custom Repaint Figure
+# @term=bootleg
+POP MART Lucky Big Into Energy Fake Bootleg Knockoff
+# @term=replica
+POP MART LABUBU Lucky Replica Figure Not Official
+# @term=inspired
+Pop Mart Inspired Lucky Big Into Energy Fan Made Figure
+# @term=bootleg
+POP MART Lucky Big Into Energy Bootleg Version
+# @term=3d print
+POP MART Lucky Big Into Energy 3D Print STL File Figure
+# @term=digital file
+POP MART Lucky Big Into Energy Digital File Download Only
+# @term=for parts
+POP MART Lucky Big Into Energy For Parts Repair
+# @term=broken
+POP MART Lucky Big Into Energy Broken Damaged Figure
+# @term=not working
+POP MART Lucky Big Into Energy Not Working Missing Accessory
+# @term=phone strap @source=audit_style
+POP MART Labubu The Monsters Phone Strap Charm Accessory
+# @term=phone case
+POP MART Labubu Macaron Phone Case Cover Only
+# @term=bag charm
+POP MART THE MONSTERS Lucky Bag Charm Key Ring
+# @term=badge
+POP MART Labubu Exciting Macaron Lanyard Badge Holder
+# @term=pin only
+POP MART Skullpanda Pin Only Enamel Badge No Figure
+# @term=key chain
+POP MART Dimoo Key Chain Metal Ring Accessory
+# @term=charm
+POP MART THE MONSTERS Lucky Charm Strap Accessory
+# @term=case of @source=audit
+POP MART Crybaby Crying to the Moon Case Of 12 Sealed Blind Box
+# @term=full case @source=audit
+POP MART Crybaby Crying to the Moon Full Case 12 Sealed Blind Box Figures
+# @term=bundle
+POP MART Big Into Energy Complete Set Bundle All Common Figures
+# @term=lot
+Lot of 10 POP MART Labubu Macaron Figures Mixed
+# @term=wholesale
+Wholesale POP MART Lucky Big Into Energy 20pcs Bulk
+# @term=custom
+Custom POP MART Lucky Big Into Energy Hand Painted OOAK
+# @term=fake
+Fake POP MART Lucky Big Into Energy Figure Replica
+# @term=replica
+Lucky Big Into Energy POP MART Replica Figure High Quality
+# @term=3d print
+3D Print POP MART Lucky Big Into Energy Model Kit
+# @term=digital file
+Digital File POP MART Lucky Big Into Energy STL Print
+
+# --- normalization_stress ---
+# @category=normalization_stress @excluded=false @source=audit @mustContain=400%|crybaby @mustNotContain=authentic|genuine
+FREE GIFT WITH PURCHASE Authentic Pop Mart Mega Crybaby 400% Crying in Pink
+# @source=audit @mustContain=pop mart|polar|monster @mustNotContain=free shipping
+Pop Mart Polar Monster Village 🅰️uthentic 🌈 [Villio] US Seller
+# @source=audit @mustContain=pop mart|dimoo @mustNotContain=authentic|us seller
+PreOrder GLOBAL 520 PCS POP MART DIMOO Elephant MoMo Figure Authentic US Seller
+# @source=audit @mustContain=twinkle twinkle @mustNotContain=nib|us seller
+POP MART Authentic Twinkle Twinkle Wonderful Journey Storage Bag, US Seller, NIB
+# @mustContain=pop mart|labubu @mustNotContain=bnib|free shipping
+🔥 POP MART Labubu Macaron Series Blind Box Confirmed 🔥
+# @mustContain=pop mart|crybaby @mustNotContain=sealed
+POP MART x Crybaby Crying Again - SEALED BOX- CONFIRMED I'LL BRING YOU A FLOWER
+# @mustContain=pop mart|lucky @mustNotContain=bnib|authentic|official|genuine
+(POP MART Lucky Big Into Energy) ~~ BNIB ~~ AUTHENTIC ~~ OFFICIAL ~~ GENUINE ~~
+# @mustContain=pop mart|lucky @mustNotContain=rare|limited|exclusive
+【POP MART Lucky Big Into Energy】HTF RARE LIMITED EXCLUSIVE
+# @mustContain=pop mart|lucky @mustNotContain=free shipping|us seller|fast ship
+⭐ POP MART Lucky Big Into Energy | Free Shipping | US Seller | Fast Ship ⭐
+# @mustContain=pop mart|skullpanda @mustNotContain=v2|v3|version|ver
+POP MART Skullpanda V3 VER Version 2 Figure Sealed
+# @source=mercari_test @mustContain=labubu|secret @mustNotContain=v3
+LABUBU V3 SECRET
+# @mustContain=pop mart|lucky @mustNotContain=new|mint|unopened|misb|mib|nrfb
+POP MART Lucky Big Into Energy NEW MISB MIB NRFB MINT UNOPENED
+# @mustContain=pop mart|lucky @mustNotContain=hard to find
+POP MART Lucky Big Into Energy Hard To Find HTF Seller
+# @mustContain=pop mart|dimoo
+*** POP MART x Dimoo - Moments In Bloom - CONFIRMED - IN HAND ***
+# @mustContain=pop mart|molly
+「POP MART 100% Mega Space Molly Series 4 Blind Box Figure Toy Doll - BedTime Bear」
+# @source=audit @mustContain=pop mart|hirono
+POP MART x Hirono Echo Series Confirmed Figure Doll in New Sealed Bag (Open Box)
+# @source=audit @mustContain=pop mart|hirono
+POP MART x Hirono Clot Series Confirmed Figure Doll New in Sealed Bag (Open Box)
+# @source=audit @mustContain=pop mart|hirono
+POP MART Hirono Tamed Wildgrass Series Confirmed Figures Sealed Bag in Open Box
+# @mustContain=pop mart|lucky
+***NEW*** POP-MART_Lucky|Big·Into·Energy|BNIB|FREE SHIPPING|AUTHENTIC***
+# @mustContain=pop mart|baby molly
+Pop Mart Baby Molly Winter Fit Check Series Vinyl Plush Blind Box
+# @source=audit @mustContain=pop mart|aespa @mustNotContain=fast shipping
+POP MART aespa Fluffy Club Series Vinyl Plush Doll - US FAST SHIPPING
+# @source=audit @mustContain=pop mart|sweet bean
+Pop Mart SWEET BEAN Animals Series Furry Fuzzy CHEESE MOUSE (No Cheese) - NICE!
+# @mustContain=pop mart|peach riot @mustNotContain=authentic|us seller
+100% Authentic POP MART x Peach Riot Rush Hour Series Confirmed Figure Dolls Toy
+# @mustContain=pop mart|pucky
+POP MART Pucky Monster Babies Series Blind Box Confirmed Figure Art Toy Hot Gift
+# @mustContain=pop mart|azura
+Starry Beach Pop Mart Azura A Dream About Stars Blind Box Confirmed Decor Desk
+
+# --- multilingual ---
+# @category=multilingual @excluded=false @mustContain=泡泡玛特|幸运
+泡泡玛特 THE MONSTERS 大号 幸运 手办
+# @mustContain=泡泡玛特|隐藏|labubu
+泡泡玛特 LABUBU 隐藏款 1/144 大秘密
+# @mustContain=pop mart|幸运|secret
+POP MART 幸运 BIG INTO ENERGY LABUBU SECRET
+# @mustContain=pop mart|ラッキー|big into energy
+POP MART THE MONSTERS ラッキー Big Into Energy Vinyl Plush
+# @mustContain=pop mart|lucky|幸运|secret @subcategory=secret_preservation
+POP MART THE MONSTERS Lucky 幸运 Secret Chase 隐藏
+# @source=audit @mustContain=枯萎|blossoms
+TNT Space x Rayan Wither 枯萎 All Life Blossoms Series 2 Designer Art Toy Figure
+# @mustContain=pop mart|马卡龙|labubu
+POP MART LABUBU 马卡龙 明盒 确认款
+# @mustContain=pop mart|몬스터|lucky
+POP MART THE MONSTERS 몬스터즈 Lucky Big Into Energy Figure
+# @mustContain=泡泡玛特|400%
+泡泡玛特 SKULLPANDA 400% 限定 正品
+# @mustContain=pop mart|大能量|lucky
+POP MART 大能量 系列 LUCKY 盲盒 确认款
+# @mustContain=labubu|隐藏|secret
+THE MONSTERS LABUBU 隐藏 Secret Chase 1/144
+# @mustContain=pop mart|モンスターズ|ラッキー
+POP MART × モンスターズ ラブブ ラッキー Big Into Energy
+
+# --- false_positive_guard ---
+# @category=false_positive_guard @excluded=false @subcategory=false_positive @mustContain=charlotte
+Charlotte Series POP MART Figure Display Piece
+# @mustContain=ocelot
+Ocelot Vinyl Plush The Monsters Collection
+# @mustContain=lottery
+Lottery Ticket Promotional Figure Display
+# @mustContain=pilot
+Pilot Bear Series POP MART Style Figure
+# @mustContain=clot
+POP MART x Hirono Clot Series Confirmed Figure Doll New Sealed
+# @mustContain=allotment
+Allotment Garden Art Figure Decor
+
+# --- pendant_override ---
+# @category=pendant_override @excluded=true @term=pendant @subcategory=pendant_override @source=audit
+POP MART The Monsters Big Into Energy Lucky Vinyl Plush Pendant Open Box
+# @category=pendant_override @excluded=false @term=(none) @overrides=pendant @subcategory=pendant_override @source=audit
+POP MART The Monsters Big Into Energy Lucky Vinyl Plush Pendant Open Box
+
+# --- size_preservation ---
+# @category=size_preservation @excluded=false @subcategory=size_preservation @mustContain=1000%
+LABUBU THE MONSTERS 1000% MEGA Authentic
+# @mustContain=400%
+LABUBU THE MONSTERS 400% FIGURE POP MART
+# @mustContain=100%
+POP MART SPACE MOLLY 100% SERIES 3 SECRET FIGURE
+# @source=audit @mustContain=400%
+AUTHENTIC Maymei 400% Forgotten Funfair Series TopToy Blind Box plush figure NIB
+# @source=audit @mustContain=1000%
+Baby Three Explorer 1000% -  Limited Edition  FREE GIFT WITH PURCHASE
+
+# --- brand_spelling ---
+# @category=brand_spelling @excluded=false @subcategory=brand_spelling @mustContain=pop mart
+POP MART THE MONSTERS Lucky Big Into Energy Figure
+# @mustContain=popmart
+POPMART THE MONSTERS Lucky Big Into Energy Figure
+# @mustContain=pop mart|labubu
+Pop Mart Labubu Big Into Energy Lucky Confirmed
+# @mustContain=popmart|labubu
+PopMart Labubu Big Into Energy Lucky Confirmed
+# @mustContain=pop mart
+POP-MART THE MONSTERS LUCKY BIG INTO ENERGY

@@ -357,6 +357,26 @@ Rationale: `$0` implies the item has no value. `Unknown` and `N/A` suggest data 
 
 ---
 
+## Note: Non-figure accessory listings (matcher concern)
+
+Sprint 2 Step 1 review surfaced **validly normalized titles that still describe non-figure products**. These are **not** normalizer exclusions. The title normalizer's job is machine-friendly, human-readable cleanup — not product-type classification.
+
+The matcher (`_catalog_matcher.mjs`) should eventually treat listings whose primary product is one of the following as rejections or manual-review candidates (exact rules TBD in matcher design):
+
+- storage bag
+- poster
+- sticker
+- card
+- mouse pad
+- towel
+- notebook
+- wallet
+- coin purse
+
+Do **not** add these terms to global exclude lists in `_title_normalizer.mjs` without an explicit matcher design decision. Premature exclusion here would hide data-quality issues from the review log and reduce matcher visibility.
+
+---
+
 ## 12. Future Expansion
 
 These are design considerations, not current requirements. They do not require any Sprint 2 changes.
