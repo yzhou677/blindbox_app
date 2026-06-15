@@ -1,16 +1,18 @@
 # Market Intelligence — Metadata Auto-Generation Design
 
-> **Sprint 2 Step 3 deliverable (rev 2).** Design review only — **no implementation**.
+> **Sprint 2 Step 3 deliverable (rev 2 — design review).** Design only — **no implementation**.
 >
-> Parent spec: [`MATCHING_DESIGN.md`](./MATCHING_DESIGN.md)
->
-> Prerequisite context: [`MATCHER_DESIGN_REVIEW.md`](./MATCHER_DESIGN_REVIEW.md) — Maintenance and Automation Principles section.
+> Parent spec: [`MATCHING_DESIGN.md`](./MATCHING_DESIGN.md)  
+> Prerequisite context: [`MATCHER_DESIGN_REVIEW.md`](./MATCHER_DESIGN_REVIEW.md) — Maintenance and Automation Principles  
+> Related debt: [`docs/TECH_DEBT.md`](../../docs/TECH_DEBT.md), [`QUERY_VOLUME_OPTIMIZATION.md`](./QUERY_VOLUME_OPTIMIZATION.md)
 
 ---
 
-## Problem Statement
+## 1. Problem and Goals
 
-Current operating model:
+### Current state
+
+Every figure entry in [`market_metadata.json`](./market_metadata.json) is hand-authored. The catalog contains **1,144 figures** across **109 series** and **6 brands** (785 Pop Mart figures today), and it grows continuously. Manual authoring does not scale for a single maintainer.
 
 ```
 Catalog Figure
@@ -19,391 +21,483 @@ Catalog Figure
   → Matcher + snapshot pipeline
 ```
 
-This does not scale. The catalog contains **1,144 figures** across 109 series and 6 brands. Hand-authoring metadata for every figure is unsustainable for a single engineer.
+### Target state
 
-**Target operating model:**
+Auto-generate **~90–95%** of metadata entries from catalog seed data. Human edits are limited to known exceptions in a small overrides file.
 
 ```
 Catalog Figure
-  → Generator derives pipeline-ready metadata automatically
+  → Generator derives baseline metadata
   → Small optional human review (exceptions only)
   → market_metadata.json
   → Matcher + snapshot pipeline
 ```
 
-Goal: **90–95% of new figures require zero manual metadata work.** Human effort is limited to genuine exceptions — marketplace naming gaps that cannot be derived from catalog data.
+**Success criteria:** Adding a new catalog figure should produce usable baseline matching and search behavior without manual metadata work, except for genuine marketplace naming gaps (spelling drift, CJK aliases, community nicknames, verified false positives).
 
 ---
 
-## Section 1 — Recommended Architecture
-
-### Simplified two-file model
+## 2. Architecture — Three-Layer Design
 
 ```
-market_metadata_overrides.json   (committed; hand-edited; sparse exceptions only)
-          ↓
-generate_metadata.mjs            (reads catalog bundle + overrides)
-          ↓
-market_metadata.json             (committed output; consumed by pipeline)
+Catalog seed JSON
+       ↓
+generate_market_metadata.mjs          (future tool)
+       ↓
+generated_market_metadata.json        Layer A — committed, never hand-edited
+       +
+market_metadata_overrides.json        Layer B — small, hand-authored exceptions
+       ↓  merge step
+merge_market_metadata.mjs             (future tool; or pre-pipeline hook)
+       ↓
+market_metadata.json                  Layer C — consumed by matcher + snapshot pipeline
 ```
 
-**`market_metadata_overrides.json` — human input**
+### Layer responsibilities
 
-- Sparse: contains only the entries where catalog-derived output is insufficient.
-- Format is a subset of `market_metadata.json` — same keys, same field names.
-- Maintained by the engineer. Reviewed in PRs like any other code change.
-- New entries are added reactively (after observing a concrete gap), not speculatively.
+| Layer | File | Who edits | Purpose |
+|-------|------|-----------|---------|
+| **A** | `generated_market_metadata.json` | Generator only | Full-catalog baseline; regenerated on every catalog change |
+| **B** | `market_metadata_overrides.json` | Maintainer | Sparse exceptions; reviewed in PRs |
+| **C** | `market_metadata.json` | Merge output only | Pipeline input; same path and shape as today |
 
-**`generate_metadata.mjs` — the generator**
+### Why three files, not one?
 
-- Reads the full catalog bundle (`figures.json`, `series.json`, `ips.json`, `brands.json`).
-- Reads `market_metadata_overrides.json` for any per-figure exceptions.
-- For each figure: produces a minimal metadata entry using catalog-derived fields only. Applies any override on top.
-- Writes `market_metadata.json`.
-- Logs warnings for catalog gaps (IPs with no `aliases`, figures with ambiguous names lacking overrides).
+A single file mixing generated and manual fields is hard to diff, conflicts on regeneration, and couples two different editing workflows. Two source files (generated + overrides) with a merge step keeps overrides small and reviewable — appropriate for a single-engineer project.
 
-**`market_metadata.json` — pipeline output**
+**Rejected alternative — single file with `_generated` flags:** Easy to accidentally overwrite generated values; unclear what the generator preserves on re-run.
 
-- The file currently consumed by the matcher and snapshot pipeline. Its role and path do not change.
-- Never edited by hand. Always regenerated by the generator.
-- A `_comment` field documents: `"DO NOT EDIT — run generate_metadata.mjs to regenerate"`.
+**Rejected alternative — hand-edit `market_metadata.json` forever:** Current bootstrap only; does not scale past ~1,144 figures.
 
-### Data flow
+### Scale review (1,144 → 5,000+ figures)
+
+| Question | Assessment |
+|----------|------------|
+| **Sufficient for 1,144 figures?** | **Yes.** One generated JSON (~1,144 rows × ~8 fields) is trivial for Node merge and git. Overrides stay sparse (<5% target ≈ 60–120 rows). |
+| **Sufficient for 5,000+ figures?** | **Yes, with operational guardrails.** Merge remains O(n). Layer A grows linearly (~2–4 MB JSON) — still fine for a single maintainer. Watch: PR diff noise on full regen, `aliasHints` review backlog, and snapshot query volume (~2.3 queries/figure today → ~11,500 queries at 5k — see [`QUERY_VOLUME_OPTIMIZATION.md`](./QUERY_VOLUME_OPTIMIZATION.md)). |
+| **Additional layer needed?** | **No fourth persistence layer.** Optional **logical** layers only: catalog `ip`/`series` aliases (not metadata files) and a future **series** block in overrides (already mirrored in current `market_metadata.json`). |
+| **Any layer unnecessary?** | **Layer C as a committed file is optional** — merge can write directly to the path the pipeline reads, or gitignore Layer C and generate in CI. **Layer A is necessary** (regen-safe bulk). **Layer B is necessary** (human exceptions). Do **not** collapse A+B into one file. |
+
+**Tradeoffs:**
+
+| Approach | Pros | Cons |
+|----------|------|------|
+| Commit Layer A + C | Reproducible pipeline input without running generator in CI | Large diffs on catalog-wide regen |
+| Gitignore Layer C; commit A + B only | Small PRs; source of truth is explicit | CI / pre-pipeline must run merge |
+| Runtime derive `searchTerms` (no store in A) | Smaller files; no search-term drift | Duplicates logic in generator + pipeline; harder to override per figure |
+
+**Recommendation:** Keep three-layer model. Commit Layer A (generated) and Layer B (overrides). Treat Layer C as **generated artifact** (committed with `_comment` until CI merge is wired, then prefer gitignore).
+
+### Data flow diagram
 
 ```
 tools/seed/figures.json
 tools/seed/series.json   ──┐
-tools/seed/ips.json        ├──  generate_metadata.mjs  ──→  market_metadata.json
-tools/seed/brands.json   ──┘          ↑
-                                       │
-                    market_metadata_overrides.json
+tools/seed/ips.json        ├──  generate_market_metadata.mjs  ──→  generated_market_metadata.json
+tools/seed/brands.json   ──┘
+
+market_metadata_overrides.json  ──┐
+generated_market_metadata.json  ├──  merge_market_metadata.mjs  ──→  market_metadata.json
+                                  │
+                                  └── consumed by:
+                                        _catalog_bundle.mjs
+                                        _search_term_derivation.mjs (override path)
+                                        _catalog_matcher.mjs
+                                        compute_snapshots.mjs
 ```
-
-**Search terms: runtime derivation (not stored)**
-
-Search terms are **not stored** in any metadata file. The snapshot pipeline derives them at runtime from the catalog bundle using the same formula (brand + IP alias + series-distinctive phrase + figure `displayName`). This eliminates a second source of truth that would diverge from the catalog over time.
-
-The only exception: if a figure's auto-derived search terms are insufficient (figure too generic to scope safely), the engineer adds an explicit `searchTerms` entry in `market_metadata_overrides.json`. The generator passes it through to the output. This override is rare.
-
-### Comparison: three-file model vs this model
-
-| Concern | Three-file model (rev 1) | Two-file model (this revision) |
-|---------|--------------------------|-------------------------------|
-| Files to track | 3 (`generated`, `overrides`, `merged`) | 2 (`overrides`, `output`) |
-| Intermediate generated file | Yes — must not hand-edit | No — one fewer file |
-| Separate merge step | Yes | No — generator writes output directly |
-| Diffing changes | Diff generated file separately from overrides | Diff output directly after generator run |
-| Mental model | "Two inputs merged into one output" | "Overrides applied over catalog-derived defaults" |
-| Suitable for single-maintainer project | Adds unnecessary ceremony | Yes |
-
-**Rejected alternatives:**
-
-- **Three-file model (rev 1):** Extra `generated_market_metadata.json` file adds friction without benefit for a single-engineer project. Separate merge step is extra ceremony.
-- **Single `market_metadata.json` with `_generated` flags:** Too easy to accidentally overwrite generated values; ambiguous what the generator will preserve on re-run.
 
 ---
 
-## Section 2 — Metadata Schema
+## 3. Metadata Ownership Matrix
 
-### Guiding principle
+Based on fields available in `tools/seed/{figures,series,ips,brands}.json` and behavior already implemented in [`_search_term_derivation.mjs`](./_search_term_derivation.mjs).
 
-`market_metadata.json` contains **only information that cannot be derived from the catalog**. If a field can be computed from `figures.json`, `series.json`, `ips.json`, or `brands.json`, it does not belong here.
+### Classification key
 
-Search terms are the clearest example: they are fully derivable from the catalog hierarchy, so they are derived at runtime and not stored (see Section 1). The metadata file exists only for marketplace-specific knowledge the catalog does not encode.
+| Class | Meaning |
+|-------|---------|
+| **Auto** | Generator produces final value; overrides rarely needed |
+| **Manual** | Overrides only; generator emits empty/default |
+| **Hybrid** | Generator baseline + human refinement via overrides |
 
-### Field classification
+### Figure-level fields
 
-| Field | Classification | Content source | When to override |
-|-------|----------------|----------------|-----------------|
-| `searchTerms` | Not stored (runtime-derived) | Derived from catalog at snapshot runtime | Override in `market_metadata_overrides.json` only when auto-derivation is unsafe (figure too generic to scope) |
-| `marketAliases` | Override-only | Populated manually | Marketplace names not derivable from catalog: spelling drift, CJK variants, community nicknames |
-| `excludeTerms` | Override-only | Populated manually | Per-figure false-positive suppression; added reactively after debug tool review |
-| `matchThreshold` | Override-only | Populated manually | Only with production evidence of false positives |
-| `disabled` | Override-only | Populated manually | Maintainer pause; discontinued figures |
-| `notes` | Override-only | Populated manually | Maintainer gap explanations; investigation notes |
+| Field | Auto | Manual | Hybrid | Owner / source | Move out of metadata? |
+|-------|:----:|:------:|:------:|----------------|----------------------|
+| Metadata key (`figure.id`) | ✓ | | | Catalog | **Yes** — key is catalog identity, not metadata content |
+| `searchTerms` | ✓ | | ✓ | Generator via `_search_term_derivation.mjs`; override when unscopable | **Partial** — derivation stays in code; stored terms are pipeline cache + override surface. Do not duplicate in Firestore catalog. |
+| `excludeTerms` (per-figure) | | | ✓ | Generator emits `[]`; global normalizer owns universal noise; overrides add collision terms | **No** — marketplace false-positive patterns are pipeline knowledge |
+| `marketAliases` | | | ✓ | Generator copies `figure.aliases[]` when present; else `[]`; overrides for drift/CJK/nicknames | **Prefer catalog** for IP/series-wide aliases (`ips.json`, `series.json`). Figure-only gaps stay here. |
+| `aliasHints` | ✓ | | | Generator only (Layer A) | **N/A** — not metadata for runtime; review queue only |
+| `matchThreshold` | | | ✓ | Generator heuristic (§5); override when production proves otherwise | **No** — per-figure acceptance gate is pipeline tuning |
+| `disabled` | | ✓ | | Maintainer | **No** |
+| `notes` | | ✓ | | Maintainer | **No** |
+
+### Fields that should leave metadata entirely (catalog-owned)
+
+| Information | Correct home | Wrong home |
+|-------------|--------------|------------|
+| Brand spellings (`POP MART` / `POPMART`) | `brands.json` `aliases` | Per-figure `marketAliases` |
+| IP marketplace names (`Labubu`, `Smiski`) | `ips.json` `aliases` | Per-figure overrides repeated N times |
+| Series abbreviations (`BIE`, `Big Energy`) | `series.json` `aliases` | Per-figure `searchTerms` widening |
+| Figure `displayName`, `isSecret`, series membership | `figures.json` | Metadata duplication |
+| Universal listing noise (`custom`, `lot`, `replica`) | Normalizer global list | Per-figure `excludeTerms` unless collision-specific |
+
+### Series- and brand-level metadata (see §10)
+
+Current `market_metadata.json` already has a `series` block. Brand-level block is **not** in schema today — brand behavior is catalog + normalizer only.
+
+### Search term formula
+
+Reuse the same derivation logic as runtime search planning (already in `_search_term_derivation.mjs` / `extractSeriesDistinctive`):
+
+| Component | Source |
+|-----------|--------|
+| Brand | `POP MART` and `POPMART` from `brands.json` (`pop_mart`) |
+| IP anchor | First IP alias, else `ip.displayName` (e.g. `Labubu` for `the_monsters`) |
+| Series distinctive | `extractSeriesDistinctive(series, ip)` — strips boilerplate (`Blind Box`, `Vinyl Plush`, IP prefix, etc.) |
+| Figure name | `figure.displayName` |
+
+**Example** — `the_monsters_big_into_energy_vinyl_plush_pendant_luck`:
+
+| Term | Value |
+|------|-------|
+| Term 1 | `POP MART Labubu Big into Energy Luck` |
+| Term 2 | `POPMART Labubu Big into Energy Luck` |
+
+Marketplace sellers often write **Lucky** not **Luck**. That gap is handled by the **alias layer** (`marketAliases`), not by broadening `searchTerms`. Search terms retrieve candidate listings; matcher aliases confirm the figure.
 
 ### Minimal generated entry (no overrides)
 
-For a standard figure with no override, the generator produces:
-
 ```json
 {
-  "marketAliases": [],
-  "excludeTerms": [],
-  "matchThreshold": null,
-  "disabled": false,
-  "notes": ""
-}
-```
-
-This is the default baseline. It is valid and usable — the matcher falls back to the global 0.75 threshold, the normalizer handles universal noise, and search terms are derived from the catalog at runtime.
-
-### Override example — Luck (Big Into Energy)
-
-```json
-{
-  "lucky_big_into_energy_popmart": {
-    "marketAliases": ["lucky"],
-    "excludeTerms": ["custom", "lot", "bootleg", "replica"],
+  "the_monsters_big_into_energy_vinyl_plush_pendant_luck": {
+    "searchTerms": [
+      "POP MART Labubu Big into Energy Luck",
+      "POPMART Labubu Big into Energy Luck"
+    ],
+    "marketAliases": [],
+    "excludeTerms": [],
     "matchThreshold": null,
+    "aliasHints": ["Lucky"],
     "disabled": false,
-    "notes": "Catalog displayName is 'Luck'; eBay sellers overwhelmingly write 'Lucky'."
+    "notes": ""
   }
 }
 ```
 
-Note: `searchTerms` is absent. The pipeline derives `POP MART Labubu Big into Energy Luck` and `POPMART Labubu Big into Energy Luck` from the catalog at runtime. The override supplies only the alias and the known false-positive excludes.
+`aliasHints` is stripped by the merge step before writing Layer C (or ignored by the mapper). It exists only in Layer A for maintainer review.
 
-### Match threshold policy
+### `aliasHints` — strict policy (design review)
 
-**Default: `null` (inherits global 0.75).**
+**Should `aliasHints` ever participate in matcher execution?**
 
-Override `matchThreshold` only when:
-1. Production marketplace data shows false positives for this specific figure at 0.75.
-2. The false positives are confirmed through `debug_matcher.mjs` review.
-3. A specific higher threshold is shown to eliminate the false positives without also rejecting valid matches.
+**No. Never.**
 
-**No speculative pre-setting of thresholds.** Heuristic auto-raise rules (e.g., raise to 0.80 for short names) are rejected — there is no production evidence to justify them. A figure named `Luck` gets `matchThreshold: null` by default; if false positives appear in practice, the override is added then.
+| Risk | Why hints must not run in matcher |
+|------|-----------------------------------|
+| False positives | Speculative `-y` rules (`Lamp` → `Lampy`) would accept wrong listings |
+| Typo propagation | Unreviewed strings become permanent matcher signal |
+| Matcher contamination | Hints bypass the human approval bar for `marketAliases` |
+| Audit confusion | Indistinguishable from approved aliases in logs |
+
+**Policy:**
+
+1. `aliasHints` exists **only** in `generated_market_metadata.json` (Layer A).
+2. Merge **strips** `aliasHints` — Layer C and `_catalog_matcher.mjs` never read the field.
+3. Mapper / merge tests **assert** absence of `aliasHints` in output.
+4. Promotion path: maintainer copies approved hint → `market_metadata_overrides.json` `marketAliases` (or catalog `figure.aliases`).
+5. Optional: `generate_market_metadata.mjs --report-hints` prints a summary count for review; no runtime effect.
+
+**Review workflow:** After catalog add/regen, scan new `aliasHints` rows (or report). Promote or dismiss. Target: <1 min per figure when hint is correct; zero action when empty.
 
 ---
 
-## Section 3 — Alias Generation Strategy
+## 4. Alias Generation Strategy
 
-### What the generator produces
+### What can be derived safely (auto-generated)
 
-The generator produces a minimal `marketAliases: []` by default. It does not speculatively populate aliases from catalog fields. Rationale: catalog `figure.aliases` is currently empty for all 1,144 seed figures; `figureId` stems duplicate the `displayName` and add no matching value; `series.aliases` tokens are already used by the matcher's `seriesMatch` signal directly from the catalog.
+| Rule | Example | Action |
+|------|---------|--------|
+| Catalog `figure.aliases[]` | When populated in seed | Copy into `marketAliases` in generated entry |
+| Conservative `-y` suffix hint | `Luck` → suggest `Lucky` | Add to `aliasHints` only — **not** auto-promoted to `marketAliases` |
+| `-y` rule constraint | `displayName` ≤ 6 chars, ends in single consonant after vowel | Conservative; avoids `Lamp` → `Lampy` |
 
-When `figure.aliases` is populated in the catalog, the generator should include those entries in `marketAliases`. This is the correct escalation path — enrich the catalog first; the generator propagates automatically.
+**`-y` suffix rule (hint only):**
 
-### What requires manual override
+```
+IF displayName length <= 6
+AND displayName matches [Vowel][Consonant] ending (single final consonant)
+THEN aliasHints += displayName + "y"
+```
 
-| Pattern | Example | Why manual |
-|---------|---------|------------|
-| Catalog–marketplace spelling drift | `Luck` → `Lucky` | No deterministic rule: `Luck→Lucky` but `Lamp` should not become `Lampy` |
-| IP shorthand absent from catalog | `Labubu` (if `ip.aliases` is empty) | Marketplace-specific; not inferrable from `displayName` alone |
-| Series abbreviations used by sellers | `Big Energy`, `BIE` | Community convention; not in catalog |
-| CJK / localized names | `幸运`, `ラッキー`, `라부부` | Marketplace-sourced; not in catalog seed |
-| Community-created nicknames | `Lucky BIE`, `Lucky chase` | Social media convention; not derivable |
-| Alternate capitalizations implying a different form | `HEHE Bear` vs catalog `HEHE` | `Bear` suffix is marketplace convention, not catalog data |
+Only `Luck → Lucky` is confirmed in production today. The generator surfaces hints; the maintainer promotes verified hints to `market_metadata_overrides.json`.
+
+### What requires manual review (overrides file)
+
+| Pattern | Example | Override field |
+|---------|---------|----------------|
+| CJK / localized names | `ラッキー`, `幸运` | `marketAliases` |
+| Marketplace abbreviations | `BIE` for Big Into Energy | `marketAliases` or `series.aliases` in catalog |
+| Community nicknames | Not derivable from `displayName` | `marketAliases` |
+| Cross-series name collisions | `Angel` in unrelated IPs | `excludeTerms` and/or `matchThreshold` |
+| All-caps short names | `SISI`, `HEHE`, `BABA` | Usually **no** spurious aliases — match well without extras |
 
 ### Catalog-first preference
 
-The correct escalation path for an alias is:
+Before adding a per-figure `marketAliases` entry, ask:
 
-1. **Can this alias benefit all figures in the IP?** → Add to `ip.aliases` in the catalog. Example: `Labubu` is the marketplace name for the The Monsters IP. Adding it to `ip.aliases` means every future figure in that IP inherits it automatically — no metadata override needed.
+1. **IP-wide?** → Add to `ips.json` `aliases` (e.g. `Labubu` for The Monsters).
+2. **Series-wide?** → Add to `series.json` `aliases` (e.g. `Big Energy`).
+3. **Figure-only?** → `market_metadata_overrides.json`.
 
-2. **Can this alias benefit all figures in the series?** → Add to `series.aliases`. Example: `Big Energy` as a seller abbreviation for `Big into Energy Series` belongs in `series.aliases`, not repeated per-figure.
-
-3. **Only this specific figure?** → Add to `market_metadata_overrides.json` `marketAliases`.
-
-Per-figure overrides are the last resort, not the first. Each alias stored in `ip.aliases` or `series.aliases` prevents N future per-figure entries.
+Enriching catalog aliases compounds across all figures in that IP/series and keeps overrides sparse.
 
 ---
 
-## Section 4 — Catalog-First Philosophy
+## 5. Threshold Heuristic
 
-**If information already exists in the catalog, do not duplicate it in metadata.**
+Generator sets `matchThreshold: 0.80` when **both** are true:
 
-The catalog is the single source of truth for: brand identity, IP hierarchy, series membership, figure names, sibling relationships, and `isSecret` status. The matcher reads these directly from the catalog bundle. Metadata must not re-encode or shadow any field already present in the catalog.
-
-### Explicit guidance
-
-| Information | Correct location | Wrong location |
-|-------------|-----------------|----------------|
-| Figure `displayName` | `figures.json` | `market_metadata.json` `marketAliases` |
-| Series membership | `figures.json` `seriesId` | metadata |
-| IP name used on marketplace | `ips.json` `aliases` | per-figure `marketAliases` |
-| Series abbreviation used on marketplace | `series.json` `aliases` | per-figure `marketAliases` |
-| Brand spelling variants (`POP MART` / `POPMART`) | `brands.json` `aliases` | metadata |
-| Figure `isSecret` status | `figures.json` `isSecret` | metadata |
-
-### Examples
-
-**Wrong:** Adding `"pop mart"` and `"popmart"` to every figure's `marketAliases` because the matcher needs both spellings.
-**Right:** `brands.json` for `pop_mart` already has `aliases: ["POPMART"]`. The matcher reads it from the catalog directly.
-
-**Wrong:** Adding `"the monsters"` and `"labubu"` to every Monsters figure's `marketAliases`.
-**Right:** Add `"Labubu"` to `ips.json` `the_monsters.aliases` once. All 785+ Pop Mart figures in that IP benefit. Metadata stays sparse.
-
-**Wrong:** Storing the series name as a `marketAliases` entry for each figure because the search term needs it.
-**Right:** The generator derives the search term from `series.displayName` and `series.aliases` at runtime. No duplication needed.
-
-### Corollary: metadata grows from exceptions, not from catalog mirroring
-
-A new series with 12 multi-word figure names and a well-aliased IP requires **zero metadata overrides**. The metadata file should not contain entries for figures that have no genuine marketplace exceptions. The generator produces minimal baseline entries; override entries are added only for verified exceptions.
-
----
-
-## Section 5 — Metadata Minimalism
-
-> Metadata should contain the minimum necessary information to handle exceptions the catalog cannot encode.
-
-### The principle
-
-Metadata exists to bridge the gap between the catalog (what the product is) and the marketplace (how sellers describe it). That gap is narrower than it appears. Most marketplace variation is handled by the normalizer (noise removal) and matcher (sibling-aware scoring). Metadata is the last-resort override for cases those layers cannot resolve.
-
-### Guiding rules
-
-**Fewer fields, not more.** Every new metadata field requires justification: what catalog gap does it address? What marketplace behavior cannot be handled without it? Fields added for hypothetical future use create maintenance debt without benefit.
-
-**New fields require strong justification.** Before introducing a new metadata field, answer: does the catalog already encode this? Can the normalizer or matcher handle it without metadata? Is this needed for more than one figure, or is it an isolated edge case that belongs in a different layer?
-
-**Do not introduce fields that duplicate catalog information.** If a field's value can be computed from `figures.json`, `series.json`, `ips.json`, or `brands.json`, it does not belong in metadata.
-
-**The default for any new figure is minimal metadata.** An entry with `marketAliases: [], excludeTerms: [], matchThreshold: null, disabled: false` is correct and complete for most figures. Adding fields should require a reason, not be the default.
-
-**Metadata fields currently justified:**
-
-| Field | Justification |
-|-------|--------------|
-| `marketAliases` | Spelling drift and community names not in catalog (`Luck → Lucky`); CJK marketplace names |
-| `excludeTerms` | Per-figure false-positive suppression beyond global normalizer noise terms |
-| `matchThreshold` | Per-figure acceptance gate when the global 0.75 produces verified false positives |
-| `disabled` / `notes` | Operational pause and documentation for unscopable figures |
-| `searchTerms` (override only) | Rare: auto-derivation unsafe due to figure name too generic to scope |
-
-This is the complete list. Any proposed addition should be evaluated against this bar.
-
----
-
-## Section 6 — Future Catalog Workflow
-
-### Target workflow (post-generator implementation)
+1. `displayName` is a single English word ≤ 8 characters.
+2. Word is in a fixed ambiguity list (explicit, not auto-detected):
 
 ```
-1. Engineer adds figure(s) to catalog seed files
-   (figures.json, series.json, ips.json as needed)
-
-2. Run: node tools/market_intel/generate_metadata.mjs
-   → reads catalog bundle + market_metadata_overrides.json
-   → writes market_metadata.json
-   → logs warnings for IPs missing aliases
-
-3. Optional: node tools/market_intel/debug_matcher.mjs
-   → inspect new figures' matching behavior against edge cases
-
-4. If exceptions observed: edit market_metadata_overrides.json
-   → re-run generate_metadata.mjs
-
-5. Run snapshot pipeline as normal
-   → pipeline derives search terms from catalog at runtime
-   → matcher uses market_metadata.json for aliases/excludes/threshold
+luck, hope, love, star, magic, angel, wish, dream, joy, charm, faith, id
 ```
 
-### Expected human effort per new figure
+All other figures: `matchThreshold: null` (inherits global default **0.75** from [`_catalog_matcher.mjs`](./_catalog_matcher.mjs)).
 
-| Figure type | Expected manual work | Justification |
-|-------------|----------------------|---------------|
-| Standard multi-word name (e.g., `The Fairy's Trick`) | None | Catalog-derived search terms are sufficient; no alias gaps; default threshold |
-| Short name with known marketplace drift (e.g., `Luck`) | Add `marketAliases: ["lucky"]` to overrides | ~2 min; drift not derivable from catalog |
-| Figure in IP with no `ip.aliases` | Add `ip.aliases` to catalog for the IP — one-time | All figures in that IP benefit immediately; not per-figure work |
-| Observed false-positive pattern | Add `excludeTerms` to overrides after debug tool review | Reactive; do not pre-populate |
-| Figure unscopable by auto-derived search terms | Add explicit `searchTerms` to overrides + `disabled: false` + `notes` | Rare |
-| Figure to pause | Set `disabled: true` + `notes` in overrides | Explicit; documented |
+Overrides in Layer B can raise or lower per figure when production data contradicts the heuristic.
 
-**Goal: 90–95% of new figures require zero overrides.** A new 12-figure series with well-aliased IP and multi-word figure names should run through the generator and be pipeline-ready with no manual edits.
+**Rationale:** Short single-token figure names are structurally ambiguous on eBay. A fixed list is reviewable and predictable — preferable to ML or open-ended detection for a solo maintainer.
 
 ---
 
-## Section 7 — Exception Handling Strategy
+## 6. Exceptions and Override Strategy
 
-Exceptions are situations where catalog-derived output is insufficient. They live in `market_metadata_overrides.json`.
+Situations where auto-generation is insufficient — all live in `market_metadata_overrides.json`.
 
-| Exception type | Concrete example | Field | Trigger |
-|----------------|-----------------|-------|---------|
-| Catalog–marketplace spelling drift | `Luck` → `Lucky` | `marketAliases` | Known at catalog entry time |
-| Marketplace-only IP shorthand | `Labubu` (if `ip.aliases` is empty) | Prefer `ip.aliases` in catalog; override as fallback | Known at IP setup; one-time |
-| Series abbreviation | `Big Energy`, `BIE` | Prefer `series.aliases` in catalog; override as fallback | Known at series setup; one-time |
-| CJK / localized marketplace names | `幸运`, `라부부` | `marketAliases` | Sourced from marketplace review |
-| Community-created nicknames | `Lucky BIE`, `Lucky chase` | `marketAliases` | Discovered via snapshot or edge case review |
-| Verified false positives | `Angel` attracting Sanrio listings | `excludeTerms` | Confirmed via debug tool |
-| Verified threshold failure | Specific figure where 0.75 accepts wrong matches at scale | `matchThreshold` | Confirmed via production data |
-| Unscopable figure | Name too generic; any search term retrieves unrelated items | `disabled: true` + `notes` + optional `searchTerms` | Discovered during snapshot setup |
+| Case | Example | Override approach |
+|------|---------|-------------------|
+| Catalog name ≠ marketplace name | `Luck` → `Lucky` | `marketAliases` in overrides |
+| CJK / localized names | `幸运`, `ラッキー` | `marketAliases` in overrides |
+| Community nicknames | `BIE Lucky` | `marketAliases` in overrides |
+| Per-figure false-positive exclusions | `Angel` + Sanrio brand collision | `excludeTerms` in overrides |
+| Raised threshold beyond heuristic | Unusual ambiguous name | `matchThreshold` in overrides |
+| Figure that cannot be safely searched | `Secret` in secret-heavy series | `searchTerms: []` + `notes` in overrides |
+| Disabled figures | Data quality investigation | `disabled: true` in overrides |
 
-**Reactive, not preemptive.** Overrides are added when a concrete problem is confirmed, not anticipated. A figure named `Hope` does not get a pre-emptive `matchThreshold: 0.80` override — it gets the default 0.75 until production data shows a problem.
+### Metadata key strategy (`figure.id`)
 
-**Catalog-first escalation.** If an exception applies to all figures in an IP or series, fix it at the catalog level (`ip.aliases`, `series.aliases`). The override file remains sparse.
+Replacing legacy slugs (`lucky_big_into_energy_popmart`) and [`METADATA_KEY_TO_CATALOG_FIGURE_ID`](./_catalog_bundle.mjs).
 
-**Document every disable.** `disabled: true` without `notes` is invisible debt. The `notes` field must explain why (e.g., `"name too generic to scope; revisit if series releases a named 'Angel' figure with unique context"`).
+| Topic | Assessment |
+|-------|------------|
+| **Advantages** | One id everywhere (catalog, Firestore snapshots, metadata); no parallel slug vocabulary; overrides keyed like `market_snapshots` docs; removes join bugs |
+| **Migration risks** | Existing hand-authored keys; dev seeds / docs referencing old slugs; `resolveCatalogFigureId` accepts three shapes today |
+| **Long-term maintainability** | **High** — catalog `figure.id` is stable canonical identity |
+
+**Compatibility layer (recommended for one migration sprint):**
+
+1. Generator and merge emit **only** `figure.id` keys in Layer C.
+2. Keep `resolveCatalogFigureId` + `METADATA_KEY_TO_CATALOG_FIGURE_ID` **read-only** for one release; log deprecation warning on legacy key hit.
+3. `merge_market_metadata.mjs --check` fails if overrides use unknown keys or legacy slugs not in map.
+4. Remove compatibility map after overrides migration + diff test green.
+
+Optional `catalogFigureId` inside each entry is **redundant** when key === id — omit from Layer C.
+
+### Merge semantics (per-field rules)
+
+**Key:** `figure.id` (catalog figureId). Layer A contains **one row per catalog figure**.
+
+| Field | Merge rule | Rationale |
+|-------|------------|-----------|
+| `searchTerms` | **Replace** if override field present; else generated | `[]` in override means “do not search”. Append would blend unsafe queries. |
+| `excludeTerms` | **Union (dedupe)** — `uniq(generated ∪ override)` | Overrides typically **add** collision terms. Full replace forces duplicating generated lists. |
+| `marketAliases` | **Replace** if override field present; else generated | Maintainer owns full approved alias set. |
+| `matchThreshold` | **Override wins** when field present in override | Omit field in override to inherit generated heuristic (preferred over JSON `null` — see Open Questions). |
+| `disabled` | **Override wins** when present | `true` disables regardless of generated |
+| `notes` | **Override wins** when non-empty | Generated default `""` |
+| `aliasHints` | **Strip** — never in Layer C | Review-only |
+
+**Series block** (`market_metadata.json` → `series`): same rules keyed by `series.id`.
+
+**Edge cases:**
+
+| Case | Behavior |
+|------|----------|
+| Override for deleted catalog figure | `merge --check` **warns** (stale override); optional `--prune` |
+| Catalog figure missing from Layer A | **CI fail** — generator bug |
+| Override-only row (no generated counterpart) | **CI fail** — overrides are not the bulk source |
+| `disabled: true` | Pipeline skips; coverage report classifies DISABLED |
 
 ---
 
-## Section 8 — Maintenance Philosophy
+## 7. Future Workflow
 
-**One-direction edits.** `market_metadata.json` is never hand-edited. All human work goes into `market_metadata_overrides.json`. The generator re-run is always safe — it reads overrides and catalog, writes output, nothing else.
+```
+Add figure to catalog (Firestore / seed JSON)
+          ↓
+node tools/market_intel/generate_market_metadata.mjs
+          ↓
+Regenerates generated_market_metadata.json (Layer A)
+          ↓
+Review aliasHints in generated output (< 1 min per new figure typically)
+          ↓
+Add any needed entries to market_metadata_overrides.json  ← only if exceptions apply
+          ↓
+node tools/market_intel/merge_market_metadata.mjs
+  (or auto-run as pre-pipeline step)
+          ↓
+market_metadata.json updated → run snapshot pipeline
+```
 
-**Reactive overrides.** Do not author overrides speculatively. Add an override entry when a concrete problem is observed — a false positive in the debug tool, a missing match for a known valid listing, or a coverage gap flagged by the report. Speculative overrides create maintenance debt.
+### Expected manual work per new catalog figure
 
-**Catalog-first enrichment.** When an alias or term applies to all figures in an IP or series, the correct home is the catalog. Enriching `ip.aliases` or `series.aliases` provides compounding value: every future figure in that IP benefits automatically.
+| Scenario | Expected work |
+|----------|----------------|
+| No exceptions (multi-word name, aliased IP) | **Zero** — regenerate + merge only |
+| Luck-style catalog/market naming gap | One `marketAliases` line in overrides (~30 s) |
+| IP-specific CJK aliases | 1–3 entries per IP in overrides or `ip.aliases` (one-time) |
+| False-positive exclusions | Per-figure `excludeTerms` after debug tool / live review |
+| Unscopable figure | `searchTerms: []`, `disabled`, `notes` in overrides |
 
-**Fail visibly on gaps.** A figure with no usable search terms produces no snapshot. This is correct behavior. The future `coverage_report.mjs` should surface these gaps explicitly (non-zero exit code) so the engineer is informed, not surprised.
+**Goal:** 90–95% of new figures require zero override edits.
 
-**Infrequent edits in steady state.** The overrides file should require changes only for:
-- New figure with a known marketplace naming gap (drift, CJK, shorthand)
-- Observed false-positive pattern requiring per-figure `excludeTerms`
-- Figure being paused or disabled
+### Pre-snapshot checklist (steady state)
 
-Normal catalog growth for unambiguous figures should require **zero overrides edits**.
-
-**Generator re-runs are free and safe.** The generator reads overrides and catalog; it writes only `market_metadata.json`. Re-running it has no side effects. It should be cheap enough to include in a standard pre-snapshot checklist.
+1. `node tools/market_intel/generate_market_metadata.mjs`
+2. `node tools/market_intel/merge_market_metadata.mjs`
+3. Optional: `node tools/market_intel/catalog_coverage_audit.mjs`
+4. `node tools/market_intel/compute_snapshots.mjs --dry-run` (spot-check new figures)
 
 ---
 
-## Section 9 — Migration Plan from Current `market_metadata.json`
+## 8. Migration from Current `market_metadata.json`
 
 ### Current state
 
-`market_metadata.json` contains:
-- 1 figure entry: `lucky_big_into_energy_popmart` (with `searchTerms`)
-- 1 series entry: `big_into_energy_popmart` (with `searchTerms`)
+[`market_metadata.json`](./market_metadata.json) contains:
 
-Both are hand-authored. No generator exists. `searchTerms` are stored in the file.
+- **1 figure entry:** `lucky_big_into_energy_popmart` (legacy key; maps to `the_monsters_big_into_energy_vinyl_plush_pendant_luck` via [`METADATA_KEY_TO_CATALOG_FIGURE_ID`](./_catalog_bundle.mjs))
+- **1 series entry:** `big_into_energy_popmart`
 
-### Migration steps
+Both are hand-authored, including stored `searchTerms`.
 
-The migration is deferred to the sprint when `generate_metadata.mjs` is implemented. Documented here to prevent the current hand-authored file from becoming a constraint.
+### Migration steps (implementation sprint — not Sprint 3)
 
-**Step 1 — Create `market_metadata_overrides.json` from current file.**
+| Step | Action |
+|------|--------|
+| **1** | Implement `generate_market_metadata.mjs` → run against full catalog → commit `generated_market_metadata.json` |
+| **2** | Create `market_metadata_overrides.json` from current hand-authored exceptions (aliases, excludes, notes). **Do not** copy auto-derivable `searchTerms` — generator reproduces them |
+| **3** | Implement `merge_market_metadata.mjs` |
+| **4** | Validate merged output: Luck matching behavior unchanged (`debug_matcher.mjs`, existing matcher tests) |
+| **5** | Switch metadata keys from legacy slugs to `figure.id`; remove `METADATA_KEY_TO_CATALOG_FIGURE_ID` once overrides use canonical ids |
+| **6** | Treat `market_metadata.json` as generated artifact (gitignored **or** committed with `_comment: "DO NOT EDIT — run merge"` — team choice at implementation time) |
 
-Copy the current `market_metadata.json` into `market_metadata_overrides.json`. Remove any `searchTerms` fields — they will be derived from the catalog at runtime and are no longer stored. Retain `marketAliases`, `excludeTerms`, `matchThreshold`, `disabled`, and `notes`. This is the initial overrides seed.
-
-For `lucky_big_into_energy_popmart`, the resulting override entry is:
+### Overrides seed for Luck (after migration)
 
 ```json
 {
-  "lucky_big_into_energy_popmart": {
-    "marketAliases": ["lucky"],
-    "excludeTerms": ["custom", "lot", "bootleg", "replica"],
-    "matchThreshold": null,
-    "disabled": false,
-    "notes": "Catalog displayName is 'Luck'; eBay sellers overwhelmingly write 'Lucky'."
+  "figures": {
+    "the_monsters_big_into_energy_vinyl_plush_pendant_luck": {
+      "marketAliases": ["lucky"],
+      "notes": "Catalog displayName is 'Luck'; eBay sellers overwhelmingly write 'Lucky'."
+    }
   }
 }
 ```
 
-**Step 2 — Implement `generate_metadata.mjs`.**
+`custom`, `lot`, `bootleg`, `replica` need **not** appear in overrides — they belong in the global normalizer (per ownership matrix). Override `excludeTerms` only for **collision-specific** terms (e.g. `sanrio` on an `Angel` figure).
 
-Generator reads catalog bundle + overrides. Produces `market_metadata.json` with minimal baseline entries for all figures, with overrides applied. No `searchTerms` in output.
+Generator produces `searchTerms`; overrides supply only marketplace-specific gaps.
 
-**Step 3 — Update snapshot pipeline to derive search terms from catalog at runtime.**
+### Migration rollback
 
-The snapshot pipeline currently reads `searchTerms` from `market_metadata.json`. This changes to: derive search terms from the catalog using the formula (brand + IP alias + series-distinctive + figure name), then check for a `searchTerms` override in `market_metadata.json` (for unscopable figures). This is a pipeline code change, not a metadata format change.
+| Step | Rollback |
+|------|----------|
+| After generator commit | Revert Layer A commit; keep hand-authored `market_metadata.json` |
+| After merge wired | Point pipeline at previous `market_metadata.json` git tag |
+| After key migration | Restore `METADATA_KEY_TO_CATALOG_FIGURE_ID` map + legacy overrides file from tag |
 
-**Step 4 — Verify.**
-
-Run `generate_metadata.mjs` and confirm the Lucky entry matches the expected override. Run `debug_matcher.mjs` to confirm the derived search terms produce the same matching behavior as the current hand-authored `searchTerms`.
-
-**Step 5 — Commit.**
-
-Commit `market_metadata_overrides.json`, the updated `market_metadata.json`, and the updated pipeline code in a single PR. Add `_comment` fields to both committed JSON files clarifying their roles.
-
-**Step 6 — Document.**
-
-Update `MATCHING_DESIGN.md` Section 2 (Search Term Strategy) to describe runtime derivation and the override mechanism. Remove references to hand-editing `market_metadata.json` directly.
+Keep a **migration tag** (`metadata-autogen-v1-pre`) before first full-catalog regen. Diff test (`debug_matcher.mjs` + matcher fixtures) is the rollback gate.
 
 ### No data loss guarantee
 
-The existing `marketAliases` and `excludeTerms` from the hand-authored file are preserved verbatim in `market_metadata_overrides.json`. `searchTerms` are removed from storage but not discarded — the same information is recovered from the catalog at runtime using the derivation formula.
+- `marketAliases` and `excludeTerms` from the hand-authored file move verbatim to overrides.
+- `searchTerms` are regenerated from catalog using the same formula as [`deriveSearchTerms`](./_search_term_derivation.mjs); diff test confirms parity for Luck.
+
+---
+
+## 9. Coverage Validation
+
+The **90–95% auto-generated** target means **90–95% of catalog figures require no override row** (or no non-default override fields). It does **not** mean 90–95% have snapshots — snapshot coverage depends on eBay data and query volume.
+
+### Metrics
+
+| Metric | Formula | Target |
+|--------|---------|--------|
+| **Override rate** | `figures_with_non_empty_override / catalog_figures` | ≤ 5–10% |
+| **Generation completeness** | `catalog_figures in Layer A / catalog_figures` | 100% |
+| **Hint backlog** | `figures with non-empty aliasHints` | Trend down after review sprints |
+| **Stale overrides** | `override keys ∉ catalog` | 0 (warn → fail) |
+| **Matcher coverage** | From [`catalog_coverage_audit.mjs`](./catalog_coverage_audit.mjs) | Maintain ≥99% MATCHABLE (current: 1,137/1,144) |
+| **Snapshot coverage** | `figures with snapshot doc / eligible figures` | Track separately; fixture mode until Marketplace Insights |
+
+### Commands (recommended)
+
+| Command | Role |
+|---------|------|
+| `node tools/market_intel/generate_market_metadata.mjs` | Regen Layer A |
+| `node tools/market_intel/merge_market_metadata.mjs --check` | Validate keys, stale overrides, strip hints |
+| `node tools/market_intel/metadata_coverage_audit.mjs` (future) | Override rate, hint backlog, field histogram |
+| `node tools/market_intel/catalog_coverage_audit.mjs` | Matcher/search-term structural risks (exists today) |
+| `node tools/market_intel/coverage_report.mjs` (future) | Metadata + snapshot join per [`MATCHER_DESIGN_REVIEW.md`](./MATCHER_DESIGN_REVIEW.md) |
+
+### CI policy (recommended)
+
+| Check | Severity |
+|-------|----------|
+| Layer A missing catalog figure | **Fail** |
+| Merge output differs from committed Layer C without regen | **Fail** (if Layer C committed) |
+| Override key not in catalog | **Fail** (after migration grace period) |
+| `aliasHints` present in Layer C | **Fail** |
+| Override rate > 15% | **Warn** — drift from automation goal |
+| Non-empty `aliasHints` count > 50 | **Warn** — review backlog |
+| `NO_SEARCH_TERMS` figures (catalog audit) | **Warn** today; **Fail** before production snapshots |
+| Matcher regression vs baseline | **Fail** |
+
+### How we know generation quality is improving
+
+1. **Override rate** decreases release-over-release for static catalog.
+2. **catalog_coverage_audit** `NO_SEARCH_TERMS` and `ambiguousFigureName` counts decrease as catalog aliases enrich.
+3. **Snapshot validation audit** false-positive / skip-reason mix improves on fixture + live samples.
+4. **Hint promotion rate** — most hints dismissed or promoted within one sprint (process metric).
+
+---
+
+## 10. Future Metadata Layers
+
+Figure-only metadata is **not** enough for all marketplace knowledge. Use a **catalog-first, layer-appropriate** model:
+
+| Layer | Belongs here | Examples |
+|-------|--------------|----------|
+| **Brand** | `brands.json` aliases; normalizer brand tokens | `POPMART`, `Dreams`, `Rolife` seller spellings — **not** a metadata file today |
+| **IP** | `ips.json` aliases | `Labubu` (The Monsters), `Smiski`, `Sonny Angel` community names |
+| **Series** | `series.json` aliases + optional `market_metadata.json` `series` block | `BIE` / `Big Energy`; Smiski Series 2 distinctive fix; series-scoped `searchTerms` for series-level snapshots |
+| **Figure** | Generated + overrides | `Luck`→`Lucky`, per-figure `excludeTerms`, `matchThreshold`, `disabled` |
+
+### Recommendations by example
+
+| Brand/IP | Series-level | Figure-level |
+|----------|--------------|--------------|
+| **Labubu / The Monsters** | Series aliases for seller abbreviations | Short names (`Luck`, `Hope`) — aliases + threshold |
+| **Smiski** | **Critical** — empty `extractSeriesDistinctive` for Series 2 → fix `series.aliases` | Per-figure only if name collision across IPs |
+| **Sonny Angel** | Generic distinctive (`Marine`, `Flower`) — enrich series alias to full marketplace phrase | `excludeTerms` if false positives confirmed |
+| **Rolife** | Brand alias gap in catalog (per TECH_DEBT) — fix in `brands.json` / IP, not 500 figure overrides | — |
+
+**Rule:** If an exception applies to **all figures in a series or IP**, fix catalog or series metadata block — never N per-figure overrides.
 
 ---
 
@@ -411,12 +505,152 @@ The existing `marketAliases` and `excludeTerms` from the hand-authored file are 
 
 | Decision | Chosen approach | Rationale |
 |----------|-----------------|-----------|
-| Architecture | Two-file: overrides → generator → output | Fewer files; simpler model; no merge step; right-sized for single-maintainer project |
-| `searchTerms` storage | Not stored — derived from catalog at runtime | Catalog is source of truth; stored terms would duplicate and diverge |
-| `matchThreshold` defaults | `null` (global 0.75) for all figures | No production evidence to justify speculative raises; reactive override only |
-| Alias generation | No auto-population; manual overrides only | `figure.aliases` is empty in seed; `figureId` stems duplicate displayName; series aliases already read by matcher directly |
-| Catalog-first | IP/series aliases belong in catalog, not per-figure metadata | Compounding benefit; one catalog edit vs N per-figure overrides |
-| Metadata minimalism | Fewer fields by default; new fields require justification | Prevents speculative field accumulation; aligns with single-engineer maintainability |
-| Override trigger policy | Reactive (observed problems) | Prevents speculative maintenance overhead |
-| Migration: searchTerms | Strip from storage; recover at runtime from catalog | Eliminates dual source of truth |
-| Migration timing | Deferred to generator implementation sprint | No code changes in Sprint 3; design documented to prevent future constraint |
+| Architecture | Three-layer: generated + overrides → merge → output | Scales to 5k+ figures; overrides stay reviewable |
+| Metadata keys | `figure.id` + temporary legacy read map | Canonical identity; safe migration |
+| `searchTerms` | Auto-generated in Layer A | Full-catalog coverage; aligns with query volume reality |
+| `excludeTerms` merge | **Union** (not replace) | Overrides add collision terms without copying baselines |
+| `matchThreshold` | Heuristic 0.80 for fixed ambiguity list; else null | Proactive guard; override when production contradicts |
+| `aliasHints` | Layer A only; **never** in matcher | Human approval gate for aliases |
+| Aliases | Catalog-first; overrides last resort | Smiski / Sonny Angel fixes at series/IP |
+| Coverage target | ≤5–10% override rate | Measurable automation success |
+| Implementation timing | Design complete; generator deferred | Matcher + pipeline already generalized |
+
+---
+
+## Design Review Findings
+
+Critical review performed against 1,144-figure catalog, generalized matcher (99.4% MATCHABLE), and working snapshot pipeline. **No implementation was performed.**
+
+### Part 1 — Architecture
+
+- **1,144 figures:** Architecture is sufficient. Bulk in Layer A, exceptions in Layer B, merge is O(n).
+- **5,000+ figures:** Still sufficient; monitor JSON regen diff size and eBay query volume (~2.3× figure count per full run).
+- **No extra persistence layer** required. Catalog `ip`/`series` enrichment is a parallel concern, not a fourth JSON file.
+- **Layer C optional as committed artifact** — prefer generating in CI once merge is stable.
+
+### Part 2 — Metadata ownership
+
+- Expanded matrix (§3) clarifies Auto / Manual / Hybrid per field.
+- **Move out of metadata:** brand/IP/series identity, universal exclude noise, anything in catalog seed.
+- **Stay in metadata:** per-figure marketplace drift, collision excludes, thresholds, operational disable.
+
+### Part 3 — Alias safety
+
+- **`aliasHints` must never participate in matcher execution** (§3, §4).
+- Auto-promoting hints to `marketAliases` would reintroduce manual maintenance at scale with worse quality control.
+
+### Part 4 — Key strategy
+
+- **`figure.id` keys are correct** long-term.
+- **Temporary compatibility layer required** — do not delete `METADATA_KEY_TO_CATALOG_FIGURE_ID` until overrides and dev seeds migrate.
+- Redundant `catalogFigureId` field in entries should be dropped from Layer C.
+
+### Part 5 — Future layers
+
+- Figure-only metadata is insufficient for Smiski, Sonny Angel, Rolife-class catalog gaps (§10).
+- **Series block** in metadata remains valid for series-scoped search (existing bootstrap).
+- **Brand metadata file** not recommended — use `brands.json`.
+
+### Part 6 — Merge semantics
+
+- Original “replace all arrays” rule is **wrong for `excludeTerms`** — union merge recommended (§6).
+- `searchTerms` and `marketAliases` remain **replace** semantics.
+- Stale override detection and optional `--prune` are required operational tools.
+
+### Part 7 — Coverage validation
+
+- 90–95% target = **low override rate**, not snapshot completeness (§9).
+- `metadata_coverage_audit.mjs` should be added alongside existing `catalog_coverage_audit.mjs`.
+- CI fail/warn policy defined in §9.
+
+### Part 8 — Technical debt interaction
+
+| Debt item | After autogen |
+|-----------|---------------|
+| [`QUERY_VOLUME_OPTIMIZATION.md`](./QUERY_VOLUME_OPTIMIZATION.md) | **Harder short-term** — full-catalog autogen enables full-catalog queries (~2,300+). Reinforces need for query dedup before production scale. |
+| Matcher coverage validation | **Simpler** — baseline metadata exists for every figure; audit focuses on matcher not missing rows. |
+| Catalog metadata quality audit | **Partially simpler** — surfaces as `NO_SEARCH_TERMS` / empty distinctive; fix in catalog aliases, not 1,144 overrides. |
+| Marketplace Insights integration | **Unchanged** — sold-listing source still blocked; autogen does not fix fetch. |
+| Snapshot scheduler | **Unchanged** — still manual CLI. |
+
+**New debt introduced:**
+
+- Stale overrides for removed catalog figures
+- `aliasHints` review backlog
+- Layer A regen PR noise
+- Generator / `_search_term_derivation.mjs` drift if not sharing one module
+- False confidence from 100% metadata rows with poor marketplace aliases
+
+### Part 9 — Previously missing topics
+
+Now addressed: migration rollback (§8), generated file ownership (Layer A generator-only), CI validation (§9), stale override detection (§6), dead alias cleanup (see Recommended Changes). **Still thin:** metadata schema versioning — see Open Questions.
+
+---
+
+## Recommended Changes
+
+Applied in this document revision:
+
+1. **Adopt union merge for `excludeTerms`** — overrides add; do not replace.
+2. **Enforce `aliasHints` strip** in merge with CI assertion on Layer C.
+3. **Add temporary legacy key compatibility** during migration; remove after one sprint.
+4. **Define override-rate metric** as the 90–95% automation KPI.
+5. **Remove redundant global excludes** from per-figure override examples (`custom`, `lot`, etc.).
+6. **Prioritize catalog fixes** for Smiski Series 2, Sonny Angel generics, Rolife brand aliases before figure overrides.
+7. **Share derivation code** — generator must import `deriveSearchTerms` from `_search_term_derivation.mjs`, not fork formula.
+8. **Add `metadata_coverage_audit.mjs`** in implementation sprint (override rate, stale keys, hint count).
+9. **Migration rollback tag** before first full regen.
+
+Not changed (confirmed sound):
+
+- Three-layer architecture
+- `figure.id` keys
+- `aliasHints` as review-only
+- Threshold heuristic list (with production override escape hatch)
+
+---
+
+## Open Questions
+
+| # | Question | Options |
+|---|----------|---------|
+| 1 | **Commit Layer C or gitignore?** | Commit with `_comment` until CI merge exists; then gitignore |
+| 2 | **`matchThreshold: null` in override** — inherit or clear? | Prefer **omit field** in overrides; `null` explicitly clears to global 0.75 |
+| 3 | **Auto-copy `figure.aliases[]` → `marketAliases`?** | Yes when catalog populated; until then hints only |
+| 4 | **Heuristic 0.80 threshold without production evidence?** | Keep as conservative pre-filter; catalog audit `ambiguousFigureName` (109 figures) may suffice — validate on fixtures first |
+| 5 | **Metadata schema version field?** | `_schemaVersion: 1` in Layer C for future merge migrations |
+| 6 | **Series block autogen?** | Generate series `searchTerms` in Layer A for all 109 series, or only when pipeline uses series-level fetch |
+| 7 | **Dead alias cleanup** | Periodic report: overrides referencing deleted figures; aliases with zero matcher hits in review log |
+
+---
+
+## Future Extensions
+
+| Extension | Description | When |
+|-----------|-------------|------|
+| `metadata_coverage_audit.mjs` | Override rate, stale keys, hint backlog, field histogram | Implementation sprint |
+| `coverage_report.mjs` | Metadata + snapshot join | After first production snapshot run |
+| `merge --prune` | Remove stale override keys | When catalog deletes figures |
+| Query dedup layer | Shared search pool across figures (QUERY_VOLUME) | Before 5k figures or production cadence |
+| `figure.aliases[]` catalog enrichment | Luck/Hope/Love in seed → generator propagates | Catalog quality sprint |
+| Brand metadata block | **Not recommended** — use `brands.json` | — |
+| IP-level override file | **Not recommended** — use `ips.json` | — |
+| Compact override format | Override file lists only `{ figureId, marketAliases }` sparse rows | When override rate stays <10% |
+| Metadata schema v2 | Confidence / provenance per field (`source: generated|override`) | Only if audit trail becomes necessary |
+
+---
+
+## Key Files Referenced
+
+| File | Role |
+|------|------|
+| [`market_metadata.json`](./market_metadata.json) | Current hand-authored seed (Layer C today) |
+| [`MATCHER_DESIGN_REVIEW.md`](./MATCHER_DESIGN_REVIEW.md) | Maintenance principles; future `coverage_report.mjs` |
+| [`MATCHING_DESIGN.md`](./MATCHING_DESIGN.md) | §2 searchTerm rules, §3 exclude rules |
+| [`_search_term_derivation.mjs`](./_search_term_derivation.mjs) | Runtime derivation formula to mirror in generator |
+| [`tools/seed/figures.json`](../seed/figures.json) | 1,144 figures |
+| [`tools/seed/series.json`](../seed/series.json) | 109 series |
+| [`tools/seed/ips.json`](../seed/ips.json) | IP aliases for search term formula |
+| [`QUERY_VOLUME_OPTIMIZATION.md`](./QUERY_VOLUME_OPTIMIZATION.md) | Query scale implications of full autogen |
+| [`CATALOG_COVERAGE_REPORT.md`](./CATALOG_COVERAGE_REPORT.md) | Matcher generalization baseline (99.4%) |
+| [`docs/TECH_DEBT.md`](../../docs/TECH_DEBT.md) | Catalog metadata quality audit items |

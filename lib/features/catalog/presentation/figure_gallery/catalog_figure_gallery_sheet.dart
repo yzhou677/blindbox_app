@@ -3,11 +3,15 @@ import 'dart:ui' show ImageFilter;
 import 'package:blindbox_app/core/presentation/collectible_immersion.dart';
 import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
-import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_item.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_page.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_precache.dart';
+import 'package:blindbox_app/features/market_intel/application/market_snapshot_providers.dart';
+import 'package:blindbox_app/features/market_intel/widgets/market_snapshot_discover_expand_panel.dart';
+import 'package:blindbox_app/features/market_intel/widgets/market_snapshot_format.dart';
+import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Opens the shared fullscreen figure gallery (swipe, drag down, tap outside art to close).
 ///
@@ -250,6 +254,9 @@ class _CatalogFigureGallerySheetState extends State<CatalogFigureGallerySheet> {
                                   Theme.of(context).colorScheme,
                                 ).copyWith(color: _kGalleryForeground),
                               ),
+                              _GalleryMarketInformationAccordion(
+                                figureId: item.id,
+                              ),
                               if (captionSecondary != null) ...[
                                 const SizedBox(height: 4),
                                 Text(
@@ -277,6 +284,112 @@ class _CatalogFigureGallerySheetState extends State<CatalogFigureGallerySheet> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Discover gallery market accordion — disclosure row is the only tap target.
+///
+/// [CatalogFigureGalleryItem.id] is the canonical catalog figure id.
+class _GalleryMarketInformationAccordion extends ConsumerStatefulWidget {
+  const _GalleryMarketInformationAccordion({required this.figureId});
+
+  final String figureId;
+
+  @override
+  ConsumerState<_GalleryMarketInformationAccordion> createState() =>
+      _GalleryMarketInformationAccordionState();
+}
+
+class _GalleryMarketInformationAccordionState
+    extends ConsumerState<_GalleryMarketInformationAccordion> {
+  bool _expanded = false;
+
+  @override
+  void didUpdateWidget(covariant _GalleryMarketInformationAccordion oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.figureId != widget.figureId) {
+      _expanded = false;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final asyncSnapshot = ref.watch(marketSnapshotProvider(widget.figureId));
+    final textTheme = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+
+    return asyncSnapshot.when(
+      data: (snapshot) {
+        if (snapshot == null) {
+          return const SizedBox.shrink();
+        }
+
+        final disclosureLabel = formatMarketSnapshotDiscoverDisclosureLabel(
+          expanded: _expanded,
+        );
+        final summaryLine = formatMarketSnapshotDiscoverSummaryLine(snapshot);
+        final disclosureStyle = CollectibleTypography.figureMeta(textTheme, scheme)
+            .copyWith(
+          color: _kGalleryForeground.withValues(alpha: 0.72),
+          fontWeight: FontWeight.w600,
+        );
+        final summaryStyle = CollectibleTypography.figureMeta(textTheme, scheme)
+            .copyWith(
+          color: _kGalleryForeground.withValues(alpha: 0.82),
+          fontWeight: FontWeight.w500,
+        );
+
+        return Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Semantics(
+            button: true,
+            expanded: _expanded,
+            label: kMarketSnapshotDiscoverDisclosureHeading,
+            child: InkWell(
+              onTap: () => setState(() => _expanded = !_expanded),
+              borderRadius: BorderRadius.circular(8),
+              splashColor: _kGalleryForeground.withValues(alpha: 0.08),
+              highlightColor: _kGalleryForeground.withValues(alpha: 0.04),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                child: Column(
+                  children: [
+                    Text(
+                      disclosureLabel,
+                      textAlign: TextAlign.center,
+                      style: disclosureStyle,
+                    ),
+                    AnimatedSize(
+                      duration: CollectibleMotion.crossfade,
+                      curve: CollectibleMotion.standard,
+                      alignment: Alignment.topCenter,
+                      child: _expanded
+                          ? Column(
+                              children: [
+                                const SizedBox(height: 10),
+                                Text(
+                                  summaryLine,
+                                  textAlign: TextAlign.center,
+                                  style: summaryStyle,
+                                ),
+                                MarketSnapshotDiscoverExpandPanel(
+                                  snapshot: snapshot,
+                                  foregroundColor: _kGalleryForeground,
+                                ),
+                              ],
+                            )
+                          : const SizedBox.shrink(),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (Object error, StackTrace stackTrace) => const SizedBox.shrink(),
     );
   }
 }
