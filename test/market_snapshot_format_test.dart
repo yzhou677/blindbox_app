@@ -9,6 +9,7 @@ MarketSnapshot _snapshot({
   double? priceRangeMinUsd = 38,
   double? priceRangeMaxUsd = 48,
   SnapshotConfidence confidence = SnapshotConfidence.high,
+  MarketTrend trend = MarketTrend.rising,
   DateTime? computedAt,
 }) {
   return MarketSnapshot(
@@ -17,7 +18,7 @@ MarketSnapshot _snapshot({
     figureId: level == SnapshotLevel.figure ? figureId : null,
     seriesId: 'series_bie',
     estimatedValueUsd: 42,
-    trend: MarketTrend.rising,
+    trend: trend,
     confidence: confidence,
     recentSalesCount: recentSalesCount,
     priceRangeMinUsd: priceRangeMinUsd,
@@ -179,6 +180,55 @@ void main() {
         formatMarketSnapshotUpdatedLine(computedAt, clock: clock),
         'Updated Jun 15',
       );
+    });
+  });
+
+  group('formatMarketSnapshotInsightsRecentSalesCount', () {
+    test('returns plain count', () {
+      expect(
+        formatMarketSnapshotInsightsRecentSalesCount(_snapshot()),
+        '18',
+      );
+    });
+  });
+
+  group('formatMarketSnapshotInsightsUpdatedValue', () {
+    test('returns relative time without updated prefix', () {
+      final computedAt = DateTime.utc(2026, 6, 12);
+      final clock = DateTime.utc(2026, 6, 15);
+      expect(
+        formatMarketSnapshotInsightsUpdatedValue(computedAt, clock: clock),
+        '3d ago',
+      );
+    });
+  });
+
+  group('formatMarketSnapshotTrendLabel', () {
+    test('maps rising to Trending', () {
+      expect(formatMarketSnapshotTrendLabel(MarketTrend.rising), 'Trending');
+    });
+
+    test('returns null for unknown', () {
+      expect(formatMarketSnapshotTrendLabel(MarketTrend.unknown), isNull);
+    });
+  });
+
+  group('formatMarketListingPriceDeltaLine', () {
+    test('above market includes rounded percent', () {
+      expect(formatMarketListingPriceDeltaLine(48, 42), '▲ 14% above market');
+    });
+
+    test('below market uses checkmark copy', () {
+      expect(formatMarketListingPriceDeltaLine(35, 42), '✓ Below market');
+    });
+
+    test('within five percent is at market', () {
+      expect(formatMarketListingPriceDeltaLine(42, 42), '≈ At market');
+      expect(formatMarketListingPriceDeltaLine(43, 42), '≈ At market');
+    });
+
+    test('returns null when estimate is zero', () {
+      expect(formatMarketListingPriceDeltaLine(10, 0), isNull);
     });
   });
 }

@@ -494,6 +494,8 @@ Files touched:
 
 **Why first:** Zero infrastructure cost. The data, the widget, and the provider all exist. The user at purchase intent is the highest-value moment to add market context.
 
+**Implemented (Sprint 3C / 3C.1 / 3D):** Market Detail shows price delta + **Market Insights >** navigation row; full intelligence lives on `/market/insights`. Current UI copy, layout, offline behavior, and screenshots: see [`MARKET_DETAIL_INSIGHTS_DESIGN.md`](MARKET_DETAIL_INSIGHTS_DESIGN.md).
+
 ---
 
 ### Phase 2 — Collection Value

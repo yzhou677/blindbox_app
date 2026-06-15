@@ -6,6 +6,7 @@ import 'package:blindbox_app/features/home/home_screen.dart';
 import 'package:blindbox_app/features/market/market_detail_screen.dart';
 import 'package:blindbox_app/features/market/market_screen.dart';
 import 'package:blindbox_app/features/market/presentation/market_browse_search_screen.dart';
+import 'package:blindbox_app/features/market_intel/presentation/market_insights_screen.dart';
 import 'package:blindbox_app/shared/widgets/main_shell_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -181,6 +182,40 @@ final GoRouter appRouter = GoRouter(
                           child: SlideTransition(
                             position: Tween<Offset>(
                               begin: const Offset(0, 0.05),
+                              end: Offset.zero,
+                            ).animate(curved),
+                            child: child,
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+                GoRoute(
+                  path: 'insights',
+                  pageBuilder: (context, state) {
+                    final query = state.uri.queryParameters;
+                    final figureId = query['figureId'] ?? '';
+                    final listingId = query['listingId'] ?? '';
+                    return CustomTransitionPage<void>(
+                      key: state.pageKey,
+                      child: MarketInsightsScreen(
+                        figureId: figureId,
+                        listingId: listingId,
+                      ),
+                      transitionDuration: const Duration(milliseconds: 320),
+                      transitionsBuilder:
+                          (context, animation, secondaryAnimation, child) {
+                        final curved = CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.easeOutCubic,
+                          reverseCurve: Curves.easeInCubic,
+                        );
+                        return FadeTransition(
+                          opacity: curved,
+                          child: SlideTransition(
+                            position: Tween<Offset>(
+                              begin: const Offset(0, 0.04),
                               end: Offset.zero,
                             ).animate(curved),
                             child: child,

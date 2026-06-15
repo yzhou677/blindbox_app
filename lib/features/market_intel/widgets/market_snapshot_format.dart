@@ -84,3 +84,64 @@ String formatMarketSnapshotUpdatedLine(
   final relative = formatOfficialFeedRelativeTime(computedAt, clock: clock);
   return 'Updated $relative';
 }
+
+/// Market listing detail navigation row label.
+const String kMarketDetailInsightsHeading = 'Market Insights';
+
+/// Shown when snapshot load fails or no sold-data exists for the matched figure.
+const String kMarketDetailInsightsUnavailable = 'Market insights unavailable';
+
+/// Dedicated Market Insights screen title.
+const String kMarketInsightsScreenTitle = 'Market Insights';
+
+/// Footer on [MarketInsightsScreen].
+const String kMarketInsightsScreenFooter =
+    'Data is currently estimated from eBay listings and sales activity.\n'
+    'Other marketplaces are not included.';
+
+/// Data source section value on [MarketInsightsScreen].
+const String kMarketInsightsDataSourceValue = 'eBay marketplace activity';
+
+/// Trend label for listing detail. Null when [MarketTrend.unknown].
+String? formatMarketSnapshotTrendLabel(MarketTrend trend) {
+  return switch (trend) {
+    MarketTrend.rising => 'Trending',
+    MarketTrend.falling => 'Cooling',
+    MarketTrend.stable => 'Stable',
+    MarketTrend.unknown => null,
+  };
+}
+
+/// Recent sales count for [MarketInsightsScreen] — e.g. `18`.
+String formatMarketSnapshotInsightsRecentSalesCount(MarketSnapshot snapshot) {
+  return '${snapshot.recentSalesCount}';
+}
+
+/// Relative freshness for [MarketInsightsScreen] — e.g. `35h ago`.
+String formatMarketSnapshotInsightsUpdatedValue(
+  DateTime computedAt, {
+  DateTime? clock,
+}) {
+  return formatOfficialFeedRelativeTime(computedAt, clock: clock);
+}
+
+/// Compares listing ask price to sold-data estimate.
+///
+/// Within ±5% → `≈ At market`; above +5% → `▲ N% above market`;
+/// below −5% → `✓ Below market`.
+String? formatMarketListingPriceDeltaLine(
+  double listingPriceUsd,
+  double estimatedValueUsd,
+) {
+  if (estimatedValueUsd <= 0) return null;
+
+  final ratio = (listingPriceUsd - estimatedValueUsd) / estimatedValueUsd;
+  if (ratio > 0.05) {
+    final pct = (ratio * 100).round();
+    return '▲ $pct% above market';
+  }
+  if (ratio < -0.05) {
+    return '✓ Below market';
+  }
+  return '≈ At market';
+}
