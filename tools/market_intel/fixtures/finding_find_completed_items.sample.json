@@ -1,0 +1,58 @@
+{
+  "findCompletedItemsResponse": [
+    {
+      "ack": ["Success"],
+      "paginationOutput": [
+        {
+          "totalEntries": ["2"]
+        }
+      ],
+      "searchResult": [
+        {
+          "item": [
+            {
+              "itemId": ["110000001"],
+              "title": ["POP MART Labubu Have a Seat SISI Vinyl Plush"],
+              "viewItemURL": ["https://www.ebay.com/itm/110000001"],
+              "sellingStatus": [
+                {
+                  "currentPrice": [
+                    {
+                      "@currencyId": "USD",
+                      "__value__": "38.5"
+                    }
+                  ]
+                }
+              ],
+              "listingInfo": [
+                {
+                  "endTime": ["2025-05-01T18:22:00.000Z"]
+                }
+              ]
+            },
+            {
+              "itemId": ["110000002"],
+              "title": ["POPMART Have a Seat SISI Plush Keychain"],
+              "viewItemURL": ["https://www.ebay.com/itm/110000002"],
+              "sellingStatus": [
+                {
+                  "currentPrice": [
+                    {
+                      "@currencyId": "USD",
+                      "__value__": "41.0"
+                    }
+                  ]
+                }
+              ],
+              "listingInfo": [
+                {
+                  "endTime": ["2025-05-03T11:05:00.000Z"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
