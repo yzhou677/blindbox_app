@@ -8,6 +8,7 @@
  */
 
 import { structurallyNormalizeTitle } from './_title_normalizer.mjs';
+import { extractSeriesDistinctive } from './_search_term_derivation.mjs';
 
 /** Global default acceptance threshold (MATCHER_DESIGN_REVIEW §6). */
 export const DEFAULT_MATCH_THRESHOLD = 0.75;
@@ -64,13 +65,6 @@ export const FIGURE_PRODUCT_NOUNS = Object.freeze(['figure', 'plush', 'vinyl']);
 const SERIES_BOILERPLATE_PATTERN =
   /\b(blind box|vinyl plush pendant|vinyl plush|vinyl face|the monsters|pop mart|series|figure|toy|doll|plush|pendant)\b/g;
 
-const TARGET_SERIES_PHRASE = 'big into energy';
-
-const SERIES_IP_ANCHORS = Object.freeze([
-  'the monsters',
-  'monsters',
-  'labubu',
-]);
 
 /**
  * @typedef {Object} MatcherMetadataOverrides
@@ -91,6 +85,7 @@ const SERIES_IP_ANCHORS = Object.freeze([
  * @property {readonly string[]} ipAnchorTokens
  * @property {readonly string[]} siblingFigureTokens
  * @property {readonly { seriesId: string, phrases: readonly string[] }[]} conflictingSeries
+ * @property {string} seriesDistinctivePhrase
  */
 
 /**
@@ -151,16 +146,18 @@ export function buildMatcherContext({
     targetFigure.aliases ?? [],
   );
 
+  const seriesDistinctivePhrase = structurallyNormalizeTitle(
+    extractSeriesDistinctive(series, ip ?? {}),
+  );
+
   const seriesAliasPhrases = uniqueNormalizedPhrases([
     series.displayName,
     ...(series.aliases ?? []),
-    TARGET_SERIES_PHRASE,
   ]);
 
   const ipAnchorTokens = uniqueNormalizedTokens([
     ip?.displayName,
     ...(ip?.aliases ?? []),
-    ...SERIES_IP_ANCHORS,
   ]);
 
   const siblingFigureTokens = uniqueNormalizedTokens(
@@ -190,6 +187,7 @@ export function buildMatcherContext({
     ipAnchorTokens,
     siblingFigureTokens,
     conflictingSeries,
+    seriesDistinctivePhrase,
   };
 }
 
@@ -464,8 +462,11 @@ function computeSignals(params) {
     context,
     targetFigureMatched,
   );
+  const seriesDistinctivePhrase = context.seriesDistinctivePhrase;
   const seriesMatchPartial =
-    !seriesMatchFull && hasPhrase(title, TARGET_SERIES_PHRASE);
+    !seriesMatchFull &&
+    (seriesDistinctivePhrase?.length ?? 0) >= 4 &&
+    hasPhrase(title, seriesDistinctivePhrase);
   const seriesMatchScore = seriesMatchFull
     ? MATCH_WEIGHTS.seriesMatchFull
     : seriesMatchPartial
@@ -566,25 +567,31 @@ function detectSeriesMatchFull(
   context,
   targetFigureMatched,
 ) {
-  if (!hasPhrase(title, TARGET_SERIES_PHRASE)) {
+  const phrase = context.seriesDistinctivePhrase;
+  const phraseLen = phrase?.length ?? 0;
+
+  const checkIpAnchor = () =>
+    context.ipAnchorTokens.some((anchor) => {
+      if (anchor.includes(' ')) {
+        return hasPhrase(title, anchor);
+      }
+      return hasWholeToken(tokens, anchor);
+    });
+
+  if (phraseLen < 4) {
+    // Distinctive too short to require — fall back to IP anchor + figure identity
+    return checkIpAnchor() || targetFigureMatched;
+  }
+
+  if (!hasPhrase(title, phrase)) {
     return false;
   }
 
-  const hasIpAnchor = context.ipAnchorTokens.some((anchor) => {
-    if (anchor.includes(' ')) {
-      return hasPhrase(title, anchor);
-    }
-    return hasWholeToken(tokens, anchor);
-  });
+  const hasDistinctSeriesAlias = context.seriesAliasPhrases.some((p) =>
+    hasPhrase(title, p),
+  );
 
-  const hasDistinctSeriesAlias = context.seriesAliasPhrases.some((phrase) => {
-    if (phrase === TARGET_SERIES_PHRASE) {
-      return false;
-    }
-    return hasPhrase(title, phrase);
-  });
-
-  if (hasIpAnchor || hasDistinctSeriesAlias) {
+  if (checkIpAnchor() || hasDistinctSeriesAlias) {
     return true;
   }
 

@@ -12,14 +12,22 @@ import { matchListingsToFigure } from './_snapshot_match.mjs';
  */
 
 /**
+ * sampleSize >= this value → confidence "high"; below → "low".
+ * Aligns with the series-fallback threshold in the Flutter dev cases.
+ */
+export const CONFIDENCE_HIGH_THRESHOLD = 5;
+
+/**
  * @typedef {Object} SnapshotDocument
  * @property {string} figureId
+ * @property {string} seriesId
  * @property {string} snapshotAt
  * @property {number} sampleSize
  * @property {number | null} averagePrice
  * @property {number | null} medianPrice
  * @property {number | null} minPrice
  * @property {number | null} maxPrice
+ * @property {'high' | 'low'} confidence
  * @property {string} dataSource
  */
 
@@ -43,14 +51,19 @@ import { matchListingsToFigure } from './_snapshot_match.mjs';
  * @returns {SnapshotDocument}
  */
 export function buildSnapshotDocument(figure, aggregation, metadata = {}) {
+  const confidence =
+    aggregation.sampleSize >= CONFIDENCE_HIGH_THRESHOLD ? 'high' : 'low';
+
   return {
     figureId: figure.id,
+    seriesId: figure.seriesId ?? '',
     snapshotAt: metadata.snapshotAt ?? new Date().toISOString(),
     sampleSize: aggregation.sampleSize,
     averagePrice: aggregation.averagePrice,
     medianPrice: aggregation.medianPrice,
     minPrice: aggregation.minPrice,
     maxPrice: aggregation.maxPrice,
+    confidence,
     dataSource: metadata.dataSource ?? 'fixture',
   };
 }

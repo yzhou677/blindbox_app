@@ -149,6 +149,21 @@ describe('buildMatcherContext', () => {
       ),
     );
   });
+
+  test('seriesDistinctivePhrase is catalog-derived for Big Into Energy', () => {
+    const context = buildLuckContext();
+    assert.equal(context.seriesDistinctivePhrase, 'big into energy');
+  });
+
+  test('ipAnchorTokens are catalog-derived (no hardcoded SERIES_IP_ANCHORS)', () => {
+    const context = buildLuckContext();
+    // The Monsters IP: displayName "The Monsters", aliases ["Labubu", "Monsters"]
+    assert.ok(context.ipAnchorTokens.includes('the monsters'));
+    assert.ok(context.ipAnchorTokens.includes('labubu'));
+    assert.ok(context.ipAnchorTokens.includes('monsters'));
+    // Must NOT contain tokens from other IPs
+    assert.ok(!context.ipAnchorTokens.includes('skullpanda'));
+  });
 });
 
 describe('matchCatalogFigure — Lucky positive matches', () => {

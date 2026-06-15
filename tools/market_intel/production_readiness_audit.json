@@ -1,0 +1,339 @@
+{
+  "generatedAt": "2026-06-15T03:33:00.000Z",
+  "sprint": "Sprint 2 Step 3F",
+  "overallStatus": "Working Prototype",
+  "pipelineStages": [
+    {
+      "stage": "Catalog",
+      "module": "_catalog_bundle.mjs",
+      "implemented": true,
+      "tested": true,
+      "productionReady": true,
+      "blocked": false,
+      "notes": "Firestore + seed JSON fallback. loadCatalogBundle() works offline."
+    },
+    {
+      "stage": "Search Term Derivation",
+      "module": "_search_term_derivation.mjs",
+      "implemented": true,
+      "tested": true,
+      "productionReady": true,
+      "blocked": false,
+      "notes": "extractSeriesDistinctive + deriveSearchTerms. 2,433 unique queries for 1,137 figures."
+    },
+    {
+      "stage": "Snapshot Search Planning",
+      "module": "_snapshot_search.mjs",
+      "implemented": true,
+      "tested": true,
+      "productionReady": true,
+      "blocked": false,
+      "notes": "buildFigureSearchPlans with figure/series/limit filters."
+    },
+    {
+      "stage": "eBay Fetch Layer",
+      "module": "_ebay_completed_sales.mjs + _snapshot_fetch.mjs",
+      "implemented": true,
+      "tested": true,
+      "productionReady": false,
+      "blocked": true,
+      "blockReason": "Marketplace Insights API requires eBay approval. Finding API decommissioned. All production runs use fixture mode.",
+      "notes": "Per-query retry (3x), rate-limit detection, dedup by itemId. Fixture mode fully functional."
+    },
+    {
+      "stage": "Normalizer",
+      "module": "_title_normalizer.mjs",
+      "implemented": true,
+      "tested": true,
+      "productionReady": true,
+      "blocked": false,
+      "notes": "Full structural normalize + noise/exclude pipeline. Edge case corpus at edge_case_titles.txt."
+    },
+    {
+      "stage": "Matcher",
+      "module": "_catalog_matcher.mjs",
+      "implemented": true,
+      "tested": true,
+      "productionReady": "partial",
+      "blocked": false,
+      "notes": "Generalized (Sprint 3E.2). 1137/1144 MATCHABLE. 137 borderline-distinctive figures unvalidated against real listings. BIE regression: 7/7 passing."
+    },
+    {
+      "stage": "Sales Aggregator",
+      "module": "_sales_aggregator.mjs",
+      "implemented": true,
+      "tested": true,
+      "productionReady": true,
+      "blocked": false,
+      "notes": "median, average, min, max. Handles empty input (all nulls)."
+    },
+    {
+      "stage": "Snapshot Document",
+      "module": "_snapshot_document.mjs",
+      "implemented": true,
+      "tested": true,
+      "productionReady": false,
+      "blocked": false,
+      "notes": "In-memory only. No Firestore write. Document shape is minimal (8 fields). No persistence layer."
+    }
+  ],
+  "queryVolume": {
+    "totalFigures": 1144,
+    "figuresWithSearchTerms": 1137,
+    "figuresSkipped": 7,
+    "totalQueriesBeforeDedupe": 2462,
+    "uniqueQueries": 2433,
+    "duplicateQueryStrings": 29,
+    "averageQueriesPerFigure": 2.15,
+    "estimatedQueriesPerDay": {
+      "oneRunPerDay": 2433,
+      "twoRunsPerDay": 4866,
+      "note": "No dedup between runs today. Cache would reduce this significantly."
+    },
+    "estimatedQueriesPerWeek": {
+      "oneRunPerDay": 17031,
+      "note": "eBay Marketplace Insights rate limits unknown until approval granted."
+    }
+  },
+  "snapshotDocumentShape": {
+    "currentFields": [
+      "figureId",
+      "snapshotAt",
+      "sampleSize",
+      "averagePrice",
+      "medianPrice",
+      "minPrice",
+      "maxPrice",
+      "dataSource"
+    ],
+    "missingForProduction": [
+      "seriesId",
+      "brandId",
+      "currency",
+      "runId",
+      "matcherVersion"
+    ],
+    "firestoreReadiness": "NOT_READY",
+    "historicalSupportDesigned": false
+  },
+  "missingComponents": [
+    {
+      "id": "firestore_persistence",
+      "name": "Firestore Persistence",
+      "priority": "P0",
+      "blocksLaunch": true,
+      "status": "NOT_STARTED",
+      "description": "Snapshot documents exist in memory only. No collection structure, document IDs, or write logic defined."
+    },
+    {
+      "id": "live_data_source",
+      "name": "Live eBay Data Source",
+      "priority": "P0",
+      "blocksLaunch": true,
+      "status": "BLOCKED_EXTERNAL",
+      "description": "Marketplace Insights API pending eBay approval. No timeline known."
+    },
+    {
+      "id": "snapshot_scheduler",
+      "name": "Snapshot Scheduler",
+      "priority": "P1",
+      "blocksLaunch": true,
+      "status": "NOT_STARTED",
+      "description": "Manual CLI only. No automation, cadence, or trigger mechanism."
+    },
+    {
+      "id": "observability",
+      "name": "Observability",
+      "priority": "P1",
+      "blocksLaunch": false,
+      "status": "NOT_STARTED",
+      "description": "stdout logging only. No metrics, error reporting, or structured audit logs."
+    },
+    {
+      "id": "failure_recovery",
+      "name": "Failure Recovery and Checkpointing",
+      "priority": "P2",
+      "blocksLaunch": false,
+      "status": "PARTIAL",
+      "description": "Per-query retry exists (3x). No per-figure resume, checkpoint state, or partial run recovery."
+    },
+    {
+      "id": "query_cache",
+      "name": "Query Cache / Incremental Refresh",
+      "priority": "P2",
+      "blocksLaunch": false,
+      "status": "NOT_STARTED",
+      "description": "2,433 unique queries per full run. No cache. Deferred until API quota constraints are known."
+    },
+    {
+      "id": "borderline_series_validation",
+      "name": "Borderline Series Validation",
+      "priority": "P1",
+      "blocksLaunch": false,
+      "status": "NOT_STARTED",
+      "description": "137 figures across 13 series with 4-7 char distinctives not validated against real eBay listing titles."
+    },
+    {
+      "id": "client_snapshot_read",
+      "name": "Flutter Client Snapshot Read Layer",
+      "priority": "P1",
+      "blocksLaunch": false,
+      "status": "PARTIAL",
+      "description": "market_snapshot_dev_screen.dart exists for dev display. Production Firestore read path and data binding not implemented."
+    }
+  ],
+  "dataSourceReadiness": {
+    "fixture": {
+      "status": "READY",
+      "notes": "Fully functional. Used for all current development and testing."
+    },
+    "findingApi": {
+      "status": "BLOCKED",
+      "notes": "Decommissioned. findCompletedItems unavailable. Not recoverable."
+    },
+    "marketplaceInsights": {
+      "status": "BLOCKED",
+      "notes": "Requires eBay business approval for buy.marketplace.insights scope. OAuth credentials ready. Endpoint path known.",
+      "endpoint": "GET /buy/marketplace/insights/v1_beta/item_sales/search"
+    },
+    "thirdParty": {
+      "status": "NOT_EVALUATED",
+      "notes": "Apify and other marketplace data vendors not assessed for cost, reliability, or TOS compliance."
+    }
+  },
+  "existingTechDebt": [
+    {
+      "id": "snapshot_query_volume_optimization",
+      "title": "Snapshot Query Volume Optimization",
+      "stillRelevant": true,
+      "blockingLaunch": false,
+      "phase": "post-launch",
+      "priority": "P2",
+      "statusChange": "No change. Still deferred until API quotas are known from live runs."
+    },
+    {
+      "id": "sold_listing_data_source",
+      "title": "Sold Listing Data Source Migration",
+      "stillRelevant": true,
+      "blockingLaunch": true,
+      "phase": "pre-launch",
+      "priority": "P0",
+      "statusChange": "Critical path. Unblocks entire production pipeline."
+    },
+    {
+      "id": "matcher_coverage_validation",
+      "title": "Matcher Coverage Validation",
+      "stillRelevant": false,
+      "blockingLaunch": false,
+      "phase": "complete",
+      "priority": "N/A",
+      "statusChange": "RESOLVED by Sprint 3E.2 generalization. 1137/1144 MATCHABLE. Item can be closed."
+    },
+    {
+      "id": "catalog_metadata_quality_audit",
+      "title": "Catalog Metadata Quality Audit",
+      "stillRelevant": true,
+      "blockingLaunch": false,
+      "phase": "pre-production-scale",
+      "priority": "P1",
+      "statusChange": "Relevant after live data validation. 137 borderline-distinctive figures need real-title testing."
+    }
+  ],
+  "launchChecklist": [
+    {
+      "id": "marketplace_insights_approval",
+      "item": "eBay Marketplace Insights API approved",
+      "category": "external",
+      "blocksLaunch": true,
+      "complete": false
+    },
+    {
+      "id": "live_listing_validation",
+      "item": "Real sold listings fetched and validated against matcher",
+      "category": "validation",
+      "blocksLaunch": true,
+      "complete": false
+    },
+    {
+      "id": "firestore_schema",
+      "item": "Firestore collection structure and document schema designed",
+      "category": "architecture",
+      "blocksLaunch": true,
+      "complete": false
+    },
+    {
+      "id": "firestore_write",
+      "item": "Firestore persistence implemented in snapshot pipeline",
+      "category": "implementation",
+      "blocksLaunch": true,
+      "complete": false
+    },
+    {
+      "id": "flutter_read",
+      "item": "Flutter client reads snapshots from Firestore (not dev screen)",
+      "category": "implementation",
+      "blocksLaunch": true,
+      "complete": false
+    },
+    {
+      "id": "snapshot_scheduler",
+      "item": "Snapshot scheduler implemented (Cloud Function, GitHub Action, or cron)",
+      "category": "implementation",
+      "blocksLaunch": true,
+      "complete": false
+    },
+    {
+      "id": "borderline_series_validation",
+      "item": "Borderline series (4-7 char distinctive) validated against real listing titles",
+      "category": "validation",
+      "blocksLaunch": false,
+      "complete": false
+    },
+    {
+      "id": "query_cache_strategy",
+      "item": "Query cache strategy selected and documented",
+      "category": "architecture",
+      "blocksLaunch": false,
+      "complete": false
+    },
+    {
+      "id": "production_dry_run",
+      "item": "Full production dry-run completed (1,144 figures, live API)",
+      "category": "validation",
+      "blocksLaunch": false,
+      "complete": false
+    },
+    {
+      "id": "coverage_audit_live",
+      "item": "Coverage audit re-run on live Marketplace Insights data",
+      "category": "validation",
+      "blocksLaunch": false,
+      "complete": false
+    },
+    {
+      "id": "cost_review",
+      "item": "API cost and quota review completed",
+      "category": "operations",
+      "blocksLaunch": false,
+      "complete": false
+    },
+    {
+      "id": "catalog_metadata_aliases",
+      "item": "Short-name figure aliases added for ambiguousFigureName figures",
+      "category": "data",
+      "blocksLaunch": false,
+      "complete": false
+    }
+  ],
+  "recommendation": {
+    "classification": "Working Prototype",
+    "rationale": "End-to-end pipeline implemented and tested in fixture mode. Matcher generalized to 99.4% catalog coverage. No live data, no Firestore persistence, no scheduler. Two P0 blockers (live data source + Firestore persistence) must be resolved before production candidate status.",
+    "nextMilestone": "Production Candidate",
+    "nextMilestoneRequirements": [
+      "Marketplace Insights access granted",
+      "Firestore persistence implemented",
+      "Snapshot scheduler implemented",
+      "At least one successful production run validated"
+    ]
+  }
+}

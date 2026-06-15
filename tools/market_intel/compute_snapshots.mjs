@@ -7,6 +7,8 @@
  *   node tools/market_intel/compute_snapshots.mjs --fetch --figure sisi
  *   node tools/market_intel/compute_snapshots.mjs --fetch --limit 50
  *   node tools/market_intel/compute_snapshots.mjs --dry-run
+ *   node tools/market_intel/compute_snapshots.mjs --fetch --push-firestore
+ *   node tools/market_intel/compute_snapshots.mjs --fetch --push-firestore --dry-run
  *   EBAY_FETCH_MODE=fixture node tools/market_intel/compute_snapshots.mjs --fetch --figure sisi --snapshot-debug
  */
 
@@ -27,6 +29,7 @@ import {
   buildFigureSnapshot,
   formatSnapshotDebug,
 } from './_snapshot_document.mjs';
+import { pushSnapshotsToFirestore } from './push_market_snapshots.mjs';
 
 /**
  * @typedef {Object} CliOptions
@@ -36,6 +39,7 @@ import {
  * @property {string | null} figureFilter
  * @property {boolean} verbose
  * @property {boolean} snapshotDebug
+ * @property {boolean} pushFirestore
  */
 
 /**
@@ -51,6 +55,7 @@ function parseCliOptions(argv) {
     figureFilter: null,
     verbose: false,
     snapshotDebug: false,
+    pushFirestore: false,
   };
 
   for (let index = 2; index < argv.length; index += 1) {
@@ -73,6 +78,11 @@ function parseCliOptions(argv) {
 
     if (arg === '--snapshot-debug') {
       options.snapshotDebug = true;
+      continue;
+    }
+
+    if (arg === '--push-firestore') {
+      options.pushFirestore = true;
       continue;
     }
 
@@ -278,6 +288,10 @@ async function main() {
   const startedAt = Date.now();
   /** @type {import('./_snapshot_fetch.mjs').FigureCompletedSalesFetch[]} */
   const fetches = [];
+  /** @type {import('./_snapshot_document.mjs').SnapshotDocument[]} */
+  const snapshots = [];
+
+  const dataSource = config.fetchMode === 'fixture' ? 'fixture' : 'live';
 
   for (const plan of plans) {
     const fetchResult = await fetchFigureCompletedSales(plan, {
@@ -305,7 +319,7 @@ async function main() {
         fetchResult.listings,
         figure,
         bundle,
-        { dataSource: config.fetchMode === 'fixture' ? 'fixture' : 'live' },
+        { dataSource },
       );
 
       console.log(
@@ -317,6 +331,19 @@ async function main() {
       );
       console.log('');
       continue;
+    }
+
+    if (!fetchResult.skipped) {
+      const figure = findFigureById(bundle, plan.catalogFigureId);
+      if (figure) {
+        const pipeline = buildFigureSnapshot(
+          fetchResult.listings,
+          figure,
+          bundle,
+          { dataSource },
+        );
+        snapshots.push(pipeline.document);
+      }
     }
 
     const showDetailed =
@@ -336,6 +363,25 @@ async function main() {
   printPlanSummary(plans);
   if (!options.snapshotDebug) {
     printFetchSummary(fetches, Date.now() - startedAt);
+  }
+
+  if (options.pushFirestore) {
+    if (snapshots.length === 0) {
+      console.error('No snapshots to push (all figures skipped or no data).');
+      process.exit(0);
+    }
+
+    console.error('');
+    console.error(`Pushing ${snapshots.length} snapshot(s) to Firestore...`);
+
+    const result = await pushSnapshotsToFirestore(snapshots, {
+      dryRun: options.mode === 'dry-run',
+    });
+
+    if (result.failed > 0) {
+      console.error(`${result.failed} batch write(s) failed.`);
+      process.exit(1);
+    }
   }
 }
 

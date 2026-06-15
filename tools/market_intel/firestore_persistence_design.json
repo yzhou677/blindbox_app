@@ -1,0 +1,113 @@
+{
+  "sprint": "Sprint 2 Step 4A",
+  "generatedAt": "2026-06-15T03:45:00.000Z",
+  "designStatus": "CONFIRMED — schema already exists; documenting pipeline bridge",
+  "collectionName": "market_snapshots",
+  "recommendation": "Option A — flat collection, latest-only, with additive history subcollection in future sprint",
+  "firestoreSchema": {
+    "collection": "market_snapshots",
+    "documentIdScheme": "figureId for figure-level; seriesId for series-level fallback",
+    "canonicalSchemaFile": "lib/features/market_intel/data/firestore/FIRESTORE_MARKET_SNAPSHOTS_SCHEMA.md",
+    "fields": [
+      { "name": "level",            "type": "string",         "required": true,  "values": ["figure", "series"] },
+      { "name": "figureId",         "type": "string|null",    "required": "when level==figure",  "notes": "absent or null when level==series" },
+      { "name": "seriesId",         "type": "string",         "required": true,  "notes": "used for batch queries" },
+      { "name": "estimatedValueUsd","type": "number",         "required": true,  "constraint": "> 0" },
+      { "name": "trend",            "type": "string",         "required": false, "values": ["rising","falling","stable","unknown"], "default": "unknown" },
+      { "name": "confidence",       "type": "string",         "required": true,  "values": ["high","low"] },
+      { "name": "recentSalesCount", "type": "number (int)",   "required": true,  "constraint": ">= 0" },
+      { "name": "priceRangeMinUsd", "type": "number|null",    "required": false },
+      { "name": "priceRangeMaxUsd", "type": "number|null",    "required": false },
+      { "name": "computedAt",       "type": "Timestamp",      "required": true }
+    ],
+    "compositeIndex": {
+      "collection": "market_snapshots",
+      "fields": ["seriesId ASC", "level ASC"],
+      "purpose": "getSnapshotsForSeries() query"
+    }
+  },
+  "pipelineBridge": {
+    "sourceShape": {
+      "figureId":     "string",
+      "snapshotAt":   "ISO 8601 string",
+      "sampleSize":   "number",
+      "averagePrice": "number | null",
+      "medianPrice":  "number | null",
+      "minPrice":     "number | null",
+      "maxPrice":     "number | null",
+      "dataSource":   "string"
+    },
+    "fieldMapping": [
+      { "from": "figureId",     "to": "figureId",          "transform": "direct" },
+      { "from": "(catalog)",    "to": "seriesId",           "transform": "look up from catalog bundle using figureId" },
+      { "from": "(constant)",   "to": "level",              "transform": "always 'figure' for pipeline-produced documents" },
+      { "from": "medianPrice",  "to": "estimatedValueUsd",  "transform": "use medianPrice; skip document if null or <= 0" },
+      { "from": "(computed)",   "to": "confidence",         "transform": "sampleSize >= 5 → 'high'; < 5 → 'low'" },
+      { "from": "(constant)",   "to": "trend",              "transform": "always 'unknown' for MVP; computed once history exists" },
+      { "from": "sampleSize",   "to": "recentSalesCount",   "transform": "direct rename" },
+      { "from": "minPrice",     "to": "priceRangeMinUsd",   "transform": "direct rename; omit if null" },
+      { "from": "maxPrice",     "to": "priceRangeMaxUsd",   "transform": "direct rename; omit if null" },
+      { "from": "snapshotAt",   "to": "computedAt",         "transform": "ISO string → Firestore Timestamp (serverTimestamp() preferred)" },
+      { "from": "averagePrice", "to": "(not stored)",       "transform": "averagePrice is internal; do not write to Firestore" },
+      { "from": "dataSource",   "to": "(not stored)",       "transform": "internal provenance; do not write to Firestore" }
+    ],
+    "writeCondition": "Only write document if medianPrice is not null AND medianPrice > 0",
+    "confidenceThreshold": 5,
+    "trendMvpValue": "unknown"
+  },
+  "readPatterns": [
+    {
+      "id": "figure_page",
+      "description": "Show latest valuation for one figure",
+      "query": "collection('market_snapshots').doc(figureId).get()",
+      "fallback": "If null, collection('market_snapshots').doc(seriesId).get()"
+    },
+    {
+      "id": "collection_page",
+      "description": "Show valuation for many owned figures",
+      "query": "N individual doc reads (one per figureId)",
+      "notes": "Firestore charges per document read; 1,137 reads for full collection unlikely at once. Provider caches results."
+    },
+    {
+      "id": "series_batch",
+      "description": "Fetch all figure-level snapshots in a series",
+      "query": "collection('market_snapshots').where('seriesId', '==', X).where('level', '==', 'figure').get()",
+      "requiresCompositeIndex": true
+    }
+  ],
+  "historicalStrategy": {
+    "mvp": "latest-only — overwrite on each pipeline run",
+    "future": "price_history/{YYYY-MM-DD} subcollection; additive, no migration required",
+    "trendComputation": "requires at least 2 snapshot dates; deferred to after first live production run"
+  },
+  "missingComponents": [
+    {
+      "id": "push_market_snapshots_prod",
+      "name": "Production Firestore writer",
+      "description": "push_market_snapshots.mjs — reads pipeline SnapshotDocument output, maps fields, batch-writes to market_snapshots. Pattern: mirrors push_market_snapshots_dev.mjs.",
+      "status": "NOT_STARTED",
+      "priority": "P0"
+    },
+    {
+      "id": "pipeline_series_id",
+      "name": "seriesId in SnapshotDocument",
+      "description": "SnapshotDocument must include seriesId (available from catalog at match time). Required by Firestore schema.",
+      "status": "NOT_STARTED",
+      "priority": "P0"
+    },
+    {
+      "id": "confidence_computation",
+      "name": "Confidence level in SnapshotDocument",
+      "description": "Compute 'high' / 'low' from sampleSize >= 5 threshold. Can be computed in buildSnapshotDocument or in the writer.",
+      "status": "NOT_STARTED",
+      "priority": "P0"
+    },
+    {
+      "id": "series_fallback_documents",
+      "name": "Series-level fallback snapshot generation",
+      "description": "No mechanism currently computes series-level fallback estimates. Needed for figures with no individual sales data.",
+      "status": "NOT_STARTED",
+      "priority": "P1"
+    }
+  ]
+}
