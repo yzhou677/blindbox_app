@@ -1,0 +1,1089 @@
+{
+  "generatedAt": "2026-06-15T04:08:28.824Z",
+  "sampleSize": 15,
+  "status": "FAIL",
+  "productionReadiness": "NOT_READY",
+  "productionReadinessExplanation": "1 figure(s) failed validation. Resolve malformed snapshot or Firestore payloads and plan skips before live data.",
+  "counts": {
+    "PASS": 9,
+    "WARNING": 5,
+    "FAIL": 1
+  },
+  "figures": [
+    {
+      "figureId": "the_monsters_big_into_energy_vinyl_plush_pendant_luck",
+      "displayName": "Luck",
+      "seriesId": "the_monsters_big_into_energy_vinyl_plush_pendant",
+      "seriesDisplayName": "THE MONSTERS Big into Energy Series-Vinyl Plush Pendant Blind Box",
+      "brandId": "pop_mart",
+      "brandDisplayName": "POP MART",
+      "category": "Big Into Energy",
+      "status": "PASS",
+      "warnings": [],
+      "failures": [],
+      "searchTerms": [
+        "POP MART Lucky Big Into Energy",
+        "POPMART LUCKY BIG ENERGY"
+      ],
+      "searchTermIssues": [],
+      "fixtureListingTitles": [
+        "POP MART THE MONSTERS Luck Big Into Energy Vinyl Plush",
+        "POPMART THE MONSTERS Big Into Energy Luck Vinyl Plush Figure"
+      ],
+      "matchedCount": 2,
+      "rejectedCount": 0,
+      "topRejectReasons": [],
+      "aggregation": {
+        "sampleSize": 2,
+        "medianPrice": 39.75,
+        "averagePrice": 39.75,
+        "minPrice": 39.5,
+        "maxPrice": 40
+      },
+      "snapshotDocument": {
+        "figureId": "the_monsters_big_into_energy_vinyl_plush_pendant_luck",
+        "seriesId": "the_monsters_big_into_energy_vinyl_plush_pendant",
+        "snapshotAt": "2026-06-15T04:08:29.140Z",
+        "sampleSize": 2,
+        "averagePrice": 39.75,
+        "medianPrice": 39.75,
+        "minPrice": 39.5,
+        "maxPrice": 40,
+        "confidence": "low",
+        "dataSource": "fixture"
+      },
+      "snapshotMalformed": false,
+      "snapshotMissingFields": [],
+      "firestore": {
+        "skipped": false,
+        "skipReason": null,
+        "docId": "the_monsters_big_into_energy_vinyl_plush_pendant_luck",
+        "fields": {
+          "level": "figure",
+          "figureId": "the_monsters_big_into_energy_vinyl_plush_pendant_luck",
+          "seriesId": "the_monsters_big_into_energy_vinyl_plush_pendant",
+          "estimatedValueUsd": 39.75,
+          "trend": "unknown",
+          "confidence": "low",
+          "recentSalesCount": 2,
+          "computedAt": "2026-06-15T04:08:29.140Z",
+          "priceRangeMinUsd": 39.5,
+          "priceRangeMaxUsd": 40
+        },
+        "malformed": false,
+        "missingFields": []
+      }
+    },
+    {
+      "figureId": "the_monsters_big_into_energy_vinyl_plush_pendant_hope",
+      "displayName": "Hope",
+      "seriesId": "the_monsters_big_into_energy_vinyl_plush_pendant",
+      "seriesDisplayName": "THE MONSTERS Big into Energy Series-Vinyl Plush Pendant Blind Box",
+      "brandId": "pop_mart",
+      "brandDisplayName": "POP MART",
+      "category": "Big Into Energy",
+      "status": "PASS",
+      "warnings": [],
+      "failures": [],
+      "searchTerms": [
+        "POP MART Labubu Big into Energy Hope",
+        "POPMART Labubu Big into Energy Hope"
+      ],
+      "searchTermIssues": [],
+      "fixtureListingTitles": [
+        "POP MART Labubu Big into Energy Hope - sold listing sample A",
+        "POP MART Labubu Big into Energy Hope - sold listing sample B"
+      ],
+      "matchedCount": 2,
+      "rejectedCount": 0,
+      "topRejectReasons": [],
+      "aggregation": {
+        "sampleSize": 2,
+        "medianPrice": 40.995000000000005,
+        "averagePrice": 41,
+        "minPrice": 39.99,
+        "maxPrice": 42
+      },
+      "snapshotDocument": {
+        "figureId": "the_monsters_big_into_energy_vinyl_plush_pendant_hope",
+        "seriesId": "the_monsters_big_into_energy_vinyl_plush_pendant",
+        "snapshotAt": "2026-06-15T04:08:29.448Z",
+        "sampleSize": 2,
+        "averagePrice": 41,
+        "medianPrice": 40.995000000000005,
+        "minPrice": 39.99,
+        "maxPrice": 42,
+        "confidence": "low",
+        "dataSource": "fixture"
+      },
+      "snapshotMalformed": false,
+      "snapshotMissingFields": [],
+      "firestore": {
+        "skipped": false,
+        "skipReason": null,
+        "docId": "the_monsters_big_into_energy_vinyl_plush_pendant_hope",
+        "fields": {
+          "level": "figure",
+          "figureId": "the_monsters_big_into_energy_vinyl_plush_pendant_hope",
+          "seriesId": "the_monsters_big_into_energy_vinyl_plush_pendant",
+          "estimatedValueUsd": 40.995000000000005,
+          "trend": "unknown",
+          "confidence": "low",
+          "recentSalesCount": 2,
+          "computedAt": "2026-06-15T04:08:29.448Z",
+          "priceRangeMinUsd": 39.99,
+          "priceRangeMaxUsd": 42
+        },
+        "malformed": false,
+        "missingFields": []
+      }
+    },
+    {
+      "figureId": "the_monsters_big_into_energy_vinyl_plush_pendant_love",
+      "displayName": "Love",
+      "seriesId": "the_monsters_big_into_energy_vinyl_plush_pendant",
+      "seriesDisplayName": "THE MONSTERS Big into Energy Series-Vinyl Plush Pendant Blind Box",
+      "brandId": "pop_mart",
+      "brandDisplayName": "POP MART",
+      "category": "Big Into Energy",
+      "status": "PASS",
+      "warnings": [],
+      "failures": [],
+      "searchTerms": [
+        "POP MART Labubu Big into Energy Love",
+        "POPMART Labubu Big into Energy Love"
+      ],
+      "searchTermIssues": [],
+      "fixtureListingTitles": [
+        "POP MART Labubu Big into Energy Love - sold listing sample A",
+        "POP MART Labubu Big into Energy Love - sold listing sample B"
+      ],
+      "matchedCount": 2,
+      "rejectedCount": 0,
+      "topRejectReasons": [],
+      "aggregation": {
+        "sampleSize": 2,
+        "medianPrice": 40.995000000000005,
+        "averagePrice": 41,
+        "minPrice": 39.99,
+        "maxPrice": 42
+      },
+      "snapshotDocument": {
+        "figureId": "the_monsters_big_into_energy_vinyl_plush_pendant_love",
+        "seriesId": "the_monsters_big_into_energy_vinyl_plush_pendant",
+        "snapshotAt": "2026-06-15T04:08:29.755Z",
+        "sampleSize": 2,
+        "averagePrice": 41,
+        "medianPrice": 40.995000000000005,
+        "minPrice": 39.99,
+        "maxPrice": 42,
+        "confidence": "low",
+        "dataSource": "fixture"
+      },
+      "snapshotMalformed": false,
+      "snapshotMissingFields": [],
+      "firestore": {
+        "skipped": false,
+        "skipReason": null,
+        "docId": "the_monsters_big_into_energy_vinyl_plush_pendant_love",
+        "fields": {
+          "level": "figure",
+          "figureId": "the_monsters_big_into_energy_vinyl_plush_pendant_love",
+          "seriesId": "the_monsters_big_into_energy_vinyl_plush_pendant",
+          "estimatedValueUsd": 40.995000000000005,
+          "trend": "unknown",
+          "confidence": "low",
+          "recentSalesCount": 2,
+          "computedAt": "2026-06-15T04:08:29.755Z",
+          "priceRangeMinUsd": 39.99,
+          "priceRangeMaxUsd": 42
+        },
+        "malformed": false,
+        "missingFields": []
+      }
+    },
+    {
+      "figureId": "the_monsters_big_into_energy_vinyl_plush_pendant_id",
+      "displayName": "Id",
+      "seriesId": "the_monsters_big_into_energy_vinyl_plush_pendant",
+      "seriesDisplayName": "THE MONSTERS Big into Energy Series-Vinyl Plush Pendant Blind Box",
+      "brandId": "pop_mart",
+      "brandDisplayName": "POP MART",
+      "category": "Big Into Energy",
+      "status": "PASS",
+      "warnings": [],
+      "failures": [],
+      "searchTerms": [
+        "POP MART Labubu Big into Energy Id",
+        "POPMART Labubu Big into Energy Id",
+        "POP MART Labubu Big into Energy Id secret"
+      ],
+      "searchTermIssues": [],
+      "fixtureListingTitles": [
+        "POP MART Labubu Big Into Energy Id Secret Chase"
+      ],
+      "matchedCount": 1,
+      "rejectedCount": 0,
+      "topRejectReasons": [],
+      "aggregation": {
+        "sampleSize": 1,
+        "medianPrice": 95,
+        "averagePrice": 95,
+        "minPrice": 95,
+        "maxPrice": 95
+      },
+      "snapshotDocument": {
+        "figureId": "the_monsters_big_into_energy_vinyl_plush_pendant_id",
+        "seriesId": "the_monsters_big_into_energy_vinyl_plush_pendant",
+        "snapshotAt": "2026-06-15T04:08:30.381Z",
+        "sampleSize": 1,
+        "averagePrice": 95,
+        "medianPrice": 95,
+        "minPrice": 95,
+        "maxPrice": 95,
+        "confidence": "low",
+        "dataSource": "fixture"
+      },
+      "snapshotMalformed": false,
+      "snapshotMissingFields": [],
+      "firestore": {
+        "skipped": false,
+        "skipReason": null,
+        "docId": "the_monsters_big_into_energy_vinyl_plush_pendant_id",
+        "fields": {
+          "level": "figure",
+          "figureId": "the_monsters_big_into_energy_vinyl_plush_pendant_id",
+          "seriesId": "the_monsters_big_into_energy_vinyl_plush_pendant",
+          "estimatedValueUsd": 95,
+          "trend": "unknown",
+          "confidence": "low",
+          "recentSalesCount": 1,
+          "computedAt": "2026-06-15T04:08:30.381Z",
+          "priceRangeMinUsd": 95,
+          "priceRangeMaxUsd": 95
+        },
+        "malformed": false,
+        "missingFields": []
+      }
+    },
+    {
+      "figureId": "the_monsters_big_into_energy_vinyl_plush_pendant_serenity",
+      "displayName": "Serenity",
+      "seriesId": "the_monsters_big_into_energy_vinyl_plush_pendant",
+      "seriesDisplayName": "THE MONSTERS Big into Energy Series-Vinyl Plush Pendant Blind Box",
+      "brandId": "pop_mart",
+      "brandDisplayName": "POP MART",
+      "category": "Big Into Energy",
+      "status": "PASS",
+      "warnings": [],
+      "failures": [],
+      "searchTerms": [
+        "POP MART Labubu Big into Energy Serenity",
+        "POPMART Labubu Big into Energy Serenity"
+      ],
+      "searchTermIssues": [],
+      "fixtureListingTitles": [
+        "POP MART Labubu Big into Energy Serenity - sold listing sample A",
+        "POP MART Labubu Big into Energy Serenity - sold listing sample B"
+      ],
+      "matchedCount": 2,
+      "rejectedCount": 0,
+      "topRejectReasons": [],
+      "aggregation": {
+        "sampleSize": 2,
+        "medianPrice": 40.995000000000005,
+        "averagePrice": 41,
+        "minPrice": 39.99,
+        "maxPrice": 42
+      },
+      "snapshotDocument": {
+        "figureId": "the_monsters_big_into_energy_vinyl_plush_pendant_serenity",
+        "seriesId": "the_monsters_big_into_energy_vinyl_plush_pendant",
+        "snapshotAt": "2026-06-15T04:08:30.695Z",
+        "sampleSize": 2,
+        "averagePrice": 41,
+        "medianPrice": 40.995000000000005,
+        "minPrice": 39.99,
+        "maxPrice": 42,
+        "confidence": "low",
+        "dataSource": "fixture"
+      },
+      "snapshotMalformed": false,
+      "snapshotMissingFields": [],
+      "firestore": {
+        "skipped": false,
+        "skipReason": null,
+        "docId": "the_monsters_big_into_energy_vinyl_plush_pendant_serenity",
+        "fields": {
+          "level": "figure",
+          "figureId": "the_monsters_big_into_energy_vinyl_plush_pendant_serenity",
+          "seriesId": "the_monsters_big_into_energy_vinyl_plush_pendant",
+          "estimatedValueUsd": 40.995000000000005,
+          "trend": "unknown",
+          "confidence": "low",
+          "recentSalesCount": 2,
+          "computedAt": "2026-06-15T04:08:30.695Z",
+          "priceRangeMinUsd": 39.99,
+          "priceRangeMaxUsd": 42
+        },
+        "malformed": false,
+        "missingFields": []
+      }
+    },
+    {
+      "figureId": "the_monsters_big_into_energy_vinyl_plush_pendant_loyalty",
+      "displayName": "Loyalty",
+      "seriesId": "the_monsters_big_into_energy_vinyl_plush_pendant",
+      "seriesDisplayName": "THE MONSTERS Big into Energy Series-Vinyl Plush Pendant Blind Box",
+      "brandId": "pop_mart",
+      "brandDisplayName": "POP MART",
+      "category": "Big Into Energy",
+      "status": "PASS",
+      "warnings": [],
+      "failures": [],
+      "searchTerms": [
+        "POP MART Labubu Big into Energy Loyalty",
+        "POPMART Labubu Big into Energy Loyalty"
+      ],
+      "searchTermIssues": [],
+      "fixtureListingTitles": [
+        "POP MART Labubu Big into Energy Loyalty - sold listing sample A",
+        "POP MART Labubu Big into Energy Loyalty - sold listing sample B"
+      ],
+      "matchedCount": 2,
+      "rejectedCount": 0,
+      "topRejectReasons": [],
+      "aggregation": {
+        "sampleSize": 2,
+        "medianPrice": 40.995000000000005,
+        "averagePrice": 41,
+        "minPrice": 39.99,
+        "maxPrice": 42
+      },
+      "snapshotDocument": {
+        "figureId": "the_monsters_big_into_energy_vinyl_plush_pendant_loyalty",
+        "seriesId": "the_monsters_big_into_energy_vinyl_plush_pendant",
+        "snapshotAt": "2026-06-15T04:08:31.007Z",
+        "sampleSize": 2,
+        "averagePrice": 41,
+        "medianPrice": 40.995000000000005,
+        "minPrice": 39.99,
+        "maxPrice": 42,
+        "confidence": "low",
+        "dataSource": "fixture"
+      },
+      "snapshotMalformed": false,
+      "snapshotMissingFields": [],
+      "firestore": {
+        "skipped": false,
+        "skipReason": null,
+        "docId": "the_monsters_big_into_energy_vinyl_plush_pendant_loyalty",
+        "fields": {
+          "level": "figure",
+          "figureId": "the_monsters_big_into_energy_vinyl_plush_pendant_loyalty",
+          "seriesId": "the_monsters_big_into_energy_vinyl_plush_pendant",
+          "estimatedValueUsd": 40.995000000000005,
+          "trend": "unknown",
+          "confidence": "low",
+          "recentSalesCount": 2,
+          "computedAt": "2026-06-15T04:08:31.007Z",
+          "priceRangeMinUsd": 39.99,
+          "priceRangeMaxUsd": 42
+        },
+        "malformed": false,
+        "missingFields": []
+      }
+    },
+    {
+      "figureId": "the_monsters_big_into_energy_vinyl_plush_pendant_happiness",
+      "displayName": "Happiness",
+      "seriesId": "the_monsters_big_into_energy_vinyl_plush_pendant",
+      "seriesDisplayName": "THE MONSTERS Big into Energy Series-Vinyl Plush Pendant Blind Box",
+      "brandId": "pop_mart",
+      "brandDisplayName": "POP MART",
+      "category": "Big Into Energy",
+      "status": "PASS",
+      "warnings": [],
+      "failures": [],
+      "searchTerms": [
+        "POP MART Labubu Big into Energy Happiness",
+        "POPMART Labubu Big into Energy Happiness"
+      ],
+      "searchTermIssues": [],
+      "fixtureListingTitles": [
+        "POP MART Labubu Big into Energy Happiness - sold listing sample A",
+        "POP MART Labubu Big into Energy Happiness - sold listing sample B"
+      ],
+      "matchedCount": 2,
+      "rejectedCount": 0,
+      "topRejectReasons": [],
+      "aggregation": {
+        "sampleSize": 2,
+        "medianPrice": 40.995000000000005,
+        "averagePrice": 41,
+        "minPrice": 39.99,
+        "maxPrice": 42
+      },
+      "snapshotDocument": {
+        "figureId": "the_monsters_big_into_energy_vinyl_plush_pendant_happiness",
+        "seriesId": "the_monsters_big_into_energy_vinyl_plush_pendant",
+        "snapshotAt": "2026-06-15T04:08:31.317Z",
+        "sampleSize": 2,
+        "averagePrice": 41,
+        "medianPrice": 40.995000000000005,
+        "minPrice": 39.99,
+        "maxPrice": 42,
+        "confidence": "low",
+        "dataSource": "fixture"
+      },
+      "snapshotMalformed": false,
+      "snapshotMissingFields": [],
+      "firestore": {
+        "skipped": false,
+        "skipReason": null,
+        "docId": "the_monsters_big_into_energy_vinyl_plush_pendant_happiness",
+        "fields": {
+          "level": "figure",
+          "figureId": "the_monsters_big_into_energy_vinyl_plush_pendant_happiness",
+          "seriesId": "the_monsters_big_into_energy_vinyl_plush_pendant",
+          "estimatedValueUsd": 40.995000000000005,
+          "trend": "unknown",
+          "confidence": "low",
+          "recentSalesCount": 2,
+          "computedAt": "2026-06-15T04:08:31.317Z",
+          "priceRangeMinUsd": 39.99,
+          "priceRangeMaxUsd": 42
+        },
+        "malformed": false,
+        "missingFields": []
+      }
+    },
+    {
+      "figureId": "the_monsters_have_a_seat_vinyl_plush_sisi",
+      "displayName": "SISI",
+      "seriesId": "the_monsters_have_a_seat_vinyl_plush",
+      "seriesDisplayName": "THE MONSTERS - Have a Seat Vinyl Plush Blind Box",
+      "brandId": "pop_mart",
+      "brandDisplayName": "POP MART",
+      "category": "Have a Seat",
+      "status": "PASS",
+      "warnings": [],
+      "failures": [],
+      "searchTerms": [
+        "POP MART Labubu Have a Seat SISI",
+        "POPMART Labubu Have a Seat SISI"
+      ],
+      "searchTermIssues": [],
+      "fixtureListingTitles": [
+        "POP MART Labubu Have a Seat SISI Vinyl Plush",
+        "POPMART Have a Seat SISI Plush Keychain"
+      ],
+      "matchedCount": 1,
+      "rejectedCount": 1,
+      "topRejectReasons": [
+        {
+          "reason": "excluded",
+          "count": 1
+        }
+      ],
+      "aggregation": {
+        "sampleSize": 1,
+        "medianPrice": 38.5,
+        "averagePrice": 38.5,
+        "minPrice": 38.5,
+        "maxPrice": 38.5
+      },
+      "snapshotDocument": {
+        "figureId": "the_monsters_have_a_seat_vinyl_plush_sisi",
+        "seriesId": "the_monsters_have_a_seat_vinyl_plush",
+        "snapshotAt": "2026-06-15T04:08:31.630Z",
+        "sampleSize": 1,
+        "averagePrice": 38.5,
+        "medianPrice": 38.5,
+        "minPrice": 38.5,
+        "maxPrice": 38.5,
+        "confidence": "low",
+        "dataSource": "fixture"
+      },
+      "snapshotMalformed": false,
+      "snapshotMissingFields": [],
+      "firestore": {
+        "skipped": false,
+        "skipReason": null,
+        "docId": "the_monsters_have_a_seat_vinyl_plush_sisi",
+        "fields": {
+          "level": "figure",
+          "figureId": "the_monsters_have_a_seat_vinyl_plush_sisi",
+          "seriesId": "the_monsters_have_a_seat_vinyl_plush",
+          "estimatedValueUsd": 38.5,
+          "trend": "unknown",
+          "confidence": "low",
+          "recentSalesCount": 1,
+          "computedAt": "2026-06-15T04:08:31.630Z",
+          "priceRangeMinUsd": 38.5,
+          "priceRangeMaxUsd": 38.5
+        },
+        "malformed": false,
+        "missingFields": []
+      }
+    },
+    {
+      "figureId": "the_monsters_have_a_seat_vinyl_plush_duoduo",
+      "displayName": "DUODUO",
+      "seriesId": "the_monsters_have_a_seat_vinyl_plush",
+      "seriesDisplayName": "THE MONSTERS - Have a Seat Vinyl Plush Blind Box",
+      "brandId": "pop_mart",
+      "brandDisplayName": "POP MART",
+      "category": "Have a Seat",
+      "status": "WARNING",
+      "warnings": [
+        "Firestore write skipped: medianPrice null",
+        "Zero matcher hits on fetched listings (common with generic fixture titles)"
+      ],
+      "failures": [],
+      "searchTerms": [
+        "POP MART Labubu Have a Seat DUODUO",
+        "POPMART Labubu Have a Seat DUODUO"
+      ],
+      "searchTermIssues": [],
+      "fixtureListingTitles": [
+        "POP MART Labubu Have a Seat DUODUO - sold listing sample A",
+        "POP MART Labubu Have a Seat DUODUO - sold listing sample B"
+      ],
+      "matchedCount": 0,
+      "rejectedCount": 2,
+      "topRejectReasons": [
+        {
+          "reason": "secretMismatch",
+          "count": 2
+        }
+      ],
+      "aggregation": {
+        "sampleSize": 0,
+        "medianPrice": null,
+        "averagePrice": null,
+        "minPrice": null,
+        "maxPrice": null
+      },
+      "snapshotDocument": {
+        "figureId": "the_monsters_have_a_seat_vinyl_plush_duoduo",
+        "seriesId": "the_monsters_have_a_seat_vinyl_plush",
+        "snapshotAt": "2026-06-15T04:08:31.942Z",
+        "sampleSize": 0,
+        "averagePrice": null,
+        "medianPrice": null,
+        "minPrice": null,
+        "maxPrice": null,
+        "confidence": "low",
+        "dataSource": "fixture"
+      },
+      "snapshotMalformed": false,
+      "snapshotMissingFields": [],
+      "firestore": {
+        "skipped": true,
+        "skipReason": "medianPrice null",
+        "docId": null,
+        "fields": null,
+        "malformed": false,
+        "missingFields": []
+      }
+    },
+    {
+      "figureId": "the_monsters_exciting_macaron_vinyl_face_soymilk",
+      "displayName": "Soymilk",
+      "seriesId": "the_monsters_exciting_macaron_vinyl_face",
+      "seriesDisplayName": "THE MONSTERS - Exciting Macaron Vinyl Face Blind Box",
+      "brandId": "pop_mart",
+      "brandDisplayName": "POP MART",
+      "category": "Exciting Macaron",
+      "status": "PASS",
+      "warnings": [],
+      "failures": [],
+      "searchTerms": [
+        "POP MART Labubu Exciting Macaron Vinyl Face Soymilk",
+        "POPMART Labubu Exciting Macaron Vinyl Face Soymilk"
+      ],
+      "searchTermIssues": [],
+      "fixtureListingTitles": [
+        "POP MART Labubu Exciting Macaron Vinyl Face Soymilk - sold listing sample A",
+        "POP MART Labubu Exciting Macaron Vinyl Face Soymilk - sold listing sample B"
+      ],
+      "matchedCount": 2,
+      "rejectedCount": 0,
+      "topRejectReasons": [],
+      "aggregation": {
+        "sampleSize": 2,
+        "medianPrice": 40.995000000000005,
+        "averagePrice": 41,
+        "minPrice": 39.99,
+        "maxPrice": 42
+      },
+      "snapshotDocument": {
+        "figureId": "the_monsters_exciting_macaron_vinyl_face_soymilk",
+        "seriesId": "the_monsters_exciting_macaron_vinyl_face",
+        "snapshotAt": "2026-06-15T04:08:32.253Z",
+        "sampleSize": 2,
+        "averagePrice": 41,
+        "medianPrice": 40.995000000000005,
+        "minPrice": 39.99,
+        "maxPrice": 42,
+        "confidence": "low",
+        "dataSource": "fixture"
+      },
+      "snapshotMalformed": false,
+      "snapshotMissingFields": [],
+      "firestore": {
+        "skipped": false,
+        "skipReason": null,
+        "docId": "the_monsters_exciting_macaron_vinyl_face_soymilk",
+        "fields": {
+          "level": "figure",
+          "figureId": "the_monsters_exciting_macaron_vinyl_face_soymilk",
+          "seriesId": "the_monsters_exciting_macaron_vinyl_face",
+          "estimatedValueUsd": 40.995000000000005,
+          "trend": "unknown",
+          "confidence": "low",
+          "recentSalesCount": 2,
+          "computedAt": "2026-06-15T04:08:32.253Z",
+          "priceRangeMinUsd": 39.99,
+          "priceRangeMaxUsd": 42
+        },
+        "malformed": false,
+        "missingFields": []
+      }
+    },
+    {
+      "figureId": "skullpanda_petals_in_four_acts_the_fairys_trick",
+      "displayName": "The Fairy's Trick",
+      "seriesId": "skullpanda_petals_in_four_acts",
+      "seriesDisplayName": "SKULLPANDA Petals in Four Acts Series Figures",
+      "brandId": "pop_mart",
+      "brandDisplayName": "POP MART",
+      "category": "Skullpanda",
+      "status": "WARNING",
+      "warnings": [
+        "Firestore write skipped: medianPrice null",
+        "Zero matcher hits on fetched listings (common with generic fixture titles)"
+      ],
+      "failures": [],
+      "searchTerms": [
+        "POP MART Skull Panda Petals in Four Acts The Fairy's Trick",
+        "POPMART Skull Panda Petals in Four Acts The Fairy's Trick"
+      ],
+      "searchTermIssues": [],
+      "fixtureListingTitles": [
+        "POP MART Skull Panda Petals in Four Acts The Fairy's Trick - sold listing sample A",
+        "POP MART Skull Panda Petals in Four Acts The Fairy's Trick - sold listing sample B"
+      ],
+      "matchedCount": 0,
+      "rejectedCount": 2,
+      "topRejectReasons": [
+        {
+          "reason": "crossFigureContamination",
+          "count": 2
+        }
+      ],
+      "aggregation": {
+        "sampleSize": 0,
+        "medianPrice": null,
+        "averagePrice": null,
+        "minPrice": null,
+        "maxPrice": null
+      },
+      "snapshotDocument": {
+        "figureId": "skullpanda_petals_in_four_acts_the_fairys_trick",
+        "seriesId": "skullpanda_petals_in_four_acts",
+        "snapshotAt": "2026-06-15T04:08:32.565Z",
+        "sampleSize": 0,
+        "averagePrice": null,
+        "medianPrice": null,
+        "minPrice": null,
+        "maxPrice": null,
+        "confidence": "low",
+        "dataSource": "fixture"
+      },
+      "snapshotMalformed": false,
+      "snapshotMissingFields": [],
+      "firestore": {
+        "skipped": true,
+        "skipReason": "medianPrice null",
+        "docId": null,
+        "fields": null,
+        "malformed": false,
+        "missingFields": []
+      }
+    },
+    {
+      "figureId": "baby_molly_pocket_friends_series_whos_the_good_girl",
+      "displayName": "Who's the Good Girl",
+      "seriesId": "baby_molly_pocket_friends_series",
+      "seriesDisplayName": "Baby Molly Pocket Friends Series",
+      "brandId": "pop_mart",
+      "brandDisplayName": "POP MART",
+      "category": "Baby Molly",
+      "status": "WARNING",
+      "warnings": [
+        "Firestore write skipped: medianPrice null",
+        "Zero matcher hits on fetched listings (common with generic fixture titles)"
+      ],
+      "failures": [],
+      "searchTerms": [
+        "POP MART Baby Molly Pocket Friends Who's the Good Girl",
+        "POPMART Baby Molly Pocket Friends Who's the Good Girl"
+      ],
+      "searchTermIssues": [],
+      "fixtureListingTitles": [
+        "POP MART Baby Molly Pocket Friends Who's the Good Girl - sold listing sample A",
+        "POP MART Baby Molly Pocket Friends Who's the Good Girl - sold listing sample B"
+      ],
+      "matchedCount": 0,
+      "rejectedCount": 2,
+      "topRejectReasons": [
+        {
+          "reason": "seriesMismatch",
+          "count": 2
+        }
+      ],
+      "aggregation": {
+        "sampleSize": 0,
+        "medianPrice": null,
+        "averagePrice": null,
+        "minPrice": null,
+        "maxPrice": null
+      },
+      "snapshotDocument": {
+        "figureId": "baby_molly_pocket_friends_series_whos_the_good_girl",
+        "seriesId": "baby_molly_pocket_friends_series",
+        "snapshotAt": "2026-06-15T04:08:32.873Z",
+        "sampleSize": 0,
+        "averagePrice": null,
+        "medianPrice": null,
+        "minPrice": null,
+        "maxPrice": null,
+        "confidence": "low",
+        "dataSource": "fixture"
+      },
+      "snapshotMalformed": false,
+      "snapshotMissingFields": [],
+      "firestore": {
+        "skipped": true,
+        "skipReason": "medianPrice null",
+        "docId": null,
+        "fields": null,
+        "malformed": false,
+        "missingFields": []
+      }
+    },
+    {
+      "figureId": "sonny_angel_animal_series_1_rabbit",
+      "displayName": "Rabbit",
+      "seriesId": "sonny_angel_animal_series_1",
+      "seriesDisplayName": "Animal 1 Series",
+      "brandId": "dreams_inc",
+      "brandDisplayName": "Dreams Inc.",
+      "category": "Sonny Angel",
+      "status": "WARNING",
+      "warnings": [
+        "Firestore write skipped: medianPrice null",
+        "Zero matcher hits on fetched listings (common with generic fixture titles)"
+      ],
+      "failures": [],
+      "searchTerms": [
+        "Dreams Inc. SonnyAngel Animal 1 Rabbit",
+        "dreams inc SonnyAngel Animal 1 Rabbit",
+        "Dreams SonnyAngel Animal 1 Rabbit",
+        "Sonny Angel SonnyAngel Animal 1 Rabbit"
+      ],
+      "searchTermIssues": [],
+      "fixtureListingTitles": [
+        "Dreams Inc. SonnyAngel Animal 1 Rabbit - sold listing sample A",
+        "Dreams Inc. SonnyAngel Animal 1 Rabbit - sold listing sample B"
+      ],
+      "matchedCount": 0,
+      "rejectedCount": 2,
+      "topRejectReasons": [
+        {
+          "reason": "seriesMismatch",
+          "count": 2
+        }
+      ],
+      "aggregation": {
+        "sampleSize": 0,
+        "medianPrice": null,
+        "averagePrice": null,
+        "minPrice": null,
+        "maxPrice": null
+      },
+      "snapshotDocument": {
+        "figureId": "sonny_angel_animal_series_1_rabbit",
+        "seriesId": "sonny_angel_animal_series_1",
+        "snapshotAt": "2026-06-15T04:08:33.806Z",
+        "sampleSize": 0,
+        "averagePrice": null,
+        "medianPrice": null,
+        "minPrice": null,
+        "maxPrice": null,
+        "confidence": "low",
+        "dataSource": "fixture"
+      },
+      "snapshotMalformed": false,
+      "snapshotMissingFields": [],
+      "firestore": {
+        "skipped": true,
+        "skipReason": "medianPrice null",
+        "docId": null,
+        "fields": null,
+        "malformed": false,
+        "missingFields": []
+      }
+    },
+    {
+      "figureId": "smiski_series_2_kneeling",
+      "displayName": "Smiski Kneeling",
+      "seriesId": "smiski_series_2",
+      "seriesDisplayName": "SMISKI Series 2",
+      "brandId": "dreams_inc",
+      "brandDisplayName": "Dreams Inc.",
+      "category": "Smiski",
+      "status": "FAIL",
+      "warnings": [],
+      "failures": [
+        "Search plan skipped: NO_SEARCH_TERMS",
+        "Fetch skipped: NO_SEARCH_TERMS"
+      ],
+      "searchTerms": [],
+      "searchTermIssues": [],
+      "fixtureListingTitles": [],
+      "matchedCount": 0,
+      "rejectedCount": 0,
+      "topRejectReasons": [],
+      "aggregation": {
+        "sampleSize": 0,
+        "medianPrice": null,
+        "averagePrice": null,
+        "minPrice": null,
+        "maxPrice": null
+      },
+      "snapshotDocument": null,
+      "snapshotMalformed": true,
+      "snapshotMissingFields": [
+        "(entire document)"
+      ],
+      "firestore": {
+        "skipped": true,
+        "skipReason": "no snapshot",
+        "docId": null,
+        "fields": null,
+        "malformed": false,
+        "missingFields": []
+      }
+    },
+    {
+      "figureId": "nanci_poetic_beauty_shy_lotus",
+      "displayName": "Shy Lotus",
+      "seriesId": "nanci_poetic_beauty",
+      "seriesDisplayName": "Nanci's Poetic Beauty",
+      "brandId": "rolife",
+      "brandDisplayName": "Rolife",
+      "category": "Non-Pop-Mart (Rolife)",
+      "status": "WARNING",
+      "warnings": [
+        "Firestore write skipped: medianPrice null",
+        "Zero matcher hits on fetched listings (common with generic fixture titles)"
+      ],
+      "failures": [],
+      "searchTerms": [
+        "Rolife Rolife Nanci 's Poetic Beauty Shy Lotus"
+      ],
+      "searchTermIssues": [],
+      "fixtureListingTitles": [
+        "Rolife Rolife Nanci 's Poetic Beauty Shy Lotus - sold listing sample A",
+        "Rolife Rolife Nanci 's Poetic Beauty Shy Lotus - sold listing sample B"
+      ],
+      "matchedCount": 0,
+      "rejectedCount": 2,
+      "topRejectReasons": [
+        {
+          "reason": "seriesMismatch",
+          "count": 2
+        }
+      ],
+      "aggregation": {
+        "sampleSize": 0,
+        "medianPrice": null,
+        "averagePrice": null,
+        "minPrice": null,
+        "maxPrice": null
+      },
+      "snapshotDocument": {
+        "figureId": "nanci_poetic_beauty_shy_lotus",
+        "seriesId": "nanci_poetic_beauty",
+        "snapshotAt": "2026-06-15T04:08:33.807Z",
+        "sampleSize": 0,
+        "averagePrice": null,
+        "medianPrice": null,
+        "minPrice": null,
+        "maxPrice": null,
+        "confidence": "low",
+        "dataSource": "fixture"
+      },
+      "snapshotMalformed": false,
+      "snapshotMissingFields": [],
+      "firestore": {
+        "skipped": true,
+        "skipReason": "medianPrice null",
+        "docId": null,
+        "fields": null,
+        "malformed": false,
+        "missingFields": []
+      }
+    }
+  ],
+  "warnings": [
+    "the_monsters_have_a_seat_vinyl_plush_duoduo: Firestore write skipped: medianPrice null",
+    "the_monsters_have_a_seat_vinyl_plush_duoduo: Zero matcher hits on fetched listings (common with generic fixture titles)",
+    "skullpanda_petals_in_four_acts_the_fairys_trick: Firestore write skipped: medianPrice null",
+    "skullpanda_petals_in_four_acts_the_fairys_trick: Zero matcher hits on fetched listings (common with generic fixture titles)",
+    "baby_molly_pocket_friends_series_whos_the_good_girl: Firestore write skipped: medianPrice null",
+    "baby_molly_pocket_friends_series_whos_the_good_girl: Zero matcher hits on fetched listings (common with generic fixture titles)",
+    "sonny_angel_animal_series_1_rabbit: Firestore write skipped: medianPrice null",
+    "sonny_angel_animal_series_1_rabbit: Zero matcher hits on fetched listings (common with generic fixture titles)",
+    "nanci_poetic_beauty_shy_lotus: Firestore write skipped: medianPrice null",
+    "nanci_poetic_beauty_shy_lotus: Zero matcher hits on fetched listings (common with generic fixture titles)"
+  ],
+  "failures": [
+    "smiski_series_2_kneeling: Search plan skipped: NO_SEARCH_TERMS",
+    "smiski_series_2_kneeling: Fetch skipped: NO_SEARCH_TERMS"
+  ],
+  "searchTermReview": {
+    "duplicateQueries": [],
+    "searchTermIssueSummary": {}
+  },
+  "matcherReview": [
+    {
+      "figureId": "the_monsters_big_into_energy_vinyl_plush_pendant_luck",
+      "matched": 2,
+      "rejected": 0,
+      "topRejectReasons": []
+    },
+    {
+      "figureId": "the_monsters_big_into_energy_vinyl_plush_pendant_hope",
+      "matched": 2,
+      "rejected": 0,
+      "topRejectReasons": []
+    },
+    {
+      "figureId": "the_monsters_big_into_energy_vinyl_plush_pendant_love",
+      "matched": 2,
+      "rejected": 0,
+      "topRejectReasons": []
+    },
+    {
+      "figureId": "the_monsters_big_into_energy_vinyl_plush_pendant_id",
+      "matched": 1,
+      "rejected": 0,
+      "topRejectReasons": []
+    },
+    {
+      "figureId": "the_monsters_big_into_energy_vinyl_plush_pendant_serenity",
+      "matched": 2,
+      "rejected": 0,
+      "topRejectReasons": []
+    },
+    {
+      "figureId": "the_monsters_big_into_energy_vinyl_plush_pendant_loyalty",
+      "matched": 2,
+      "rejected": 0,
+      "topRejectReasons": []
+    },
+    {
+      "figureId": "the_monsters_big_into_energy_vinyl_plush_pendant_happiness",
+      "matched": 2,
+      "rejected": 0,
+      "topRejectReasons": []
+    },
+    {
+      "figureId": "the_monsters_have_a_seat_vinyl_plush_sisi",
+      "matched": 1,
+      "rejected": 1,
+      "topRejectReasons": [
+        {
+          "reason": "excluded",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "figureId": "the_monsters_have_a_seat_vinyl_plush_duoduo",
+      "matched": 0,
+      "rejected": 2,
+      "topRejectReasons": [
+        {
+          "reason": "secretMismatch",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "figureId": "the_monsters_exciting_macaron_vinyl_face_soymilk",
+      "matched": 2,
+      "rejected": 0,
+      "topRejectReasons": []
+    },
+    {
+      "figureId": "skullpanda_petals_in_four_acts_the_fairys_trick",
+      "matched": 0,
+      "rejected": 2,
+      "topRejectReasons": [
+        {
+          "reason": "crossFigureContamination",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "figureId": "baby_molly_pocket_friends_series_whos_the_good_girl",
+      "matched": 0,
+      "rejected": 2,
+      "topRejectReasons": [
+        {
+          "reason": "seriesMismatch",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "figureId": "sonny_angel_animal_series_1_rabbit",
+      "matched": 0,
+      "rejected": 2,
+      "topRejectReasons": [
+        {
+          "reason": "seriesMismatch",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "figureId": "smiski_series_2_kneeling",
+      "matched": 0,
+      "rejected": 0,
+      "topRejectReasons": []
+    },
+    {
+      "figureId": "nanci_poetic_beauty_shy_lotus",
+      "matched": 0,
+      "rejected": 2,
+      "topRejectReasons": [
+        {
+          "reason": "seriesMismatch",
+          "count": 2
+        }
+      ]
+    }
+  ],
+  "firestoreReview": {
+    "writable": 9,
+    "skipped": 6,
+    "malformed": 0
+  }
+}
