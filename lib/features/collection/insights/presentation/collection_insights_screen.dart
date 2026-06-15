@@ -8,6 +8,7 @@ import 'package:blindbox_app/features/collection/insights/presentation/collector
 import 'package:blindbox_app/features/collection/insights/widgets/collector_journey_card.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_evolution_hint_banner.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_reveal_card.dart';
+import 'package:blindbox_app/features/collection/insights/widgets/shelf_value_card.dart';
 import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -110,6 +111,8 @@ class CollectionInsightsScreen extends ConsumerWidget {
                   const CollectorTypeRevealCard(),
                   const SizedBox(height: FeedRhythm.blockGapMedium),
                   const CollectorJourneyCard(),
+                  const SizedBox(height: FeedRhythm.blockGapMedium),
+                  const ShelfValueCard(),
                 ]),
               ),
             ),

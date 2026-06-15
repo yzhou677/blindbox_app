@@ -1,4 +1,19 @@
-/// Lightweight USD / percent strings (no intl dependency).
+// Lightweight USD / percent strings (no intl dependency).
+
+/// Exact dollar amount with comma thousands separator, e.g. `$4,382`.
+/// Preferred for shelf / collection value displays where precision matters.
+String formatShelfValueUsd(double usd) {
+  final rounded = usd.round();
+  if (rounded == 0) return '\$0';
+  final s = rounded.toString();
+  final buf = StringBuffer('\$');
+  final offset = s.length % 3;
+  for (var i = 0; i < s.length; i++) {
+    if (i != 0 && (i - offset) % 3 == 0) buf.write(',');
+    buf.write(s[i]);
+  }
+  return buf.toString();
+}
 String formatMarketUsd(double usd) {
   final rounded = usd.round();
   if (rounded >= 1000) {

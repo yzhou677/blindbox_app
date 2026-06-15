@@ -17,6 +17,9 @@ abstract final class CollectorTypeCopy {
   static const String entryCta = 'Reveal collector type';
   static const String entryRevealedPrefix = 'Your collector type';
 
+  /// Single Collection Home entry to [CollectionInsightsScreen].
+  static const String homeInsightsEntry = 'Collection insights';
+
   static const String journeyTitle = 'Collector journey';
   static const String journeySubtitle =
       'How your shelf story has unfolded over time.';

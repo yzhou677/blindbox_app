@@ -41,7 +41,7 @@ Future<void> main() async {
         seriesReleaseLookupProvider.overrideWith(
           (ref) => ref.watch(homeSeriesReleaseLookupProvider),
         ),
-        if (kMarketSnapshotDevValidation && !kMarketSnapshotDevLive)
+        if (kMarketSnapshotRepositoryUsesMock)
           marketSnapshotRepositoryProvider.overrideWithValue(
             DevMockMarketSnapshotRepository(),
           ),

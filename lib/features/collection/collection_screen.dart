@@ -13,10 +13,10 @@ import 'package:blindbox_app/features/collection/widgets/collection_brand_filter
 import 'package:blindbox_app/features/collection/widgets/collection_ip_filter_row.dart';
 import 'package:blindbox_app/features/collectible_relationship/application/collectible_relationship_providers.dart';
 import 'package:blindbox_app/features/collection/application/shelf_emotional_providers.dart';
-import 'package:blindbox_app/features/collection/insights/application/collector_type_providers.dart';
 import 'package:blindbox_app/features/collection/presentation/shelf_editorial_voice.dart';
 import 'package:blindbox_app/features/collection/presentation/shelf_series_feed.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_empty_state.dart';
+import 'package:blindbox_app/features/collection/insights/application/collection_value_providers.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_summary_section.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_warm_start_banner.dart';
 import 'package:blindbox_app/features/collection/widgets/series_figures_sheet.dart';
@@ -201,7 +201,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     final interpretationLine = ref.watch(shelfInterpretationLineProvider);
     final memoryWhisper = ref.watch(shelfMemoryWhisperProvider);
     final relationshipWhisper = ref.watch(shelfRelationshipWhisperProvider);
-    final collectorIdentity = ref.watch(collectorTypeIdentityProvider);
+    final shelfValue = ref.watch(collectionValueProvider).valueOrNull;
     final sectionSubtitle = ShelfEditorialVoice.sectionSubtitle(
       profile,
       insights,
@@ -312,7 +312,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                   ? interpretationLine
                   : ShelfEditorialVoice.shelfMoodLine(snap),
               memoryWhisper: memoryWhisper ?? relationshipWhisper,
-              collectorTypeName: collectorIdentity?.archetype.displayName,
+              shelfValue: shelfValue,
               onInsightsTap: () => context.push('/collection/insights'),
             ),
           ),

@@ -3,7 +3,9 @@ import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/app_typography.dart';
 import 'package:blindbox_app/core/theme/collectible_shape.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/insights/domain/shelf_value_summary.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
+import 'package:blindbox_app/features/market/utils/market_format.dart';
 import 'package:flutter/material.dart';
 
 /// Soft glance at the shelf — not a stats dashboard.
@@ -32,20 +34,27 @@ class CollectionSummarySection extends StatelessWidget {
     this.shelfMoodLine,
     this.memoryWhisper,
     this.onInsightsTap,
-    this.collectorTypeName,
+    this.shelfValue,
   });
 
   final CollectionAggregateStats stats;
   final String? shelfMoodLine;
   final String? memoryWhisper;
   final VoidCallback? onInsightsTap;
-  final String? collectorTypeName;
+
+  /// When provided and [ShelfValueSummary.hasAnyValue], shows value glance in
+  /// the summary card.
+  final ShelfValueSummary? shelfValue;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textTheme = Theme.of(context).textTheme;
+
+    final valueData = shelfValue;
+    final showValue = valueData != null && valueData.hasAnyValue;
+    final showInsightsEntry = onInsightsTap != null;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -73,30 +82,65 @@ class CollectionSummarySection extends StatelessWidget {
               // Horizontal 18 is intentionally narrower than pageHorizontal (20)
               // to give the metric strip a slightly inset look within the card.
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: AppSpacing.md),
-              child: SizedBox(
-                height: FeedRhythm.collectionSummaryMetricStripHeight,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    _ShelfGlanceStat(
-                      count: stats.inCollection,
-                      label: 'In collection',
-                      scheme: scheme,
-                      textTheme: textTheme,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    height: FeedRhythm.collectionSummaryMetricStripHeight,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        _ShelfGlanceStat(
+                          count: stats.inCollection,
+                          label: 'in collection',
+                          scheme: scheme,
+                          textTheme: textTheme,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          child: _Dot(scheme: scheme),
+                        ),
+                        _ShelfGlanceStat(
+                          count: stats.wantListCount,
+                          label: 'wishlist',
+                          scheme: scheme,
+                          textTheme: textTheme,
+                        ),
+                      ],
                     ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      child: _Dot(scheme: scheme),
+                  ),
+                  if (showValue) ...[
+                    const SizedBox(height: 10),
+                    Divider(
+                      height: 1,
+                      thickness: 0.5,
+                      color: scheme.outlineVariant.withValues(alpha: 0.35),
                     ),
-                    _ShelfGlanceStat(
-                      count: stats.wantListCount,
-                      label: 'Wishlist',
+                    const SizedBox(height: 10),
+                    _ShelfValueGlance(
+                      summary: valueData,
                       scheme: scheme,
                       textTheme: textTheme,
                     ),
                   ],
-                ),
+                  if (showInsightsEntry) ...[
+                    const SizedBox(height: 10),
+                    Divider(
+                      height: 1,
+                      thickness: 0.5,
+                      color: scheme.outlineVariant.withValues(alpha: 0.35),
+                    ),
+                    const SizedBox(height: 6),
+                    _SummaryNavEntryRow(
+                      scheme: scheme,
+                      textTheme: textTheme,
+                      label: CollectorTypeCopy.homeInsightsEntry,
+                      icon: Icons.insights_outlined,
+                      onTap: onInsightsTap!,
+                    ),
+                  ],
+                ],
               ),
             ),
           ),
@@ -124,79 +168,60 @@ class CollectionSummarySection extends StatelessWidget {
               ),
             ),
           ],
-          if (onInsightsTap != null) ...[
-            const SizedBox(height: 12),
-            _InsightsEntryRow(
-              scheme: scheme,
-              textTheme: textTheme,
-              collectorTypeName: collectorTypeName,
-              onTap: onInsightsTap!,
-            ),
-          ],
         ],
       ),
     );
   }
 }
 
-class _InsightsEntryRow extends StatelessWidget {
-  const _InsightsEntryRow({
+class _SummaryNavEntryRow extends StatelessWidget {
+  const _SummaryNavEntryRow({
     required this.scheme,
     required this.textTheme,
+    required this.label,
+    required this.icon,
     required this.onTap,
-    this.collectorTypeName,
   });
 
   final ColorScheme scheme;
   final TextTheme textTheme;
+  final String label;
+  final IconData icon;
   final VoidCallback onTap;
-  final String? collectorTypeName;
 
   @override
   Widget build(BuildContext context) {
-    final revealed = collectorTypeName?.trim().isNotEmpty == true;
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: CollectibleShape.matRadius,
-        child: Ink(
-          decoration: BoxDecoration(
-            borderRadius: CollectibleShape.matRadius,
-            color: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
-            border: Border.all(
-              color: scheme.outlineVariant.withValues(alpha: 0.4),
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.auto_awesome_outlined,
-                  size: 18,
-                  color: scheme.primary.withValues(alpha: 0.7),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    revealed
-                        ? '${CollectorTypeCopy.entryRevealedPrefix}: $collectorTypeName'
-                        : CollectorTypeCopy.entryCta,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: scheme.onSurface.withValues(alpha: 0.88),
-                      fontWeight: FontWeight.w500,
-                      height: 1.25,
-                    ),
+        borderRadius: CollectibleShape.insetRadius,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                size: 18,
+                color: scheme.primary.withValues(alpha: 0.7),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  label,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: scheme.onSurface.withValues(alpha: 0.88),
+                    fontWeight: FontWeight.w500,
+                    height: 1.25,
                   ),
                 ),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  size: 20,
-                  color: scheme.onSurfaceVariant.withValues(alpha: 0.55),
-                ),
-              ],
-            ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 20,
+                color: scheme.onSurfaceVariant.withValues(alpha: 0.55),
+              ),
+            ],
           ),
         ),
       ),
@@ -257,6 +282,60 @@ class _ShelfGlanceStat extends StatelessWidget {
             color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
             fontWeight: FontWeight.w500,
             height: 1.1,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ShelfValueGlance extends StatelessWidget {
+  const _ShelfValueGlance({
+    required this.summary,
+    required this.scheme,
+    required this.textTheme,
+  });
+
+  final ShelfValueSummary summary;
+  final ColorScheme scheme;
+  final TextTheme textTheme;
+
+  @override
+  Widget build(BuildContext context) {
+    final valueLabel = '~${formatShelfValueUsd(summary.totalValueUsd)}';
+    final coverageLabel =
+        'Based on ${summary.valuedCount} of ${summary.ownedCount} figures';
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Est. shelf value',
+              style: textTheme.bodySmall?.copyWith(
+                color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            Text(
+              valueLabel,
+              style: textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurface.withValues(alpha: 0.88),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 3),
+        Align(
+          alignment: Alignment.centerRight,
+          child: Text(
+            coverageLabel,
+            style: textTheme.bodySmall?.copyWith(
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.55),
+              fontSize: 11,
+            ),
           ),
         ),
       ],

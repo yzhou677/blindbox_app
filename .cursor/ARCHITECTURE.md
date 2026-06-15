@@ -75,6 +75,22 @@ These must stay separate. Do not merge persistence, media keys, or loading paths
 - **Market filters (shared ids only):** [`MarketTaxonomy`](../lib/features/market/catalog/market_taxonomy.dart) chip rows and predicates use canonical brand/IP **ids** aligned via `applyCatalogBundle()` after catalog bootstrap. Filter chips read `_catalogBrands` / `_catalogIps`; listing title resolution still uses the full [`MarketTaxonomyAdapter`](../lib/features/market/taxonomy/market_taxonomy_adapter.dart) registry. **Do not** load `CatalogSeedBundle` or query Firestore for listing content, prices, or card art.
 - **Into shelf:** Notifier methods only (`addSeriesFromDrop`, etc.) — not direct snapshot mutation from widgets
 
+### Sold-data market intelligence (`market_intel/`)
+
+Separate from Market **Browse** listing intelligence (`CollectibleMarketSnapshot` in `lib/features/market/`).
+
+- **Purpose:** Admin-persisted sold-listing estimates for catalog figures/series — Discover accordion, Collection Value.
+- **Domain:** [`MarketSnapshot`](../lib/features/market_intel/domain/market_snapshot.dart), [`MarketSnapshotRepository`](../lib/features/market_intel/domain/market_snapshot_repository.dart)
+- **Application:** [`marketSnapshotProvider`](../lib/features/market_intel/application/market_snapshot_providers.dart), [`collectionValueProvider`](../lib/features/collection/insights/application/collection_value_providers.dart)
+- **Data:** [`FirestoreMarketSnapshotRepository`](../lib/features/market_intel/data/firestore/firestore_market_snapshot_repository.dart) (prod); [`DevMockMarketSnapshotRepository`](../lib/features/market_intel/dev/dev_mock_market_snapshot_repository.dart) (debug default)
+- **UI:** widgets only via providers — no Firestore in presentation layer
+
+```
+UI → Riverpod Provider → MarketSnapshotRepository → Mock | Firestore | (future eBay)
+```
+
+Debug mock enabled when `kMarketSnapshotRepositoryUsesMock` (`main.dart`). Force live: `--dart-define=MARKET_SNAPSHOT_LIVE=true`. See [`tools/market_intel/MARKET_SNAPSHOT_ARCHITECTURE_AUDIT.md`](../tools/market_intel/MARKET_SNAPSHOT_ARCHITECTURE_AUDIT.md).
+
 ---
 
 ## Data flow (high level)
