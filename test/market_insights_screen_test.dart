@@ -392,6 +392,16 @@ void main() {
         ),
         findsOneWidget,
       );
+      expect(
+        find.textContaining(
+          'regular figures, popular figures, and secrets can sell for very different prices',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('individual figures can vary significantly'),
+        findsNothing,
+      );
     });
   });
 

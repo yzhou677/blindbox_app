@@ -98,4 +98,25 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('Bottom sheet explains includes estimates in user language',
+      (tester) async {
+    await _pumpShelfValueCard(tester);
+
+    await tester.tap(find.byIcon(Icons.info_outline));
+    await tester.pumpAndSettle();
+
+    final scrollable = find.descendant(
+      of: find.byType(BottomSheet),
+      matching: find.byType(Scrollable),
+    );
+    await tester.drag(scrollable, const Offset(0, -280));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining('series averages instead of figure-specific sales'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('one or more figures used a'), findsNothing);
+  });
 }

@@ -60,14 +60,8 @@ class MarketSeriesAverageInfoSheet extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 Text(
-                  'Within a blind-box series, individual figures can vary '
-                  'significantly in value.',
-                  style: bodyStyle,
-                ),
-                const SizedBox(height: AppSpacing.md),
-                Text(
-                  'Regular figures, popular figures, and secrets may sell for '
-                  'very different prices.',
+                  'Within a blind-box series, regular figures, popular '
+                  'figures, and secrets can sell for very different prices.',
                   style: bodyStyle,
                 ),
                 const SizedBox(height: AppSpacing.lg),

@@ -84,8 +84,7 @@ class ShelfValueInfoSheet extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
-                  '• "includes estimates" means one or more figures used a '
-                  'Series Estimate.',
+                  '• "includes estimates" means some figures used series averages instead of figure-specific sales.',
                   style: bodyStyle,
                 ),
                 const SizedBox(height: AppSpacing.lg),
