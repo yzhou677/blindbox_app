@@ -1,10 +1,17 @@
+import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
+import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+import 'package:blindbox_app/features/catalog/models/catalog_series.dart';
 import 'package:blindbox_app/features/market_intel/domain/market_snapshot.dart';
 import 'package:blindbox_app/features/market_intel/widgets/market_snapshot_format.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+const _blindBoxSeriesId = 'series_bie';
+const _standaloneSeriesId = 'mega_crybaby_400_crying_in_pink';
+
 MarketSnapshot _snapshot({
   SnapshotLevel level = SnapshotLevel.figure,
   String? figureId = 'fig_luck',
+  String seriesId = _blindBoxSeriesId,
   int recentSalesCount = 18,
   double? priceRangeMinUsd = 38,
   double? priceRangeMaxUsd = 48,
@@ -13,10 +20,10 @@ MarketSnapshot _snapshot({
   DateTime? computedAt,
 }) {
   return MarketSnapshot(
-    id: figureId ?? 'series_bie',
+    id: figureId ?? seriesId,
     level: level,
     figureId: level == SnapshotLevel.figure ? figureId : null,
-    seriesId: 'series_bie',
+    seriesId: seriesId,
     estimatedValueUsd: 42,
     trend: trend,
     confidence: confidence,
@@ -27,7 +34,32 @@ MarketSnapshot _snapshot({
   );
 }
 
+CatalogSeries _blindBoxSeries() {
+  return CatalogSeries(
+    id: _blindBoxSeriesId,
+    brandId: 'pop_mart',
+    ipId: 'crybaby',
+    displayName: 'Blind Box Series',
+    releaseDate: '2025-01-01',
+    isBlindBox: true,
+    imageKey: _blindBoxSeriesId,
+  );
+}
+
+CatalogSeries _standaloneSeries() {
+  return CatalogSeries(
+    id: _standaloneSeriesId,
+    brandId: 'pop_mart',
+    ipId: 'crybaby',
+    displayName: 'MEGA CRYBABY 400% Crying in Pink',
+    releaseDate: '2025-01-01',
+    isBlindBox: false,
+    imageKey: _standaloneSeriesId,
+  );
+}
+
 void main() {
+  tearDown(CatalogBundleCache.resetForTest);
   group('formatMarketSnapshotValue', () {
     test('formats rounded USD without tilde', () {
       expect(formatMarketSnapshotValue(42), '\$42');
@@ -59,6 +91,15 @@ void main() {
     });
 
     test('series fallback uses series avg label and sales', () {
+      CatalogBundleCache.prime(
+        CatalogSeedBundle(
+          brands: const [],
+          ips: const [],
+          series: [_blindBoxSeries()],
+          figures: const [],
+        ),
+      );
+
       expect(
         formatMarketSnapshotDiscoverSummaryLine(
           _snapshot(
@@ -69,6 +110,30 @@ void main() {
           ),
         ),
         'Series Avg. · \$42 · 4 sales',
+      );
+    });
+
+    test('non-blind-box series fallback uses market estimate label', () {
+      CatalogBundleCache.prime(
+        CatalogSeedBundle(
+          brands: const [],
+          ips: const [],
+          series: [_standaloneSeries()],
+          figures: const [],
+        ),
+      );
+
+      expect(
+        formatMarketSnapshotDiscoverSummaryLine(
+          _snapshot(
+            level: SnapshotLevel.series,
+            figureId: null,
+            seriesId: _standaloneSeriesId,
+            recentSalesCount: 6,
+            confidence: SnapshotConfidence.low,
+          ),
+        ),
+        'Market Estimate · \$42 · 6 sales',
       );
     });
 
@@ -269,23 +334,130 @@ void main() {
     });
 
     test('series estimate above uses series avg wording', () {
+      CatalogBundleCache.prime(
+        CatalogSeedBundle(
+          brands: const [],
+          ips: const [],
+          series: [_blindBoxSeries()],
+          figures: const [],
+        ),
+      );
+
       expect(
-        formatMarketListingPriceDeltaLine(48, 42, isSeriesEstimate: true),
+        formatMarketListingPriceDeltaLine(
+          48,
+          42,
+          isSeriesEstimate: true,
+          seriesId: _blindBoxSeriesId,
+        ),
         '▲ 14% above series avg.',
       );
     });
 
     test('series estimate below omits checkmark', () {
+      CatalogBundleCache.prime(
+        CatalogSeedBundle(
+          brands: const [],
+          ips: const [],
+          series: [_blindBoxSeries()],
+          figures: const [],
+        ),
+      );
+
       expect(
-        formatMarketListingPriceDeltaLine(35, 42, isSeriesEstimate: true),
+        formatMarketListingPriceDeltaLine(
+          35,
+          42,
+          isSeriesEstimate: true,
+          seriesId: _blindBoxSeriesId,
+        ),
         'Below series avg.',
       );
     });
 
     test('series estimate within five percent is near series avg', () {
+      CatalogBundleCache.prime(
+        CatalogSeedBundle(
+          brands: const [],
+          ips: const [],
+          series: [_blindBoxSeries()],
+          figures: const [],
+        ),
+      );
+
       expect(
-        formatMarketListingPriceDeltaLine(42, 42, isSeriesEstimate: true),
+        formatMarketListingPriceDeltaLine(
+          42,
+          42,
+          isSeriesEstimate: true,
+          seriesId: _blindBoxSeriesId,
+        ),
         '≈ Near series avg.',
+      );
+    });
+
+    test('non-blind-box series estimate above uses market estimate wording',
+        () {
+      CatalogBundleCache.prime(
+        CatalogSeedBundle(
+          brands: const [],
+          ips: const [],
+          series: [_standaloneSeries()],
+          figures: const [],
+        ),
+      );
+
+      expect(
+        formatMarketListingPriceDeltaLine(
+          48,
+          42,
+          isSeriesEstimate: true,
+          seriesId: _standaloneSeriesId,
+        ),
+        '▲ 14% above market estimate',
+      );
+    });
+
+    test('non-blind-box series estimate below uses market estimate wording',
+        () {
+      CatalogBundleCache.prime(
+        CatalogSeedBundle(
+          brands: const [],
+          ips: const [],
+          series: [_standaloneSeries()],
+          figures: const [],
+        ),
+      );
+
+      expect(
+        formatMarketListingPriceDeltaLine(
+          35,
+          42,
+          isSeriesEstimate: true,
+          seriesId: _standaloneSeriesId,
+        ),
+        'Below market estimate',
+      );
+    });
+
+    test('non-blind-box series estimate near uses market estimate wording', () {
+      CatalogBundleCache.prime(
+        CatalogSeedBundle(
+          brands: const [],
+          ips: const [],
+          series: [_standaloneSeries()],
+          figures: const [],
+        ),
+      );
+
+      expect(
+        formatMarketListingPriceDeltaLine(
+          42,
+          42,
+          isSeriesEstimate: true,
+          seriesId: _standaloneSeriesId,
+        ),
+        '≈ Near market estimate',
       );
     });
 
@@ -293,6 +465,58 @@ void main() {
       expect(
         formatMarketListingPriceDeltaLine(10, 0, isSeriesEstimate: false),
         isNull,
+      );
+    });
+  });
+
+  group('snapshot tier labels', () {
+    test('non-blind-box banner and chip use market estimate', () {
+      CatalogBundleCache.prime(
+        CatalogSeedBundle(
+          brands: const [],
+          ips: const [],
+          series: [_standaloneSeries()],
+          figures: const [],
+        ),
+      );
+
+      final snapshot = _snapshot(
+        level: SnapshotLevel.series,
+        figureId: null,
+        seriesId: _standaloneSeriesId,
+      );
+
+      expect(snapshotTierBBannerLabel(snapshot), 'Market Estimate');
+      expect(snapshotTierBEstimateChipLabel(snapshot), 'Market Estimate');
+      expect(snapshotTierBInfoSheetTitle(snapshot), 'About this market estimate');
+    });
+
+    test('blind-box banner and chip unchanged', () {
+      CatalogBundleCache.prime(
+        CatalogSeedBundle(
+          brands: const [],
+          ips: const [],
+          series: [_blindBoxSeries()],
+          figures: const [],
+        ),
+      );
+
+      final snapshot = _snapshot(
+        level: SnapshotLevel.series,
+        figureId: null,
+      );
+
+      expect(
+        snapshotTierBBannerLabel(snapshot),
+        kMarketSnapshotInsightsSeriesLevelEstimateLabel,
+      );
+      expect(
+        snapshotTierBEstimateChipLabel(snapshot),
+        kMarketSnapshotSeriesEstimateLabel,
+      );
+      expect(
+        snapshotTierBInfoSheetTitle(snapshot),
+        kMarketSeriesAverageInfoSheetTitle,
       );
     });
   });

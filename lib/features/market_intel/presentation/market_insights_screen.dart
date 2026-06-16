@@ -197,7 +197,7 @@ class _MarketInsightsContent extends StatelessWidget {
       children: [
         if (snapshot.isSeriesEstimate) ...[
           Text(
-            kMarketSnapshotInsightsSeriesLevelEstimateLabel,
+            snapshotTierBBannerLabel(snapshot),
             style: textTheme.labelMedium?.copyWith(
               color: scheme.tertiary.withValues(alpha: 0.92),
               fontWeight: FontWeight.w600,
@@ -226,9 +226,7 @@ class _MarketInsightsContent extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            snapshot.isSeriesEstimate
-                                ? kMarketSnapshotSeriesAvgLabel
-                                : 'Market Value',
+                            snapshotTierValueLabel(snapshot),
                             style: labelStyle,
                           ),
                           const SizedBox(height: 4),
@@ -263,6 +261,7 @@ class _MarketInsightsContent extends StatelessWidget {
                     listingPriceUsd: listingPriceUsd!,
                     estimatedValueUsd: snapshot.estimatedValueUsd,
                     isSeriesEstimate: snapshot.isSeriesEstimate,
+                    seriesId: snapshot.seriesId,
                   ),
                 ],
               ],
@@ -309,11 +308,13 @@ class _MarketInsightsPurchaseDeltaLine extends StatelessWidget {
     required this.listingPriceUsd,
     required this.estimatedValueUsd,
     required this.isSeriesEstimate,
+    required this.seriesId,
   });
 
   final double listingPriceUsd;
   final double estimatedValueUsd;
   final bool isSeriesEstimate;
+  final String seriesId;
 
   @override
   Widget build(BuildContext context) {
@@ -323,6 +324,7 @@ class _MarketInsightsPurchaseDeltaLine extends StatelessWidget {
       listingPriceUsd,
       estimatedValueUsd,
       isSeriesEstimate: isSeriesEstimate,
+      seriesId: seriesId,
     );
     if (line == null) return const SizedBox.shrink();
 

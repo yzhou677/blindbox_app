@@ -31,6 +31,7 @@ class MarketListingPriceDeltaLine extends ConsumerWidget {
           listingPriceUsd,
           snapshot.estimatedValueUsd,
           isSeriesEstimate: snapshot.isSeriesEstimate,
+          seriesId: snapshot.seriesId,
         );
         if (line == null) return const SizedBox.shrink();
 
@@ -55,6 +56,8 @@ class MarketListingPriceDeltaLine extends ConsumerWidget {
           );
         }
 
+        final isBlindBoxSeries = resolveIsBlindBoxSeries(snapshot.seriesId);
+
         return Padding(
           padding: const EdgeInsets.only(top: 4),
           child: Row(
@@ -65,11 +68,14 @@ class MarketListingPriceDeltaLine extends ConsumerWidget {
               const SizedBox(width: 3),
               Semantics(
                 button: true,
-                label: kMarketSeriesAverageInfoSemanticsLabel,
+                label: snapshotTierBInfoSemanticsLabel(snapshot),
                 child: Material(
                   type: MaterialType.transparency,
                   child: InkWell(
-                    onTap: () => showMarketSeriesAverageInfoSheet(context),
+                    onTap: () => showMarketSeriesAverageInfoSheet(
+                      context,
+                      isBlindBoxSeries: isBlindBoxSeries,
+                    ),
                     customBorder: const CircleBorder(),
                     child: SizedBox(
                       width: 40,

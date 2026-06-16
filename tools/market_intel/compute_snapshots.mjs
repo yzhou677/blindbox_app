@@ -9,11 +9,24 @@
  *   node tools/market_intel/compute_snapshots.mjs --dry-run
  *   node tools/market_intel/compute_snapshots.mjs --fetch --push-firestore
  *   node tools/market_intel/compute_snapshots.mjs --fetch --push-firestore --dry-run
+ *   node tools/market_intel/compute_snapshots.mjs --dry-run --catalog-source file
+ *   CATALOG_STRICT=1 node tools/market_intel/compute_snapshots.mjs --dry-run --catalog-source file
  *   EBAY_FETCH_MODE=fixture node tools/market_intel/compute_snapshots.mjs --fetch --figure sisi --snapshot-debug
+ *
+ * Catalog source (default: firestore):
+ *   --catalog-source firestore   read brands/ips/series/figures from Firestore
+ *   --catalog-source file        read JSON via CATALOG_DATA_DIR or tools/seed fallback
+ *
+ * Set CATALOG_STRICT=1 to fail when file mode would fall back to tools/seed.
  */
 
 import { ebayClientIdConfigured, readEbayConfig } from './_ebay_env.mjs';
-import { findFigureById, loadCatalogBundle } from './_catalog_bundle.mjs';
+import {
+  findFigureById,
+  isCatalogStrict,
+  loadCatalogBundleForSource,
+  resolveCatalogSource,
+} from './_catalog_bundle.mjs';
 import {
   SnapshotSkipReason,
   analyzeQueryDuplication,
@@ -40,6 +53,7 @@ import { pushSnapshotsToFirestore } from './push_market_snapshots.mjs';
  * @property {boolean} verbose
  * @property {boolean} snapshotDebug
  * @property {boolean} pushFirestore
+ * @property {'firestore' | 'file'} catalogSource
  */
 
 /**
@@ -56,10 +70,22 @@ function parseCliOptions(argv) {
     verbose: false,
     snapshotDebug: false,
     pushFirestore: false,
+    catalogSource: 'firestore',
   };
 
   for (let index = 2; index < argv.length; index += 1) {
     const arg = argv[index];
+
+    if (arg === '--catalog-source') {
+      const value = argv[index + 1]?.trim();
+      if (value !== 'firestore' && value !== 'file') {
+        console.error('Expected firestore or file after --catalog-source');
+        process.exit(1);
+      }
+      options.catalogSource = value;
+      index += 1;
+      continue;
+    }
 
     if (arg === '--dry-run') {
       options.mode = 'dry-run';
@@ -247,7 +273,29 @@ function printFetchSummary(fetches, runtimeMs) {
 async function main() {
   const options = parseCliOptions(process.argv);
   const config = readEbayConfig();
-  const bundle = loadCatalogBundle();
+  const catalogSource = resolveCatalogSource({
+    catalogSource: options.catalogSource,
+  });
+  const bundle = await loadCatalogBundleForSource(undefined, {
+    catalogSource,
+    strict: isCatalogStrict(),
+  });
+
+  if (bundle.catalogSource === 'firestore') {
+    console.error(`Catalog source: Firestore (${bundle.catalogDataDir})`);
+  } else if (bundle.catalogSource === 'seed_fallback') {
+    console.error(
+      'WARNING: catalog loaded from tools/seed (dev fallback). ' +
+        'Production runs should use --catalog-source firestore (default).',
+    );
+  } else {
+    console.error(`Catalog source: ${bundle.catalogDataDir} (${bundle.catalogSource})`);
+  }
+  console.error(
+    `Catalog figures: ${bundle.figures.length}, series: ${bundle.series.length}`,
+  );
+  console.error('');
+
   const plans = buildFigureSearchPlans(bundle, {
     figureFilter: options.figureFilter,
     seriesFilter: options.seriesFilter,

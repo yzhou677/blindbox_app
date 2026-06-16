@@ -1,22 +1,109 @@
+import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
 import 'package:blindbox_app/features/market_intel/domain/market_snapshot.dart';
 import 'package:blindbox_app/features/market/utils/market_format.dart';
 import 'package:blindbox_app/features/official_feed/presentation/official_feed_relative_time.dart';
 
-/// User-facing label for series-level fallback estimates (badge chip).
+/// User-facing label for blind-box series-level fallback estimates (badge chip).
 const String kMarketSnapshotSeriesEstimateLabel = 'Series Estimate';
 
 /// Compact series-average label (Discover summary, Insights card column).
 const String kMarketSnapshotSeriesAvgLabel = 'Series Avg.';
 
-/// Badge heading when snapshot is a series-level fallback.
+/// Badge heading when snapshot is a blind-box series-level fallback.
 const String kMarketSnapshotSeriesAvgValueBadgeHeading = 'Series Avg. Value';
 
-/// Insights screen label above purchase context for series fallback.
+/// Product-level market estimate for non-blind-box series fallbacks.
+const String kMarketSnapshotMarketEstimateLabel = 'Market Estimate';
+
+/// Insights screen banner for blind-box series fallback.
 const String kMarketSnapshotInsightsSeriesLevelEstimateLabel =
     'Series-Level Estimate';
 
 /// Discover gallery accordion heading.
 const String kMarketSnapshotDiscoverDisclosureHeading = 'Market Information';
+
+/// Semantics label for blind-box Tier B delta info affordance.
+const String kMarketSeriesAverageInfoSemanticsLabel =
+    'About series average pricing';
+
+/// Semantics label for non-blind-box Tier B delta info affordance.
+const String kMarketMarketEstimateInfoSemanticsLabel =
+    'About this market estimate';
+
+/// Bottom sheet title for blind-box Tier B listing price comparison.
+const String kMarketSeriesAverageInfoSheetTitle = 'About series average pricing';
+
+/// Bottom sheet title for non-blind-box Tier B listing price comparison.
+const String kMarketMarketEstimateInfoSheetTitle =
+    'About this market estimate';
+
+/// Returns [true] when [seriesId] maps to a blind-box catalog series.
+///
+/// Defaults to blind-box wording when the catalog bundle is unavailable or the
+/// series is missing — preserves existing Hope / Big Into Energy copy.
+bool resolveIsBlindBoxSeries(String seriesId) {
+  final trimmed = seriesId.trim();
+  if (trimmed.isEmpty) return true;
+
+  final bundle = CatalogBundleCache.current;
+  if (bundle == null) return true;
+
+  for (final series in bundle.series) {
+    if (series.id == trimmed) {
+      return series.isBlindBox;
+    }
+  }
+  return true;
+}
+
+/// Value column label for market snapshot surfaces.
+String snapshotTierValueLabel(MarketSnapshot snapshot) {
+  if (!snapshot.isSeriesEstimate) return 'Market Value';
+  if (!resolveIsBlindBoxSeries(snapshot.seriesId)) {
+    return kMarketSnapshotMarketEstimateLabel;
+  }
+  return kMarketSnapshotSeriesAvgLabel;
+}
+
+/// Banner above purchase context on [MarketInsightsScreen] for Tier B.
+String snapshotTierBBannerLabel(MarketSnapshot snapshot) {
+  if (!resolveIsBlindBoxSeries(snapshot.seriesId)) {
+    return kMarketSnapshotMarketEstimateLabel;
+  }
+  return kMarketSnapshotInsightsSeriesLevelEstimateLabel;
+}
+
+/// Badge heading for Tier B snapshots.
+String snapshotTierBBadgeHeadingLabel(MarketSnapshot snapshot) {
+  if (!resolveIsBlindBoxSeries(snapshot.seriesId)) {
+    return kMarketSnapshotMarketEstimateLabel;
+  }
+  return kMarketSnapshotSeriesAvgValueBadgeHeading;
+}
+
+/// Chip label for Tier B snapshots (without leading ≈).
+String snapshotTierBEstimateChipLabel(MarketSnapshot snapshot) {
+  if (!resolveIsBlindBoxSeries(snapshot.seriesId)) {
+    return kMarketSnapshotMarketEstimateLabel;
+  }
+  return kMarketSnapshotSeriesEstimateLabel;
+}
+
+/// Info sheet title for Tier B delta disclosure.
+String snapshotTierBInfoSheetTitle(MarketSnapshot snapshot) {
+  if (!resolveIsBlindBoxSeries(snapshot.seriesId)) {
+    return kMarketMarketEstimateInfoSheetTitle;
+  }
+  return kMarketSeriesAverageInfoSheetTitle;
+}
+
+/// Semantics label for Tier B delta info affordance.
+String snapshotTierBInfoSemanticsLabel(MarketSnapshot snapshot) {
+  if (!resolveIsBlindBoxSeries(snapshot.seriesId)) {
+    return kMarketMarketEstimateInfoSemanticsLabel;
+  }
+  return kMarketSeriesAverageInfoSemanticsLabel;
+}
 
 /// Collapsed / expanded disclosure row — e.g. `▶ Market Information`.
 String formatMarketSnapshotDiscoverDisclosureLabel({required bool expanded}) {
@@ -52,12 +139,11 @@ String? formatMarketSnapshotDiscoverPriceRangeValue(MarketSnapshot snapshot) {
 /// Discover gallery expanded body — value and sales (not shown when collapsed).
 ///
 /// Figure snapshot: `Market Value · $42 · 18 sales`
-/// Series fallback: `Series Avg. · $37 · 4 sales`
+/// Blind-box series fallback: `Series Avg. · $37 · 4 sales`
+/// Non-blind-box series fallback: `Market Estimate · $1,240 · 6 sales`
 String formatMarketSnapshotDiscoverSummaryLine(MarketSnapshot snapshot) {
   final value = formatMarketSnapshotValue(snapshot.estimatedValueUsd);
-  final head = snapshot.isSeriesEstimate
-      ? '$kMarketSnapshotSeriesAvgLabel · $value'
-      : 'Market Value · $value';
+  final head = '${snapshotTierValueLabel(snapshot)} · $value';
   final sales = formatMarketSnapshotDiscoverSalesSegment(snapshot);
   if (sales == null) return head;
   return '$head · $sales';
@@ -151,24 +237,46 @@ String formatMarketSnapshotInsightsUpdatedValue(
 /// Compares listing ask price to sold-data estimate.
 ///
 /// Tier A (figure snapshot): `▲ N% above market`, `✓ Below market`, `≈ At market`.
-/// Tier B (series estimate): `▲ N% above series avg.`, `Below series avg.`,
-/// `≈ Near series avg.`
+/// Tier B blind-box: `▲ N% above series avg.`, `Below series avg.`, `≈ Near series avg.`
+/// Tier B non-blind-box: `▲ N% above market estimate`, etc.
 String? formatMarketListingPriceDeltaLine(
   double listingPriceUsd,
   double estimatedValueUsd, {
   required bool isSeriesEstimate,
+  String? seriesId,
 }) {
   if (estimatedValueUsd <= 0) return null;
 
   final ratio = (listingPriceUsd - estimatedValueUsd) / estimatedValueUsd;
+  if (!isSeriesEstimate) {
+    if (ratio > 0.05) {
+      final pct = (ratio * 100).round();
+      return '▲ $pct% above market';
+    }
+    if (ratio < -0.05) {
+      return '✓ Below market';
+    }
+    return '≈ At market';
+  }
+
+  final blindBox = resolveIsBlindBoxSeries(seriesId ?? '');
+  if (!blindBox) {
+    if (ratio > 0.05) {
+      final pct = (ratio * 100).round();
+      return '▲ $pct% above market estimate';
+    }
+    if (ratio < -0.05) {
+      return 'Below market estimate';
+    }
+    return '≈ Near market estimate';
+  }
+
   if (ratio > 0.05) {
     final pct = (ratio * 100).round();
-    return isSeriesEstimate
-        ? '▲ $pct% above series avg.'
-        : '▲ $pct% above market';
+    return '▲ $pct% above series avg.';
   }
   if (ratio < -0.05) {
-    return isSeriesEstimate ? 'Below series avg.' : '✓ Below market';
+    return 'Below series avg.';
   }
-  return isSeriesEstimate ? '≈ Near series avg.' : '≈ At market';
+  return '≈ Near series avg.';
 }

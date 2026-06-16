@@ -1,9 +1,14 @@
 import 'package:blindbox_app/core/theme/app_theme.dart';
+import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
+import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+import 'package:blindbox_app/features/catalog/models/catalog_series.dart';
 import 'package:blindbox_app/features/market_intel/domain/market_snapshot.dart';
 import 'package:blindbox_app/features/market_intel/widgets/market_snapshot_badge.dart';
 import 'package:blindbox_app/features/market_intel/widgets/market_snapshot_format.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+const _standaloneSeriesId = 'mega_crybaby_400_crying_in_pink';
 
 MarketSnapshot _figureSnapshot() {
   return MarketSnapshot(
@@ -36,6 +41,33 @@ MarketSnapshot _seriesSnapshot() {
   );
 }
 
+MarketSnapshot _standaloneSeriesSnapshot() {
+  return MarketSnapshot(
+    id: _standaloneSeriesId,
+    level: SnapshotLevel.series,
+    seriesId: _standaloneSeriesId,
+    estimatedValueUsd: 1240,
+    trend: MarketTrend.stable,
+    confidence: SnapshotConfidence.low,
+    recentSalesCount: 6,
+    priceRangeMinUsd: 1100,
+    priceRangeMaxUsd: 1380,
+    computedAt: DateTime.utc(2026, 6, 15),
+  );
+}
+
+CatalogSeries _standaloneCatalogSeries() {
+  return CatalogSeries(
+    id: _standaloneSeriesId,
+    brandId: 'pop_mart',
+    ipId: 'crybaby',
+    displayName: 'MEGA CRYBABY 400% Crying in Pink',
+    releaseDate: '2025-01-01',
+    isBlindBox: false,
+    imageKey: _standaloneSeriesId,
+  );
+}
+
 Future<void> _pumpBadge(WidgetTester tester, MarketSnapshot snapshot) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -48,6 +80,8 @@ Future<void> _pumpBadge(WidgetTester tester, MarketSnapshot snapshot) async {
 }
 
 void main() {
+  tearDown(CatalogBundleCache.resetForTest);
+
   testWidgets('figure snapshot shows value, sales, range, and freshness', (
     tester,
   ) async {
@@ -64,6 +98,25 @@ void main() {
   testWidgets('series fallback shows series estimate indicator', (
     tester,
   ) async {
+    CatalogBundleCache.prime(
+      CatalogSeedBundle(
+        brands: const [],
+        ips: const [],
+        series: [
+          CatalogSeries(
+            id: 'the_monsters_big_into_energy_vinyl_plush_pendant',
+            brandId: 'pop_mart',
+            ipId: 'the_monsters',
+            displayName: 'Big Into Energy',
+            releaseDate: '2025-04-25',
+            isBlindBox: true,
+            imageKey: 'the_monsters_big_into_energy_vinyl_plush_pendant',
+          ),
+        ],
+        figures: const [],
+      ),
+    );
+
     await _pumpBadge(tester, _seriesSnapshot());
 
     expect(find.text(kMarketSnapshotSeriesAvgValueBadgeHeading), findsOneWidget);
@@ -76,6 +129,27 @@ void main() {
     expect(find.text('4 sales'), findsOneWidget);
     expect(find.text('4 sales*'), findsNothing);
     expect(find.text('\$30–\$45 range'), findsOneWidget);
+  });
+
+  testWidgets('non-blind-box series fallback shows market estimate indicator', (
+    tester,
+  ) async {
+    CatalogBundleCache.prime(
+      CatalogSeedBundle(
+        brands: const [],
+        ips: const [],
+        series: [_standaloneCatalogSeries()],
+        figures: const [],
+      ),
+    );
+
+    await _pumpBadge(tester, _standaloneSeriesSnapshot());
+
+    expect(find.text(kMarketSnapshotMarketEstimateLabel), findsOneWidget);
+    expect(find.text(kMarketSnapshotSeriesAvgValueBadgeHeading), findsNothing);
+    expect(find.text('\$1.2k'), findsOneWidget);
+    expect(find.text('≈ $kMarketSnapshotMarketEstimateLabel'), findsOneWidget);
+    expect(find.text('6 sales'), findsOneWidget);
   });
 
   testWidgets('hides sales line when count is zero', (tester) async {

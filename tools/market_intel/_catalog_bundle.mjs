@@ -5,12 +5,68 @@
  * Pure I/O at load boundary; join helpers are pure.
  */
 
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const defaultRepoRoot = join(__dirname, '..', '..');
+
+/** Relative to repo root — offline dev / test fallback only. */
+export const SEED_CATALOG_RELATIVE_DIR = 'tools/seed';
+
+/**
+ * Resolves catalog JSON directory for the Node market pipeline.
+ *
+ * Priority:
+ *   1. options.catalogDataDir
+ *   2. process.env.CATALOG_DATA_DIR (absolute or relative to repoRoot)
+ *   3. tools/seed (offline dev fallback — NOT production source of truth)
+ *
+ * Shelfy architecture: Firestore catalog is canonical. Production runs should set
+ * CATALOG_DATA_DIR to a Firestore export (e.g. blindbox-catalog/data).
+ *
+ * @param {string} [repoRoot]
+ * @param {{ catalogDataDir?: string }} [options]
+ * @returns {{ catalogDataDir: string, catalogSource: 'env' | 'option' | 'seed_fallback' }}
+ */
+export function resolveCatalogDataDir(repoRoot = defaultRepoRoot, options = {}) {
+  const explicit = options.catalogDataDir?.trim();
+  if (explicit) {
+    return {
+      catalogDataDir: resolve(explicit),
+      catalogSource: 'option',
+    };
+  }
+
+  const fromEnv = process.env.CATALOG_DATA_DIR?.trim();
+  if (fromEnv) {
+    return {
+      catalogDataDir: resolve(repoRoot, fromEnv),
+      catalogSource: 'env',
+    };
+  }
+
+  return {
+    catalogDataDir: join(repoRoot, SEED_CATALOG_RELATIVE_DIR),
+    catalogSource: 'seed_fallback',
+  };
+}
+
+/**
+ * @param {string} catalogDataDir
+ * @param {string} filename
+ */
+export function loadCatalogJsonFromDir(catalogDataDir, filename) {
+  const path = join(catalogDataDir, filename);
+  if (!existsSync(path)) {
+    throw new Error(
+      `Catalog file not found: ${path}\n` +
+        'Set CATALOG_DATA_DIR to a Firestore export directory (brands.json, ips.json, series.json, figures.json).',
+    );
+  }
+  return JSON.parse(readFileSync(path, 'utf8'));
+}
 
 /** Architecture example ids → canonical catalog figure ids (DEV_VALIDATION.md). */
 export const METADATA_KEY_TO_CATALOG_FIGURE_ID = Object.freeze({
@@ -67,9 +123,14 @@ export function buildCatalogToMetadataMap(metadataFigures, catalogFigureIds) {
 }
 
 /**
- * @param {string} [repoRoot]
- * @returns {{
+ * @typedef {'env' | 'option' | 'seed_fallback' | 'firestore'} CatalogBundleSource
+ */
+
+/**
+ * @typedef {{
  *   repoRoot: string,
+ *   catalogDataDir: string,
+ *   catalogSource: CatalogBundleSource,
  *   figures: object[],
  *   series: object[],
  *   brands: object[],
@@ -80,36 +141,135 @@ export function buildCatalogToMetadataMap(metadataFigures, catalogFigureIds) {
  *   seriesById: Map<string, object>,
  *   brandById: Map<string, object>,
  *   ipById: Map<string, object>,
- * }}
+ * }} CatalogBundle
  */
-export function loadCatalogBundle(repoRoot = defaultRepoRoot) {
-  const figures = loadJsonFromRepo(repoRoot, 'tools/seed/figures.json');
-  const series = loadJsonFromRepo(repoRoot, 'tools/seed/series.json');
-  const brands = loadJsonFromRepo(repoRoot, 'tools/seed/brands.json');
-  const ips = loadJsonFromRepo(repoRoot, 'tools/seed/ips.json');
+
+/**
+ * @param {string} repoRoot
+ * @param {{
+ *   catalogDataDir: string,
+ *   catalogSource: CatalogBundleSource,
+ *   figures: object[],
+ *   series: object[],
+ *   brands: object[],
+ *   ips: object[],
+ * }} input
+ * @returns {CatalogBundle}
+ */
+export function assembleCatalogBundle(repoRoot, input) {
   const metadata = loadJsonFromRepo(
     repoRoot,
     'tools/market_intel/market_metadata.json',
   );
-
-  const catalogFigureIds = new Set(figures.map((figure) => figure.id));
+  const catalogFigureIds = new Set(input.figures.map((figure) => figure.id));
 
   return {
     repoRoot,
-    figures,
-    series,
-    brands,
-    ips,
+    catalogDataDir: input.catalogDataDir,
+    catalogSource: input.catalogSource,
+    figures: input.figures,
+    series: input.series,
+    brands: input.brands,
+    ips: input.ips,
     metadata,
     catalogFigureIds,
     catalogToMetadata: buildCatalogToMetadataMap(
       metadata.figures,
       catalogFigureIds,
     ),
-    seriesById: new Map(series.map((row) => [row.id, row])),
-    brandById: new Map(brands.map((row) => [row.id, row])),
-    ipById: new Map(ips.map((row) => [row.id, row])),
+    seriesById: new Map(input.series.map((row) => [row.id, row])),
+    brandById: new Map(input.brands.map((row) => [row.id, row])),
+    ipById: new Map(input.ips.map((row) => [row.id, row])),
   };
+}
+
+/**
+ * @param {{ catalogSource?: string }} [options]
+ * @returns {'firestore' | 'file'}
+ */
+export function resolveCatalogSource(options = {}) {
+  const explicit = options.catalogSource?.trim();
+  if (explicit === 'file' || explicit === 'firestore') {
+    return explicit;
+  }
+
+  const fromEnv = process.env.CATALOG_SOURCE?.trim();
+  if (fromEnv === 'file' || fromEnv === 'firestore') {
+    return fromEnv;
+  }
+
+  return 'firestore';
+}
+
+/**
+ * @returns {boolean}
+ */
+export function isCatalogStrict() {
+  const value = process.env.CATALOG_STRICT?.trim().toLowerCase();
+  return value === '1' || value === 'true' || value === 'yes';
+}
+
+/**
+ * @param {CatalogBundle} bundle
+ * @param {{ strict?: boolean, catalogSource?: 'firestore' | 'file' }} [options]
+ */
+export function assertCatalogBundleAllowed(bundle, options = {}) {
+  const strict = options.strict ?? isCatalogStrict();
+  if (!strict) return;
+
+  const requestedSource = options.catalogSource ?? resolveCatalogSource(options);
+  if (requestedSource !== 'file') return;
+
+  if (bundle.catalogSource === 'seed_fallback') {
+    throw new Error(
+      'CATALOG_STRICT=1: refused tools/seed catalog fallback.\n' +
+        'Set CATALOG_DATA_DIR to a JSON export directory or use --catalog-source firestore.',
+    );
+  }
+}
+
+/**
+ * @param {string} [repoRoot]
+ * @param {{ catalogDataDir?: string, catalogSource?: 'firestore' | 'file', strict?: boolean }} [options]
+ * @returns {Promise<CatalogBundle>}
+ */
+export async function loadCatalogBundleForSource(
+  repoRoot = defaultRepoRoot,
+  options = {},
+) {
+  const catalogSource = resolveCatalogSource(options);
+
+  const bundle =
+    catalogSource === 'firestore'
+      ? await import('../catalog/load_firestore_catalog_bundle.mjs').then(
+          ({ loadFirestoreCatalogBundle }) =>
+            loadFirestoreCatalogBundle(repoRoot, options),
+        )
+      : loadCatalogBundle(repoRoot, options);
+
+  assertCatalogBundleAllowed(bundle, { ...options, catalogSource });
+  return bundle;
+}
+
+/**
+ * @param {string} [repoRoot]
+ * @param {{ catalogDataDir?: string }} [options]
+ * @returns {CatalogBundle}
+ */
+export function loadCatalogBundle(repoRoot = defaultRepoRoot, options = {}) {
+  const { catalogDataDir, catalogSource } = resolveCatalogDataDir(
+    repoRoot,
+    options,
+  );
+
+  return assembleCatalogBundle(repoRoot, {
+    catalogDataDir,
+    catalogSource,
+    figures: loadCatalogJsonFromDir(catalogDataDir, 'figures.json'),
+    series: loadCatalogJsonFromDir(catalogDataDir, 'series.json'),
+    brands: loadCatalogJsonFromDir(catalogDataDir, 'brands.json'),
+    ips: loadCatalogJsonFromDir(catalogDataDir, 'ips.json'),
+  });
 }
 
 /**

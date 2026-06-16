@@ -43,7 +43,7 @@ class MarketSnapshotBadge extends StatelessWidget {
           children: [
             Text(
               snapshot.isSeriesEstimate
-                  ? kMarketSnapshotSeriesAvgValueBadgeHeading
+                  ? snapshotTierBBadgeHeadingLabel(snapshot)
                   : 'Market Value',
               style: textTheme.labelSmall?.copyWith(
                 color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
@@ -62,7 +62,11 @@ class MarketSnapshotBadge extends StatelessWidget {
             ),
             if (snapshot.isSeriesEstimate) ...[
               const SizedBox(height: 6),
-              _SeriesEstimateChip(scheme: scheme, textTheme: textTheme),
+              _SeriesEstimateChip(
+                scheme: scheme,
+                textTheme: textTheme,
+                label: snapshotTierBEstimateChipLabel(snapshot),
+              ),
             ],
             if (salesLine != null) ...[
               SizedBox(height: snapshot.isSeriesEstimate ? 4 : 6),
@@ -85,10 +89,12 @@ class _SeriesEstimateChip extends StatelessWidget {
   const _SeriesEstimateChip({
     required this.scheme,
     required this.textTheme,
+    required this.label,
   });
 
   final ColorScheme scheme;
   final TextTheme textTheme;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
@@ -100,7 +106,7 @@ class _SeriesEstimateChip extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         child: Text(
-          '≈ $kMarketSnapshotSeriesEstimateLabel',
+          '≈ $label',
           style: textTheme.labelSmall?.copyWith(
             color: scheme.onTertiaryContainer.withValues(alpha: 0.95),
             fontWeight: FontWeight.w600,

@@ -2,6 +2,7 @@ import 'package:blindbox_app/core/theme/app_theme.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
 import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_figure.dart';
+import 'package:blindbox_app/features/catalog/models/catalog_series.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_item.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_sheet.dart';
 import 'package:blindbox_app/features/market_intel/application/market_snapshot_providers.dart';
@@ -224,6 +225,79 @@ void main() {
       expect(find.text('4 recent sales'), findsNothing);
       expect(find.text('\$37'), findsNothing);
       expect(find.text('\$30–\$45'), findsOneWidget);
+    });
+
+    testWidgets('non-blind-box series fallback shows market estimate summary',
+        (tester) async {
+      const standaloneSeriesId = 'mega_crybaby_400_crying_in_pink';
+      const standaloneFigureId = 'mega_crybaby_400_crying_in_pink_figure';
+
+      CatalogBundleCache.prime(
+        CatalogSeedBundle(
+          brands: const [],
+          ips: const [],
+          series: [
+            CatalogSeries(
+              id: standaloneSeriesId,
+              brandId: 'pop_mart',
+              ipId: 'crybaby',
+              displayName: 'MEGA CRYBABY 400% Crying in Pink',
+              releaseDate: '2025-01-01',
+              isBlindBox: false,
+              imageKey: standaloneSeriesId,
+            ),
+          ],
+          figures: [
+            CatalogFigure(
+              id: standaloneFigureId,
+              seriesId: standaloneSeriesId,
+              brandId: 'pop_mart',
+              ipId: 'crybaby',
+              displayName: 'MEGA CRYBABY 400% Crying in Pink',
+              isSecret: false,
+              sortOrder: 1,
+              imageKey: standaloneFigureId,
+            ),
+          ],
+        ),
+      );
+
+      await _pumpGallery(
+        tester,
+        repository: _FakeMarketSnapshotRepository(
+          seriesSnapshot: MarketSnapshot(
+            id: standaloneSeriesId,
+            level: SnapshotLevel.series,
+            seriesId: standaloneSeriesId,
+            estimatedValueUsd: 1240,
+            trend: MarketTrend.stable,
+            confidence: SnapshotConfidence.low,
+            recentSalesCount: 6,
+            priceRangeMinUsd: 1100,
+            priceRangeMaxUsd: 1380,
+            computedAt: DateTime.utc(2026, 6, 15),
+          ),
+        ),
+        items: const [
+          CatalogFigureGalleryItem(
+            id: standaloneFigureId,
+            name: 'MEGA CRYBABY 400% Crying in Pink',
+            rarityLabel: 'Common',
+          ),
+        ],
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.text(formatMarketSnapshotDiscoverDisclosureLabel(expanded: false)),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Market Estimate · \$1.2k · 6 sales'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Series Avg.'), findsNothing);
     });
   });
 }

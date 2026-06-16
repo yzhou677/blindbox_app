@@ -57,6 +57,59 @@ MarketSnapshot _seriesSnapshot() {
   );
 }
 
+const _standaloneSeriesId = 'mega_crybaby_400_crying_in_pink';
+
+void _primeHopeBlindBoxCatalog() {
+  CatalogBundleCache.prime(
+    CatalogSeedBundle(
+      brands: const [],
+      ips: const [],
+      series: [_luckCatalogSeries()],
+      figures: [_hopeCatalogFigure()],
+    ),
+  );
+}
+
+MarketSnapshot _standaloneSeriesSnapshot() {
+  return MarketSnapshot(
+    id: _standaloneSeriesId,
+    level: SnapshotLevel.series,
+    seriesId: _standaloneSeriesId,
+    estimatedValueUsd: 1240,
+    trend: MarketTrend.stable,
+    confidence: SnapshotConfidence.low,
+    recentSalesCount: 6,
+    priceRangeMinUsd: 1100,
+    priceRangeMaxUsd: 1380,
+    computedAt: DateTime.utc(2026, 6, 15, 11),
+  );
+}
+
+CatalogFigure _megaCrybabyCatalogFigure() {
+  return CatalogFigure(
+    id: 'mega_crybaby_400_crying_in_pink_figure',
+    seriesId: _standaloneSeriesId,
+    brandId: 'pop_mart',
+    ipId: 'crybaby',
+    displayName: 'MEGA CRYBABY 400% Crying in Pink',
+    isSecret: false,
+    sortOrder: 1,
+    imageKey: 'mega_crybaby_400_crying_in_pink_figure',
+  );
+}
+
+CatalogSeries _standaloneCatalogSeries() {
+  return CatalogSeries(
+    id: _standaloneSeriesId,
+    brandId: 'pop_mart',
+    ipId: 'crybaby',
+    displayName: 'MEGA CRYBABY 400% Crying in Pink',
+    releaseDate: '2025-01-01',
+    isBlindBox: false,
+    imageKey: _standaloneSeriesId,
+  );
+}
+
 Future<void> _pumpInsightsScreen(
   WidgetTester tester, {
   required MarketSnapshotRepository repository,
@@ -176,14 +229,7 @@ void main() {
     });
 
     testWidgets('series fallback shows series-level estimate once', (tester) async {
-      CatalogBundleCache.prime(
-        CatalogSeedBundle(
-          brands: const [],
-          ips: const [],
-          series: const [],
-          figures: [_hopeCatalogFigure()],
-        ),
-      );
+      _primeHopeBlindBoxCatalog();
 
       await _pumpInsightsScreen(
         tester,
@@ -206,6 +252,50 @@ void main() {
       expect(find.text('4 recent sales · Stable'), findsOneWidget);
       expect(find.text('4 recent sales'), findsNothing);
       expect(find.text('Stable'), findsNothing);
+    });
+
+    testWidgets('non-blind-box series fallback shows market estimate labels',
+        (tester) async {
+      CatalogBundleCache.prime(
+        CatalogSeedBundle(
+          brands: const [],
+          ips: const [],
+          series: [_standaloneCatalogSeries()],
+          figures: [_megaCrybabyCatalogFigure()],
+        ),
+      );
+
+      await _pumpInsightsScreen(
+        tester,
+        repository: _FakeMarketSnapshotRepository(
+          seriesSnapshot: _standaloneSeriesSnapshot(),
+        ),
+        figureId: _megaCrybabyCatalogFigure().id,
+        listing: MarketListing(
+          id: _listingId,
+          collectible: Collectible(
+            id: 'c-$_listingId',
+            name: 'MEGA CRYBABY 400% Crying in Pink',
+            series: 'MEGA CRYBABY 400% Crying in Pink',
+            brand: 'POP MART',
+            releaseDate: DateTime.utc(2025, 4, 25),
+            imageUrl: '',
+          ),
+          currentPriceUsd: 1400,
+          priceChangePercent: 0,
+          listingCount: 1,
+        ),
+      );
+      await _settleInsightsScreen(tester);
+
+      expect(find.text(kMarketSnapshotMarketEstimateLabel), findsNWidgets(2));
+      expect(
+        find.text(kMarketSnapshotInsightsSeriesLevelEstimateLabel),
+        findsNothing,
+      );
+      expect(find.text(kMarketSnapshotSeriesAvgLabel), findsNothing);
+      expect(find.text('\$1.2k'), findsOneWidget);
+      expect(find.text('▲ 13% above market estimate'), findsOneWidget);
     });
 
     testWidgets('loading shows skeleton', (tester) async {
@@ -295,14 +385,7 @@ void main() {
     });
 
     testWidgets('shows series estimate above series avg delta', (tester) async {
-      CatalogBundleCache.prime(
-        CatalogSeedBundle(
-          brands: const [],
-          ips: const [],
-          series: const [],
-          figures: [_hopeCatalogFigure()],
-        ),
-      );
+      _primeHopeBlindBoxCatalog();
 
       await _pumpPriceDelta(
         tester,
@@ -335,14 +418,7 @@ void main() {
     });
 
     testWidgets('shows info icon for series estimate delta', (tester) async {
-      CatalogBundleCache.prime(
-        CatalogSeedBundle(
-          brands: const [],
-          ips: const [],
-          series: const [],
-          figures: [_hopeCatalogFigure()],
-        ),
-      );
+      _primeHopeBlindBoxCatalog();
 
       await _pumpPriceDelta(
         tester,
@@ -363,14 +439,7 @@ void main() {
 
     testWidgets('tap series estimate info icon opens disclosure sheet',
         (tester) async {
-      CatalogBundleCache.prime(
-        CatalogSeedBundle(
-          brands: const [],
-          ips: const [],
-          series: const [],
-          figures: [_hopeCatalogFigure()],
-        ),
-      );
+      _primeHopeBlindBoxCatalog();
 
       await _pumpPriceDelta(
         tester,
@@ -400,6 +469,50 @@ void main() {
       );
       expect(
         find.textContaining('individual figures can vary significantly'),
+        findsNothing,
+      );
+    });
+
+    testWidgets('non-blind-box series estimate uses market estimate delta and sheet',
+        (tester) async {
+      CatalogBundleCache.prime(
+        CatalogSeedBundle(
+          brands: const [],
+          ips: const [],
+          series: [_standaloneCatalogSeries()],
+          figures: [_megaCrybabyCatalogFigure()],
+        ),
+      );
+
+      await _pumpPriceDelta(
+        tester,
+        repository: _FakeMarketSnapshotRepository(
+          seriesSnapshot: _standaloneSeriesSnapshot(),
+        ),
+        listingPriceUsd: 1400,
+        figureId: _megaCrybabyCatalogFigure().id,
+      );
+      await _settleInsightsLoaded(
+        tester,
+        waitFor: '▲ 13% above market estimate',
+      );
+
+      expect(find.text('▲ 13% above market estimate'), findsOneWidget);
+      expect(
+        find.bySemanticsLabel(kMarketMarketEstimateInfoSemanticsLabel),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byIcon(Icons.info_outline));
+      await tester.pumpAndSettle();
+
+      expect(find.text(kMarketMarketEstimateInfoSheetTitle), findsWidgets);
+      expect(
+        find.textContaining('derived from recent marketplace activity'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('regular figures, popular figures, and secrets'),
         findsNothing,
       );
     });
