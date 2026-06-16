@@ -64,6 +64,7 @@ class ShelfValueSummary {
     required this.topFigures,
     required this.seriesBreakdown,
     required this.tier,
+    required this.includesSeriesEstimates,
   });
 
   /// Sum of [MarketSnapshot.estimatedValueUsd] for all owned figures with a
@@ -91,9 +92,21 @@ class ShelfValueSummary {
   /// Rough tier — stored for future use; not displayed in MVP.
   final CollectionValueTier tier;
 
+  /// True when at least one valued figure used a series-level fallback snapshot.
+  final bool includesSeriesEstimates;
+
   /// 0–100 integer coverage percentage.
   int get coveragePercent =>
       ownedCount == 0 ? 0 : ((valuedCount / ownedCount) * 100).round();
+
+  /// Coverage sub-label for Collection Home and Insights overview.
+  String get coverageLabel {
+    final base = 'Based on $valuedCount of $ownedCount figures';
+    if (includesSeriesEstimates) {
+      return '$base · includes estimates';
+    }
+    return base;
+  }
 
   bool get hasAnyValue => valuedCount > 0;
 
@@ -106,5 +119,6 @@ class ShelfValueSummary {
     topFigures: [],
     seriesBreakdown: [],
     tier: CollectionValueTier.empty,
+    includesSeriesEstimates: false,
   );
 }

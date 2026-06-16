@@ -167,6 +167,8 @@ void main() {
       expect(result.unavailableCount, 0);
       expect(result.totalValueUsd, 80);
       expect(result.hasAnyValue, isTrue);
+      expect(result.includesSeriesEstimates, isFalse);
+      expect(result.coverageLabel, 'Based on 2 of 2 figures');
     });
 
     test('excludes figures without snapshots from total', () async {
@@ -263,6 +265,48 @@ void main() {
 
       expect(result.ownedCount, 1);
       expect(result.topFigures.single.isSeriesEstimate, isTrue);
+      expect(result.includesSeriesEstimates, isTrue);
+      expect(
+        result.coverageLabel,
+        'Based on 1 of 1 figures · includes estimates',
+      );
+    });
+
+    test('includesSeriesEstimates is false when all snapshots are figure-level',
+        () async {
+      final repo = _FakeRepo(
+        figureMap: {
+          'cat_fig_1': _figureSnapshot(id: 'cat_fig_1', value: 42),
+          'cat_fig_2': _figureSnapshot(id: 'cat_fig_2', value: 38),
+        },
+      );
+
+      final container = _makeContainer(snap: _snapWithFigures(), repo: repo);
+
+      final result = await container.read(collectionValueProvider.future);
+
+      expect(result.includesSeriesEstimates, isFalse);
+      expect(result.coverageLabel, 'Based on 2 of 2 figures');
+    });
+
+    test('includesSeriesEstimates is true when mix includes series fallback',
+        () async {
+      final repo = _FakeRepo(
+        figureMap: {
+          'cat_fig_1': _figureSnapshot(id: 'cat_fig_1', value: 42),
+          'cat_fig_2': _seriesSnapshot(seriesId: 'series_test', value: 37),
+        },
+      );
+
+      final container = _makeContainer(snap: _snapWithFigures(), repo: repo);
+
+      final result = await container.read(collectionValueProvider.future);
+
+      expect(result.includesSeriesEstimates, isTrue);
+      expect(
+        result.coverageLabel,
+        'Based on 2 of 2 figures · includes estimates',
+      );
     });
 
     test('seriesBreakdown aggregates across series', () async {
@@ -384,8 +428,27 @@ void main() {
         topFigures: [],
         seriesBreakdown: [],
         tier: CollectionValueTier.small,
+        includesSeriesEstimates: false,
       );
       expect(s.coveragePercent, 75);
+      expect(s.coverageLabel, 'Based on 3 of 4 figures');
+    });
+
+    test('coverageLabel appends estimates qualifier when needed', () {
+      const s = ShelfValueSummary(
+        totalValueUsd: 100,
+        ownedCount: 15,
+        valuedCount: 12,
+        unavailableCount: 3,
+        topFigures: [],
+        seriesBreakdown: [],
+        tier: CollectionValueTier.large,
+        includesSeriesEstimates: true,
+      );
+      expect(
+        s.coverageLabel,
+        'Based on 12 of 15 figures · includes estimates',
+      );
     });
   });
 

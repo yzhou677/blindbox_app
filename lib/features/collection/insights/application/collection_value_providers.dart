@@ -44,6 +44,7 @@ final collectionValueProvider =
 
   double total = 0;
   var valuedCount = 0;
+  var includesSeriesEstimates = false;
   final valuedFigures = <ValuedFigure>[];
   final seriesMap = <String, _SeriesAccum>{};
 
@@ -61,6 +62,9 @@ final collectionValueProvider =
 
     total += snapshot.estimatedValueUsd;
     valuedCount++;
+    if (snapshot.isSeriesEstimate) {
+      includesSeriesEstimates = true;
+    }
 
     valuedFigures.add(
       ValuedFigure(
@@ -106,6 +110,7 @@ final collectionValueProvider =
     topFigures: valuedFigures.take(5).toList(),
     seriesBreakdown: seriesBreakdown,
     tier: _computeTier(total),
+    includesSeriesEstimates: includesSeriesEstimates,
   );
 });
 

@@ -8,6 +8,8 @@
 
 **Sprint 3J status:** Market Insights navigation hidden when `snapshot.isSeriesEstimate` (Option B — Trust > Coverage). Tier A unchanged; Tier B keeps delta wording only.
 
+**Sprint 3K status:** Collection Home / Insights overview sub-label appends `· includes estimates` when `ShelfValueSummary.includesSeriesEstimates` is true.
+
 ---
 
 ## Core Principles
@@ -778,7 +780,7 @@ All three P0 items are contained to `market_snapshot_format.dart` and two screen
 | Item | Description | Prerequisite |
 |------|-------------|--------------|
 | P1-1 | `4 sales*` asterisk removal | P0 badge change (asterisk removed as part of P0-2 badge rework) |
-| P1-2 | Collection total adds `· includes estimates` when Tier B is in the mix | Requires `ShelfValueSummary` to track whether any `isSeriesEstimate` was included |
+| P1-2 | Collection total adds `· includes estimates` when Tier B is in the mix | **Implemented Sprint 3K** — `ShelfValueSummary.includesSeriesEstimates` + `coverageLabel` |
 | P1-3 | `Using Series Estimate` → `Series-Level Estimate` label | Part of P0-3 (the two are adjacent; do together) |
 | P1-4 | `_SeriesValueRow` adds `~` when series has series-estimate figures | Requires `SeriesValueEntry.hasSeriesEstimates: bool` domain addition |
 

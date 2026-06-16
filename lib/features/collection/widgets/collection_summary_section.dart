@@ -303,8 +303,7 @@ class _ShelfValueGlance extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final valueLabel = '~${formatShelfValueUsd(summary.totalValueUsd)}';
-    final coverageLabel =
-        'Based on ${summary.valuedCount} of ${summary.ownedCount} figures';
+    final coverageLabel = summary.coverageLabel;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
