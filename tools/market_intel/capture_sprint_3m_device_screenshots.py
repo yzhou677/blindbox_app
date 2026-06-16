@@ -10,7 +10,7 @@ sys.path.insert(0, str(REPO / "tools" / "market_intel"))
 
 import capture_sprint_3k_device_screenshots as base
 
-OUT = REPO / "tools" / "market_intel" / "screenshots" / "sprint_3m"
+OUT = REPO / "tools" / "market_intel" / "screenshots" / "sprint_3m_c"
 
 
 def screencap(filename: str) -> None:
@@ -47,7 +47,9 @@ def wait_for_shelf_value() -> None:
 
 def tap_shelf_value_info() -> None:
     ui = base.dump_ui()
-    pt = base.find_text_tap(ui, "How shelf value is calculated")
+    pt = base.find_text_tap(ui, "About shelf value")
+    if pt is None:
+        pt = base.find_text_tap(ui, "How shelf value is calculated")
     if pt is None:
         shelf = base.find_text_tap(ui, "Shelf Value")
         if shelf is None:
@@ -64,7 +66,9 @@ def wait_for_sheet() -> None:
     deadline = time.time() + 15
     while time.time() < deadline:
         ui = base.dump_ui()
-        if "Figure Snapshot" in ui and "Series Estimate" in ui:
+        if "About shelf value" in ui or (
+            "Figure Snapshot" in ui and "Series Estimate" in ui
+        ):
             return
         time.sleep(0.6)
     raise RuntimeError("Shelf value info sheet did not open")

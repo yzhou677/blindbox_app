@@ -921,5 +921,18 @@ Est. shelf value    ~$612
 
 ### Screenshots
 
-`tools/market_intel/screenshots/sprint_3m/`
+`tools/market_intel/screenshots/sprint_3m_c/`
+
+---
+
+## Sprint 3M-C — Market Detail Tier B + Shelf Value polish
+
+**Status:** Implemented June 2026
+
+- Tier B `MarketListingPriceDeltaLine` shows inline ⓘ → `MarketSeriesAverageInfoSheet`
+- Shelf Value sheet title → **About shelf value**; explanation-first hierarchy
+- Sprint 3J gating unchanged
+
+**Screenshots:** `tools/market_intel/screenshots/sprint_3m_c/` (capture via `capture_sprint_3m_c_device_screenshots.py` with `MARKET_FIXTURE_SOURCE=true`)
+
 

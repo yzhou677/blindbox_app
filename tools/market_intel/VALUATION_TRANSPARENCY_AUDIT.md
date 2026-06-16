@@ -326,7 +326,7 @@ Tier B (series estimate) surfaces need disclosure more than Tier A: the label ch
 
 | # | Screen | Widget | Label | Location | Reason |
 |---|--------|--------|-------|----------|--------|
-| **P0-1** | Market Detail | `MarketListingPriceDeltaLine` | `▲ N% above series avg.` (all Tier B delta variants) | Inline ⓘ on delta line | Purchase decision point; Tier B denominator is easy to misread as figure market value; Insights drill-down blocked (3J). Highest financial trust risk. |
+| **P0-1** | Market Detail | `MarketListingPriceDeltaLine` | `▲ N% above series avg.` (all Tier B delta variants) | Inline ⓘ on delta line | Purchase decision point; Tier B denominator is easy to misread as figure market value; Insights drill-down blocked (3J). Highest financial trust risk. **Implemented — Sprint 3M-C.** |
 | **P0-2** | Collection Insights | `_SectionHeader` / `_ValueOverview` | `Shelf Value` | ⓘ on section header | Canonical explanation for portfolio total, `~`, coverage, exclusions, and mixed tiers — educates users for Home glance and subsections. **Implemented — Sprint 3M-B.** |
 | **P0-3** | Discover Figure Detail | `_GalleryMarketInformationAccordion` | `Series Avg. · $…` / `Market Information` | ⓘ on heading when Tier B, or on summary line | Forms price expectations during catalog browse; Tier B structurally mirrors Tier A; sales count misattributed to figure. |
 

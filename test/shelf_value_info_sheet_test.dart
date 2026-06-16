@@ -62,14 +62,13 @@ void main() {
     expect(find.text(kShelfValueInfoSheetTitle), findsWidgets);
   });
 
-  testWidgets('Bottom sheet contains how shelf value is calculated title',
-      (tester) async {
+  testWidgets('Bottom sheet contains about shelf value title', (tester) async {
     await _pumpShelfValueCard(tester);
 
     await tester.tap(find.byIcon(Icons.info_outline));
     await tester.pumpAndSettle();
 
-    expect(find.text('How shelf value is calculated'), findsWidgets);
+    expect(find.text('About shelf value'), findsWidgets);
   });
 
   testWidgets('Bottom sheet contains Figure Snapshot section', (tester) async {

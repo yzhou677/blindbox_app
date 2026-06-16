@@ -94,10 +94,17 @@ def tap_market_tab() -> None:
     time.sleep(2.5)
 
 
+def find_feed_card_tap(ui: str, needle: str, min_y: int = 400) -> tuple[int, int] | None:
+    pt = find_card_center(ui, needle)
+    if pt is not None:
+        return pt
+    return find_text_tap(ui, needle, min_y=min_y)
+
+
 def scroll_feed_until_card(figure_name: str, max_swipes: int = 16) -> tuple[int, int] | None:
     for _ in range(max_swipes):
         ui = dump_ui()
-        pt = find_card_center(ui, figure_name)
+        pt = find_feed_card_tap(ui, figure_name)
         if pt is not None:
             return pt
         swipe(540, 1700, 540, 700, 450)

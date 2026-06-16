@@ -13,6 +13,7 @@ import 'package:blindbox_app/features/market_intel/domain/market_snapshot_reposi
 import 'package:blindbox_app/features/market_intel/presentation/market_insights_screen.dart';
 import 'package:blindbox_app/features/market_intel/widgets/market_detail_insights_section.dart';
 import 'package:blindbox_app/features/market_intel/widgets/market_insights_navigation_row.dart';
+import 'package:blindbox_app/features/market_intel/widgets/market_series_average_info_sheet.dart';
 import 'package:blindbox_app/features/market_intel/widgets/market_snapshot_format.dart';
 import 'package:blindbox_app/models/collectible.dart';
 import 'package:blindbox_app/models/market_listing.dart';
@@ -315,6 +316,83 @@ void main() {
 
       expect(find.text('▲ 8% above series avg.'), findsOneWidget);
     });
+
+    testWidgets('hides info icon for figure snapshot delta', (tester) async {
+      await _pumpPriceDelta(
+        tester,
+        repository: _FakeMarketSnapshotRepository(
+          figureSnapshot: _figureSnapshot(),
+        ),
+        listingPriceUsd: 48,
+      );
+      await _settleInsightsLoaded(tester, waitFor: '▲ 14% above market');
+
+      expect(find.byIcon(Icons.info_outline), findsNothing);
+      expect(
+        find.bySemanticsLabel(kMarketSeriesAverageInfoSemanticsLabel),
+        findsNothing,
+      );
+    });
+
+    testWidgets('shows info icon for series estimate delta', (tester) async {
+      CatalogBundleCache.prime(
+        CatalogSeedBundle(
+          brands: const [],
+          ips: const [],
+          series: const [],
+          figures: [_hopeCatalogFigure()],
+        ),
+      );
+
+      await _pumpPriceDelta(
+        tester,
+        repository: _FakeMarketSnapshotRepository(
+          seriesSnapshot: _seriesSnapshot(),
+        ),
+        listingPriceUsd: 40,
+        figureId: _hopeFigureId,
+      );
+      await _settleInsightsLoaded(tester, waitFor: '▲ 8% above series avg.');
+
+      expect(find.byIcon(Icons.info_outline), findsOneWidget);
+      expect(
+        find.bySemanticsLabel(kMarketSeriesAverageInfoSemanticsLabel),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('tap series estimate info icon opens disclosure sheet',
+        (tester) async {
+      CatalogBundleCache.prime(
+        CatalogSeedBundle(
+          brands: const [],
+          ips: const [],
+          series: const [],
+          figures: [_hopeCatalogFigure()],
+        ),
+      );
+
+      await _pumpPriceDelta(
+        tester,
+        repository: _FakeMarketSnapshotRepository(
+          seriesSnapshot: _seriesSnapshot(),
+        ),
+        listingPriceUsd: 40,
+        figureId: _hopeFigureId,
+      );
+      await _settleInsightsLoaded(tester, waitFor: '▲ 8% above series avg.');
+
+      await tester.tap(find.byIcon(Icons.info_outline));
+      await tester.pumpAndSettle();
+
+      expect(find.text(kMarketSeriesAverageInfoSheetTitle), findsWidgets);
+      expect(
+        find.textContaining(
+          'This comparison uses marketplace activity from the same series',
+        ),
+        findsOneWidget,
+      );
+    });
   });
 
   group('Market detail insights visibility', () {
@@ -417,6 +495,7 @@ void main() {
       await _settleInsightsLoaded(tester, waitFor: '▲ 8% above series avg.');
 
       expect(find.text('▲ 8% above series avg.'), findsOneWidget);
+      expect(find.byIcon(Icons.info_outline), findsOneWidget);
       expect(find.text(kMarketDetailInsightsHeading), findsNothing);
     });
   });
