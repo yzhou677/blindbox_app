@@ -37,6 +37,7 @@ class SeriesValueEntry {
     required this.totalValueUsd,
     required this.valuedFigureCount,
     required this.ownedFigureCount,
+    required this.hasSeriesEstimates,
   });
 
   final String seriesId;
@@ -48,6 +49,9 @@ class SeriesValueEntry {
 
   /// Total owned figures in this series (with or without a snapshot).
   final int ownedFigureCount;
+
+  /// True when at least one valued figure used a series-level fallback snapshot.
+  final bool hasSeriesEstimates;
 }
 
 /// Rough tier for future use — not displayed in MVP.

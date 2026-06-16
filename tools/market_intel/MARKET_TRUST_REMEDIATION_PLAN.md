@@ -10,6 +10,10 @@
 
 **Sprint 3K status:** Collection Home / Insights overview sub-label appends `· includes estimates` when `ShelfValueSummary.includesSeriesEstimates` is true.
 
+**Sprint 3L status:** By Series row prefixes `~` on series total when `SeriesValueEntry.hasSeriesEstimates` is true (P1-4).
+
+**Sprint 3M-B status:** Collection Insights `Shelf Value` section header includes an inline ⓘ that opens `ShelfValueInfoSheet` — P0-2 from `VALUATION_TRANSPARENCY_AUDIT.md`. Educational disclosure only; no valuation logic changes.
+
 ---
 
 ## Core Principles
@@ -782,7 +786,7 @@ All three P0 items are contained to `market_snapshot_format.dart` and two screen
 | P1-1 | `4 sales*` asterisk removal | P0 badge change (asterisk removed as part of P0-2 badge rework) |
 | P1-2 | Collection total adds `· includes estimates` when Tier B is in the mix | **Implemented Sprint 3K** — `ShelfValueSummary.includesSeriesEstimates` + `coverageLabel` |
 | P1-3 | `Using Series Estimate` → `Series-Level Estimate` label | Part of P0-3 (the two are adjacent; do together) |
-| P1-4 | `_SeriesValueRow` adds `~` when series has series-estimate figures | Requires `SeriesValueEntry.hasSeriesEstimates: bool` domain addition |
+| P1-4 | `_SeriesValueRow` adds `~` when series has series-estimate figures | **Implemented Sprint 3L** — `SeriesValueEntry.hasSeriesEstimates` |
 
 P1-3 overlaps with P0-3 and should be done in the same pass. The remaining P1 items are independent and can be done in a follow-up sprint.
 
@@ -887,3 +891,35 @@ Est. shelf value    ~$612
 - **Useful Tier B information is still shown.** Series averages provide a rough ballpark. We do not suppress them — we label them honestly. A collector comparing $40 to `Series Avg. $37` still gets context. They just know what they are looking at.
 - **Tier A is unchanged and fully authoritative.** `Market Value $42 / ▲ 14% above market` remains exactly as designed for figure-level snapshots.
 - **Architecture is unchanged.** The remediation is purely vocabulary. No new providers, repositories, routes, or Firestore queries.
+
+---
+
+## Sprint 3M-B — Shelf Value Transparency Info Sheet (P0-2)
+
+**Status:** Implemented June 2026  
+**Audit reference:** `tools/market_intel/VALUATION_TRANSPARENCY_AUDIT.md` — P0-2
+
+### What shipped
+
+- Inline `Icons.info_outline` on the **Shelf Value** section header in `shelf_value_card.dart` (Collection Insights only).
+- Tapping opens `showShelfValueInfoSheet` → `ShelfValueInfoSheet` modal bottom sheet via `showCollectibleBottomSheet`.
+- Copy explains figure snapshot vs series estimate, `~`, `includes estimates`, exclusions, and eBay data source.
+
+### Files
+
+| File | Role |
+|------|------|
+| `lib/features/collection/insights/widgets/shelf_value_info_sheet.dart` | Sheet widget + `showShelfValueInfoSheet` |
+| `lib/features/collection/insights/widgets/shelf_value_card.dart` | ⓘ on `_SectionHeader` for Shelf Value |
+| `test/shelf_value_info_sheet_test.dart` | Widget tests (icon, tap, copy) |
+
+### Constraints honored
+
+- No valuation math, provider, repository, Firestore, or routing changes.
+- No copy changes outside the new disclosure sheet.
+- Educational tone only — no warning language.
+
+### Screenshots
+
+`tools/market_intel/screenshots/sprint_3m/`
+

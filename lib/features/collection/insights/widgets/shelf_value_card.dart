@@ -6,6 +6,7 @@ import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalo
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/insights/application/collection_value_providers.dart';
 import 'package:blindbox_app/features/collection/insights/domain/shelf_value_summary.dart';
+import 'package:blindbox_app/features/collection/insights/widgets/shelf_value_info_sheet.dart';
 import 'package:blindbox_app/features/market/utils/market_format.dart';
 import 'package:blindbox_app/shared/widgets/app_image_shimmer.dart';
 import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
@@ -114,7 +115,12 @@ class _ShelfValueContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHeader(title: 'Shelf Value', scheme: scheme, textTheme: textTheme),
+        _SectionHeader(
+          title: 'Shelf Value',
+          scheme: scheme,
+          textTheme: textTheme,
+          onInfoTap: () => showShelfValueInfoSheet(context),
+        ),
         const SizedBox(height: AppSpacing.sm),
         _ValueOverview(summary: summary, scheme: scheme, textTheme: textTheme),
         if (summary.topFigures.isNotEmpty) ...[
@@ -456,6 +462,10 @@ class _SeriesValueRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final valueLabel = entry.hasSeriesEstimates
+        ? '~${formatShelfValueUsd(entry.totalValueUsd)}'
+        : formatShelfValueUsd(entry.totalValueUsd);
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 9),
       child: Row(
@@ -485,7 +495,7 @@ class _SeriesValueRow extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            formatShelfValueUsd(entry.totalValueUsd),
+            valueLabel,
             style: textTheme.bodyMedium?.copyWith(
               color: scheme.onSurface.withValues(alpha: 0.75),
               fontWeight: FontWeight.w600,
@@ -507,21 +517,55 @@ class _SectionHeader extends StatelessWidget {
     required this.title,
     required this.scheme,
     required this.textTheme,
+    this.onInfoTap,
   });
 
   final String title;
   final ColorScheme scheme;
   final TextTheme textTheme;
+  final VoidCallback? onInfoTap;
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      title,
-      style: textTheme.titleSmall?.copyWith(
-        color: scheme.onSurface.withValues(alpha: 0.75),
-        fontWeight: FontWeight.w700,
-        letterSpacing: 0.4,
-      ),
+    final titleStyle = textTheme.titleSmall?.copyWith(
+      color: scheme.onSurface.withValues(alpha: 0.75),
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.4,
+    );
+
+    if (onInfoTap == null) {
+      return Text(title, style: titleStyle);
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(title, style: titleStyle),
+        const SizedBox(width: 6),
+        Semantics(
+          button: true,
+          label: kShelfValueInfoSemanticsLabel,
+          child: Material(
+            type: MaterialType.transparency,
+            child: InkWell(
+              onTap: onInfoTap,
+              customBorder: const CircleBorder(),
+              child: SizedBox(
+                width: 40,
+                height: 40,
+                child: Center(
+                  child: Icon(
+                    Icons.info_outline,
+                    size: 18,
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.55),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

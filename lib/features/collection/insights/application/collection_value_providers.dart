@@ -81,6 +81,9 @@ final collectionValueProvider =
     final acc = seriesMap[fig.seriesId]!;
     acc.totalValue += snapshot.estimatedValueUsd;
     acc.valuedCount += 1;
+    if (snapshot.isSeriesEstimate) {
+      acc.hasSeriesEstimates = true;
+    }
   }
 
   valuedFigures.sort(
@@ -97,6 +100,7 @@ final collectionValueProvider =
               totalValueUsd: e.value.totalValue,
               valuedFigureCount: e.value.valuedCount,
               ownedFigureCount: e.value.ownedCount,
+              hasSeriesEstimates: e.value.hasSeriesEstimates,
             ),
           )
           .toList()
@@ -154,4 +158,5 @@ class _SeriesAccum {
   double totalValue = 0;
   int valuedCount = 0;
   int ownedCount = 0;
+  bool hasSeriesEstimates = false;
 }

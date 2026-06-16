@@ -309,6 +309,42 @@ void main() {
       );
     });
 
+    test('seriesBreakdown hasSeriesEstimates false when all figure snapshots',
+        () async {
+      final repo = _FakeRepo(
+        figureMap: {
+          'cat_fig_1': _figureSnapshot(id: 'cat_fig_1', value: 100),
+          'cat_fig_2': _figureSnapshot(id: 'cat_fig_2', value: 83),
+        },
+      );
+
+      final container = _makeContainer(snap: _snapWithFigures(), repo: repo);
+
+      final result = await container.read(collectionValueProvider.future);
+
+      expect(result.seriesBreakdown, hasLength(1));
+      expect(result.seriesBreakdown.single.totalValueUsd, 183);
+      expect(result.seriesBreakdown.single.hasSeriesEstimates, isFalse);
+    });
+
+    test('seriesBreakdown hasSeriesEstimates true when series estimate included',
+        () async {
+      final repo = _FakeRepo(
+        figureMap: {
+          'cat_fig_1': _figureSnapshot(id: 'cat_fig_1', value: 100),
+          'cat_fig_2': _seriesSnapshot(seriesId: 'series_test', value: 83),
+        },
+      );
+
+      final container = _makeContainer(snap: _snapWithFigures(), repo: repo);
+
+      final result = await container.read(collectionValueProvider.future);
+
+      expect(result.seriesBreakdown, hasLength(1));
+      expect(result.seriesBreakdown.single.totalValueUsd, 183);
+      expect(result.seriesBreakdown.single.hasSeriesEstimates, isTrue);
+    });
+
     test('seriesBreakdown aggregates across series', () async {
       final fig1 = const ShelfFigure(
         id: 'fig_a',
@@ -375,7 +411,9 @@ void main() {
       // sorted by total value descending
       expect(result.seriesBreakdown.first.seriesName, 'Series A');
       expect(result.seriesBreakdown.first.totalValueUsd, 100);
+      expect(result.seriesBreakdown.first.hasSeriesEstimates, isFalse);
       expect(result.seriesBreakdown.last.totalValueUsd, 50);
+      expect(result.seriesBreakdown.last.hasSeriesEstimates, isFalse);
     });
 
     test('CollectionValueTier reflects total value', () async {
