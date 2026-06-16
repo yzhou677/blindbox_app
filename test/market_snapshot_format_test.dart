@@ -58,7 +58,7 @@ void main() {
       );
     });
 
-    test('series fallback uses using-series-estimate label and sales', () {
+    test('series fallback uses series avg label and sales', () {
       expect(
         formatMarketSnapshotDiscoverSummaryLine(
           _snapshot(
@@ -68,7 +68,7 @@ void main() {
             confidence: SnapshotConfidence.low,
           ),
         ),
-        'Using Series Estimate · \$42 · 4 sales',
+        'Series Avg. · \$42 · 4 sales',
       );
     });
 
@@ -119,12 +119,12 @@ void main() {
       expect(formatMarketSnapshotSalesLine(_snapshot()), '18 sales');
     });
 
-    test('appends asterisk for low confidence', () {
+    test('does not append asterisk for low confidence', () {
       expect(
         formatMarketSnapshotSalesLine(
           _snapshot(confidence: SnapshotConfidence.low, recentSalesCount: 4),
         ),
-        '4 sales*',
+        '4 sales',
       );
     });
 
@@ -183,6 +183,35 @@ void main() {
     });
   });
 
+  group('formatMarketSnapshotInsightsActivitySalesLine', () {
+    test('returns recent sales wording', () {
+      expect(
+        formatMarketSnapshotInsightsActivitySalesLine(_snapshot()),
+        '18 recent sales',
+      );
+    });
+  });
+
+  group('formatMarketSnapshotInsightsRangeLine', () {
+    test('prefixes range label', () {
+      expect(
+        formatMarketSnapshotInsightsRangeLine(_snapshot()),
+        'Range \$38–\$48',
+      );
+    });
+  });
+
+  group('formatMarketSnapshotInsightsUpdatedMetadataLine', () {
+    test('includes updated prefix', () {
+      final computedAt = DateTime.utc(2026, 6, 12);
+      final clock = DateTime.utc(2026, 6, 15);
+      expect(
+        formatMarketSnapshotInsightsUpdatedMetadataLine(computedAt, clock: clock),
+        'Updated 3d ago',
+      );
+    });
+  });
+
   group('formatMarketSnapshotInsightsRecentSalesCount', () {
     test('returns plain count', () {
       expect(
@@ -214,21 +243,57 @@ void main() {
   });
 
   group('formatMarketListingPriceDeltaLine', () {
-    test('above market includes rounded percent', () {
-      expect(formatMarketListingPriceDeltaLine(48, 42), '▲ 14% above market');
+    test('figure snapshot above market includes rounded percent', () {
+      expect(
+        formatMarketListingPriceDeltaLine(48, 42, isSeriesEstimate: false),
+        '▲ 14% above market',
+      );
     });
 
-    test('below market uses checkmark copy', () {
-      expect(formatMarketListingPriceDeltaLine(35, 42), '✓ Below market');
+    test('figure snapshot below market uses checkmark copy', () {
+      expect(
+        formatMarketListingPriceDeltaLine(35, 42, isSeriesEstimate: false),
+        '✓ Below market',
+      );
     });
 
-    test('within five percent is at market', () {
-      expect(formatMarketListingPriceDeltaLine(42, 42), '≈ At market');
-      expect(formatMarketListingPriceDeltaLine(43, 42), '≈ At market');
+    test('figure snapshot within five percent is at market', () {
+      expect(
+        formatMarketListingPriceDeltaLine(42, 42, isSeriesEstimate: false),
+        '≈ At market',
+      );
+      expect(
+        formatMarketListingPriceDeltaLine(43, 42, isSeriesEstimate: false),
+        '≈ At market',
+      );
+    });
+
+    test('series estimate above uses series avg wording', () {
+      expect(
+        formatMarketListingPriceDeltaLine(48, 42, isSeriesEstimate: true),
+        '▲ 14% above series avg.',
+      );
+    });
+
+    test('series estimate below omits checkmark', () {
+      expect(
+        formatMarketListingPriceDeltaLine(35, 42, isSeriesEstimate: true),
+        'Below series avg.',
+      );
+    });
+
+    test('series estimate within five percent is near series avg', () {
+      expect(
+        formatMarketListingPriceDeltaLine(42, 42, isSeriesEstimate: true),
+        '≈ Near series avg.',
+      );
     });
 
     test('returns null when estimate is zero', () {
-      expect(formatMarketListingPriceDeltaLine(10, 0), isNull);
+      expect(
+        formatMarketListingPriceDeltaLine(10, 0, isSeriesEstimate: false),
+        isNull,
+      );
     });
   });
 }

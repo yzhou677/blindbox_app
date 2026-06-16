@@ -197,15 +197,15 @@ The solution is a "Market Insights" section appended below the buy CTA, drawing 
 ```
 │  ─────  Market Insights  ─────  │
 │                                 │
-│  Series Estimate   ~$37         │
-│  4 recent sales*                │
+│  Series Avg. Value  $37         │
+│  ≈ Series Estimate              │
+│  4 sales                        │
 │  Range   $30 – $45              │
 │  Updated 1h ago                 │
-│                                 │
-│  * Based on series average.     │
-│    Figure-level data pending.   │
 └─────────────────────────────────┘
 ```
+
+**Trust vocabulary (Sprint 3I):** Figure snapshots use *Market Value* / *above market*; series estimates use *Series Avg.* / *above series avg.* on every surface. Sales count no longer uses a confidence asterisk — tier is communicated by heading and chip.
 
 Never show nothing. A series estimate with a caveat is more useful than a blank section.
 
@@ -357,6 +357,15 @@ Expanded state:
 │    ▼  Market Information        │
 │    Market Value · $42 · 18 sales│
 │    Range  $38–$48               │
+│    Updated 1h ago               │
+```
+
+**Series fallback expanded** (Hope — no figure-level snapshot):
+
+```
+│    ▼  Market Information        │
+│    Series Avg. · $37 · 4 sales  │
+│    Range  $30–$45               │
 │    Updated 1h ago               │
 ```
 

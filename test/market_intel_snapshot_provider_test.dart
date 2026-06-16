@@ -110,7 +110,9 @@ void main() {
   });
 
   group('MarketSnapshotBadge', () {
-    testWidgets('omits trend when trend is unknown', (tester) async {
+    testWidgets('figure snapshot shows market value heading and sales', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -127,10 +129,14 @@ void main() {
         ),
       );
 
-      expect(find.text('~\$42 · 18 sales'), findsOneWidget);
+      expect(find.text('Market Value'), findsOneWidget);
+      expect(find.text('\$42'), findsOneWidget);
+      expect(find.text('18 sales'), findsOneWidget);
     });
 
-    testWidgets('shows trend when trend is rising', (tester) async {
+    testWidgets('figure snapshot does not show series estimate chip', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -147,10 +153,11 @@ void main() {
         ),
       );
 
-      expect(find.text('~\$42 · Rising · 18 sales'), findsOneWidget);
+      expect(find.text('Market Value'), findsOneWidget);
+      expect(find.textContaining('Series Estimate'), findsNothing);
     });
 
-    testWidgets('marks low confidence with asterisk on sales count', (tester) async {
+    testWidgets('low confidence sales line has no asterisk', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -167,7 +174,8 @@ void main() {
         ),
       );
 
-      expect(find.text('~\$42 · 4 sales*'), findsOneWidget);
+      expect(find.text('4 sales'), findsOneWidget);
+      expect(find.text('4 sales*'), findsNothing);
     });
   });
 }

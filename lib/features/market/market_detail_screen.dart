@@ -19,7 +19,6 @@ import 'package:blindbox_app/features/market/widgets/listing_description_section
 import 'package:blindbox_app/features/market/widgets/listing_market_signals.dart';
 import 'package:blindbox_app/features/market_intel/application/market_listing_insights.dart';
 import 'package:blindbox_app/features/market_intel/widgets/market_detail_insights_section.dart';
-import 'package:blindbox_app/features/market_intel/widgets/market_insights_navigation_row.dart';
 import 'package:blindbox_app/models/market_listing.dart';
 import 'package:blindbox_app/shared/widgets/series_hero_meta_block.dart';
 import 'package:flutter/material.dart';
@@ -355,13 +354,9 @@ class _MarketDetailBody extends ConsumerWidget {
           ),
         ],
         if (insightsFigureId != null)
-          MarketInsightsNavigationRow(
-            onTap: () => context.push(
-              marketInsightsRoute(
-                figureId: insightsFigureId,
-                listingId: listingId,
-              ),
-            ),
+          MarketInsightsNavigationEntry(
+            figureId: insightsFigureId,
+            listingId: listingId,
           ),
       ],
     );

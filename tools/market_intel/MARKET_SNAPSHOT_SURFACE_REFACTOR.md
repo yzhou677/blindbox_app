@@ -25,7 +25,7 @@
 | Context | Collapsed | Expanded (first line after header) |
 |---------|-----------|-------------------------------------|
 | Figure snapshot | `▶ Market Information` | `Market Value · $42 · 18 sales` |
-| Series fallback | `▶ Market Information` | `Using Series Estimate · $37 · 4 sales` |
+| Series fallback | `▶ Market Information` | `Series Avg. · $37 · 4 sales` |
 | No data | *(hidden)* | — |
 
 Expanded body also shows **Range** (`$38–$48`) and **Updated** (`Updated 1h ago`) when available.

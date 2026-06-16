@@ -42,7 +42,9 @@ class MarketSnapshotBadge extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Market Value',
+              snapshot.isSeriesEstimate
+                  ? kMarketSnapshotSeriesAvgValueBadgeHeading
+                  : 'Market Value',
               style: textTheme.labelSmall?.copyWith(
                 color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
                 fontWeight: FontWeight.w600,

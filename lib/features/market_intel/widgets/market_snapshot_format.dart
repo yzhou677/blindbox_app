@@ -5,9 +5,15 @@ import 'package:blindbox_app/features/official_feed/presentation/official_feed_r
 /// User-facing label for series-level fallback estimates (badge chip).
 const String kMarketSnapshotSeriesEstimateLabel = 'Series Estimate';
 
-/// Discover gallery series-fallback prefix.
-const String kMarketSnapshotDiscoverSeriesFallbackLabel =
-    'Using Series Estimate';
+/// Compact series-average label (Discover summary, Insights card column).
+const String kMarketSnapshotSeriesAvgLabel = 'Series Avg.';
+
+/// Badge heading when snapshot is a series-level fallback.
+const String kMarketSnapshotSeriesAvgValueBadgeHeading = 'Series Avg. Value';
+
+/// Insights screen label above purchase context for series fallback.
+const String kMarketSnapshotInsightsSeriesLevelEstimateLabel =
+    'Series-Level Estimate';
 
 /// Discover gallery accordion heading.
 const String kMarketSnapshotDiscoverDisclosureHeading = 'Market Information';
@@ -46,25 +52,21 @@ String? formatMarketSnapshotDiscoverPriceRangeValue(MarketSnapshot snapshot) {
 /// Discover gallery expanded body — value and sales (not shown when collapsed).
 ///
 /// Figure snapshot: `Market Value · $42 · 18 sales`
-/// Series fallback: `Using Series Estimate · $37 · 4 sales`
+/// Series fallback: `Series Avg. · $37 · 4 sales`
 String formatMarketSnapshotDiscoverSummaryLine(MarketSnapshot snapshot) {
   final value = formatMarketSnapshotValue(snapshot.estimatedValueUsd);
   final head = snapshot.isSeriesEstimate
-      ? '$kMarketSnapshotDiscoverSeriesFallbackLabel · $value'
+      ? '$kMarketSnapshotSeriesAvgLabel · $value'
       : 'Market Value · $value';
   final sales = formatMarketSnapshotDiscoverSalesSegment(snapshot);
   if (sales == null) return head;
   return '$head · $sales';
 }
 
-/// Returns e.g. `18 sales` or `4 sales*` when confidence is low.
-/// Null when [recentSalesCount] <= 0.
+/// Returns e.g. `18 sales`. Null when [recentSalesCount] <= 0.
 String? formatMarketSnapshotSalesLine(MarketSnapshot snapshot) {
   if (snapshot.recentSalesCount <= 0) return null;
-
-  final suffix =
-      snapshot.confidence == SnapshotConfidence.low ? '*' : '';
-  return '${snapshot.recentSalesCount} sales$suffix';
+  return '${snapshot.recentSalesCount} sales';
 }
 
 /// Returns e.g. `$38–$48 range`. Null when min or max is missing.
@@ -117,6 +119,27 @@ String formatMarketSnapshotInsightsRecentSalesCount(MarketSnapshot snapshot) {
   return '${snapshot.recentSalesCount}';
 }
 
+/// Activity line — e.g. `18 recent sales`.
+String? formatMarketSnapshotInsightsActivitySalesLine(MarketSnapshot snapshot) {
+  if (snapshot.recentSalesCount <= 0) return null;
+  return '${snapshot.recentSalesCount} recent sales';
+}
+
+/// Secondary range line — e.g. `Range $38–$48`.
+String? formatMarketSnapshotInsightsRangeLine(MarketSnapshot snapshot) {
+  final range = formatMarketSnapshotDiscoverPriceRangeValue(snapshot);
+  if (range == null) return null;
+  return 'Range $range';
+}
+
+/// Secondary freshness line — e.g. `Updated 35h ago`.
+String formatMarketSnapshotInsightsUpdatedMetadataLine(
+  DateTime computedAt, {
+  DateTime? clock,
+}) {
+  return 'Updated ${formatOfficialFeedRelativeTime(computedAt, clock: clock)}';
+}
+
 /// Relative freshness for [MarketInsightsScreen] — e.g. `35h ago`.
 String formatMarketSnapshotInsightsUpdatedValue(
   DateTime computedAt, {
@@ -127,21 +150,25 @@ String formatMarketSnapshotInsightsUpdatedValue(
 
 /// Compares listing ask price to sold-data estimate.
 ///
-/// Within ±5% → `≈ At market`; above +5% → `▲ N% above market`;
-/// below −5% → `✓ Below market`.
+/// Tier A (figure snapshot): `▲ N% above market`, `✓ Below market`, `≈ At market`.
+/// Tier B (series estimate): `▲ N% above series avg.`, `Below series avg.`,
+/// `≈ Near series avg.`
 String? formatMarketListingPriceDeltaLine(
   double listingPriceUsd,
-  double estimatedValueUsd,
-) {
+  double estimatedValueUsd, {
+  required bool isSeriesEstimate,
+}) {
   if (estimatedValueUsd <= 0) return null;
 
   final ratio = (listingPriceUsd - estimatedValueUsd) / estimatedValueUsd;
   if (ratio > 0.05) {
     final pct = (ratio * 100).round();
-    return '▲ $pct% above market';
+    return isSeriesEstimate
+        ? '▲ $pct% above series avg.'
+        : '▲ $pct% above market';
   }
   if (ratio < -0.05) {
-    return '✓ Below market';
+    return isSeriesEstimate ? 'Below series avg.' : '✓ Below market';
   }
-  return '≈ At market';
+  return isSeriesEstimate ? '≈ Near series avg.' : '≈ At market';
 }

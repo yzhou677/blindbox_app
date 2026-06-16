@@ -66,12 +66,15 @@ void main() {
   ) async {
     await _pumpBadge(tester, _seriesSnapshot());
 
+    expect(find.text(kMarketSnapshotSeriesAvgValueBadgeHeading), findsOneWidget);
+    expect(find.text('Market Value'), findsNothing);
     expect(find.text('\$37'), findsOneWidget);
     expect(
       find.text('≈ $kMarketSnapshotSeriesEstimateLabel'),
       findsOneWidget,
     );
-    expect(find.text('4 sales*'), findsOneWidget);
+    expect(find.text('4 sales'), findsOneWidget);
+    expect(find.text('4 sales*'), findsNothing);
     expect(find.text('\$30–\$45 range'), findsOneWidget);
   });
 

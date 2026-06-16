@@ -73,7 +73,7 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.text('Using Series Estimate · \$37 · 4 sales'),
+        find.text('Series Avg. · \$37 · 4 sales'),
         findsNothing,
       );
       expect(find.byType(MarketSnapshotBadge), findsNothing);
@@ -218,7 +218,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.text('Using Series Estimate · \$37 · 4 sales'),
+        find.text('Series Avg. · \$37 · 4 sales'),
         findsOneWidget,
       );
       expect(find.text('4 recent sales'), findsNothing);

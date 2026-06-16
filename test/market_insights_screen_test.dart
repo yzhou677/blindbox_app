@@ -4,6 +4,8 @@ import 'package:blindbox_app/core/theme/app_theme.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
 import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_figure.dart';
+import 'package:blindbox_app/features/catalog/models/catalog_series.dart';
+import 'package:blindbox_app/features/market/application/market_listing_lookup.dart';
 import 'package:blindbox_app/features/market_intel/application/market_listing_insights.dart';
 import 'package:blindbox_app/features/market_intel/application/market_snapshot_providers.dart';
 import 'package:blindbox_app/features/market_intel/domain/market_snapshot.dart';
@@ -58,11 +60,15 @@ Future<void> _pumpInsightsScreen(
   WidgetTester tester, {
   required MarketSnapshotRepository repository,
   required String figureId,
+  MarketListing? listing,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
         marketSnapshotRepositoryProvider.overrideWithValue(repository),
+        marketListingByIdProvider(_listingId).overrideWith(
+          (ref) => listing ?? _luckListing(),
+        ),
       ],
       child: MaterialApp(
         theme: AppTheme.light(),
@@ -79,6 +85,7 @@ Future<void> _pumpPriceDelta(
   WidgetTester tester, {
   required MarketSnapshotRepository repository,
   required double listingPriceUsd,
+  String figureId = _figureId,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -91,7 +98,7 @@ Future<void> _pumpPriceDelta(
           body: Padding(
             padding: const EdgeInsets.all(22),
             child: MarketListingPriceDeltaLine(
-              figureId: _figureId,
+              figureId: figureId,
               listingPriceUsd: listingPriceUsd,
             ),
           ),
@@ -99,6 +106,17 @@ Future<void> _pumpPriceDelta(
       ),
     ),
   );
+}
+
+Future<void> _settleInsightsScreen(WidgetTester tester) async {
+  await tester.pump();
+  for (var i = 0; i < 40; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+    if (find.text('Market Value').evaluate().isNotEmpty ||
+        find.text(kMarketDetailInsightsUnavailable).evaluate().isNotEmpty) {
+      return;
+    }
+  }
 }
 
 Future<void> _settleInsightsLoaded(
@@ -116,7 +134,18 @@ void main() {
   tearDown(CatalogBundleCache.resetForTest);
 
   group('MarketInsightsScreen', () {
-    testWidgets('figure snapshot shows sectioned insights content', (tester) async {
+    setUp(() {
+      CatalogBundleCache.prime(
+        CatalogSeedBundle(
+          brands: const [],
+          ips: const [],
+          series: [_luckCatalogSeries()],
+          figures: [_luckCatalogFigure()],
+        ),
+      );
+    });
+
+    testWidgets('figure snapshot shows collector-focused layout', (tester) async {
       await _pumpInsightsScreen(
         tester,
         repository: _FakeMarketSnapshotRepository(
@@ -124,25 +153,28 @@ void main() {
         ),
         figureId: _figureId,
       );
-      await tester.pumpAndSettle();
+      await _settleInsightsScreen(tester);
 
       expect(find.text(kMarketInsightsScreenTitle), findsOneWidget);
+      expect(find.text('Luck'), findsOneWidget);
+      expect(find.text('THE MONSTERS Big Into Energy'), findsOneWidget);
       expect(find.text('Market Value'), findsOneWidget);
-      expect(find.text('\$42'), findsOneWidget);
-      expect(find.text('Recent Sales'), findsOneWidget);
-      expect(find.text('18'), findsOneWidget);
-      expect(find.text('Range'), findsOneWidget);
-      expect(find.text('\$38–\$48'), findsOneWidget);
-      expect(find.text('Trend'), findsOneWidget);
-      expect(find.text('Trending'), findsOneWidget);
-      expect(find.text('Updated'), findsOneWidget);
+      expect(find.text('Current Listing'), findsOneWidget);
+      expect(find.text('\$42'), findsNWidgets(2));
+      expect(find.text('≈ At market'), findsOneWidget);
+      expect(find.text('18 recent sales · Trending'), findsOneWidget);
+      expect(find.text('18 recent sales'), findsNothing);
+      expect(find.text('Trending'), findsNothing);
+      expect(find.text('Range \$38–\$48'), findsOneWidget);
+      expect(find.textContaining('Updated'), findsOneWidget);
       expect(find.text('Data Source'), findsOneWidget);
       expect(find.text(kMarketInsightsDataSourceValue), findsOneWidget);
       expect(find.text(kMarketInsightsScreenFooter), findsOneWidget);
-      expect(find.text(kMarketSnapshotDiscoverSeriesFallbackLabel), findsNothing);
+      expect(find.text('Recent Sales'), findsNothing);
+      expect(find.text(kMarketSnapshotInsightsSeriesLevelEstimateLabel), findsNothing);
     });
 
-    testWidgets('series fallback shows using series estimate once', (tester) async {
+    testWidgets('series fallback shows series-level estimate once', (tester) async {
       CatalogBundleCache.prime(
         CatalogSeedBundle(
           brands: const [],
@@ -159,12 +191,20 @@ void main() {
         ),
         figureId: _hopeFigureId,
       );
-      await tester.pumpAndSettle();
+      await _settleInsightsScreen(tester);
 
-      expect(find.text(kMarketSnapshotDiscoverSeriesFallbackLabel), findsOneWidget);
+      expect(
+        find.text(kMarketSnapshotInsightsSeriesLevelEstimateLabel),
+        findsOneWidget,
+      );
+      expect(find.text(kMarketSnapshotSeriesAvgLabel), findsOneWidget);
+      expect(find.text('Market Value'), findsNothing);
       expect(find.text('\$37'), findsOneWidget);
-      expect(find.text('4'), findsOneWidget);
-      expect(find.text('Stable'), findsOneWidget);
+      expect(find.text('Current Listing'), findsOneWidget);
+      expect(find.text('▲ 14% above series avg.'), findsOneWidget);
+      expect(find.text('4 recent sales · Stable'), findsOneWidget);
+      expect(find.text('4 recent sales'), findsNothing);
+      expect(find.text('Stable'), findsNothing);
     });
 
     testWidgets('loading shows skeleton', (tester) async {
@@ -184,7 +224,7 @@ void main() {
         repository: _ErrorMarketSnapshotRepository(),
         figureId: _figureId,
       );
-      await tester.pumpAndSettle();
+      await _settleInsightsScreen(tester);
 
       expect(find.text(kMarketDetailInsightsUnavailable), findsOneWidget);
     });
@@ -252,6 +292,29 @@ void main() {
 
       expect(find.text('≈ At market'), findsOneWidget);
     });
+
+    testWidgets('shows series estimate above series avg delta', (tester) async {
+      CatalogBundleCache.prime(
+        CatalogSeedBundle(
+          brands: const [],
+          ips: const [],
+          series: const [],
+          figures: [_hopeCatalogFigure()],
+        ),
+      );
+
+      await _pumpPriceDelta(
+        tester,
+        repository: _FakeMarketSnapshotRepository(
+          seriesSnapshot: _seriesSnapshot(),
+        ),
+        listingPriceUsd: 40,
+        figureId: _hopeFigureId,
+      );
+      await _settleInsightsLoaded(tester, waitFor: '▲ 8% above series avg.');
+
+      expect(find.text('▲ 8% above series avg.'), findsOneWidget);
+    });
   });
 
   group('Market detail insights visibility', () {
@@ -286,11 +349,90 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await _settleInsightsScreen(tester);
 
       expect(find.text(kMarketDetailInsightsHeading), findsNothing);
     });
+
+    testWidgets('shows navigation row for figure snapshot', (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            marketSnapshotRepositoryProvider.overrideWithValue(
+              _FakeMarketSnapshotRepository(figureSnapshot: _figureSnapshot()),
+            ),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.light(),
+            home: Scaffold(
+              body: MarketInsightsNavigationEntry(
+                figureId: _figureId,
+                listingId: _listingId,
+              ),
+            ),
+          ),
+        ),
+      );
+      await _settleInsightsLoaded(tester, waitFor: kMarketDetailInsightsHeading);
+
+      expect(find.text(kMarketDetailInsightsHeading), findsOneWidget);
+    });
+
+    testWidgets('hides navigation row for series estimate', (tester) async {
+      CatalogBundleCache.prime(
+        CatalogSeedBundle(
+          brands: const [],
+          ips: const [],
+          series: const [],
+          figures: [_hopeCatalogFigure()],
+        ),
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            marketSnapshotRepositoryProvider.overrideWithValue(
+              _FakeMarketSnapshotRepository(seriesSnapshot: _seriesSnapshot()),
+            ),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.light(),
+            home: Scaffold(
+              body: Column(
+                children: [
+                  MarketListingPriceDeltaLine(
+                    figureId: _hopeFigureId,
+                    listingPriceUsd: 40,
+                  ),
+                  MarketInsightsNavigationEntry(
+                    figureId: _hopeFigureId,
+                    listingId: _listingId,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      await _settleInsightsLoaded(tester, waitFor: '▲ 8% above series avg.');
+
+      expect(find.text('▲ 8% above series avg.'), findsOneWidget);
+      expect(find.text(kMarketDetailInsightsHeading), findsNothing);
+    });
   });
+}
+
+CatalogFigure _luckCatalogFigure() {
+  return CatalogFigure(
+    id: _figureId,
+    seriesId: _seriesId,
+    brandId: 'pop_mart',
+    ipId: 'the_monsters',
+    displayName: 'Luck',
+    isSecret: false,
+    sortOrder: 1,
+    imageKey: _figureId,
+  );
 }
 
 CatalogFigure _hopeCatalogFigure() {
@@ -303,6 +445,35 @@ CatalogFigure _hopeCatalogFigure() {
     isSecret: false,
     sortOrder: 2,
     imageKey: _hopeFigureId,
+  );
+}
+
+MarketListing _luckListing() {
+  return MarketListing(
+    id: _listingId,
+    collectible: Collectible(
+      id: 'c-$_listingId',
+      name: 'Luck',
+      series: 'THE MONSTERS Big into Energy Series-Vinyl Plush Pendant Blind Box',
+      brand: 'POP MART',
+      releaseDate: DateTime.utc(2025, 4, 25),
+      imageUrl: '',
+    ),
+    currentPriceUsd: 42,
+    priceChangePercent: 0,
+    listingCount: 1,
+  );
+}
+
+CatalogSeries _luckCatalogSeries() {
+  return CatalogSeries(
+    id: _seriesId,
+    brandId: 'pop_mart',
+    ipId: 'the_monsters',
+    displayName: 'THE MONSTERS Big Into Energy',
+    releaseDate: '2025-04-25',
+    isBlindBox: true,
+    imageKey: _seriesId,
   );
 }
 
