@@ -71,6 +71,7 @@ Canonical POP MART lineup IP id is **`the_monsters`** (not `labubu`; Labubu is a
 - `imageKey` (string) — equals document id stem; Storage `catalog/figures/<imageKey>.<ext>`
 - `brandId`, `ipId`, `seriesId` (strings) — cross-refs to parent docs
 - `displayName` (string)
+- `aliases` (array of strings, optional) — alternate marketplace / collector names for this figure (e.g. `Lucky` when `displayName` is `Luck`). Canonical identity stays `displayName`; aliases supplement search and market-intel matching.
 - `rarityLabel` (string or **`null`**)
 - `isSecret` (bool)
 - `sortOrder` (int; Firestore may store as number/double)

@@ -13,6 +13,19 @@ function readString(value) {
 }
 
 /**
+ * Mirrors catalogReadStringList in catalog_json_support.dart.
+ *
+ * @param {unknown} value
+ * @returns {string[]}
+ */
+function readStringList(value) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry) => readString(entry))
+    .filter((entry) => entry.length > 0);
+}
+
+/**
  * @param {{ toDate: () => Date }} timestamp
  * @returns {string}
  */
@@ -136,7 +149,16 @@ export function mapFirestoreSeries(docId, data) {
  */
 export function mapFirestoreFigure(docId, data) {
   const mapped = firestoreCatalogDocToJsonMap(docId, data);
-  return isUsableFigure(mapped) ? mapped : null;
+  if (!isUsableFigure(mapped)) return null;
+
+  const aliases = readStringList(mapped.aliases);
+  if (aliases.length > 0) {
+    mapped.aliases = aliases;
+  } else {
+    delete mapped.aliases;
+  }
+
+  return mapped;
 }
 
 /**

@@ -65,6 +65,22 @@ test('mapFirestoreFigure keeps JSON-compatible fields', () => {
   });
 });
 
+test('mapFirestoreFigure normalizes figure aliases', () => {
+  const mapped = mapFirestoreFigure('figure_a', {
+    id: 'figure_a',
+    seriesId: 'series_a',
+    brandId: 'pop_mart',
+    ipId: 'labubu',
+    displayName: 'Luck',
+    imageKey: 'figure_a',
+    isSecret: false,
+    sortOrder: 1,
+    aliases: ['Lucky', '', '  ', 'Luckster'],
+  });
+
+  assert.deepEqual(mapped?.aliases, ['Lucky', 'Luckster']);
+});
+
 test('mapSeriesSnapshot sorts by releaseDate descending', () => {
   const snap = {
     docs: [

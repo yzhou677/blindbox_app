@@ -6,8 +6,8 @@ List<String> catalogReadStringList(dynamic value) {
   if (value is! List) return const [];
   return value
       .map((e) {
-        if (e is String) return e;
-        if (e != null) return e.toString();
+        if (e is String) return e.trim();
+        if (e != null) return e.toString().trim();
         return '';
       })
       .where((s) => s.isNotEmpty)

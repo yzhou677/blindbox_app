@@ -52,7 +52,27 @@ void main() {
       final f = mapped!;
       expect(f.imageKey, f.id);
       expect(f.rarityLabel, isNull);
+      expect(f.aliases, isEmpty);
       expect(f.seriesId, 'aespa_fluffy_club_vinyl_plush_doll_pendant_series');
+    });
+
+    test('parses figure aliases from Firestore', () {
+      final mapped = mapFirestoreFigure(
+        'the_monsters_big_into_energy_vinyl_plush_pendant_luck',
+        {
+          'aliases': ['Lucky', '  ', 'Luckster'],
+          'brandId': 'pop_mart',
+          'displayName': 'Luck',
+          'id': 'the_monsters_big_into_energy_vinyl_plush_pendant_luck',
+          'imageKey': 'the_monsters_big_into_energy_vinyl_plush_pendant_luck',
+          'ipId': 'the_monsters',
+          'isSecret': false,
+          'seriesId': 'the_monsters_big_into_energy_vinyl_plush_pendant',
+          'sortOrder': 1,
+        },
+      );
+      expect(mapped, isNotNull);
+      expect(mapped!.aliases, ['Lucky', 'Luckster']);
     });
 
     test('skips figure without seriesId', () {

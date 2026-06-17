@@ -14,6 +14,7 @@ class CatalogFigure {
     this.rarityLabel,
     required this.sortOrder,
     required this.imageKey,
+    this.aliases = const [],
   });
 
   final String id;
@@ -27,6 +28,12 @@ class CatalogFigure {
 
   /// Opaque illustration id (matches canonical figure [id]); resolves via [CatalogImageResolver].
   final String imageKey;
+
+  /// Alternate marketplace / collector names for this figure (e.g. `Lucky` for `Luck`).
+  ///
+  /// Canonical identity remains [displayName]. Aliases are used by catalog search and
+  /// the market-intel pipeline matcher — not a second metadata alias store.
+  final List<String> aliases;
 
   factory CatalogFigure.fromJson(Map<String, dynamic> json) {
     final rarityStr = catalogReadString(json, 'rarityLabel');
@@ -45,6 +52,7 @@ class CatalogFigure {
         fallbackId: id,
         legacyThumbField: catalogReadString(json, 'thumbnailAsset'),
       ),
+      aliases: catalogReadStringList(json['aliases']),
     );
   }
 
@@ -58,5 +66,6 @@ class CatalogFigure {
         if (rarityLabel != null) 'rarityLabel': rarityLabel,
         'sortOrder': sortOrder,
         'imageKey': imageKey,
+        if (aliases.isNotEmpty) 'aliases': aliases,
       };
 }
