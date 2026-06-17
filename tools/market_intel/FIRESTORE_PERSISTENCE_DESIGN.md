@@ -384,4 +384,4 @@ is already implemented and will work as soon as conforming documents exist in Fi
 >
 > Dev seeder reference: [`push_market_snapshots_dev.mjs`](./push_market_snapshots_dev.mjs)
 >
-> Production readiness audit: [`PRODUCTION_READINESS_AUDIT.md`](./PRODUCTION_READINESS_AUDIT.md)
+> Production readiness audit (archived): [`archive/sprint_3n/docs/PRODUCTION_READINESS_AUDIT.md`](./archive/sprint_3n/docs/PRODUCTION_READINESS_AUDIT.md)

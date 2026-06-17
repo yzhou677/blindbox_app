@@ -164,27 +164,9 @@ Replace `MarketSnapshotRepository` implementation only — UI and providers unch
 
 ## Screenshots
 
-**Sprint 3E before/after:** `tools/market_intel/screenshots/sprint_3e/before/` and `sprint_3e/after/`
+**Active reference sets:** `tools/market_intel/screenshots/sprint_3i/`, `sprint_3j/`, `sprint_3m_c/`
 
-| File | Scenario |
-|------|----------|
-| `2_market_insights_screen.png` | Figure snapshot (light) |
-| `3_market_insights_series_estimate.png` | Series fallback |
-| `4_market_insights_dark_mode.png` | Dark mode |
-
-Captured via `tools/market_intel/capture_sprint_3e_device_screenshots.py` on a debug build with `--dart-define=MARKET_GATEWAY_EBAY=false --dart-define=MARKET_FIXTURE_SOURCE=true`.
-
-**Sprint 3F purchase context:** `tools/market_intel/screenshots/sprint_3f/`
-
-| File | Scenario |
-|------|----------|
-| `1_market_insights_above_market.png` | Soymilk listing $48 vs $42 estimate |
-| `2_market_insights_below_market.png` | Lychee Berry listing $35 vs $38 estimate |
-| `3_market_insights_at_market.png` | Luck listing $42 vs $42 estimate |
-| `4_market_insights_series_estimate.png` | Hope series fallback |
-| `5_market_insights_dark_mode.png` | At-market (Luck) dark mode |
-
-Captured via `tools/market_intel/capture_sprint_3f_device_screenshots.py` on the same debug build flags.
+Older sprint captures (3E, 3F, 2.4F, 3K, 3L, 3N-A2) live under `tools/market_intel/archive/sprint_3n/screenshots/`.
 
 **Sprint 3I trust vocabulary:** `tools/market_intel/screenshots/sprint_3i/`
 

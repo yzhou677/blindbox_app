@@ -82,7 +82,7 @@ Firestore market_snapshots
 
 Only folder kept under `tools/market_intel/screenshots/`:
 
-[`screenshots/sprint_2_4f/`](./screenshots/sprint_2_4f/)
+[`screenshots/sprint_2_4f/`](../screenshots/sprint_2_4f/)
 
 | File | Scenario |
 |------|----------|

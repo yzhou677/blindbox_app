@@ -4,7 +4,7 @@
 **Type:** Architecture review only — challenges Sprint 3N-FA before 3N-FB implementation.  
 **Constraints:** No code, scripts, commits, workflows, schema, or production behavior changes.
 
-**Related:** [`tools/catalog/CATALOG_EXPORT_AUTOMATION_PLAN.md`](../catalog/CATALOG_EXPORT_AUTOMATION_PLAN.md) (3N-FA plan under review)
+**Related:** [`archive/sprint_3n/docs/CATALOG_EXPORT_AUTOMATION_PLAN.md`](./archive/sprint_3n/docs/CATALOG_EXPORT_AUTOMATION_PLAN.md) (3N-FA plan — archived)
 
 ---
 
@@ -616,7 +616,7 @@ GUARDRAILS:
 
 **Proceed with 3N-FB** using the **trimmed scope** above. Do **not** implement daily export, seed refresh automation, or blindbox-catalog coupling as architectural requirements.
 
-Update [`CATALOG_EXPORT_AUTOMATION_PLAN.md`](../catalog/CATALOG_EXPORT_AUTOMATION_PLAN.md) after approval to reflect FA.1 decisions before coding.
+[`archive/sprint_3n/docs/CATALOG_EXPORT_AUTOMATION_PLAN.md`](./archive/sprint_3n/docs/CATALOG_EXPORT_AUTOMATION_PLAN.md) is archived; see FA.1 decisions in this document.
 
 ---
 
@@ -663,5 +663,5 @@ flowchart LR
 | `lib/features/catalog/application/catalog_bundle_cache.dart` | Persisted cache > seed |
 | `lib/features/catalog/data/catalog_bundle_persistence.dart` | No seed after first sync |
 | `tools/market_intel/_catalog_bundle.mjs` | Current file-based loader |
-| `tools/catalog/CATALOG_EXPORT_AUTOMATION_PLAN.md` | Plan under review |
+| `archive/sprint_3n/docs/CATALOG_EXPORT_AUTOMATION_PLAN.md` | 3N-FA plan (archived) |
 | `tools/market_intel/MARKET_SNAPSHOT_PIPELINE_FORENSICS.md` | Drift evidence |

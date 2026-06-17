@@ -1,6 +1,15 @@
 # Local adb audit captures (regenerate via tools/market_dora_reselect_audit_adb.py)
 tools/*_audit_run.txt
 
+# Market intel one-off device dumps (regenerate locally)
+tools/market_intel/debug_*.xml
+tools/market_intel/_sprint_*_ui*.xml
+tools/market_intel/*_forensics.json
+tools/market_intel/catalog_coverage_report.json
+tools/market_intel/snapshot_validation_report.json
+tools/market_intel/production_readiness_audit.json
+tools/market_intel/matcher_generalization_simulation.json
+
 # Local machine / doc artifacts (not part of the repo)
 .tools/
 build_env.txt
