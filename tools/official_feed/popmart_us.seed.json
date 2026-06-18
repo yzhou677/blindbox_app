@@ -31,7 +31,10 @@
     "popmart_us_aespa_fluffy_club_lanyard_6273",
     "popmart_us_monsters_chasing_mermaids_6270",
     "popmart_us_crybaby_ocean_figures_6284",
-    "popmart_us_crybaby_ocean_vinyl_plush_6278"
+    "popmart_us_crybaby_ocean_vinyl_plush_6278",
+    "popmart_us_fifa_monsters_la_tour",
+    "popmart_us_haikyu_off_court_6287",
+    "popmart_us_hirono_behind_time_6267"
   ],
   "items": [
     {
@@ -47,18 +50,6 @@
       "status": "active"
     },
     {
-      "id": "popmart_us_haikyu_off_court_6287",
-      "releaseType": "product",
-      "productId": "6287",
-      "productIdConfirmed": true,
-      "title": "Haikyu!! Off-Court Vibes Series Figures",
-      "summary": "New Haikyu!! Off-Court Vibes blind box figures. Online June 4, 7:00 PM PT.",
-      "imageUrl": "https://prod-server-r2.popmart.com/uploads/BVpibjM982GYSP6wpdwjh4gLtGFs66Vy/jr-jzhi4kIQQ2VLy-1779952492-7c309d4656b38d0ecddb309ebdb5ca0a_1200x1200.jpg",
-      "officialUrl": "https://www.popmart.com/us/products/6287/haikyu-off-court-vibes-series-figures",
-      "publishedAt": "2026-05-29T00:00:00Z",
-      "status": "active"
-    },
-    {
       "id": "popmart_us_zsiga_im_zsiga_6479",
       "releaseType": "product",
       "productId": "6479",
@@ -67,18 +58,6 @@
       "summary": "New Zsiga vinyl plush pendant blind box. Online June 4, 7:00 PM PT.",
       "imageUrl": "https://cdn.shopify.com/s/files/1/0737/5506/6686/files/d5310525ae66dd15001936d1684f8fe9.jpg",
       "officialUrl": "https://www.popmart.com/us/products/6479/zsiga-i-m-zsiga-series-vinyl-plush-pendant-blind-box",
-      "publishedAt": "2026-05-29T00:00:00Z",
-      "status": "active"
-    },
-    {
-      "id": "popmart_us_hirono_behind_time_6267",
-      "releaseType": "product",
-      "productId": "6267",
-      "productIdConfirmed": true,
-      "title": "Hirono Behind Time Figure",
-      "summary": "New Hirono Behind Time figure. Online June 4, 7:00 PM PT.",
-      "imageUrl": "https://cdn.shopify.com/s/files/1/0737/5506/6686/files/3a19497e33a1f52711ad9b00a68c60ef.jpg",
-      "officialUrl": "https://www.popmart.com/us/products/6267/hirono-behind-time-figure",
       "publishedAt": "2026-05-29T00:00:00Z",
       "status": "active"
     },
@@ -165,13 +144,33 @@
       "status": "active"
     },
     {
-      "id": "popmart_us_fifa_monsters_la_tour",
+      "id": "popmart_us_demon_slayer_unwavering_resolve_arc_block",
       "releaseType": "announcement",
-      "title": "LABUBU Is Heading Your Way",
-      "summary": "THE MONSTERS FIFA World Cup tour — Mexico City to LA.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Fpopmart_us%2Ffifa-monsters-la.png?alt=media&token=485908d2-31aa-42be-9449-b109fba3a7df",
-      "officialUrl": "https://www.instagram.com/p/DZfdBbij1eT/",
-      "publishedAt": "2026-06-12T00:00:00Z",
+      "title": "Demon Slayer — Coming Soon",
+      "summary": "One piece closer to the world of Demon Slayer. Coming soon.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Fpopmart_us%2Fpopmart_us_demon_slayer_unwavering_resolve_arc_block.png?alt=media&token=196302c4-309a-46dc-bc2b-fd1c5708b632",
+      "officialUrl": "https://www.instagram.com/p/DZrCrrKReOx/",
+      "publishedAt": "2026-06-17T00:00:00Z",
+      "status": "active"
+    },
+    {
+      "id": "popmart_us_angry_molly_crocs_angry_cheese",
+      "releaseType": "announcement",
+      "title": "Angry Molly × Crocs \"Angry Cheese\" Co-branded Figurine",
+      "summary": "US TikTok Shop first. LIVE launch June 18, 8:00 AM PT.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Fpopmart_us%2Fpopmart_us_angry_molly_crocs_angry_cheese.png?alt=media&token=8e392038-b188-4f69-b682-866cce57cc29",
+      "officialUrl": "https://www.instagram.com/p/DZrZfnsH_hC/",
+      "publishedAt": "2026-06-17T00:00:00Z",
+      "status": "active"
+    },
+    {
+      "id": "popmart_us_the_monsters_hair_salon",
+      "releaseType": "announcement",
+      "title": "The Monsters Hair Salon",
+      "summary": "New hair new you.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Fpopmart_us%2Fpopmart_us_the_monsters_hair_salon.png?alt=media&token=243b7c70-1491-497b-92ca-7a5a7b0e1b37",
+      "officialUrl": "https://www.instagram.com/reel/DZr_ABCktUL/",
+      "publishedAt": "2026-06-17T00:00:00Z",
       "status": "active"
     }
   ]
