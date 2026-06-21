@@ -34,57 +34,13 @@
     "popmart_us_crybaby_ocean_vinyl_plush_6278",
     "popmart_us_fifa_monsters_la_tour",
     "popmart_us_haikyu_off_court_6287",
-    "popmart_us_hirono_behind_time_6267"
+    "popmart_us_hirono_behind_time_6267",
+    "popmart_us_peach_riot_fruit_punch_6476",
+    "popmart_us_zsiga_im_zsiga_6479",
+    "popmart_us_mini_zimomo_maia_7792",
+    "popmart_us_tycoco_goud_7794"
   ],
   "items": [
-    {
-      "id": "popmart_us_peach_riot_fruit_punch_6476",
-      "releaseType": "product",
-      "productId": "6476",
-      "productIdConfirmed": true,
-      "title": "Peach Riot Fruit Punch Series — Plush Doll Pendant",
-      "summary": "New Peach Riot Fruit Punch plush pendants. Online June 4, 7:00 PM PT.",
-      "imageUrl": "https://cdn.shopify.com/s/files/1/0737/5506/6686/files/c680af0f949a018b10ef23404d1289ad.jpg",
-      "officialUrl": "https://www.popmart.com/us/products/6476/peach-riot-fruit-punch-series-plush-doll-pendant",
-      "publishedAt": "2026-05-29T00:00:00Z",
-      "status": "active"
-    },
-    {
-      "id": "popmart_us_zsiga_im_zsiga_6479",
-      "releaseType": "product",
-      "productId": "6479",
-      "productIdConfirmed": true,
-      "title": "Zsiga I'm Zsiga Series — Vinyl Plush Pendant Blind Box",
-      "summary": "New Zsiga vinyl plush pendant blind box. Online June 4, 7:00 PM PT.",
-      "imageUrl": "https://cdn.shopify.com/s/files/1/0737/5506/6686/files/d5310525ae66dd15001936d1684f8fe9.jpg",
-      "officialUrl": "https://www.popmart.com/us/products/6479/zsiga-i-m-zsiga-series-vinyl-plush-pendant-blind-box",
-      "publishedAt": "2026-05-29T00:00:00Z",
-      "status": "active"
-    },
-    {
-      "id": "popmart_us_mini_zimomo_maia_7792",
-      "releaseType": "product",
-      "productId": "7792",
-      "productIdConfirmed": true,
-      "title": "Mini ZIMOMO Maia",
-      "summary": "Mini ZIMOMO Maia. Website and TikTok Shop exclusive.",
-      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1780632633043_75357acedab9bbb21b258f5de9c4f191.jpg?x-oss-process=image/format,webp",
-      "officialUrl": "https://www.popmart.com/us/products/7792/Mini-ZIMOMO-Maia",
-      "publishedAt": "2026-06-05T00:00:00Z",
-      "status": "active"
-    },
-    {
-      "id": "popmart_us_tycoco_goud_7794",
-      "releaseType": "product",
-      "productId": "7794",
-      "productIdConfirmed": true,
-      "title": "TYCOCO Goud",
-      "summary": "TYCOCO Goud. Website and TikTok Shop exclusive.",
-      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1780634152206_ed4ae3fffba86655a91be5a5acb06289.jpg?x-oss-process=image/format,webp",
-      "officialUrl": "https://www.popmart.com/us/products/7794/TYCOCO-Goud",
-      "publishedAt": "2026-06-05T00:00:00Z",
-      "status": "active"
-    },
     {
       "id": "popmart_us_pixar_pop_cube_cubiec_6274",
       "releaseType": "product",
@@ -149,7 +105,7 @@
       "title": "Demon Slayer — Coming Soon",
       "summary": "One piece closer to the world of Demon Slayer. Coming soon.",
       "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Fpopmart_us%2Fpopmart_us_demon_slayer_unwavering_resolve_arc_block.png?alt=media&token=196302c4-309a-46dc-bc2b-fd1c5708b632",
-      "officialUrl": "https://www.instagram.com/p/DZrCrrKReOx/",
+      "officialUrl": "https://www.popmart.com/us/products/7894/Demon%20Slayer%20Unwavering%20Resolve%20Arc%20Series%20Block%20Figures",
       "publishedAt": "2026-06-17T00:00:00Z",
       "status": "active"
     },
@@ -171,6 +127,66 @@
       "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Fpopmart_us%2Fpopmart_us_the_monsters_hair_salon.png?alt=media&token=243b7c70-1491-497b-92ca-7a5a7b0e1b37",
       "officialUrl": "https://www.instagram.com/reel/DZr_ABCktUL/",
       "publishedAt": "2026-06-17T00:00:00Z",
+      "status": "active"
+    },
+    {
+      "id": "popmart_us_1001moons_moona_variant_6355",
+      "releaseType": "product",
+      "productId": "6355",
+      "productIdConfirmed": true,
+      "title": "1001MOONS Confession in the Wind — Moona (Variant)",
+      "summary": "New 1001MOONS designer figurine. Purchase in app.",
+      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1781860207851_d67a873eff9239de4f3c05f60563a7b8.jpg?x-oss-process=image/format,webp",
+      "officialUrl": "https://www.popmart.com/us/products/6355/1001MOONS%20Confession%20in%20the%20Wind%20%C2%B7%20Moona%20(Variant)",
+      "publishedAt": "2026-06-19T00:00:00Z",
+      "status": "active"
+    },
+    {
+      "id": "popmart_us_skullpanda_punk_panda_plush_7893",
+      "releaseType": "product",
+      "productId": "7893",
+      "productIdConfirmed": true,
+      "title": "SKULLPANDA Punk Panda Plush Doll",
+      "summary": "New SKULLPANDA Punk Panda plush doll. Online June 25, 7:00 PM PT.",
+      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1781860714116_68769a4303ad21c72c734cec81859fd2.jpg?x-oss-process=image/format,webp",
+      "officialUrl": "https://www.popmart.com/us/products/7893/SKULLPANDA-Punk-Panda-Plush-Doll",
+      "publishedAt": "2026-06-19T00:00:00Z",
+      "status": "active"
+    },
+    {
+      "id": "popmart_us_the_monsters_hair_salon_series_7892",
+      "releaseType": "product",
+      "productId": "7892",
+      "productIdConfirmed": true,
+      "title": "THE MONSTERS Hair Salon Series Figures",
+      "summary": "New THE MONSTERS Hair Salon blind box figures. Online June 25, 7:00 PM PT.",
+      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1781862656282_ae1d518a356ac6e5ab7afe75d1e4f3e1__1200x1787.jpg?x-oss-process=image/format,webp",
+      "officialUrl": "https://www.popmart.com/us/products/7892/THE-MONSTERS-Hair-Salon-Series-Figures",
+      "publishedAt": "2026-06-19T00:00:00Z",
+      "status": "active"
+    },
+    {
+      "id": "popmart_us_hirono_leah_dou_in_the_air_7883",
+      "releaseType": "product",
+      "productId": "7883",
+      "productIdConfirmed": true,
+      "title": "Hirono × Leah Dou In the Air Figurine",
+      "summary": "New Hirono × Leah Dou designer figurine. Online June 25, 7:00 PM PT.",
+      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1781861740516_e9bc0b3f33ed5ec2724829992a222615__1200x1725.jpg?x-oss-process=image/format,webp",
+      "officialUrl": "https://www.popmart.com/us/products/7883/Hirono-x-Leah-Dou-In-the-Air-Figurine",
+      "publishedAt": "2026-06-19T00:00:00Z",
+      "status": "active"
+    },
+    {
+      "id": "popmart_us_the_monsters_hair_salon_vinyl_plush_pendant_7890",
+      "releaseType": "product",
+      "productId": "7890",
+      "productIdConfirmed": true,
+      "title": "THE MONSTERS Hair Salon Series — Vinyl Plush Pendant Blind Box",
+      "summary": "New THE MONSTERS Hair Salon vinyl plush pendants. Online June 25, 7:00 PM PT.",
+      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1781861535663_7adf500e88631d8bf1518d65d3f25f76__1200x1838.jpg?x-oss-process=image/format,webp",
+      "officialUrl": "https://www.popmart.com/us/products/7890/THE-MONSTERS-Hair-Salon-Series-Vinyl-Plush-Pendant-Blind-Box",
+      "publishedAt": "2026-06-19T00:00:00Z",
       "status": "active"
     }
   ]
