@@ -5,12 +5,6 @@ import 'package:blindbox_app/features/catalog/data/catalog_bundle_persistence.da
 import 'package:blindbox_app/features/catalog/firestore/firestore_catalog_loader.dart';
 import 'package:flutter/foundation.dart';
 
-/// In-memory catalog snapshot — static metadata only (no Storage URLs).
-///
-/// **Offline-first startup:** persisted Firestore snapshot (when available) →
-/// bundled seed (first install / never synced) → background Firestore refresh.
-/// After the first successful refresh, persisted data is authoritative on cold
-/// start; deleted Firestore entries do not reappear from seed.
 enum CatalogBundleLoadSource {
   /// In-memory bundle reused within the same process (e.g. second call).
   memory,
@@ -25,15 +19,51 @@ enum CatalogBundleLoadSource {
   empty,
 }
 
+enum CatalogFirestoreRefreshResult {
+  refreshed,
+  skippedWithinTtl,
+  failed,
+}
+
+/// In-memory catalog snapshot — static metadata only (no Storage URLs).
+///
+/// **Offline-first startup:** persisted Firestore snapshot (when available) →
+/// bundled seed (first install / never synced) → background Firestore refresh.
+/// After the first successful refresh, persisted data is authoritative on cold
+/// start; deleted Firestore entries do not reappear from seed.
+///
+/// **Refresh policy**
+///
+/// - Successful refreshes are throttled for 5 minutes.
+/// - Failed refreshes never update the TTL.
+/// - Concurrent refreshes share one in-flight [Future].
+/// - [refreshFromFirestore] `force: true` bypasses the TTL.
 abstract final class CatalogBundleCache {
   static const Duration firestoreTimeout = Duration(seconds: 12);
+  static const Duration catalogRefreshTtl = Duration(minutes: 5);
 
   static CatalogSeedBundle? _bundle;
   static Future<CatalogSeedBundle>? _inFlight;
+  static Future<CatalogFirestoreRefreshResult>? _refreshInFlight;
+  static DateTime? _lastFirestoreRefreshAt;
 
   static CatalogSeedBundle? get current => _bundle;
 
   static bool get hasValue => _bundle != null;
+
+  @visibleForTesting
+  static DateTime? get lastFirestoreRefreshAt => _lastFirestoreRefreshAt;
+
+  @visibleForTesting
+  static void setLastFirestoreRefreshAtForTest(DateTime? at) {
+    _lastFirestoreRefreshAt = at;
+  }
+
+  static bool _isWithinRefreshTtl(DateTime now) {
+    final last = _lastFirestoreRefreshAt;
+    if (last == null) return false;
+    return now.difference(last) < catalogRefreshTtl;
+  }
 
   /// Startup source for the current in-memory bundle (debug / tests).
   static CatalogBundleLoadSource? lastStartupSource;
@@ -71,6 +101,8 @@ abstract final class CatalogBundleCache {
   static void resetForTest() {
     _bundle = null;
     _inFlight = null;
+    _refreshInFlight = null;
+    _lastFirestoreRefreshAt = null;
     onBundleReplaced = null;
     loadSeedOverride = null;
     loadFirestoreOverride = null;
@@ -129,12 +161,37 @@ abstract final class CatalogBundleCache {
   }
 
   /// Stale-while-revalidate: updates [current] when network succeeds; never throws.
-  static Future<void> refreshFromFirestore() async {
+  ///
+  /// Skips Firestore when [force] is false and the last successful refresh is
+  /// within [catalogRefreshTtl]. Concurrent calls share one in-flight request.
+  static Future<CatalogFirestoreRefreshResult> refreshFromFirestore({
+    bool force = false,
+  }) async {
+    if (!force && _isWithinRefreshTtl(DateTime.now())) {
+      return CatalogFirestoreRefreshResult.skippedWithinTtl;
+    }
+
+    final pending = _refreshInFlight;
+    if (pending != null) return pending;
+
+    final refresh = _refreshFromFirestoreImpl();
+    _refreshInFlight = refresh;
+    try {
+      return await refresh;
+    } finally {
+      if (identical(_refreshInFlight, refresh)) _refreshInFlight = null;
+    }
+  }
+
+  static Future<CatalogFirestoreRefreshResult> _refreshFromFirestoreImpl() async {
     try {
       final fresh = await _loadFirestore().timeout(firestoreTimeout);
       await _commitFirestoreBundle(fresh, notifyListeners: true);
+      _lastFirestoreRefreshAt = DateTime.now();
+      return CatalogFirestoreRefreshResult.refreshed;
     } catch (e, st) {
       debugPrint('CatalogBundleCache: Firestore refresh skipped: $e\n$st');
+      return CatalogFirestoreRefreshResult.failed;
     }
   }
 
