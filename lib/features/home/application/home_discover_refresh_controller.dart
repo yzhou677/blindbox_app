@@ -26,7 +26,7 @@ class HomeDiscoverRefreshNotifier extends Notifier<bool> {
           }
         }),
       );
-      await ref.refresh(officialFeedListProvider.future);
+      final _ = await ref.refresh(officialFeedListProvider.future);
     } finally {
       state = false;
     }
