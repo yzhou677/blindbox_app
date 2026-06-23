@@ -16,18 +16,16 @@ class HomeFeedSeriesPick {
   final List<CatalogSeries> trending;
 }
 
-/// Recent drops window (inclusive lower bound).
-const Duration homeLatestDropsWindow = Duration(days: 92); // ~3 months
+/// Recent drops window (inclusive lower bound). Every dated series in this
+/// window appears in Latest Drops — no item cap.
+const Duration homeLatestDropsWindow = Duration(days: 60);
 
-/// Trending primary pool: releases older than latest window, up to ~12 months.
-const Duration homeTrendingWindowStart = Duration(days: 92);
+/// Trending primary pool: releases older than [homeLatestDropsWindow], up to ~12 months.
 const Duration homeTrendingWindowEnd = Duration(days: 365);
 
-const int homeLatestTargetCount = 8;
 const int homeTrendingTargetCount = 8;
 
 /// Minimum before [backfillHomeFeedSection] expands by nearest [releaseDate].
-const int homeLatestMinimumCount = 4;
 const int homeTrendingMinimumCount = 5;
 
 /// Curated collector-popular IPs — only used when series exist in the loaded bundle.
@@ -57,24 +55,13 @@ HomeFeedSeriesPick pickHomeFeedSeries(
 
   final latestCutoff = now.subtract(homeLatestDropsWindow);
   final trendingStart = now.subtract(homeTrendingWindowEnd);
-  final trendingEnd = now.subtract(homeTrendingWindowStart);
+  final trendingEnd = now.subtract(homeLatestDropsWindow);
 
-  final latestPool = dated
+  final latest = dated
       .where((e) => !e.date!.isBefore(latestCutoff))
       .map((e) => e.series)
       .toList(growable: false)
     ..sort((a, b) => _parseReleaseDate(b.releaseDate)!.compareTo(_parseReleaseDate(a.releaseDate)!));
-
-  var latest = latestPool.take(homeLatestTargetCount).toList(growable: false);
-  if (latest.length < homeLatestMinimumCount) {
-    latest = backfillHomeFeedSection(
-      dated,
-      current: latest,
-      target: homeLatestTargetCount,
-      minimum: homeLatestMinimumCount,
-      anchor: now,
-    );
-  }
 
   final latestIds = latest.map((s) => s.id).toSet();
 
