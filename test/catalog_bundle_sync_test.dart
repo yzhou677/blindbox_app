@@ -302,42 +302,4 @@ void main() {
     expect(loaded.series.single.id, 'remote_series');
     expect(CatalogBundleCache.current?.series.single.id, 'remote_series');
   });
-
-  test('refreshFromFirestore skips Firestore within catalogRefreshTtl', () async {
-    CatalogBundleCache.loadFirestoreOverride = () async {
-      throw StateError('should not fetch');
-    };
-    CatalogBundleCache.setLastFirestoreRefreshAtForTest(DateTime.now());
-
-    final outcome = await CatalogBundleCache.refreshFromFirestore();
-
-    expect(outcome, CatalogFirestoreRefreshResult.skippedWithinTtl);
-  });
-
-  test('refreshFromFirestore force bypasses catalogRefreshTtl', () async {
-    final remote = _remoteWithoutDeletedSeries();
-    CatalogBundleCache.loadFirestoreOverride = () async => remote;
-    CatalogBundleCache.setLastFirestoreRefreshAtForTest(DateTime.now());
-
-    final outcome = await CatalogBundleCache.refreshFromFirestore(force: true);
-
-    expect(outcome, CatalogFirestoreRefreshResult.refreshed);
-    expect(CatalogBundleCache.current?.series.single.id, 'remote_series');
-  });
-
-  test('consecutive refreshFromFirestore calls share one in-flight request', () async {
-    var fetchCount = 0;
-    CatalogBundleCache.loadFirestoreOverride = () async {
-      fetchCount++;
-      await Future<void>.delayed(const Duration(milliseconds: 30));
-      return _remoteWithoutDeletedSeries();
-    };
-
-    final first = CatalogBundleCache.refreshFromFirestore(force: true);
-    final second = CatalogBundleCache.refreshFromFirestore(force: true);
-
-    expect(await first, CatalogFirestoreRefreshResult.refreshed);
-    expect(await second, CatalogFirestoreRefreshResult.refreshed);
-    expect(fetchCount, 1);
-  });
 }

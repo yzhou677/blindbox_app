@@ -1,7 +1,6 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
-import 'package:blindbox_app/features/home/application/home_discover_refresh_controller.dart';
 import 'package:blindbox_app/features/home/application/home_feed_provider.dart';
 import 'package:blindbox_app/features/home/widgets/latest_drops_section.dart';
 import 'package:blindbox_app/features/home/widgets/trending_series_section.dart';
@@ -54,15 +53,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return Scaffold(
       backgroundColor: scheme.surfaceContainerLow,
-      body: RefreshIndicator(
-        onRefresh: () =>
-            ref.read(homeDiscoverRefreshProvider.notifier).refresh(),
-        child: CustomScrollView(
-          controller: _scrollController,
-          physics: const AlwaysScrollableScrollPhysics(
-            parent: BouncingScrollPhysics(),
-          ),
-          slivers: [
+      body: CustomScrollView(
+        controller: _scrollController,
+        physics: const BouncingScrollPhysics(),
+        slivers: [
           SliverAppBar(
             pinned: false,
             floating: false,
@@ -99,8 +93,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
           ),
-          ],
-        ),
+        ],
       ),
     );
   }
