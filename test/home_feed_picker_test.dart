@@ -31,6 +31,8 @@ CatalogSeries _series(String id, String date, {String ipId = 'skullpanda'}) =>
 void main() {
   final clock = DateTime(2026, 5, 21);
 
+  tearDown(resetTrendingSessionOrderForTest);
+
   test('latest includes every release within 60 days, newest first', () {
     final bundle = _bundle([
       _series('a', '2026-05-10'),
@@ -138,5 +140,111 @@ void main() {
     ]);
     final pick = pickHomeFeedSeries(bundle, clock: clock, random: Random(1));
     expect(pick.trending, isEmpty);
+  });
+
+  test('trending session order stays stable across repeated picks', () {
+    seedTrendingSessionRandomForTest(42);
+    final bundle = _bundle([
+      _series('l1', '2026-05-01'),
+      _series('l2', '2026-04-15'),
+      _series('l3', '2026-04-01'),
+      _series('t1', '2026-03-15'),
+      _series('t2', '2026-02-10'),
+      _series('t3', '2026-01-25'),
+    ]);
+    final first = pickHomeFeedSeries(bundle, clock: clock);
+    final second = pickHomeFeedSeries(bundle, clock: clock);
+    expect(
+      second.trending.map((s) => s.id),
+      first.trending.map((s) => s.id),
+    );
+    expect(first.latest.map((s) => s.id), second.latest.map((s) => s.id));
+  });
+
+  test('trending session order can change after a new session', () {
+    seedTrendingSessionRandomForTest(1);
+    final bundle = _bundle([
+      _series('l1', '2026-05-01'),
+      _series('t1', '2026-03-15'),
+      _series('t2', '2026-02-10'),
+      _series('t3', '2026-01-25'),
+    ]);
+    final firstOrder =
+        pickHomeFeedSeries(bundle, clock: clock).trending.map((s) => s.id).toList();
+
+    resetTrendingSessionOrderForTest();
+    seedTrendingSessionRandomForTest(99);
+    final secondOrder =
+        pickHomeFeedSeries(bundle, clock: clock).trending.map((s) => s.id).toList();
+
+    expect(secondOrder, isNot(firstOrder));
+  });
+
+  test('trending keeps order when pool membership is unchanged', () {
+    seedTrendingSessionRandomForTest(7);
+    final bundle = _bundle([
+      _series('l1', '2026-05-01'),
+      _series('t1', '2026-03-15'),
+      _series('t2', '2026-02-10'),
+      _series('t3', '2026-01-25'),
+    ]);
+    final firstOrder =
+        pickHomeFeedSeries(bundle, clock: clock).trending.map((s) => s.id).toList();
+    final refreshedOrder =
+        pickHomeFeedSeries(bundle, clock: clock).trending.map((s) => s.id).toList();
+
+    expect(refreshedOrder, firstOrder);
+  });
+
+  test('trending reshuffles entire pool when membership changes', () {
+    seedTrendingSessionRandomForTest(42);
+    final base = [
+      _series('l1', '2026-05-01'),
+      _series('t1', '2026-03-15'),
+      _series('t2', '2026-02-10'),
+      _series('t3', '2026-01-25'),
+    ];
+    final firstOrder = pickHomeFeedSeries(_bundle(base), clock: clock)
+        .trending
+        .map((s) => s.id)
+        .toList();
+
+    final withNew = [
+      ...base,
+      _series('t4', '2026-02-01'),
+    ];
+    final secondOrder = pickHomeFeedSeries(_bundle(withNew), clock: clock)
+        .trending
+        .map((s) => s.id)
+        .toList();
+
+    expect(secondOrder, hasLength(4));
+    expect(secondOrder.toSet(), containsAll(['t1', 't2', 't3', 't4']));
+    expect(
+      secondOrder.where(firstOrder.contains).toList(),
+      isNot(firstOrder),
+    );
+  });
+
+  test('trending drops removed series when pool membership changes', () {
+    seedTrendingSessionRandomForTest(3);
+    final full = [
+      _series('l1', '2026-05-01'),
+      _series('t1', '2026-03-15'),
+      _series('t2', '2026-02-10'),
+      _series('t3', '2026-01-25'),
+    ];
+    pickHomeFeedSeries(_bundle(full), clock: clock);
+
+    final reduced = [
+      _series('l1', '2026-05-01'),
+      _series('t1', '2026-03-15'),
+      _series('t2', '2026-02-10'),
+    ];
+    final trending =
+        pickHomeFeedSeries(_bundle(reduced), clock: clock).trending;
+
+    expect(trending, hasLength(2));
+    expect(trending.map((s) => s.id), isNot(contains('t3')));
   });
 }
