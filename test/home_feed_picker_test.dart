@@ -59,33 +59,46 @@ void main() {
     );
   });
 
-  test('trending uses 60-day to 12-month window and excludes latest', () {
+  test('trending uses 60-day to 120-day window and excludes latest', () {
     final bundle = _bundle([
       _series('l1', '2026-05-01'),
       _series('l2', '2026-04-15'),
       _series('l3', '2026-04-01'),
-      _series('l4', '2026-03-20'),
-      _series('trend_a', '2025-10-01'),
-      _series('trend_b', '2025-08-15'),
-      _series('trend_c', '2025-07-01'),
-      _series('trend_d', '2025-06-10'),
-      _series('trend_e', '2025-06-01'),
-      _series('too_old', '2024-01-01'),
+      _series('t1', '2026-03-15'),
+      _series('t2', '2026-03-01'),
+      _series('t3', '2026-02-10'),
+      _series('t4', '2026-01-25'),
+      _series('t5', '2026-01-22'),
+      _series('too_recent', '2026-03-22'),
+      _series('too_old', '2026-01-20', ipId: 'nommi'),
+      _series('ancient', '2025-10-01', ipId: 'nommi'),
     ]);
     final pick = pickHomeFeedSeries(bundle, clock: clock, random: Random(2));
-    for (final id in ['l1', 'l2', 'l3']) {
+    for (final id in ['l1', 'l2', 'l3', 'too_recent']) {
       expect(pick.latest.map((s) => s.id), contains(id));
     }
-    expect(pick.latest.map((s) => s.id), isNot(contains('l4')));
-    for (final id in ['l1', 'l2', 'l3']) {
+    for (final id in ['l1', 'l2', 'l3', 'too_recent']) {
       expect(pick.trending.map((s) => s.id), isNot(contains(id)));
     }
-    expect(pick.trending.map((s) => s.id), contains('l4'));
     expect(
       pick.trending.map((s) => s.id),
-      containsAll(['trend_a', 'trend_b', 'trend_c', 'trend_d', 'trend_e']),
+      containsAll(['t1', 't2', 't3', 't4', 't5']),
     );
     expect(pick.trending.any((s) => s.id == 'too_old'), isFalse);
+    expect(pick.trending.any((s) => s.id == 'ancient'), isFalse);
+  });
+
+  test('trending does not truncate when more than 8 series are eligible', () {
+    final bundle = _bundle([
+      _series('latest_only', '2026-05-01'),
+      for (var i = 0; i < 12; i++)
+        _series('trend_$i', '2026-02-${(10 + i).toString().padLeft(2, '0')}'),
+    ]);
+    final pick = pickHomeFeedSeries(bundle, clock: clock, random: Random(5));
+    expect(pick.trending, hasLength(12));
+    for (var i = 0; i < 12; i++) {
+      expect(pick.trending.map((s) => s.id), contains('trend_$i'));
+    }
   });
 
   test('latest and trending never share a series id', () {
@@ -93,9 +106,8 @@ void main() {
       _series('l1', '2026-05-01'),
       _series('l2', '2026-04-15'),
       _series('l3', '2026-04-01'),
-      _series('l4', '2026-03-20'),
-      _series('trend_a', '2025-10-01'),
-      _series('trend_b', '2025-08-15'),
+      _series('t1', '2026-03-15'),
+      _series('t2', '2026-02-10'),
     ]);
     final pick = pickHomeFeedSeries(bundle, clock: clock, random: Random(4));
     final latestIds = pick.latest.map((s) => s.id).toSet();
@@ -103,16 +115,28 @@ void main() {
     expect(latestIds.intersection(trendingIds), isEmpty);
   });
 
-  test('collector-popular fallback fills thin trending from known ips', () {
+  test('trending stays within window when pool is thin', () {
     final bundle = _bundle([
       _series('l1', '2026-05-01'),
       _series('l2', '2026-04-20'),
       _series('l3', '2026-04-05'),
-      _series('l4', '2026-03-15'),
+      _series('t1', '2026-03-15'),
       _series('sp_old', '2025-06-01', ipId: 'skullpanda'),
       _series('labubu', '2025-05-01', ipId: 'the_monsters'),
     ]);
     final pick = pickHomeFeedSeries(bundle, clock: clock, random: Random(3));
-    expect(pick.trending.map((s) => s.id), contains('labubu'));
+    expect(pick.trending.map((s) => s.id), ['t1']);
+    expect(pick.trending.any((s) => s.id == 'labubu'), isFalse);
+    expect(pick.trending.any((s) => s.id == 'sp_old'), isFalse);
+  });
+
+  test('trending is empty when nothing falls in the 60-120 day window', () {
+    final bundle = _bundle([
+      _series('l1', '2026-05-01'),
+      _series('l2', '2026-04-15'),
+      _series('ancient', '2025-01-01'),
+    ]);
+    final pick = pickHomeFeedSeries(bundle, clock: clock, random: Random(1));
+    expect(pick.trending, isEmpty);
   });
 }
