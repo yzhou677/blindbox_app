@@ -168,24 +168,34 @@ class _SearchHistoryClearAll extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         const Divider(height: 1, indent: AppSpacing.pageHorizontal),
-        TextButton(
-          onPressed: onPressed,
-          style: TextButton.styleFrom(
-            alignment: Alignment.centerLeft,
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.pageHorizontal,
-              SearchHistorySectionSpacing.clearAllVertical,
-              AppSpacing.pageHorizontal,
-              SearchHistorySectionSpacing.clearAllVertical,
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onPressed,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.pageHorizontal,
+                SearchHistorySectionSpacing.clearAllVertical,
+                AppSpacing.pageHorizontal,
+                SearchHistorySectionSpacing.clearAllVertical,
+              ),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Clear All',
+                  style: textTheme.labelLarge?.copyWith(
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.75),
+                  ),
+                ),
+              ),
             ),
-            foregroundColor: scheme.onSurfaceVariant.withValues(alpha: 0.75),
           ),
-          child: const Text('Clear All'),
         ),
       ],
     );

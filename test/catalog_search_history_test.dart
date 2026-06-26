@@ -377,6 +377,20 @@ void main() {
       expect(cleared, isTrue);
     });
 
+    testWidgets('tapping Clear All row outside label still clears', (tester) async {
+      var cleared = false;
+      await tester.pumpWidget(_wrap(
+        queries: const ['Labubu'],
+        onClearAll: () => cleared = true,
+      ));
+
+      final labelRect = tester.getRect(find.text('Clear All'));
+      await tester.tapAt(
+        Offset(labelRect.right + 40, labelRect.center.dy),
+      );
+      expect(cleared, isTrue);
+    });
+
     testWidgets('suggested mode hides delete buttons and Clear All', (tester) async {
       final suggestions = pickDisplayedSuggestedSearches(Random(0));
       await tester.pumpWidget(
