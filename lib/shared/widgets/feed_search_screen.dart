@@ -1,6 +1,7 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
+import 'package:blindbox_app/features/catalog/search/catalog_search_history_section.dart';
 import 'package:blindbox_app/shared/widgets/app_search_field.dart';
 import 'package:flutter/material.dart';
 
@@ -133,7 +134,9 @@ class FeedSearchScreen extends StatelessWidget {
                 : historySection != null
                     ? SingleChildScrollView(
                         child: Padding(
-                          padding: const EdgeInsets.only(top: AppSpacing.sm),
+                          padding: const EdgeInsets.only(
+                            top: SearchHistorySectionSpacing.belowSearchField,
+                          ),
                           child: historySection,
                         ),
                       )

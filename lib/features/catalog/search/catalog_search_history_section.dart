@@ -2,6 +2,21 @@ import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/features/catalog/search/suggested_searches.dart';
 import 'package:flutter/material.dart';
 
+/// Vertical rhythm for history / suggestion lists (Catalog + Market search).
+abstract final class SearchHistorySectionSpacing {
+  /// Gap between the search field and the section title ([FeedSearchScreen]).
+  static const double belowSearchField = AppSpacing.xs;
+
+  /// Space under the section title before the first row.
+  static const double titleBottom = 2;
+
+  /// Vertical padding inside each row (tap target stays ≥ 44 px tall).
+  static const double rowVertical = 6;
+
+  /// Vertical padding on the Clear All control.
+  static const double clearAllVertical = 5;
+}
+
 /// Reusable search history / suggestions section when the query field is empty.
 ///
 /// Callers:
@@ -43,54 +58,20 @@ class CatalogSearchHistorySection extends StatelessWidget {
   Widget build(BuildContext context) {
     if (queries.isEmpty) return const SizedBox.shrink();
 
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.pageHorizontal,
-            0,
-            AppSpacing.pageHorizontal,
-            0,
-          ),
-          child: Text(
-            title,
-            style: textTheme.labelLarge?.copyWith(
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.12,
-              color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
-            ),
-          ),
-        ),
+        _SearchHistorySectionTitle(title: title),
         for (final query in queries)
-          _SearchHistoryRow(
+          SearchHistoryRow(
             label: query,
             onTap: () => onQueryTap(query),
             showDeleteButton: showDeleteButtons,
             onRemove:
                 showDeleteButtons && onRemove != null ? () => onRemove!(query) : null,
           ),
-        if (showClearAll) ...[
-          const Divider(height: 1, indent: AppSpacing.pageHorizontal),
-          TextButton(
-            onPressed: onClearAll,
-            style: TextButton.styleFrom(
-              alignment: Alignment.centerLeft,
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.pageHorizontal,
-                6,
-                AppSpacing.pageHorizontal,
-                6,
-              ),
-              foregroundColor: scheme.onSurfaceVariant.withValues(alpha: 0.75),
-            ),
-            child: const Text('Clear All'),
-          ),
-        ],
+        if (showClearAll) _SearchHistoryClearAll(onPressed: onClearAll),
       ],
     );
   }
@@ -134,31 +115,13 @@ class _ShuffledSuggestedSearchesSectionState
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.pageHorizontal,
-            0,
-            AppSpacing.pageHorizontal,
-            0,
-          ),
-          child: Text(
-            'Suggested Searches',
-            style: textTheme.labelLarge?.copyWith(
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.12,
-              color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
-            ),
-          ),
-        ),
+        const _SearchHistorySectionTitle(title: 'Suggested Searches'),
         for (final suggestion in _suggestions)
-          _SearchHistoryRow(
+          SearchHistoryRow(
             label: suggestion.displayLabel,
             onTap: () => widget.onSuggestedTap(suggestion.query),
             showDeleteButton: false,
@@ -168,8 +131,71 @@ class _ShuffledSuggestedSearchesSectionState
   }
 }
 
-class _SearchHistoryRow extends StatelessWidget {
-  const _SearchHistoryRow({
+class _SearchHistorySectionTitle extends StatelessWidget {
+  const _SearchHistorySectionTitle({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.pageHorizontal,
+        0,
+        AppSpacing.pageHorizontal,
+        SearchHistorySectionSpacing.titleBottom,
+      ),
+      child: Text(
+        title,
+        style: textTheme.labelLarge?.copyWith(
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.12,
+          color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
+        ),
+      ),
+    );
+  }
+}
+
+class _SearchHistoryClearAll extends StatelessWidget {
+  const _SearchHistoryClearAll({required this.onPressed});
+
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Divider(height: 1, indent: AppSpacing.pageHorizontal),
+        TextButton(
+          onPressed: onPressed,
+          style: TextButton.styleFrom(
+            alignment: Alignment.centerLeft,
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.pageHorizontal,
+              SearchHistorySectionSpacing.clearAllVertical,
+              AppSpacing.pageHorizontal,
+              SearchHistorySectionSpacing.clearAllVertical,
+            ),
+            foregroundColor: scheme.onSurfaceVariant.withValues(alpha: 0.75),
+          ),
+          child: const Text('Clear All'),
+        ),
+      ],
+    );
+  }
+}
+
+/// Single history / suggestion row — shared by recent and suggested sections.
+class SearchHistoryRow extends StatelessWidget {
+  const SearchHistoryRow({
+    super.key,
     required this.label,
     required this.onTap,
     required this.showDeleteButton,
@@ -181,6 +207,11 @@ class _SearchHistoryRow extends StatelessWidget {
   final bool showDeleteButton;
   final VoidCallback? onRemove;
 
+  static const double _historyIconSize = 18;
+  static const double _historyIconGap = 12;
+  static const double _deleteLeadingGap = 4;
+  static const double _deleteTapSize = 32;
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -191,16 +222,16 @@ class _SearchHistoryRow extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.pageHorizontal,
-          vertical: 8,
+          vertical: SearchHistorySectionSpacing.rowVertical,
         ),
         child: Row(
           children: [
             Icon(
               Icons.history_rounded,
-              size: 18,
+              size: _historyIconSize,
               color: scheme.onSurfaceVariant.withValues(alpha: 0.55),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: _historyIconGap),
             Expanded(
               child: Text(
                 label,
@@ -208,21 +239,31 @@ class _SearchHistoryRow extends StatelessWidget {
                   color: scheme.onSurface,
                 ),
                 maxLines: 1,
+                softWrap: false,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            if (showDeleteButton && onRemove != null)
-              IconButton(
-                icon: Icon(
-                  Icons.close_rounded,
-                  size: 18,
-                  color: scheme.onSurfaceVariant.withValues(alpha: 0.55),
+            if (showDeleteButton && onRemove != null) ...[
+              const SizedBox(width: _deleteLeadingGap),
+              SizedBox(
+                width: _deleteTapSize,
+                height: _deleteTapSize,
+                child: IconButton(
+                  icon: Icon(
+                    Icons.close_rounded,
+                    size: _historyIconSize,
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.55),
+                  ),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: _deleteTapSize,
+                    minHeight: _deleteTapSize,
+                  ),
+                  tooltip: 'Remove',
+                  onPressed: onRemove,
                 ),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                tooltip: 'Remove',
-                onPressed: onRemove,
               ),
+            ],
           ],
         ),
       ),

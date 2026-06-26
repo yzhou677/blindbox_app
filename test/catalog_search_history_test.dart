@@ -5,6 +5,7 @@ import 'package:blindbox_app/features/catalog/search/catalog_search_history_stor
 import 'package:blindbox_app/features/catalog/search/suggested_searches.dart';
 import 'dart:math';
 
+import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -399,6 +400,62 @@ void main() {
       expect(find.byIcon(Icons.close_rounded), findsNothing);
       expect(find.text('Clear All'), findsNothing);
     });
+
+    testWidgets('long query uses single-line ellipsis', (tester) async {
+      const longQuery =
+          'Nommi Sweetheart Plan Series Mini Figures Surprise Bag Extra';
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 240,
+              child: CatalogSearchHistorySection(
+                queries: const [longQuery],
+                onQueryTap: (_) {},
+                onRemove: (_) {},
+                onClearAll: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final text = tester.widget<Text>(
+        find.descendant(
+          of: find.byType(SearchHistoryRow),
+          matching: find.byType(Text),
+        ),
+      );
+      expect(text.maxLines, 1);
+      expect(text.softWrap, isFalse);
+      expect(text.overflow, TextOverflow.ellipsis);
+    });
+
+    testWidgets('long query keeps delete button visible and tappable',
+        (tester) async {
+      const longQuery =
+          'Nommi Sweetheart Plan Series Mini Figures Surprise Bag Extra';
+      String? removed;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 240,
+              child: CatalogSearchHistorySection(
+                queries: const [longQuery],
+                onQueryTap: (_) {},
+                onRemove: (q) => removed = q,
+                onClearAll: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byIcon(Icons.close_rounded), findsOneWidget);
+      await tester.tap(find.byIcon(Icons.close_rounded));
+      expect(removed, equals(longQuery));
+    });
   });
 
   // -------------------------------------------------------------------------
@@ -600,6 +657,10 @@ void main() {
         onClearAll: () {},
       );
       expect(widget, isA<CatalogSearchHistorySection>());
+    });
+
+    test('Catalog and Market search share FeedSearchScreen history spacing', () {
+      expect(SearchHistorySectionSpacing.belowSearchField, AppSpacing.xs);
     });
   });
 }
