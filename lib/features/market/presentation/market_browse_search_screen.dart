@@ -76,6 +76,11 @@ class _MarketBrowseSearchScreenState
     setState(() {});
   }
 
+  void _applySuggestedQuery(String query) {
+    _applyHistoryQuery(query);
+    _recordSearch(query);
+  }
+
   void _onSearchSubmitted() {
     _debounce?.cancel();
     final q = _trimmedQuery;
@@ -161,16 +166,15 @@ class _MarketBrowseSearchScreenState
     final sessionTransitioning = ref.watch(marketBrowseSessionTransitionProvider);
     final history = ref.watch(marketSearchHistoryProvider);
 
-    final historyWidget = history.isEmpty
-        ? null
-        : CatalogSearchHistorySection(
-            queries: history,
-            onQueryTap: _applyHistoryQuery,
-            onRemove: (q) =>
-                ref.read(marketSearchHistoryProvider.notifier).remove(q),
-            onClearAll: () =>
-                ref.read(marketSearchHistoryProvider.notifier).clearAll(),
-          );
+    final historyWidget = searchEmptyQuerySection(
+      history: history,
+      onHistoryTap: _applyHistoryQuery,
+      onRemove: (q) =>
+          ref.read(marketSearchHistoryProvider.notifier).remove(q),
+      onClearAll: () =>
+          ref.read(marketSearchHistoryProvider.notifier).clearAll(),
+      onSuggestedTap: _applySuggestedQuery,
+    );
 
     return PopScope(
       canPop: false,

@@ -54,6 +54,11 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
     setState(() {});
   }
 
+  void _applySuggestedQuery(String query) {
+    _applyHistoryQuery(query);
+    _recordSearch(query);
+  }
+
   Future<void> _openSeriesPreview(
     BuildContext context,
     CatalogSeedBundle bundle,
@@ -98,16 +103,15 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
     final snap = ref.watch(collectionNotifierProvider);
     final history = ref.watch(catalogSearchHistoryProvider);
 
-    final historyWidget = history.isEmpty
-        ? null
-        : CatalogSearchHistorySection(
-            queries: history,
-            onQueryTap: _applyHistoryQuery,
-            onRemove: (q) =>
-                ref.read(catalogSearchHistoryProvider.notifier).remove(q),
-            onClearAll: () =>
-                ref.read(catalogSearchHistoryProvider.notifier).clearAll(),
-          );
+    final historyWidget = searchEmptyQuerySection(
+      history: history,
+      onHistoryTap: _applyHistoryQuery,
+      onRemove: (q) =>
+          ref.read(catalogSearchHistoryProvider.notifier).remove(q),
+      onClearAll: () =>
+          ref.read(catalogSearchHistoryProvider.notifier).clearAll(),
+      onSuggestedTap: _applySuggestedQuery,
+    );
 
     return bundleAsync.when(
       loading: () => FeedSearchScreen(

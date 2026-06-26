@@ -2,6 +2,9 @@ import 'package:blindbox_app/features/catalog/search/catalog_search_history.dart
 import 'package:blindbox_app/features/catalog/search/catalog_search_history_provider.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_history_section.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_history_storage.dart';
+import 'package:blindbox_app/features/catalog/search/suggested_searches.dart';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -371,6 +374,213 @@ void main() {
       ));
       await tester.tap(find.text('Clear All'));
       expect(cleared, isTrue);
+    });
+
+    testWidgets('suggested mode hides delete buttons and Clear All', (tester) async {
+      final suggestions = pickDisplayedSuggestedSearches(Random(0));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: CatalogSearchHistorySection(
+              queries: suggestions.map((s) => s.displayLabel).toList(),
+              title: 'Suggested Searches',
+              showDeleteButtons: false,
+              showClearAll: false,
+              onQueryTap: (_) {},
+            ),
+          ),
+        ),
+      );
+      expect(find.text('Suggested Searches'), findsOneWidget);
+      expect(suggestions.length, kSuggestedSearchesDisplayCount);
+      for (final suggestion in suggestions) {
+        expect(find.text(suggestion.displayLabel), findsOneWidget);
+      }
+      expect(find.byIcon(Icons.close_rounded), findsNothing);
+      expect(find.text('Clear All'), findsNothing);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // searchEmptyQuerySection — recent vs suggested
+  // -------------------------------------------------------------------------
+
+  group('searchEmptyQuerySection', () {
+    Widget _wrapSection({
+      required List<String> history,
+      ValueChanged<String>? onHistoryTap,
+      ValueChanged<String>? onRemove,
+      VoidCallback? onClearAll,
+      ValueChanged<String>? onSuggestedTap,
+    }) {
+      return MaterialApp(
+        home: Scaffold(
+          body: searchEmptyQuerySection(
+            history: history,
+            onHistoryTap: onHistoryTap ?? (_) {},
+            onRemove: onRemove ?? (_) {},
+            onClearAll: onClearAll ?? () {},
+            onSuggestedTap: onSuggestedTap ?? (_) {},
+          ),
+        ),
+      );
+    }
+
+    testWidgets('empty history shows Suggested Searches', (tester) async {
+      await tester.pumpWidget(_wrapSection(history: const []));
+      expect(find.text('Suggested Searches'), findsOneWidget);
+      expect(find.text('Recent Searches'), findsNothing);
+
+      final poolQueries = kSuggestedSearches.map((s) => s.query).toSet();
+      final displayed = kSuggestedSearches
+          .where((s) => find.text(s.displayLabel).evaluate().isNotEmpty)
+          .toList();
+      expect(displayed.length, kSuggestedSearchesDisplayCount);
+      expect(displayed.map((s) => s.query).toSet().length,
+          kSuggestedSearchesDisplayCount);
+      for (final suggestion in displayed) {
+        expect(poolQueries, contains(suggestion.query));
+      }
+    });
+
+    testWidgets('non-empty history shows Recent Searches only', (tester) async {
+      await tester.pumpWidget(_wrapSection(history: const ['Nommi']));
+      expect(find.text('Recent Searches'), findsOneWidget);
+      expect(find.text('Suggested Searches'), findsNothing);
+      expect(find.text('Nommi'), findsOneWidget);
+      expect(find.text('Labubu'), findsNothing);
+    });
+
+    testWidgets('suggested row tap calls onSuggestedTap', (tester) async {
+      String? tapped;
+      await tester.pumpWidget(_wrapSection(
+        history: const [],
+        onSuggestedTap: (q) => tapped = q,
+      ));
+      final suggestion = kSuggestedSearches
+          .where((s) => find.text(s.displayLabel).evaluate().isNotEmpty)
+          .first;
+      await tester.tap(find.text(suggestion.displayLabel));
+      expect(tapped, equals(suggestion.query));
+    });
+
+    testWidgets('suggested rows have no delete button', (tester) async {
+      await tester.pumpWidget(_wrapSection(history: const []));
+      expect(find.byIcon(Icons.close_rounded), findsNothing);
+    });
+
+    testWidgets('suggested tap fills field and records history', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final controller = TextEditingController();
+      addTearDown(controller.dispose);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          parent: container,
+          child: MaterialApp(
+            home: Scaffold(
+              body: Consumer(
+                builder: (context, ref, _) {
+                  final history = ref.watch(catalogSearchHistoryProvider);
+                  return Column(
+                    children: [
+                      TextField(controller: controller, key: const Key('field')),
+                      searchEmptyQuerySection(
+                        history: history,
+                        onHistoryTap: (q) => controller.text = q,
+                        onRemove: (q) => ref
+                            .read(catalogSearchHistoryProvider.notifier)
+                            .remove(q),
+                        onClearAll: () => ref
+                            .read(catalogSearchHistoryProvider.notifier)
+                            .clearAll(),
+                        onSuggestedTap: (q) {
+                          controller.text = q;
+                          ref.read(catalogSearchHistoryProvider.notifier).add(q);
+                        },
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final suggestion = kSuggestedSearches
+          .where((s) => find.text(s.displayLabel).evaluate().isNotEmpty)
+          .first;
+      await tester.tap(find.text(suggestion.displayLabel));
+      await tester.pumpAndSettle();
+
+      expect(controller.text, equals(suggestion.query));
+      expect(
+        container.read(catalogSearchHistoryProvider),
+        contains(suggestion.query),
+      );
+      expect(find.text('Recent Searches'), findsOneWidget);
+      expect(find.text('Suggested Searches'), findsNothing);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // kSuggestedSearches — shared constant
+  // -------------------------------------------------------------------------
+
+  group('SuggestedSearch', () {
+    test('displayLabel falls back to query', () {
+      expect(const SuggestedSearch(query: 'Labubu').displayLabel, 'Labubu');
+    });
+
+    test('display can differ from query for i18n', () {
+      const suggestion = SuggestedSearch(query: 'Labubu', display: 'ラブブ');
+      expect(suggestion.displayLabel, 'ラブブ');
+      expect(suggestion.query, 'Labubu');
+    });
+  });
+
+  group('kSuggestedSearches', () {
+    test('contains curated starter query pool', () {
+      expect(
+        kSuggestedSearches.map((s) => s.query).toList(),
+        equals([
+          'Labubu',
+          'Crybaby',
+          'Skullpanda',
+          'Dimoo',
+          'Nommi',
+          'Hirono',
+          'Molly',
+          'Pucky',
+          'Baby Three',
+          'Nyota',
+        ]),
+      );
+    });
+  });
+
+  group('pickDisplayedSuggestedSearches', () {
+    test('returns five unique items from the pool', () {
+      final picked = pickDisplayedSuggestedSearches(Random(0));
+      expect(picked.length, kSuggestedSearchesDisplayCount);
+      expect(picked.map((s) => s.query).toSet().length,
+          kSuggestedSearchesDisplayCount);
+      final poolQueries = kSuggestedSearches.map((s) => s.query).toSet();
+      for (final suggestion in picked) {
+        expect(poolQueries, contains(suggestion.query));
+      }
+    });
+
+    test('seeded shuffle is deterministic', () {
+      expect(
+        pickDisplayedSuggestedSearches(Random(42)),
+        pickDisplayedSuggestedSearches(Random(42)),
+      );
     });
   });
 
