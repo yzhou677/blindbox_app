@@ -5,6 +5,7 @@ import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_item.dart';
+import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_meta.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_page.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_precache.dart';
 import 'package:flutter/material.dart';
@@ -111,29 +112,17 @@ class _CatalogFigureGallerySheetState extends State<CatalogFigureGallerySheet> {
     Navigator.of(context).pop();
   }
 
-  String? _figureMetaLine(CatalogFigureGalleryItem item) {
-    final rarity = item.rarityLabel?.trim();
-    if (item.isSecret) {
-      if (rarity != null && rarity.isNotEmpty) {
-        return '$rarity · Secret';
-      }
-      return 'Secret';
-    }
-    return rarity != null && rarity.isNotEmpty ? rarity : null;
-  }
+  String? _figureMetaLine(CatalogFigureGalleryItem item) =>
+      catalogFigureGalleryFigureMetaLine(item);
 
   String? _captionSecondaryLine({
     required String? metaLine,
     required String? seriesTitle,
-  }) {
-    final series = seriesTitle?.trim();
-    final meta = metaLine?.trim();
-    if (series != null && series.isNotEmpty) {
-      if (meta != null && meta.isNotEmpty) return '$series · $meta';
-      return series;
-    }
-    return meta;
-  }
+  }) =>
+      catalogFigureGalleryCaptionSecondary(
+        metaLine: metaLine,
+        seriesTitle: seriesTitle,
+      );
 
   @override
   Widget build(BuildContext context) {

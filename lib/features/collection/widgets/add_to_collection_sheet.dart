@@ -210,8 +210,8 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
                       },
                     ),
             ),
-            const SizedBox(height: 14),
-            if (!catalogActive && history.isNotEmpty)
+            if (!catalogActive && history.isNotEmpty) ...[
+              const SizedBox(height: 8),
               CatalogSearchHistorySection(
                 queries: history,
                 onQueryTap: _applyHistoryQuery,
@@ -219,8 +219,8 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
                     ref.read(catalogSearchHistoryProvider.notifier).remove(q),
                 onClearAll: () =>
                     ref.read(catalogSearchHistoryProvider.notifier).clearAll(),
-              )
-            else if (catalogActive)
+              ),
+            ] else if (catalogActive)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
@@ -231,7 +231,8 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
                   ),
                 ),
               )
-            else if (!_catalogLoadFailed && _catalogBundle != null)
+            else if (!_catalogLoadFailed && _catalogBundle != null) ...[
+              const SizedBox(height: 8),
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
@@ -243,6 +244,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
                   ),
                 ),
               ),
+            ],
           ],
             ),
           ),

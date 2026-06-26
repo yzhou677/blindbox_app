@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 /// Callers:
 /// - [CatalogBrowseScreen] (full-screen search)
 /// - [AddToCollectionSheet] (bottom-sheet inline search)
+/// - [MarketBrowseSearchScreen] (Market search overlay)
 ///
 /// When [queries] is empty, renders nothing — no header, no empty placeholder.
 class CatalogSearchHistorySection extends StatelessWidget {
@@ -47,7 +48,7 @@ class CatalogSearchHistorySection extends StatelessWidget {
             AppSpacing.pageHorizontal,
             0,
             AppSpacing.pageHorizontal,
-            4,
+            0,
           ),
           child: Text(
             'Recent Searches',
@@ -71,9 +72,9 @@ class CatalogSearchHistorySection extends StatelessWidget {
             alignment: Alignment.centerLeft,
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.pageHorizontal,
-              AppSpacing.sm,
+              6,
               AppSpacing.pageHorizontal,
-              AppSpacing.sm,
+              6,
             ),
             foregroundColor: scheme.onSurfaceVariant.withValues(alpha: 0.75),
           ),
@@ -105,7 +106,7 @@ class _HistoryRow extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.pageHorizontal,
-          vertical: 10,
+          vertical: 8,
         ),
         child: Row(
           children: [

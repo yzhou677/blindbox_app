@@ -133,7 +133,7 @@ class FeedSearchScreen extends StatelessWidget {
                 : historySection != null
                     ? SingleChildScrollView(
                         child: Padding(
-                          padding: const EdgeInsets.only(top: AppSpacing.lg),
+                          padding: const EdgeInsets.only(top: AppSpacing.sm),
                           child: historySection,
                         ),
                       )
