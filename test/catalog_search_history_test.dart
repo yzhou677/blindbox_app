@@ -57,6 +57,29 @@ void main() {
   // Rules
   // -------------------------------------------------------------------------
 
+  group('CatalogSearchHistoryRules.normalize', () {
+    test('trims leading and trailing whitespace', () {
+      expect(CatalogSearchHistoryRules.normalize('  Labubu  '), 'Labubu');
+    });
+
+    test('collapses internal multiple spaces to one', () {
+      expect(
+          CatalogSearchHistoryRules.normalize('Labubu   v2'), 'Labubu v2');
+    });
+
+    test('collapses tabs and mixed whitespace', () {
+      expect(CatalogSearchHistoryRules.normalize('Labubu\t\tv2'), 'Labubu v2');
+    });
+
+    test('empty string stays empty', () {
+      expect(CatalogSearchHistoryRules.normalize(''), '');
+    });
+
+    test('already-clean string is unchanged', () {
+      expect(CatalogSearchHistoryRules.normalize('Labubu'), 'Labubu');
+    });
+  });
+
   group('CatalogSearchHistoryRules.add', () {
     test('adds new query at front', () {
       final result = CatalogSearchHistoryRules.add(['Crybaby'], 'Labubu');
@@ -68,9 +91,9 @@ void main() {
       expect(result, equals(['Labubu']));
     });
 
-    test('trims query before adding', () {
-      final result = CatalogSearchHistoryRules.add([], '  Labubu  ');
-      expect(result, equals(['Labubu']));
+    test('trims and collapses spaces before adding', () {
+      final result = CatalogSearchHistoryRules.add([], '  Labubu  v2  ');
+      expect(result, equals(['Labubu v2']));
     });
 
     test('promotes existing query to top (deduplication)', () {

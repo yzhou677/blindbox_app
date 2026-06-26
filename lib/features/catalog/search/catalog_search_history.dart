@@ -36,14 +36,20 @@ abstract final class CatalogSearchHistoryCodec {
 ///
 /// Pure functions — no I/O, easy to test.
 abstract final class CatalogSearchHistoryRules {
+  /// Normalises a raw query string before storage/comparison:
+  /// trims leading/trailing whitespace and collapses internal runs of
+  /// whitespace to a single space.  e.g. `"  Labubu  v2  "` → `"Labubu v2"`.
+  static String normalize(String query) =>
+      query.trim().replaceAll(RegExp(r'\s+'), ' ');
+
   /// Returns a new list with [query] promoted to the front.
   ///
-  /// * Trims [query]; ignores empty strings.
+  /// * Normalises [query] (trim + collapse spaces); ignores empty strings.
   /// * Removes any existing occurrence of [query] (case-sensitive equality).
   /// * Prepends [query].
   /// * Truncates to [kCatalogSearchHistoryMaxEntries].
   static List<String> add(List<String> current, String query) {
-    final q = query.trim();
+    final q = normalize(query);
     if (q.isEmpty) return current;
     final updated = [q, for (final e in current) if (e != q) e];
     if (updated.length > kCatalogSearchHistoryMaxEntries) {
@@ -52,9 +58,11 @@ abstract final class CatalogSearchHistoryRules {
     return updated;
   }
 
-  /// Returns a new list without [query].
-  static List<String> remove(List<String> current, String query) =>
-      [for (final e in current) if (e != query) e];
+  /// Returns a new list without [query] (normalises before comparing).
+  static List<String> remove(List<String> current, String query) {
+    final q = normalize(query);
+    return [for (final e in current) if (e != q) e];
+  }
 
   /// Returns an empty list.
   static List<String> clear() => const [];
