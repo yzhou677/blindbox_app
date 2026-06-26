@@ -336,24 +336,28 @@ class _GalleryPageIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        for (var i = 0; i < count; i++)
-          AnimatedContainer(
-            duration: CollectibleMotion.crossfade,
-            curve: CollectibleMotion.standard,
-            margin: const EdgeInsets.symmetric(horizontal: 3),
-            width: i == index ? 18 : 6,
-            height: 6,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(999),
-              color: i == index
-                  ? _kGalleryForeground.withValues(alpha: 0.92)
-                  : _kGalleryForeground.withValues(alpha: 0.32),
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          for (var i = 0; i < count; i++)
+            AnimatedContainer(
+              duration: CollectibleMotion.crossfade,
+              curve: CollectibleMotion.standard,
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              width: i == index ? 18 : 6,
+              height: 6,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(999),
+                color: i == index
+                    ? _kGalleryForeground.withValues(alpha: 0.92)
+                    : _kGalleryForeground.withValues(alpha: 0.32),
+              ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }
