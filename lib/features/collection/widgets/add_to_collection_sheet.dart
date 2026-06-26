@@ -5,6 +5,8 @@ import 'package:blindbox_app/features/catalog/catalog_latest_series.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_series_search_rows.dart';
+import 'package:blindbox_app/features/catalog/search/catalog_search_history_provider.dart';
+import 'package:blindbox_app/features/catalog/search/catalog_search_history_section.dart';
 import 'package:blindbox_app/features/catalog/widgets/catalog_series_search_row_card.dart';
 import 'package:blindbox_app/features/collection/application/catalog_series_shelf_commit.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
@@ -111,6 +113,18 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
 
   bool get _hasSearchText => _trimmedQuery.isNotEmpty;
 
+  void _recordSearch(String query) {
+    final q = query.trim();
+    if (q.isEmpty) return;
+    ref.read(catalogSearchHistoryProvider.notifier).add(q);
+  }
+
+  void _applyHistoryQuery(String query) {
+    _search.text = query;
+    _search.selection = TextSelection.collapsed(offset: query.length);
+    setState(() {});
+  }
+
   String _seriesCoverImageKey(CatalogSeedBundle bundle, String seriesId) {
     for (final s in bundle.series) {
       if (s.id == seriesId) return s.imageKey.trim();
@@ -161,6 +175,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     final notifier = ref.read(collectionNotifierProvider.notifier);
     final catalogActive = _trimmedQuery.isNotEmpty;
     final sheetScroll = CollectibleSheetScope.scrollControllerOf(context);
+    final history = ref.watch(catalogSearchHistoryProvider);
 
     return CollectibleSheetInsets(
       extraBottom: AppSpacing.md,
@@ -180,6 +195,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
               padding: EdgeInsets.zero,
               hintText: 'Search catalog — figures, series, IPs, aliases…',
               onChanged: (_) => setState(() {}),
+              onSubmitted: () => _recordSearch(_trimmedQuery),
               suffixIcon: !_hasSearchText
                   ? null
                   : IconButton(
@@ -195,7 +211,16 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
                     ),
             ),
             const SizedBox(height: 14),
-            if (catalogActive)
+            if (!catalogActive && history.isNotEmpty)
+              CatalogSearchHistorySection(
+                queries: history,
+                onQueryTap: _applyHistoryQuery,
+                onRemove: (q) =>
+                    ref.read(catalogSearchHistoryProvider.notifier).remove(q),
+                onClearAll: () =>
+                    ref.read(catalogSearchHistoryProvider.notifier).clearAll(),
+              )
+            else if (catalogActive)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
@@ -446,6 +471,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
           row: row,
           shelfCta: shelfCta,
           onOpenPreview: () async {
+            _recordSearch(_trimmedQuery);
             final template = await catalogTemplateFromSeedSeries(
               bundle,
               row.seriesId,
@@ -460,6 +486,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
             );
           },
           onShelfCtaPressed: () async {
+            _recordSearch(_trimmedQuery);
             if (!shelfCta.isAddable) return;
             final template = await catalogTemplateFromSeedSeries(
               bundle,

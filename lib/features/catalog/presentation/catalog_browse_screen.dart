@@ -3,6 +3,8 @@ import 'package:blindbox_app/features/catalog/adapters/catalog_seed_to_collectio
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
 import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_series_search_rows.dart';
+import 'package:blindbox_app/features/catalog/search/catalog_search_history_provider.dart';
+import 'package:blindbox_app/features/catalog/search/catalog_search_history_section.dart';
 import 'package:blindbox_app/features/catalog/widgets/catalog_series_search_row_card.dart';
 import 'package:blindbox_app/features/collection/application/catalog_series_shelf_commit.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
@@ -18,7 +20,8 @@ class CatalogBrowseScreen extends ConsumerStatefulWidget {
   const CatalogBrowseScreen({super.key});
 
   @override
-  ConsumerState<CatalogBrowseScreen> createState() => _CatalogBrowseScreenState();
+  ConsumerState<CatalogBrowseScreen> createState() =>
+      _CatalogBrowseScreenState();
 }
 
 class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
@@ -38,6 +41,18 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
 
   String get _trimmedQuery => _search.text.trim();
   bool get _hasSearchText => _trimmedQuery.isNotEmpty;
+
+  void _recordSearch(String query) {
+    final q = query.trim();
+    if (q.isEmpty) return;
+    ref.read(catalogSearchHistoryProvider.notifier).add(q);
+  }
+
+  void _applyHistoryQuery(String query) {
+    _search.text = query;
+    _search.selection = TextSelection.collapsed(offset: query.length);
+    setState(() {});
+  }
 
   Future<void> _openSeriesPreview(
     BuildContext context,
@@ -81,6 +96,18 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
     final textTheme = Theme.of(context).textTheme;
     final bundleAsync = ref.watch(catalogBundleProvider);
     final snap = ref.watch(collectionNotifierProvider);
+    final history = ref.watch(catalogSearchHistoryProvider);
+
+    final historyWidget = history.isEmpty
+        ? null
+        : CatalogSearchHistorySection(
+            queries: history,
+            onQueryTap: _applyHistoryQuery,
+            onRemove: (q) =>
+                ref.read(catalogSearchHistoryProvider.notifier).remove(q),
+            onClearAll: () =>
+                ref.read(catalogSearchHistoryProvider.notifier).clearAll(),
+          );
 
     return bundleAsync.when(
       loading: () => FeedSearchScreen(
@@ -90,7 +117,9 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
         controller: _search,
         hasSearchText: _hasSearchText,
         onChanged: (_) => setState(() {}),
+        onSubmitted: () => _recordSearch(_trimmedQuery),
         onClear: _search.clear,
+        historySection: historyWidget,
         results: const Center(child: CircularProgressIndicator()),
       ),
       error: (_, _) => FeedSearchScreen(
@@ -100,12 +129,14 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
         controller: _search,
         hasSearchText: _hasSearchText,
         onChanged: (_) => setState(() {}),
+        onSubmitted: () => _recordSearch(_trimmedQuery),
         onClear: _search.clear,
+        historySection: historyWidget,
         results: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              'Couldn’t load the catalog. Check your connection and try again.',
+              "Couldn\u2019t load the catalog. Check your connection and try again.",
               textAlign: TextAlign.center,
               style: textTheme.bodyMedium?.copyWith(
                 color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
@@ -129,7 +160,9 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
           controller: _search,
           hasSearchText: _hasSearchText,
           onChanged: (_) => setState(() {}),
+          onSubmitted: () => _recordSearch(_trimmedQuery),
           onClear: _search.clear,
+          historySection: historyWidget,
           results: matches.isEmpty
               ? Center(
                   child: Text(
@@ -146,7 +179,8 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
                       const SizedBox(height: 12),
                   itemBuilder: (ctx, i) {
                     final row = matches[i];
-                    final shelfCta = CollectionSeriesShelfCtaPresentation.resolve(
+                    final shelfCta =
+                        CollectionSeriesShelfCtaPresentation.resolve(
                       snapshot: snap,
                       layout: CollectionSeriesShelfCtaLayout.catalogBrowse,
                       catalogTemplateId: row.seriesId,
@@ -161,16 +195,14 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
                       ),
                       row: row,
                       shelfCta: shelfCta,
-                      onOpenPreview: () => _openSeriesPreview(
-                        ctx,
-                        bundle,
-                        row.seriesId,
-                      ),
-                      onShelfCtaPressed: () => _openSeriesPreview(
-                        ctx,
-                        bundle,
-                        row.seriesId,
-                      ),
+                      onOpenPreview: () {
+                        _recordSearch(_trimmedQuery);
+                        _openSeriesPreview(ctx, bundle, row.seriesId);
+                      },
+                      onShelfCtaPressed: () {
+                        _recordSearch(_trimmedQuery);
+                        _openSeriesPreview(ctx, bundle, row.seriesId);
+                      },
                     );
                   },
                 ),
