@@ -21,7 +21,6 @@ abstract final class SearchHistorySectionSpacing {
 ///
 /// Callers:
 /// - [CatalogBrowseScreen] (full-screen search)
-/// - [AddToCollectionSheet] (bottom-sheet inline search)
 /// - [MarketBrowseSearchScreen] (Market search overlay)
 ///
 /// When [queries] is empty, renders nothing — no header, no empty placeholder.

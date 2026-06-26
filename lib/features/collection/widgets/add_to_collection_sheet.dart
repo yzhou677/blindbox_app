@@ -6,7 +6,6 @@ import 'package:blindbox_app/features/catalog/presentation/catalog_image_display
 import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_series_search_rows.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_history_provider.dart';
-import 'package:blindbox_app/features/catalog/search/catalog_search_history_section.dart';
 import 'package:blindbox_app/features/catalog/widgets/catalog_series_search_row_card.dart';
 import 'package:blindbox_app/features/collection/application/catalog_series_shelf_commit.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
@@ -119,12 +118,6 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     ref.read(catalogSearchHistoryProvider.notifier).add(q);
   }
 
-  void _applyHistoryQuery(String query) {
-    _search.text = query;
-    _search.selection = TextSelection.collapsed(offset: query.length);
-    setState(() {});
-  }
-
   String _seriesCoverImageKey(CatalogSeedBundle bundle, String seriesId) {
     for (final s in bundle.series) {
       if (s.id == seriesId) return s.imageKey.trim();
@@ -175,7 +168,6 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     final notifier = ref.read(collectionNotifierProvider.notifier);
     final catalogActive = _trimmedQuery.isNotEmpty;
     final sheetScroll = CollectibleSheetScope.scrollControllerOf(context);
-    final history = ref.watch(catalogSearchHistoryProvider);
 
     return CollectibleSheetInsets(
       extraBottom: AppSpacing.md,
@@ -210,17 +202,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
                       },
                     ),
             ),
-            if (!catalogActive && history.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              CatalogSearchHistorySection(
-                queries: history,
-                onQueryTap: _applyHistoryQuery,
-                onRemove: (q) =>
-                    ref.read(catalogSearchHistoryProvider.notifier).remove(q),
-                onClearAll: () =>
-                    ref.read(catalogSearchHistoryProvider.notifier).clearAll(),
-              ),
-            ] else if (catalogActive)
+            if (catalogActive)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
