@@ -5,6 +5,7 @@ import 'package:blindbox_app/core/theme/collectible_shelf_shadow.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_glyph.dart';
+import 'package:blindbox_app/features/collection/insights/widgets/collector_type_reveal_dashboard_footer.dart';
 import 'package:flutter/material.dart';
 
 class CollectorTypeResultCard extends StatelessWidget {
@@ -12,10 +13,16 @@ class CollectorTypeResultCard extends StatelessWidget {
     super.key,
     required this.identity,
     this.helperLine,
+    this.showRevealAgain = false,
+    this.onRevealAgain,
+    this.updatedAtNow,
   });
 
   final CollectorTypeIdentity identity;
   final String? helperLine;
+  final bool showRevealAgain;
+  final VoidCallback? onRevealAgain;
+  final DateTime? updatedAtNow;
 
   @override
   Widget build(BuildContext context) {
@@ -77,6 +84,12 @@ class CollectorTypeResultCard extends StatelessWidget {
                   ),
                 ),
               ],
+              CollectorTypeRevealDashboardFooter(
+                revealedAt: identity.revealedAt,
+                showRevealAgain: showRevealAgain,
+                onRevealAgain: onRevealAgain ?? () {},
+                now: updatedAtNow,
+              ),
             ],
           ),
         ),

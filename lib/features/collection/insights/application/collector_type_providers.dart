@@ -13,6 +13,23 @@ final collectorTypeIdentityProvider = Provider<CollectorTypeIdentity?>((ref) {
   return CollectionMemoryStore.instance.cachedCollectorTypeIdentity;
 });
 
+/// Whether the live shelf signature differs from the last persisted reveal.
+///
+/// Drives the lightweight Reveal Again affordance. Separate from
+/// [collectorTypeEvolutionHintProvider], which handles era-shift messaging.
+final collectorTypeNeedsRevealProvider = Provider<bool>((ref) {
+  final snap = ref.watch(collectionNotifierProvider);
+  ref.watch(collectionMemoryBootstrapProvider);
+  final cached = CollectionMemoryStore.instance.cached;
+  final hasRevealed =
+      (cached.collectorTypeArchetypeId?.isNotEmpty ?? false) &&
+      cached.collectorTypeRevealedAtMs != null;
+  if (!hasRevealed) return false;
+  final storedHash = cached.collectorTypeSignatureHash;
+  if (storedHash == null || storedHash.isEmpty) return false;
+  return computeCollectorTypeSignatureHash(snap) != storedHash;
+});
+
 /// Whether the shelf signature drifted and an era transition was recorded.
 final collectorTypeEvolutionHintProvider = Provider<bool>((ref) {
   final snap = ref.watch(collectionNotifierProvider);

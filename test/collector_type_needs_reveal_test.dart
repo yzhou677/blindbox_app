@@ -3,7 +3,6 @@ import 'package:blindbox_app/features/collection/data/collection_memory_store.da
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_providers.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_resolver.dart';
-import 'package:blindbox_app/features/collection/insights/application/collector_type_view_model.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_archetype.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_stats.dart';
@@ -13,8 +12,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'helpers/collection_fixtures.dart';
 
-final class TestCollectionNotifier extends CollectionNotifier {
-  TestCollectionNotifier(this._snap);
+final class NeedsRevealTestNotifier extends CollectionNotifier {
+  NeedsRevealTestNotifier(this._snap);
   final CollectionSnapshot _snap;
 
   @override
@@ -27,12 +26,34 @@ void main() {
     CollectionMemoryStore.instance.resetForTest();
   });
 
-  test('build starts revealed when cached identity exists', () async {
+  test('false when no persisted reveal', () async {
+    final snap = CollectionSnapshot(
+      shelfSeries: [testShelfSeries()],
+      figureStates: const {},
+    );
+    final container = ProviderContainer(
+      overrides: [
+        collectionNotifierProvider.overrideWith(
+          () => NeedsRevealTestNotifier(snap),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    expect(container.read(collectorTypeNeedsRevealProvider), isFalse);
+  });
+
+  test('false when stored signature matches live shelf', () async {
+    final snap = CollectionSnapshot(
+      shelfSeries: [testShelfSeries()],
+      figureStates: const {},
+    );
+    final signature = computeCollectorTypeSignatureHash(snap);
     await CollectionMemoryStore.instance.saveCollectorType(
       CollectorTypeIdentity(
         archetypeId: CollectorTypeArchetypeId.wanderer,
         revealedAt: DateTime(2026, 1, 1),
-        signatureHash: 'cached',
+        signatureHash: signature,
         stats: const CollectorTypeStats(
           totalOwned: 0,
           totalWishlist: 0,
@@ -50,50 +71,48 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         collectionNotifierProvider.overrideWith(
-          () => TestCollectionNotifier(
-            CollectionSnapshot(
-              shelfSeries: [testShelfSeries()],
-              figureStates: const {},
-            ),
-          ),
+          () => NeedsRevealTestNotifier(snap),
         ),
       ],
     );
     addTearDown(container.dispose);
 
-    expect(
-      container.read(collectorTypeViewModelProvider),
-      isA<CollectorTypeRevealRevealed>(),
-    );
+    expect(container.read(collectorTypeNeedsRevealProvider), isFalse);
   });
 
-  test('requestReveal holds analyzing for at least minimum duration', () async {
+  test('true when stored signature differs from live shelf', () async {
     final snap = CollectionSnapshot(
       shelfSeries: [testShelfSeries()],
       figureStates: const {},
     );
+    await CollectionMemoryStore.instance.saveCollectorType(
+      CollectorTypeIdentity(
+        archetypeId: CollectorTypeArchetypeId.wanderer,
+        revealedAt: DateTime(2026, 1, 1),
+        signatureHash: 'stale-signature',
+        stats: const CollectorTypeStats(
+          totalOwned: 0,
+          totalWishlist: 0,
+          trackedSeries: 1,
+          completionPercent: 0,
+          secretOwned: 0,
+          secretSlots: 0,
+          brandBreakdown: {},
+          topSeries: [],
+          customSeriesRatio: 0,
+        ),
+      ),
+    );
+
     final container = ProviderContainer(
       overrides: [
         collectionNotifierProvider.overrideWith(
-          () => TestCollectionNotifier(snap),
+          () => NeedsRevealTestNotifier(snap),
         ),
       ],
     );
     addTearDown(container.dispose);
 
-    final notifier = container.read(collectorTypeViewModelProvider.notifier);
-    final future = notifier.requestReveal();
-    expect(
-      container.read(collectorTypeViewModelProvider),
-      isA<CollectorTypeRevealAnalyzing>(),
-    );
-
-    final started = DateTime.now();
-    await future;
-    final elapsed = DateTime.now().difference(started);
-    expect(elapsed.inMilliseconds, greaterThanOrEqualTo(collectorTypeAnalyzingHoldMs - 50));
-
-    final stage = container.read(collectorTypeViewModelProvider);
-    expect(stage, isA<CollectorTypeRevealRevealed>());
+    expect(container.read(collectorTypeNeedsRevealProvider), isTrue);
   });
 }

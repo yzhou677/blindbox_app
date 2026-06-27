@@ -19,12 +19,12 @@ class CollectionInsightsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final showEvolutionHint = ref.watch(collectorTypeEvolutionHintProvider);
+    final needsReveal = ref.watch(collectorTypeNeedsRevealProvider);
     final stage = ref.watch(collectorTypeViewModelProvider);
     final textTheme = Theme.of(context).textTheme;
 
-    final showRevealAgain =
-        stage is CollectorTypeRevealRevealed ||
-        (stage is CollectorTypeRevealIdle && stage.cachedIdentity != null);
+    final showRevealAgainMenu =
+        stage is CollectorTypeRevealRevealed && !needsReveal;
 
     Future<void> exitInsights() async {
       // Route taxonomy boundary:
@@ -63,7 +63,7 @@ class CollectionInsightsScreen extends ConsumerWidget {
                 onPressed: () => unawaited(exitInsights()),
               ),
               actions: [
-                if (showRevealAgain)
+                if (showRevealAgainMenu)
                   PopupMenuButton<String>(
                     onSelected: (value) {
                       if (value == 'reveal') {
@@ -100,11 +100,7 @@ class CollectionInsightsScreen extends ConsumerWidget {
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
                   if (showEvolutionHint) ...[
-                    CollectorTypeEvolutionHintBanner(
-                      onRevealTap: () => ref
-                          .read(collectorTypeViewModelProvider.notifier)
-                          .requestReveal(),
-                    ),
+                    const CollectorTypeEvolutionHintBanner(),
                     const SizedBox(height: FeedRhythm.blockGapMedium),
                   ],
                   const CollectorTypeRevealCard(),
