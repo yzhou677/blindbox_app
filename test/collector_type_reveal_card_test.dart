@@ -149,11 +149,54 @@ void main() {
     expect(find.text('The Wanderer'), findsOneWidget);
     expect(find.text(CollectorTypeCopy.statsSectionTitle), findsOneWidget);
     expect(find.text(CollectorTypeCopy.staleInsightsMessage), findsOneWidget);
+    final typeY = tester.getTopLeft(find.text('The Wanderer')).dy;
+    final staleY = tester.getTopLeft(find.byType(CollectorTypeStaleInsightsOverlay)).dy;
+    final statsY = tester.getTopLeft(find.text(CollectorTypeCopy.statsSectionTitle)).dy;
+    expect(typeY < staleY, isTrue);
+    expect(staleY < statsY, isTrue);
     expect(
       tester
-          .widget<Opacity>(find.byKey(const ValueKey('stale-insights-deemphasis')))
+          .widget<Opacity>(find.byKey(const ValueKey('stale-stats-deemphasis')))
           .opacity,
       collectorTypeStaleInsightsOpacity,
     );
+  });
+
+  testWidgets('reveal again clears stale card after analysis completes',
+      (tester) async {
+    await CollectionMemoryStore.instance.saveCollectorType(
+      CollectorTypeIdentity(
+        archetypeId: CollectorTypeArchetypeId.wanderer,
+        revealedAt: DateTime.now().subtract(const Duration(days: 3)),
+        signatureHash: 'stale-signature',
+        stats: const CollectorTypeStats(
+          totalOwned: 1,
+          totalWishlist: 0,
+          trackedSeries: 1,
+          completionPercent: 50,
+          secretOwned: 0,
+          secretSlots: 0,
+          brandBreakdown: {'pop_mart': 1},
+          topSeries: ['Test Series'],
+          customSeriesRatio: 0,
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(wrap(const CollectorTypeRevealCard()));
+    await tester.pump();
+
+    expect(find.byType(CollectorTypeStaleInsightsOverlay), findsOneWidget);
+
+    await tester.tap(find.text(CollectorTypeCopy.revealAgain));
+    await tester.pump();
+    expect(find.text(CollectorTypeCopy.analyzingLine), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: collectorTypeAnalyzingHoldMs));
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.byType(CollectorTypeStaleInsightsOverlay), findsNothing);
+    expect(find.text(CollectorTypeCopy.revealAgain), findsNothing);
+    expect(find.textContaining('Updated'), findsOneWidget);
   });
 }

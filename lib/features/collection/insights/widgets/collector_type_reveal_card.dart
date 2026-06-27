@@ -130,31 +130,32 @@ class _RevealedStage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final insights = Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        CollectorTypeResultCard(
-          identity: identity,
-          helperLine: helperLine,
-        ),
-        CollectorTypeStatsStrip(stats: identity.stats),
-      ],
+    final resultCard = CollectorTypeResultCard(
+      identity: identity,
+      helperLine: helperLine,
     );
+    final statsStrip = CollectorTypeStatsStrip(stats: identity.stats);
 
-    if (!isStale) return insights;
+    if (!isStale) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [resultCard, statsStrip],
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        resultCard,
+        const SizedBox(height: 12),
         CollectorTypeStaleInsightsOverlay(
           onRevealAgain: onRevealAgain,
           compactMessage: compactStaleMessage,
         ),
-        const SizedBox(height: 12),
         Opacity(
-          key: const ValueKey('stale-insights-deemphasis'),
+          key: const ValueKey('stale-stats-deemphasis'),
           opacity: collectorTypeStaleInsightsOpacity,
-          child: insights,
+          child: statsStrip,
         ),
       ],
     );

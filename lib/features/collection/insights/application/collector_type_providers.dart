@@ -20,6 +20,8 @@ final collectorTypeIdentityProvider = Provider<CollectorTypeIdentity?>((ref) {
 final collectorTypeNeedsRevealProvider = Provider<bool>((ref) {
   final snap = ref.watch(collectionNotifierProvider);
   ref.watch(collectionMemoryBootstrapProvider);
+  // Recompute after reveal persists a fresh signature to memory store.
+  ref.watch(collectorTypeViewModelProvider);
   final cached = CollectionMemoryStore.instance.cached;
   final hasRevealed =
       (cached.collectorTypeArchetypeId?.isNotEmpty ?? false) &&
@@ -34,6 +36,7 @@ final collectorTypeNeedsRevealProvider = Provider<bool>((ref) {
 final collectorTypeEvolutionHintProvider = Provider<bool>((ref) {
   final snap = ref.watch(collectionNotifierProvider);
   ref.watch(collectionMemoryBootstrapProvider);
+  ref.watch(collectorTypeViewModelProvider);
   final cached = CollectionMemoryStore.instance.cached;
   final hasRevealed =
       (cached.collectorTypeArchetypeId?.isNotEmpty ?? false) &&
