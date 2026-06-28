@@ -343,19 +343,6 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
           SliverToBoxAdapter(
             child: SizedBox(height: FeedRhythm.belowMainTabAppBar),
           ),
-          if (snap.isWarmStart)
-            const SliverToBoxAdapter(child: CollectionWarmStartBanner()),
-          SliverToBoxAdapter(
-            child: CollectionSummarySection(
-              stats: CollectionAggregateStats.fromSnapshot(snap),
-              shelfMoodLine: interpretationLine.isNotEmpty
-                  ? interpretationLine
-                  : ShelfEditorialVoice.shelfMoodLine(snap),
-              memoryWhisper: memoryWhisper ?? relationshipWhisper,
-              collectorTypeName: collectorIdentity?.archetype.displayName,
-              onInsightsTap: () => context.push('/collection/insights'),
-            ),
-          ),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.only(top: FeedRhythm.headerToSearchField),
@@ -375,47 +362,17 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               ),
             ),
           ),
+          if (snap.isWarmStart)
+            const SliverToBoxAdapter(child: CollectionWarmStartBanner()),
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const TaxonomyFilterSectionLabel(text: 'Brand'),
-                  const SizedBox(
-                    height: FeedRhythm.collectionFilterSectionLabelToRail,
-                  ),
-                  CollectionBrandFilterRow(
-                    options: brandFilterOptions,
-                    selectedBrandId: activeBrandFilterId,
-                    onBrandSelected: (id) => setState(() => _brandFilterId = id),
-                  ),
-                  const SizedBox(
-                    height: FeedRhythm.collectionBrandToIpFilterSectionGap,
-                  ),
-                  const TaxonomyFilterSectionLabel(text: 'IP'),
-                  const SizedBox(
-                    height: FeedRhythm.collectionFilterSectionLabelToRail,
-                  ),
-                  CollectionIpFilterRow(
-                    options: ipFilterOptions,
-                    selectedIpId: activeIpFilterId,
-                    onIpSelected: (id) => setState(() => _ipFilterId = id),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: _CollectionShelfSortMenu(
-                        selected: shelfUiPrefs.sort,
-                        onSelected: (sort) => ref
-                            .read(collectionShelfUiPrefsProvider.notifier)
-                            .setSort(sort),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            child: CollectionSummarySection(
+              stats: CollectionAggregateStats.fromSnapshot(snap),
+              shelfMoodLine: interpretationLine.isNotEmpty
+                  ? interpretationLine
+                  : ShelfEditorialVoice.shelfMoodLine(snap),
+              memoryWhisper: memoryWhisper ?? relationshipWhisper,
+              collectorTypeName: collectorIdentity?.archetype.displayName,
+              onInsightsTap: () => context.push('/collection/insights'),
             ),
           ),
           SliverToBoxAdapter(
@@ -462,6 +419,49 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const TaxonomyFilterSectionLabel(text: 'Brand'),
+                  const SizedBox(
+                    height: FeedRhythm.collectionFilterSectionLabelToRail,
+                  ),
+                  CollectionBrandFilterRow(
+                    options: brandFilterOptions,
+                    selectedBrandId: activeBrandFilterId,
+                    onBrandSelected: (id) => setState(() => _brandFilterId = id),
+                  ),
+                  const SizedBox(
+                    height: FeedRhythm.collectionBrandToIpFilterSectionGap,
+                  ),
+                  const TaxonomyFilterSectionLabel(text: 'IP'),
+                  const SizedBox(
+                    height: FeedRhythm.collectionFilterSectionLabelToRail,
+                  ),
+                  CollectionIpFilterRow(
+                    options: ipFilterOptions,
+                    selectedIpId: activeIpFilterId,
+                    onIpSelected: (id) => setState(() => _ipFilterId = id),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: _CollectionShelfSortMenu(
+                        selected: shelfUiPrefs.sort,
+                        onSelected: (sort) => ref
+                            .read(collectionShelfUiPrefsProvider.notifier)
+                            .setSort(sort),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
