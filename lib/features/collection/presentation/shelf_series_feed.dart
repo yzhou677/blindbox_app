@@ -136,6 +136,7 @@ List<ShelfFeedItem> buildShelfFeedItems({
   required List<ShelfSeries> series,
   required Map<String, TrackedFigure> figureStates,
   ShelfEmotionalProfile? profile,
+  Set<String> collapsedSectionKeys = const {},
 }) {
   if (series.isEmpty) return const [];
 
@@ -169,18 +170,24 @@ List<ShelfFeedItem> buildShelfFeedItems({
       ));
     }
 
-    for (final s in section.series) {
-      items.add(ShelfFeedCard(
-        sectionColor: sectionColor,
-        series: s,
-        progress: progressForSeries(s, figureStates),
-        figureStates: figureStates,
-        atmosphere: atmosphereForSeries(
-          s,
-          figureStates,
-          shelfHarmony: shelfHarmony,
-        ),
-      ));
+    // Only honor collapse when a header is shown — otherwise the user has no
+    // affordance to expand a single-series universe after search/filter.
+    final honorCollapse =
+        showHeader && collapsedSectionKeys.contains(section.key);
+    if (!honorCollapse) {
+      for (final s in section.series) {
+        items.add(ShelfFeedCard(
+          sectionColor: sectionColor,
+          series: s,
+          progress: progressForSeries(s, figureStates),
+          figureStates: figureStates,
+          atmosphere: atmosphereForSeries(
+            s,
+            figureStates,
+            shelfHarmony: shelfHarmony,
+          ),
+        ));
+      }
     }
   }
   return items;
@@ -192,11 +199,20 @@ List<ShelfFeedItem> buildShelfFeedItems({
 /// shadows don't bleed through translucent gaps between adjacent sections.
 Widget buildShelfFeedItemWidget(
   ShelfFeedItem item, {
+  required BuildContext context,
   required void Function(ShelfSeries) onOpen,
   required void Function(ShelfSeries) onRemove,
+  void Function(String sectionKey)? onToggleIpSection,
+  Set<String> collapsedSectionKeys = const {},
 }) {
+  final scheme = Theme.of(context).colorScheme;
   return switch (item) {
-    ShelfFeedHeader(:final sectionColor, :final label, :final topPadding) =>
+    ShelfFeedHeader(
+      :final sectionColor,
+      :final sectionKey,
+      :final label,
+      :final topPadding,
+    ) =>
       ColoredBox(
         color: sectionColor,
         child: Padding(
@@ -204,7 +220,29 @@ Widget buildShelfFeedItemWidget(
             top: topPadding,
             bottom: FeedRhythm.collectionUniverseHeaderToCards,
           ),
-          child: CollectibleSectionHeader(title: label, padding: EdgeInsets.zero),
+          child: onToggleIpSection == null
+              ? CollectibleSectionHeader(title: label, padding: EdgeInsets.zero)
+              : InkWell(
+                  onTap: () => onToggleIpSection(sectionKey),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: CollectibleSectionHeader(
+                          title: label,
+                          padding: EdgeInsets.zero,
+                        ),
+                      ),
+                      Icon(
+                        collapsedSectionKeys.contains(sectionKey)
+                            ? Icons.expand_more_rounded
+                            : Icons.expand_less_rounded,
+                        size: 22,
+                        color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
+                      ),
+                    ],
+                  ),
+                ),
         ),
       ),
     ShelfFeedGap(:final sectionColor, :final height) =>

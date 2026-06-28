@@ -50,6 +50,34 @@ abstract final class CollectionProgressVoice {
     return 'Growing this series';
   }
 
+  /// Concise factual primary stat for shelf cards (owned/total or complete mark).
+  static String seriesStatPrimaryLine({
+    required ShelfSeries series,
+    required SeriesProgressCounts progress,
+  }) {
+    final total = series.figureCount;
+    if (total <= 0) return '';
+
+    final owned = progress.owned;
+    if (owned >= total) return '✓ Complete';
+    return '$owned / $total';
+  }
+
+  /// Optional factual secondary stat — missing count or full tally when complete.
+  static String seriesStatSecondaryLine({
+    required ShelfSeries series,
+    required SeriesProgressCounts progress,
+  }) {
+    final total = series.figureCount;
+    if (total <= 0) return '';
+
+    final owned = progress.owned;
+    final missing = progress.missing;
+    if (owned >= total) return '$total / $total';
+    if (missing <= 0) return '';
+    return missing == 1 ? 'Missing 1' : 'Missing $missing';
+  }
+
   /// Softer supporting copy — light facts, calm tone.
   static String seriesSubline({
     required ShelfSeries series,

@@ -287,6 +287,7 @@ void main() {
                   atmosphere: const SeriesCompletionAtmosphere(),
                 );
                 return buildShelfFeedItemWidget(
+                  context: context,
                   item,
                   onOpen: (_) {},
                   onRemove: (_) {},
@@ -300,4 +301,62 @@ void main() {
       expect(find.byType(SeriesShelfCard), findsOneWidget);
     },
   );
+
+  testWidgets(
+    'buildShelfFeedItems still shows cards when collapsed but header hidden',
+    (tester) async {
+      late List<ShelfFeedItem> items;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light(),
+          home: Builder(
+            builder: (context) {
+              items = buildShelfFeedItems(
+                context: context,
+                series: [
+                  testShelfSeries(id: 'solo', taxonomyIpId: 'ia', ipName: 'A'),
+                ],
+                figureStates: const {},
+                collapsedSectionKeys: {'ip:ia'},
+              );
+              return const SizedBox();
+            },
+          ),
+        ),
+      );
+
+      expect(items.whereType<ShelfFeedHeader>(), isEmpty);
+      expect(items.whereType<ShelfFeedCard>(), hasLength(1));
+    },
+  );
+
+  testWidgets('buildShelfFeedItems omits cards for collapsed IP sections', (
+    tester,
+  ) async {
+    late List<ShelfFeedItem> items;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Builder(
+          builder: (context) {
+            items = buildShelfFeedItems(
+              context: context,
+              series: [
+                testShelfSeries(id: 'a1', taxonomyIpId: 'ia', ipName: 'A'),
+                testShelfSeries(id: 'a2', taxonomyIpId: 'ia', ipName: 'A'),
+                testShelfSeries(id: 'b1', taxonomyIpId: 'ib', ipName: 'B'),
+              ],
+              figureStates: const {},
+              collapsedSectionKeys: {'ip:ia'},
+            );
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+
+    expect(items.whereType<ShelfFeedHeader>(), hasLength(2));
+    expect(items.whereType<ShelfFeedCard>(), hasLength(1));
+    expect(items.whereType<ShelfFeedCard>().single.series.id, 'b1');
+  });
 }

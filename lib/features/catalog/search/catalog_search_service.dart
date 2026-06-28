@@ -5,7 +5,9 @@ import 'package:blindbox_app/features/catalog/models/catalog_ip.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_series.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_result.dart';
 
-/// Local, offline catalog search over a [CatalogSeedBundle].
+/// Shared offline search matcher for catalog-backed surfaces (browse, add-series,
+/// collection shelf, market identity). Single source of truth for figure/series/IP/
+/// brand/alias substring matching.
 ///
 /// Pure Dart: no Flutter widgets, no Riverpod. Swappable later for remote/cache
 /// sources by building the same bundle from JSON.
@@ -59,6 +61,20 @@ final class CatalogSearchService {
 
     scored.sort(_compareScored);
     return scored.map((e) => e.result).toList(growable: false);
+  }
+
+  /// Series ids with at least one figure match — for filtering shelf rows by
+  /// [ShelfSeries.catalogTemplateId] without duplicating match rules.
+  Set<String> matchingSeriesIds(String rawQuery) {
+    final q = normalizeCatalogSearchQuery(rawQuery);
+    if (q.isEmpty) return const {};
+
+    final ids = <String>{};
+    for (final fig in _figures) {
+      if (_bestRank(fig, q) == null) continue;
+      ids.add(fig.seriesId);
+    }
+    return ids;
   }
 
   _Rank? _bestRank(CatalogFigure fig, String q) {
