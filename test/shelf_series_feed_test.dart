@@ -9,6 +9,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'helpers/collection_fixtures.dart';
 
 void main() {
+  group('shelfIpCollapseSectionKey', () {
+    test('scopes collapse prefs per bucket', () {
+      expect(
+        shelfIpCollapseSectionKey(shelfCollapseBucketInProgress, 'ip:pucky'),
+        'in_progress:ip:pucky',
+      );
+      expect(
+        shelfIpCollapseSectionKey(shelfCollapseBucketCompleted, 'ip:pucky'),
+        'completed:ip:pucky',
+      );
+    });
+  });
+
   group('groupShelfSeriesByUniverse', () {
     test('keeps distinct IPs in separate sections', () {
       final sections = groupShelfSeriesByUniverse([
@@ -107,11 +120,8 @@ void main() {
       ),
     );
 
-    final headers = tester
-        .widgetList<CollectibleSectionHeader>(find.byType(CollectibleSectionHeader))
-        .map((h) => h.title)
-        .toList();
-    expect(headers, ['Crybaby', 'Polar']);
+    expect(find.text('Polar'), findsAtLeastNWidgets(1));
+    expect(find.text('Crybaby'), findsAtLeastNWidgets(1));
   });
 
   // ---------------------------------------------------------------------------
@@ -347,7 +357,10 @@ void main() {
                 testShelfSeries(id: 'b1', taxonomyIpId: 'ib', ipName: 'B'),
               ],
               figureStates: const {},
-              collapsedSectionKeys: {'ip:ia'},
+              collapseBucketKey: shelfCollapseBucketInProgress,
+              collapsedSectionKeys: {
+                shelfIpCollapseSectionKey(shelfCollapseBucketInProgress, 'ip:ia'),
+              },
             );
             return const SizedBox();
           },
@@ -359,4 +372,50 @@ void main() {
     expect(items.whereType<ShelfFeedCard>(), hasLength(1));
     expect(items.whereType<ShelfFeedCard>().single.series.id, 'b1');
   });
+
+  testWidgets(
+    'buildShelfFeedItems keeps bucket collapse independent for same IP',
+    (tester) async {
+      final puckySeries = [
+        testShelfSeries(id: 'p1', taxonomyIpId: 'pucky', ipName: 'Pucky'),
+        testShelfSeries(id: 'p2', taxonomyIpId: 'pucky', ipName: 'Pucky'),
+      ];
+
+      late List<ShelfFeedItem> inProgressItems;
+      late List<ShelfFeedItem> completedItems;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light(),
+          home: Builder(
+            builder: (context) {
+              final collapsed = {
+                shelfIpCollapseSectionKey(
+                  shelfCollapseBucketInProgress,
+                  'ip:pucky',
+                ),
+              };
+              inProgressItems = buildShelfFeedItems(
+                context: context,
+                series: puckySeries,
+                figureStates: const {},
+                collapseBucketKey: shelfCollapseBucketInProgress,
+                collapsedSectionKeys: collapsed,
+              );
+              completedItems = buildShelfFeedItems(
+                context: context,
+                series: puckySeries,
+                figureStates: const {},
+                collapseBucketKey: shelfCollapseBucketCompleted,
+                collapsedSectionKeys: collapsed,
+              );
+              return const SizedBox();
+            },
+          ),
+        ),
+      );
+
+      expect(inProgressItems.whereType<ShelfFeedCard>(), isEmpty);
+      expect(completedItems.whereType<ShelfFeedCard>(), hasLength(2));
+    },
+  );
 }

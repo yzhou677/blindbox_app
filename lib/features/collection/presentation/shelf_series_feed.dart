@@ -4,8 +4,15 @@ import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/domain/series_completion_atmosphere.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_emotional_profile.dart';
 import 'package:blindbox_app/features/collection/widgets/series_shelf_cards.dart';
-import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
 import 'package:flutter/material.dart';
+
+/// Bucket segment for IP collapse prefs — scopes keys per In progress / Completed.
+const String shelfCollapseBucketInProgress = 'in_progress';
+const String shelfCollapseBucketCompleted = 'completed';
+
+/// Collapse key stored in [CollectionShelfUiPrefs.collapsedIpSectionKeys].
+String shelfIpCollapseSectionKey(String bucketKey, String ipGroupKey) =>
+    '$bucketKey:$ipGroupKey';
 
 /// Stable universe key for shelf grouping — avoids empty keys merging unrelated rows.
 String shelfIpGroupKey(ShelfSeries series) {
@@ -136,6 +143,7 @@ List<ShelfFeedItem> buildShelfFeedItems({
   required List<ShelfSeries> series,
   required Map<String, TrackedFigure> figureStates,
   ShelfEmotionalProfile? profile,
+  String? collapseBucketKey,
   Set<String> collapsedSectionKeys = const {},
 }) {
   if (series.isEmpty) return const [];
@@ -154,14 +162,18 @@ List<ShelfFeedItem> buildShelfFeedItems({
       seriesInUniverse: section.series.length,
     );
 
+    final collapseKey = collapseBucketKey == null
+        ? section.key
+        : shelfIpCollapseSectionKey(collapseBucketKey, section.key);
+
     if (showHeader) {
       items.add(ShelfFeedHeader(
         sectionColor: sectionColor,
-        sectionKey: section.key,
+        sectionKey: collapseKey,
         label: section.label,
         topPadding: i == 0
             ? FeedRhythm.collectionUniverseSectionTop
-            : FeedRhythm.collectionUniverseSectionGap,
+            : FeedRhythm.collectionIpUniverseSectionGap,
       ));
     } else if (i > 0) {
       items.add(ShelfFeedGap(
@@ -173,7 +185,7 @@ List<ShelfFeedItem> buildShelfFeedItems({
     // Only honor collapse when a header is shown — otherwise the user has no
     // affordance to expand a single-series universe after search/filter.
     final honorCollapse =
-        showHeader && collapsedSectionKeys.contains(section.key);
+        showHeader && collapsedSectionKeys.contains(collapseKey);
     if (!honorCollapse) {
       for (final s in section.series) {
         items.add(ShelfFeedCard(
@@ -205,7 +217,6 @@ Widget buildShelfFeedItemWidget(
   void Function(String sectionKey)? onToggleIpSection,
   Set<String> collapsedSectionKeys = const {},
 }) {
-  final scheme = Theme.of(context).colorScheme;
   return switch (item) {
     ShelfFeedHeader(
       :final sectionColor,
@@ -218,31 +229,14 @@ Widget buildShelfFeedItemWidget(
         child: Padding(
           padding: EdgeInsets.only(
             top: topPadding,
-            bottom: FeedRhythm.collectionUniverseHeaderToCards,
+            bottom: FeedRhythm.collectionIpUniverseHeaderToCards,
           ),
-          child: onToggleIpSection == null
-              ? CollectibleSectionHeader(title: label, padding: EdgeInsets.zero)
-              : InkWell(
-                  onTap: () => onToggleIpSection(sectionKey),
-                  borderRadius: BorderRadius.circular(8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: CollectibleSectionHeader(
-                          title: label,
-                          padding: EdgeInsets.zero,
-                        ),
-                      ),
-                      Icon(
-                        collapsedSectionKeys.contains(sectionKey)
-                            ? Icons.expand_more_rounded
-                            : Icons.expand_less_rounded,
-                        size: 22,
-                        color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
-                      ),
-                    ],
-                  ),
-                ),
+          child: _ShelfIpGroupHeader(
+            label: label,
+            sectionKey: sectionKey,
+            collapsed: collapsedSectionKeys.contains(sectionKey),
+            onToggle: onToggleIpSection,
+          ),
         ),
       ),
     ShelfFeedGap(:final sectionColor, :final height) =>
@@ -256,17 +250,83 @@ Widget buildShelfFeedItemWidget(
     ) =>
       ColoredBox(
         color: sectionColor,
-        child: SeriesShelfCard(
-          key: ValueKey(series.id),
-          series: series,
-          progress: progress,
-          figureStates: figureStates,
-          atmosphere: atmosphere,
-          onOpen: () => onOpen(series),
-          onRemove: () => onRemove(series),
+        child: Padding(
+          padding: const EdgeInsets.only(
+            left: FeedRhythm.collectionIpGroupIndent,
+          ),
+          child: SeriesShelfCard(
+            key: ValueKey(series.id),
+            series: series,
+            progress: progress,
+            figureStates: figureStates,
+            atmosphere: atmosphere,
+            onOpen: () => onOpen(series),
+            onRemove: () => onRemove(series),
+          ),
         ),
       ),
   };
+}
+
+/// Second-level shelf header — lighter and indented under bucket sections.
+class _ShelfIpGroupHeader extends StatelessWidget {
+  const _ShelfIpGroupHeader({
+    required this.label,
+    required this.sectionKey,
+    required this.collapsed,
+    required this.onToggle,
+  });
+
+  final String label;
+  final String sectionKey;
+  final bool collapsed;
+  final void Function(String sectionKey)? onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    final title = Text(
+      label,
+      style: textTheme.titleSmall?.copyWith(
+        fontWeight: FontWeight.w500,
+        height: 1.25,
+        color: scheme.onSurface.withValues(alpha: 0.72),
+      ),
+    );
+
+    if (onToggle == null) {
+      return Padding(
+        padding: const EdgeInsets.only(
+          left: FeedRhythm.collectionIpGroupIndent,
+        ),
+        child: title,
+      );
+    }
+
+    return InkWell(
+      onTap: () => onToggle!(sectionKey),
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.only(
+          left: FeedRhythm.collectionIpGroupIndent,
+        ),
+        child: Row(
+          children: [
+            Expanded(child: title),
+            Icon(
+              collapsed
+                  ? Icons.expand_more_rounded
+                  : Icons.expand_less_rounded,
+              size: 20,
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.58),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -307,28 +367,35 @@ List<Widget> buildShelfSeriesFeed({
           padding: EdgeInsets.only(
             top: i == 0
                 ? FeedRhythm.collectionUniverseSectionTop
-                : FeedRhythm.collectionUniverseSectionGap,
-            bottom: FeedRhythm.collectionUniverseHeaderToCards,
+                : FeedRhythm.collectionIpUniverseSectionGap,
+            bottom: FeedRhythm.collectionIpUniverseHeaderToCards,
           ),
-          child: CollectibleSectionHeader(
-            title: section.label,
-            padding: EdgeInsets.zero,
+          child: _ShelfIpGroupHeader(
+            label: section.label,
+            sectionKey: section.key,
+            collapsed: false,
+            onToggle: null,
           ),
         )
       else if (i > 0)
         const SizedBox(height: FeedRhythm.collectionUniverseSectionGap),
       for (final s in section.series)
-        SeriesShelfCard(
-          series: s,
-          progress: progressForSeries(s, figureStates),
-          figureStates: figureStates,
-          atmosphere: atmosphereForSeries(
-            s,
-            figureStates,
-            shelfHarmony: shelfHarmony,
+        Padding(
+          padding: const EdgeInsets.only(
+            left: FeedRhythm.collectionIpGroupIndent,
           ),
-          onOpen: () => onOpen(s),
-          onRemove: () => onRemove(s),
+          child: SeriesShelfCard(
+            series: s,
+            progress: progressForSeries(s, figureStates),
+            figureStates: figureStates,
+            atmosphere: atmosphereForSeries(
+              s,
+              figureStates,
+              shelfHarmony: shelfHarmony,
+            ),
+            onOpen: () => onOpen(s),
+            onRemove: () => onRemove(s),
+          ),
         ),
     ];
 

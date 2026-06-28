@@ -274,6 +274,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       series: inProgress,
       figureStates: snap.figureStates,
       profile: profile,
+      collapseBucketKey: shelfCollapseBucketInProgress,
       collapsedSectionKeys: collapsedIpKeys,
     );
     final completedFeed = buildShelfFeedItems(
@@ -281,6 +282,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       series: completed,
       figureStates: snap.figureStates,
       profile: profile,
+      collapseBucketKey: shelfCollapseBucketCompleted,
       collapsedSectionKeys: collapsedIpKeys,
     );
     final brandFilterExhausted = brandFiltered.isEmpty;
