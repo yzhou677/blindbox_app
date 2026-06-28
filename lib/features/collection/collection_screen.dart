@@ -26,7 +26,6 @@ import 'package:blindbox_app/features/collection/presentation/shelf_series_feed.
 import 'package:blindbox_app/shared/widgets/app_search_field.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
-import 'package:blindbox_app/shared/widgets/taxonomy_filter_section_label.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -380,45 +379,8 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               title: 'My collection',
               subtitle: sectionSubtitle,
               padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
-              trailing: TextButton.icon(
-                key: const Key('collection_header_add_series'),
+              trailing: _CollectionAddSeriesButton(
                 onPressed: () => _openAddToCollection(context),
-                icon: Icon(
-                  Icons.add_rounded,
-                  size: 16,
-                  color: scheme.primary.withValues(alpha: 0.72),
-                ),
-                label: Text(
-                  'Add series',
-                  style: textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 0.02,
-                    height: 1.1,
-                    color: scheme.primary.withValues(alpha: 0.78),
-                  ),
-                ),
-                style: TextButton.styleFrom(
-                  backgroundColor: Color.lerp(
-                    scheme.surface,
-                    scheme.primaryContainer,
-                    Theme.of(context).brightness == Brightness.dark ? 0.22 : 0.32,
-                  ),
-                  foregroundColor: scheme.primary.withValues(alpha: 0.78),
-                  shadowColor: Colors.transparent,
-                  surfaceTintColor: Colors.transparent,
-                  padding: const EdgeInsetsDirectional.only(
-                    start: 8,
-                    end: 10,
-                    top: 8,
-                    bottom: 8,
-                  ),
-                  minimumSize: const Size(48, 40),
-                  tapTargetSize: MaterialTapTargetSize.padded,
-                  visualDensity: VisualDensity.compact,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
               ),
             ),
           ),
@@ -428,7 +390,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const TaxonomyFilterSectionLabel(text: 'Brand'),
+                  _CollectionBrowseFilterLabel(text: 'Brand'),
                   const SizedBox(
                     height: FeedRhythm.collectionFilterSectionLabelToRail,
                   ),
@@ -440,7 +402,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                   const SizedBox(
                     height: FeedRhythm.collectionBrandToIpFilterSectionGap,
                   ),
-                  const TaxonomyFilterSectionLabel(text: 'IP'),
+                  _CollectionBrowseFilterLabel(text: 'IP'),
                   const SizedBox(
                     height: FeedRhythm.collectionFilterSectionLabelToRail,
                   ),
@@ -617,6 +579,86 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _CollectionBrowseFilterLabel extends StatelessWidget {
+  const _CollectionBrowseFilterLabel({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Semantics(
+        header: true,
+        child: Text(
+          text,
+          style: textTheme.labelSmall?.copyWith(
+            fontWeight: FontWeight.w500,
+            letterSpacing: 0.28,
+            color: scheme.onSurfaceVariant.withValues(alpha: 0.58),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CollectionAddSeriesButton extends StatelessWidget {
+  const _CollectionAddSeriesButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return TextButton.icon(
+      key: const Key('collection_header_add_series'),
+      onPressed: onPressed,
+      icon: Icon(
+        Icons.add_rounded,
+        size: 16,
+        color: scheme.primary.withValues(alpha: 0.72),
+      ),
+      label: Text(
+        'Add series',
+        style: textTheme.labelMedium?.copyWith(
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.02,
+          height: 1.1,
+          color: scheme.primary.withValues(alpha: 0.78),
+        ),
+      ),
+      style: TextButton.styleFrom(
+        backgroundColor: Color.lerp(
+          scheme.surface,
+          scheme.primaryContainer,
+          Theme.of(context).brightness == Brightness.dark ? 0.22 : 0.32,
+        ),
+        foregroundColor: scheme.primary.withValues(alpha: 0.78),
+        shadowColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        padding: const EdgeInsetsDirectional.only(
+          start: 8,
+          end: 10,
+          top: 8,
+          bottom: 8,
+        ),
+        minimumSize: const Size(48, 40),
+        tapTargetSize: MaterialTapTargetSize.padded,
+        visualDensity: VisualDensity.compact,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
     );
   }
