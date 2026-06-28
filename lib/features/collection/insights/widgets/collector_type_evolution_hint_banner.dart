@@ -3,53 +3,43 @@ import 'package:blindbox_app/core/theme/collectible_shape.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
 import 'package:flutter/material.dart';
 
+/// Informational banner when the shelf era shifted — not a reveal affordance.
 class CollectorTypeEvolutionHintBanner extends StatelessWidget {
-  const CollectorTypeEvolutionHintBanner({super.key, this.onRevealTap});
-
-  final VoidCallback? onRevealTap;
+  const CollectorTypeEvolutionHintBanner({super.key});
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onRevealTap,
+    return DecoratedBox(
+      decoration: BoxDecoration(
         borderRadius: CollectibleShape.matRadius,
-        child: Ink(
-          decoration: BoxDecoration(
-            borderRadius: CollectibleShape.matRadius,
-            color: scheme.tertiaryContainer.withValues(alpha: 0.35),
-            border: Border.all(
-              color: scheme.tertiary.withValues(alpha: 0.2),
+        color: scheme.tertiaryContainer.withValues(alpha: 0.35),
+        border: Border.all(
+          color: scheme.tertiary.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        child: Row(
+          children: [
+            Icon(
+              Icons.auto_awesome_outlined,
+              size: 18,
+              color: scheme.tertiary.withValues(alpha: 0.75),
             ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.auto_awesome_outlined,
-                  size: 18,
-                  color: scheme.tertiary.withValues(alpha: 0.75),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                CollectorTypeCopy.evolutionHint,
+                style: AppTypography.deckText(textTheme, scheme).copyWith(
+                  color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
+                  height: 1.35,
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    CollectorTypeCopy.evolutionHint,
-                    style: AppTypography.deckText(textTheme, scheme).copyWith(
-                      // Banner sits on tertiary container — lift opacity slightly
-                      // above the default deckText alpha for legibility.
-                      color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
-                      height: 1.35,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );

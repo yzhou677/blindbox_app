@@ -16,7 +16,10 @@ final class CollectorTypeViewModel extends Notifier<CollectorTypeRevealStage> {
     // Read-only: watching the bootstrap future would reset mid-reveal when it completes.
     ref.read(collectionMemoryBootstrapProvider);
     final cached = CollectionMemoryStore.instance.cachedCollectorTypeIdentity;
-    return CollectorTypeRevealIdle(cachedIdentity: cached);
+    if (cached != null) {
+      return CollectorTypeRevealRevealed(cached);
+    }
+    return const CollectorTypeRevealIdle();
   }
 
   Future<void> requestReveal() async {
@@ -67,7 +70,6 @@ final class CollectorTypeViewModel extends Notifier<CollectorTypeRevealStage> {
   }
 
   void resetToIdle() {
-    final cached = CollectionMemoryStore.instance.cachedCollectorTypeIdentity;
-    state = CollectorTypeRevealIdle(cachedIdentity: cached);
+    showCached();
   }
 }

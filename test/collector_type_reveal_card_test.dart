@@ -9,7 +9,9 @@ import 'package:blindbox_app/features/collection/insights/domain/collector_type_
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_stats.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
+import 'package:blindbox_app/features/collection/insights/widgets/collector_type_reveal_button.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_reveal_card.dart';
+import 'package:blindbox_app/features/collection/insights/widgets/collector_type_stale_insights_overlay.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -49,7 +51,9 @@ void main() {
       ],
       child: MaterialApp(
         theme: AppTheme.light(),
-        home: Scaffold(body: child),
+        home: Scaffold(
+          body: SingleChildScrollView(child: child),
+        ),
       ),
     );
   }
@@ -76,21 +80,28 @@ void main() {
     expect(find.textContaining('The '), findsWidgets);
   });
 
-  testWidgets('cached identity idle shows result and reveal again', (tester) async {
+  testWidgets('cached identity opens dashboard without reveal again CTA',
+      (tester) async {
+    final revealedAt = DateTime.now().subtract(const Duration(days: 3));
+    final snap = CollectionSnapshot(
+      shelfSeries: [testShelfSeries()],
+      figureStates: const {},
+    );
+    final signature = computeCollectorTypeSignatureHash(snap);
     await CollectionMemoryStore.instance.saveCollectorType(
       CollectorTypeIdentity(
         archetypeId: CollectorTypeArchetypeId.wanderer,
-        revealedAt: DateTime(2026, 1, 1),
-        signatureHash: 'x',
+        revealedAt: revealedAt,
+        signatureHash: signature,
         stats: const CollectorTypeStats(
-          totalOwned: 0,
+          totalOwned: 1,
           totalWishlist: 0,
           trackedSeries: 1,
-          completionPercent: 0,
+          completionPercent: 50,
           secretOwned: 0,
           secretSlots: 0,
-          brandBreakdown: {},
-          topSeries: [],
+          brandBreakdown: {'pop_mart': 1},
+          topSeries: ['Test Series'],
           customSeriesRatio: 0,
         ),
       ),
@@ -100,6 +111,92 @@ void main() {
     await tester.pump();
 
     expect(find.text('The Wanderer'), findsOneWidget);
+    expect(find.textContaining('Updated'), findsOneWidget);
+    expect(find.textContaining('3 days ago'), findsOneWidget);
+    expect(find.text(CollectorTypeCopy.statsSectionTitle), findsOneWidget);
+    expect(find.byType(CollectorTypeRevealButton), findsNothing);
+    expect(find.text(CollectorTypeCopy.revealAgain), findsNothing);
+  });
+
+  testWidgets('stale collection keeps dashboard visible with de-emphasis',
+      (tester) async {
+    final revealedAt = DateTime.now().subtract(const Duration(days: 3));
+    await CollectionMemoryStore.instance.saveCollectorType(
+      CollectorTypeIdentity(
+        archetypeId: CollectorTypeArchetypeId.wanderer,
+        revealedAt: revealedAt,
+        signatureHash: 'stale-signature',
+        stats: const CollectorTypeStats(
+          totalOwned: 1,
+          totalWishlist: 0,
+          trackedSeries: 1,
+          completionPercent: 50,
+          secretOwned: 0,
+          secretSlots: 0,
+          brandBreakdown: {'pop_mart': 1},
+          topSeries: ['Test Series'],
+          customSeriesRatio: 0,
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(wrap(const CollectorTypeRevealCard()));
+    await tester.pump();
+
+    expect(find.byType(CollectorTypeStaleInsightsOverlay), findsOneWidget);
     expect(find.text(CollectorTypeCopy.revealAgain), findsOneWidget);
+    expect(find.byType(CollectorTypeRevealButton), findsOneWidget);
+    expect(find.text('The Wanderer'), findsOneWidget);
+    expect(find.text(CollectorTypeCopy.statsSectionTitle), findsOneWidget);
+    expect(find.text(CollectorTypeCopy.staleInsightsMessage), findsOneWidget);
+    final typeY = tester.getTopLeft(find.text('The Wanderer')).dy;
+    final staleY = tester.getTopLeft(find.byType(CollectorTypeStaleInsightsOverlay)).dy;
+    final statsY = tester.getTopLeft(find.text(CollectorTypeCopy.statsSectionTitle)).dy;
+    expect(typeY < staleY, isTrue);
+    expect(staleY < statsY, isTrue);
+    expect(
+      tester
+          .widget<Opacity>(find.byKey(const ValueKey('stale-stats-deemphasis')))
+          .opacity,
+      collectorTypeStaleInsightsOpacity,
+    );
+  });
+
+  testWidgets('reveal again clears stale card after analysis completes',
+      (tester) async {
+    await CollectionMemoryStore.instance.saveCollectorType(
+      CollectorTypeIdentity(
+        archetypeId: CollectorTypeArchetypeId.wanderer,
+        revealedAt: DateTime.now().subtract(const Duration(days: 3)),
+        signatureHash: 'stale-signature',
+        stats: const CollectorTypeStats(
+          totalOwned: 1,
+          totalWishlist: 0,
+          trackedSeries: 1,
+          completionPercent: 50,
+          secretOwned: 0,
+          secretSlots: 0,
+          brandBreakdown: {'pop_mart': 1},
+          topSeries: ['Test Series'],
+          customSeriesRatio: 0,
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(wrap(const CollectorTypeRevealCard()));
+    await tester.pump();
+
+    expect(find.byType(CollectorTypeStaleInsightsOverlay), findsOneWidget);
+
+    await tester.tap(find.text(CollectorTypeCopy.revealAgain));
+    await tester.pump();
+    expect(find.text(CollectorTypeCopy.analyzingLine), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: collectorTypeAnalyzingHoldMs));
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.byType(CollectorTypeStaleInsightsOverlay), findsNothing);
+    expect(find.text(CollectorTypeCopy.revealAgain), findsNothing);
+    expect(find.textContaining('Updated'), findsOneWidget);
   });
 }

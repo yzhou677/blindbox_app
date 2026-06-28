@@ -65,6 +65,10 @@ class AppSearchField extends StatelessWidget {
           size: 22,
           color: scheme.onSurfaceVariant.withValues(alpha: 0.75),
         ),
+        prefixIconConstraints: const BoxConstraints(
+          minWidth: 48,
+          minHeight: 48,
+        ),
         suffixIcon: suffixIcon,
         filled: true,
         fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.45),
@@ -85,9 +89,11 @@ class AppSearchField extends StatelessWidget {
             width: 1.5,
           ),
         ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 6,
-          vertical: 14,
+        contentPadding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          14,
+          AppSpacing.md,
+          14,
         ),
         isDense: true,
       ),

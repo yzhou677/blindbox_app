@@ -13,6 +13,7 @@ class CatalogFigureGalleryItem {
     this.localImageUri,
     this.seriesCoverImageUri,
     this.rarityLabel,
+    this.oddsLabel,
     this.isSecret = false,
   });
 
@@ -26,7 +27,11 @@ class CatalogFigureGalleryItem {
 
   /// User series cover when the figure has no dedicated photo (shelf parity).
   final String? seriesCoverImageUri;
+  /// Descriptive rarity (e.g. Rare, Super Rare Secret) — not pull odds.
   final String? rarityLabel;
+
+  /// Pull odds (e.g. `1:72`) when known separately from [rarityLabel].
+  final String? oddsLabel;
   final bool isSecret;
 
   bool get hasCatalogKey {

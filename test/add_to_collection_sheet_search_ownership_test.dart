@@ -4,6 +4,7 @@ import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.d
 import 'package:blindbox_app/features/catalog/catalog_image_resolver.dart';
 import 'package:blindbox_app/features/catalog/data/catalog_image_disk_cache.dart';
 import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+import 'package:blindbox_app/features/catalog/search/catalog_search_history_provider.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_brand.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_figure.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_ip.dart';
@@ -17,6 +18,7 @@ import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class _SeededCollectionNotifier extends CollectionNotifier {
   _SeededCollectionNotifier(this._snapshot);
@@ -103,6 +105,7 @@ void main() {
   late Directory tempCacheRoot;
 
   setUp(() async {
+    SharedPreferences.setMockInitialValues({});
     tempCacheRoot = await Directory.systemTemp.createTemp('add_sheet_own_test_');
     CatalogImageDiskCache.testRootOverride = tempCacheRoot;
     CatalogImageResolver.storageFallbackOverride = false;
@@ -116,6 +119,31 @@ void main() {
     if (await tempCacheRoot.exists()) {
       await tempCacheRoot.delete(recursive: true);
     }
+  });
+
+  testWidgets('does not render Recent Searches even when history exists',
+      (tester) async {
+    final container = ProviderContainer(
+      overrides: [
+        collectionNotifierProvider.overrideWith(
+          () => _SeededCollectionNotifier(CollectionSnapshot.emptyTest()),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    container.read(catalogSearchHistoryProvider.notifier).add('Labubu');
+    await tester.pump();
+
+    await _pumpSheet(tester, container);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Recent Searches'), findsNothing);
+    expect(find.text('Labubu'), findsNothing);
+    expect(find.text('Latest releases'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
   });
 
   testWidgets('add from search keeps result visible and switches CTA to owned', (

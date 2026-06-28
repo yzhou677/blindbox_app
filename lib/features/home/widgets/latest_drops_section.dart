@@ -17,6 +17,8 @@ class LatestDropsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (releases.isEmpty) return const SizedBox.shrink();
+
     final scheme = Theme.of(context).colorScheme;
     final brightness = Theme.of(context).brightness;
 

@@ -7,10 +7,13 @@ sealed class CollectorTypeRevealStage {
   const CollectorTypeRevealStage();
 }
 
+/// First-time state only — no persisted reveal. Returning users bootstrap
+/// directly into [CollectorTypeRevealRevealed] via the view model.
 @immutable
 final class CollectorTypeRevealIdle extends CollectorTypeRevealStage {
   const CollectorTypeRevealIdle({this.cachedIdentity});
 
+  /// Legacy field; no longer set by [CollectorTypeViewModel.build].
   final CollectorTypeIdentity? cachedIdentity;
 }
 

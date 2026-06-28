@@ -4,6 +4,9 @@ import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_providers.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_resolver.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_view_model.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_archetype.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_stats.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -22,6 +25,46 @@ void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
     CollectionMemoryStore.instance.resetForTest();
+  });
+
+  test('build starts revealed when cached identity exists', () async {
+    await CollectionMemoryStore.instance.saveCollectorType(
+      CollectorTypeIdentity(
+        archetypeId: CollectorTypeArchetypeId.wanderer,
+        revealedAt: DateTime(2026, 1, 1),
+        signatureHash: 'cached',
+        stats: const CollectorTypeStats(
+          totalOwned: 0,
+          totalWishlist: 0,
+          trackedSeries: 1,
+          completionPercent: 0,
+          secretOwned: 0,
+          secretSlots: 0,
+          brandBreakdown: {},
+          topSeries: [],
+          customSeriesRatio: 0,
+        ),
+      ),
+    );
+
+    final container = ProviderContainer(
+      overrides: [
+        collectionNotifierProvider.overrideWith(
+          () => TestCollectionNotifier(
+            CollectionSnapshot(
+              shelfSeries: [testShelfSeries()],
+              figureStates: const {},
+            ),
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    expect(
+      container.read(collectorTypeViewModelProvider),
+      isA<CollectorTypeRevealRevealed>(),
+    );
   });
 
   test('requestReveal holds analyzing for at least minimum duration', () async {

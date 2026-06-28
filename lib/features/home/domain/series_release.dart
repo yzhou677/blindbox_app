@@ -10,6 +10,7 @@ class ReleaseLineupSlot {
     required this.imageKey,
     this.imageUrl,
     required this.isSecret,
+    this.rarityLabel,
   });
 
   final String slotId;
@@ -21,6 +22,9 @@ class ReleaseLineupSlot {
   /// Legacy/mock preset URL — UI ignores; use [imageKey] with [CatalogImageFromKey].
   final String? imageUrl;
   final bool isSecret;
+
+  /// Catalog rarity / odds label when available (e.g. `1:144`, `Rare`).
+  final String? rarityLabel;
 }
 
 /// A Home “latest drop” as a **series launch**: hero art + full lineup for browsing.

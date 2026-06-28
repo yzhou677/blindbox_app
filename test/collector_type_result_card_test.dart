@@ -10,7 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 CollectorTypeIdentity _sampleIdentity() {
   return CollectorTypeIdentity(
     archetypeId: CollectorTypeArchetypeId.hunter,
-    revealedAt: DateTime(2026, 5, 1),
+    revealedAt: DateTime(2026, 6, 1),
     signatureHash: 'hash',
     stats: const CollectorTypeStats(
       totalOwned: 3,
@@ -67,6 +67,7 @@ void main() {
             identity: _sampleIdentity(),
             helperLine:
                 'While your current shelf is focused around a few favorites, your collecting journey has explored many different worlds.',
+            updatedAtNow: DateTime(2026, 6, 4),
           ),
         ),
       ),
@@ -79,5 +80,31 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(find.text('Updated 3 days ago'), findsOneWidget);
+  });
+
+  testWidgets('shows reveal again in dashboard footer when requested', (
+    tester,
+  ) async {
+    var tapped = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: CollectorTypeResultCard(
+            identity: _sampleIdentity(),
+            showRevealAgain: true,
+            onRevealAgain: () => tapped = true,
+            updatedAtNow: DateTime(2026, 6, 4),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Updated 3 days ago'), findsOneWidget);
+    await tester.tap(find.text('Reveal again'));
+    await tester.pump();
+    expect(tapped, isTrue);
   });
 }

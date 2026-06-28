@@ -4,11 +4,11 @@ import 'package:blindbox_app/features/collection/insights/application/collector_
 import 'package:blindbox_app/features/collection/insights/application/collector_type_providers.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_view_model.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
-import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_ambient_glow.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_analyzing_panel.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_reveal_button.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_result_card.dart';
+import 'package:blindbox_app/features/collection/insights/widgets/collector_type_stale_insights_overlay.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_stats_strip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,6 +30,8 @@ class CollectorTypeRevealCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final stage = ref.watch(collectorTypeViewModelProvider);
+    final needsReveal = ref.watch(collectorTypeNeedsRevealProvider);
+    final showEvolutionHint = ref.watch(collectorTypeEvolutionHintProvider);
     final snapshot = ref.watch(collectionNotifierProvider);
     final journey = ref.watch(collectorJourneySummaryProvider);
     final brightness = Theme.of(context).brightness;
@@ -40,21 +42,11 @@ class CollectorTypeRevealCard extends ConsumerWidget {
           journey: journey,
           snapshot: snapshot,
         ),
-      CollectorTypeRevealIdle(:final cachedIdentity) =>
-        cachedIdentity == null
-            ? null
-            : resolveCollectorTypeHelperLine(
-                identity: cachedIdentity,
-                journey: journey,
-                snapshot: snapshot,
-              ),
       _ => null,
     };
     final accent = switch (stage) {
       CollectorTypeRevealRevealed(:final identity) =>
         identity.archetype.accentFor(brightness),
-      CollectorTypeRevealIdle(:final cachedIdentity) =>
-        cachedIdentity?.archetype.accentFor(brightness),
       _ => null,
     };
 
@@ -81,10 +73,8 @@ class CollectorTypeRevealCard extends ConsumerWidget {
           );
         },
         child: switch (stage) {
-          CollectorTypeRevealIdle(:final cachedIdentity) => _IdleStage(
+          CollectorTypeRevealIdle() => _IdleStage(
             key: const ValueKey('idle'),
-            cachedIdentity: cachedIdentity,
-            helperLine: helperLine,
             onReveal: () => ref
                 .read(collectorTypeViewModelProvider.notifier)
                 .requestReveal(),
@@ -96,6 +86,11 @@ class CollectorTypeRevealCard extends ConsumerWidget {
             key: ValueKey('revealed-${identity.archetypeId.name}'),
             identity: identity,
             helperLine: helperLine,
+            isStale: needsReveal,
+            compactStaleMessage: showEvolutionHint,
+            onRevealAgain: () => ref
+                .read(collectorTypeViewModelProvider.notifier)
+                .requestReveal(),
           ),
         },
       ),
@@ -106,31 +101,13 @@ class CollectorTypeRevealCard extends ConsumerWidget {
 class _IdleStage extends StatelessWidget {
   const _IdleStage({
     super.key,
-    required this.cachedIdentity,
-    required this.helperLine,
     required this.onReveal,
   });
 
-  final CollectorTypeIdentity? cachedIdentity;
-  final String? helperLine;
   final VoidCallback onReveal;
 
   @override
   Widget build(BuildContext context) {
-    final cached = cachedIdentity;
-    if (cached != null) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          CollectorTypeResultCard(identity: cached, helperLine: helperLine),
-          const SizedBox(height: 12),
-          CollectorTypeRevealButton(
-            label: CollectorTypeCopy.revealAgain,
-            onPressed: onReveal,
-          ),
-        ],
-      );
-    }
     return CollectorTypeRevealButton(onPressed: onReveal);
   }
 }
@@ -140,18 +117,46 @@ class _RevealedStage extends StatelessWidget {
     super.key,
     required this.identity,
     required this.helperLine,
+    required this.isStale,
+    required this.compactStaleMessage,
+    required this.onRevealAgain,
   });
 
   final CollectorTypeIdentity identity;
   final String? helperLine;
+  final bool isStale;
+  final bool compactStaleMessage;
+  final VoidCallback onRevealAgain;
 
   @override
   Widget build(BuildContext context) {
+    final resultCard = CollectorTypeResultCard(
+      identity: identity,
+      helperLine: helperLine,
+    );
+    final statsStrip = CollectorTypeStatsStrip(stats: identity.stats);
+
+    if (!isStale) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [resultCard, statsStrip],
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        CollectorTypeResultCard(identity: identity, helperLine: helperLine),
-        CollectorTypeStatsStrip(stats: identity.stats),
+        resultCard,
+        const SizedBox(height: 12),
+        CollectorTypeStaleInsightsOverlay(
+          onRevealAgain: onRevealAgain,
+          compactMessage: compactStaleMessage,
+        ),
+        Opacity(
+          key: const ValueKey('stale-stats-deemphasis'),
+          opacity: collectorTypeStaleInsightsOpacity,
+          child: statsStrip,
+        ),
       ],
     );
   }

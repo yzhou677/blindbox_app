@@ -1,4 +1,5 @@
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_adapters.dart';
+import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_meta.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -28,6 +29,34 @@ void main() {
       final items = catalogGalleryItemsFromShelfSeries(series);
       expect(items, hasLength(1));
       expect(items.single.catalogImageKey, 'the_monsters_exciting_macaron_soymilk');
+    });
+
+    test('splits shelf rarity and odds for gallery meta', () {
+      const series = ShelfSeries(
+        id: 'series_secret',
+        name: 'Hair Salon',
+        brand: 'POP MART',
+        ipName: 'THE MONSTERS',
+        figures: [
+          ShelfFigure(
+            id: 'fig_secret',
+            seriesId: 'series_secret',
+            name: 'Hidden Cut',
+            rarity: 'Secret',
+            rarityLabel: '1:1152',
+            isSecret: true,
+          ),
+        ],
+        shelfAccent: Color(0xFFE8F5E9),
+      );
+
+      final item = catalogGalleryItemsFromShelfSeries(series).single;
+      expect(item.rarityLabel, 'Secret');
+      expect(item.oddsLabel, '1:1152');
+      expect(
+        catalogFigureGalleryFigureMetaLine(item),
+        'Secret · 1:1152',
+      );
     });
 
     test('passes series cover when figure has no local photo', () {

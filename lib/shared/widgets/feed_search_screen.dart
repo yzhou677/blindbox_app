@@ -1,6 +1,7 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
+import 'package:blindbox_app/features/catalog/search/catalog_search_history_section.dart';
 import 'package:blindbox_app/shared/widgets/app_search_field.dart';
 import 'package:flutter/material.dart';
 
@@ -32,6 +33,8 @@ class FeedSearchScreen extends StatelessWidget {
     this.onChanged,
     this.onClear,
     this.onBack,
+    this.onSubmitted,
+    this.historySection,
   });
 
   final String title;
@@ -45,6 +48,14 @@ class FeedSearchScreen extends StatelessWidget {
 
   /// When set, replaces the default [Navigator.maybePop] (e.g. Market search exit).
   final VoidCallback? onBack;
+
+  /// Called when the user presses the keyboard Search/Done action.
+  final VoidCallback? onSubmitted;
+
+  /// Optional widget shown below the search field when [hasSearchText] is false.
+  /// Typically a [CatalogSearchHistorySection]. Rendered instead of [emptyPrompt]
+  /// when provided and non-null; falls back to [emptyPrompt] when null.
+  final Widget? historySection;
 
   @override
   Widget build(BuildContext context) {
@@ -87,6 +98,7 @@ class FeedSearchScreen extends StatelessWidget {
               autofocus: true,
               hintText: hintText,
               onChanged: onChanged,
+              onSubmitted: onSubmitted,
               suffixIcon: !hasSearchText || onClear == null
                   ? null
                   : IconButton(
@@ -119,21 +131,32 @@ class FeedSearchScreen extends StatelessWidget {
           Expanded(
             child: hasSearchText
                 ? results
-                : Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.emptyStateHorizontal,
-                      ),
-                      child: Text(
-                        emptyPrompt,
-                        textAlign: TextAlign.center,
-                        style: textTheme.bodyLarge?.copyWith(
-                          color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
-                          height: 1.4,
+                : historySection != null
+                    ? SingleChildScrollView(
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                            top: SearchHistorySectionSpacing.belowSearchField,
+                          ),
+                          child: historySection,
+                        ),
+                      )
+                    : Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.emptyStateHorizontal,
+                          ),
+                          child: Text(
+                            emptyPrompt,
+                            textAlign: TextAlign.center,
+                            style: textTheme.bodyLarge?.copyWith(
+                              color: scheme.onSurfaceVariant.withValues(
+                                alpha: 0.82,
+                              ),
+                              height: 1.4,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
           ),
         ],
       ),

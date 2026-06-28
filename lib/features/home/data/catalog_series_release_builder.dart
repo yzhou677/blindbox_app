@@ -55,6 +55,7 @@ Future<SeriesRelease?> _buildOne(
         name: f.displayName,
         imageKey: f.imageKey,
         isSecret: f.isSecret,
+        rarityLabel: f.rarityLabel,
       ),
   ];
 

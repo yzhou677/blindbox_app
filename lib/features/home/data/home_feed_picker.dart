@@ -16,31 +16,30 @@ class HomeFeedSeriesPick {
   final List<CatalogSeries> trending;
 }
 
-/// Recent drops window (inclusive lower bound).
-const Duration homeLatestDropsWindow = Duration(days: 92); // ~3 months
+/// Recent drops window (inclusive lower bound). Every dated series in this
+/// window appears in Latest Drops — no item cap.
+const Duration homeLatestDropsWindow = Duration(days: 60);
 
-/// Trending primary pool: releases older than latest window, up to ~12 months.
-const Duration homeTrendingWindowStart = Duration(days: 92);
-const Duration homeTrendingWindowEnd = Duration(days: 365);
+/// Trending window: releases older than [homeLatestDropsWindow], up to 120 days.
+const Duration homeTrendingWindowEnd = Duration(days: 120);
 
-const int homeLatestTargetCount = 8;
-const int homeTrendingTargetCount = 8;
+List<String>? _sessionTrendingSeriesIds;
+Set<String>? _sessionTrendingPoolIds;
+Random? _sessionTrendingRng;
 
-/// Minimum before [backfillHomeFeedSection] expands by nearest [releaseDate].
-const int homeLatestMinimumCount = 4;
-const int homeTrendingMinimumCount = 5;
+@visibleForTesting
+void resetTrendingSessionOrderForTest() {
+  _sessionTrendingSeriesIds = null;
+  _sessionTrendingPoolIds = null;
+  _sessionTrendingRng = null;
+}
 
-/// Curated collector-popular IPs — only used when series exist in the loaded bundle.
-const List<String> homeCollectorPopularIpIds = [
-  'the_monsters',
-  'skullpanda',
-  'hirono',
-  'crybaby',
-  'dimoo',
-  'molly',
-  'baby_molly',
-  'space_molly',
-];
+@visibleForTesting
+void seedTrendingSessionRandomForTest(int seed) {
+  _sessionTrendingRng = Random(seed);
+  _sessionTrendingSeriesIds = null;
+  _sessionTrendingPoolIds = null;
+}
 
 /// Picks catalog series for Latest Drops and Trending using [releaseDate] only.
 HomeFeedSeriesPick pickHomeFeedSeries(
@@ -49,7 +48,6 @@ HomeFeedSeriesPick pickHomeFeedSeries(
   Random? random,
 }) {
   final now = _day(clock ?? DateTime.now());
-  final rng = random ?? Random();
   final dated = bundle.series
       .map((s) => (series: s, date: _parseReleaseDate(s.releaseDate)))
       .where((e) => e.date != null)
@@ -57,24 +55,13 @@ HomeFeedSeriesPick pickHomeFeedSeries(
 
   final latestCutoff = now.subtract(homeLatestDropsWindow);
   final trendingStart = now.subtract(homeTrendingWindowEnd);
-  final trendingEnd = now.subtract(homeTrendingWindowStart);
+  final trendingEnd = now.subtract(homeLatestDropsWindow);
 
-  final latestPool = dated
+  final latest = dated
       .where((e) => !e.date!.isBefore(latestCutoff))
       .map((e) => e.series)
       .toList(growable: false)
     ..sort((a, b) => _parseReleaseDate(b.releaseDate)!.compareTo(_parseReleaseDate(a.releaseDate)!));
-
-  var latest = latestPool.take(homeLatestTargetCount).toList(growable: false);
-  if (latest.length < homeLatestMinimumCount) {
-    latest = backfillHomeFeedSection(
-      dated,
-      current: latest,
-      target: homeLatestTargetCount,
-      minimum: homeLatestMinimumCount,
-      anchor: now,
-    );
-  }
 
   final latestIds = latest.map((s) => s.id).toSet();
 
@@ -88,112 +75,41 @@ HomeFeedSeriesPick pickHomeFeedSeries(
       .map((e) => e.series)
       .toList(growable: false);
 
-  var trending = _shuffleCopy(trendingPool, rng).take(homeTrendingTargetCount).toList(growable: false);
-
-  if (trending.length < homeTrendingMinimumCount) {
-    trending = _appendCollectorPopularFallback(
-      bundle: bundle,
-      dated: dated,
-      current: trending,
-      excludeIds: latestIds,
-      target: homeTrendingTargetCount,
-      rng: rng,
-    );
-  }
-
-  if (trending.length < homeTrendingMinimumCount) {
-    trending = backfillHomeFeedSection(
-      dated,
-      current: trending,
-      target: homeTrendingTargetCount,
-      minimum: homeTrendingMinimumCount,
-      anchor: trendingEnd,
-      excludeIds: latestIds,
-      releaseOnOrAfter: trendingStart,
-      releaseBefore: trendingEnd,
-    );
-  }
-  if (trending.length < homeTrendingMinimumCount) {
-    trending = backfillHomeFeedSection(
-      dated,
-      current: trending,
-      target: homeTrendingTargetCount,
-      minimum: homeTrendingMinimumCount,
-      anchor: trendingEnd,
-      excludeIds: latestIds,
-    );
-  }
+  final trending = _trendingOrderForSession(trendingPool, random: random);
 
   return HomeFeedSeriesPick(latest: latest, trending: trending);
 }
 
-List<CatalogSeries> _appendCollectorPopularFallback({
-  required CatalogSeedBundle bundle,
-  required List<({CatalogSeries series, DateTime? date})> dated,
-  required List<CatalogSeries> current,
-  required Set<String> excludeIds,
-  required int target,
-  required Random rng,
+/// Session-stable Trending order; reshuffles only when pool membership changes.
+List<CatalogSeries> _trendingOrderForSession(
+  List<CatalogSeries> pool, {
+  Random? random,
 }) {
-  final seen = {for (final s in current) s.id, ...excludeIds};
-  final out = List<CatalogSeries>.from(current);
+  if (random != null) return _shuffleCopy(pool, random);
 
-  for (final ipId in homeCollectorPopularIpIds) {
-    if (out.length >= target) break;
-    final candidates = dated
-        .where((e) => e.series.ipId == ipId && !seen.contains(e.series.id))
-        .toList(growable: false)
-      ..sort((a, b) => b.date!.compareTo(a.date!));
-    for (final c in candidates) {
-      if (out.length >= target) break;
-      out.add(c.series);
-      seen.add(c.series.id);
-    }
+  final poolIds = pool.map((s) => s.id).toSet();
+  if (poolIds.isEmpty) {
+    _sessionTrendingSeriesIds = const [];
+    _sessionTrendingPoolIds = {};
+    return const [];
   }
 
-  if (out.length <= current.length) return current;
-  final tail = _shuffleCopy(out.skip(current.length).toList(), rng);
-  return [...current, ...tail].take(target).toList(growable: false);
-}
+  final byId = {for (final s in pool) s.id: s};
+  _sessionTrendingRng ??= Random();
 
-/// Fills [current] toward [target] with nearest-dated series not already included.
-List<CatalogSeries> backfillHomeFeedSection(
-  List<({CatalogSeries series, DateTime? date})> dated, {
-  required List<CatalogSeries> current,
-  required int target,
-  required int minimum,
-  required DateTime anchor,
-  Set<String> excludeIds = const {},
-  DateTime? releaseOnOrAfter,
-  DateTime? releaseBefore,
-}) {
-  if (current.length >= minimum) return current.take(target).toList(growable: false);
-
-  final seen = {for (final s in current) s.id, ...excludeIds};
-  final ranked = dated
-      .where((e) {
-        if (e.date == null || seen.contains(e.series.id)) return false;
-        final d = e.date!;
-        if (releaseOnOrAfter != null && d.isBefore(releaseOnOrAfter)) return false;
-        if (releaseBefore != null && !d.isBefore(releaseBefore)) return false;
-        return true;
-      })
-      .toList(growable: false)
-    ..sort((a, b) {
-      final da = a.date!.difference(anchor).inDays.abs();
-      final db = b.date!.difference(anchor).inDays.abs();
-      final byDist = da.compareTo(db);
-      if (byDist != 0) return byDist;
-      return b.date!.compareTo(a.date!);
-    });
-
-  final out = List<CatalogSeries>.from(current);
-  for (final e in ranked) {
-    if (out.length >= target) break;
-    out.add(e.series);
-    seen.add(e.series.id);
+  if (_sessionTrendingPoolIds != null &&
+      setEquals(_sessionTrendingPoolIds!, poolIds) &&
+      _sessionTrendingSeriesIds != null) {
+    return [
+      for (final id in _sessionTrendingSeriesIds!) byId[id]!,
+    ];
   }
-  return out;
+
+  final shuffled = _shuffleCopy(pool, _sessionTrendingRng!);
+  _sessionTrendingSeriesIds =
+      shuffled.map((s) => s.id).toList(growable: false);
+  _sessionTrendingPoolIds = poolIds;
+  return shuffled;
 }
 
 List<CatalogSeries> _shuffleCopy(List<CatalogSeries> items, Random rng) {

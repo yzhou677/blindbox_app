@@ -16,9 +16,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Collectible-centered browse row — groups market sightings calmly.
 class CollectibleMarketCard extends ConsumerWidget {
-  const CollectibleMarketCard({super.key, required this.snapshot});
+  const CollectibleMarketCard({
+    super.key,
+    required this.snapshot,
+    this.onOpen,
+  });
 
   final CollectibleMarketSnapshot snapshot;
+
+  /// Optional hook before opening the market sheet (e.g. record search history).
+  final VoidCallback? onOpen;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -55,10 +62,13 @@ class CollectibleMarketCard extends ConsumerWidget {
           child: InkWell(
             onTap: rep == null
                 ? null
-                : () => showCollectibleMarketSheet(
+                : () {
+                    onOpen?.call();
+                    showCollectibleMarketSheet(
                       context: context,
                       snapshot: snapshot,
-                    ),
+                    );
+                  },
             child: Padding(
               padding: const EdgeInsets.fromLTRB(14, 14, 16, 14),
               child: Row(

@@ -11,6 +11,8 @@ import 'package:blindbox_app/features/market/application/market_browse_load_more
 import 'package:blindbox_app/features/market/data/gateway/market_gateway_config.dart';
 import 'package:blindbox_app/features/market/presentation/collectible_market_display_order.dart';
 import 'package:blindbox_app/features/market/presentation/market_price_sort.dart';
+import 'package:blindbox_app/features/market/search/market_search_history_provider.dart';
+import 'package:blindbox_app/features/catalog/search/catalog_search_history_section.dart';
 import 'package:blindbox_app/features/market/widgets/market_browse_session_transition.dart';
 import 'package:blindbox_app/features/market/widgets/collectible_market_card.dart';
 import 'package:blindbox_app/features/market/debug/market_search_trace.dart';
@@ -59,6 +61,34 @@ class _MarketBrowseSearchScreenState
 
   String get _trimmedQuery => _search.text.trim();
   bool get _hasSearchText => _trimmedQuery.isNotEmpty;
+
+  void _recordSearch(String query) {
+    final q = query.trim();
+    if (q.isEmpty) return;
+    ref.read(marketSearchHistoryProvider.notifier).add(q);
+  }
+
+  void _applyHistoryQuery(String query) {
+    _search.text = query;
+    _search.selection = TextSelection.collapsed(offset: query.length);
+    _debounce?.cancel();
+    ref.read(marketSearchBrowseNotifierProvider.notifier).commitQuery(query);
+    setState(() {});
+  }
+
+  void _applySuggestedQuery(String query) {
+    _applyHistoryQuery(query);
+    _recordSearch(query);
+  }
+
+  void _onSearchSubmitted() {
+    _debounce?.cancel();
+    final q = _trimmedQuery;
+    if (q.isEmpty) return;
+    _recordSearch(q);
+    ref.read(marketSearchBrowseNotifierProvider.notifier).commitQuery(q);
+    setState(() {});
+  }
 
   void _onSearchChanged(String value) {
     MarketSearchTrace.event(
@@ -134,6 +164,17 @@ class _MarketBrowseSearchScreenState
     final liveHasMore = ref.watch(marketLiveBrowseHasMoreProvider);
     final loadingMore = ref.watch(marketBrowseLoadMoreProvider);
     final sessionTransitioning = ref.watch(marketBrowseSessionTransitionProvider);
+    final history = ref.watch(marketSearchHistoryProvider);
+
+    final historyWidget = searchEmptyQuerySection(
+      history: history,
+      onHistoryTap: _applyHistoryQuery,
+      onRemove: (q) =>
+          ref.read(marketSearchHistoryProvider.notifier).remove(q),
+      onClearAll: () =>
+          ref.read(marketSearchHistoryProvider.notifier).clearAll(),
+      onSuggestedTap: _applySuggestedQuery,
+    );
 
     return PopScope(
       canPop: false,
@@ -147,8 +188,10 @@ class _MarketBrowseSearchScreenState
       controller: _search,
       hasSearchText: _hasSearchText,
       onChanged: _onSearchChanged,
+      onSubmitted: _onSearchSubmitted,
       onClear: _clearSearch,
       onBack: () => _exitSearch(clearField: false),
+      historySection: historyWidget,
       results: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -205,6 +248,7 @@ class _MarketBrowseSearchScreenState
                         return CollectibleMarketCard(
                           key: ValueKey(snapshot.identity.snapshotId),
                           snapshot: snapshot,
+                          onOpen: () => _recordSearch(_trimmedQuery),
                         );
                       },
                     ),

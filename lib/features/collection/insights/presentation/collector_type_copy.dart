@@ -13,6 +13,13 @@ abstract final class CollectorTypeCopy {
   static const String evolutionHint =
       'Your collection has shifted — reveal again when you are ready.';
 
+  static const String staleInsightsMessage =
+      'These insights are from your last reveal. Your collection has '
+      'changed — reveal again for an updated read.';
+
+  static const String staleInsightsMessageCompact =
+      'Insights below reflect your shelf at the last reveal.';
+
   static const String statsSectionTitle = 'At a glance';
   static const String entryCta = 'Reveal collector type';
   static const String entryRevealedPrefix = 'Your collector type';
