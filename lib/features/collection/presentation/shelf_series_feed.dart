@@ -74,12 +74,12 @@ String _universeLabelFor(ShelfSeries first, String key) {
 }
 
 /// Whether this universe block gets an explicit section header.
-bool shouldShowShelfUniverseHeader({
-  required int universeCount,
-  required int seriesInUniverse,
-}) {
-  if (universeCount > 1) return true;
-  return seriesInUniverse >= 2;
+///
+/// Headers disambiguate multiple IP groups in the same bucket. When only one
+/// IP group is visible (filters, search, or natural shelf shape), the label
+/// is redundant and cards render directly under the bucket header.
+bool shouldShowShelfUniverseHeader({required int universeCount}) {
+  return universeCount > 1;
 }
 
 // ---------------------------------------------------------------------------
@@ -125,12 +125,14 @@ final class ShelfFeedCard extends ShelfFeedItem {
     required this.progress,
     required this.figureStates,
     required this.atmosphere,
+    this.indentUnderIpHeader = true,
   });
 
   final ShelfSeries series;
   final SeriesProgressCounts progress;
   final Map<String, TrackedFigure> figureStates;
   final SeriesCompletionAtmosphere atmosphere;
+  final bool indentUnderIpHeader;
 }
 
 /// Returns a flat list of [ShelfFeedItem]s that drives a [SliverList.builder].
@@ -157,10 +159,8 @@ List<ShelfFeedItem> buildShelfFeedItems({
   final items = <ShelfFeedItem>[];
   for (var i = 0; i < sections.length; i++) {
     final section = sections[i];
-    final showHeader = shouldShowShelfUniverseHeader(
-      universeCount: universeCount,
-      seriesInUniverse: section.series.length,
-    );
+    final showHeader =
+        shouldShowShelfUniverseHeader(universeCount: universeCount);
 
     final collapseKey = collapseBucketKey == null
         ? section.key
@@ -198,6 +198,7 @@ List<ShelfFeedItem> buildShelfFeedItems({
             figureStates,
             shelfHarmony: shelfHarmony,
           ),
+          indentUnderIpHeader: showHeader,
         ));
       }
     }
@@ -247,12 +248,15 @@ Widget buildShelfFeedItemWidget(
       :final progress,
       :final figureStates,
       :final atmosphere,
+      :final indentUnderIpHeader,
     ) =>
       ColoredBox(
         color: sectionColor,
         child: Padding(
-          padding: const EdgeInsets.only(
-            left: FeedRhythm.collectionIpGroupIndent,
+          padding: EdgeInsets.only(
+            left: indentUnderIpHeader
+                ? FeedRhythm.collectionIpGroupIndent
+                : 0,
           ),
           child: SeriesShelfCard(
             key: ValueKey(series.id),
@@ -356,10 +360,8 @@ List<Widget> buildShelfSeriesFeed({
   final out = <Widget>[];
   for (var i = 0; i < sections.length; i++) {
     final section = sections[i];
-    final showHeader = shouldShowShelfUniverseHeader(
-      universeCount: universeCount,
-      seriesInUniverse: section.series.length,
-    );
+    final showHeader =
+        shouldShowShelfUniverseHeader(universeCount: universeCount);
 
     final sectionChildren = <Widget>[
       if (showHeader)
@@ -381,8 +383,8 @@ List<Widget> buildShelfSeriesFeed({
         const SizedBox(height: FeedRhythm.collectionUniverseSectionGap),
       for (final s in section.series)
         Padding(
-          padding: const EdgeInsets.only(
-            left: FeedRhythm.collectionIpGroupIndent,
+          padding: EdgeInsets.only(
+            left: showHeader ? FeedRhythm.collectionIpGroupIndent : 0,
           ),
           child: SeriesShelfCard(
             series: s,

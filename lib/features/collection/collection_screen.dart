@@ -544,34 +544,15 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                   ),
                 ),
               ),
-            if (inProgress.isEmpty &&
-                (!showCompletedSection ||
-                    !shelfUiPrefs.completedSectionExpanded))
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-                sliver: SliverToBoxAdapter(
-                  child: Text(
-                    showCompletedSection
-                        ? 'Everything in view is complete — expand Completed below.'
-                        : 'Nothing to show here yet.',
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-              ),
             if (inProgress.isNotEmpty &&
+                showCompletedSection &&
                 !shelfUiPrefs.inProgressSectionExpanded &&
-                (!showCompletedSection ||
-                    !shelfUiPrefs.completedSectionExpanded))
+                !shelfUiPrefs.completedSectionExpanded)
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
                 sliver: SliverToBoxAdapter(
                   child: Text(
-                    showCompletedSection
-                        ? 'Expand a section above to browse your shelf.'
-                        : 'Expand In progress above to browse your shelf.',
+                    'Expand a section above to browse your shelf.',
                     style: textTheme.bodyMedium?.copyWith(
                       color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
                       height: 1.4,

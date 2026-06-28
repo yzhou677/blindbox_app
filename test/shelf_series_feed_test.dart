@@ -51,33 +51,17 @@ void main() {
   });
 
   group('shouldShowShelfUniverseHeader', () {
-    test('shows header for singleton when multiple universes exist', () {
+    test('shows header when multiple IP groups are visible', () {
       expect(
-        shouldShowShelfUniverseHeader(
-          universeCount: 2,
-          seriesInUniverse: 1,
-        ),
+        shouldShowShelfUniverseHeader(universeCount: 2),
         isTrue,
       );
     });
 
-    test('hides header for single universe with one series', () {
+    test('hides header when only one IP group is visible', () {
       expect(
-        shouldShowShelfUniverseHeader(
-          universeCount: 1,
-          seriesInUniverse: 1,
-        ),
+        shouldShowShelfUniverseHeader(universeCount: 1),
         isFalse,
-      );
-    });
-
-    test('shows header for single universe with multiple series', () {
-      expect(
-        shouldShowShelfUniverseHeader(
-          universeCount: 1,
-          seriesInUniverse: 3,
-        ),
-        isTrue,
       );
     });
   });
@@ -210,10 +194,8 @@ void main() {
   );
 
   testWidgets(
-    'buildShelfFeedItems emits ShelfFeedGap instead of header for second '
-    'section when single-series universe with no peers',
+    'buildShelfFeedItems omits IP header for a single visible IP group',
     (tester) async {
-      // Single universe, 3 series → header + 3 cards (no gap needed).
       late List<ShelfFeedItem> items;
       await tester.pumpWidget(
         MaterialApp(
@@ -235,8 +217,12 @@ void main() {
         ),
       );
 
-      expect(items.whereType<ShelfFeedHeader>(), hasLength(1));
+      expect(items.whereType<ShelfFeedHeader>(), isEmpty);
       expect(items.whereType<ShelfFeedCard>(), hasLength(3));
+      expect(
+        items.whereType<ShelfFeedCard>().every((c) => !c.indentUnderIpHeader),
+        isTrue,
+      );
     },
   );
 
@@ -379,6 +365,7 @@ void main() {
       final puckySeries = [
         testShelfSeries(id: 'p1', taxonomyIpId: 'pucky', ipName: 'Pucky'),
         testShelfSeries(id: 'p2', taxonomyIpId: 'pucky', ipName: 'Pucky'),
+        testShelfSeries(id: 'd1', taxonomyIpId: 'disney', ipName: 'Disney'),
       ];
 
       late List<ShelfFeedItem> inProgressItems;
@@ -403,7 +390,7 @@ void main() {
               );
               completedItems = buildShelfFeedItems(
                 context: context,
-                series: puckySeries,
+                series: puckySeries.sublist(0, 2),
                 figureStates: const {},
                 collapseBucketKey: shelfCollapseBucketCompleted,
                 collapsedSectionKeys: collapsed,
@@ -414,7 +401,10 @@ void main() {
         ),
       );
 
-      expect(inProgressItems.whereType<ShelfFeedCard>(), isEmpty);
+      expect(
+        inProgressItems.whereType<ShelfFeedCard>().map((c) => c.series.id),
+        ['d1'],
+      );
       expect(completedItems.whereType<ShelfFeedCard>(), hasLength(2));
     },
   );
