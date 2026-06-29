@@ -2,6 +2,8 @@ import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
 import 'package:blindbox_app/features/collection/application/collection_shelf_ui_prefs_provider.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_browse.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_shelf_brand_facets.dart';
+import 'package:blindbox_app/features/collection/presentation/shelf_series_feed.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_progress_voice.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -77,6 +79,40 @@ Map<String, TrackedFigure> _ownedCount(ShelfSeries series, int count) {
         state: FigureCollectionState.owned,
       ),
   };
+}
+
+ShelfSeries _ipSeries({
+  required String id,
+  required String name,
+  required String ipId,
+  required String ipLabel,
+  int figureCount = 3,
+}) {
+  return testShelfSeries(
+    id: id,
+    name: name,
+    taxonomyIpId: ipId,
+    ipName: ipLabel,
+    figures: [
+      for (var i = 0; i < figureCount; i++)
+        ShelfFigure(
+          id: '${id}_fig_$i',
+          seriesId: id,
+          name: 'Figure $i',
+          rarity: 'Regular',
+          isSecret: false,
+          catalogFigureTemplateId: '${id}_tpl_$i',
+        ),
+    ],
+  );
+}
+
+/// Hierarchical sorts emit IP-consolidated order; feed grouping must not reorder.
+void expectSortMatchesGroupedFeedOrder(List<ShelfSeries> sorted) {
+  final regrouped = [
+    for (final section in groupShelfSeriesByUniverse(sorted)) ...section.series,
+  ];
+  expect(sorted.map((s) => s.id).toList(), regrouped.map((s) => s.id).toList());
 }
 
 void main() {
@@ -344,6 +380,438 @@ void main() {
 
       expect(sorted.map((s) => s.id).toList(), ['na', 'da', 'db']);
     });
+
+    test('alphabetical is case-insensitive for IP and series names', () {
+      final sorted = sortShelfSeriesForDisplay(
+        [
+          _ipSeries(id: 'z', name: 'zebra', ipId: 'zeta', ipLabel: 'ZETA'),
+          _ipSeries(id: 'a', name: 'Alpha', ipId: 'alpha', ipLabel: 'alpha'),
+        ],
+        CollectionShelfSort.alphabetical,
+        states,
+      );
+      expect(sorted.map((s) => s.id).toList(), ['a', 'z']);
+    });
+
+    test('alphabetical tie-breaks equal series names by shelf id', () {
+      final sorted = sortShelfSeriesForDisplay(
+        [
+          _ipSeries(
+            id: 'z_id',
+            name: 'Same Name',
+            ipId: 'solo',
+            ipLabel: 'Solo',
+          ),
+          _ipSeries(
+            id: 'a_id',
+            name: 'Same Name',
+            ipId: 'solo',
+            ipLabel: 'Solo',
+          ),
+        ],
+        CollectionShelfSort.alphabetical,
+        states,
+      );
+      expect(sorted.map((s) => s.id).toList(), ['a_id', 'z_id']);
+    });
+
+    test('alphabetical tie-breaks equal IP labels by group key', () {
+      final sorted = sortShelfSeriesForDisplay(
+        [
+          _ipSeries(
+            id: 's2',
+            name: 'Series B',
+            ipId: 'zeta',
+            ipLabel: 'Twin',
+          ),
+          _ipSeries(
+            id: 's1',
+            name: 'Series A',
+            ipId: 'alpha',
+            ipLabel: 'Twin',
+          ),
+        ],
+        CollectionShelfSort.alphabetical,
+        states,
+      );
+      expect(sorted.map((s) => s.id).toList(), ['s1', 's2']);
+    });
+
+    test('figureCount tie-breaks equal IP totals by IP label A-Z', () {
+      final sorted = sortShelfSeriesForDisplay(
+        [
+          _ipSeries(
+            id: 'z1',
+            name: 'Z Series',
+            ipId: 'zeta',
+            ipLabel: 'Zeta',
+            figureCount: 5,
+          ),
+          _ipSeries(
+            id: 'a1',
+            name: 'A Series',
+            ipId: 'alpha',
+            ipLabel: 'Alpha',
+            figureCount: 5,
+          ),
+        ],
+        CollectionShelfSort.figureCount,
+        states,
+      );
+      expect(sorted.map((s) => s.id).toList(), ['a1', 'z1']);
+    });
+
+    test('figureCount tie-breaks equal series counts by name A-Z', () {
+      final sorted = sortShelfSeriesForDisplay(
+        [
+          _ipSeries(
+            id: 'b',
+            name: 'Bravo',
+            ipId: 'solo',
+            ipLabel: 'Solo',
+            figureCount: 4,
+          ),
+          _ipSeries(
+            id: 'a',
+            name: 'Alpha',
+            ipId: 'solo',
+            ipLabel: 'Solo',
+            figureCount: 4,
+          ),
+        ],
+        CollectionShelfSort.figureCount,
+        states,
+      );
+      expect(sorted.map((s) => s.id).toList(), ['a', 'b']);
+    });
+
+    test('figureCount tie-breaks equal counts and names by shelf id', () {
+      final sorted = sortShelfSeriesForDisplay(
+        [
+          _ipSeries(
+            id: 'z_id',
+            name: 'Same',
+            ipId: 'solo',
+            ipLabel: 'Solo',
+            figureCount: 4,
+          ),
+          _ipSeries(
+            id: 'a_id',
+            name: 'Same',
+            ipId: 'solo',
+            ipLabel: 'Solo',
+            figureCount: 4,
+          ),
+        ],
+        CollectionShelfSort.figureCount,
+        states,
+      );
+      expect(sorted.map((s) => s.id).toList(), ['a_id', 'z_id']);
+    });
+
+    test('completion tie-breaks equal series ratios by name A-Z', () {
+      final a = _ipSeries(
+        id: 'b',
+        name: 'Bravo',
+        ipId: 'solo',
+        ipLabel: 'Solo',
+        figureCount: 4,
+      );
+      final b = _ipSeries(
+        id: 'a',
+        name: 'Alpha',
+        ipId: 'solo',
+        ipLabel: 'Solo',
+        figureCount: 4,
+      );
+      final owned = {
+        ..._ownedCount(a, 2),
+        ..._ownedCount(b, 2),
+      };
+      final sorted = sortShelfSeriesForDisplay(
+        [a, b],
+        CollectionShelfSort.completion,
+        owned,
+      );
+      expect(sorted.map((s) => s.id).toList(), ['a', 'b']);
+    });
+
+    test('completion tie-breaks equal ratios and names by shelf id', () {
+      final z = _ipSeries(
+        id: 'z_id',
+        name: 'Same',
+        ipId: 'solo',
+        ipLabel: 'Solo',
+        figureCount: 4,
+      );
+      final a = _ipSeries(
+        id: 'a_id',
+        name: 'Same',
+        ipId: 'solo',
+        ipLabel: 'Solo',
+        figureCount: 4,
+      );
+      final owned = {
+        ..._ownedCount(z, 2),
+        ..._ownedCount(a, 2),
+      };
+      final sorted = sortShelfSeriesForDisplay(
+        [z, a],
+        CollectionShelfSort.completion,
+        owned,
+      );
+      expect(sorted.map((s) => s.id).toList(), ['a_id', 'z_id']);
+    });
+
+    test('completion sorts zero-figure series after in-progress rows', () {
+      final empty = testShelfSeries(
+        id: 'empty',
+        name: 'Empty',
+        taxonomyIpId: 'solo',
+        ipName: 'Solo',
+        figures: const [],
+      );
+      final partial = _ipSeries(
+        id: 'partial',
+        name: 'Partial',
+        ipId: 'solo',
+        ipLabel: 'Solo',
+        figureCount: 4,
+      );
+      final sorted = sortShelfSeriesForDisplay(
+        [empty, partial],
+        CollectionShelfSort.completion,
+        _ownedCount(partial, 2),
+      );
+      expect(sorted.map((s) => s.id).toList(), ['partial', 'empty']);
+    });
+
+    test('completion tie-breaks equal IP weighted ratios by IP label A-Z', () {
+      final alpha = _ipSeries(
+        id: 'a1',
+        name: 'A One',
+        ipId: 'alpha',
+        ipLabel: 'Alpha',
+        figureCount: 4,
+      );
+      final zeta = _ipSeries(
+        id: 'z1',
+        name: 'Z One',
+        ipId: 'zeta',
+        ipLabel: 'Zeta',
+        figureCount: 4,
+      );
+      final owned = {
+        ..._ownedCount(alpha, 2),
+        ..._ownedCount(zeta, 2),
+      };
+      final sorted = sortShelfSeriesForDisplay(
+        [zeta, alpha],
+        CollectionShelfSort.completion,
+        owned,
+      );
+      expect(sorted.map((s) => s.id).toList(), ['a1', 'z1']);
+    });
+
+    test('empty input returns empty for every sort mode', () {
+      const states = <String, TrackedFigure>{};
+      for (final sort in CollectionShelfSort.values) {
+        expect(
+          sortShelfSeriesForDisplay(const [], sort, states),
+          isEmpty,
+        );
+      }
+    });
+  });
+
+  group('hierarchical sort feed faithfulness', () {
+    const states = <String, TrackedFigure>{};
+
+    test('alphabetical order matches feed grouping order', () {
+      final sorted = sortShelfSeriesForDisplay(
+        [
+          _ipSeries(id: 'da', name: 'Disney A', ipId: 'disney', ipLabel: 'Disney'),
+          _ipSeries(id: 'na', name: 'Nommi A', ipId: 'nommi', ipLabel: 'Nommi'),
+          _ipSeries(id: 'db', name: 'Disney B', ipId: 'disney', ipLabel: 'Disney'),
+        ],
+        CollectionShelfSort.alphabetical,
+        states,
+      );
+      expectSortMatchesGroupedFeedOrder(sorted);
+    });
+
+    test('figureCount order matches feed grouping order', () {
+      final sorted = sortShelfSeriesForDisplay(
+        [
+          _ipSeries(
+            id: 'da',
+            name: 'Disney A',
+            ipId: 'disney',
+            ipLabel: 'Disney',
+            figureCount: 20,
+          ),
+          _ipSeries(
+            id: 'na',
+            name: 'Nommi A',
+            ipId: 'nommi',
+            ipLabel: 'Nommi',
+            figureCount: 18,
+          ),
+          _ipSeries(
+            id: 'db',
+            name: 'Disney B',
+            ipId: 'disney',
+            ipLabel: 'Disney',
+            figureCount: 17,
+          ),
+        ],
+        CollectionShelfSort.figureCount,
+        states,
+      );
+      expectSortMatchesGroupedFeedOrder(sorted);
+      expect(sorted.map((s) => s.id).toList(), ['da', 'db', 'na']);
+    });
+
+    test('completion order matches feed grouping order', () {
+      final disneyDone = _ipSeries(
+        id: 'da',
+        name: 'Disney Done',
+        ipId: 'disney',
+        ipLabel: 'Disney',
+        figureCount: 10,
+      );
+      final disneyOpen = _ipSeries(
+        id: 'db',
+        name: 'Disney Open',
+        ipId: 'disney',
+        ipLabel: 'Disney',
+        figureCount: 10,
+      );
+      final nommiAlmost = _ipSeries(
+        id: 'na',
+        name: 'Nommi Almost',
+        ipId: 'nommi',
+        ipLabel: 'Nommi',
+        figureCount: 10,
+      );
+      final owned = {
+        ..._ownedAll(disneyDone),
+        ..._ownedCount(nommiAlmost, 9),
+      };
+      final sorted = sortShelfSeriesForDisplay(
+        [disneyDone, nommiAlmost, disneyOpen],
+        CollectionShelfSort.completion,
+        owned,
+      );
+      expectSortMatchesGroupedFeedOrder(sorted);
+    });
+  });
+
+  group('browse pipeline sort interactions', () {
+    test('partition preserves shelf order within each bucket', () {
+      final complete = _series(id: 'done', name: 'Done', figureCount: 2);
+      final openNew = _series(id: 'open_new', name: 'Open New', figureCount: 2);
+      final openOld = _series(id: 'open_old', name: 'Open Old', figureCount: 2);
+      final states = {..._ownedAll(complete)};
+      final shelf = [openNew, complete, openOld];
+
+      final (inProgress, completed) = partitionShelfSeries(shelf, states);
+      expect(inProgress.map((s) => s.id).toList(), ['open_new', 'open_old']);
+      expect(completed.map((s) => s.id).toList(), ['done']);
+
+      final display = sortShelfSeriesForDisplay(
+        inProgress,
+        CollectionShelfSort.recentlyAdded,
+        states,
+      );
+      expect(display.map((s) => s.id).toList(), ['open_new', 'open_old']);
+    });
+
+    test('brand filter then figureCount keeps hierarchical order', () {
+      final pop = testShelfSeries(
+        id: 'pop',
+        name: 'Pop Series',
+        brand: 'POP MART',
+        taxonomyBrandId: 'pop_mart',
+        taxonomyIpId: 'disney',
+        ipName: 'Disney',
+        figures: [
+          for (var i = 0; i < 10; i++)
+            ShelfFigure(
+              id: 'pop_fig_$i',
+              seriesId: 'pop',
+              name: 'F $i',
+              rarity: 'Regular',
+              isSecret: false,
+              catalogFigureTemplateId: 'pop_tpl_$i',
+            ),
+        ],
+      );
+      final other = testShelfSeries(
+        id: 'other',
+        name: 'Other Brand',
+        brand: 'Other Co',
+        taxonomyIpId: 'nommi',
+        ipName: 'Nommi',
+        figures: [
+          for (var i = 0; i < 20; i++)
+            ShelfFigure(
+              id: 'other_fig_$i',
+              seriesId: 'other',
+              name: 'F $i',
+              rarity: 'Regular',
+              isSecret: false,
+              catalogFigureTemplateId: 'other_tpl_$i',
+            ),
+        ],
+      );
+      const states = <String, TrackedFigure>{};
+      final shelf = [other, pop];
+      final brandFiltered = shelfSeriesVisibleForBrandFilter(
+        shelf,
+        collectionBrandFilterKeyForSeries(pop),
+      );
+      final sorted = sortShelfSeriesForDisplay(
+        brandFiltered,
+        CollectionShelfSort.figureCount,
+        states,
+      );
+      expect(sorted.map((s) => s.id).toList(), ['pop']);
+    });
+
+    test('figureCount order survives search filter and clear', () {
+      final sorted = sortShelfSeriesForDisplay(
+        [
+          _ipSeries(
+            id: 'da',
+            name: 'Disney A',
+            ipId: 'disney',
+            ipLabel: 'Disney',
+            figureCount: 20,
+          ),
+          _ipSeries(
+            id: 'na',
+            name: 'Nommi A',
+            ipId: 'nommi',
+            ipLabel: 'Nommi',
+            figureCount: 18,
+          ),
+          _ipSeries(
+            id: 'db',
+            name: 'Disney B',
+            ipId: 'disney',
+            ipLabel: 'Disney',
+            figureCount: 17,
+          ),
+        ],
+        CollectionShelfSort.figureCount,
+        const {},
+      );
+      final filtered = filterShelfSeriesBySearch(sorted, 'Disney');
+      expect(filtered.map((s) => s.id).toList(), ['da', 'db']);
+      final restored = filterShelfSeriesBySearch(sorted, '');
+      expect(restored.map((s) => s.id).toList(), ['da', 'db', 'na']);
+    });
   });
 
   group('search preserves sort', () {
@@ -503,6 +971,47 @@ void main() {
             display.map((s) => s.id).toList(),
             ['newest', 'middle', 'oldest'],
           );
+        }
+      }
+    });
+
+    test('recentlyAdded preserves flat order when IPs interleave on shelf', () {
+      const states = <String, TrackedFigure>{};
+      final shelf = [
+        _ipSeries(id: 'n2', name: 'Nommi B', ipId: 'nommi', ipLabel: 'Nommi'),
+        _ipSeries(id: 'd1', name: 'Disney A', ipId: 'disney', ipLabel: 'Disney'),
+        _ipSeries(id: 'n1', name: 'Nommi A', ipId: 'nommi', ipLabel: 'Nommi'),
+      ];
+      final sorted = sortShelfSeriesForDisplay(
+        shelf,
+        CollectionShelfSort.recentlyAdded,
+        states,
+      );
+      expect(sorted.map((s) => s.id).toList(), ['n2', 'd1', 'n1']);
+    });
+
+    test('recentlyAdded restores shelf order across repeated sort cycles', () {
+      final shelf = [
+        _series(id: 'newest', name: 'Newest', figureCount: 4),
+        _series(id: 'middle', name: 'Middle', figureCount: 2),
+        _series(id: 'oldest', name: 'Oldest', figureCount: 6),
+      ];
+      const states = <String, TrackedFigure>{};
+      const expected = ['newest', 'middle', 'oldest'];
+      const cycle = [
+        CollectionShelfSort.figureCount,
+        CollectionShelfSort.alphabetical,
+        CollectionShelfSort.completion,
+        CollectionShelfSort.recentlyAdded,
+      ];
+
+      for (var i = 0; i < 3; i++) {
+        final (inProgress, _) = partitionShelfSeries(shelf, states);
+        for (final sort in cycle) {
+          final display = sortShelfSeriesForDisplay(inProgress, sort, states);
+          if (sort == CollectionShelfSort.recentlyAdded) {
+            expect(display.map((s) => s.id).toList(), expected);
+          }
         }
       }
     });

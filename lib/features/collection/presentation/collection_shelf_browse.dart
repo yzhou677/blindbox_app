@@ -120,8 +120,18 @@ double _ipWeightedCompletion(
   return owned / total;
 }
 
-int _compareIpSectionLabels(ShelfUniverseSection a, ShelfUniverseSection b) =>
-    a.label.toLowerCase().compareTo(b.label.toLowerCase());
+int _compareIpSectionLabels(ShelfUniverseSection a, ShelfUniverseSection b) {
+  final labelCmp =
+      a.label.toLowerCase().compareTo(b.label.toLowerCase());
+  if (labelCmp != 0) return labelCmp;
+  return a.key.compareTo(b.key);
+}
+
+int _compareShelfSeriesByNameThenId(ShelfSeries a, ShelfSeries b) {
+  final nameCmp = a.name.toLowerCase().compareTo(b.name.toLowerCase());
+  if (nameCmp != 0) return nameCmp;
+  return a.id.compareTo(b.id);
+}
 
 double _seriesCompletionRatio(
   ShelfSeries series,
@@ -133,13 +143,21 @@ double _seriesCompletionRatio(
 
 /// Display order for one bucket (In Progress or Completed) after filter/search.
 ///
-/// Collection browsing is hierarchical: Bucket → IP → Series. Every sort mode
-/// orders IP groups first, then series within each IP, so the grouped shelf
-/// UI matches the selected sort. The feed builder only renders this order.
+/// The Collection page is a hierarchical browser, not a flat ranked list.
+///
+/// ```text
+/// Bucket → IP → Series
+/// ```
+///
+/// Every sort mode defines an IP aggregate and a series aggregate (see
+/// `docs/COLLECTION_ARCHITECTURE_NOTES.md` → Collection sorting reference).
+/// The feed builder only renders that order.
 ///
 /// [CollectionShelfSort.recentlyAdded] preserves shelf traversal order within
-/// the bucket (IP blocks follow encounter order). See
-/// `docs/COLLECTION_ARCHITECTURE_NOTES.md` → Hierarchical shelf sorting.
+/// the bucket (IP blocks follow encounter order when regrouped for display).
+///
+/// Future sort modes should follow this model unless Product intentionally
+/// introduces a flat ranked list.
 List<ShelfSeries> sortShelfSeriesForDisplay(
   List<ShelfSeries> series,
   CollectionShelfSort sort,
@@ -151,15 +169,11 @@ List<ShelfSeries> sortShelfSeriesForDisplay(
     case CollectionShelfSort.alphabetical:
       final sectionOrder = List<ShelfUniverseSection>.from(
         groupShelfSeriesByUniverse(series),
-      )..sort(
-          (a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()),
-        );
+      )..sort(_compareIpSectionLabels);
       final ordered = <ShelfSeries>[];
       for (final section in sectionOrder) {
         final copy = List<ShelfSeries>.from(section.series)
-          ..sort(
-            (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
-          );
+          ..sort(_compareShelfSeriesByNameThenId);
         ordered.addAll(copy);
       }
       return ordered;
@@ -178,7 +192,7 @@ List<ShelfSeries> sortShelfSeriesForDisplay(
           ..sort((a, b) {
             final cmp = b.figureCount.compareTo(a.figureCount);
             if (cmp != 0) return cmp;
-            return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+            return _compareShelfSeriesByNameThenId(a, b);
           });
         byFigureCount.addAll(copy);
       }
@@ -199,7 +213,7 @@ List<ShelfSeries> sortShelfSeriesForDisplay(
             final cmp = _seriesCompletionRatio(b, states)
                 .compareTo(_seriesCompletionRatio(a, states));
             if (cmp != 0) return cmp;
-            return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+            return _compareShelfSeriesByNameThenId(a, b);
           });
         byCompletion.addAll(copy);
       }
