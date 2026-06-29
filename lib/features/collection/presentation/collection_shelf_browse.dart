@@ -33,17 +33,23 @@ extension CollectionShelfSortLabels on CollectionShelfSort {
 /// when the bundle has not loaded.
 ///
 /// Empty query returns [series] unchanged.
+///
+/// Prefer [catalogSearch] when the caller already holds a service for the
+/// current bundle — avoids reconstructing indexes on every rebuild.
 List<ShelfSeries> filterShelfSeriesBySearch(
   List<ShelfSeries> series,
   String query, {
   CatalogSeedBundle? catalog,
+  CatalogSearchService? catalogSearch,
 }) {
   final normalizedQuery = normalizeCatalogSearchQuery(query);
   if (normalizedQuery.isEmpty) return series;
 
-  final catalogSeriesIds = catalog != null
-      ? CatalogSearchService(catalog).matchingSeriesIds(query)
-      : const <String>{};
+  final catalogSeriesIds = catalogSearch != null
+      ? catalogSearch.matchingSeriesIds(query)
+      : catalog != null
+          ? CatalogSearchService(catalog).matchingSeriesIds(query)
+          : const <String>{};
 
   return [
     for (final row in series)
@@ -73,25 +79,34 @@ bool _shelfDisplayFieldsMatch(ShelfSeries series, String normalizedQuery) {
   return false;
 }
 
+SeriesProgressCounts _seriesProgress(
+  ShelfSeries series,
+  Map<String, TrackedFigure> states, {
+  ShelfBrowseProgressLookup? progress,
+}) =>
+    progress?.forSeries(series) ?? progressForSeries(series, states);
+
 /// Whether every figure in [series] is owned — matches shelf card completion rule.
 bool isShelfSeriesComplete(
   ShelfSeries series,
-  Map<String, TrackedFigure> states,
-) {
+  Map<String, TrackedFigure> states, {
+  ShelfBrowseProgressLookup? progress,
+}) {
   final total = series.figureCount;
   if (total <= 0) return false;
-  return progressForSeries(series, states).owned >= total;
+  return _seriesProgress(series, states, progress: progress).owned >= total;
 }
 
 /// Single-pass split into in-progress and completed buckets.
 (List<ShelfSeries> inProgress, List<ShelfSeries> completed) partitionShelfSeries(
   List<ShelfSeries> series,
-  Map<String, TrackedFigure> states,
-) {
+  Map<String, TrackedFigure> states, {
+  ShelfBrowseProgressLookup? progress,
+}) {
   final inProgress = <ShelfSeries>[];
   final completed = <ShelfSeries>[];
   for (final row in series) {
-    if (isShelfSeriesComplete(row, states)) {
+    if (isShelfSeriesComplete(row, states, progress: progress)) {
       completed.add(row);
     } else {
       inProgress.add(row);
@@ -106,15 +121,16 @@ int _ipFigureCountTotal(ShelfUniverseSection section) =>
 /// Owned figures / total figure slots across every series in the IP group.
 double _ipWeightedCompletion(
   ShelfUniverseSection section,
-  Map<String, TrackedFigure> states,
-) {
+  Map<String, TrackedFigure> states, {
+  ShelfBrowseProgressLookup? progress,
+}) {
   var owned = 0;
   var total = 0;
   for (final row in section.series) {
     final slots = row.figureCount;
     if (slots <= 0) continue;
     total += slots;
-    owned += progressForSeries(row, states).owned;
+    owned += _seriesProgress(row, states, progress: progress).owned;
   }
   if (total <= 0) return 0;
   return owned / total;
@@ -135,10 +151,11 @@ int _compareShelfSeriesByNameThenId(ShelfSeries a, ShelfSeries b) {
 
 double _seriesCompletionRatio(
   ShelfSeries series,
-  Map<String, TrackedFigure> states,
-) {
+  Map<String, TrackedFigure> states, {
+  ShelfBrowseProgressLookup? progress,
+}) {
   final total = series.figureCount;
-  return progressForSeries(series, states).completion(total);
+  return _seriesProgress(series, states, progress: progress).completion(total);
 }
 
 /// Display order for one bucket (In Progress or Completed) after filter/search.
@@ -161,8 +178,9 @@ double _seriesCompletionRatio(
 List<ShelfSeries> sortShelfSeriesForDisplay(
   List<ShelfSeries> series,
   CollectionShelfSort sort,
-  Map<String, TrackedFigure> states,
-) {
+  Map<String, TrackedFigure> states, {
+  ShelfBrowseProgressLookup? progress,
+}) {
   switch (sort) {
     case CollectionShelfSort.recentlyAdded:
       return series;
@@ -201,8 +219,8 @@ List<ShelfSeries> sortShelfSeriesForDisplay(
       final sectionOrder = List<ShelfUniverseSection>.from(
         groupShelfSeriesByUniverse(series),
       )..sort((a, b) {
-          final cmp = _ipWeightedCompletion(b, states)
-              .compareTo(_ipWeightedCompletion(a, states));
+          final cmp = _ipWeightedCompletion(b, states, progress: progress)
+              .compareTo(_ipWeightedCompletion(a, states, progress: progress));
           if (cmp != 0) return cmp;
           return _compareIpSectionLabels(a, b);
         });
@@ -210,8 +228,8 @@ List<ShelfSeries> sortShelfSeriesForDisplay(
       for (final section in sectionOrder) {
         final copy = List<ShelfSeries>.from(section.series)
           ..sort((a, b) {
-            final cmp = _seriesCompletionRatio(b, states)
-                .compareTo(_seriesCompletionRatio(a, states));
+            final cmp = _seriesCompletionRatio(b, states, progress: progress)
+                .compareTo(_seriesCompletionRatio(a, states, progress: progress));
             if (cmp != 0) return cmp;
             return _compareShelfSeriesByNameThenId(a, b);
           });

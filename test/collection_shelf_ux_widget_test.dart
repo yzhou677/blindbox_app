@@ -191,6 +191,7 @@ void main() {
       await _scrollToTop(tester);
       await tester.enterText(_searchField, 'Apple');
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 150));
       await _scrollShelfIntoView(tester);
 
       expect(find.text('Alpha Apple'), findsOneWidget);
@@ -211,6 +212,7 @@ void main() {
       await _scrollToTop(tester);
       await tester.enterText(_searchField, 'NoMatchQuery');
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 150));
       await _scrollShelfIntoView(tester);
 
       expect(find.text('No series match your search.'), findsOneWidget);

@@ -280,6 +280,21 @@ SeriesProgressCounts progressForSeries(
   return SeriesProgressCounts(owned: o, wishlist: w, missing: m);
 }
 
+/// Per-pass progress cache for shelf browse (partition → sort → feed).
+///
+/// Lives only for one [CollectionScreen.build] — not persisted across rebuilds.
+final class ShelfBrowseProgressLookup {
+  ShelfBrowseProgressLookup(this._states);
+
+  final Map<String, TrackedFigure> _states;
+  final Map<String, SeriesProgressCounts> _cache = {};
+
+  SeriesProgressCounts forSeries(ShelfSeries series) => _cache.putIfAbsent(
+        series.id,
+        () => progressForSeries(series, _states),
+      );
+}
+
 /// Deep copy a [CatalogSeries] template onto the shelf with fresh instance ids.
 ShelfSeries cloneCatalogSeriesOntoShelf(
   CatalogSeries template,

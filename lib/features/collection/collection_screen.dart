@@ -17,7 +17,10 @@ import 'package:blindbox_app/features/collection/insights/application/collector_
 import 'package:blindbox_app/features/collection/presentation/shelf_editorial_voice.dart';
 import 'package:blindbox_app/features/collection/application/collection_shelf_ui_prefs_provider.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
+import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+import 'package:blindbox_app/features/catalog/search/catalog_search_service.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_browse.dart';
+import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_empty_state.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_summary_section.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_warm_start_banner.dart';
@@ -38,6 +41,8 @@ class CollectionScreen extends ConsumerStatefulWidget {
 }
 
 class _CollectionScreenState extends ConsumerState<CollectionScreen> {
+  static const _searchDebounce = Duration(milliseconds: 125);
+
   /// Presentation-only Collection shelf brand facet.
   String _brandFilterId = collectionAnyBrandFilterId;
 
@@ -47,6 +52,13 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   VoidCallback? _routerListener;
+  Timer? _searchDebounceTimer;
+
+  /// Debounced query for the browse pipeline — text field updates immediately.
+  String _debouncedSearchQuery = '';
+
+  CatalogSeedBundle? _catalogSearchBundle;
+  CatalogSearchService? _catalogSearchService;
 
   @override
   void initState() {
@@ -66,6 +78,32 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       duration: const Duration(milliseconds: 320),
       curve: Curves.easeOutCubic,
     );
+  }
+
+  void _onSearchChanged(String value) {
+    setState(() {});
+    _searchDebounceTimer?.cancel();
+    if (normalizeCatalogSearchQuery(value).isEmpty) {
+      if (_debouncedSearchQuery.isNotEmpty) {
+        setState(() => _debouncedSearchQuery = '');
+      }
+      return;
+    }
+    _searchDebounceTimer = Timer(_searchDebounce, () {
+      if (!mounted) return;
+      final next = _searchController.text;
+      if (next == _debouncedSearchQuery) return;
+      setState(() => _debouncedSearchQuery = next);
+    });
+  }
+
+  CatalogSearchService? _catalogSearchServiceFor(CatalogSeedBundle? catalog) {
+    if (catalog == null) return null;
+    if (!identical(catalog, _catalogSearchBundle)) {
+      _catalogSearchBundle = catalog;
+      _catalogSearchService = CatalogSearchService(catalog);
+    }
+    return _catalogSearchService;
   }
 
   @override
@@ -95,6 +133,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
 
   @override
   void dispose() {
+    _searchDebounceTimer?.cancel();
     ShellTabReselectBus.instance.reselectedBranch.removeListener(_onTabReselected);
     _searchController.dispose();
     _scrollController.dispose();
@@ -249,24 +288,29 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     // Browse pipeline: brand → IP → search → partition → sort each bucket.
     final shelfUiPrefs = ref.watch(collectionShelfUiPrefsProvider);
     final catalog = ref.watch(catalogBundleProvider).valueOrNull;
+    final progressLookup = ShelfBrowseProgressLookup(snap.figureStates);
     final searched = filterShelfSeriesBySearch(
       visible,
-      _searchController.text,
+      _debouncedSearchQuery,
       catalog: catalog,
+      catalogSearch: _catalogSearchServiceFor(catalog),
     );
     final (inProgressRaw, completedRaw) = partitionShelfSeries(
       searched,
       snap.figureStates,
+      progress: progressLookup,
     );
     final inProgress = sortShelfSeriesForDisplay(
       inProgressRaw,
       shelfUiPrefs.sort,
       snap.figureStates,
+      progress: progressLookup,
     );
     final completed = sortShelfSeriesForDisplay(
       completedRaw,
       shelfUiPrefs.sort,
       snap.figureStates,
+      progress: progressLookup,
     );
     final collapsedIpKeys = shelfUiPrefs.collapsedIpSectionKeys;
     final inProgressFeed = buildShelfFeedItems(
@@ -276,6 +320,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       profile: profile,
       collapseBucketKey: shelfCollapseBucketInProgress,
       collapsedSectionKeys: collapsedIpKeys,
+      progress: progressLookup,
     );
     final completedFeed = buildShelfFeedItems(
       context: context,
@@ -284,6 +329,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       profile: profile,
       collapseBucketKey: shelfCollapseBucketCompleted,
       collapsedSectionKeys: collapsedIpKeys,
+      progress: progressLookup,
     );
     final brandFilterExhausted = brandFiltered.isEmpty;
     final ipFilterExhausted = !brandFilterExhausted && visible.isEmpty;
@@ -350,13 +396,18 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               child: AppSearchField(
                 controller: _searchController,
                 hintText: 'Search your collection…',
-                onChanged: (_) => setState(() {}),
+                onChanged: _onSearchChanged,
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
                         icon: const Icon(Icons.close_rounded, size: 20),
                         onPressed: () {
+                          _searchDebounceTimer?.cancel();
                           _searchController.clear();
-                          setState(() {});
+                          if (_debouncedSearchQuery.isNotEmpty) {
+                            setState(() => _debouncedSearchQuery = '');
+                          } else {
+                            setState(() {});
+                          }
                         },
                       )
                     : null,

@@ -147,6 +147,7 @@ List<ShelfFeedItem> buildShelfFeedItems({
   ShelfEmotionalProfile? profile,
   String? collapseBucketKey,
   Set<String> collapsedSectionKeys = const {},
+  ShelfBrowseProgressLookup? progress,
 }) {
   if (series.isEmpty) return const [];
 
@@ -191,12 +192,13 @@ List<ShelfFeedItem> buildShelfFeedItems({
         items.add(ShelfFeedCard(
           sectionColor: sectionColor,
           series: s,
-          progress: progressForSeries(s, figureStates),
+          progress: progress?.forSeries(s) ?? progressForSeries(s, figureStates),
           figureStates: figureStates,
           atmosphere: atmosphereForSeries(
             s,
             figureStates,
             shelfHarmony: shelfHarmony,
+            progress: progress,
           ),
           indentUnderIpHeader: showHeader,
         ));
