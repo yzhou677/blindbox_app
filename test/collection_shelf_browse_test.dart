@@ -225,7 +225,7 @@ void main() {
       expect(sorted.map((s) => s.id).toList(), ['a', 'b', 'c']);
     });
 
-    test('figureCount sorts descending', () {
+    test('figureCount sorts descending within a single IP', () {
       final sorted = sortShelfSeriesForDisplay(
         series,
         CollectionShelfSort.figureCount,
@@ -234,7 +234,45 @@ void main() {
       expect(sorted.map((s) => s.id).toList(), ['b', 'c', 'a']);
     });
 
-    test('completion sorts by ratio descending', () {
+    test('figureCount sorts IP groups by summed figure count then series', () {
+      ShelfSeries withCount({
+        required String id,
+        required String name,
+        required String ipId,
+        required int count,
+      }) {
+        return testShelfSeries(
+          id: id,
+          name: name,
+          taxonomyIpId: ipId,
+          ipName: ipId == 'disney' ? 'Disney' : 'Nommi',
+          figures: [
+            for (var i = 0; i < count; i++)
+              ShelfFigure(
+                id: '${id}_fig_$i',
+                seriesId: id,
+                name: 'Figure $i',
+                rarity: 'Regular',
+                isSecret: false,
+                catalogFigureTemplateId: '${id}_tpl_$i',
+              ),
+          ],
+        );
+      }
+
+      final sorted = sortShelfSeriesForDisplay(
+        [
+          withCount(id: 'da', name: 'Disney A', ipId: 'disney', count: 20),
+          withCount(id: 'na', name: 'Nommi A', ipId: 'nommi', count: 18),
+          withCount(id: 'db', name: 'Disney B', ipId: 'disney', count: 17),
+        ],
+        CollectionShelfSort.figureCount,
+        states,
+      );
+      expect(sorted.map((s) => s.id).toList(), ['da', 'db', 'na']);
+    });
+
+    test('completion sorts by ratio descending within a single IP', () {
       final s1 = _series(id: 's1', name: 'One', figureCount: 4);
       final s2 = _series(id: 's2', name: 'Two', figureCount: 4);
       final states = {
@@ -247,6 +285,64 @@ void main() {
         states,
       );
       expect(sorted.first.id, 's1');
+    });
+
+    test('completion sorts IP groups by weighted ratio then series', () {
+      ShelfSeries withCount({
+        required String id,
+        required String name,
+        required String ipId,
+        required int count,
+      }) {
+        return testShelfSeries(
+          id: id,
+          name: name,
+          taxonomyIpId: ipId,
+          ipName: ipId == 'disney' ? 'Disney' : 'Nommi',
+          figures: [
+            for (var i = 0; i < count; i++)
+              ShelfFigure(
+                id: '${id}_fig_$i',
+                seriesId: id,
+                name: 'Figure $i',
+                rarity: 'Regular',
+                isSecret: false,
+                catalogFigureTemplateId: '${id}_tpl_$i',
+              ),
+          ],
+        );
+      }
+
+      final disneyDone = withCount(
+        id: 'da',
+        name: 'Disney Done',
+        ipId: 'disney',
+        count: 10,
+      );
+      final disneyOpen = withCount(
+        id: 'db',
+        name: 'Disney Open',
+        ipId: 'disney',
+        count: 10,
+      );
+      final nommiAlmost = withCount(
+        id: 'na',
+        name: 'Nommi Almost',
+        ipId: 'nommi',
+        count: 10,
+      );
+      final states = {
+        ..._ownedAll(disneyDone),
+        ..._ownedCount(nommiAlmost, 9),
+      };
+
+      final sorted = sortShelfSeriesForDisplay(
+        [disneyDone, nommiAlmost, disneyOpen],
+        CollectionShelfSort.completion,
+        states,
+      );
+
+      expect(sorted.map((s) => s.id).toList(), ['na', 'da', 'db']);
     });
   });
 

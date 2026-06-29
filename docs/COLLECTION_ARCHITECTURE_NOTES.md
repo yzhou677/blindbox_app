@@ -23,6 +23,7 @@ Core functionality is complete (see also [`ARCHITECTURE_NOTES.md`](ARCHITECTURE_
 * Custom figure support (create, edit, **add figure** from edit sheet)
 * Brand filter
 * IP filter
+* Shelf browse (search, sort, collapsible buckets)
 * Collection insights
 * Collector identity
 * Journey system
@@ -145,6 +146,32 @@ The application should not attempt to second-guess or override user intent.
 Catalog data remains authoritative.
 
 Custom data remains user-controlled.
+
+---
+
+### Hierarchical shelf sorting
+
+Collection sorting is hierarchical.
+
+The Collection page is organized as:
+
+```
+Collection
+    ↓
+Bucket (In Progress / Completed)
+        ↓
+IP
+            ↓
+Series
+```
+
+All sort modes preserve this hierarchy: determine the order of **IP groups** first, then the order of **series within each IP**. The feed builder renders that order; it does not re-rank.
+
+This is a deliberate product decision. A global flat series ranking would fight the grouped shelf UI and can make on-screen order disagree with the selected sort.
+
+**New sort modes** (for example Market Value, Estimated Value, Release Date, Last Updated) should follow the same model unless there is an explicit product decision to introduce a flat ranked list.
+
+Implementation: [`sortShelfSeriesForDisplay`](../lib/features/collection/presentation/collection_shelf_browse.dart) in `collection_shelf_browse.dart`.
 
 ---
 

@@ -100,7 +100,46 @@ bool isShelfSeriesComplete(
   return (inProgress, completed);
 }
 
-/// Returns a display-ordered copy (or the same list for [recentlyAdded]).
+int _ipFigureCountTotal(ShelfUniverseSection section) =>
+    section.series.fold<int>(0, (sum, row) => sum + row.figureCount);
+
+/// Owned figures / total figure slots across every series in the IP group.
+double _ipWeightedCompletion(
+  ShelfUniverseSection section,
+  Map<String, TrackedFigure> states,
+) {
+  var owned = 0;
+  var total = 0;
+  for (final row in section.series) {
+    final slots = row.figureCount;
+    if (slots <= 0) continue;
+    total += slots;
+    owned += progressForSeries(row, states).owned;
+  }
+  if (total <= 0) return 0;
+  return owned / total;
+}
+
+int _compareIpSectionLabels(ShelfUniverseSection a, ShelfUniverseSection b) =>
+    a.label.toLowerCase().compareTo(b.label.toLowerCase());
+
+double _seriesCompletionRatio(
+  ShelfSeries series,
+  Map<String, TrackedFigure> states,
+) {
+  final total = series.figureCount;
+  return progressForSeries(series, states).completion(total);
+}
+
+/// Display order for one bucket (In Progress or Completed) after filter/search.
+///
+/// Collection browsing is hierarchical: Bucket → IP → Series. Every sort mode
+/// orders IP groups first, then series within each IP, so the grouped shelf
+/// UI matches the selected sort. The feed builder only renders this order.
+///
+/// [CollectionShelfSort.recentlyAdded] preserves shelf traversal order within
+/// the bucket (IP blocks follow encounter order). See
+/// `docs/COLLECTION_ARCHITECTURE_NOTES.md` → Hierarchical shelf sorting.
 List<ShelfSeries> sortShelfSeriesForDisplay(
   List<ShelfSeries> series,
   CollectionShelfSort sort,
@@ -125,18 +164,45 @@ List<ShelfSeries> sortShelfSeriesForDisplay(
       }
       return ordered;
     case CollectionShelfSort.figureCount:
-      final copy = List<ShelfSeries>.from(series);
-      copy.sort((a, b) => b.figureCount.compareTo(a.figureCount));
-      return copy;
+      final sectionOrder = List<ShelfUniverseSection>.from(
+        groupShelfSeriesByUniverse(series),
+      )..sort((a, b) {
+          final cmp =
+              _ipFigureCountTotal(b).compareTo(_ipFigureCountTotal(a));
+          if (cmp != 0) return cmp;
+          return _compareIpSectionLabels(a, b);
+        });
+      final byFigureCount = <ShelfSeries>[];
+      for (final section in sectionOrder) {
+        final copy = List<ShelfSeries>.from(section.series)
+          ..sort((a, b) {
+            final cmp = b.figureCount.compareTo(a.figureCount);
+            if (cmp != 0) return cmp;
+            return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+          });
+        byFigureCount.addAll(copy);
+      }
+      return byFigureCount;
     case CollectionShelfSort.completion:
-      final copy = List<ShelfSeries>.from(series);
-      copy.sort((a, b) {
-        final aTotal = a.figureCount;
-        final bTotal = b.figureCount;
-        final aRatio = progressForSeries(a, states).completion(aTotal);
-        final bRatio = progressForSeries(b, states).completion(bTotal);
-        return bRatio.compareTo(aRatio);
-      });
-      return copy;
+      final sectionOrder = List<ShelfUniverseSection>.from(
+        groupShelfSeriesByUniverse(series),
+      )..sort((a, b) {
+          final cmp = _ipWeightedCompletion(b, states)
+              .compareTo(_ipWeightedCompletion(a, states));
+          if (cmp != 0) return cmp;
+          return _compareIpSectionLabels(a, b);
+        });
+      final byCompletion = <ShelfSeries>[];
+      for (final section in sectionOrder) {
+        final copy = List<ShelfSeries>.from(section.series)
+          ..sort((a, b) {
+            final cmp = _seriesCompletionRatio(b, states)
+                .compareTo(_seriesCompletionRatio(a, states));
+            if (cmp != 0) return cmp;
+            return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+          });
+        byCompletion.addAll(copy);
+      }
+      return byCompletion;
   }
 }
