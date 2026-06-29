@@ -15,14 +15,20 @@ import 'package:blindbox_app/features/collectible_relationship/application/colle
 import 'package:blindbox_app/features/collection/application/shelf_emotional_providers.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_providers.dart';
 import 'package:blindbox_app/features/collection/presentation/shelf_editorial_voice.dart';
-import 'package:blindbox_app/features/collection/presentation/shelf_series_feed.dart';
+import 'package:blindbox_app/features/collection/application/collection_shelf_ui_prefs_provider.dart';
+import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
+import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+import 'package:blindbox_app/features/catalog/search/catalog_search_service.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_shelf_browse.dart';
+import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_empty_state.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_summary_section.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_warm_start_banner.dart';
 import 'package:blindbox_app/features/collection/widgets/series_figures_sheet.dart';
+import 'package:blindbox_app/features/collection/presentation/shelf_series_feed.dart';
+import 'package:blindbox_app/shared/widgets/app_search_field.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
-import 'package:blindbox_app/shared/widgets/taxonomy_filter_section_label.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -35,14 +41,24 @@ class CollectionScreen extends ConsumerStatefulWidget {
 }
 
 class _CollectionScreenState extends ConsumerState<CollectionScreen> {
+  static const _searchDebounce = Duration(milliseconds: 125);
+
   /// Presentation-only Collection shelf brand facet.
   String _brandFilterId = collectionAnyBrandFilterId;
 
   /// Presentation-only Collection shelf IP facet (scoped to brand-filtered series).
   String _ipFilterId = collectionAnyIpFilterId;
 
+  final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   VoidCallback? _routerListener;
+  Timer? _searchDebounceTimer;
+
+  /// Debounced query for the browse pipeline — text field updates immediately.
+  String _debouncedSearchQuery = '';
+
+  CatalogSeedBundle? _catalogSearchBundle;
+  CatalogSearchService? _catalogSearchService;
 
   @override
   void initState() {
@@ -62,6 +78,32 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       duration: const Duration(milliseconds: 320),
       curve: Curves.easeOutCubic,
     );
+  }
+
+  void _onSearchChanged(String value) {
+    setState(() {});
+    _searchDebounceTimer?.cancel();
+    if (normalizeCatalogSearchQuery(value).isEmpty) {
+      if (_debouncedSearchQuery.isNotEmpty) {
+        setState(() => _debouncedSearchQuery = '');
+      }
+      return;
+    }
+    _searchDebounceTimer = Timer(_searchDebounce, () {
+      if (!mounted) return;
+      final next = _searchController.text;
+      if (next == _debouncedSearchQuery) return;
+      setState(() => _debouncedSearchQuery = next);
+    });
+  }
+
+  CatalogSearchService? _catalogSearchServiceFor(CatalogSeedBundle? catalog) {
+    if (catalog == null) return null;
+    if (!identical(catalog, _catalogSearchBundle)) {
+      _catalogSearchBundle = catalog;
+      _catalogSearchService = CatalogSearchService(catalog);
+    }
+    return _catalogSearchService;
   }
 
   @override
@@ -91,7 +133,9 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
 
   @override
   void dispose() {
+    _searchDebounceTimer?.cancel();
     ShellTabReselectBus.instance.reselectedBranch.removeListener(_onTabReselected);
+    _searchController.dispose();
     _scrollController.dispose();
     CollectionModalOverlayRegistry.instance.unregister();
     if (_routerListener != null) {
@@ -236,20 +280,63 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       });
     }
 
-    // Compute filtered series and lazy feed items (data-only, no widgets).
-    // Off-screen cards are built on demand by the SliverList.builder below.
     final visible = shelfSeriesVisibleForIpFilter(
       brandFiltered,
       activeIpFilterId,
     );
-    final feedItems = buildShelfFeedItems(
+
+    // Browse pipeline: brand → IP → search → partition → sort each bucket.
+    final shelfUiPrefs = ref.watch(collectionShelfUiPrefsProvider);
+    final catalog = ref.watch(catalogBundleProvider).valueOrNull;
+    final progressLookup = ShelfBrowseProgressLookup(snap.figureStates);
+    final searched = filterShelfSeriesBySearch(
+      visible,
+      _debouncedSearchQuery,
+      catalog: catalog,
+      catalogSearch: _catalogSearchServiceFor(catalog),
+    );
+    final (inProgressRaw, completedRaw) = partitionShelfSeries(
+      searched,
+      snap.figureStates,
+      progress: progressLookup,
+    );
+    final inProgress = sortShelfSeriesForDisplay(
+      inProgressRaw,
+      shelfUiPrefs.sort,
+      snap.figureStates,
+      progress: progressLookup,
+    );
+    final completed = sortShelfSeriesForDisplay(
+      completedRaw,
+      shelfUiPrefs.sort,
+      snap.figureStates,
+      progress: progressLookup,
+    );
+    final collapsedIpKeys = shelfUiPrefs.collapsedIpSectionKeys;
+    final inProgressFeed = buildShelfFeedItems(
       context: context,
-      series: visible,
+      series: inProgress,
       figureStates: snap.figureStates,
       profile: profile,
+      collapseBucketKey: shelfCollapseBucketInProgress,
+      collapsedSectionKeys: collapsedIpKeys,
+      progress: progressLookup,
+    );
+    final completedFeed = buildShelfFeedItems(
+      context: context,
+      series: completed,
+      figureStates: snap.figureStates,
+      profile: profile,
+      collapseBucketKey: shelfCollapseBucketCompleted,
+      collapsedSectionKeys: collapsedIpKeys,
+      progress: progressLookup,
     );
     final brandFilterExhausted = brandFiltered.isEmpty;
     final ipFilterExhausted = !brandFilterExhausted && visible.isEmpty;
+    final searchExhausted =
+        !brandFilterExhausted && !ipFilterExhausted && searched.isEmpty;
+    final showInProgressSection = inProgress.isNotEmpty;
+    final showCompletedSection = completed.isNotEmpty;
 
     if (snap.trackedSeriesCount == 0) {
       return Scaffold(
@@ -303,6 +390,30 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
           SliverToBoxAdapter(
             child: SizedBox(height: FeedRhythm.belowMainTabAppBar),
           ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(top: FeedRhythm.headerToSearchField),
+              child: AppSearchField(
+                controller: _searchController,
+                hintText: 'Search your collection…',
+                onChanged: _onSearchChanged,
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.close_rounded, size: 20),
+                        onPressed: () {
+                          _searchDebounceTimer?.cancel();
+                          _searchController.clear();
+                          if (_debouncedSearchQuery.isNotEmpty) {
+                            setState(() => _debouncedSearchQuery = '');
+                          } else {
+                            setState(() {});
+                          }
+                        },
+                      )
+                    : null,
+              ),
+            ),
+          ),
           if (snap.isWarmStart)
             const SliverToBoxAdapter(child: CollectionWarmStartBanner()),
           SliverToBoxAdapter(
@@ -321,45 +432,8 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               title: 'My collection',
               subtitle: sectionSubtitle,
               padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
-              trailing: TextButton.icon(
-                key: const Key('collection_header_add_series'),
+              trailing: _CollectionAddSeriesButton(
                 onPressed: () => _openAddToCollection(context),
-                icon: Icon(
-                  Icons.add_rounded,
-                  size: 16,
-                  color: scheme.primary.withValues(alpha: 0.72),
-                ),
-                label: Text(
-                  'Add series',
-                  style: textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 0.02,
-                    height: 1.1,
-                    color: scheme.primary.withValues(alpha: 0.78),
-                  ),
-                ),
-                style: TextButton.styleFrom(
-                  backgroundColor: Color.lerp(
-                    scheme.surface,
-                    scheme.primaryContainer,
-                    Theme.of(context).brightness == Brightness.dark ? 0.22 : 0.32,
-                  ),
-                  foregroundColor: scheme.primary.withValues(alpha: 0.78),
-                  shadowColor: Colors.transparent,
-                  surfaceTintColor: Colors.transparent,
-                  padding: const EdgeInsetsDirectional.only(
-                    start: 8,
-                    end: 10,
-                    top: 8,
-                    bottom: 8,
-                  ),
-                  minimumSize: const Size(48, 40),
-                  tapTargetSize: MaterialTapTargetSize.padded,
-                  visualDensity: VisualDensity.compact,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
               ),
             ),
           ),
@@ -369,7 +443,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const TaxonomyFilterSectionLabel(text: 'Brand'),
+                  _CollectionBrowseFilterLabel(text: 'Brand'),
                   const SizedBox(
                     height: FeedRhythm.collectionFilterSectionLabelToRail,
                   ),
@@ -381,7 +455,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                   const SizedBox(
                     height: FeedRhythm.collectionBrandToIpFilterSectionGap,
                   ),
-                  const TaxonomyFilterSectionLabel(text: 'IP'),
+                  _CollectionBrowseFilterLabel(text: 'IP'),
                   const SizedBox(
                     height: FeedRhythm.collectionFilterSectionLabelToRail,
                   ),
@@ -389,6 +463,18 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                     options: ipFilterOptions,
                     selectedIpId: activeIpFilterId,
                     onIpSelected: (id) => setState(() => _ipFilterId = id),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: _CollectionShelfSortMenu(
+                        selected: shelfUiPrefs.sort,
+                        onSelected: (sort) => ref
+                            .read(collectionShelfUiPrefsProvider.notifier)
+                            .setSort(sort),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -409,25 +495,339 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                 ),
               ),
             )
-          else
+          else if (searchExhausted)
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(
-                20,
-                FeedRhythm.collectionFilterToFirstCard,
-                20,
-                FeedRhythm.tabScrollTailPadding,
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+              sliver: SliverToBoxAdapter(
+                child: Text(
+                  'No series match your search.',
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
+                    height: 1.4,
+                  ),
+                ),
               ),
-              sliver: SliverList.builder(
-                itemCount: feedItems.length,
-                itemBuilder: (context, i) => buildShelfFeedItemWidget(
-                  feedItems[i],
-                  onOpen: (s) => _openFiguresSheet(context, s.id),
-                  onRemove: (s) =>
-                      _confirmRemoveSeries(context, s.id, s.name),
+            )
+          else ...[
+            if (showInProgressSection)
+              SliverPadding(
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  FeedRhythm.collectionFilterToFirstCard,
+                  20,
+                  shelfUiPrefs.inProgressSectionExpanded ? 8 : 0,
+                ),
+                sliver: SliverToBoxAdapter(
+                  child: _ShelfBucketSectionHeader(
+                    title: 'In progress',
+                    count: inProgress.length,
+                    expanded: shelfUiPrefs.inProgressSectionExpanded,
+                    onToggle: () => ref
+                        .read(collectionShelfUiPrefsProvider.notifier)
+                        .toggleInProgressSection(),
+                  ),
+                ),
+              ),
+            if (showInProgressSection && shelfUiPrefs.inProgressSectionExpanded)
+              SliverPadding(
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  0,
+                  20,
+                  showCompletedSection ? 8 : FeedRhythm.tabScrollTailPadding,
+                ),
+                sliver: SliverList.builder(
+                  itemCount: inProgressFeed.length,
+                  itemBuilder: (context, i) => buildShelfFeedItemWidget(
+                    context: context,
+                    inProgressFeed[i],
+                    collapsedSectionKeys: collapsedIpKeys,
+                    onToggleIpSection: (key) => ref
+                        .read(collectionShelfUiPrefsProvider.notifier)
+                        .toggleIpSection(key),
+                    onOpen: (s) => _openFiguresSheet(context, s.id),
+                    onRemove: (s) =>
+                        _confirmRemoveSeries(context, s.id, s.name),
+                  ),
+                ),
+              ),
+            if (showCompletedSection)
+              SliverPadding(
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  showInProgressSection ? 0 : FeedRhythm.collectionFilterToFirstCard,
+                  20,
+                  shelfUiPrefs.completedSectionExpanded
+                      ? 8
+                      : FeedRhythm.tabScrollTailPadding,
+                ),
+                sliver: SliverToBoxAdapter(
+                  child: _ShelfBucketSectionHeader(
+                    title: 'Completed',
+                    count: completed.length,
+                    expanded: shelfUiPrefs.completedSectionExpanded,
+                    onToggle: () => ref
+                        .read(collectionShelfUiPrefsProvider.notifier)
+                        .toggleCompletedSection(),
+                  ),
+                ),
+              ),
+            if (showCompletedSection && shelfUiPrefs.completedSectionExpanded)
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(
+                  20,
+                  0,
+                  20,
+                  FeedRhythm.tabScrollTailPadding,
+                ),
+                sliver: SliverList.builder(
+                  itemCount: completedFeed.length,
+                  itemBuilder: (context, i) => buildShelfFeedItemWidget(
+                    context: context,
+                    completedFeed[i],
+                    collapsedSectionKeys: collapsedIpKeys,
+                    onToggleIpSection: (key) => ref
+                        .read(collectionShelfUiPrefsProvider.notifier)
+                        .toggleIpSection(key),
+                    onOpen: (s) => _openFiguresSheet(context, s.id),
+                    onRemove: (s) =>
+                        _confirmRemoveSeries(context, s.id, s.name),
+                  ),
+                ),
+              ),
+            if (inProgress.isNotEmpty &&
+                showCompletedSection &&
+                !shelfUiPrefs.inProgressSectionExpanded &&
+                !shelfUiPrefs.completedSectionExpanded)
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                sliver: SliverToBoxAdapter(
+                  child: Text(
+                    'Expand a section above to browse your shelf.',
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _CollectionBrowseFilterLabel extends StatelessWidget {
+  const _CollectionBrowseFilterLabel({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Semantics(
+        header: true,
+        child: Text(
+          text,
+          style: textTheme.labelSmall?.copyWith(
+            fontWeight: FontWeight.w500,
+            letterSpacing: 0.28,
+            color: scheme.onSurfaceVariant.withValues(alpha: 0.58),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CollectionAddSeriesButton extends StatelessWidget {
+  const _CollectionAddSeriesButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return TextButton.icon(
+      key: const Key('collection_header_add_series'),
+      onPressed: onPressed,
+      icon: Icon(
+        Icons.add_rounded,
+        size: 16,
+        color: scheme.primary.withValues(alpha: 0.72),
+      ),
+      label: Text(
+        'Add series',
+        style: textTheme.labelMedium?.copyWith(
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.02,
+          height: 1.1,
+          color: scheme.primary.withValues(alpha: 0.78),
+        ),
+      ),
+      style: TextButton.styleFrom(
+        backgroundColor: Color.lerp(
+          scheme.surface,
+          scheme.primaryContainer,
+          Theme.of(context).brightness == Brightness.dark ? 0.22 : 0.32,
+        ),
+        foregroundColor: scheme.primary.withValues(alpha: 0.78),
+        shadowColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        padding: const EdgeInsetsDirectional.only(
+          start: 8,
+          end: 10,
+          top: 8,
+          bottom: 8,
+        ),
+        minimumSize: const Size(48, 40),
+        tapTargetSize: MaterialTapTargetSize.padded,
+        visualDensity: VisualDensity.compact,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    );
+  }
+}
+
+class _CollectionShelfSortMenu extends StatelessWidget {
+  const _CollectionShelfSortMenu({
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final CollectionShelfSort selected;
+  final ValueChanged<CollectionShelfSort> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return PopupMenuButton<CollectionShelfSort>(
+      key: const Key('collection_shelf_sort_menu'),
+      initialValue: selected,
+      tooltip: 'Sort shelf',
+      onSelected: onSelected,
+      itemBuilder: (context) => [
+        PopupMenuItem<CollectionShelfSort>(
+          enabled: false,
+          height: 40,
+          child: Text(
+            'Sort by',
+            style: textTheme.titleSmall?.copyWith(
+              color: scheme.onSurface,
+              fontWeight: FontWeight.w600,
+              letterSpacing: -0.2,
+            ),
+          ),
+        ),
+        for (final sort in CollectionShelfSort.values)
+          PopupMenuItem<CollectionShelfSort>(
+            value: sort,
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 28,
+                  child: sort == selected
+                      ? Icon(
+                          Icons.check_rounded,
+                          size: 20,
+                          color: scheme.primary,
+                        )
+                      : null,
+                ),
+                Expanded(
+                  child: Text(
+                    sort.menuLabel,
+                    style: textTheme.bodyLarge?.copyWith(
+                      fontWeight:
+                          sort == selected ? FontWeight.w600 : FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.sort_rounded,
+            size: 18,
+            color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            selected.menuLabel,
+            style: textTheme.labelMedium?.copyWith(
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          Icon(
+            Icons.expand_more_rounded,
+            size: 18,
+            color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ShelfBucketSectionHeader extends StatelessWidget {
+  const _ShelfBucketSectionHeader({
+    required this.title,
+    required this.count,
+    required this.expanded,
+    required this.onToggle,
+  });
+
+  final String title;
+  final int count;
+  final bool expanded;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return InkWell(
+      onTap: onToggle,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                '$title ($count)',
+                style: textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: scheme.onSurface.withValues(alpha: 0.88),
                 ),
               ),
             ),
-        ],
+            Icon(
+              expanded
+                  ? Icons.expand_less_rounded
+                  : Icons.expand_more_rounded,
+              size: 22,
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
+            ),
+          ],
+        ),
       ),
     );
   }

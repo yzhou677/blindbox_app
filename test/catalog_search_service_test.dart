@@ -108,6 +108,14 @@ void main() {
     expect(svc.search('zzznope'), isEmpty);
   });
 
+  test('matchingSeriesIds returns series keys for any figure match', () {
+    final svc = CatalogSearchService(bundle);
+    expect(svc.matchingSeriesIds(''), isEmpty);
+    expect(svc.matchingSeriesIds('labubu'), {'macaron'});
+    expect(svc.matchingSeriesIds('moonlight'), {'alias_only'});
+    expect(svc.matchingSeriesIds('hirono'), {'wild', 'alias_only'});
+  });
+
   test('normalize collapses whitespace for query', () {
     expect(normalizeCatalogSearchQuery('  Macaron  '), 'macaron');
   });

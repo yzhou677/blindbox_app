@@ -23,6 +23,7 @@ Core functionality is complete (see also [`ARCHITECTURE_NOTES.md`](ARCHITECTURE_
 * Custom figure support (create, edit, **add figure** from edit sheet)
 * Brand filter
 * IP filter
+* Shelf browse (search, sort, collapsible buckets)
 * Collection insights
 * Collector identity
 * Journey system
@@ -145,6 +146,43 @@ The application should not attempt to second-guess or override user intent.
 Catalog data remains authoritative.
 
 Custom data remains user-controlled.
+
+---
+
+### Hierarchical shelf sorting
+
+Collection sorting is hierarchical.
+
+The Collection page is organized as:
+
+```
+Collection
+    ↓
+Bucket (In Progress / Completed)
+        ↓
+IP
+            ↓
+Series
+```
+
+All sort modes preserve this hierarchy: determine the order of **IP groups** first, then the order of **series within each IP**. The feed builder renders that order; it does not re-rank.
+
+This is a deliberate product decision. A global flat series ranking would fight the grouped shelf UI and can make on-screen order disagree with the selected sort.
+
+#### Collection sorting reference
+
+| Sort | IP aggregate | Series aggregate | Tie-breakers |
+| ---- | ------------ | ---------------- | ------------ |
+| Recently Added | Most recent addition (encounter order in bucket) | Recently added (shelf order within IP) | N/A (no comparator) |
+| Alphabetical (A–Z) | IP label | Series name | IP group key → shelf `id` |
+| Figure Count | `Σ figureCount` per IP (desc) | `figureCount` (desc) | IP label → IP key; series name → shelf `id` |
+| Completion | `Σ owned ÷ Σ slots` per IP (desc) — **weighted**, not average of series % | `owned ÷ slots` per series (desc) | IP label → IP key; series name → shelf `id` |
+
+**Product rule:** Collection sorting is hierarchical. New sort modes (Market Value, Estimated Value, Release Date, Last Updated, Rarity, etc.) should define an **IP aggregate** and a **series aggregate** — not introduce flat global ranking — unless Product explicitly chooses a flat ranked list.
+
+Implementation: [`sortShelfSeriesForDisplay`](../lib/features/collection/presentation/collection_shelf_browse.dart) in `collection_shelf_browse.dart`.
+
+**The Collection page is a hierarchical browser, not a flat ranked list.**
 
 ---
 

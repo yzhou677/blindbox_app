@@ -5,13 +5,15 @@ SeriesCompletionAtmosphere atmosphereForSeries(
   ShelfSeries series,
   Map<String, TrackedFigure> figureStates, {
   bool shelfHarmony = false,
+  ShelfBrowseProgressLookup? progress,
 }) {
   final total = series.figureCount;
   if (total <= 0) return const SeriesCompletionAtmosphere();
 
-  final progress = progressForSeries(series, figureStates);
-  final complete = progress.owned >= total;
-  final ratio = progress.owned / total;
+  final seriesProgress =
+      progress?.forSeries(series) ?? progressForSeries(series, figureStates);
+  final complete = seriesProgress.owned >= total;
+  final ratio = seriesProgress.owned / total;
 
   final secrets = series.figures.where((f) => f.isSecret).toList();
   final ownedSecrets = secrets

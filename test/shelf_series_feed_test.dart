@@ -9,6 +9,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'helpers/collection_fixtures.dart';
 
 void main() {
+  group('shelfIpCollapseSectionKey', () {
+    test('scopes collapse prefs per bucket', () {
+      expect(
+        shelfIpCollapseSectionKey(shelfCollapseBucketInProgress, 'ip:pucky'),
+        'in_progress:ip:pucky',
+      );
+      expect(
+        shelfIpCollapseSectionKey(shelfCollapseBucketCompleted, 'ip:pucky'),
+        'completed:ip:pucky',
+      );
+    });
+  });
+
   group('groupShelfSeriesByUniverse', () {
     test('keeps distinct IPs in separate sections', () {
       final sections = groupShelfSeriesByUniverse([
@@ -38,33 +51,17 @@ void main() {
   });
 
   group('shouldShowShelfUniverseHeader', () {
-    test('shows header for singleton when multiple universes exist', () {
+    test('shows header when multiple IP groups are visible', () {
       expect(
-        shouldShowShelfUniverseHeader(
-          universeCount: 2,
-          seriesInUniverse: 1,
-        ),
+        shouldShowShelfUniverseHeader(universeCount: 2),
         isTrue,
       );
     });
 
-    test('hides header for single universe with one series', () {
+    test('hides header when only one IP group is visible', () {
       expect(
-        shouldShowShelfUniverseHeader(
-          universeCount: 1,
-          seriesInUniverse: 1,
-        ),
+        shouldShowShelfUniverseHeader(universeCount: 1),
         isFalse,
-      );
-    });
-
-    test('shows header for single universe with multiple series', () {
-      expect(
-        shouldShowShelfUniverseHeader(
-          universeCount: 1,
-          seriesInUniverse: 3,
-        ),
-        isTrue,
       );
     });
   });
@@ -107,11 +104,8 @@ void main() {
       ),
     );
 
-    final headers = tester
-        .widgetList<CollectibleSectionHeader>(find.byType(CollectibleSectionHeader))
-        .map((h) => h.title)
-        .toList();
-    expect(headers, ['Crybaby', 'Polar']);
+    expect(find.text('Polar'), findsAtLeastNWidgets(1));
+    expect(find.text('Crybaby'), findsAtLeastNWidgets(1));
   });
 
   // ---------------------------------------------------------------------------
@@ -200,10 +194,8 @@ void main() {
   );
 
   testWidgets(
-    'buildShelfFeedItems emits ShelfFeedGap instead of header for second '
-    'section when single-series universe with no peers',
+    'buildShelfFeedItems omits IP header for a single visible IP group',
     (tester) async {
-      // Single universe, 3 series → header + 3 cards (no gap needed).
       late List<ShelfFeedItem> items;
       await tester.pumpWidget(
         MaterialApp(
@@ -225,8 +217,12 @@ void main() {
         ),
       );
 
-      expect(items.whereType<ShelfFeedHeader>(), hasLength(1));
+      expect(items.whereType<ShelfFeedHeader>(), isEmpty);
       expect(items.whereType<ShelfFeedCard>(), hasLength(3));
+      expect(
+        items.whereType<ShelfFeedCard>().every((c) => !c.indentUnderIpHeader),
+        isTrue,
+      );
     },
   );
 
@@ -287,6 +283,7 @@ void main() {
                   atmosphere: const SeriesCompletionAtmosphere(),
                 );
                 return buildShelfFeedItemWidget(
+                  context: context,
                   item,
                   onOpen: (_) {},
                   onRemove: (_) {},
@@ -298,6 +295,117 @@ void main() {
       );
 
       expect(find.byType(SeriesShelfCard), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'buildShelfFeedItems still shows cards when collapsed but header hidden',
+    (tester) async {
+      late List<ShelfFeedItem> items;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light(),
+          home: Builder(
+            builder: (context) {
+              items = buildShelfFeedItems(
+                context: context,
+                series: [
+                  testShelfSeries(id: 'solo', taxonomyIpId: 'ia', ipName: 'A'),
+                ],
+                figureStates: const {},
+                collapsedSectionKeys: {'ip:ia'},
+              );
+              return const SizedBox();
+            },
+          ),
+        ),
+      );
+
+      expect(items.whereType<ShelfFeedHeader>(), isEmpty);
+      expect(items.whereType<ShelfFeedCard>(), hasLength(1));
+    },
+  );
+
+  testWidgets('buildShelfFeedItems omits cards for collapsed IP sections', (
+    tester,
+  ) async {
+    late List<ShelfFeedItem> items;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Builder(
+          builder: (context) {
+            items = buildShelfFeedItems(
+              context: context,
+              series: [
+                testShelfSeries(id: 'a1', taxonomyIpId: 'ia', ipName: 'A'),
+                testShelfSeries(id: 'a2', taxonomyIpId: 'ia', ipName: 'A'),
+                testShelfSeries(id: 'b1', taxonomyIpId: 'ib', ipName: 'B'),
+              ],
+              figureStates: const {},
+              collapseBucketKey: shelfCollapseBucketInProgress,
+              collapsedSectionKeys: {
+                shelfIpCollapseSectionKey(shelfCollapseBucketInProgress, 'ip:ia'),
+              },
+            );
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+
+    expect(items.whereType<ShelfFeedHeader>(), hasLength(2));
+    expect(items.whereType<ShelfFeedCard>(), hasLength(1));
+    expect(items.whereType<ShelfFeedCard>().single.series.id, 'b1');
+  });
+
+  testWidgets(
+    'buildShelfFeedItems keeps bucket collapse independent for same IP',
+    (tester) async {
+      final puckySeries = [
+        testShelfSeries(id: 'p1', taxonomyIpId: 'pucky', ipName: 'Pucky'),
+        testShelfSeries(id: 'p2', taxonomyIpId: 'pucky', ipName: 'Pucky'),
+        testShelfSeries(id: 'd1', taxonomyIpId: 'disney', ipName: 'Disney'),
+      ];
+
+      late List<ShelfFeedItem> inProgressItems;
+      late List<ShelfFeedItem> completedItems;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light(),
+          home: Builder(
+            builder: (context) {
+              final collapsed = {
+                shelfIpCollapseSectionKey(
+                  shelfCollapseBucketInProgress,
+                  'ip:pucky',
+                ),
+              };
+              inProgressItems = buildShelfFeedItems(
+                context: context,
+                series: puckySeries,
+                figureStates: const {},
+                collapseBucketKey: shelfCollapseBucketInProgress,
+                collapsedSectionKeys: collapsed,
+              );
+              completedItems = buildShelfFeedItems(
+                context: context,
+                series: puckySeries.sublist(0, 2),
+                figureStates: const {},
+                collapseBucketKey: shelfCollapseBucketCompleted,
+                collapsedSectionKeys: collapsed,
+              );
+              return const SizedBox();
+            },
+          ),
+        ),
+      );
+
+      expect(
+        inProgressItems.whereType<ShelfFeedCard>().map((c) => c.series.id),
+        ['d1'],
+      );
+      expect(completedItems.whereType<ShelfFeedCard>(), hasLength(2));
     },
   );
 }

@@ -85,6 +85,15 @@ abstract final class FeedRhythm {
   /// Header deck to first owned series card in a universe group.
   static const double collectionUniverseHeaderToCards = 10;
 
+  /// Nested IP group indent under In Progress / Completed bucket headers.
+  static const double collectionIpGroupIndent = 10;
+
+  /// Vertical gap between nested IP groups (lighter than bucket spacing).
+  static const double collectionIpUniverseSectionGap = 14;
+
+  /// Header-to-cards gap for nested IP groups.
+  static const double collectionIpUniverseHeaderToCards = 8;
+
   /// Section label to chip rail (Brand / IP headings on collection shelf).
   static const double collectionFilterSectionLabelToRail = 6;
 

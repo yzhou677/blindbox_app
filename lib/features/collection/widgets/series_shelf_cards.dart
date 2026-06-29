@@ -254,6 +254,14 @@ class _SeriesMatContent extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final completion = progress.completion(totalFigures);
+    final statPrimary = CollectionProgressVoice.seriesStatPrimaryLine(
+      series: series,
+      progress: progress,
+    );
+    final statSecondary = CollectionProgressVoice.seriesStatSecondaryLine(
+      series: series,
+      progress: progress,
+    );
     final headline = CollectionProgressVoice.seriesHeadline(
       series: series,
       progress: progress,
@@ -314,11 +322,25 @@ class _SeriesMatContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 11),
-        if (headline.isNotEmpty)
+        if (statPrimary.isNotEmpty)
+          Text(
+            statPrimary,
+            style: CollectibleTypography.shelfProgressLine(textTheme, scheme),
+          ),
+        if (statSecondary.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            statSecondary,
+            style: CollectibleTypography.shelfProgressMeta(textTheme, scheme),
+          ),
+        ],
+        if (headline.isNotEmpty) ...[
+          const SizedBox(height: 6),
           Text(
             headline,
             style: CollectibleTypography.shelfProgressLine(textTheme, scheme),
           ),
+        ],
         if (subline.isNotEmpty) ...[
           const SizedBox(height: 4),
           Text(
