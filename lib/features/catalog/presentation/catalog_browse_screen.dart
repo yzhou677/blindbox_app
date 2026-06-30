@@ -1,4 +1,5 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/search/search_placeholders.dart';
 import 'package:blindbox_app/features/catalog/adapters/catalog_seed_to_collection_template.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
 import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
@@ -116,7 +117,7 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
     return bundleAsync.when(
       loading: () => FeedSearchScreen(
         title: 'Search catalog',
-        hintText: 'Search catalog — figures, series, IPs, aliases…',
+        hintText: SearchPlaceholders.localCatalog,
         emptyPrompt: 'Search by series, figure, or IP.',
         controller: _search,
         hasSearchText: _hasSearchText,
@@ -128,7 +129,7 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
       ),
       error: (_, _) => FeedSearchScreen(
         title: 'Search catalog',
-        hintText: 'Search catalog — figures, series, IPs, aliases…',
+        hintText: SearchPlaceholders.localCatalog,
         emptyPrompt: 'Search by series, figure, or IP.',
         controller: _search,
         hasSearchText: _hasSearchText,
@@ -159,7 +160,7 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
 
         return FeedSearchScreen(
           title: 'Search catalog',
-          hintText: 'Search catalog — figures, series, IPs, aliases…',
+          hintText: SearchPlaceholders.localCatalog,
           emptyPrompt: 'Search by series, figure, or IP.',
           controller: _search,
           hasSearchText: _hasSearchText,

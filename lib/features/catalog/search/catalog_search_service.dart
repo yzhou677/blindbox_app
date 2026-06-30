@@ -1,3 +1,6 @@
+import 'package:blindbox_app/core/search/search_matcher.dart';
+import 'package:blindbox_app/core/search/search_normalizer.dart';
+import 'package:blindbox_app/core/search/search_tokenizer.dart';
 import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_brand.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_figure.dart';
@@ -7,7 +10,7 @@ import 'package:blindbox_app/features/catalog/search/catalog_search_result.dart'
 
 /// Shared offline search matcher for catalog-backed surfaces (browse, add-series,
 /// collection shelf, market identity). Single source of truth for figure/series/IP/
-/// brand/alias substring matching.
+/// brand/alias token matching.
 ///
 /// Pure Dart: no Flutter widgets, no Riverpod. Swappable later for remote/cache
 /// sources by building the same bundle from JSON.
@@ -32,12 +35,13 @@ final class CatalogSearchService {
 
   /// Returns figures that match [rawQuery], best matches first. Empty query → [].
   List<CatalogSearchResult> search(String rawQuery) {
-    final q = normalizeCatalogSearchQuery(rawQuery);
-    if (q.isEmpty) return [];
+    final tokens = SearchTokenizer.tokenize(rawQuery);
+    if (tokens.isEmpty) return [];
 
+    final normalizedFullQuery = SearchNormalizer.normalize(rawQuery);
     final scored = <_ScoredResult>[];
     for (final fig in _figures) {
-      final rank = _bestRank(fig, q);
+      final rank = _bestRank(fig, tokens, normalizedFullQuery);
       if (rank == null) continue;
       final series = _seriesById[fig.seriesId];
       if (series == null) continue;
@@ -66,18 +70,27 @@ final class CatalogSearchService {
   /// Series ids with at least one figure match — for filtering shelf rows by
   /// [ShelfSeries.catalogTemplateId] without duplicating match rules.
   Set<String> matchingSeriesIds(String rawQuery) {
-    final q = normalizeCatalogSearchQuery(rawQuery);
-    if (q.isEmpty) return const {};
+    final tokens = SearchTokenizer.tokenize(rawQuery);
+    if (tokens.isEmpty) return const {};
 
+    final normalizedFullQuery = SearchNormalizer.normalize(rawQuery);
     final ids = <String>{};
     for (final fig in _figures) {
-      if (_bestRank(fig, q) == null) continue;
+      if (_bestRank(fig, tokens, normalizedFullQuery) == null) continue;
       ids.add(fig.seriesId);
     }
     return ids;
   }
 
-  _Rank? _bestRank(CatalogFigure fig, String q) {
+  _Rank? _bestRank(
+    CatalogFigure fig,
+    List<String> tokens,
+    String normalizedFullQuery,
+  ) {
+    if (!SearchMatcher.allTokensMatch(_combinedHaystack(fig), tokens)) {
+      return null;
+    }
+
     _Rank? best;
 
     void take(_Rank candidate) {
@@ -86,57 +99,95 @@ final class CatalogSearchService {
       }
     }
 
-    final figureNorm = normalizeCatalogSearchQuery(fig.displayName);
-    if (figureNorm == q) {
+    final figureNorm = SearchNormalizer.normalize(fig.displayName);
+    if (figureNorm == normalizedFullQuery) {
       take(const _Rank(_tierExactFigure, 0));
-    } else if (q.isNotEmpty && figureNorm.contains(q)) {
-      take(_Rank(_tierFigureSubstring, figureNorm.indexOf(q)));
+    } else if (SearchMatcher.allTokensMatch(
+      SearchNormalizer.normalizeForMatch(fig.displayName),
+      tokens,
+    )) {
+      take(_Rank(
+        _tierFigureSubstring,
+        SearchMatcher.earliestTokenIndex(figureNorm, tokens),
+      ));
     }
 
     final series = _seriesById[fig.seriesId];
     if (series != null) {
-      final seriesNorm = normalizeCatalogSearchQuery(series.displayName);
-      if (q.isNotEmpty && seriesNorm.contains(q)) {
-        take(_Rank(_tierSeries, seriesNorm.indexOf(q)));
+      final seriesMatch = SearchNormalizer.normalizeForMatch(series.displayName);
+      if (SearchMatcher.allTokensMatch(seriesMatch, tokens)) {
+        take(_Rank(
+          _tierSeries,
+          SearchMatcher.earliestTokenIndex(seriesMatch, tokens),
+        ));
       }
       for (final alias in series.aliases) {
-        final a = normalizeCatalogSearchQuery(alias);
-        if (q.isNotEmpty && a.contains(q)) {
-          take(_Rank(_tierAlias, a.indexOf(q)));
+        final a = SearchNormalizer.normalizeForMatch(alias);
+        if (SearchMatcher.allTokensMatch(a, tokens)) {
+          take(_Rank(_tierAlias, SearchMatcher.earliestTokenIndex(a, tokens)));
         }
       }
     }
 
     final ip = _ipById[fig.ipId];
     if (ip != null) {
-      final ipNorm = normalizeCatalogSearchQuery(ip.displayName);
-      if (q.isNotEmpty && ipNorm.contains(q)) {
-        take(_Rank(_tierIpName, ipNorm.indexOf(q)));
+      final ipMatch = SearchNormalizer.normalizeForMatch(ip.displayName);
+      if (SearchMatcher.allTokensMatch(ipMatch, tokens)) {
+        take(_Rank(
+          _tierIpName,
+          SearchMatcher.earliestTokenIndex(ipMatch, tokens),
+        ));
       }
       for (final alias in ip.aliases) {
-        final a = normalizeCatalogSearchQuery(alias);
-        if (q.isNotEmpty && a.contains(q)) {
-          take(_Rank(_tierAlias, a.indexOf(q)));
+        final a = SearchNormalizer.normalizeForMatch(alias);
+        if (SearchMatcher.allTokensMatch(a, tokens)) {
+          take(_Rank(_tierAlias, SearchMatcher.earliestTokenIndex(a, tokens)));
         }
       }
     }
 
     final brand = _brandById[fig.brandId];
     if (brand != null) {
-      final brandNorm = normalizeCatalogSearchQuery(brand.displayName);
-      if (q.isNotEmpty && brandNorm.contains(q)) {
-        take(_Rank(_tierAlias, brandNorm.indexOf(q)));
+      final brandMatch = SearchNormalizer.normalizeForMatch(brand.displayName);
+      if (SearchMatcher.allTokensMatch(brandMatch, tokens)) {
+        take(_Rank(
+          _tierAlias,
+          SearchMatcher.earliestTokenIndex(brandMatch, tokens),
+        ));
       }
       for (final alias in brand.aliases) {
-        final a = normalizeCatalogSearchQuery(alias);
-        if (q.isEmpty) continue;
-        if (a.contains(q)) {
-          take(_Rank(_tierAlias, a.indexOf(q)));
+        final a = SearchNormalizer.normalizeForMatch(alias);
+        if (SearchMatcher.allTokensMatch(a, tokens)) {
+          take(_Rank(_tierAlias, SearchMatcher.earliestTokenIndex(a, tokens)));
         }
       }
     }
 
     return best;
+  }
+
+  String _combinedHaystack(CatalogFigure fig) {
+    final parts = <String>[fig.displayName];
+
+    final series = _seriesById[fig.seriesId];
+    if (series != null) {
+      parts.add(series.displayName);
+      parts.addAll(series.aliases);
+    }
+
+    final ip = _ipById[fig.ipId];
+    if (ip != null) {
+      parts.add(ip.displayName);
+      parts.addAll(ip.aliases);
+    }
+
+    final brand = _brandById[fig.brandId];
+    if (brand != null) {
+      parts.add(brand.displayName);
+      parts.addAll(brand.aliases);
+    }
+
+    return parts.map(SearchNormalizer.normalizeForMatch).join(' ');
   }
 
   static int _compareScored(_ScoredResult a, _ScoredResult b) {
@@ -148,12 +199,8 @@ final class CatalogSearchService {
   }
 }
 
-/// Lowercase, trim, collapse internal whitespace (deterministic substring search).
-String normalizeCatalogSearchQuery(String raw) {
-  var s = raw.trim().toLowerCase();
-  if (s.isEmpty) return '';
-  return s.split(RegExp(r'\s+')).where((e) => e.isNotEmpty).join(' ');
-}
+/// Normalized query string — delegates to [SearchNormalizer] (Search V2).
+String normalizeCatalogSearchQuery(String raw) => SearchNormalizer.normalize(raw);
 
 class _Rank {
   const _Rank(this.tier, this.indexInHaystack);

@@ -4,6 +4,7 @@ import 'package:blindbox_app/features/catalog/catalog_bundle_loader.dart';
 import 'package:blindbox_app/features/catalog/catalog_latest_series.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+import 'package:blindbox_app/core/search/search_placeholders.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_series_search_rows.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_history_provider.dart';
 import 'package:blindbox_app/features/catalog/widgets/catalog_series_search_row_card.dart';
@@ -185,7 +186,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
             AppSearchField(
               controller: _search,
               padding: EdgeInsets.zero,
-              hintText: 'Search catalog — figures, series, IPs, aliases…',
+              hintText: SearchPlaceholders.localCatalog,
               onChanged: (_) => setState(() {}),
               onSubmitted: () => _recordSearch(_trimmedQuery),
               suffixIcon: !_hasSearchText

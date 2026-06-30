@@ -1,4 +1,5 @@
 import 'package:blindbox_app/features/catalog/search/catalog_search_history.dart';
+import 'package:blindbox_app/core/search/search_normalizer.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_history_provider.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_history_section.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_history_storage.dart';
@@ -63,31 +64,31 @@ void main() {
 
   group('CatalogSearchHistoryRules.normalize', () {
     test('trims leading and trailing whitespace', () {
-      expect(CatalogSearchHistoryRules.normalize('  Labubu  '), 'Labubu');
+      expect(CatalogSearchHistoryRules.normalize('  Labubu  '), 'labubu');
     });
 
     test('collapses internal multiple spaces to one', () {
       expect(
-          CatalogSearchHistoryRules.normalize('Labubu   v2'), 'Labubu v2');
+          CatalogSearchHistoryRules.normalize('Labubu   v2'), 'labubu v2');
     });
 
     test('collapses tabs and mixed whitespace', () {
-      expect(CatalogSearchHistoryRules.normalize('Labubu\t\tv2'), 'Labubu v2');
+      expect(CatalogSearchHistoryRules.normalize('Labubu\t\tv2'), 'labubu v2');
     });
 
     test('empty string stays empty', () {
       expect(CatalogSearchHistoryRules.normalize(''), '');
     });
 
-    test('already-clean string is unchanged', () {
-      expect(CatalogSearchHistoryRules.normalize('Labubu'), 'Labubu');
+    test('already-clean string is lowercased', () {
+      expect(CatalogSearchHistoryRules.normalize('Labubu'), 'labubu');
     });
   });
 
   group('CatalogSearchHistoryRules.add', () {
     test('adds new query at front', () {
-      final result = CatalogSearchHistoryRules.add(['Crybaby'], 'Labubu');
-      expect(result, equals(['Labubu', 'Crybaby']));
+      final result = CatalogSearchHistoryRules.add(['crybaby'], 'Labubu');
+      expect(result, equals(['labubu', 'crybaby']));
     });
 
     test('ignores blank query', () {
@@ -97,19 +98,19 @@ void main() {
 
     test('trims and collapses spaces before adding', () {
       final result = CatalogSearchHistoryRules.add([], '  Labubu  v2  ');
-      expect(result, equals(['Labubu v2']));
+      expect(result, equals(['labubu v2']));
     });
 
     test('promotes existing query to top (deduplication)', () {
       final result = CatalogSearchHistoryRules.add(
-          ['Labubu', 'Crybaby', 'Nommi'], 'Crybaby');
-      expect(result, equals(['Crybaby', 'Labubu', 'Nommi']));
+          ['labubu', 'crybaby', 'nommi'], 'Crybaby');
+      expect(result, equals(['crybaby', 'labubu', 'nommi']));
     });
 
     test('promotes to top even when already at front', () {
       final result =
-          CatalogSearchHistoryRules.add(['Labubu', 'Crybaby'], 'Labubu');
-      expect(result, equals(['Labubu', 'Crybaby']));
+          CatalogSearchHistoryRules.add(['labubu', 'crybaby'], 'Labubu');
+      expect(result, equals(['labubu', 'crybaby']));
     });
 
     test('no duplicates after promote-to-top', () {
@@ -142,12 +143,12 @@ void main() {
   group('CatalogSearchHistoryRules.remove', () {
     test('removes matching query', () {
       final result =
-          CatalogSearchHistoryRules.remove(['Labubu', 'Crybaby'], 'Crybaby');
-      expect(result, equals(['Labubu']));
+          CatalogSearchHistoryRules.remove(['labubu', 'crybaby'], 'Crybaby');
+      expect(result, equals(['labubu']));
     });
 
     test('no-op when query not in list', () {
-      final list = ['Labubu', 'Crybaby'];
+      final list = ['labubu', 'crybaby'];
       expect(CatalogSearchHistoryRules.remove(list, 'Nommi'), equals(list));
     });
 
@@ -231,7 +232,7 @@ void main() {
       addTearDown(container.dispose);
       container.read(catalogSearchHistoryProvider.notifier).add('Labubu');
       expect(container.read(catalogSearchHistoryProvider).first,
-          equals('Labubu'));
+          equals('labubu'));
     });
 
     test('add deduplicates and promotes to top', () {
@@ -243,7 +244,7 @@ void main() {
       n.add('Labubu');
       expect(
         container.read(catalogSearchHistoryProvider),
-        equals(['Labubu', 'Crybaby']),
+        equals(['labubu', 'crybaby']),
       );
     });
 
@@ -261,7 +262,7 @@ void main() {
       n.add('Labubu');
       n.add('Crybaby');
       n.remove('Labubu');
-      expect(container.read(catalogSearchHistoryProvider), equals(['Crybaby']));
+      expect(container.read(catalogSearchHistoryProvider), equals(['crybaby']));
     });
 
     test('clearAll empties the list', () {
@@ -281,7 +282,7 @@ void main() {
       // Give the fire-and-forget save a microtask to complete.
       await Future<void>.delayed(Duration.zero);
       final loaded = await CatalogSearchHistoryStorage.load();
-      expect(loaded, contains('Labubu'));
+      expect(loaded, contains('labubu'));
     });
 
     test('persistence: clearAll persists empty list', () async {
@@ -340,37 +341,37 @@ void main() {
     });
 
     testWidgets('renders header and queries when non-empty', (tester) async {
-      await tester.pumpWidget(_wrap(queries: const ['Labubu', 'Crybaby']));
+      await tester.pumpWidget(_wrap(queries: const ['labubu', 'crybaby']));
       expect(find.text('Recent Searches'), findsOneWidget);
-      expect(find.text('Labubu'), findsOneWidget);
-      expect(find.text('Crybaby'), findsOneWidget);
+      expect(find.text('labubu'), findsOneWidget);
+      expect(find.text('crybaby'), findsOneWidget);
       expect(find.text('Clear All'), findsOneWidget);
     });
 
     testWidgets('tapping row calls onQueryTap with the query', (tester) async {
       String? tapped;
       await tester.pumpWidget(_wrap(
-        queries: const ['Labubu'],
+        queries: const ['labubu'],
         onQueryTap: (q) => tapped = q,
       ));
-      await tester.tap(find.text('Labubu'));
-      expect(tapped, equals('Labubu'));
+      await tester.tap(find.text('labubu'));
+      expect(tapped, equals('labubu'));
     });
 
     testWidgets('tapping × calls onRemove with the query', (tester) async {
       String? removed;
       await tester.pumpWidget(_wrap(
-        queries: const ['Labubu'],
+        queries: const ['labubu'],
         onRemove: (q) => removed = q,
       ));
       await tester.tap(find.byIcon(Icons.close_rounded));
-      expect(removed, equals('Labubu'));
+      expect(removed, equals('labubu'));
     });
 
     testWidgets('tapping Clear All calls onClearAll', (tester) async {
       var cleared = false;
       await tester.pumpWidget(_wrap(
-        queries: const ['Labubu'],
+        queries: const ['labubu'],
         onClearAll: () => cleared = true,
       ));
       await tester.tap(find.text('Clear All'));
@@ -380,7 +381,7 @@ void main() {
     testWidgets('tapping Clear All row outside label still clears', (tester) async {
       var cleared = false;
       await tester.pumpWidget(_wrap(
-        queries: const ['Labubu'],
+        queries: const ['labubu'],
         onClearAll: () => cleared = true,
       ));
 
@@ -515,10 +516,10 @@ void main() {
     });
 
     testWidgets('non-empty history shows Recent Searches only', (tester) async {
-      await tester.pumpWidget(_wrapSection(history: const ['Nommi']));
+      await tester.pumpWidget(_wrapSection(history: const ['nommi']));
       expect(find.text('Recent Searches'), findsOneWidget);
       expect(find.text('Suggested Searches'), findsNothing);
-      expect(find.text('Nommi'), findsOneWidget);
+      expect(find.text('nommi'), findsOneWidget);
       expect(find.text('Labubu'), findsNothing);
     });
 
@@ -592,7 +593,7 @@ void main() {
       expect(controller.text, equals(suggestion.query));
       expect(
         container.read(catalogSearchHistoryProvider),
-        contains(suggestion.query),
+        contains(SearchNormalizer.normalize(suggestion.query)),
       );
       expect(find.text('Recent Searches'), findsOneWidget);
       expect(find.text('Suggested Searches'), findsNothing);

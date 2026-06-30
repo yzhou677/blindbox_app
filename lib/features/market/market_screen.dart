@@ -1,5 +1,6 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
+import 'package:blindbox_app/core/search/search_placeholders.dart';
 import 'package:blindbox_app/features/market/application/collectible_market_providers.dart';
 import 'package:blindbox_app/features/market/debug/market_search_trace.dart';
 import 'package:blindbox_app/features/market/application/active_market_browse_query.dart';
@@ -191,7 +192,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                   AppSearchField(
                     readOnly: true,
                     onTap: () => context.push('/market/search'),
-                    hintText: 'Search figures, series, brands…',
+                    hintText: SearchPlaceholders.localMarket,
                   ),
                   if (!immersive) ...[
                     const SizedBox(height: FeedRhythm.blockGapMedium),

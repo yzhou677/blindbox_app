@@ -1,4 +1,5 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/search/search_placeholders.dart';
 import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
 import 'package:blindbox_app/features/home/application/home_discover_refresh_controller.dart';
@@ -80,7 +81,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: AppSearchField(
                 readOnly: true,
                 onTap: () => context.push('/home/catalog'),
-                hintText: 'Search catalog — figures, series, IPs…',
+                hintText: SearchPlaceholders.localCatalog,
               ),
             ),
           ),

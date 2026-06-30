@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
+import 'package:blindbox_app/core/search/search_placeholders.dart';
 import 'package:blindbox_app/features/market/application/collectible_market_providers.dart';
 import 'package:blindbox_app/features/market/application/active_market_browse_query.dart';
 import 'package:blindbox_app/features/market/application/market_browse_root_navigation.dart';
@@ -183,7 +184,7 @@ class _MarketBrowseSearchScreenState
       },
       child: FeedSearchScreen(
       title: 'Search market',
-      hintText: 'Search figures, series, brands…',
+      hintText: SearchPlaceholders.localMarket,
       emptyPrompt: 'Search by series, figure, or brand.',
       controller: _search,
       hasSearchText: _hasSearchText,

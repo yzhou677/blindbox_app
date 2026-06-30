@@ -48,7 +48,7 @@ void main() {
         snapshot,
         brandId: 'pop_mart',
         ipId: MarketTaxonomyIds.anyIp,
-        queryLower: '',
+        searchText: '',
       ),
       isTrue,
     );
@@ -57,7 +57,7 @@ void main() {
         snapshot,
         brandId: 'other_brand',
         ipId: MarketTaxonomyIds.anyIp,
-        queryLower: '',
+        searchText: '',
       ),
       isFalse,
     );
