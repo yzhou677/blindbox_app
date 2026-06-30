@@ -8,6 +8,36 @@ Search is designed to help collectors find **known** collectibles, not discover 
 
 When in doubt, the implementation prefers **predictable** behavior over **clever** behavior.
 
+### Aliases
+
+Aliases represent **alternative names** that collectors naturally use to refer to the **same entity**.
+
+Aliases are **not** search keywords, tags, descriptions, or marketing phrases.
+
+Search treats aliases as equivalent names for matching purposes only.
+
+**Good aliases**
+
+- THE MONSTERS → Labubu
+- Exciting Macaron → Macaron
+- SKULLPANDA → Skull Panda
+
+**Not aliases**
+
+- Cute
+- Pink
+- Vinyl
+- Rare
+- Blind Box
+
+Those are product attributes or keywords, not alternative names.
+
+> Search is designed to recognize the names collectors actually use, not to approximate intent through arbitrary keywords.
+
+Keeping aliases limited to genuine alternative names keeps search predictable, explainable, and easy to maintain.
+
+**Catalog ownership:** Alias values are maintained by the Catalog project. The Shelfy app only consumes aliases as catalog metadata — the app should never generate or invent aliases at runtime.
+
 Shelfy search is **local-first**: pure Dart matchers over in-memory catalog bundles, shelf rows, and offline market listings. There is no fuzzy matching, typo correction, stemming, or remote search engine in the local path.
 
 We intentionally avoid Elasticsearch, Algolia, Meilisearch, SQLite FTS, and similar systems because:
