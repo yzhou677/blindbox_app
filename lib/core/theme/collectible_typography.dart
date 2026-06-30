@@ -69,6 +69,45 @@ abstract final class CollectibleTypography {
     );
   }
 
+  /// Calm regular-complete badge on shelf cards.
+  static TextStyle shelfCompleteStatLine(TextTheme t, ColorScheme scheme) {
+    return shelfProgressLine(t, scheme).copyWith(
+      fontWeight: FontWeight.w500,
+      color: scheme.onSurface.withValues(alpha: 0.72),
+    );
+  }
+
+  /// Master-complete achievement — warmer accent, stronger weight.
+  static TextStyle shelfMasterCompleteStatLine(TextTheme t, ColorScheme scheme) {
+    final gold = Color.lerp(scheme.primary, const Color(0xFFC9A227), 0.68)!;
+    return shelfProgressLine(t, scheme).copyWith(
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.04,
+      color: gold,
+    );
+  }
+
+  /// Quiet section label inside the series figure sheet.
+  static TextStyle shelfFigureSheetSectionLabel(
+    TextTheme t,
+    ColorScheme scheme, {
+    bool accent = false,
+  }) {
+    final color = accent
+        ? Color.lerp(
+            scheme.onSurfaceVariant,
+            const Color(0xFFC9A227),
+            0.32,
+          )!.withValues(alpha: 0.84)
+        : scheme.onSurfaceVariant.withValues(alpha: 0.68);
+    return t.labelSmall!.copyWith(
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.28,
+      height: 1.3,
+      color: color,
+    );
+  }
+
   /// Figure name in rails, capsules, and gallery footer.
   static TextStyle figureCaption(TextTheme t, ColorScheme scheme) {
     return t.labelLarge!.copyWith(

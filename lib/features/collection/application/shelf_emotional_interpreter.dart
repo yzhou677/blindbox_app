@@ -1,4 +1,5 @@
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/domain/series_completion_resolution.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_stat_keys.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_emotional_profile.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_interpretation_confidence.dart';
@@ -57,7 +58,9 @@ ShelfEmotionalProfile interpretShelf(CollectionSnapshot snap) {
 
     final progress = progressForSeries(series, snap.figureStates);
     final total = series.figureCount;
-    if (total > 0 && progress.owned >= total) seriesComplete++;
+    if (resolveSeriesCompletion(series, snap.figureStates).isCompleted) {
+      seriesComplete++;
+    }
 
     if (total > 0) {
       final ratio = progress.owned / total;

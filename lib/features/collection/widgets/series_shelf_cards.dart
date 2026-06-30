@@ -7,6 +7,7 @@ import 'package:blindbox_app/core/theme/collectible_shape.dart';
 import 'package:blindbox_app/core/theme/collectible_shelf_shadow.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/domain/series_completion_atmosphere.dart';
+import 'package:blindbox_app/features/collection/domain/series_completion_resolution.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_series_thumbnail.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_progress_voice.dart';
 import 'package:flutter/material.dart';
@@ -49,9 +50,10 @@ class _SeriesShelfCardState extends State<SeriesShelfCard>
     _wasComplete = _isSeriesComplete;
   }
 
-  bool get _isSeriesComplete =>
-      widget.series.figureCount > 0 &&
-      widget.progress.owned >= widget.series.figureCount;
+  bool get _isSeriesComplete => resolveSeriesCompletion(
+        widget.series,
+        widget.figureStates,
+      ).isCompleted;
 
   @override
   void didUpdateWidget(SeriesShelfCard oldWidget) {
@@ -166,6 +168,7 @@ class _SeriesMatShell extends StatelessWidget {
     final nearComplete = atm?.nearComplete ?? false;
     final missingSecret = atm?.missingSecret ?? false;
     final sustainedComplete = atm?.complete ?? false;
+    final masterComplete = atm?.masterComplete ?? false;
 
     var borderColor = accent.withValues(alpha: isDark ? 0.22 : 0.38);
     if (nearComplete) {
@@ -174,6 +177,8 @@ class _SeriesMatShell extends StatelessWidget {
         const Color(0xFFE8C547),
         0.25,
       )!.withValues(alpha: 0.42);
+    } else if (masterComplete) {
+      borderColor = const Color(0xFFE8C547).withValues(alpha: 0.48);
     } else if (missingSecret) {
       borderColor = scheme.tertiary.withValues(alpha: 0.38);
     } else if (sustainedComplete) {
@@ -253,14 +258,17 @@ class _SeriesMatContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final completion = progress.completion(totalFigures);
+    final resolution = resolveSeriesCompletion(series, figureStates);
+    final completion = resolution.progressRatio;
     final statPrimary = CollectionProgressVoice.seriesStatPrimaryLine(
       series: series,
       progress: progress,
+      figureStates: figureStates,
     );
     final statSecondary = CollectionProgressVoice.seriesStatSecondaryLine(
       series: series,
       progress: progress,
+      figureStates: figureStates,
     );
     final headline = CollectionProgressVoice.seriesHeadline(
       series: series,
@@ -272,7 +280,8 @@ class _SeriesMatContent extends StatelessWidget {
       progress: progress,
       figureStates: figureStates,
     );
-    final isComplete = totalFigures > 0 && progress.owned >= totalFigures;
+    final isComplete = resolution.isCompleted;
+    final isMasterComplete = resolution.isMasterComplete;
     final missingSecret = atmosphere?.missingSecret ?? false;
 
     return Column(
@@ -314,18 +323,36 @@ class _SeriesMatContent extends StatelessWidget {
                 ? Color.lerp(
                     scheme.primary,
                     const Color(0xFFE8C547),
-                    0.38,
-                  )!.withValues(alpha: 0.78)
+                    isMasterComplete ? 0.72 : 0.38,
+                  )!.withValues(alpha: isMasterComplete ? 0.92 : 0.78)
                 : missingSecret
                     ? scheme.tertiary.withValues(alpha: 0.55)
                     : scheme.primary.withValues(alpha: 0.48),
           ),
         ),
         const SizedBox(height: 11),
-        if (statPrimary.isNotEmpty)
+        if (isMasterComplete)
+          Semantics(
+            label: 'Master Complete',
+            child: Text.rich(
+              TextSpan(
+                style: CollectibleTypography.shelfMasterCompleteStatLine(
+                  textTheme,
+                  scheme,
+                ),
+                children: const [
+                  TextSpan(text: '👑 '),
+                  TextSpan(text: 'Master Complete'),
+                ],
+              ),
+            ),
+          )
+        else if (statPrimary.isNotEmpty)
           Text(
             statPrimary,
-            style: CollectibleTypography.shelfProgressLine(textTheme, scheme),
+            style: isComplete
+                ? CollectibleTypography.shelfCompleteStatLine(textTheme, scheme)
+                : CollectibleTypography.shelfProgressLine(textTheme, scheme),
           ),
         if (statSecondary.isNotEmpty) ...[
           const SizedBox(height: 4),

@@ -3,6 +3,7 @@ import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/app_typography.dart';
 import 'package:blindbox_app/core/theme/collectible_shape.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/domain/series_completion_resolution.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
 import 'package:flutter/material.dart';
 
@@ -12,15 +13,22 @@ class CollectionAggregateStats {
   const CollectionAggregateStats({
     required this.inCollection,
     required this.wantListCount,
+    required this.completedSeriesCount,
+    required this.masterCompleteSeriesCount,
   });
 
   final int inCollection;
   final int wantListCount;
+  final int completedSeriesCount;
+  final int masterCompleteSeriesCount;
 
   factory CollectionAggregateStats.fromSnapshot(CollectionSnapshot s) {
+    final (completed, master) = countShelfCompletionTiers(s);
     return CollectionAggregateStats(
       inCollection: s.totalOwnedFigures,
       wantListCount: s.totalWishlistFigures,
+      completedSeriesCount: completed,
+      masterCompleteSeriesCount: master,
     );
   }
 }
@@ -73,30 +81,59 @@ class CollectionSummarySection extends StatelessWidget {
               // Horizontal 18 is intentionally narrower than pageHorizontal (20)
               // to give the metric strip a slightly inset look within the card.
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: AppSpacing.md),
-              child: SizedBox(
-                height: FeedRhythm.collectionSummaryMetricStripHeight,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    _ShelfGlanceStat(
-                      count: stats.inCollection,
-                      label: 'In collection',
-                      scheme: scheme,
-                      textTheme: textTheme,
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      child: _Dot(scheme: scheme),
-                    ),
-                    _ShelfGlanceStat(
-                      count: stats.wantListCount,
-                      label: 'Wishlist',
-                      scheme: scheme,
-                      textTheme: textTheme,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      _ShelfGlanceStat(
+                        count: stats.inCollection,
+                        label: 'In collection',
+                        scheme: scheme,
+                        textTheme: textTheme,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        child: _Dot(scheme: scheme),
+                      ),
+                      _ShelfGlanceStat(
+                        count: stats.wantListCount,
+                        label: 'Wishlist',
+                        scheme: scheme,
+                        textTheme: textTheme,
+                      ),
+                    ],
+                  ),
+                  if (stats.completedSeriesCount > 0) ...[
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        _ShelfGlanceStat(
+                          count: stats.completedSeriesCount,
+                          label: 'Completed',
+                          scheme: scheme,
+                          textTheme: textTheme,
+                        ),
+                        if (stats.masterCompleteSeriesCount > 0) ...[
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                            child: _Dot(scheme: scheme),
+                          ),
+                          _ShelfGlanceStat(
+                            count: stats.masterCompleteSeriesCount,
+                            label: 'Master',
+                            scheme: scheme,
+                            textTheme: textTheme,
+                          ),
+                        ],
+                      ],
                     ),
                   ],
-                ),
+                ],
               ),
             ),
           ),

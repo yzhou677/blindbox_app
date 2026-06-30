@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:blindbox_app/features/collection/application/shelf_emotional_interpreter.dart';
 import 'package:blindbox_app/features/collection/application/collection_evolution_interpreter.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/domain/series_completion_resolution.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_era.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_mood.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
@@ -400,8 +401,7 @@ final class CollectionMemoryStore {
   static bool _isSeriesComplete(CollectionSnapshot snap, String seriesId) {
     for (final series in snap.shelfSeries) {
       if (series.id != seriesId) continue;
-      final p = progressForSeries(series, snap.figureStates);
-      return series.figureCount > 0 && p.owned >= series.figureCount;
+      return resolveSeriesCompletion(series, snap.figureStates).isCompleted;
     }
     return false;
   }

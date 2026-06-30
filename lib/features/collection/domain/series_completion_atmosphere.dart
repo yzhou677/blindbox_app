@@ -7,6 +7,7 @@ class SeriesCompletionAtmosphere {
     this.nearComplete = false,
     this.missingSecret = false,
     this.complete = false,
+    this.masterComplete = false,
     this.rareLineup = false,
     this.harmony = false,
   });
@@ -14,9 +15,15 @@ class SeriesCompletionAtmosphere {
   final bool nearComplete;
   final bool missingSecret;
   final bool complete;
+  final bool masterComplete;
   final bool rareLineup;
   final bool harmony;
 
   bool get hasAccent =>
-      nearComplete || missingSecret || complete || rareLineup || harmony;
+      nearComplete ||
+      missingSecret ||
+      complete ||
+      masterComplete ||
+      rareLineup ||
+      harmony;
 }

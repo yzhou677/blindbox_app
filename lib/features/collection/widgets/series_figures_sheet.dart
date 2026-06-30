@@ -1,4 +1,5 @@
 import 'package:blindbox_app/core/theme/app_spacing.dart';
+import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_adapters.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_sheet.dart';
 import 'package:blindbox_app/features/collectible_relationship/application/collectible_relationship_providers.dart';
@@ -164,36 +165,182 @@ class SeriesFiguresSheet extends ConsumerWidget {
               bottom: AppSpacing.lg,
             ),
             sliver: SliverToBoxAdapter(
-              child: SizedBox(
-                width: double.infinity,
-                child: Wrap(
-                  spacing: 14,
-                  runSpacing: 18,
-                  alignment: WrapAlignment.center,
-                  children: [
-                    for (final f in series.figures)
-                      FigureCapsuleCard(
-                        series: series,
-                        figure: f,
-                        tracked: snap.trackedOrDefault(f.id),
-                        onTap: () => notifier.cycleFigure(f.id),
-                        onBrowseFigure: () {
-                          final index = series.figures.indexWhere(
-                            (fig) => fig.id == f.id,
-                          );
-                          showCatalogFigureGallery(
-                            context,
-                            items: catalogGalleryItemsFromShelfSeries(series),
-                            initialIndex: index < 0 ? 0 : index,
-                            seriesTitle: series.name,
-                          );
-                        },
-                      ),
-                  ],
-                ),
+              child: _SeriesFigureGrid(
+                series: series,
+                snap: snap,
+                onCycleFigure: notifier.cycleFigure,
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SeriesFigureGrid extends StatelessWidget {
+  const _SeriesFigureGrid({
+    required this.series,
+    required this.snap,
+    required this.onCycleFigure,
+  });
+
+  final ShelfSeries series;
+  final CollectionSnapshot snap;
+  final void Function(String figureId) onCycleFigure;
+
+  @override
+  Widget build(BuildContext context) {
+    final regularFigures =
+        series.figures.where((f) => !f.isSecret).toList(growable: false);
+    final secretFigures =
+        series.figures.where((f) => f.isSecret).toList(growable: false);
+
+    if (secretFigures.isEmpty) {
+      return _FigureCapsuleWrap(
+        series: series,
+        figures: series.figures,
+        snap: snap,
+        onCycleFigure: onCycleFigure,
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (regularFigures.isNotEmpty) ...[
+          const _FigureSheetSectionRule(),
+          const SizedBox(height: 16),
+          _FigureSheetSectionHeader(
+            label: 'Regular figures',
+            count: regularFigures.length,
+          ),
+          const SizedBox(height: 14),
+          _FigureCapsuleWrap(
+            series: series,
+            figures: regularFigures,
+            snap: snap,
+            onCycleFigure: onCycleFigure,
+          ),
+        ],
+        const SizedBox(height: 28),
+        const _FigureSheetSectionRule(),
+        const SizedBox(height: 16),
+        _FigureSheetSectionHeader(
+          label: 'Secret Figure',
+          count: secretFigures.length,
+          showCrown: true,
+          accent: true,
+        ),
+        const SizedBox(height: 24),
+        _FigureCapsuleWrap(
+          series: series,
+          figures: secretFigures,
+          snap: snap,
+          onCycleFigure: onCycleFigure,
+        ),
+      ],
+    );
+  }
+}
+
+class _FigureSheetSectionRule extends StatelessWidget {
+  const _FigureSheetSectionRule();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Divider(
+      height: 1,
+      thickness: 1,
+      color: scheme.outlineVariant.withValues(alpha: 0.32),
+    );
+  }
+}
+
+class _FigureSheetSectionHeader extends StatelessWidget {
+  const _FigureSheetSectionHeader({
+    required this.label,
+    this.count,
+    this.showCrown = false,
+    this.accent = false,
+  });
+
+  final String label;
+  final int? count;
+  final bool showCrown;
+  final bool accent;
+
+  String get _displayLabel =>
+      count != null ? '$label ($count)' : label;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final style = CollectibleTypography.shelfFigureSheetSectionLabel(
+      textTheme,
+      scheme,
+      accent: accent,
+    );
+
+    return Semantics(
+      header: true,
+      label: _displayLabel,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (showCrown) ...[
+            Text('👑', style: style.copyWith(fontSize: 13)),
+            const SizedBox(width: 5),
+          ],
+          Text(_displayLabel, style: style),
+        ],
+      ),
+    );
+  }
+}
+
+class _FigureCapsuleWrap extends StatelessWidget {
+  const _FigureCapsuleWrap({
+    required this.series,
+    required this.figures,
+    required this.snap,
+    required this.onCycleFigure,
+  });
+
+  final ShelfSeries series;
+  final List<ShelfFigure> figures;
+  final CollectionSnapshot snap;
+  final void Function(String figureId) onCycleFigure;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: Wrap(
+        spacing: 14,
+        runSpacing: 18,
+        alignment: WrapAlignment.center,
+        children: [
+          for (final f in figures)
+            FigureCapsuleCard(
+              series: series,
+              figure: f,
+              tracked: snap.trackedOrDefault(f.id),
+              onTap: () => onCycleFigure(f.id),
+              onBrowseFigure: () {
+                final index = series.figures.indexWhere(
+                  (fig) => fig.id == f.id,
+                );
+                showCatalogFigureGallery(
+                  context,
+                  items: catalogGalleryItemsFromShelfSeries(series),
+                  initialIndex: index < 0 ? 0 : index,
+                  seriesTitle: series.name,
+                );
+              },
+            ),
         ],
       ),
     );
