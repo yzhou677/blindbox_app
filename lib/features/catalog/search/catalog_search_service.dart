@@ -102,18 +102,27 @@ final class CatalogSearchService {
     final figureNorm = SearchNormalizer.normalize(fig.displayName);
     if (figureNorm == normalizedFullQuery) {
       take(const _Rank(_tierExactFigure, 0));
-    } else if (SearchMatcher.allTokensMatch(figureNorm, tokens)) {
-      take(_Rank(_tierFigureSubstring, SearchMatcher.earliestTokenIndex(figureNorm, tokens)));
+    } else if (SearchMatcher.allTokensMatch(
+      SearchNormalizer.normalizeForMatch(fig.displayName),
+      tokens,
+    )) {
+      take(_Rank(
+        _tierFigureSubstring,
+        SearchMatcher.earliestTokenIndex(figureNorm, tokens),
+      ));
     }
 
     final series = _seriesById[fig.seriesId];
     if (series != null) {
-      final seriesNorm = SearchNormalizer.normalize(series.displayName);
-      if (SearchMatcher.allTokensMatch(seriesNorm, tokens)) {
-        take(_Rank(_tierSeries, SearchMatcher.earliestTokenIndex(seriesNorm, tokens)));
+      final seriesMatch = SearchNormalizer.normalizeForMatch(series.displayName);
+      if (SearchMatcher.allTokensMatch(seriesMatch, tokens)) {
+        take(_Rank(
+          _tierSeries,
+          SearchMatcher.earliestTokenIndex(seriesMatch, tokens),
+        ));
       }
       for (final alias in series.aliases) {
-        final a = SearchNormalizer.normalize(alias);
+        final a = SearchNormalizer.normalizeForMatch(alias);
         if (SearchMatcher.allTokensMatch(a, tokens)) {
           take(_Rank(_tierAlias, SearchMatcher.earliestTokenIndex(a, tokens)));
         }
@@ -122,12 +131,15 @@ final class CatalogSearchService {
 
     final ip = _ipById[fig.ipId];
     if (ip != null) {
-      final ipNorm = SearchNormalizer.normalize(ip.displayName);
-      if (SearchMatcher.allTokensMatch(ipNorm, tokens)) {
-        take(_Rank(_tierIpName, SearchMatcher.earliestTokenIndex(ipNorm, tokens)));
+      final ipMatch = SearchNormalizer.normalizeForMatch(ip.displayName);
+      if (SearchMatcher.allTokensMatch(ipMatch, tokens)) {
+        take(_Rank(
+          _tierIpName,
+          SearchMatcher.earliestTokenIndex(ipMatch, tokens),
+        ));
       }
       for (final alias in ip.aliases) {
-        final a = SearchNormalizer.normalize(alias);
+        final a = SearchNormalizer.normalizeForMatch(alias);
         if (SearchMatcher.allTokensMatch(a, tokens)) {
           take(_Rank(_tierAlias, SearchMatcher.earliestTokenIndex(a, tokens)));
         }
@@ -136,12 +148,15 @@ final class CatalogSearchService {
 
     final brand = _brandById[fig.brandId];
     if (brand != null) {
-      final brandNorm = SearchNormalizer.normalize(brand.displayName);
-      if (SearchMatcher.allTokensMatch(brandNorm, tokens)) {
-        take(_Rank(_tierAlias, SearchMatcher.earliestTokenIndex(brandNorm, tokens)));
+      final brandMatch = SearchNormalizer.normalizeForMatch(brand.displayName);
+      if (SearchMatcher.allTokensMatch(brandMatch, tokens)) {
+        take(_Rank(
+          _tierAlias,
+          SearchMatcher.earliestTokenIndex(brandMatch, tokens),
+        ));
       }
       for (final alias in brand.aliases) {
-        final a = SearchNormalizer.normalize(alias);
+        final a = SearchNormalizer.normalizeForMatch(alias);
         if (SearchMatcher.allTokensMatch(a, tokens)) {
           take(_Rank(_tierAlias, SearchMatcher.earliestTokenIndex(a, tokens)));
         }
@@ -172,7 +187,7 @@ final class CatalogSearchService {
       parts.addAll(brand.aliases);
     }
 
-    return parts.map(SearchNormalizer.normalize).join(' ');
+    return parts.map(SearchNormalizer.normalizeForMatch).join(' ');
   }
 
   static int _compareScored(_ScoredResult a, _ScoredResult b) {

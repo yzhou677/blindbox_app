@@ -43,5 +43,5 @@ String _marketListingHaystack(MarketListing m) {
     if (m.taxonomyIpId != null) m.taxonomyIpId!.replaceAll('_', ' '),
   ];
 
-  return parts.map(SearchNormalizer.normalize).join(' ');
+  return parts.map(SearchNormalizer.normalizeForMatch).join(' ');
 }

@@ -79,7 +79,7 @@ String _shelfDisplayHaystack(ShelfSeries series) {
     series.name,
     series.brand,
     shelfSeriesIpLabel(series),
-  ].map(SearchNormalizer.normalize).join(' ');
+  ].map(SearchNormalizer.normalizeForMatch).join(' ');
 }
 
 SeriesProgressCounts _seriesProgress(

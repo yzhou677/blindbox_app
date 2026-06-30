@@ -30,6 +30,55 @@ void main() {
       );
       expect(SearchNormalizer.normalize('pop_mart/sku'), 'pop mart sku');
     });
+
+    test('strips decorative symbols and parentheses', () {
+      expect(SearchNormalizer.normalize('ZERO°'), 'zero');
+      expect(SearchNormalizer.normalize('POP MART®'), 'pop mart');
+      expect(SearchNormalizer.normalize('Haikyu!!'), 'haikyu');
+      expect(
+        SearchNormalizer.normalize('SKULLPANDA (Limited)'),
+        'skullpanda limited',
+      );
+    });
+
+    test('strips product-title boilerplate phrases', () {
+      expect(
+        SearchNormalizer.normalize(
+          'THE MONSTERS - Exciting Macaron Vinyl Face Blind Box',
+        ),
+        'the monsters exciting macaron',
+      );
+      expect(
+        SearchNormalizer.normalize('SKULLPANDA Petals in Four Acts Series Figures'),
+        'skullpanda petals in four acts',
+      );
+    });
+
+    test('compact removes spaces from normalized text', () {
+      expect(SearchNormalizer.compact('pop mart'), 'popmart');
+      expect(SearchNormalizer.compact('sonny angel'), 'sonnyangel');
+      expect(SearchNormalizer.compact('the monsters'), 'themonsters');
+    });
+
+    test('normalizeForMatch appends compact twin for spaced text', () {
+      expect(
+        SearchNormalizer.normalizeForMatch('POP MART'),
+        'pop mart popmart',
+      );
+      expect(
+        SearchNormalizer.normalizeForMatch('Sonny Angel'),
+        'sonny angel sonnyangel',
+      );
+      expect(
+        SearchNormalizer.normalizeForMatch('Skull Panda'),
+        'skull panda skullpanda',
+      );
+      expect(
+        SearchNormalizer.normalizeForMatch('THE MONSTERS'),
+        'the monsters themonsters',
+      );
+      expect(SearchNormalizer.normalizeForMatch('macaron'), 'macaron');
+    });
   });
 
   group('SearchTokenizer', () {
@@ -65,12 +114,15 @@ void main() {
     setUp(() {
       bundle = CatalogSeedBundle(
         brands: parseCatalogBrandsJson(r'''[
-          {"id": "pop_mart", "displayName": "POP MART", "aliases": ["POPMART"]}
+          {"id": "pop_mart", "displayName": "POP MART", "aliases": []},
+          {"id": "dreams_inc", "displayName": "Dreams Inc.", "aliases": []}
         ]'''),
         ips: parseCatalogIpsJson(r'''[
           {"id": "the_monsters", "brandId": "pop_mart", "displayName": "THE MONSTERS",
            "aliases": ["Labubu"]},
-          {"id": "hello_kitty", "brandId": "pop_mart", "displayName": "HELLO KITTY", "aliases": []}
+          {"id": "hello_kitty", "brandId": "pop_mart", "displayName": "HELLO KITTY", "aliases": []},
+          {"id": "skullpanda", "brandId": "pop_mart", "displayName": "SKULLPANDA", "aliases": []},
+          {"id": "sonny_angel", "brandId": "dreams_inc", "displayName": "Sonny Angel", "aliases": []}
         ]'''),
         series: parseCatalogSeriesJson(r'''[
           {"id": "hk_collab", "brandId": "pop_mart", "ipId": "the_monsters",
@@ -78,7 +130,13 @@ void main() {
            "releaseDate": "2024-01-01", "isBlindBox": true, "imageKey": "hk_collab"},
           {"id": "macaron", "brandId": "pop_mart", "ipId": "the_monsters",
            "displayName": "THE MONSTERS - Exciting Macaron Vinyl Face Blind Box",
-           "releaseDate": "2023-10-27", "isBlindBox": true, "imageKey": "macaron"}
+           "releaseDate": "2023-10-27", "isBlindBox": true, "imageKey": "macaron"},
+          {"id": "sonny_animal", "brandId": "dreams_inc", "ipId": "sonny_angel",
+           "displayName": "Sonny Angel Animal Series Figures",
+           "releaseDate": "2024-01-01", "isBlindBox": true, "imageKey": "sonny_animal"},
+          {"id": "skullpanda_sound", "brandId": "pop_mart", "ipId": "skullpanda",
+           "displayName": "SKULLPANDA The Sound Series Figures",
+           "releaseDate": "2024-01-01", "isBlindBox": true, "imageKey": "skullpanda_sound"}
         ]'''),
         figures: parseCatalogFiguresJson(r'''[
           {"id": "fig_hello", "seriesId": "hk_collab", "brandId": "pop_mart",
@@ -86,7 +144,13 @@ void main() {
            "sortOrder": 1, "imageKey": "fig_hello"},
           {"id": "fig_soy", "seriesId": "macaron", "brandId": "pop_mart",
            "ipId": "the_monsters", "displayName": "Soymilk", "isSecret": false,
-           "sortOrder": 1, "imageKey": "fig_soy"}
+           "sortOrder": 1, "imageKey": "fig_soy"},
+          {"id": "fig_sonny", "seriesId": "sonny_animal", "brandId": "dreams_inc",
+           "ipId": "sonny_angel", "displayName": "Rabbit", "isSecret": false,
+           "sortOrder": 1, "imageKey": "fig_sonny"},
+          {"id": "fig_skull", "seriesId": "skullpanda_sound", "brandId": "pop_mart",
+           "ipId": "skullpanda", "displayName": "Choir", "isSecret": false,
+           "sortOrder": 1, "imageKey": "fig_skull"}
         ]'''),
       );
     });
@@ -117,6 +181,117 @@ void main() {
       final svc = CatalogSearchService(bundle);
       expect(svc.search('soymilk'), hasLength(1));
     });
+
+    test('compact brand query matches without catalog alias', () {
+      final svc = CatalogSearchService(bundle);
+      expect(svc.search('popmart'), isNotEmpty);
+      expect(svc.search('pop mart'), isNotEmpty);
+    });
+
+    test('compact IP query matches without catalog alias', () {
+      final svc = CatalogSearchService(bundle);
+      expect(svc.search('themonsters'), isNotEmpty);
+      expect(svc.search('skullpanda'), isNotEmpty);
+      expect(svc.search('sonnyangel'), isNotEmpty);
+    });
+
+    test('compact spaced IP query matches without catalog alias', () {
+      final svc = CatalogSearchService(bundle);
+      expect(svc.search('sonny angel'), isNotEmpty);
+    });
+
+    test('boilerplate-stripped series title matches content tokens', () {
+      final svc = CatalogSearchService(bundle);
+      expect(svc.search('exciting macaron'), isNotEmpty);
+    });
+
+    test('labubu identity alias still matches when present', () {
+      final svc = CatalogSearchService(bundle);
+      expect(svc.search('labubu'), isNotEmpty);
+    });
+  });
+
+  group('Search normalization smoke tests', () {
+    late CatalogSeedBundle bundle;
+    late CatalogSearchService svc;
+
+    setUp(() {
+      bundle = CatalogSeedBundle(
+        brands: parseCatalogBrandsJson(r'''[
+          {"id": "pop_mart", "displayName": "POP MART", "aliases": []},
+          {"id": "dreams_inc", "displayName": "Dreams Inc.", "aliases": []}
+        ]'''),
+        ips: parseCatalogIpsJson(r'''[
+          {"id": "the_monsters", "brandId": "pop_mart", "displayName": "THE MONSTERS",
+           "aliases": ["Labubu"]},
+          {"id": "skullpanda", "brandId": "pop_mart", "displayName": "SKULLPANDA", "aliases": []},
+          {"id": "sonny_angel", "brandId": "dreams_inc", "displayName": "Sonny Angel", "aliases": []}
+        ]'''),
+        series: parseCatalogSeriesJson(r'''[
+          {"id": "macaron", "brandId": "pop_mart", "ipId": "the_monsters",
+           "displayName": "THE MONSTERS - Exciting Macaron Vinyl Face Blind Box",
+           "releaseDate": "2023-10-27", "isBlindBox": true, "imageKey": "macaron"},
+          {"id": "sonny_animal", "brandId": "dreams_inc", "ipId": "sonny_angel",
+           "displayName": "Sonny Angel Animal Series Figures",
+           "releaseDate": "2024-01-01", "isBlindBox": true, "imageKey": "sonny_animal"},
+          {"id": "skullpanda_sound", "brandId": "pop_mart", "ipId": "skullpanda",
+           "displayName": "SKULLPANDA The Sound Series Figures",
+           "releaseDate": "2024-01-01", "isBlindBox": true, "imageKey": "skullpanda_sound"}
+        ]'''),
+        figures: parseCatalogFiguresJson(r'''[
+          {"id": "fig_soy", "seriesId": "macaron", "brandId": "pop_mart",
+           "ipId": "the_monsters", "displayName": "Soymilk", "isSecret": false,
+           "sortOrder": 1, "imageKey": "fig_soy"},
+          {"id": "fig_sonny", "seriesId": "sonny_animal", "brandId": "dreams_inc",
+           "ipId": "sonny_angel", "displayName": "Rabbit", "isSecret": false,
+           "sortOrder": 1, "imageKey": "fig_sonny"},
+          {"id": "fig_skull", "seriesId": "skullpanda_sound", "brandId": "pop_mart",
+           "ipId": "skullpanda", "displayName": "Choir", "isSecret": false,
+           "sortOrder": 1, "imageKey": "fig_skull"}
+        ]'''),
+      );
+      svc = CatalogSearchService(bundle);
+    });
+
+    Set<String> figureIds(String query) =>
+        svc.search(query).map((r) => r.figureId).toSet();
+
+    test('popmart and POP MART return the same figures', () {
+      final compact = figureIds('popmart');
+      final spaced = figureIds('POP MART');
+      expect(compact, isNotEmpty);
+      expect(spaced, compact);
+      expect(compact, containsAll(['fig_soy', 'fig_skull']));
+    });
+
+    test('sonnyangel and Sonny Angel return the same figures', () {
+      final compact = figureIds('sonnyangel');
+      final spaced = figureIds('Sonny Angel');
+      expect(compact, equals({'fig_sonny'}));
+      expect(spaced, compact);
+    });
+
+    test('skullpanda matches SKULLPANDA IP figures', () {
+      expect(figureIds('skullpanda'), equals({'fig_skull'}));
+      expect(figureIds('SKULLPANDA'), figureIds('skullpanda'));
+    });
+
+    test('themonsters matches THE MONSTERS IP figures', () {
+      final compact = figureIds('themonsters');
+      final spaced = figureIds('THE MONSTERS');
+      expect(compact, equals({'fig_soy'}));
+      expect(spaced, compact);
+    });
+
+    test('blind box alone is boilerplate-only and yields no catalog results', () {
+      expect(SearchNormalizer.normalize('blind box'), isEmpty);
+      expect(SearchTokenizer.tokenize('blind box'), isEmpty);
+      expect(svc.search('blind box'), isEmpty);
+    });
+
+    test('blind box plus content tokens still matches after boilerplate strip', () {
+      expect(figureIds('blind box exciting macaron'), equals({'fig_soy'}));
+    });
   });
 
   group('filterShelfSeriesBySearch token matching', () {
@@ -132,6 +307,7 @@ void main() {
         ),
       ];
       expect(filterShelfSeriesBySearch(series, 'pop mart hello'), hasLength(1));
+      expect(filterShelfSeriesBySearch(series, 'popmart hello'), hasLength(1));
       expect(filterShelfSeriesBySearch(series, 'football hello'), isEmpty);
     });
 

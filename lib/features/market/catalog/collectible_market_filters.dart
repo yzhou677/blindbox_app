@@ -21,7 +21,7 @@ bool collectibleMarketSnapshotVisible(
   if (tokens.isEmpty) return true;
 
   final display = resolveCollectibleMarketDisplay(snapshot);
-  final displayHaystack = SearchNormalizer.normalize(
+  final displayHaystack = SearchNormalizer.normalizeForMatch(
     '${display.title} ${display.subtitle}',
   );
   if (SearchMatcher.allTokensMatch(displayHaystack, tokens)) return true;
