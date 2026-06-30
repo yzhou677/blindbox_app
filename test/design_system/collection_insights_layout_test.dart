@@ -2,7 +2,7 @@ import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/app_theme.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
-import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
@@ -16,7 +16,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../helpers/collection_fixtures.dart';
 
 // ---------------------------------------------------------------------------
-// Test notifier — minimal shelf so providers resolve immediately.
+// Test notifier ??minimal shelf so providers resolve immediately.
 // ---------------------------------------------------------------------------
 
 final class _InsightsLayoutTestNotifier extends CollectionNotifier {
@@ -66,7 +66,7 @@ void main() {
     CollectionMemoryStore.instance.resetForTest();
   });
 
-  group('CollectionInsightsScreen — AppBar layout', () {
+  group('CollectionInsightsScreen ??AppBar layout', () {
     testWidgets('uses FeedRhythm.mainTabAppBarToolbarHeight (52)', (tester) async {
       await _pumpInsights(tester);
 
@@ -89,7 +89,7 @@ void main() {
       );
     });
 
-    testWidgets('has a back button (leading) — is a sub-route', (tester) async {
+    testWidgets('has a back button (leading) ??is a sub-route', (tester) async {
       await _pumpInsights(tester);
 
       // The leading icon is an arrow_back_rounded; confirm there is a leading
@@ -99,7 +99,7 @@ void main() {
     });
   });
 
-  group('CollectionInsightsScreen — section header', () {
+  group('CollectionInsightsScreen ??section header', () {
     testWidgets('CollectibleSectionHeader is present in scroll view', (tester) async {
       await _pumpInsights(tester);
 
@@ -129,7 +129,7 @@ void main() {
     });
   });
 
-  group('CollectionInsightsScreen — body horizontal gutter', () {
+  group('CollectionInsightsScreen ??body horizontal gutter', () {
     testWidgets('SliverPadding uses AppSpacing.pageHorizontal on left and right',
         (tester) async {
       await _pumpInsights(tester);

@@ -1,9 +1,12 @@
-import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+﻿import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/search/search_placeholders.dart';
 import 'package:blindbox_app/features/catalog/adapters/catalog_seed_to_collection_template.dart';
+import 'package:blindbox_app/features/catalog/application/catalog_availability.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
-import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
+import 'package:blindbox_app/features/catalog/presentation/catalog_availability_copy.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_series_search_rows.dart';
+import 'package:blindbox_app/features/catalog/widgets/catalog_availability_card.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_history_provider.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_history_section.dart';
 import 'package:blindbox_app/features/catalog/widgets/catalog_series_search_row_card.dart';
@@ -16,7 +19,7 @@ import 'package:blindbox_app/shared/widgets/feed_search_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Home entry: catalog search → series preview → figure gallery.
+/// Home entry: catalog search —series preview —figure gallery.
 class CatalogBrowseScreen extends ConsumerStatefulWidget {
   const CatalogBrowseScreen({super.key});
 
@@ -101,6 +104,8 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final bundleAsync = ref.watch(catalogBundleProvider);
+    final availability = ref.watch(catalogAvailabilityProvider);
+    final retry = ref.read(catalogDownloadRetryProvider);
     final snap = ref.watch(collectionNotifierProvider);
     final history = ref.watch(catalogSearchHistoryProvider);
 
@@ -114,105 +119,92 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
       onSuggestedTap: _applySuggestedQuery,
     );
 
-    return bundleAsync.when(
-      loading: () => FeedSearchScreen(
-        title: 'Search catalog',
-        hintText: SearchPlaceholders.localCatalog,
-        emptyPrompt: 'Search by series, figure, or IP.',
-        controller: _search,
-        hasSearchText: _hasSearchText,
-        onChanged: (_) => setState(() {}),
-        onSubmitted: () => _recordSearch(_trimmedQuery),
-        onClear: _search.clear,
-        historySection: historyWidget,
-        results: const Center(child: CircularProgressIndicator()),
-      ),
-      error: (_, _) => FeedSearchScreen(
-        title: 'Search catalog',
-        hintText: SearchPlaceholders.localCatalog,
-        emptyPrompt: 'Search by series, figure, or IP.',
-        controller: _search,
-        hasSearchText: _hasSearchText,
-        onChanged: (_) => setState(() {}),
-        onSubmitted: () => _recordSearch(_trimmedQuery),
-        onClear: _search.clear,
-        historySection: historyWidget,
-        results: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text(
-              "Couldn\u2019t load the catalog. Check your connection and try again.",
-              textAlign: TextAlign.center,
-              style: textTheme.bodyMedium?.copyWith(
-                color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
-              ),
-            ),
-          ),
-        ),
-      ),
-      data: (bundle) {
-        final matches = _hasSearchText
-            ? buildCatalogSeriesSearchRows(
-                bundle: bundle,
-                query: _trimmedQuery,
-              )
-            : const <CatalogSeriesSearchRow>[];
-
-        return FeedSearchScreen(
-          title: 'Search catalog',
-          hintText: SearchPlaceholders.localCatalog,
-          emptyPrompt: 'Search by series, figure, or IP.',
-          controller: _search,
-          hasSearchText: _hasSearchText,
-          onChanged: (_) => setState(() {}),
-          onSubmitted: () => _recordSearch(_trimmedQuery),
-          onClear: _search.clear,
-          historySection: historyWidget,
-          results: matches.isEmpty
-              ? Center(
-                  child: Text(
-                    'No matches for that search.',
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: scheme.onSurfaceVariant.withValues(alpha: 0.8),
-                    ),
-                  ),
-                )
-              : ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-                  itemCount: matches.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(height: 12),
-                  itemBuilder: (ctx, i) {
-                    final row = matches[i];
-                    final shelfCta =
-                        CollectionSeriesShelfCtaPresentation.resolve(
-                      snapshot: snap,
-                      layout: CollectionSeriesShelfCtaLayout.catalogBrowse,
-                      catalogTemplateId: row.seriesId,
-                      seriesName: row.seriesTitle,
-                      brandName: row.brand,
-                      taxonomyBrandId: row.taxonomyBrandId,
-                      taxonomyIpId: row.taxonomyIpId,
-                    );
-                    return CatalogSeriesSearchRowCard(
-                      key: ValueKey<String>(
-                        'catalog-browse:${row.seriesId}',
-                      ),
-                      row: row,
-                      shelfCta: shelfCta,
-                      onOpenPreview: () {
-                        _recordSearch(_trimmedQuery);
-                        _openSeriesPreview(ctx, bundle, row.seriesId);
-                      },
-                      onShelfCtaPressed: () {
-                        _recordSearch(_trimmedQuery);
-                        _openSeriesPreview(ctx, bundle, row.seriesId);
-                      },
-                    );
-                  },
-                ),
+    final Widget results;
+    final Widget? historySection;
+    if (!availability.isCatalogUsable) {
+      final message = CatalogAvailabilityCopy.searchMessageFor(availability);
+      if (_hasSearchText) {
+        historySection = null;
+        results = CatalogAvailabilitySearchMessage(
+          message: message,
+          onRetry: availability.isOfflineFirstLaunch ? retry : null,
         );
-      },
+      } else {
+        historySection = CatalogAvailabilityCard(
+          availability: availability,
+          onRetry: availability.isOfflineFirstLaunch ? retry : null,
+        );
+        results = const SizedBox.shrink();
+      }
+    } else {
+      historySection = historyWidget;
+      final bundle = bundleAsync.valueOrNull;
+      if (bundle == null) {
+        results = const Center(child: CircularProgressIndicator());
+      } else if (_hasSearchText) {
+        final matches = buildCatalogSeriesSearchRows(
+          bundle: bundle,
+          query: _trimmedQuery,
+        );
+        results = matches.isEmpty
+            ? Center(
+                child: Text(
+                  'No matches for that search.',
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.8),
+                  ),
+                ),
+              )
+            : ListView.separated(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+                itemCount: matches.length,
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: 12),
+                itemBuilder: (ctx, i) {
+                  final row = matches[i];
+                  final shelfCta =
+                      CollectionSeriesShelfCtaPresentation.resolve(
+                    snapshot: snap,
+                    layout: CollectionSeriesShelfCtaLayout.catalogBrowse,
+                    catalogTemplateId: row.seriesId,
+                    seriesName: row.seriesTitle,
+                    brandName: row.brand,
+                    taxonomyBrandId: row.taxonomyBrandId,
+                    taxonomyIpId: row.taxonomyIpId,
+                  );
+                  return CatalogSeriesSearchRowCard(
+                    key: ValueKey<String>(
+                      'catalog-browse:${row.seriesId}',
+                    ),
+                    row: row,
+                    shelfCta: shelfCta,
+                    onOpenPreview: () {
+                      _recordSearch(_trimmedQuery);
+                      _openSeriesPreview(ctx, bundle, row.seriesId);
+                    },
+                    onShelfCtaPressed: () {
+                      _recordSearch(_trimmedQuery);
+                      _openSeriesPreview(ctx, bundle, row.seriesId);
+                    },
+                  );
+                },
+              );
+      } else {
+        results = const SizedBox.shrink();
+      }
+    }
+
+    return FeedSearchScreen(
+      title: 'Search catalog',
+      hintText: SearchPlaceholders.localCatalog,
+      emptyPrompt: 'Search by series, figure, or IP.',
+      controller: _search,
+      hasSearchText: _hasSearchText,
+      onChanged: (_) => setState(() {}),
+      onSubmitted: () => _recordSearch(_trimmedQuery),
+      onClear: _search.clear,
+      historySection: historySection,
+      results: results,
     );
   }
 }

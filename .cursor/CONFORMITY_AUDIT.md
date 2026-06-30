@@ -12,15 +12,18 @@ Last reviewed against the repo structure and key files.
 - [x] Collection mutations only via `CollectionNotifier` + `CollectionSnapshotCodec`
 - [x] Market: `MarketSource` → repository → providers; HTTP in `ebay_http_browse_data_source.dart` and `data/datasource/mercari/` (sandbox gateway only)
 - [x] Mercari live sandbox **off by default** (`MarketSandboxConfig`); asset bootstrap unchanged; manual refresh only
-- [x] Catalog search is pure Dart over `CatalogSeedBundle`
-- [x] Firestore loader returns same bundle type as seed loader
+- [x] Catalog search is Search V2 over `CatalogSeedBundle` via `catalogSearchServiceProvider`
+- [x] Firestore loader returns same bundle type as `catalog_bundle.dart` codec
 - [x] Shelf media separation (`imageKey` in catalog only; `localImageUri` / `imageUrl` on shelf)
 - [x] `go_router` three-tab shell
-- [x] Bootstrap in `main.dart` for market + collection restore
+- [x] Bootstrap in `main.dart` for catalog cache, market identity install, collection restore
 - [x] Legacy expansion guardrails documented (`lib/models/` frozen; feature-owned new models) in `ARCHITECTURE.md`
 - [x] Firebase integration boundaries documented (Firestore + Storage catalog-only; shelf local-first) in `ARCHITECTURE.md` + `firebase-catalog.mdc`
-- [x] Add Series uses `loadCatalogBundle()` (Firestore + seed fallback) and `pickLatestSeriesRecommendations` — not `CollectionCatalog`
+- [x] Add Series uses `catalogBundleProvider` + `pickLatestSeriesRecommendations` — not `CollectionCatalog`
 - [x] `CatalogImageResolver` + Storage paths wired for catalog UI (`CatalogImageFromKey`, add sheet search)
+- [x] `CatalogBundleCache` + `catalogBundleProvider` propagation (revision bump → reactive graph)
+- [x] `catalogAvailabilityProvider` first-launch / offline / refresh UX
+- [x] Runtime bootstrap metadata seed removed — Firestore + persisted cache only
 - [x] Market browse stays on `MarketSource`/repository — no Firestore catalog queries for listing rows
 - [x] Market identity matching: offline `CatalogIdentityIndex` + `MarketIdentityMatcher` at bootstrap (no matcher in widgets)
 - [x] `MarketTaxonomy.applyCatalogBundle()` at startup; brand-scoped filter chips use Firestore-backed `_catalogBrands` / `_catalogIps`

@@ -1,5 +1,7 @@
 # Search architecture
 
+**Catalog context:** [`CATALOG_ARCHITECTURE.md`](CATALOG_ARCHITECTURE.md) — full catalog runtime, provider graph, and alias policy. This document goes deeper on search behavior only.
+
 ## Philosophy
 
 > **Search is token-based, deterministic, and shared across all local Shelfy surfaces.**

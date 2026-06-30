@@ -1,4 +1,4 @@
-import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+﻿import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_figure.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_series.dart';
 import 'package:blindbox_app/features/market/application/market_listing_title_normalizer.dart';
@@ -38,7 +38,7 @@ class CatalogTokenHit {
   final int sortOrder;
 }
 
-/// Rank tier — mirrors [CatalogSearchService] (1 = best).
+/// Rank tier —mirrors [CatalogSearchService] (1 = best).
 @immutable
 class CatalogFigureCandidate {
   const CatalogFigureCandidate({

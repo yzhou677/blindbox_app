@@ -2,7 +2,7 @@ import 'package:blindbox_app/core/search/search_matcher.dart';
 import 'package:blindbox_app/core/search/search_normalizer.dart';
 import 'package:blindbox_app/core/search/search_placeholders.dart';
 import 'package:blindbox_app/core/search/search_tokenizer.dart';
-import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_history.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_service.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
@@ -21,7 +21,7 @@ void main() {
 
     test('folds separator characters into spaces', () {
       expect(
-        SearchNormalizer.normalize('THE MONSTERS × HELLO KITTY'),
+        SearchNormalizer.normalize('THE MONSTERS ? HELLO KITTY'),
         'the monsters hello kitty',
       );
       expect(
@@ -126,7 +126,7 @@ void main() {
         ]'''),
         series: parseCatalogSeriesJson(r'''[
           {"id": "hk_collab", "brandId": "pop_mart", "ipId": "the_monsters",
-           "displayName": "THE MONSTERS × HELLO KITTY - Vinyl Plush",
+           "displayName": "THE MONSTERS ? HELLO KITTY - Vinyl Plush",
            "releaseDate": "2024-01-01", "isBlindBox": true, "imageKey": "hk_collab"},
           {"id": "macaron", "brandId": "pop_mart", "ipId": "the_monsters",
            "displayName": "THE MONSTERS - Exciting Macaron Vinyl Face Blind Box",
@@ -351,7 +351,7 @@ void main() {
     test('separator and token AND across listing fields', () {
       final listing = makeListing(
         name: 'Plush',
-        series: 'THE MONSTERS × HELLO KITTY',
+        series: 'THE MONSTERS ? HELLO KITTY',
         brand: 'POP MART',
       );
       expect(marketListingMatchesFreeText(listing, 'hello kitty monsters'), isTrue);

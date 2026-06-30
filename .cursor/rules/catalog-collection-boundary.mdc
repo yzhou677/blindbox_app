@@ -10,11 +10,13 @@ alwaysApply: false
 
 - Read-only universe: brands, IPs, series, figures
 - Models use **`imageKey`** (opaque); resolve with **`CatalogImageResolver`**
-- Load via `loadCatalogBundle()` (Firestore `brands` / `ips` / `series` / `figures`, else seed JSON)
+- Runtime: **`CatalogBundleCache`** → **`catalogBundleProvider`** — Firestore one-shot `.get()` via `loadFirestoreCatalogBundle()`; persisted `catalog_bundle_v1.json` for offline; `CatalogBundleMemoryOrigin` (`bootstrapPlaceholder` → `persisted` | `firestore` | `resolved`). **No** APK-bundled metadata JSON.
+- UI: **`catalogAvailabilityProvider`** for loading/offline/refresh UX — widgets do not call Firestore for catalog
 - Same flat schema only — no nested catalog collections, no `imagePath` on Firestore docs
 - Firebase Storage = `catalog/series/<imageKey>.<ext>` and `catalog/figures/<imageKey>.<ext>` only — no URLs or `imagePath` on Firestore docs
-- `CatalogSearchService` is pure Dart; keep ranking/grouping logic out of widgets when possible
+- **Search V2:** `CatalogSearchService` + `lib/core/search/` (normalization, token AND, combined haystack) — see [`docs/SEARCH_ARCHITECTURE.md`](../../docs/SEARCH_ARCHITECTURE.md)
 - Clone onto shelf only through `catalogTemplateFromSeedSeries` + `CollectionNotifier`
+- New catalog-derived providers must `ref.watch(catalogBundleProvider)` (or transitively)
 
 ## Collection (`lib/features/collection/`)
 
@@ -27,7 +29,7 @@ alwaysApply: false
 ## Naming trap
 
 - `features/catalog/models/CatalogSeries` ≠ `collection_domain.CatalogSeries` (shelf template)
-- `CollectionCatalog` in `collection/data/` is a **legacy hardcoded** suggestion list — separate from seed JSON catalog
+- `CollectionCatalog` in `collection/data/` is a **legacy hardcoded** suggestion list — separate from Firestore catalog
 
 ## Do not
 

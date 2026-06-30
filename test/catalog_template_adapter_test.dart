@@ -1,5 +1,5 @@
 import 'package:blindbox_app/features/catalog/adapters/catalog_seed_to_collection_template.dart';
-import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_figure.dart';
 import 'package:flutter_test/flutter_test.dart';
 

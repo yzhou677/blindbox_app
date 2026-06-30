@@ -2,7 +2,7 @@ import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/app_theme.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
-import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/market/presentation/market_browse_search_screen.dart';
@@ -57,7 +57,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  group('FeedSearchScreen (search overlay) — intentional AppBar deviations', () {
+  group('FeedSearchScreen (search overlay) ??intentional AppBar deviations', () {
     testWidgets('uses toolbarHeight 72 (not 52)', (tester) async {
       await _pumpMarketSearch(tester);
 
@@ -90,7 +90,7 @@ void main() {
     });
   });
 
-  group('MarketBrowseSearchScreen — results list spacing', () {
+  group('MarketBrowseSearchScreen ??results list spacing', () {
     testWidgets('FeedSearchScreen is rendered', (tester) async {
       await _pumpMarketSearch(tester);
       expect(find.byType(FeedSearchScreen), findsOneWidget);
@@ -106,7 +106,7 @@ void main() {
     });
   });
 
-  group('MarketBrowseResultsSkeleton — constrained viewport', () {
+  group('MarketBrowseResultsSkeleton ??constrained viewport', () {
     testWidgets('does not overflow when height is shorter than card stack', (
       tester,
     ) async {
@@ -127,7 +127,7 @@ void main() {
     });
   });
 
-  group('FeedRhythm token guard — market listing gap', () {
+  group('FeedRhythm token guard ??market listing gap', () {
     test('marketListingFeedCardVerticalGap is 18', () {
       // Regression guard: this value is referenced from the search list
       // separator. If the main market feed gap changes, the search screen

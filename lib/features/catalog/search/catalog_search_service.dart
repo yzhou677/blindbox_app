@@ -1,7 +1,7 @@
-import 'package:blindbox_app/core/search/search_matcher.dart';
+﻿import 'package:blindbox_app/core/search/search_matcher.dart';
 import 'package:blindbox_app/core/search/search_normalizer.dart';
 import 'package:blindbox_app/core/search/search_tokenizer.dart';
-import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_brand.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_figure.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_ip.dart';
@@ -33,7 +33,7 @@ final class CatalogSearchService {
   static const int _tierIpName = 4;
   static const int _tierAlias = 5;
 
-  /// Returns figures that match [rawQuery], best matches first. Empty query → [].
+  /// Returns figures that match [rawQuery], best matches first. Empty query ??[].
   List<CatalogSearchResult> search(String rawQuery) {
     final tokens = SearchTokenizer.tokenize(rawQuery);
     if (tokens.isEmpty) return [];
@@ -67,7 +67,7 @@ final class CatalogSearchService {
     return scored.map((e) => e.result).toList(growable: false);
   }
 
-  /// Series ids with at least one figure match — for filtering shelf rows by
+  /// Series ids with at least one figure match —for filtering shelf rows by
   /// [ShelfSeries.catalogTemplateId] without duplicating match rules.
   Set<String> matchingSeriesIds(String rawQuery) {
     final tokens = SearchTokenizer.tokenize(rawQuery);
@@ -199,13 +199,13 @@ final class CatalogSearchService {
   }
 }
 
-/// Normalized query string — delegates to [SearchNormalizer] (Search V2).
+/// Normalized query string —delegates to [SearchNormalizer] (Search V2).
 String normalizeCatalogSearchQuery(String raw) => SearchNormalizer.normalize(raw);
 
 class _Rank {
   const _Rank(this.tier, this.indexInHaystack);
 
-  /// 1 = best … 5 = alias / loose brand text.
+  /// 1 = best ??5 = alias / loose brand text.
   final int tier;
 
   /// Earlier match in normalized string sorts before later (smaller index = better).

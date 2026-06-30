@@ -1,4 +1,4 @@
-import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+﻿import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_series.dart'
     as seed;
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
@@ -11,7 +11,7 @@ import 'package:blindbox_app/features/collection/insights/domain/collector_type_
 import 'package:blindbox_app/features/collection/insights/application/collector_type_stat_keys.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_stats.dart';
 
-/// Minimum analyzing hold duration (ms) — mirrored by view model.
+/// Minimum analyzing hold duration (ms) —mirrored by view model.
 const int collectorTypeAnalyzingHoldMs = 1400;
 
 /// Computes a stable shelf signature for era-shift detection.
@@ -235,12 +235,12 @@ Map<CollectorTypeArchetypeId, double> _scoreArchetypes({
     scores[CollectorTypeArchetypeId.hunter] = 20 + secretOwnedRatio * 20;
   }
 
-  // Lucky One — high secret hit rate with modest shelf
+  // Lucky One —high secret hit rate with modest shelf
   if (stats.secretOwned >= 1 && secretOwnedRatio >= 0.5 && seriesCount <= 4) {
     scores[CollectorTypeArchetypeId.luckyOne] = 30 + secretOwnedRatio * 40;
   }
 
-  // Loyalist — dominant brand/IP
+  // Loyalist —dominant brand/IP
   if (profile.dominantBrandId != null || profile.dominantIpId != null) {
     final dominantShare = _dominantShare(snapshot, profile);
     if (dominantShare >= 0.6) {
@@ -248,24 +248,24 @@ Map<CollectorTypeArchetypeId, double> _scoreArchetypes({
     }
   }
 
-  // Curator — spread across brands/IPs
+  // Curator —spread across brands/IPs
   if (brandSpread >= 2 || shelfIpSpread >= 2) {
     scores[CollectorTypeArchetypeId.curator] =
         25 + brandSpread * 8 + ipDepthKeys * 5;
   }
 
-  // Wanderer — many IPs, low completion
+  // Wanderer —many IPs, low completion
   if (brandSpread >= 2 && avgCompletion < 0.5 && seriesCount >= 2) {
     scores[CollectorTypeArchetypeId.wanderer] =
         20 + brandSpread * 6 + (1 - avgCompletion) * 20;
   }
 
-  // Minimalist — small shelf, high completion
+  // Minimalist —small shelf, high completion
   if (seriesCount <= 3 && owned <= 12 && avgCompletion >= 0.75) {
     scores[CollectorTypeArchetypeId.minimalist] = 35 + avgCompletion * 25;
   }
 
-  // Archivist — notes, photos, long tenure
+  // Archivist —notes, photos, long tenure
   if (notesCount >= 1 || photoSeries >= 2) {
     scores[CollectorTypeArchetypeId.archivist] =
         20 + notesCount * 10 + photoSeries * 8;
@@ -276,24 +276,24 @@ Map<CollectorTypeArchetypeId, double> _scoreArchetypes({
         (scores[CollectorTypeArchetypeId.archivist] ?? 0) + 15;
   }
 
-  // Stylist — custom + photos
+  // Stylist —custom + photos
   if (stats.customSeriesRatio >= 0.3 || photoSeries >= 2) {
     scores[CollectorTypeArchetypeId.stylist] =
         25 + stats.customSeriesRatio * 40 + photoSeries * 6;
   }
 
-  // Dreamer — wishlist leaning
+  // Dreamer —wishlist leaning
   if (wishlistRatio >= 0.45 && wishlist >= 2) {
     scores[CollectorTypeArchetypeId.dreamer] = 30 + wishlistRatio * 35;
   }
 
-  // Daydream Collector — wishlist >> owned (stronger than dreamer when gap is wide)
+  // Daydream Collector —wishlist >> owned (stronger than dreamer when gap is wide)
   if (wishlist > owned && wishlist >= 3) {
     scores[CollectorTypeArchetypeId.daydreamCollector] =
         45 + (wishlist - owned) * 6 + wishlistRatio * 20;
   }
 
-  // Trend Chaser — recent catalog releases on shelf
+  // Trend Chaser —recent catalog releases on shelf
   if (recentCatalogSeries >= 2) {
     scores[CollectorTypeArchetypeId.trendChaser] =
         50 + recentCatalogSeries * 14;

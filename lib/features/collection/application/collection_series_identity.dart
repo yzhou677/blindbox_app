@@ -1,4 +1,4 @@
-import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+﻿import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_series.dart' as catalog;
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 
@@ -79,9 +79,9 @@ class CollectionSeriesOwnershipMatch {
 ///
 /// ## Precedence (first hit wins)
 ///
-/// 1. **Exact catalog template** — `catalogTemplateId` / alternates vs
+/// 1. **Exact catalog template** ??`catalogTemplateId` / alternates vs
 ///    `ShelfSeries.catalogTemplateId` or shelf row `id`.
-/// 2. **Canonical brand + series** — both canonicalized strings must match the
+/// 2. **Canonical brand + series** —both canonicalized strings must match the
 ///    same shelf row. Custom user entries without a template id rely on this.
 ///
 /// ## What never produces owned=true
@@ -130,7 +130,7 @@ CollectionSeriesOwnershipMatch resolveCollectionSeriesOwnership({
     }
   }
 
-  // 2) Canonical brand + series name (both required — not IP/universe level).
+  // 2) Canonical brand + series name (both required —not IP/universe level).
   if (canonicalSeries.isNotEmpty && canonicalBrand.isNotEmpty) {
     for (final row in snapshot.shelfSeries) {
       final rowSeries = canonicalizeCollectionIdentity(row.name);

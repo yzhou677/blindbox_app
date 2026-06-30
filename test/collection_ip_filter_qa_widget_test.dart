@@ -1,4 +1,6 @@
 import 'package:blindbox_app/core/theme/app_theme.dart';
+import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/collection_screen.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
@@ -28,6 +30,14 @@ Widget _qaHarness(CollectionSnapshot snap) {
   return ProviderScope(
     overrides: [
       collectionNotifierProvider.overrideWith(() => _QaCollectionNotifier(snap)),
+      catalogBundleProvider.overrideWith(
+        (ref) async => const CatalogSeedBundle(
+          brands: [],
+          ips: [],
+          series: [],
+          figures: [],
+        ),
+      ),
     ],
     child: MaterialApp(
       theme: AppTheme.light(),

@@ -7,6 +7,9 @@
 | What | Path |
 |------|------|
 | **Architecture** (three universes, data flow, Firebase, naming) | [`.cursor/ARCHITECTURE.md`](../.cursor/ARCHITECTURE.md) |
+| **Catalog spec** (runtime cache, providers, Search V2, availability) | [`CATALOG_ARCHITECTURE.md`](CATALOG_ARCHITECTURE.md) |
+| **Search spec** (normalization, token AND, haystack) | [`SEARCH_ARCHITECTURE.md`](SEARCH_ARCHITECTURE.md) |
+| **Testing / RC workflow** | [`TESTING.md`](TESTING.md) |
 | **Agent rules** (always-on and scoped snippets) | [`.cursor/rules/`](../.cursor/rules/) |
 | **Conformity checklist** | [`.cursor/CONFORMITY_AUDIT.md`](../.cursor/CONFORMITY_AUDIT.md) |
 
@@ -23,6 +26,9 @@
 
 | Doc | Purpose |
 |-----|---------|
+| [`CATALOG_ARCHITECTURE.md`](CATALOG_ARCHITECTURE.md) | Catalog runtime: Firestore, persisted cache, provider graph, availability |
+| [`SEARCH_ARCHITECTURE.md`](SEARCH_ARCHITECTURE.md) | Search V2: normalizer, tokenizer, matcher, haystack |
+| [`TESTING.md`](TESTING.md) | RC automated gate, emulator ADB notes |
 | [`PROJECT_OVERVIEW.md`](PROJECT_OVERVIEW.md) | Product vision and feature goals |
 | [`FIREBASE_LOCAL_SETUP.md`](FIREBASE_LOCAL_SETUP.md) | Local Firebase / emulator setup |
 

@@ -112,7 +112,7 @@ Examples only — **not created yet**:
 | ----- | -------------------------- |
 | Collection Hierarchy | Bucket → IP → Series; local shelf vs catalog |
 | Collection Sorting | Hierarchical browser, not flat ranked list; aggregate metrics |
-| Catalog Identity | `imageKey`, Firestore catalog universe, seed fallback |
+| Catalog Identity | `imageKey`, Firestore catalog universe, persisted cache offline baseline |
 | Market Intelligence | Market universe separate from shelf and catalog |
 | Offline-first / Local-first | Collection local persistence; progressive hydration |
 

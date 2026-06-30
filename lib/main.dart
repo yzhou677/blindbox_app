@@ -23,9 +23,11 @@ Future<void> main() async {
   }
   try {
     final catalogBundle = await CatalogBundleCache.loadOfflineFirst();
+    // Identity index syncs via [catalogBundleProvider] once the revision
+    // listener is active; prime here for pre-ProviderScope enricher paths.
     MarketCatalogIdentityCache.install(catalogBundle);
   } catch (e, st) {
-    debugPrint('Catalog seed bootstrap skipped: $e\n$st');
+    debugPrint('Catalog offline-first bootstrap skipped: $e\n$st');
   }
   await bootstrapMarketBrowseListings();
   final restored = await CollectionSnapshotStorage.load();

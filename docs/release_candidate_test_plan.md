@@ -1,6 +1,8 @@
 # Shelfy — Release Candidate Test Plan
 
-**Branch / build under test:** `feature/bug-fix` (or tagged RC build)  
+> **Historical supplement.** This document predates the catalog-refresh architecture merge. For current RC workflow use **[`TESTING.md`](TESTING.md)** (automated gate + ADB notes) and **[`CATALOG_ARCHITECTURE.md`](CATALOG_ARCHITECTURE.md)** (catalog runtime). Update manual scenarios here only when they diverge from those sources.
+
+**Branch / build under test:** RC branch or tagged RC build (e.g. `feature/catalog-refresh-architecture`)  
 **Display name:** Shelfy (package id: `app.shelfy.collector`, Firebase project: `blindbox-collection`)  
 **Tester mindset:** Collector app — image-first, local shelf, messy navigation, poor network.
 
@@ -20,7 +22,7 @@ This plan is **architecture-aware** and targets regressions that unit tests do n
 | **Ownership detection** | `resolveCollectionSeriesOwnership()` — template id + **canonical brand+series** (no taxonomy false positives) |
 | **Modal overlays** | `showCollectibleBottomSheet` / `showCollectionModalBottomSheet`; `CollectionModalOverlayRegistry.dismissAll()` reentrancy guard |
 | **Nested sheets** | Add sheet → catalog preview on **branch** navigator (not root stack); leaving Collection tab dismisses overlays |
-| **Catalog load** | Firestore `brands/ips/series/figures` one-shot `.get()` with `tools/seed/` fallback |
+| **Catalog load** | `CatalogBundleCache` → `catalogBundleProvider`: Firestore one-shot `.get()`; persisted `catalog_bundle_v1.json` offline; `catalogAvailabilityProvider` for loading/offline/refresh UX — **no** APK metadata seed fallback |
 | **Catalog images** | `CatalogImageResolver`: bundled → disk cache (LRU ~150MB, TTL) → Storage → placeholder; stale-while-revalidate; bounded concurrent refresh; session negative cache for 404s |
 | **Discover / Home** | Latest drops, trending, official feed (`official_feed_items`), catalog browse push |
 | **Market** | Browse filters (taxonomy ids from catalog bundle only); listing detail; expandable description |
@@ -296,7 +298,7 @@ Simulate impatient collector behavior for **≥15 minutes** on a physical Androi
 
 | # | Check | Pass |
 |---|--------|------|
-| F-1 | Cold launch online | Catalog loads (Firestore or seed fallback without permission errors) |
+| F-1 | Cold launch online | Catalog loads from Firestore (or persisted cache on repeat launch) without permission errors; availability card reflects ready/offline state |
 | F-2 | Discover official feed | Query succeeds or empty; no `permission-denied` spam |
 | F-3 | Catalog images | `catalog/series/*`, `catalog/figures/*` download or cache |
 | F-4 | Airplane mode after cache warm | §5 still passes |

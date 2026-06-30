@@ -4,6 +4,7 @@ Operational decisions and future assumptions captured so we do not re-investigat
 
 **Related docs:**
 
+- [`CATALOG_ARCHITECTURE.md`](CATALOG_ARCHITECTURE.md) — **catalog architecture spec** (data flow, state machine, provider graph, Search V2, alias policy)
 - [`.cursor/ARCHITECTURE.md`](../.cursor/ARCHITECTURE.md) — full agent/contributor architecture reference (three universes, folder layout, data flow)
 - [`KNOWN_RUNTIME_NOTES.md`](KNOWN_RUNTIME_NOTES.md) — logcat / debug console noise vs actionable failures
 - [`COLLECTION_ARCHITECTURE_NOTES.md`](COLLECTION_ARCHITECTURE_NOTES.md) — Collection maintenance-mode tradeoffs (snapshot persistence, journey history, collector identity)
@@ -18,31 +19,168 @@ Operational decisions and future assumptions captured so we do not re-investigat
 
 Catalog metadata (`brands`, `ips`, `series`, `figures`) is loaded through [`CatalogBundleCache`](../lib/features/catalog/application/catalog_bundle_cache.dart).
 
-**After the first successful Firestore sync**, Firestore is the **authoritative** catalog source. Bundled seed is bootstrap/offline fallback only — not the long-term source of truth.
+**Firestore is the canonical catalog source.** Persisted on-device cache is the offline baseline after the first successful sync.
 
 ### Startup order
 
-1. **Persisted catalog bundle** — last successful Firestore snapshot on disk (`{ApplicationSupport}/catalog_bundle_cache/catalog_bundle_v1.json`), when available
-2. **Seed bundle** — `tools/seed/` JSON, **only** before the device has ever completed a successful Firestore sync
+1. **Persisted catalog bundle** — last successful Firestore snapshot on disk (`{ApplicationSupport}/catalog_bundle_cache/catalog_bundle_v1.json`), when available → **catalog-ready** immediately + background Firestore refresh
+2. **Bootstrap placeholder** — empty in-memory slot when no persisted snapshot → **not catalog-ready** until Firestore refresh or `getOrLoad()` network path completes
 3. **Background Firestore refresh** — stale-while-revalidate; updates in-memory bundle and re-persists on success
 
-If synced before but persisted file is missing/corrupt: empty in-memory bundle until refresh succeeds (edge case).
+If refresh fails after placeholder: `origin=resolved` (may be empty lists) → first-launch availability UX (offline + Retry).
 
-### Deletions and seed resurrection
+### Offline baseline
 
-Once a successful Firestore sync has been **persisted**, entries **deleted from Firestore must not reappear** from bundled seed on subsequent cold starts. Persisted snapshot replaces seed as the offline baseline.
+Once a successful Firestore sync has been **persisted**, cold start serves the persisted snapshot offline. Deleted Firestore entries do not reappear on subsequent launches.
 
-### Why this architecture was introduced
+### Why persistence was introduced
 
-Previously, cold start always loaded bundled seed first and Firestore refresh only updated **memory**. After a Firestore deletion, the next app restart could still show removed series/figures from seed until the user went online again — confusing for operators who expected Firestore edits to stick.
+Previously, Firestore refresh only updated **memory**. After a Firestore deletion, the next cold start could still show removed series until the user went online again.
 
-Persistence after successful Firestore fetch makes offline cold start reflect the last known cloud catalog and stops deleted entries from resurrecting from seed.
+Persistence after successful Firestore fetch makes offline cold start reflect the last known cloud catalog.
 
 ### Implementation notes
 
 - Memory + listener notification happen **before** disk persist; persist failure must not block UI refresh ([`_commitFirestoreBundle`](../lib/features/catalog/application/catalog_bundle_cache.dart)).
-- Debug startup logs: `CatalogBundleCache: startup source=persisted|seed|empty|memory` and `refresh source=firestore` (see [`KNOWN_RUNTIME_NOTES.md`](KNOWN_RUNTIME_NOTES.md)).
+- Debug startup logs: `CatalogBundleCache: startup source=persisted|empty|memory origin=<CatalogBundleMemoryOrigin>` and `refresh source=firestore origin=...` (see [`KNOWN_RUNTIME_NOTES.md`](KNOWN_RUNTIME_NOTES.md)).
 - **Not catalog sync:** user shelf (`CollectionNotifier`) remains local-first and independent.
+
+### Catalog bundle readiness (`CatalogBundleMemoryOrigin`)
+
+[`CatalogBundleCache`](../lib/features/catalog/application/catalog_bundle_cache.dart) tracks **where the in-memory bundle came from** with a single enum — no parallel placeholder flag. Provenance and readiness cannot drift.
+
+```dart
+enum CatalogBundleMemoryOrigin {
+  none,                   // no bundle in memory
+  bootstrapPlaceholder,   // only non-ready state with a memory slot
+  persisted,
+  firestore,
+  resolved,               // fallbacks exhausted; lists may still be empty
+}
+```
+
+- **`hasValue`** — `_bundle != null` (includes `bootstrapPlaceholder`)
+- **`isCatalogReady`** — `memoryOrigin.isCatalogReady` (`!= none` and `!= bootstrapPlaceholder`)
+- **Debug logs** — `origin=<name>` on startup and refresh lines
+
+#### Mental model (readiness ladder)
+
+```
+No bundle (none)
+      │
+      │  loadOfflineFirst — no persisted snapshot
+      ▼
+Bootstrap placeholder          ← not catalog-ready; getOrLoad() must wait
+      │
+      │  refresh / getOrLoad network path completes
+      ▼
+Ready (catalog-ready)
+ ├─ persisted       disk snapshot on cold start
+ ├─ firestore       successful Firestore fetch (refresh or getOrLoad)
+ └─ resolved        refresh/load failed after placeholder (may be empty lists)
+```
+
+`persisted` is **ready immediately** on cold start when disk has a valid snapshot.
+
+#### Cold-start paths (from `none`)
+
+```
+                    loadOfflineFirst()
+                           │
+              ┌────────────┴────────────┐
+              ▼                         ▼
+         persisted              bootstrapPlaceholder
+         (disk hit)              (no disk snapshot)
+              │                         │
+         catalog-ready              NOT catalog-ready
+              │                         │
+              │              ┌──────────┴──────────┐
+              │              ▼                     ▼
+              │         firestore            resolved
+              │      (refresh OK)        (refresh/load fail)
+              │              │                     │
+              └──────────────┴─────────────────────┘
+                             │
+                      all catalog-ready
+```
+
+Background refresh can later move `persisted` → `firestore` when Firestore succeeds. `onBundleReplaced` fires on that commit.
+
+#### Runtime propagation (provider graph)
+
+When the in-memory bundle is replaced, [catalogBundleRevisionProvider](../lib/features/catalog/application/catalog_bundle_provider.dart) bumps and **all dependents rebuild declaratively** — no per-feature `ref.invalidate` list.
+
+```
+CatalogBundleCache._commitFirestoreBundle
+        │
+        ▼
+addBundleReplacedListener → catalogBundleRevisionProvider (state++)
+        │
+        ├── catalogBundleProvider (FutureProvider re-reads cache)
+        │        ├── catalogSearchServiceProvider
+        │        ├── addSeriesCatalogRecommendationsProvider
+        │        ├── homeFeedSnapshotProvider → homeSeriesReleaseLookupProvider
+        │        └── collectibleRelationshipProviders (already watched bundle)
+        │
+        └── MarketCatalogIdentityCache.install (same bundle, no duplicate index)
+```
+
+[`CatalogBundleRefreshBridge`](../lib/features/home/application/catalog_bundle_refresh_bridge.dart) only keeps the revision notifier alive for the app lifetime; it does not invalidate individual features.
+
+#### Caller contract
+
+| `memoryOrigin` | `loadOfflineFirst()` | `getOrLoad()` |
+|----------------|----------------------|---------------|
+| `persisted` | Returns disk snapshot; starts background refresh | Returns immediately |
+| `bootstrapPlaceholder` | Returns empty for offline-first paint; starts background refresh | **Does not** return early — awaits `_refreshInFlight` or shared network load |
+| `firestore` | Returns memory bundle | Returns immediately |
+| `resolved` | Returns empty | Returns empty (no duplicate fetch) |
+
+This prevents the race where `loadOfflineFirst()` sets an empty bootstrap bundle, background Firestore refresh starts, and a concurrent `getOrLoad()` returns the empty slot before refresh finishes.
+
+**Related:** `CatalogBundleLoadSource` (`persisted` / `empty` / `memory`) is for **startup debug logging only** — it describes which branch `loadOfflineFirst()` took, not ongoing memory provenance.
+
+---
+
+## Catalog runtime architecture
+
+End-to-end path from cloud catalog to feature surfaces. This is the mental model to use when adding anything that reads catalog metadata at runtime.
+
+```
+Firestore
+        │
+        ▼
+CatalogBundleCache
+        │
+        ▼
+catalogBundleRevisionProvider
+        │
+        ▼
+catalogBundleProvider
+        │
+        ├──────── Search          (catalogSearchServiceProvider, catalog browse)
+        ├──────── Home            (homeFeedSnapshotProvider)
+        ├──────── Collection      (shelf search, relationship providers)
+        ├──────── Market          (MarketCatalogIdentityCache.install)
+        ├──────── Add Series      (addSeriesCatalogRecommendationsProvider)
+        └──────── Future features (new providers on catalogBundleProvider)
+```
+
+**Week-one gap (historical):** `CatalogBundleCache` → `???` → features (ad hoc caches, direct Firestore/loader calls in widgets, manual `ref.invalidate`). **Now:** the `???` is the revision bump + `catalogBundleProvider` graph — one declarative propagation path.
+
+Readiness (`CatalogBundleMemoryOrigin`), placeholder semantics, and the low-level listener wiring live under [Firestore Authoritative Catalog](#firestore-authoritative-catalog) above.
+
+### Catalog-derived runtime objects
+
+Any runtime object derived from catalog metadata (`CatalogSearchService`, identity indexes, relationship graphs, lookup tables, recommendation pickers, etc.) **must** be provided through Riverpod providers that depend on [`catalogBundleProvider`](../lib/features/catalog/application/catalog_bundle_provider.dart).
+
+- **Do not** manually cache catalog-derived state in widget fields, `late` singletons, or `initState` one-shot loads.
+- **Do not** refresh catalog-derived state imperatively (`ref.invalidate(homeFeedSnapshotProvider)` per feature, `onBundleReplaced` feature lists, etc.).
+- **Do** add a `Provider` / `FutureProvider` that `ref.watch(catalogBundleProvider)` (or a provider that watches it) and let bundle replacement propagate naturally.
+
+When adding something like `RelationshipIndex`, the first instinct should be **`final relationshipIndexProvider = Provider(...)`**, not `late RelationshipIndex _index` installed once at startup.
+
+**Exception (boundary, not a second cache):** [`MarketCatalogIdentityCache`](../lib/features/market/data/market_catalog_identity_cache.dart) remains the runtime slot for enricher code paths that run outside `WidgetRef`. It is **re-installed from the same bundle** when `catalogBundleRevisionProvider` bumps — not a separate source of truth.
 
 ---
 
@@ -57,7 +195,7 @@ Persistence after successful Firestore fetch makes offline cold start reflect th
 | [`MarketIdentityMatcher`](../lib/features/market/application/market_identity_matcher.dart) | Listing title → `MarketListing.catalogMatch` |
 | [`enrichBrowseListingsIdentity`](../lib/features/market/application/market_listing_identity_enricher.dart) | Batch attach `catalogMatch` before aggregation |
 
-Installed at startup in [`main.dart`](../lib/main.dart): `MarketCatalogIdentityCache.install(catalogBundle)`.
+Installed at startup in [`main.dart`](../lib/main.dart) for pre–`ProviderScope` paths; kept in sync on bundle replacement via [`catalogBundleRevisionProvider`](../lib/features/catalog/application/catalog_bundle_provider.dart).
 
 ### Default production runtime reality (verified audit)
 
@@ -92,7 +230,7 @@ They remain useful for sandbox flows, fixture flows, gateway-disabled paths, dis
 
 ### Stale cache after catalog refresh (B3)
 
-`MarketCatalogIdentityCache` is installed once at startup and is **not** automatically rebuilt when `CatalogBundleCache` replaces the bundle. Impact is limited to non-gateway enrichment paths and market display name lookup — not catalog sync or collection filter chips.
+`MarketCatalogIdentityCache` is kept as the runtime slot for non-provider enrichment paths; it is **re-installed** when [catalogBundleRevisionProvider](../lib/features/catalog/application/catalog_bundle_provider.dart) observes a bundle replacement (same index as [catalogBundleProvider], no duplicate cache).
 
 ---
 
@@ -183,7 +321,7 @@ See also [`COLLECTION_ARCHITECTURE_NOTES.md`](COLLECTION_ARCHITECTURE_NOTES.md) 
 | Insights | Shelf emotional profile, summary |
 | Journey | Historical exploration metrics |
 | Brand / IP filters | Collection shelf chip facets |
-| Offline-first catalog | Persisted bundle + seed fallback + background refresh |
+| Offline-first catalog | Persisted Firestore snapshot + bootstrap placeholder + background refresh |
 | Firestore authoritative catalog sync | See [Firestore Authoritative Catalog](#firestore-authoritative-catalog) |
 
 **Low priority / not currently planned:**
@@ -197,4 +335,4 @@ Future work: bug fixes, UX polish, catalog content expansion, performance profil
 
 ---
 
-*Last updated: 2026-06 — reflects catalog persistence sync, add-figure edit flow, and market gateway identity audit.*
+*Last updated: 2026-06 — reflects runtime bootstrap catalog removal, catalog persistence sync, and provider propagation.*

@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Offline-first & async
 
-- **Local persistence is first-class** — collection codec, bundled/ cached catalog; app must feel usable on poor network
+- **Local persistence is first-class** — collection codec, persisted catalog cache (`catalog_bundle_v1.json`), bundled catalog **art**; app must feel usable on poor network
 - **Optimistic UI by default** — mutate `CollectionNotifier` state immediately; persist with `unawaited` save
 - **Never block UI** on Firebase, Storage URL resolve, or image hydration before `_commit` / render
 - **Progressive hydration** — shimmer/placeholder via `CatalogImageFromKey`; stale-while-revalidate where needed

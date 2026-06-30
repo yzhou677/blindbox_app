@@ -1,6 +1,4 @@
-import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
-import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
 import 'package:blindbox_app/features/collection/data/series_release_lookup.dart';
 import 'package:blindbox_app/features/home/data/catalog_series_release_builder.dart';
 import 'package:blindbox_app/features/home/data/home_feed_picker.dart';
@@ -38,13 +36,7 @@ HomeFeedSnapshot _emptyHomeFeedSnapshot() => const HomeFeedSnapshot(
 
 final homeFeedSnapshotProvider = FutureProvider<HomeFeedSnapshot>((ref) async {
   try {
-    final CatalogSeedBundle bundle;
-    final cached = CatalogBundleCache.current;
-    if (cached != null) {
-      bundle = cached;
-    } else {
-      bundle = await ref.watch(catalogBundleProvider.future);
-    }
+    final bundle = await ref.watch(catalogBundleProvider.future);
     final pick = pickHomeFeedSeries(bundle);
     final latest = await buildSeriesReleasesFromCatalog(bundle, pick.latest);
     final trending = await buildSeriesReleasesFromCatalog(bundle, pick.trending);

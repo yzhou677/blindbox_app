@@ -17,7 +17,6 @@ import 'package:blindbox_app/features/collection/insights/application/collector_
 import 'package:blindbox_app/features/collection/presentation/shelf_editorial_voice.dart';
 import 'package:blindbox_app/features/collection/application/collection_shelf_ui_prefs_provider.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
-import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
 import 'package:blindbox_app/core/search/search_placeholders.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_service.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_browse.dart';
@@ -58,9 +57,6 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
   /// Debounced query for the browse pipeline — text field updates immediately.
   String _debouncedSearchQuery = '';
 
-  CatalogSeedBundle? _catalogSearchBundle;
-  CatalogSearchService? _catalogSearchService;
-
   @override
   void initState() {
     super.initState();
@@ -96,15 +92,6 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       if (next == _debouncedSearchQuery) return;
       setState(() => _debouncedSearchQuery = next);
     });
-  }
-
-  CatalogSearchService? _catalogSearchServiceFor(CatalogSeedBundle? catalog) {
-    if (catalog == null) return null;
-    if (!identical(catalog, _catalogSearchBundle)) {
-      _catalogSearchBundle = catalog;
-      _catalogSearchService = CatalogSearchService(catalog);
-    }
-    return _catalogSearchService;
   }
 
   @override
@@ -289,12 +276,13 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     // Browse pipeline: brand → IP → search → partition → sort each bucket.
     final shelfUiPrefs = ref.watch(collectionShelfUiPrefsProvider);
     final catalog = ref.watch(catalogBundleProvider).valueOrNull;
+    final catalogSearch = ref.watch(catalogSearchServiceProvider);
     final progressLookup = ShelfBrowseProgressLookup(snap.figureStates);
     final searched = filterShelfSeriesBySearch(
       visible,
       _debouncedSearchQuery,
       catalog: catalog,
-      catalogSearch: _catalogSearchServiceFor(catalog),
+      catalogSearch: catalogSearch,
     );
     final (inProgressRaw, completedRaw) = partitionShelfSeries(
       searched,

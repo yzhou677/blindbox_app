@@ -1,6 +1,6 @@
 import 'package:blindbox_app/core/theme/app_theme.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
-import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
@@ -36,7 +36,7 @@ void main() {
       CollectorTypeIdentity(
         archetypeId: CollectorTypeArchetypeId.wanderer,
         revealedAt: DateTime(2026, 1, 1),
-        signatureHash: 'cached',
+        signatureHash: 'stale-overflow-signature',
         stats: const CollectorTypeStats(
           totalOwned: 0,
           totalWishlist: 0,
@@ -74,7 +74,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.byType(PopupMenuButton<String>), findsOneWidget);
+    expect(find.byType(CollectorTypeRevealCard), findsOneWidget);
 
     await tester.tap(
       find.descendant(

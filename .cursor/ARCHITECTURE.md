@@ -2,7 +2,7 @@
 
 Canonical reference for humans and Cursor agents. Supersedes scattered notes in `docs/` for day-to-day implementation guidance.
 
-**Related:** [`.cursor/rules/`](rules/) (agent rule snippets — **`product-principles`**, **`offline-async-media`**, **`project-architecture`**), [`CONFORMITY_AUDIT.md`](CONFORMITY_AUDIT.md) (codebase checklist), [`FIRESTORE_CATALOG_SCHEMA.md`](../lib/features/catalog/firestore/FIRESTORE_CATALOG_SCHEMA.md), [`FIREBASE_STORAGE_CATALOG.md`](../lib/features/catalog/firestore/FIREBASE_STORAGE_CATALOG.md)
+**Related:** [`docs/CATALOG_ARCHITECTURE.md`](../docs/CATALOG_ARCHITECTURE.md) (catalog spec — data flow, runtime state, providers, Search V2), [`docs/SEARCH_ARCHITECTURE.md`](../docs/SEARCH_ARCHITECTURE.md) (search-only depth), [`.cursor/rules/`](rules/) (agent rule snippets — **`product-principles`**, **`offline-async-media`**, **`project-architecture`**), [`CONFORMITY_AUDIT.md`](CONFORMITY_AUDIT.md) (codebase checklist), [`FIRESTORE_CATALOG_SCHEMA.md`](../lib/features/catalog/firestore/FIRESTORE_CATALOG_SCHEMA.md), [`FIREBASE_STORAGE_CATALOG.md`](../lib/features/catalog/firestore/FIREBASE_STORAGE_CATALOG.md)
 
 ---
 
@@ -34,10 +34,14 @@ These must stay separate. Do not merge persistence, media keys, or loading paths
 
 - **Purpose:** Canonical brands, IPs, series, and figures for search, browse, and “add to shelf” templates.
 - **Location:** `lib/features/catalog/`
-- **In-memory shape:** `CatalogSeedBundle` ([`catalog_seed_loader.dart`](../lib/features/catalog/catalog_seed_loader.dart))
-- **Default source:** `loadCatalogBundle()` — Firestore (`brands`, `ips`, `series`, `figures`) with seed JSON fallback ([`catalog_bundle_loader.dart`](../lib/features/catalog/catalog_bundle_loader.dart))
-- **Media:** Opaque `imageKey` on catalog models; resolve via [`CatalogImageResolver`](../lib/features/catalog/catalog_image_resolver.dart) — **bundled → bounded disk cache (LRU + TTL) → Firebase Storage → placeholder** (see [Firebase](#firebase-firestore--storage)); [`CatalogImageFromKey`](../lib/shared/widgets/catalog_image_from_key.dart) for catalog UI. Disk cache is intermediate resilience; Storage is the freshness source when online.
-- **Search:** Pure Dart [`CatalogSearchService`](../lib/features/catalog/search/catalog_search_service.dart) over a bundle — no Riverpod inside search
+- **Spec:** [`docs/CATALOG_ARCHITECTURE.md`](../docs/CATALOG_ARCHITECTURE.md) — data flow, `CatalogBundleMemoryOrigin`, provider graph, Search V2, alias policy, availability UX.
+- **In-memory shape:** `CatalogSeedBundle` ([`catalog_bundle.dart`](../lib/features/catalog/catalog_bundle.dart)) — DTO name is historical; no runtime JSON seed in the APK.
+- **Runtime source:** `CatalogBundleCache` → `catalogBundleProvider` (Firestore authoritative; persisted disk offline baseline; **no** bundled metadata seed). Loader: [`firestore_catalog_loader.dart`](../lib/features/catalog/firestore/firestore_catalog_loader.dart) via [`catalog_bundle_cache.dart`](../lib/features/catalog/application/catalog_bundle_cache.dart).
+- **Provenance:** `CatalogBundleMemoryOrigin` — `bootstrapPlaceholder` (not ready) → `persisted` | `firestore` | `resolved` (ready). See catalog spec §2.
+- **UI readiness:** [`catalogAvailabilityProvider`](../lib/features/catalog/application/catalog_availability.dart) — loading / offline / ready / refreshing; widgets must not call Firestore directly.
+- **Media:** Opaque `imageKey` on catalog models; resolve via [`CatalogImageResolver`](../lib/features/catalog/catalog_image_resolver.dart) — **bundled art assets → bounded disk cache (LRU + TTL) → Firebase Storage → placeholder** (see [Firebase](#firebase-firestore--storage)); [`CatalogImageFromKey`](../lib/shared/widgets/catalog_image_from_key.dart) for catalog UI.
+- **Search:** Shared Search V2 stack ([`lib/core/search/`](../lib/core/search/), [`CatalogSearchService`](../lib/features/catalog/search/catalog_search_service.dart)) — token AND, normalization, combined haystack. See [`docs/SEARCH_ARCHITECTURE.md`](../docs/SEARCH_ARCHITECTURE.md).
+- **Propagation:** `catalogBundleRevisionProvider` bumps on bundle replace → reactive provider graph (search, Discover feeds, Add Series, relationship index, …). No per-feature `ref.invalidate` lists.
 - **Into shelf:** Only through adapters + `CollectionNotifier` (e.g. [`catalog_seed_to_collection_template.dart`](../lib/features/catalog/adapters/catalog_seed_to_collection_template.dart)) — catalog does **not** own shelf rows
 
 **Never on catalog:** user figure state (owned/wishlist), `localImageUri`, cloud sync of collection, Firestore listeners for shelf.
@@ -81,13 +85,20 @@ These must stay separate. Do not merge persistence, media keys, or loading paths
 
 ```
 Catalog universe (read-only) — NOT used for market listing bodies
-  Firestore (brands/ips/series/figures) ──┐
-  tools/seed JSON (fallback) ────────────┼──> loadCatalogBundle() ──> CatalogSeedBundle
-  Storage catalog/series|figures/* ──────┘         │
-        imageKey → CatalogImageResolver            ├──> CatalogSearchService
-        (bundled → disk cache → Storage, runtime)  ├──> Add Series / recommendations (add_to_collection_sheet)
-                                                   ├──> catalog_seed_to_collection_template → collectionNotifier
-                                                   └──> MarketTaxonomy.applyCatalogBundle (filter chip ids/labels only)
+  Firestore (brands/ips/series/figures) ──> CatalogBundleCache
+        │                                      │
+        │                                      ├──> persisted disk (catalog_bundle_v1.json)
+        │                                      │
+        ▼                                      ▼
+  Storage catalog/series|figures/*      catalogBundleRevisionProvider
+        imageKey → CatalogImageResolver            │
+        (bundled art → disk cache → Storage)       ▼
+                                                   catalogBundleProvider
+                                                         │
+                         ┌───────────────────────────────┼───────────────────────────────┐
+                         ▼                               ▼                               ▼
+              catalogSearchServiceProvider    catalogAvailabilityProvider    homeFeedSnapshotProvider
+              addSeriesCatalogRecommendations …              MarketCatalogIdentityCache.install (boundary)
 
 User shelf (local-first)
   collectionNotifierProvider ──> CollectionSnapshot ──> SharedPreferences codec
@@ -102,9 +113,9 @@ Market (separate data path — not catalog bodies)
         └──> marketBrowseNotifier (filters via MarketTaxonomy ids; no CatalogSeedBundle for row bodies)
 ```
 
-**Startup ([`main.dart`](../lib/main.dart)):** optional Firebase init + `loadCatalogBundle()` + `MarketTaxonomy.applyCatalogBundle()` → bootstrap market listings → restore collection snapshot (or seed) → `ProviderScope` → `GoRouter`.
+**Startup ([`main.dart`](../lib/main.dart)):** `CatalogBundleCache.loadOfflineFirst()` → `MarketCatalogIdentityCache.install(bundle)` → restore collection snapshot → `ProviderScope` + [`CatalogBundleRefreshBridge`](../lib/features/home/application/catalog_bundle_refresh_bridge.dart) → `GoRouter`.
 
-**Navigation:** [`app_router.dart`](../lib/core/router/app_router.dart) — shell tabs Home / Market / Collection.
+**Navigation:** [`app_router.dart`](../lib/core/router/app_router.dart) — shell tabs Collection / Discover / Market.
 
 ---
 
@@ -163,7 +174,7 @@ The codebase is **feature-oriented** (`lib/features/<feature>/`). A few **grandf
 ### Grandfathered structures (documented, not to grow)
 
 - **`lib/models/`** — shared presentation models; see [above](#libmodels-grandfathered--expansion-frozen).
-- **`CollectionCatalog`** (`collection/data/`) — frozen hardcoded demo suggestions / seed shelf art; **not** used by Add Series search or recommendations (those use `loadCatalogBundle()`).
+- **`CollectionCatalog`** (`collection/data/`) — frozen hardcoded demo suggestions / seed shelf art; **not** used by Add Series search or recommendations (those use `catalogBundleProvider`).
 
 ### What agents should avoid
 
@@ -181,7 +192,7 @@ Preserve: feature boundaries, local-first collection (`CollectionSnapshot` + cod
 |--------|---------|------------------|
 | Collection shelf | Riverpod `Notifier` + codec | `collection_notifier.dart`, `collection_snapshot_storage.dart` |
 | Market browse UI | Riverpod + session bootstrap | `market_browse_notifier.dart`, `market_listings_bootstrap.dart` |
-| Catalog | Load on demand + startup bootstrap (no global catalog provider yet) | `loadCatalogBundle()` in `main.dart` and add sheet |
+| Catalog | `CatalogBundleCache` + `catalogBundleProvider` graph | `catalog_bundle_cache.dart`, `catalog_bundle_provider.dart`, `catalog_availability.dart` |
 | Firestore / Storage | Catalog only; `ensureFirebaseInitialized()` before fetch | `firestore_catalog_loader.dart`, `catalog_image_resolver.dart` |
 
 - **Do not** replace Riverpod.
@@ -197,17 +208,18 @@ Firebase is for the **catalog universe only** in the current roadmap. Collection
 ### Firestore (catalog reference)
 
 - **Canonical collections only:** `brands`, `ips`, `series`, `figures` (flat top-level — no nested/duplicate catalog trees). See [`FIRESTORE_CATALOG_SCHEMA.md`](../lib/features/catalog/firestore/FIRESTORE_CATALOG_SCHEMA.md).
-- **Loader:** `loadFirestoreCatalogBundle()` / `loadCatalogBundle()` — four one-shot `.get()` queries → `CatalogSeedBundle`. Metadata only (`imageKey`, canonical ids) — no Storage URLs or `imagePath` on docs.
+- **Loader:** `loadFirestoreCatalogBundle()` — four one-shot `.get()` queries → `CatalogSeedBundle`, committed via `CatalogBundleCache`. Metadata only (`imageKey`, canonical ids) — no Storage URLs or `imagePath` on docs.
+- **Runtime:** Firestore is authoritative; persisted snapshot is offline baseline. **No** APK-bundled metadata JSON (`tools/seed/*.json` removed from runtime). First install uses `bootstrapPlaceholder` until Firestore or `getOrLoad()` completes.
 - **Do not** introduce alternate Firestore layouts or `imagePath` fields when extending catalog features.
 - **Init:** `ensureFirebaseInitialized()` before any Firestore/Storage call; run `flutterfire configure` and add platform config (`google-services.json`, `GoogleService-Info.plist`). Keep secrets out of git if your pipeline requires it.
-- **Canonical ids:** match seed (e.g. IP `the_monsters`, not `labubu`).
+- **Canonical ids:** match Firestore (e.g. IP `the_monsters`, not `labubu`).
 
 ### Storage (public catalog art)
 
 - **Scope:** read-only catalog thumbnails keyed by `imageKey`. Deterministic paths: `catalog/series/<imageKey>.<ext>`, `catalog/figures/<imageKey>.<ext>` — probe `.avif`, `.webp`, `.png`, `.jpg`, `.jpeg` until one exists. See [`FIREBASE_STORAGE_CATALOG.md`](../lib/features/catalog/firestore/FIREBASE_STORAGE_CATALOG.md).
 - **Not in scope for MVP agents:** uploading `localImageUri` / `customCoverImageUri` (private shelf photos).
 - **Resolver:** four-tier display strategy at **display time** (see [`catalog_image_resolver.dart`](../lib/features/catalog/catalog_image_resolver.dart), [`catalog_image_disk_cache.dart`](../lib/features/catalog/data/catalog_image_disk_cache.dart), [`catalog_image_cache_policy.dart`](../lib/features/catalog/data/catalog_image_cache_policy.dart)):
-  1. Bundled `assets/catalog/**` (stable offline seed subset)
+  1. Bundled `assets/catalog/**` (stable offline **art** subset — not metadata JSON)
   2. Bounded disk cache (`ApplicationSupport/catalog_image_cache/`) — **resilience layer**, not canonical storage
   3. Firebase Storage — freshness / enrichment (network when available)
   4. Placeholder when all tiers miss
@@ -228,7 +240,7 @@ Firebase is for the **catalog universe only** in the current roadmap. Collection
 
 - Firestore listeners or collection cloud sync without explicit scope.
 - Storing `imageKey` on shelf models or Firestore payloads in the collection codec.
-- Making Firestore the only catalog path (keep `tools/seed/` for offline tests and dev).
+- Reintroducing APK-bundled catalog metadata JSON as a runtime fallback.
 - Putting long-lived download URLs on shelf domain models instead of resolving at display time.
 - Reintroducing `labubu` as a Firestore IP document id.
 
@@ -334,8 +346,8 @@ See also: [`docs/DESIGN_SYSTEM_CHECKLIST.md`](../docs/DESIGN_SYSTEM_CHECKLIST.md
 
 ### MVP discipline
 
-- Ship focused diffs; avoid rewriting `CatalogSearchService`, collection flow, or switching catalog source unless the task says so.
-- Default catalog source is `loadCatalogBundle()` (Firestore with seed fallback) — do not remove seed path without explicit task.
+- Ship focused diffs; avoid rewriting `CatalogSearchService`, collection flow, or catalog cache/propagation unless the task says so.
+- Catalog runtime: `CatalogBundleCache` + `catalogBundleProvider` — see [`docs/CATALOG_ARCHITECTURE.md`](../docs/CATALOG_ARCHITECTURE.md). Widget tests override `catalogBundleProvider` to avoid Firestore timers.
 - Firebase Storage: catalog art only; see [Firebase](#firebase-firestore--storage) — not shelf photo upload unless tasked.
 - Market listings: keep marketplace provider path separate — do not wire listing cards to Firestore catalog or `imageKey`.
 - Do not expand grandfathered architecture (`lib/models/`, new `lib/services/`, growing `CollectionCatalog`) as part of unrelated tasks.
@@ -346,11 +358,11 @@ See also: [`docs/DESIGN_SYSTEM_CHECKLIST.md`](../docs/DESIGN_SYSTEM_CHECKLIST.md
 
 | Name | Where | Meaning |
 |------|--------|---------|
-| `CatalogSeries` | `features/catalog/models/` | Seed/Firestore entity |
+| `CatalogSeries` | `features/catalog/models/` | Firestore/catalog entity |
 | `CatalogSeries` | `collection/domain/` | Template for cloning onto shelf (`templateId`, `figures`, …) |
-| `CatalogFigure` | catalog models | Seed figure |
+| `CatalogFigure` | catalog models | Catalog figure |
 | `ShelfFigure` | collection domain | User’s figure **instance** on a shelf row |
-| `CollectionCatalog` | `collection/data/` | **Hardcoded** legacy suggestion catalog — not the seed JSON universe |
+| `CollectionCatalog` | `collection/data/` | **Hardcoded** legacy suggestion catalog — not the Firestore catalog universe |
 
 Always check imports when editing “CatalogSeries” or “CatalogFigure”.
 

@@ -8,8 +8,8 @@ Public **catalog** thumbnails only. User shelf photos (`localImageUri`, `customC
 
 ## Purpose
 
-- Host series/figure art keyed by catalog **`imageKey`** (same opaque ids as Firestore documents and `tools/seed/`).
-- Let the app ship a small bundled subset offline while loading the full catalog from Firestore + Storage when connected.
+- Host series/figure art keyed by catalog **`imageKey`** (same opaque ids as Firestore documents).
+- Ship a small bundled **art** subset offline (`assets/catalog/**`) while loading full catalog art from Storage when connected. Catalog **metadata** is not bundled in the APK.
 
 ---
 
@@ -60,11 +60,12 @@ Resolved download URLs may appear in widget/shelf `imageUrl` at add time for dis
 
 ## Resolver order (when Storage is wired)
 
-1. **Bundled asset** under `assets/catalog/figures/` or `assets/catalog/series/` (offline / tests / partial bundle).
-2. **Firebase Storage** download URL for `catalog/{figures|series}/{imageKey}.{ext}` (or cached disk copy of that URL).
-3. **Placeholder** — never broken-image UI.
+1. **Bundled asset** under `assets/catalog/figures/` or `assets/catalog/series/` (offline art subset / tests).
+2. **Bounded disk cache** — previously fetched Storage bytes (`ApplicationSupport/catalog_image_cache/`).
+3. **Firebase Storage** download URL for `catalog/{figures|series}/{imageKey}.{ext}`.
+4. **Placeholder** — never broken-image UI.
 
-`tools/seed/` and `loadCatalogSeedBundle()` remain the **dev/test fallback** when Firebase is unavailable.
+**Runtime metadata** comes from Firestore + persisted `catalog_bundle_v1.json` via `catalogBundleProvider` — not from `tools/seed/` or any APK JSON fallback.
 
 ---
 

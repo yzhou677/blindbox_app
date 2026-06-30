@@ -1,10 +1,10 @@
-import 'dart:math';
+﻿import 'dart:math';
 
 import 'package:flutter/foundation.dart';
-import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_series.dart';
 
-/// Result of [pickHomeFeedSeries] — catalog series ids before [SeriesRelease] build.
+/// Result of [pickHomeFeedSeries] —catalog series ids before [SeriesRelease] build.
 @immutable
 class HomeFeedSeriesPick {
   const HomeFeedSeriesPick({
@@ -17,7 +17,7 @@ class HomeFeedSeriesPick {
 }
 
 /// Recent drops window (inclusive lower bound). Every dated series in this
-/// window appears in Latest Drops — no item cap.
+/// window appears in Latest Drops —no item cap.
 const Duration homeLatestDropsWindow = Duration(days: 60);
 
 /// Trending window: releases older than [homeLatestDropsWindow], up to 120 days.
