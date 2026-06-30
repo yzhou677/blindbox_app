@@ -1,6 +1,8 @@
-# Catalog figure art — re-export guide (for catalog / Storage agent)
+# Catalog figure art — re-export guide (catalog development / asset workflows)
 
-**Audience:** Cursor agent working in the **catalog folder** (Firestore seed, Storage uploads, `tools/seed/*.json`).  
+> **Not runtime metadata.** APK-bundled `tools/seed/*.json` was removed; catalog metadata at runtime comes from Firestore + persisted cache only ([`docs/CATALOG_ARCHITECTURE.md`](../../docs/CATALOG_ARCHITECTURE.md)). This guide applies to **catalog development** — Firestore ingestion, Storage uploads, and external export JSON — not to app startup.
+
+**Audience:** Cursor agent working in the **external catalog repo** or admin tooling (Firestore export, Storage uploads, `D:\blindbox-catalog\data\*.json`).  
 **Consumer app:** `blindbox_app` — gallery, search thumbs, series browse. Frontend can blur letterbox and adapt fit, but **cannot fix baked-in promo graphics or wrong asset types**.
 
 Use this doc to **audit existing `figures` + Storage objects** and output a **re-download / re-export checklist** for the human.

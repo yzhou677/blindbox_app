@@ -9,7 +9,7 @@ Read [`.cursor/ARCHITECTURE.md`](../ARCHITECTURE.md) for full detail. Enforce th
 
 ## Three universes (do not mix)
 
-1. **Catalog Universe** (`lib/features/catalog/`) — read-only reference. `CatalogSeedBundle`, `imageKey`, `CatalogImageResolver`. Default: `loadCatalogBundle()` (Firestore `brands`/`ips`/`series`/`figures`, seed JSON fallback). No shelf state.
+1. **Catalog Universe** (`lib/features/catalog/`) — read-only reference. `CatalogSeedBundle`, `imageKey`, `CatalogImageResolver`. Runtime: `CatalogBundleCache` → `catalogBundleProvider` (Firestore authoritative; persisted disk offline; **no** APK metadata seed). UI readiness: `catalogAvailabilityProvider`. Spec: [`docs/CATALOG_ARCHITECTURE.md`](../../docs/CATALOG_ARCHITECTURE.md). No shelf state.
 
 2. **User Private Shelf** (`lib/features/collection/`) — local-first. `CollectionSnapshot`, `collectionNotifierProvider`, SharedPreferences codec. **Display:** `imageKey` via `CatalogImageFromKey`; `localImageUri` / `customCoverImageUri` for user photos only. `imageUrl` in codec is optional cache — UI must not depend on it. No cloud sync unless explicitly requested.
 

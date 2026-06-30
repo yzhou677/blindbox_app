@@ -2,7 +2,7 @@
 
 The live Firebase project uses **four top-level collections only**. The app reads them directly via `loadFirestoreCatalogBundle()` — no alternate layouts, nested hierarchies, duplicate catalog trees, or separate image-metadata collections.
 
-Maps into the same Dart models as `tools/seed/*.json` (`CatalogBrand`, `CatalogIp`, `CatalogSeries`, `CatalogFigure`) through `firestore_catalog_mapper.dart`.
+Maps into Dart models (`CatalogBrand`, `CatalogIp`, `CatalogSeries`, `CatalogFigure`) through `firestore_catalog_mapper.dart`. Field names use the same camelCase keys as the external catalog export JSON (historical shape; **not** shipped in the APK at runtime).
 
 **Storage (binary art):** [`FIREBASE_STORAGE_CATALOG.md`](FIREBASE_STORAGE_CATALOG.md) — paths are `catalog/series/<imageKey>.<ext>` and `catalog/figures/<imageKey>.<ext>`, resolved in app code only.
 
@@ -79,13 +79,21 @@ Documents missing `imageKey` or required strings are **skipped** at load time (l
 
 ## Loader behavior
 
-- `loadFirestoreCatalogBundle()` performs **four one-shot `.get()` queries** (no streams).
+- `loadFirestoreCatalogBundle()` performs **four one-shot `.get()` queries** (no streams). Called from `CatalogBundleCache` — widgets consume `catalogBundleProvider`, not Firestore directly.
 - Invalid documents are **skipped**; failures are **logged** with `debugPrint` in the mapper.
 - Results are sorted by canonical `id` for stable ordering.
 
-## Local JSON
+## Runtime source of truth
 
-- Canonical export for upload + offline dev: `D:\blindbox-catalog\data\{brands,ips,series,figures}.json` (keep in sync with Firestore).
-- App fallback copies live under `tools/seed/*.json` (same shape; currently ~6 brands, ~23 IPs, ~110 series, ~1151 figures).
-- `loadCatalogBundle()` loads Firestore first, then `tools/seed/` on failure.
+| Layer | Role |
+|-------|------|
+| **Firestore** | Authoritative catalog metadata at runtime (when network + init succeed) |
+| **Persisted cache** | `catalog_bundle_v1.json` on disk — offline runtime baseline after first successful load |
+| **`catalogBundleProvider`** | In-memory `CatalogSeedBundle` + `CatalogBundleMemoryOrigin` for the reactive provider graph |
+
+**No APK metadata seed.** Runtime bootstrap `tools/seed/*.json` was removed; the app does not fall back to bundled metadata JSON on Firestore failure.
+
+## External catalog export (dev / ingestion only)
+
+- Canonical export for upload + offline admin: `D:\blindbox-catalog\data\{brands,ips,series,figures}.json` (keep in sync with Firestore).
 - Run `flutterfire configure` and add platform config files (`google-services.json`, etc.) before expecting Firestore on device.

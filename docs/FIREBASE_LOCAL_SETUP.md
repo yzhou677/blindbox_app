@@ -61,7 +61,7 @@ Manual: `cd android && .\gradlew signingReport` → add **debug** + **release** 
 
 - Gradle: `com.google.gms.google-services` on the Android app module.
 - Dart: `firebase_core`, `cloud_firestore`, `firebase_storage`.
-- `ensureFirebaseInitialized()` in `main.dart` (app still runs if init fails; catalog uses seed JSON by default).
+- `ensureFirebaseInitialized()` in `main.dart` (app still runs if init fails; catalog stays on `bootstrapPlaceholder` / persisted cache until Firestore succeeds — no APK metadata seed).
 
 ## If `google-services.json` was committed before gitignore
 

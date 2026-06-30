@@ -16,7 +16,8 @@ Read [`.cursor/ARCHITECTURE.md`](../ARCHITECTURE.md) → **Firebase (Firestore +
 - Use **only** existing top-level collections: `brands`, `ips`, `series`, `figures`
 - Do **not** add nested hierarchies, duplicate catalog collections, or image-metadata collections
 - Metadata only on docs (`imageKey`, ids, `displayName`, …) — **no** Storage URLs, **no** `imagePath`
-- `loadFirestoreCatalogBundle()` / `loadCatalogBundle()` — one-shot reads, no listeners unless tasked
+- `loadFirestoreCatalogBundle()` — one-shot reads inside `CatalogBundleCache`; consumers use `catalogBundleProvider`, not direct Firestore calls from widgets
+- **Runtime:** Firestore authoritative; persisted cache offline baseline; no APK metadata seed fallback
 - Canonical ids must match filters, Storage filenames, and `imageKey` resolution (e.g. `the_monsters`, not display labels)
 
 ## Storage (canonical paths — deterministic)

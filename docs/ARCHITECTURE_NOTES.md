@@ -166,7 +166,7 @@ catalogBundleProvider
         └──────── Future features (new providers on catalogBundleProvider)
 ```
 
-**Week-one gap:** `CatalogBundleCache` → `???` → features (ad hoc caches, `loadCatalogBundle()` in widgets, manual `ref.invalidate`). **Now:** the `???` is the revision bump + `catalogBundleProvider` graph — one declarative propagation path.
+**Week-one gap (historical):** `CatalogBundleCache` → `???` → features (ad hoc caches, direct Firestore/loader calls in widgets, manual `ref.invalidate`). **Now:** the `???` is the revision bump + `catalogBundleProvider` graph — one declarative propagation path.
 
 Readiness (`CatalogBundleMemoryOrigin`), placeholder semantics, and the low-level listener wiring live under [Firestore Authoritative Catalog](#firestore-authoritative-catalog) above.
 

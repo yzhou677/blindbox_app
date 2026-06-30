@@ -92,8 +92,8 @@ CatalogImageResolver: missing Storage asset for {series|figure} imageKey="…" (
 
 1. Reproduce in debug build; browse catalog until placeholders appear on a **fresh device** (no disk cache).
 2. Call `CatalogImageResolver.debugDumpMissingKeys()` (debug only) for a grouped snapshot.
-3. Compare keys against Storage bucket layout ([`FIREBASE_STORAGE_CATALOG.md`](../lib/features/catalog/firestore/FIREBASE_STORAGE_CATALOG.md)) and `tools/seed/`.
-4. Backfill Storage objects or seed/bundled assets for truly missing keys.
+3. Compare keys against Storage bucket layout ([`FIREBASE_STORAGE_CATALOG.md`](../lib/features/catalog/firestore/FIREBASE_STORAGE_CATALOG.md)) and Firestore `imageKey` fields.
+4. Backfill Storage objects or bundled `assets/catalog/**` art for truly missing keys.
 
 **Ignore if:** disk cache or bundled asset eventually serves the image and UI looks correct.
 
