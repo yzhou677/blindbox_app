@@ -29,7 +29,7 @@ final visibleCollectibleMarketSnapshotsProvider =
           s,
           brandId: facets.brandId,
           ipId: facets.ipId,
-          queryLower: facets.queryLower,
+          searchText: facets.searchText,
         ),
       )
       .toList(growable: false);

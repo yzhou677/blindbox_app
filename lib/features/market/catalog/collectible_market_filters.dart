@@ -1,29 +1,34 @@
+import 'package:blindbox_app/core/search/search_matcher.dart';
+import 'package:blindbox_app/core/search/search_normalizer.dart';
+import 'package:blindbox_app/core/search/search_tokenizer.dart';
 import 'package:blindbox_app/features/market/application/collectible_market_display_resolver.dart';
 import 'package:blindbox_app/features/market/catalog/market_listing_filters.dart';
 import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
 import 'package:blindbox_app/features/market/data/market_browse_listings_session.dart';
 import 'package:blindbox_app/features/market/domain/aggregation_confidence.dart';
 import 'package:blindbox_app/features/market/domain/collectible_market_snapshot.dart';
+
 bool collectibleMarketSnapshotVisible(
   CollectibleMarketSnapshot snapshot, {
   required String brandId,
   required String ipId,
-  required String queryLower,
+  required String searchText,
 }) {
   if (!_snapshotMatchesTaxonomy(snapshot, brandId: brandId, ipId: ipId)) {
     return false;
   }
-  if (queryLower.isEmpty) return true;
+  final tokens = SearchTokenizer.tokenize(searchText);
+  if (tokens.isEmpty) return true;
 
   final display = resolveCollectibleMarketDisplay(snapshot);
-  final displayHaystack =
-      '${display.title} ${display.subtitle}'.toLowerCase();
-  if (displayHaystack.contains(queryLower)) return true;
+  final displayHaystack = SearchNormalizer.normalize(
+    '${display.title} ${display.subtitle}',
+  );
+  if (SearchMatcher.allTokensMatch(displayHaystack, tokens)) return true;
 
   for (final id in snapshot.listingIds) {
     final listing = MarketBrowseListingsSession.instance.findById(id);
-    if (listing != null &&
-        marketListingMatchesFreeText(listing, queryLower)) {
+    if (listing != null && marketListingMatchesFreeText(listing, searchText)) {
       return true;
     }
   }

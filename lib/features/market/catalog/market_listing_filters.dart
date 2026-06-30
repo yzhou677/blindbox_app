@@ -1,3 +1,6 @@
+import 'package:blindbox_app/core/search/search_matcher.dart';
+import 'package:blindbox_app/core/search/search_normalizer.dart';
+import 'package:blindbox_app/core/search/search_tokenizer.dart';
 import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
 import 'package:blindbox_app/models/market_listing.dart';
 
@@ -6,18 +9,22 @@ bool marketListingVisible(
   MarketListing m, {
   required String brandId,
   required String ipId,
-  required String queryLower,
+  required String searchText,
 }) {
   if (!MarketTaxonomy.listingMatchesFilters(m, brandId: brandId, ipId: ipId)) {
     return false;
   }
-  return marketListingMatchesFreeText(m, queryLower);
+  return marketListingMatchesFreeText(m, searchText);
 }
 
-/// Case-insensitive match across collectible fields + taxonomy display keys.
-bool marketListingMatchesFreeText(MarketListing m, String queryLower) {
-  if (queryLower.isEmpty) return true;
+/// Token-AND match across collectible fields + taxonomy display keys (Search V2).
+bool marketListingMatchesFreeText(MarketListing m, String rawQuery) {
+  final tokens = SearchTokenizer.tokenize(rawQuery);
+  if (tokens.isEmpty) return true;
+  return SearchMatcher.allTokensMatch(_marketListingHaystack(m), tokens);
+}
 
+String _marketListingHaystack(MarketListing m) {
   final c = m.collectible;
   final ipLine = c.ipLine?.trim();
   final brandTaxon =
@@ -36,6 +43,5 @@ bool marketListingMatchesFreeText(MarketListing m, String queryLower) {
     if (m.taxonomyIpId != null) m.taxonomyIpId!.replaceAll('_', ' '),
   ];
 
-  final haystack = parts.join(' ').toLowerCase();
-  return haystack.contains(queryLower);
+  return parts.map(SearchNormalizer.normalize).join(' ');
 }

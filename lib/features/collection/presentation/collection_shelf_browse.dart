@@ -1,3 +1,6 @@
+import 'package:blindbox_app/core/search/search_matcher.dart';
+import 'package:blindbox_app/core/search/search_normalizer.dart';
+import 'package:blindbox_app/core/search/search_tokenizer.dart';
 import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_service.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
@@ -42,8 +45,8 @@ List<ShelfSeries> filterShelfSeriesBySearch(
   CatalogSeedBundle? catalog,
   CatalogSearchService? catalogSearch,
 }) {
-  final normalizedQuery = normalizeCatalogSearchQuery(query);
-  if (normalizedQuery.isEmpty) return series;
+  final tokens = SearchTokenizer.tokenize(query);
+  if (tokens.isEmpty) return series;
 
   final catalogSeriesIds = catalogSearch != null
       ? catalogSearch.matchingSeriesIds(query)
@@ -53,13 +56,13 @@ List<ShelfSeries> filterShelfSeriesBySearch(
 
   return [
     for (final row in series)
-      if (_shelfSeriesMatchesSearch(row, normalizedQuery, catalogSeriesIds)) row,
+      if (_shelfSeriesMatchesSearch(row, tokens, catalogSeriesIds)) row,
   ];
 }
 
 bool _shelfSeriesMatchesSearch(
   ShelfSeries series,
-  String normalizedQuery,
+  List<String> tokens,
   Set<String> catalogSeriesIds,
 ) {
   final templateId = series.catalogTemplateId?.trim();
@@ -68,15 +71,15 @@ bool _shelfSeriesMatchesSearch(
       catalogSeriesIds.contains(templateId)) {
     return true;
   }
-  return _shelfDisplayFieldsMatch(series, normalizedQuery);
+  return SearchMatcher.allTokensMatch(_shelfDisplayHaystack(series), tokens);
 }
 
-bool _shelfDisplayFieldsMatch(ShelfSeries series, String normalizedQuery) {
-  for (final raw in [series.name, series.brand, shelfSeriesIpLabel(series)]) {
-    final norm = normalizeCatalogSearchQuery(raw);
-    if (norm.contains(normalizedQuery)) return true;
-  }
-  return false;
+String _shelfDisplayHaystack(ShelfSeries series) {
+  return [
+    series.name,
+    series.brand,
+    shelfSeriesIpLabel(series),
+  ].map(SearchNormalizer.normalize).join(' ');
 }
 
 SeriesProgressCounts _seriesProgress(

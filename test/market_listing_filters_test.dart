@@ -24,7 +24,7 @@ void main() {
         m,
         brandId: MarketTaxonomyIds.anyBrand,
         ipId: MarketTaxonomyIds.anyIp,
-        queryLower: 'hirono',
+        searchText: 'hirono',
       ),
       true,
     );
@@ -37,7 +37,7 @@ void main() {
         m,
         brandId: MarketTaxonomyIds.anyBrand,
         ipId: MarketTaxonomyIds.anyIp,
-        queryLower: 'nommi',
+        searchText: 'nommi',
       ),
       true,
     );

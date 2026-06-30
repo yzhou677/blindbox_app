@@ -35,7 +35,7 @@ void main() {
     container.read(marketSearchHistoryProvider.notifier).add('Crybaby');
     await Future<void>.delayed(Duration.zero);
 
-    expect(await MarketSearchHistoryStorage.load(), ['Crybaby']);
+    expect(await MarketSearchHistoryStorage.load(), ['crybaby']);
     expect(
       await SearchHistoryPrefsStorage.load(kCatalogSearchHistoryPrefsKey),
       isEmpty,

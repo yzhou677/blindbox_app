@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:blindbox_app/core/search/search_normalizer.dart';
+
 /// Max entries kept in search history. Oldest entries are dropped when this
 /// limit is reached; the list is always most-recent-first.
 const int kCatalogSearchHistoryMaxEntries = 15;
@@ -36,22 +38,23 @@ abstract final class CatalogSearchHistoryCodec {
 ///
 /// Pure functions — no I/O, easy to test.
 abstract final class CatalogSearchHistoryRules {
-  /// Normalises a raw query string before storage/comparison:
-  /// trims leading/trailing whitespace and collapses internal runs of
-  /// whitespace to a single space.  e.g. `"  Labubu  v2  "` → `"Labubu v2"`.
-  static String normalize(String query) =>
-      query.trim().replaceAll(RegExp(r'\s+'), ' ');
+  /// Same pipeline as live local search ([SearchNormalizer]).
+  static String normalize(String query) => SearchNormalizer.normalize(query);
 
   /// Returns a new list with [query] promoted to the front.
   ///
-  /// * Normalises [query] (trim + collapse spaces); ignores empty strings.
-  /// * Removes any existing occurrence of [query] (case-sensitive equality).
+  /// * Normalises [query]; ignores empty strings.
+  /// * Removes any existing occurrence (case-insensitive after normalize).
   /// * Prepends [query].
   /// * Truncates to [kCatalogSearchHistoryMaxEntries].
   static List<String> add(List<String> current, String query) {
     final q = normalize(query);
     if (q.isEmpty) return current;
-    final updated = [q, for (final e in current) if (e != q) e];
+    final updated = [
+      q,
+      for (final e in current)
+        if (normalize(e) != q) e,
+    ];
     if (updated.length > kCatalogSearchHistoryMaxEntries) {
       return updated.sublist(0, kCatalogSearchHistoryMaxEntries);
     }
@@ -61,7 +64,7 @@ abstract final class CatalogSearchHistoryRules {
   /// Returns a new list without [query] (normalises before comparing).
   static List<String> remove(List<String> current, String query) {
     final q = normalize(query);
-    return [for (final e in current) if (e != q) e];
+    return [for (final e in current) if (normalize(e) != q) e];
   }
 
   /// Returns an empty list.

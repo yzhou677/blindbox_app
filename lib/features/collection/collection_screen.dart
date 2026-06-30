@@ -18,6 +18,7 @@ import 'package:blindbox_app/features/collection/presentation/shelf_editorial_vo
 import 'package:blindbox_app/features/collection/application/collection_shelf_ui_prefs_provider.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
 import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+import 'package:blindbox_app/core/search/search_placeholders.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_service.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_browse.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
@@ -395,7 +396,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               padding: const EdgeInsets.only(top: FeedRhythm.headerToSearchField),
               child: AppSearchField(
                 controller: _searchController,
-                hintText: 'Search your collection…',
+                hintText: SearchPlaceholders.localCatalog,
                 onChanged: _onSearchChanged,
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
