@@ -5,6 +5,7 @@ import 'package:blindbox_app/core/theme/collectible_shape.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/domain/series_completion_resolution.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_summary_editorial.dart';
 import 'package:flutter/material.dart';
 
 /// Soft glance at the shelf — not a stats dashboard.
@@ -85,53 +86,67 @@ class CollectionSummarySection extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _ShelfGlanceStat(
-                        count: stats.inCollection,
-                        label: 'In collection',
-                        scheme: scheme,
-                        textTheme: textTheme,
+                      Expanded(
+                        child: _ShelfGlanceStatCell(
+                          count: stats.inCollection,
+                          label: CollectionSummaryLabels.figures,
+                          scheme: scheme,
+                          textTheme: textTheme,
+                        ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        padding: const EdgeInsets.only(top: 10),
                         child: _Dot(scheme: scheme),
                       ),
-                      _ShelfGlanceStat(
-                        count: stats.wantListCount,
-                        label: 'Wishlist',
-                        scheme: scheme,
-                        textTheme: textTheme,
+                      Expanded(
+                        child: _ShelfGlanceStatCell(
+                          count: stats.wantListCount,
+                          label: CollectionSummaryLabels.wishlist,
+                          scheme: scheme,
+                          textTheme: textTheme,
+                        ),
                       ),
                     ],
                   ),
                   if (stats.completedSeriesCount > 0) ...[
-                    const SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        _ShelfGlanceStat(
-                          count: stats.completedSeriesCount,
-                          label: 'Completed',
-                          scheme: scheme,
-                          textTheme: textTheme,
-                        ),
-                        if (stats.masterCompleteSeriesCount > 0) ...[
+                    const SizedBox(height: 14),
+                    if (stats.masterCompleteSeriesCount > 0)
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: _ShelfGlanceStatCell(
+                              count: stats.completedSeriesCount,
+                              label: CollectionSummaryLabels.seriesComplete,
+                              scheme: scheme,
+                              textTheme: textTheme,
+                            ),
+                          ),
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                            padding: const EdgeInsets.only(top: 10),
                             child: _Dot(scheme: scheme),
                           ),
-                          _ShelfGlanceStat(
-                            count: stats.masterCompleteSeriesCount,
-                            label: 'Master',
-                            scheme: scheme,
-                            textTheme: textTheme,
+                          Expanded(
+                            child: _ShelfGlanceStatCell(
+                              count: stats.masterCompleteSeriesCount,
+                              label: CollectionSummaryLabels.masterComplete,
+                              scheme: scheme,
+                              textTheme: textTheme,
+                              emphasizeLabel: true,
+                            ),
                           ),
                         ],
-                      ],
-                    ),
+                      )
+                    else
+                      _ShelfGlanceStatCell(
+                        count: stats.completedSeriesCount,
+                        label: CollectionSummaryLabels.seriesComplete,
+                        scheme: scheme,
+                        textTheme: textTheme,
+                        centered: true,
+                      ),
                   ],
                 ],
               ),
@@ -259,44 +274,69 @@ class _Dot extends StatelessWidget {
   }
 }
 
-class _ShelfGlanceStat extends StatelessWidget {
-  const _ShelfGlanceStat({
+class _ShelfGlanceStatCell extends StatelessWidget {
+  const _ShelfGlanceStatCell({
     required this.count,
     required this.label,
     required this.scheme,
     required this.textTheme,
+    this.centered = false,
+    this.emphasizeLabel = false,
   });
 
   final int count;
   final String label;
   final ColorScheme scheme;
   final TextTheme textTheme;
+  final bool centered;
+  final bool emphasizeLabel;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    final labelStyle = AppTypography.deckText(textTheme, scheme).copyWith(
+      color: scheme.onSurfaceVariant.withValues(
+        alpha: emphasizeLabel ? 0.78 : 0.72,
+      ),
+      fontWeight: emphasizeLabel ? FontWeight.w600 : FontWeight.w500,
+      fontSize: 11.5,
+      height: 1.18,
+      letterSpacing: 0.02,
+    );
+
+    final cell = Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.baseline,
-      textBaseline: TextBaseline.alphabetic,
+      crossAxisAlignment:
+          centered ? CrossAxisAlignment.center : CrossAxisAlignment.center,
       children: [
         Text(
           '$count',
+          textAlign: TextAlign.center,
           style: AppTypography.insightsTotals(textTheme, scheme).copyWith(
             fontWeight: FontWeight.w600,
             height: 1.05,
             color: scheme.onSurface.withValues(alpha: 0.92),
           ),
         ),
-        const SizedBox(width: AppSpacing.xs + 2),
-        Text(
-          label,
-          style: AppTypography.deckText(textTheme, scheme).copyWith(
-            color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
-            fontWeight: FontWeight.w500,
-            height: 1.1,
+        const SizedBox(height: 3),
+        SizedBox(
+          height: 28,
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: labelStyle,
+            ),
           ),
         ),
       ],
     );
+
+    if (centered) {
+      return Center(child: cell);
+    }
+    return cell;
   }
 }

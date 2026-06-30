@@ -14,6 +14,7 @@ import 'package:blindbox_app/features/collection/widgets/collection_ip_filter_ro
 import 'package:blindbox_app/features/collectible_relationship/application/collectible_relationship_providers.dart';
 import 'package:blindbox_app/features/collection/application/shelf_emotional_providers.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_providers.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_summary_editorial.dart';
 import 'package:blindbox_app/features/collection/presentation/shelf_editorial_voice.dart';
 import 'package:blindbox_app/features/collection/application/collection_shelf_ui_prefs_provider.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
@@ -410,7 +411,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               stats: CollectionAggregateStats.fromSnapshot(snap),
               shelfMoodLine: interpretationLine.isNotEmpty
                   ? interpretationLine
-                  : ShelfEditorialVoice.shelfMoodLine(snap),
+                  : CollectionSummaryEditorial.shelfMoodLine(snap),
               memoryWhisper: memoryWhisper ?? relationshipWhisper,
               collectorTypeName: collectorIdentity?.archetype.displayName,
               onInsightsTap: () => context.push('/collection/insights'),

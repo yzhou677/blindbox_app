@@ -141,7 +141,7 @@ String? resolveCollectionMemoryWhisper(CollectionSnapshot snap) {
     return null;
   }
 
-  return CollectionMemoryEditorial.whisperForMoment(primary);
+  return CollectionMemoryEditorial.whisperForMoment(primary, snap: snap);
 }
 
 CollectionMemoryMoment? _longLovedUniverse(

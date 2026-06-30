@@ -58,8 +58,11 @@ abstract final class ShelfEditorialVoice {
     return null;
   }
 
-  static String? memoryWhisper(CollectionMemoryMoment moment) =>
-      CollectionMemoryEditorial.whisperForMoment(moment);
+  static String? memoryWhisper(
+    CollectionMemoryMoment moment, {
+    CollectionSnapshot? snap,
+  }) =>
+      CollectionMemoryEditorial.whisperForMoment(moment, snap: snap);
 
   static String seriesCompleteBannerTitle({required bool chasesHome}) {
     return chasesHome
