@@ -41,24 +41,86 @@ Persistence after successful Firestore fetch makes offline cold start reflect th
 ### Implementation notes
 
 - Memory + listener notification happen **before** disk persist; persist failure must not block UI refresh ([`_commitFirestoreBundle`](../lib/features/catalog/application/catalog_bundle_cache.dart)).
-- Debug startup logs: `CatalogBundleCache: startup source=persisted|seed|empty|memory` and `refresh source=firestore` (see [`KNOWN_RUNTIME_NOTES.md`](KNOWN_RUNTIME_NOTES.md)).
+- Debug startup logs: `CatalogBundleCache: startup source=persisted|seed|empty|memory origin=<CatalogBundleMemoryOrigin>` and `refresh source=firestore origin=...` (see [`KNOWN_RUNTIME_NOTES.md`](KNOWN_RUNTIME_NOTES.md)).
 - **Not catalog sync:** user shelf (`CollectionNotifier`) remains local-first and independent.
 
-### Catalog bundle readiness (memory slot vs ready)
+### Catalog bundle readiness (`CatalogBundleMemoryOrigin`)
 
-[`CatalogBundleCache`](../lib/features/catalog/application/catalog_bundle_cache.dart) separates **having a memory slot** from **catalog-ready**:
+[`CatalogBundleCache`](../lib/features/catalog/application/catalog_bundle_cache.dart) tracks **where the in-memory bundle came from** with a single enum — no parallel placeholder flag. Provenance and readiness cannot drift.
 
-| State | Meaning | `loadOfflineFirst()` | `getOrLoad()` |
-|-------|---------|----------------------|---------------|
-| **Persisted bundle** | Last Firestore snapshot on disk | Returns immediately; background refresh | Returns immediately |
-| **Seed bundle** | First install / never synced | Returns seed immediately; background refresh | Returns seed immediately |
-| **Bootstrap placeholder** | Synced before but no valid persist (empty lists) | Returns empty for offline-first paint; starts background refresh | **Does not** return placeholder — awaits startup refresh or shared network load |
-| **Ready bundle** | Firestore refresh or load path completed | Returns memory bundle | Returns memory bundle |
-| **Resolved empty** | Refresh/load failed after placeholder | Returns empty | Returns empty (no duplicate fetch) |
+```dart
+enum CatalogBundleMemoryOrigin {
+  none,                   // no bundle in memory
+  bootstrapPlaceholder,   // only non-ready state with a memory slot
+  seed,
+  persisted,
+  firestore,
+  resolved,               // fallbacks exhausted; lists may still be empty
+}
+```
 
-`hasValue` is true for bootstrap placeholders (memory slot exists). `isCatalogReady` is false until refresh or `getOrLoad` completes.
+- **`hasValue`** — `_bundle != null` (includes `bootstrapPlaceholder`)
+- **`isCatalogReady`** — `memoryOrigin.isCatalogReady` (`!= none` and `!= bootstrapPlaceholder`)
+- **Debug logs** — `origin=<name>` on startup and refresh lines
+
+#### Mental model (readiness ladder)
+
+```
+No bundle (none)
+      │
+      │  loadOfflineFirst — synced before, no persisted snapshot
+      ▼
+Bootstrap placeholder          ← not catalog-ready; getOrLoad() must wait
+      │
+      │  refresh / getOrLoad network path completes
+      ▼
+Ready (catalog-ready)
+ ├─ seed            first install / never synced
+ ├─ persisted       disk snapshot on cold start
+ ├─ firestore       successful Firestore fetch (refresh or getOrLoad)
+ └─ resolved        refresh/load failed after placeholder (may be empty lists)
+```
+
+`seed` and `persisted` are **ready immediately** on cold start — they skip the placeholder rung. Only the post-sync / no-persist edge case enters `bootstrapPlaceholder`.
+
+#### Cold-start paths (from `none`)
+
+```
+                    loadOfflineFirst()
+                           │
+         ┌─────────────────┼─────────────────┐
+         ▼                 ▼                 ▼
+    persisted            seed      bootstrapPlaceholder
+    (disk hit)      (never synced)   (synced, no disk)
+         │                 │                 │
+    catalog-ready     catalog-ready     NOT catalog-ready
+         │                 │                 │
+         └────────┬────────┘                 │
+                  │              ┌───────────┴───────────┐
+                  │              ▼                       ▼
+                  │         firestore              resolved
+                  │      (refresh OK)          (refresh/load fail)
+                  │              │                       │
+                  └──────────────┴───────────────────────┘
+                                 │
+                          all catalog-ready
+```
+
+Background refresh can later move `seed` / `persisted` → `firestore` when Firestore succeeds. `onBundleReplaced` fires on that commit.
+
+#### Caller contract
+
+| `memoryOrigin` | `loadOfflineFirst()` | `getOrLoad()` |
+|----------------|----------------------|---------------|
+| `persisted` | Returns disk snapshot; starts background refresh | Returns immediately |
+| `seed` | Returns seed; starts background refresh | Returns immediately |
+| `bootstrapPlaceholder` | Returns empty for offline-first paint; starts background refresh | **Does not** return early — awaits `_refreshInFlight` or shared network load |
+| `firestore` | Returns memory bundle | Returns immediately |
+| `resolved` | Returns empty | Returns empty (no duplicate fetch) |
 
 This prevents the race where `loadOfflineFirst()` sets an empty bootstrap bundle, background Firestore refresh starts, and a concurrent `getOrLoad()` returns the empty slot before refresh finishes. Removing bundled seed bootstrap would expose that race without this guard.
+
+**Related:** `CatalogBundleLoadSource` (`persisted` / `seed` / `empty` / `memory`) is for **startup debug logging only** — it describes which branch `loadOfflineFirst()` took, not ongoing memory provenance.
 
 ---
 

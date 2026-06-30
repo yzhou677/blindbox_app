@@ -57,7 +57,8 @@ void main() {
       expect(CatalogBundleCache.lastStartupSource, CatalogBundleLoadSource.empty);
       expect(CatalogBundleCache.hasValue, isTrue);
       expect(CatalogBundleCache.isCatalogReady, isFalse);
-      expect(CatalogBundleCache.isBootstrapPlaceholderForTest, isTrue);
+      expect(CatalogBundleCache.memoryOriginForTest,
+          CatalogBundleMemoryOrigin.bootstrapPlaceholder);
 
       gate.complete();
     });
@@ -138,7 +139,8 @@ void main() {
       expect(loaded.series.single.id, 'fresh');
       expect(notified, isTrue);
       expect(CatalogBundleCache.current?.series.single.id, 'fresh');
-      expect(CatalogBundleCache.isBootstrapPlaceholderForTest, isFalse);
+      expect(CatalogBundleCache.memoryOriginForTest,
+          CatalogBundleMemoryOrigin.firestore);
     });
 
     test('loadOfflineFirst refresh and getOrLoad do not duplicate Firestore fetch',
@@ -184,6 +186,8 @@ void main() {
 
       expect(fetchCount, 1);
       expect(CatalogBundleCache.isCatalogReady, isTrue);
+      expect(CatalogBundleCache.memoryOriginForTest,
+          CatalogBundleMemoryOrigin.resolved);
       expect(CatalogBundleCache.current?.series, isEmpty);
 
       final loaded = await CatalogBundleCache.getOrLoad();
@@ -203,7 +207,8 @@ void main() {
       await CatalogBundleCache.loadOfflineFirst();
 
       expect(CatalogBundleCache.isCatalogReady, isTrue);
-      expect(CatalogBundleCache.isBootstrapPlaceholderForTest, isFalse);
+      expect(CatalogBundleCache.memoryOriginForTest,
+          CatalogBundleMemoryOrigin.persisted);
 
       final loaded = await CatalogBundleCache.getOrLoad();
 
@@ -225,7 +230,8 @@ void main() {
       };
 
       await CatalogBundleCache.loadOfflineFirst();
-      expect(CatalogBundleCache.isBootstrapPlaceholderForTest, isTrue);
+      expect(CatalogBundleCache.memoryOriginForTest,
+          CatalogBundleMemoryOrigin.bootstrapPlaceholder);
 
       final loaded = await CatalogBundleCache.getOrLoad();
 

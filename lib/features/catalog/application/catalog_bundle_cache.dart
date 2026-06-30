@@ -25,6 +25,33 @@ enum CatalogFirestoreRefreshResult {
   failed,
 }
 
+/// In-memory provenance for [_bundle] inside [CatalogBundleCache].
+///
+/// Single source of truth for catalog readiness — replaces a parallel placeholder
+/// flag. [bootstrapPlaceholder] is the only non-ready state with a memory slot.
+enum CatalogBundleMemoryOrigin {
+  /// No bundle in memory.
+  none,
+
+  /// [loadOfflineFirst] empty bootstrap — [getOrLoad] must await refresh/load.
+  bootstrapPlaceholder,
+
+  /// Bundled `tools/seed/`.
+  seed,
+
+  /// On-disk Firestore snapshot.
+  persisted,
+
+  /// Successful Firestore fetch (background refresh or [getOrLoad] network path).
+  firestore,
+
+  /// Refresh/load fallbacks exhausted; bundle may still be empty lists.
+  resolved;
+
+  bool get isCatalogReady =>
+      this != none && this != CatalogBundleMemoryOrigin.bootstrapPlaceholder;
+}
+
 /// In-memory catalog snapshot — static metadata only (no Storage URLs).
 ///
 /// **Offline-first startup:** persisted Firestore snapshot (when available) →
@@ -35,21 +62,20 @@ enum CatalogFirestoreRefreshResult {
 ///
 /// **Readiness vs memory slot**
 ///
-/// [_bundle] may hold a **bootstrap placeholder** (intentionally empty after
-/// sync with no persisted snapshot). Placeholders paint offline-first startup
-/// but are **not** catalog-ready: [getOrLoad] awaits the startup Firestore
-/// refresh (or falls through to the shared network load) instead of returning
-/// the empty slot immediately.
+/// [_bundle] plus [CatalogBundleMemoryOrigin] track provenance. Only
+/// [CatalogBundleMemoryOrigin.bootstrapPlaceholder] is a non-ready memory
+/// slot: [getOrLoad] awaits startup Firestore refresh (or the shared network
+/// load) instead of returning the empty bundle immediately.
 ///
 /// **State machine (what callers receive)**
 ///
-/// | State | [loadOfflineFirst] | [getOrLoad] |
+/// | [CatalogBundleMemoryOrigin] | [loadOfflineFirst] | [getOrLoad] |
 /// |-------|-------------------|-------------|
-/// | Persisted bundle | Returns disk snapshot; starts background refresh | Returns same bundle immediately |
-/// | Seed bundle | Returns seed; starts background refresh | Returns seed immediately |
-/// | Bootstrap placeholder | Returns empty; starts background refresh | Awaits refresh / shared load — not empty until refresh resolves or load exhausts fallbacks |
-/// | Ready bundle (post-refresh or [prime]) | Returns memory bundle | Returns memory bundle immediately |
-/// | Resolved empty (refresh/load failed) | Returns empty | Returns empty (no re-fetch while placeholder was resolved) |
+/// | `persisted` | Returns disk snapshot; background refresh | Returns immediately |
+/// | `seed` | Returns seed; background refresh | Returns immediately |
+/// | `bootstrapPlaceholder` | Returns empty; background refresh | Awaits refresh / shared load |
+/// | `firestore` | Returns memory bundle | Returns immediately |
+/// | `resolved` | Returns empty (load exhausted) | Returns empty (no duplicate fetch) |
 ///
 /// **Refresh policy**
 ///
@@ -62,11 +88,7 @@ abstract final class CatalogBundleCache {
   static const Duration catalogRefreshTtl = Duration(minutes: 5);
 
   static CatalogSeedBundle? _bundle;
-
-  /// True when [_bundle] is an intentional empty bootstrap from
-  /// [loadOfflineFirst] (synced before, no persisted snapshot). Not
-  /// catalog-ready until startup refresh or [getOrLoad] load completes.
-  static bool _bootstrapPlaceholder = false;
+  static CatalogBundleMemoryOrigin _memoryOrigin = CatalogBundleMemoryOrigin.none;
 
   static Future<CatalogSeedBundle>? _inFlight;
   static Future<CatalogFirestoreRefreshResult>? _refreshInFlight;
@@ -74,14 +96,17 @@ abstract final class CatalogBundleCache {
 
   static CatalogSeedBundle? get current => _bundle;
 
+  /// Provenance of the in-memory bundle (debug / tests).
+  static CatalogBundleMemoryOrigin get memoryOrigin => _memoryOrigin;
+
   /// Whether [_bundle] is non-null (includes bootstrap placeholders).
   static bool get hasValue => _bundle != null;
 
   /// Whether [_bundle] is safe to treat as a completed catalog load.
-  static bool get isCatalogReady => _bundle != null && !_bootstrapPlaceholder;
+  static bool get isCatalogReady => _memoryOrigin.isCatalogReady && _bundle != null;
 
   @visibleForTesting
-  static bool get isBootstrapPlaceholderForTest => _bootstrapPlaceholder;
+  static CatalogBundleMemoryOrigin get memoryOriginForTest => _memoryOrigin;
 
   @visibleForTesting
   static DateTime? get lastFirestoreRefreshAt => _lastFirestoreRefreshAt;
@@ -116,17 +141,20 @@ abstract final class CatalogBundleCache {
   static Future<bool> Function()? hasCompletedFirestoreSyncOverride;
 
   static void prime(CatalogSeedBundle bundle) {
+    _setMemoryBundle(bundle, CatalogBundleMemoryOrigin.firestore);
+  }
+
+  static void _setMemoryBundle(
+    CatalogSeedBundle bundle,
+    CatalogBundleMemoryOrigin origin,
+  ) {
     _bundle = bundle;
-    _markBundleReady();
+    _memoryOrigin = origin;
   }
 
-  static void _markBundleReady() {
-    _bootstrapPlaceholder = false;
-  }
-
-  static void _setBootstrapPlaceholder(CatalogSeedBundle empty) {
-    _bundle = empty;
-    _bootstrapPlaceholder = true;
+  static void _clearMemoryBundle() {
+    _bundle = null;
+    _memoryOrigin = CatalogBundleMemoryOrigin.none;
   }
 
   /// Optional hook after a successful Firestore refresh replaces [_bundle].
@@ -141,8 +169,7 @@ abstract final class CatalogBundleCache {
 
   @visibleForTesting
   static void resetForTest() {
-    _bundle = null;
-    _bootstrapPlaceholder = false;
+    _clearMemoryBundle();
     _inFlight = null;
     _refreshInFlight = null;
     _lastFirestoreRefreshAt = null;
@@ -165,8 +192,7 @@ abstract final class CatalogBundleCache {
 
     final local = await _loadLocalCatalog();
     if (local != null) {
-      _bundle = local;
-      _markBundleReady();
+      _setMemoryBundle(local, CatalogBundleMemoryOrigin.persisted);
       _logStartup(CatalogBundleLoadSource.persisted, local);
       unawaited(refreshFromFirestore());
       return local;
@@ -174,15 +200,14 @@ abstract final class CatalogBundleCache {
 
     if (!await _hasCompletedFirestoreSync()) {
       final seed = await _loadSeed();
-      _bundle = seed;
-      _markBundleReady();
+      _setMemoryBundle(seed, CatalogBundleMemoryOrigin.seed);
       _logStartup(CatalogBundleLoadSource.seed, seed);
       unawaited(refreshFromFirestore());
       return seed;
     }
 
     final empty = _emptyBundle();
-    _setBootstrapPlaceholder(empty);
+    _setMemoryBundle(empty, CatalogBundleMemoryOrigin.bootstrapPlaceholder);
     _logStartup(CatalogBundleLoadSource.empty, empty);
     unawaited(refreshFromFirestore());
     return empty;
@@ -198,7 +223,7 @@ abstract final class CatalogBundleCache {
       return _bundle!;
     }
 
-    if (_bootstrapPlaceholder) {
+    if (_memoryOrigin == CatalogBundleMemoryOrigin.bootstrapPlaceholder) {
       final refreshPending = _refreshInFlight;
       if (refreshPending != null) {
         await refreshPending;
@@ -252,8 +277,8 @@ abstract final class CatalogBundleCache {
       _lastFirestoreRefreshAt = DateTime.now();
       return CatalogFirestoreRefreshResult.refreshed;
     } catch (e, st) {
-      if (_bootstrapPlaceholder) {
-        _markBundleReady();
+      if (_memoryOrigin == CatalogBundleMemoryOrigin.bootstrapPlaceholder) {
+        _memoryOrigin = CatalogBundleMemoryOrigin.resolved;
       }
       debugPrint('CatalogBundleCache: Firestore refresh skipped: $e\n$st');
       return CatalogFirestoreRefreshResult.failed;
@@ -268,19 +293,16 @@ abstract final class CatalogBundleCache {
     } catch (_) {
       final persisted = await _loadPersisted();
       if (persisted != null) {
-        _bundle = persisted;
-        _markBundleReady();
+        _setMemoryBundle(persisted, CatalogBundleMemoryOrigin.persisted);
         return persisted;
       }
       if (!await _hasCompletedFirestoreSync()) {
         final seed = await _loadSeed();
-        _bundle = seed;
-        _markBundleReady();
+        _setMemoryBundle(seed, CatalogBundleMemoryOrigin.seed);
         return seed;
       }
       final empty = _emptyBundle();
-      _bundle = empty;
-      _markBundleReady();
+      _setMemoryBundle(empty, CatalogBundleMemoryOrigin.resolved);
       return empty;
     }
   }
@@ -317,8 +339,7 @@ abstract final class CatalogBundleCache {
     CatalogSeedBundle fresh, {
     required bool notifyListeners,
   }) async {
-    _bundle = fresh;
-    _markBundleReady();
+    _setMemoryBundle(fresh, CatalogBundleMemoryOrigin.firestore);
     _logRefresh(fresh);
     if (notifyListeners) {
       _notifyBundleReplaced();
@@ -342,6 +363,7 @@ abstract final class CatalogBundleCache {
     if (!kDebugMode) return;
     debugPrint(
       'CatalogBundleCache: startup source=${source.name} '
+      'origin=${_memoryOrigin.name} '
       'brands=${bundle.brands.length} ips=${bundle.ips.length} '
       'series=${bundle.series.length} figures=${bundle.figures.length}',
     );
@@ -351,6 +373,7 @@ abstract final class CatalogBundleCache {
     if (!kDebugMode) return;
     debugPrint(
       'CatalogBundleCache: refresh source=firestore '
+      'origin=${_memoryOrigin.name} '
       'brands=${bundle.brands.length} ips=${bundle.ips.length} '
       'series=${bundle.series.length} figures=${bundle.figures.length}',
     );
