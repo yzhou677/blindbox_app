@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
-import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_brand.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_ip.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_series.dart';
@@ -44,7 +44,6 @@ void main() {
   group('bootstrap placeholder readiness', () {
     test('loadOfflineFirst empty bootstrap is not catalog-ready', () async {
       final gate = Completer<void>();
-      CatalogBundleCache.hasCompletedFirestoreSyncOverride = () async => true;
       CatalogBundleCache.loadPersistedOverride = () async => null;
       CatalogBundleCache.loadFirestoreOverride = () async {
         await gate.future;
@@ -68,7 +67,6 @@ void main() {
       var fetchCount = 0;
       final gate = Completer<void>();
 
-      CatalogBundleCache.hasCompletedFirestoreSyncOverride = () async => true;
       CatalogBundleCache.loadPersistedOverride = () async => null;
       CatalogBundleCache.loadFirestoreOverride = () async {
         fetchCount++;
@@ -101,7 +99,6 @@ void main() {
       var fetchCount = 0;
       final gate = Completer<void>();
 
-      CatalogBundleCache.hasCompletedFirestoreSyncOverride = () async => true;
       CatalogBundleCache.loadPersistedOverride = () async => null;
       CatalogBundleCache.loadFirestoreOverride = () async {
         fetchCount++;
@@ -125,7 +122,6 @@ void main() {
 
     test('Firestore refresh replaces bundle and notifies listeners', () async {
       final remote = _tinyBundle(seriesId: 'fresh');
-      CatalogBundleCache.hasCompletedFirestoreSyncOverride = () async => true;
       CatalogBundleCache.loadPersistedOverride = () async => null;
       CatalogBundleCache.loadFirestoreOverride = () async => remote;
 
@@ -149,7 +145,6 @@ void main() {
       var fetchCount = 0;
       final gate = Completer<void>();
 
-      CatalogBundleCache.hasCompletedFirestoreSyncOverride = () async => true;
       CatalogBundleCache.loadPersistedOverride = () async => null;
       CatalogBundleCache.loadFirestoreOverride = () async {
         fetchCount++;
@@ -174,7 +169,6 @@ void main() {
     test('resolved empty after failed refresh does not re-fetch on getOrLoad',
         () async {
       var fetchCount = 0;
-      CatalogBundleCache.hasCompletedFirestoreSyncOverride = () async => true;
       CatalogBundleCache.loadPersistedOverride = () async => null;
       CatalogBundleCache.loadFirestoreOverride = () async {
         fetchCount++;
@@ -221,7 +215,6 @@ void main() {
       final remote = _tinyBundle(seriesId: 'from_network');
       var fetchCount = 0;
 
-      CatalogBundleCache.hasCompletedFirestoreSyncOverride = () async => true;
       CatalogBundleCache.loadPersistedOverride = () async => null;
       CatalogBundleCache.setLastFirestoreRefreshAtForTest(DateTime.now());
       CatalogBundleCache.loadFirestoreOverride = () async {

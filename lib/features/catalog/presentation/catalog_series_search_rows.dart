@@ -1,6 +1,6 @@
-import 'package:flutter/foundation.dart';
+﻿import 'package:flutter/foundation.dart';
 
-import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_series.dart'
     as seed_catalog;
 import 'package:blindbox_app/features/catalog/search/catalog_search_result.dart';
@@ -45,7 +45,7 @@ class _SeriesSearchAgg {
   bool hasAnySecret;
 }
 
-/// Builds series-centric search rows — same ranking/filter as Add Series sheet.
+/// Builds series-centric search rows —same ranking/filter as Add Series sheet.
 List<CatalogSeriesSearchRow> buildCatalogSeriesSearchRows({
   required CatalogSeedBundle bundle,
   required String query,

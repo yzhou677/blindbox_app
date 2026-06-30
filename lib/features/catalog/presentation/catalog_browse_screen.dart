@@ -1,9 +1,9 @@
-import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+﻿import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/search/search_placeholders.dart';
 import 'package:blindbox_app/features/catalog/adapters/catalog_seed_to_collection_template.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_availability.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
-import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_availability_copy.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_series_search_rows.dart';
 import 'package:blindbox_app/features/catalog/widgets/catalog_availability_card.dart';
@@ -19,7 +19,7 @@ import 'package:blindbox_app/shared/widgets/feed_search_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Home entry: catalog search → series preview → figure gallery.
+/// Home entry: catalog search —series preview —figure gallery.
 class CatalogBrowseScreen extends ConsumerStatefulWidget {
   const CatalogBrowseScreen({super.key});
 

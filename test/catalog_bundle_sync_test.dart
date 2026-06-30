@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
-import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/data/catalog_bundle_codec.dart';
 import 'package:blindbox_app/features/catalog/data/catalog_bundle_persistence.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_brand.dart';
@@ -21,26 +21,26 @@ CatalogSeedBundle _bundle({
       series: series ??
           const [
             CatalogSeries(
-              id: 'seed_series',
+              id: 'local_series',
               brandId: 'b',
               ipId: 'ip',
-              displayName: 'Seed Series',
+              displayName: 'Local Series',
               releaseDate: '2026-01-01',
               isBlindBox: true,
-              imageKey: 'seed_series',
+              imageKey: 'local_series',
             ),
           ],
       figures: figures ??
           const [
             CatalogFigure(
-              id: 'seed_figure',
-              seriesId: 'seed_series',
+              id: 'local_figure',
+              seriesId: 'local_series',
               brandId: 'b',
               ipId: 'ip',
-              displayName: 'Seed Figure',
+              displayName: 'Local Figure',
               isSecret: false,
               sortOrder: 1,
-              imageKey: 'seed_figure',
+              imageKey: 'local_figure',
             ),
           ],
     );
@@ -87,8 +87,8 @@ void main() {
       final original = _bundle();
       final decoded = CatalogBundleCodec.tryDecode(CatalogBundleCodec.encode(original));
       expect(decoded, isNotNull);
-      expect(decoded!.series.single.id, 'seed_series');
-      expect(decoded.figures.single.id, 'seed_figure');
+      expect(decoded!.series.single.id, 'local_series');
+      expect(decoded.figures.single.id, 'local_figure');
     });
 
     test('returns null for corrupt payloads', () {
@@ -98,24 +98,22 @@ void main() {
   });
 
   group('CatalogBundleCache sync', () {
-    test('first install uses bundled seed when no persisted snapshot exists',
+    test('first install uses bootstrap placeholder when no persisted snapshot exists',
         () async {
-      final seed = _bundle();
-      CatalogBundleCache.loadSeedOverride = () async => seed;
-
       final loaded = await CatalogBundleCache.loadOfflineFirst();
 
-      expect(loaded.series.single.id, 'seed_series');
-      expect(CatalogBundleCache.lastStartupSource, CatalogBundleLoadSource.seed);
+      expect(loaded.series, isEmpty);
+      expect(CatalogBundleCache.lastStartupSource, CatalogBundleLoadSource.empty);
+      expect(CatalogBundleCache.isCatalogReady, isFalse);
+      expect(CatalogBundleCache.memoryOriginForTest,
+          CatalogBundleMemoryOrigin.bootstrapPlaceholder);
       expect(await CatalogBundlePersistence.hasCompletedFirestoreSync(), isFalse);
       expect(await CatalogBundlePersistence.load(), isNull);
     });
 
     test('successful refresh persists bundle and marks Firestore sync complete',
         () async {
-      final seed = _bundle();
       final remote = _remoteWithoutDeletedSeries();
-      CatalogBundleCache.loadSeedOverride = () async => seed;
       CatalogBundleCache.loadFirestoreOverride = () async => remote;
 
       await CatalogBundleCache.loadOfflineFirst();
@@ -124,27 +122,11 @@ void main() {
       expect(await CatalogBundlePersistence.hasCompletedFirestoreSync(), isTrue);
       final persisted = await CatalogBundlePersistence.load();
       expect(persisted?.series.single.id, 'remote_series');
-      expect(persisted?.series.map((s) => s.id), isNot(contains('seed_series')));
     });
 
     test('deleted series stays removed after cold start once sync completed',
         () async {
-      final seed = _bundle(
-        series: const [
-          CatalogSeries(
-            id: 'smiski_series_1',
-            brandId: 'b',
-            ipId: 'ip',
-            displayName: 'Smiski',
-            releaseDate: '2026-01-01',
-            isBlindBox: true,
-            imageKey: 'smiski_series_1',
-          ),
-        ],
-      );
       final remote = _remoteWithoutDeletedSeries();
-
-      CatalogBundleCache.loadSeedOverride = () async => seed;
       CatalogBundleCache.loadFirestoreOverride = () async => remote;
 
       await CatalogBundleCache.loadOfflineFirst();
@@ -152,7 +134,6 @@ void main() {
 
       CatalogBundleCache.resetForTest();
       CatalogBundlePersistence.testRootOverride = tempRoot;
-      CatalogBundleCache.loadSeedOverride = () async => seed;
       CatalogBundleCache.loadFirestoreOverride = () async {
         throw StateError('offline');
       };
@@ -160,23 +141,20 @@ void main() {
       final relaunched = await CatalogBundleCache.loadOfflineFirst();
 
       expect(relaunched.series.map((s) => s.id), ['remote_series']);
-      expect(relaunched.series.map((s) => s.id), isNot(contains('smiski_series_1')));
       expect(
         CatalogBundleCache.lastStartupSource,
         CatalogBundleLoadSource.persisted,
       );
     });
 
-    test('offline restart after sync serves persisted bundle without seed fallback',
+    test('offline restart after sync serves persisted bundle without network',
         () async {
-      final seed = _bundle();
       final remote = _remoteWithoutDeletedSeries();
 
       await CatalogBundlePersistence.save(remote);
       CatalogBundleCache.resetForTest();
       CatalogBundlePersistence.testRootOverride = tempRoot;
 
-      CatalogBundleCache.loadSeedOverride = () async => seed;
       CatalogBundleCache.loadFirestoreOverride = () async {
         throw StateError('offline');
       };
@@ -184,33 +162,12 @@ void main() {
       final loaded = await CatalogBundleCache.loadOfflineFirst();
 
       expect(loaded.series.single.id, 'remote_series');
-      expect(loaded.series.map((s) => s.id), isNot(contains('seed_series')));
     });
 
-    test('corrupted persisted cache falls back to seed before first sync',
+    test('corrupted persisted cache uses bootstrap placeholder before first sync',
         () async {
-      final seed = _bundle();
       await CatalogBundlePersistence.writeCorruptBundleForTest('not-json');
 
-      CatalogBundleCache.loadSeedOverride = () async => seed;
-      CatalogBundleCache.loadFirestoreOverride = () async {
-        throw StateError('offline');
-      };
-
-      final loaded = await CatalogBundleCache.loadOfflineFirst();
-
-      expect(loaded.series.single.id, 'seed_series');
-      expect(await CatalogBundlePersistence.hasCompletedFirestoreSync(), isFalse);
-    });
-
-    test('corrupted persisted cache does not resurrect seed after sync completed',
-        () async {
-      final seed = _bundle();
-      final remote = _remoteWithoutDeletedSeries();
-      await CatalogBundlePersistence.save(remote);
-      await CatalogBundlePersistence.writeCorruptBundleForTest('not-json');
-
-      CatalogBundleCache.loadSeedOverride = () async => seed;
       CatalogBundleCache.loadFirestoreOverride = () async {
         throw StateError('offline');
       };
@@ -218,7 +175,25 @@ void main() {
       final loaded = await CatalogBundleCache.loadOfflineFirst();
 
       expect(loaded.series, isEmpty);
-      expect(loaded.series.map((s) => s.id), isNot(contains('seed_series')));
+      expect(CatalogBundleCache.isCatalogReady, isFalse);
+      expect(await CatalogBundlePersistence.hasCompletedFirestoreSync(), isFalse);
+    });
+
+    test('corrupted persisted cache uses bootstrap placeholder after sync completed',
+        () async {
+      final remote = _remoteWithoutDeletedSeries();
+      await CatalogBundlePersistence.save(remote);
+      await CatalogBundlePersistence.writeCorruptBundleForTest('not-json');
+
+      CatalogBundleCache.loadFirestoreOverride = () async {
+        throw StateError('offline');
+      };
+
+      final loaded = await CatalogBundleCache.loadOfflineFirst();
+
+      expect(loaded.series, isEmpty);
+      expect(CatalogBundleCache.memoryOriginForTest,
+          CatalogBundleMemoryOrigin.bootstrapPlaceholder);
     });
 
     test('Firestore timeout keeps persisted bundle on getOrLoad', () async {
@@ -227,7 +202,6 @@ void main() {
       CatalogBundleCache.resetForTest();
       CatalogBundlePersistence.testRootOverride = tempRoot;
 
-      CatalogBundleCache.loadSeedOverride = () async => _bundle();
       CatalogBundleCache.loadFirestoreOverride = () async {
         await Future<void>.delayed(const Duration(milliseconds: 50));
         throw StateError('timeout');
@@ -238,17 +212,17 @@ void main() {
       expect(loaded.series.single.id, 'remote_series');
     });
 
-    test('Firestore failure before first sync falls back to seed on getOrLoad',
+    test('Firestore failure before first sync resolves empty on getOrLoad',
         () async {
-      final seed = _bundle();
-      CatalogBundleCache.loadSeedOverride = () async => seed;
       CatalogBundleCache.loadFirestoreOverride = () async {
         throw StateError('offline');
       };
 
       final loaded = await CatalogBundleCache.getOrLoad();
 
-      expect(loaded.series.single.id, 'seed_series');
+      expect(loaded.series, isEmpty);
+      expect(CatalogBundleCache.memoryOriginForTest,
+          CatalogBundleMemoryOrigin.resolved);
     });
   });
 

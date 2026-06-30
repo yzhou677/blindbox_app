@@ -1,4 +1,4 @@
-import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/collection/application/collection_shelf_ui_prefs_provider.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_browse.dart';
@@ -866,10 +866,10 @@ void main() {
   });
 
   group('CollectionShelfSortLabels', () {
-    test('alphabetical menu label is Alphabetical (Aâ€“Z)', () {
+    test('alphabetical menu label is Alphabetical (A?“Z)', () {
       expect(
         CollectionShelfSort.alphabetical.menuLabel,
-        'Alphabetical (Aâ€“Z)',
+        'Alphabetical (A?“Z)',
       );
     });
 
@@ -916,7 +916,7 @@ void main() {
           series: series,
           progress: progress,
         ),
-        'âœ“ Complete',
+        '? Complete',
       );
       expect(
         CollectionProgressVoice.seriesStatSecondaryLine(

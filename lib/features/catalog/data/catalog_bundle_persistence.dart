@@ -1,15 +1,12 @@
 import 'dart:io';
 
-import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/data/catalog_bundle_codec.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Durable on-device cache for the last successful Firestore catalog snapshot.
-///
-/// Once [markFirestoreSyncCompleted] is set, startup must not fall back to the
-/// bundled seed — only to this persisted bundle (offline) or a fresh refresh.
 abstract final class CatalogBundlePersistence {
   CatalogBundlePersistence._();
 

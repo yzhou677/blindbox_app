@@ -1,6 +1,6 @@
 import 'package:blindbox_app/core/firebase/ensure_firebase_initialized.dart';
 import 'package:blindbox_app/features/catalog/catalog_image_resolver.dart';
-import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/firestore/firestore_catalog_mapper.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_brand.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_figure.dart';
@@ -11,13 +11,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// Loads the catalog from canonical Firestore collections into [CatalogSeedBundle].
 ///
 /// **Collections (flat, top-level only):** `brands`, `ips`, `series`, `figures`.
-/// No subcollections, no alternate catalog trees, no image-metadata collections.
 /// Schema: [FIRESTORE_CATALOG_SCHEMA.md]. Storage paths: [FIREBASE_STORAGE_CATALOG.md].
 ///
-/// [loadCatalogBundle] tries this first, then falls back to [loadCatalogSeedBundle].
-///
-/// - One-shot `.get()` per collection (no listeners).
-/// - Document id = canonical id; see mapper for field normalization.
+/// One-shot `.get()` per collection (no listeners).
 Future<CatalogSeedBundle> loadFirestoreCatalogBundle({
   FirebaseFirestore? firestore,
 }) async {

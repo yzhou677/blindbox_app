@@ -1,5 +1,5 @@
-import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
-import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+﻿import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_service.dart';
 import 'package:blindbox_app/features/market/data/market_catalog_identity_cache.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -36,7 +36,7 @@ class CatalogBundleRevisionNotifier extends Notifier<int> {
   }
 }
 
-/// Shared catalog metadata — reloads when the in-memory bundle is replaced.
+/// Shared catalog metadata —reloads when the in-memory bundle is replaced.
 final catalogBundleProvider = FutureProvider<CatalogSeedBundle>((ref) async {
   ref.watch(catalogBundleRevisionProvider);
   final bundle = await CatalogBundleCache.getOrLoad();

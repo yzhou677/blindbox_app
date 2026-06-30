@@ -1,4 +1,4 @@
-import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+﻿import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_brand.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_figure.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_ip.dart';
@@ -12,7 +12,7 @@ import 'package:flutter/material.dart';
 Future<domain.CatalogSeries?> catalogTemplateFromSeedSeries(
   CatalogSeedBundle bundle,
   String seriesId, {
-  /// When false, skips eager URL resolution (deprecated — templates never carry URLs).
+  /// When false, skips eager URL resolution (deprecated —templates never carry URLs).
   bool resolveFigureImages = true,
 }) async {
   CatalogSeries? series;

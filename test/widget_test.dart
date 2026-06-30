@@ -1,5 +1,8 @@
 import 'package:blindbox_app/core/router/app_router.dart';
 import 'package:blindbox_app/core/theme/app_theme.dart';
+import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
+import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/collection_screen.dart';
 import 'package:blindbox_app/features/collection/data/series_release_lookup.dart';
@@ -14,6 +17,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 List<Override> _blindboxTestOverrides() => [
+  catalogBundleProvider.overrideWith(
+    (_) async => const CatalogSeedBundle(
+      brands: [],
+      ips: [],
+      series: [],
+      figures: [],
+    ),
+  ),
   homeFeedSnapshotProvider.overrideWith(
     (_) async => HomeFeedSnapshot(
       latest: mockSeriesReleases,
@@ -125,9 +136,20 @@ void main() {
   SharedPreferences.setMockInitialValues({});
 
   setUp(() {
+    CatalogBundleCache.resetForTest();
+    CatalogBundleCache.prime(
+      const CatalogSeedBundle(
+        brands: [],
+        ips: [],
+        series: [],
+        figures: [],
+      ),
+    );
     // [appRouter] is a process-wide singleton; reset the shell tab between tests.
     appRouter.go('/collection');
   });
+
+  tearDown(CatalogBundleCache.resetForTest);
 
   testWidgets('App shell opens on Collection tab', (WidgetTester tester) async {
     await tester.pumpWidget(

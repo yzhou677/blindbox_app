@@ -1,7 +1,7 @@
-import 'package:blindbox_app/core/search/search_matcher.dart';
+﻿import 'package:blindbox_app/core/search/search_matcher.dart';
 import 'package:blindbox_app/core/search/search_normalizer.dart';
 import 'package:blindbox_app/core/search/search_tokenizer.dart';
-import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_service.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/shelf_series_feed.dart';
@@ -17,7 +17,7 @@ enum CollectionShelfSort {
 extension CollectionShelfSortLabels on CollectionShelfSort {
   String get menuLabel => switch (this) {
         CollectionShelfSort.recentlyAdded => 'Recently Added',
-        CollectionShelfSort.alphabetical => 'Alphabetical (A–Z)',
+        CollectionShelfSort.alphabetical => 'Alphabetical (A?�Z)',
         CollectionShelfSort.figureCount => 'Figure Count',
         CollectionShelfSort.completion => 'Completion',
       };
@@ -38,7 +38,7 @@ extension CollectionShelfSortLabels on CollectionShelfSort {
 /// Empty query returns [series] unchanged.
 ///
 /// Prefer [catalogSearch] when the caller already holds a service for the
-/// current bundle — avoids reconstructing indexes on every rebuild.
+/// current bundle —avoids reconstructing indexes on every rebuild.
 List<ShelfSeries> filterShelfSeriesBySearch(
   List<ShelfSeries> series,
   String query, {
@@ -89,7 +89,7 @@ SeriesProgressCounts _seriesProgress(
 }) =>
     progress?.forSeries(series) ?? progressForSeries(series, states);
 
-/// Whether every figure in [series] is owned — matches shelf card completion rule.
+/// Whether every figure in [series] is owned —matches shelf card completion rule.
 bool isShelfSeriesComplete(
   ShelfSeries series,
   Map<String, TrackedFigure> states, {
@@ -166,11 +166,11 @@ double _seriesCompletionRatio(
 /// The Collection page is a hierarchical browser, not a flat ranked list.
 ///
 /// ```text
-/// Bucket → IP → Series
+/// Bucket ??IP ??Series
 /// ```
 ///
 /// Every sort mode defines an IP aggregate and a series aggregate (see
-/// `docs/COLLECTION_ARCHITECTURE_NOTES.md` → Collection sorting reference).
+/// `docs/COLLECTION_ARCHITECTURE_NOTES.md` ??Collection sorting reference).
 /// The feed builder only renders that order.
 ///
 /// [CollectionShelfSort.recentlyAdded] preserves shelf traversal order within

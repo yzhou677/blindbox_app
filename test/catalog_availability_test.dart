@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:blindbox_app/features/catalog/application/catalog_availability.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
-import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_brand.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_ip.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_series.dart';
@@ -40,7 +40,6 @@ void main() {
 
   test('bootstrap placeholder resolves to loading', () async {
     final container = _container();
-    CatalogBundleCache.hasCompletedFirestoreSyncOverride = () async => true;
     CatalogBundleCache.loadPersistedOverride = () async => null;
     CatalogBundleCache.loadFirestoreOverride = () async {
       await Completer<void>().future;
@@ -64,7 +63,6 @@ void main() {
     CatalogBundleCache.resetForTest();
     container.read(catalogBundleRevisionProvider);
 
-    CatalogBundleCache.hasCompletedFirestoreSyncOverride = () async => true;
     CatalogBundleCache.loadPersistedOverride = () async => null;
     CatalogBundleCache.loadFirestoreOverride = () async {
       throw StateError('offline');
@@ -79,7 +77,7 @@ void main() {
     expect(availability.isCatalogUsable, isFalse);
   });
 
-  test('seed bundle resolves to ready', () async {
+  test('catalog-ready bundle resolves to ready', () async {
     final container = _container();
     CatalogBundleCache.prime(_bundle());
     await container.read(catalogBundleProvider.future);

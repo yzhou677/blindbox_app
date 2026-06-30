@@ -3,7 +3,7 @@ library;
 
 import 'package:blindbox_app/core/theme/app_theme.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
-import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/market/application/market_live_browse_controller.dart';
@@ -28,11 +28,11 @@ final class _EmptyCollectionNotifier extends CollectionNotifier {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('live gateway search zor — trace timeline', (tester) async {
+  testWidgets('live gateway search zor ??trace timeline', (tester) async {
     if (!MarketGatewayConfig.isActive) {
       // ignore: avoid_print
       print(
-        '[MarketSearchRepro] SKIP: gateway inactive — pass MARKET_GATEWAY_EBAY '
+        '[MarketSearchRepro] SKIP: gateway inactive ??pass MARKET_GATEWAY_EBAY '
         'and MARKET_GATEWAY_BASE_URL dart-defines',
       );
       return;
@@ -63,7 +63,7 @@ void main() {
     await tester.enterText(find.byType(TextField), 'zor');
     await tester.pump(const Duration(milliseconds: 450));
 
-  // Allow network + commits + rebuilds (40 × 500ms = 20s max wait).
+  // Allow network + commits + rebuilds (40 ? 500ms = 20s max wait).
     for (var i = 0; i < 40; i++) {
       await tester.pump(const Duration(milliseconds: 500));
       if (find.text('No matches for that search.').evaluate().isNotEmpty &&

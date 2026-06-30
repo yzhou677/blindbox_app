@@ -2,7 +2,7 @@
 
 Canonical reference for humans and Cursor agents. Supersedes scattered notes in `docs/` for day-to-day implementation guidance.
 
-**Related:** [`.cursor/rules/`](rules/) (agent rule snippets — **`product-principles`**, **`offline-async-media`**, **`project-architecture`**), [`CONFORMITY_AUDIT.md`](CONFORMITY_AUDIT.md) (codebase checklist), [`FIRESTORE_CATALOG_SCHEMA.md`](../lib/features/catalog/firestore/FIRESTORE_CATALOG_SCHEMA.md), [`FIREBASE_STORAGE_CATALOG.md`](../lib/features/catalog/firestore/FIREBASE_STORAGE_CATALOG.md)
+**Related:** [`docs/CATALOG_ARCHITECTURE.md`](../docs/CATALOG_ARCHITECTURE.md) (catalog spec — data flow, runtime state, providers, Search V2), [`docs/SEARCH_ARCHITECTURE.md`](../docs/SEARCH_ARCHITECTURE.md) (search-only depth), [`.cursor/rules/`](rules/) (agent rule snippets — **`product-principles`**, **`offline-async-media`**, **`project-architecture`**), [`CONFORMITY_AUDIT.md`](CONFORMITY_AUDIT.md) (codebase checklist), [`FIRESTORE_CATALOG_SCHEMA.md`](../lib/features/catalog/firestore/FIRESTORE_CATALOG_SCHEMA.md), [`FIREBASE_STORAGE_CATALOG.md`](../lib/features/catalog/firestore/FIREBASE_STORAGE_CATALOG.md)
 
 ---
 

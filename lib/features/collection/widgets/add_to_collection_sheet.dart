@@ -1,8 +1,8 @@
-import 'package:blindbox_app/features/catalog/adapters/catalog_seed_to_collection_template.dart';
+﻿import 'package:blindbox_app/features/catalog/adapters/catalog_seed_to_collection_template.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_availability.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
-import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/core/search/search_placeholders.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_availability_copy.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_series_search_rows.dart';
@@ -96,7 +96,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     required VoidCallback onAdd,
   }) {
     final shelfCta = _previewShelfCta(snap, series);
-    // Same branch navigator as the parent sheet — root overlay stacks a second
+    // Same branch navigator as the parent sheet —root overlay stacks a second
     // modal and leaves the parent drag handle visually pinned on dismiss.
     showCollectionModalBottomSheet<void>(
       context: context,
@@ -278,7 +278,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
         hasScrollBody: false,
         child: Center(
           child: Text(
-            'Couldn’t load recommendations.',
+            'Couldn?�t load recommendations.',
             style: textTheme.bodyMedium?.copyWith(
               color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
             ),

@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/data/catalog_bundle_persistence.dart';
 import 'package:blindbox_app/features/catalog/firestore/firestore_catalog_loader.dart';
 import 'package:flutter/foundation.dart';
@@ -12,10 +12,7 @@ enum CatalogBundleLoadSource {
   /// Last successful Firestore snapshot from on-device persistence.
   persisted,
 
-  /// Bundled `tools/seed/` — first install or never synced.
-  seed,
-
-  /// Synced before but no valid persisted snapshot (corrupt / missing file).
+  /// No persisted snapshot — bootstrap placeholder until refresh/load completes.
   empty,
 }
 
@@ -36,9 +33,6 @@ enum CatalogBundleMemoryOrigin {
   /// [loadOfflineFirst] empty bootstrap — [getOrLoad] must await refresh/load.
   bootstrapPlaceholder,
 
-  /// Bundled `tools/seed/`.
-  seed,
-
   /// On-disk Firestore snapshot.
   persisted,
 
@@ -55,10 +49,8 @@ enum CatalogBundleMemoryOrigin {
 /// In-memory catalog snapshot — static metadata only (no Storage URLs).
 ///
 /// **Offline-first startup:** persisted Firestore snapshot (when available) →
-/// bundled seed (first install / never synced) → empty bootstrap placeholder →
-/// background Firestore refresh. After the first successful refresh, persisted
-/// data is authoritative on cold start; deleted Firestore entries do not
-/// reappear from seed.
+/// bootstrap placeholder → background Firestore refresh. After the first
+/// successful refresh, persisted data is authoritative on cold start.
 ///
 /// **Readiness vs memory slot**
 ///
@@ -72,7 +64,6 @@ enum CatalogBundleMemoryOrigin {
 /// | [CatalogBundleMemoryOrigin] | [loadOfflineFirst] | [getOrLoad] |
 /// |-------|-------------------|-------------|
 /// | `persisted` | Returns disk snapshot; background refresh | Returns immediately |
-/// | `seed` | Returns seed; background refresh | Returns immediately |
 /// | `bootstrapPlaceholder` | Returns empty; background refresh | Awaits refresh / shared load |
 /// | `firestore` | Returns memory bundle | Returns immediately |
 /// | `resolved` | Returns empty (load exhausted) | Returns empty (no duplicate fetch) |
@@ -129,9 +120,6 @@ abstract final class CatalogBundleCache {
   static CatalogBundleLoadSource? lastStartupSource;
 
   @visibleForTesting
-  static Future<CatalogSeedBundle> Function()? loadSeedOverride;
-
-  @visibleForTesting
   static Future<CatalogSeedBundle> Function()? loadFirestoreOverride;
 
   @visibleForTesting
@@ -139,9 +127,6 @@ abstract final class CatalogBundleCache {
 
   @visibleForTesting
   static Future<void> Function(CatalogSeedBundle bundle)? persistOverride;
-
-  @visibleForTesting
-  static Future<bool> Function()? hasCompletedFirestoreSyncOverride;
 
   static void prime(CatalogSeedBundle bundle) {
     _setMemoryBundle(bundle, CatalogBundleMemoryOrigin.firestore);
@@ -205,15 +190,13 @@ abstract final class CatalogBundleCache {
     _lastFirestoreRefreshAt = null;
     onBundleReplaced = null;
     _bundleReplacedListeners.clear();
-    loadSeedOverride = null;
     loadFirestoreOverride = null;
     loadPersistedOverride = null;
     persistOverride = null;
-    hasCompletedFirestoreSyncOverride = null;
     lastStartupSource = null;
   }
 
-  /// Persisted snapshot → bundled seed (never synced) → background refresh.
+  /// Persisted snapshot when available, otherwise bootstrap placeholder + refresh.
   static Future<CatalogSeedBundle> loadOfflineFirst() async {
     if (_bundle != null) {
       _logStartup(CatalogBundleLoadSource.memory, _bundle!);
@@ -227,14 +210,6 @@ abstract final class CatalogBundleCache {
       _logStartup(CatalogBundleLoadSource.persisted, local);
       unawaited(refreshFromFirestore());
       return local;
-    }
-
-    if (!await _hasCompletedFirestoreSync()) {
-      final seed = await _loadSeed();
-      _setMemoryBundle(seed, CatalogBundleMemoryOrigin.seed);
-      _logStartup(CatalogBundleLoadSource.seed, seed);
-      unawaited(refreshFromFirestore());
-      return seed;
     }
 
     final empty = _emptyBundle();
@@ -269,7 +244,7 @@ abstract final class CatalogBundleCache {
     final pending = _inFlight;
     if (pending != null) return pending;
 
-    final load = _loadNetworkThenPersistedOrSeed();
+    final load = _loadNetworkThenPersisted();
     _inFlight = load;
     try {
       return await load;
@@ -316,7 +291,7 @@ abstract final class CatalogBundleCache {
     }
   }
 
-  static Future<CatalogSeedBundle> _loadNetworkThenPersistedOrSeed() async {
+  static Future<CatalogSeedBundle> _loadNetworkThenPersisted() async {
     try {
       final remote = await _loadFirestore().timeout(firestoreTimeout);
       await _commitFirestoreBundle(remote, notifyListeners: true);
@@ -326,11 +301,6 @@ abstract final class CatalogBundleCache {
       if (persisted != null) {
         _setMemoryBundle(persisted, CatalogBundleMemoryOrigin.persisted);
         return persisted;
-      }
-      if (!await _hasCompletedFirestoreSync()) {
-        final seed = await _loadSeed();
-        _setMemoryBundle(seed, CatalogBundleMemoryOrigin.seed);
-        return seed;
       }
       final empty = _emptyBundle();
       _setMemoryBundle(empty, CatalogBundleMemoryOrigin.resolved);
@@ -349,15 +319,6 @@ abstract final class CatalogBundleCache {
   static Future<void> _persist(CatalogSeedBundle bundle) {
     return persistOverride?.call(bundle) ??
         CatalogBundlePersistence.save(bundle);
-  }
-
-  static Future<bool> _hasCompletedFirestoreSync() {
-    return hasCompletedFirestoreSyncOverride?.call() ??
-        CatalogBundlePersistence.hasCompletedFirestoreSync();
-  }
-
-  static Future<CatalogSeedBundle> _loadSeed() {
-    return loadSeedOverride?.call() ?? loadCatalogSeedBundle();
   }
 
   static Future<CatalogSeedBundle> _loadFirestore() {
