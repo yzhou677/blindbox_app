@@ -90,7 +90,7 @@ void main() {
       );
       expect(
         CollectionSummaryEditorial.shelfMoodLine(snap),
-        anyOf(contains('Master Complete'), contains('finished all the way')),
+        anyOf(contains('Master Complete series'), contains('finishing every figure')),
       );
     });
   });
@@ -115,7 +115,7 @@ void main() {
         ),
         snap: snap,
       );
-      expect(line, 'Macaron was recently completed');
+      expect(line, 'Macaron is your latest completed series');
     });
 
     test('master complete uses master wording', () {
@@ -141,7 +141,7 @@ void main() {
         ),
         snap: snap,
       );
-      expect(line, 'Macaron became your latest Master Complete');
+      expect(line, 'Macaron is your latest Master Complete series');
     });
   });
 }

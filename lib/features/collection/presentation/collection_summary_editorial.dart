@@ -14,14 +14,16 @@ abstract final class CollectionSummaryEditorial {
     final alt = snap.shelfSeries.length % 2;
     return switch (stage) {
       _CollectorStage.masterComplete => alt == 0
-          ? 'Master Complete lineups are finding their place on your shelf.'
-          : 'A quiet pride in series finished all the way through.',
+          ? (master == 1
+              ? 'Your collection now includes a Master Complete series.'
+              : 'Your collection now includes $master Master Complete series.')
+          : 'A quiet pride in finishing every figure in a series.',
       _CollectorStage.severalComplete => alt == 0
-          ? 'Several series feel complete — your shelf is finding its rhythm.'
-          : 'Completed lineups are becoming a steady part of your collection.',
+          ? 'Several completed series are finding their rhythm on your shelf.'
+          : 'Completed series are becoming a steady part of your collection.',
       _CollectorStage.firstComplete => alt == 0
-          ? 'Your first complete series is a gentle milestone.'
-          : 'One series feels whole — room for more when you\'re ready.',
+          ? 'Your first completed series is a gentle milestone.'
+          : 'One completed series — room for more when you\'re ready.',
       _CollectorStage.growing => alt == 0
           ? 'Your collection is quietly taking shape.'
           : 'Each figure adds a little more character to the shelf.',
@@ -65,6 +67,6 @@ enum _CollectorStage {
 abstract final class CollectionSummaryLabels {
   static const figures = 'Figures';
   static const wishlist = 'Wishlist';
-  static const seriesComplete = 'Series complete';
+  static const seriesComplete = 'Completed Series';
   static const masterComplete = 'Master Complete';
 }

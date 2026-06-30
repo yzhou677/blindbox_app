@@ -58,7 +58,7 @@ abstract final class CollectionMemoryEditorial {
       return '$seriesName was recently completed after a long search';
     }
     if (isComplete) {
-      return 'This lineup has found its place on your shelf';
+      return 'This completed series has found its place on your shelf';
     }
     return null;
   }
@@ -72,14 +72,14 @@ abstract final class CollectionMemoryEditorial {
       for (final series in snap.shelfSeries) {
         if (series.id != moment.seriesId) continue;
         if (resolveSeriesCompletion(series, snap.figureStates).isMasterComplete) {
-          return '$name became your latest Master Complete';
+          return '$name is your latest Master Complete series';
         }
         break;
       }
-      return '$name was recently completed';
+      return '$name is your latest completed series';
     }
     if (name != null && name.isNotEmpty) {
-      return '$name was recently completed';
+      return '$name is your latest completed series';
     }
     return 'A series was recently completed';
   }
