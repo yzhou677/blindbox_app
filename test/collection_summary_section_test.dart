@@ -39,4 +39,35 @@ void main() {
     expect(find.text('In collection'), findsNothing);
     expect(find.text('Master'), findsNothing);
   });
+
+  testWidgets('summary always shows stable 2x2 grid with muted zero row', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 500);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    const stats = CollectionAggregateStats(
+      inCollection: 2,
+      wantListCount: 1,
+      completedSeriesCount: 0,
+      masterCompleteSeriesCount: 0,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(
+          extensions: [CollectibleTokens.forBrightness(Brightness.light)],
+        ),
+        home: const Scaffold(
+          body: CollectionSummarySection(stats: stats),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text(CollectionSummaryLabels.seriesComplete), findsOneWidget);
+    expect(find.text(CollectionSummaryLabels.masterComplete), findsOneWidget);
+    expect(find.text('0'), findsNWidgets(2));
+  });
 }

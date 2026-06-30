@@ -404,8 +404,12 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               ),
             ),
           ),
-          if (snap.isWarmStart)
+          if (snap.showWarmStartBanner)
             const SliverToBoxAdapter(child: CollectionWarmStartBanner()),
+          if (!snap.showWarmStartBanner)
+            const SliverToBoxAdapter(
+              child: SizedBox(height: FeedRhythm.collectionSearchToSummaryGap),
+            ),
           SliverToBoxAdapter(
             child: CollectionSummarySection(
               stats: CollectionAggregateStats.fromSnapshot(snap),
@@ -421,7 +425,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
             child: CollectibleSectionHeader(
               title: 'My collection',
               subtitle: sectionSubtitle,
-              padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
               trailing: _CollectionAddSeriesButton(
                 onPressed: () => _openAddToCollection(context),
               ),

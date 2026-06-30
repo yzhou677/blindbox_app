@@ -59,9 +59,9 @@ class CollectionSummarySection extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.pageHorizontal,
-        AppSpacing.xs + 2, // 6 — tighter top than belowTabAppBar so card sits close to section header
+        0,
         AppSpacing.pageHorizontal,
-        FeedRhythm.blockGapMedium, // 18
+        FeedRhythm.collectionSummaryToShelfHeader,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -79,81 +79,61 @@ class CollectionSummarySection extends StatelessWidget {
               ),
             ),
             child: Padding(
-              // Horizontal 18 is intentionally narrower than pageHorizontal (20)
-              // to give the metric strip a slightly inset look within the card.
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: AppSpacing.md),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 18,
+                vertical: FeedRhythm.collectionSummaryCardVerticalPadding,
+              ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  _MetricRow(
+                    scheme: scheme,
+                    textTheme: textTheme,
                     children: [
-                      Expanded(
-                        child: _ShelfGlanceStatCell(
-                          count: stats.inCollection,
-                          label: CollectionSummaryLabels.figures,
-                          scheme: scheme,
-                          textTheme: textTheme,
-                        ),
+                      _ShelfGlanceStatCell(
+                        count: stats.inCollection,
+                        label: CollectionSummaryLabels.figures,
+                        scheme: scheme,
+                        textTheme: textTheme,
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 10),
-                        child: _Dot(scheme: scheme),
-                      ),
-                      Expanded(
-                        child: _ShelfGlanceStatCell(
-                          count: stats.wantListCount,
-                          label: CollectionSummaryLabels.wishlist,
-                          scheme: scheme,
-                          textTheme: textTheme,
-                        ),
+                      _ShelfGlanceStatCell(
+                        count: stats.wantListCount,
+                        label: CollectionSummaryLabels.wishlist,
+                        scheme: scheme,
+                        textTheme: textTheme,
                       ),
                     ],
                   ),
-                  if (stats.completedSeriesCount > 0) ...[
-                    const SizedBox(height: 14),
-                    if (stats.masterCompleteSeriesCount > 0)
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: _ShelfGlanceStatCell(
-                              count: stats.completedSeriesCount,
-                              label: CollectionSummaryLabels.seriesComplete,
-                              scheme: scheme,
-                              textTheme: textTheme,
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(top: 10),
-                            child: _Dot(scheme: scheme),
-                          ),
-                          Expanded(
-                            child: _ShelfGlanceStatCell(
-                              count: stats.masterCompleteSeriesCount,
-                              label: CollectionSummaryLabels.masterComplete,
-                              scheme: scheme,
-                              textTheme: textTheme,
-                              emphasizeLabel: true,
-                            ),
-                          ),
-                        ],
-                      )
-                    else
+                  const SizedBox(
+                    height: FeedRhythm.collectionSummaryMetricRowGap,
+                  ),
+                  _MetricRow(
+                    scheme: scheme,
+                    textTheme: textTheme,
+                    children: [
                       _ShelfGlanceStatCell(
                         count: stats.completedSeriesCount,
                         label: CollectionSummaryLabels.seriesComplete,
                         scheme: scheme,
                         textTheme: textTheme,
-                        centered: true,
+                        muted: stats.completedSeriesCount == 0,
                       ),
-                  ],
+                      _ShelfGlanceStatCell(
+                        count: stats.masterCompleteSeriesCount,
+                        label: CollectionSummaryLabels.masterComplete,
+                        scheme: scheme,
+                        textTheme: textTheme,
+                        muted: stats.masterCompleteSeriesCount == 0,
+                        emphasizeLabel: stats.masterCompleteSeriesCount > 0,
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
           ),
           if (shelfMoodLine != null && shelfMoodLine!.trim().isNotEmpty) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: FeedRhythm.collectionSummaryToEditorial),
             Text(
               shelfMoodLine!,
               textAlign: TextAlign.center,
@@ -164,9 +144,8 @@ class CollectionSummarySection extends StatelessWidget {
               ),
             ),
           ],
-          if (memoryWhisper != null && memoryWhisper!.trim().isNotEmpty)
-            ...[
-            const SizedBox(height: 6),
+          if (memoryWhisper != null && memoryWhisper!.trim().isNotEmpty) ...[
+            const SizedBox(height: FeedRhythm.collectionSummaryEditorialGap),
             Text(
               memoryWhisper!,
               textAlign: TextAlign.center,
@@ -177,7 +156,7 @@ class CollectionSummarySection extends StatelessWidget {
             ),
           ],
           if (onInsightsTap != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.lg),
             _InsightsEntryRow(
               scheme: scheme,
               textTheme: textTheme,
@@ -185,6 +164,33 @@ class CollectionSummarySection extends StatelessWidget {
               onTap: onInsightsTap!,
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _MetricRow extends StatelessWidget {
+  const _MetricRow({
+    required this.scheme,
+    required this.textTheme,
+    required this.children,
+  });
+
+  final ColorScheme scheme;
+  final TextTheme textTheme;
+  final List<_ShelfGlanceStatCell> children;
+
+  @override
+  Widget build(BuildContext context) {
+    assert(children.length == 2);
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(child: children[0]),
+          Center(child: _Dot(scheme: scheme)),
+          Expanded(child: children[1]),
         ],
       ),
     );
@@ -263,12 +269,15 @@ class _Dot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 4,
-      height: 4,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: scheme.primary.withValues(alpha: 0.2),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      child: Container(
+        width: 4,
+        height: 4,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: scheme.primary.withValues(alpha: 0.2),
+        ),
       ),
     );
   }
@@ -280,7 +289,7 @@ class _ShelfGlanceStatCell extends StatelessWidget {
     required this.label,
     required this.scheme,
     required this.textTheme,
-    this.centered = false,
+    this.muted = false,
     this.emphasizeLabel = false,
   });
 
@@ -288,38 +297,50 @@ class _ShelfGlanceStatCell extends StatelessWidget {
   final String label;
   final ColorScheme scheme;
   final TextTheme textTheme;
-  final bool centered;
+  final bool muted;
   final bool emphasizeLabel;
 
   @override
   Widget build(BuildContext context) {
+    final countAlpha = muted ? 0.36 : 0.92;
+    final labelAlpha = muted
+        ? 0.38
+        : emphasizeLabel
+        ? 0.78
+        : 0.72;
+
     final labelStyle = AppTypography.deckText(textTheme, scheme).copyWith(
-      color: scheme.onSurfaceVariant.withValues(
-        alpha: emphasizeLabel ? 0.78 : 0.72,
-      ),
+      color: scheme.onSurfaceVariant.withValues(alpha: labelAlpha),
       fontWeight: emphasizeLabel ? FontWeight.w600 : FontWeight.w500,
       fontSize: 11.5,
       height: 1.18,
       letterSpacing: 0.02,
     );
 
-    final cell = Column(
+    final countStyle = AppTypography.insightsTotals(textTheme, scheme).copyWith(
+      fontWeight: FontWeight.w600,
+      height: 1.0,
+      color: scheme.onSurface.withValues(alpha: countAlpha),
+    );
+
+    return Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment:
-          centered ? CrossAxisAlignment.center : CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(
-          '$count',
-          textAlign: TextAlign.center,
-          style: AppTypography.insightsTotals(textTheme, scheme).copyWith(
-            fontWeight: FontWeight.w600,
-            height: 1.05,
-            color: scheme.onSurface.withValues(alpha: 0.92),
+        SizedBox(
+          height: FeedRhythm.collectionSummaryCountHeight,
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: Text(
+              '$count',
+              textAlign: TextAlign.center,
+              style: countStyle,
+            ),
           ),
         ),
-        const SizedBox(height: 3),
+        const SizedBox(height: 4),
         SizedBox(
-          height: 28,
+          height: FeedRhythm.collectionSummaryLabelHeight,
           child: Align(
             alignment: Alignment.topCenter,
             child: Text(
@@ -333,10 +354,5 @@ class _ShelfGlanceStatCell extends StatelessWidget {
         ),
       ],
     );
-
-    if (centered) {
-      return Center(child: cell);
-    }
-    return cell;
   }
 }
