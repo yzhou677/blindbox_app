@@ -36,7 +36,7 @@ void main() {
       CollectorTypeIdentity(
         archetypeId: CollectorTypeArchetypeId.wanderer,
         revealedAt: DateTime(2026, 1, 1),
-        signatureHash: 'cached',
+        signatureHash: 'stale-overflow-signature',
         stats: const CollectorTypeStats(
           totalOwned: 0,
           totalWishlist: 0,
@@ -74,7 +74,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.byType(PopupMenuButton<String>), findsOneWidget);
+    expect(find.byType(CollectorTypeRevealCard), findsOneWidget);
 
     await tester.tap(
       find.descendant(

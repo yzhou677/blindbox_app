@@ -866,10 +866,10 @@ void main() {
   });
 
   group('CollectionShelfSortLabels', () {
-    test('alphabetical menu label is Alphabetical (A?“Z)', () {
+    test('alphabetical menu label is Alphabetical (Aâ€“Z)', () {
       expect(
         CollectionShelfSort.alphabetical.menuLabel,
-        'Alphabetical (A?“Z)',
+        'Alphabetical (Aâ€“Z)',
       );
     });
 
@@ -916,7 +916,7 @@ void main() {
           series: series,
           progress: progress,
         ),
-        '? Complete',
+        'âœ“ Complete',
       );
       expect(
         CollectionProgressVoice.seriesStatSecondaryLine(

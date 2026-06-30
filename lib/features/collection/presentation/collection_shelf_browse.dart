@@ -1,4 +1,4 @@
-﻿import 'package:blindbox_app/core/search/search_matcher.dart';
+import 'package:blindbox_app/core/search/search_matcher.dart';
 import 'package:blindbox_app/core/search/search_normalizer.dart';
 import 'package:blindbox_app/core/search/search_tokenizer.dart';
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
@@ -17,7 +17,7 @@ enum CollectionShelfSort {
 extension CollectionShelfSortLabels on CollectionShelfSort {
   String get menuLabel => switch (this) {
         CollectionShelfSort.recentlyAdded => 'Recently Added',
-        CollectionShelfSort.alphabetical => 'Alphabetical (A?�Z)',
+        CollectionShelfSort.alphabetical => 'Alphabetical (A–Z)',
         CollectionShelfSort.figureCount => 'Figure Count',
         CollectionShelfSort.completion => 'Completion',
       };
