@@ -9,6 +9,7 @@ import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/domain/series_completion_atmosphere.dart';
 import 'package:blindbox_app/features/collection/domain/series_completion_resolution.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_series_thumbnail.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_progress_voice.dart';
 import 'package:flutter/material.dart';
 
@@ -333,7 +334,7 @@ class _SeriesMatContent extends StatelessWidget {
         const SizedBox(height: 11),
         if (isMasterComplete)
           Semantics(
-            label: 'Master Complete',
+            label: CollectionVocabulary.masterComplete,
             child: Text.rich(
               TextSpan(
                 style: CollectibleTypography.shelfMasterCompleteStatLine(
@@ -342,7 +343,7 @@ class _SeriesMatContent extends StatelessWidget {
                 ),
                 children: const [
                   TextSpan(text: '👑 '),
-                  TextSpan(text: 'Master Complete'),
+                  TextSpan(text: CollectionVocabulary.masterComplete),
                 ],
               ),
             ),

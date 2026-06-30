@@ -1,5 +1,6 @@
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/domain/series_completion_resolution.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 
 /// Curated collector-stage lines for the collection summary card.
 abstract final class CollectionSummaryEditorial {
@@ -13,11 +14,7 @@ abstract final class CollectionSummaryEditorial {
     );
     final alt = snap.shelfSeries.length % 2;
     return switch (stage) {
-      _CollectorStage.masterComplete => alt == 0
-          ? (master == 1
-              ? 'Your collection now includes a Master Complete series.'
-              : 'Your collection now includes $master Master Complete series.')
-          : 'A quiet pride in finishing every figure in a series.',
+      _CollectorStage.masterComplete => _masterCompleteShelfMoodLine(master),
       _CollectorStage.severalComplete => alt == 0
           ? 'Several completed series are finding their rhythm on your shelf.'
           : 'Completed series are becoming a steady part of your collection.',
@@ -53,6 +50,14 @@ abstract final class CollectionSummaryEditorial {
     }
     return _CollectorStage.beginning;
   }
+
+  static String _masterCompleteShelfMoodLine(int masterCount) {
+    return switch (masterCount) {
+      1 => 'Your collection now includes a Master Complete series.',
+      2 => 'Your collection now includes multiple Master Complete series.',
+      _ => 'Your collection now includes $masterCount Master Complete series.',
+    };
+  }
 }
 
 enum _CollectorStage {
@@ -65,8 +70,8 @@ enum _CollectorStage {
 
 /// Summary metric labels — figure row vs series-progress row.
 abstract final class CollectionSummaryLabels {
-  static const figures = 'Figures';
-  static const wishlist = 'Wishlist';
-  static const seriesComplete = 'Completed Series';
-  static const masterComplete = 'Master Complete';
+  static const figures = CollectionVocabulary.figures;
+  static const wishlist = CollectionVocabulary.wishlist;
+  static const seriesComplete = CollectionVocabulary.completedSeries;
+  static const masterComplete = CollectionVocabulary.masterComplete;
 }

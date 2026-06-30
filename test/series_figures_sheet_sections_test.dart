@@ -83,7 +83,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('Regular figures (3)'), findsOneWidget);
+    expect(find.text('Regular Figures (3)'), findsOneWidget);
     expect(find.text('Secret Figure (1)'), findsOneWidget);
     expect(find.text('Regular 0'), findsOneWidget);
     expect(find.text('Chase'), findsOneWidget);
@@ -133,7 +133,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('Regular figures'), findsNothing);
+    expect(find.text('Regular Figures'), findsNothing);
     expect(find.text('Secret Figure'), findsNothing);
     expect(find.text('Only'), findsOneWidget);
   });

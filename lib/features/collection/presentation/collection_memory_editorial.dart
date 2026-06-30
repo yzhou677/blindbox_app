@@ -14,7 +14,7 @@ abstract final class CollectionMemoryEditorial {
   }) {
     return switch (moment.kind) {
       CollectionMemoryMomentKind.firstSecretOwned =>
-        'Your first secret still lives on this shelf',
+        'Your first Secret Figure still lives on this shelf',
       CollectionMemoryMomentKind.recentlyCompletedLineup =>
         _recentCompletionWhisper(moment, snap),
       CollectionMemoryMomentKind.dominantUniverse when
@@ -43,7 +43,7 @@ abstract final class CollectionMemoryEditorial {
       CollectionEvolutionKind.moodBrightened =>
         'Playful lineups have been appearing more often lately',
       CollectionEvolutionKind.secretsEmerging =>
-        'Secrets have slowly become part of your collection language',
+        'Secret Figures have slowly become part of your collection',
       CollectionEvolutionKind.universeShift =>
         'A new universe has been finding its place on your shelf',
     };

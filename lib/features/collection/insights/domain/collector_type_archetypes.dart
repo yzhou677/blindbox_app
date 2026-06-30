@@ -54,7 +54,7 @@ abstract final class CollectorTypeArchetypes {
     id: CollectorTypeArchetypeId.dreamer,
     displayName: 'The Dreamer',
     flavorText:
-        'You collect with your heart first — wishlists are where the story begins.',
+        'You collect with your heart first — your Wishlist is where the story begins.',
     accentColorLight: Color(0xFFB8A8D8),
     accentColorDark: Color(0xFFC4B4E0),
     icon: Icons.nights_stay_outlined,
@@ -64,7 +64,7 @@ abstract final class CollectorTypeArchetypes {
     id: CollectorTypeArchetypeId.hunter,
     displayName: 'The Hunter',
     flavorText:
-        'Rare pulls call to you. You chase the secret slot with quiet focus.',
+        'Secret Figures draw you in — you collect them with quiet focus.',
     accentColorLight: Color(0xFFC9A06A),
     accentColorDark: Color(0xFFD4B078),
     icon: Icons.track_changes_outlined,
@@ -74,7 +74,7 @@ abstract final class CollectorTypeArchetypes {
     id: CollectorTypeArchetypeId.completionist,
     displayName: 'The Completionist',
     flavorText:
-        'Every slot matters. You find calm in closing the circle on a series.',
+        'Every figure matters. You find calm in completing a series.',
     accentColorLight: Color(0xFF7BA88A),
     accentColorDark: Color(0xFF8FBC9C),
     icon: Icons.all_inclusive_outlined,
@@ -154,7 +154,7 @@ abstract final class CollectorTypeArchetypes {
     id: CollectorTypeArchetypeId.daydreamCollector,
     displayName: 'The Daydream Collector',
     flavorText:
-        'More lives in the wishlist than on the shelf — and that is part of the joy.',
+        'More lives on your Wishlist than on the shelf — and that is part of the joy.',
     accentColorLight: Color(0xFFB0C4E8),
     accentColorDark: Color(0xFFC0D0F0),
     icon: Icons.cloud_outlined,
@@ -164,7 +164,7 @@ abstract final class CollectorTypeArchetypes {
     id: CollectorTypeArchetypeId.luckyOne,
     displayName: 'The Lucky One',
     flavorText:
-        'Fortune favors your pulls. Secrets find you when others keep searching.',
+        'Fortune favors your pulls. Secret Figures find you when others keep searching.',
     accentColorLight: Color(0xFFE8C878),
     accentColorDark: Color(0xFFF0D488),
     icon: Icons.auto_awesome_outlined,

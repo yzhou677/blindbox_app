@@ -31,7 +31,7 @@ void main() {
         hasChase: true,
         matchedFigureNames: {'A', 'B'},
       ),
-      '12 figures • chase included',
+      '12 figures • Secret Figure included',
     );
   });
 

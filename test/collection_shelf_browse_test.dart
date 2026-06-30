@@ -982,7 +982,7 @@ void main() {
           progress: progress,
           figureStates: states,
         ),
-        '☆ Chase still out there',
+        '☆ Secret Figure still to find',
       );
     });
 

@@ -26,7 +26,7 @@ class CollectionWarmStartBanner extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Wishlist, then collected.',
+                  'Wishlist first, then Figures.',
                   style: textTheme.bodyMedium?.copyWith(
                     color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
                     height: 1.35,

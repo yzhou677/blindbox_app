@@ -1,5 +1,6 @@
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/domain/series_completion_resolution.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 import 'package:blindbox_app/features/collection/presentation/shelf_editorial_voice.dart';
 
 /// Human, shelf-first language for progress — not spreadsheet rows.
@@ -23,7 +24,7 @@ abstract final class CollectionProgressVoice {
     final wish = progress.wishlist;
 
     if (missing == 0 && wish > 0 && owned < total) {
-      return wish == 1 ? 'One on wishlist' : 'Several on wishlist';
+      return wish == 1 ? 'One on Wishlist' : 'Several on Wishlist';
     }
 
     if (missing == 1) return 'One figure left';
@@ -50,15 +51,17 @@ abstract final class CollectionProgressVoice {
     required Map<String, TrackedFigure> figureStates,
   }) {
     final resolution = resolveSeriesCompletion(series, figureStates);
-    if (resolution.isMasterComplete) return '👑 Master Complete';
-    if (resolution.isCompleted) return '✓ Complete';
+    if (resolution.isMasterComplete) {
+      return '👑 ${CollectionVocabulary.masterComplete}';
+    }
+    if (resolution.isCompleted) return CollectionVocabulary.seriesCompleteBadge;
 
     final denom = resolution.progressDenominator;
     if (denom <= 0) return '';
     return '${resolution.progressNumerator} / $denom';
   }
 
-  /// Optional factual secondary stat — chase whisper when complete, missing while in progress.
+  /// Optional factual secondary stat — Secret Figure whisper when complete.
   static String seriesStatSecondaryLine({
     required ShelfSeries series,
     required SeriesProgressCounts progress,
@@ -69,7 +72,7 @@ abstract final class CollectionProgressVoice {
       if (resolution.isMasterComplete || resolution.secretSlotCount == 0) {
         return '';
       }
-      return '☆ Chase still out there';
+      return '☆ Secret Figure still to find';
     }
 
     final missing = resolution.regularMissingCount > 0
@@ -96,11 +99,17 @@ abstract final class CollectionProgressVoice {
         .length;
 
     final parts = <String>[];
-    if (owned > 0) parts.add('$owned collected');
-    if (wish > 0) parts.add('$wish on wishlist');
+    if (owned > 0) {
+      parts.add(CollectionVocabulary.countLabel(owned, CollectionVocabulary.figures));
+    }
+    if (wish > 0) {
+      parts.add('$wish on ${CollectionVocabulary.wishlist}');
+    }
     if (secrets.isNotEmpty && ownedSecrets < secrets.length) {
-      final openChase = secrets.length - ownedSecrets;
-      if (openChase > 0) parts.add('chase still hiding');
+      final openSecrets = secrets.length - ownedSecrets;
+      if (openSecrets > 0) {
+        parts.add('${CollectionVocabulary.secretFigure} still to find');
+      }
     }
     if (parts.isEmpty) return '';
     return parts.join(' · ');

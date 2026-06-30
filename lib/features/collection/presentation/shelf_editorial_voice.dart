@@ -27,13 +27,13 @@ abstract final class ShelfEditorialVoice {
 
     if (profile.themeIncludes(ShelfEditorialTheme.secrets) &&
         profile.secretOwnedCount >= 2) {
-      return 'Secrets show up often in your collection';
+      return 'Secret Figures show up often in your collection';
     }
 
     return switch (profile.shelfMood) {
       ShelfMood.dreamy => 'Your shelf feels dreamy lately',
       ShelfMood.playful => 'A playful collecting mood on the shelf',
-      ShelfMood.chaseHunter => 'You tend to chase the rare pulls',
+      ShelfMood.chaseHunter => 'You tend to seek out Secret Figures',
       ShelfMood.settled when profile.themeIncludes(ShelfEditorialTheme.harmony) =>
         'Your shelf feels settled and complete',
       ShelfMood.settled => 'Your collection leans calm and curated',
@@ -66,7 +66,7 @@ abstract final class ShelfEditorialVoice {
 
   static String seriesCompleteBannerTitle({required bool chasesHome}) {
     return chasesHome
-        ? 'Whole series — chase home'
+        ? 'Master Complete — every figure home'
         : 'This series feels complete';
   }
 

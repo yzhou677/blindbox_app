@@ -305,7 +305,7 @@ void main() {
         _ownedIds([for (var i = 0; i < 12; i++) 'copy_a_reg_$i']),
       );
       expect(find.text('✓ Complete'), findsOneWidget);
-      expect(find.text('☆ Chase still out there'), findsOneWidget);
+      expect(find.text('☆ Secret Figure still to find'), findsOneWidget);
       expect(find.textContaining('/'), findsNothing);
 
       final caseB = _seriesWithSecrets(

@@ -2,6 +2,7 @@ import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/features/collection/data/collection_input_formatters.dart';
 import 'package:blindbox_app/features/collection/data/collection_input_limits.dart';
 import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 import 'package:blindbox_app/features/collection/widgets/custom_series_quiet_field.dart';
 import 'package:blindbox_app/features/collection/widgets/shelf_gallery_pick.dart';
 import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
@@ -100,7 +101,7 @@ class _EditCustomFigureDialogState extends State<EditCustomFigureDialog> {
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: Text(
-                'Secret',
+                CollectionVocabulary.secretFigure,
                 style: textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),

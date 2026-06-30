@@ -7,6 +7,7 @@ import 'package:blindbox_app/features/collectible_relationship/widgets/collectib
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/application/shelf_emotional_providers.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 import 'package:blindbox_app/features/collection/presentation/shelf_editorial_voice.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart';
 import 'package:blindbox_app/features/collection/widgets/custom_series_form_sheet.dart';
@@ -115,7 +116,7 @@ class SeriesFiguresSheet extends ConsumerWidget {
       collectionMemoryReflectionForSeriesProvider(seriesId),
     );
     final trailingMeta = series.figureCount > 0
-        ? '${progress.owned} of ${series.figureCount} on shelf'
+        ? '${progress.owned} of ${series.figureCount} ${CollectionVocabulary.figures}'
         : null;
     final contextualLine =
         (relationshipLine != null && relationshipLine.isNotEmpty)
@@ -212,7 +213,7 @@ class _SeriesFigureGrid extends StatelessWidget {
           const _FigureSheetSectionRule(),
           const SizedBox(height: 16),
           _FigureSheetSectionHeader(
-            label: 'Regular figures',
+            label: CollectionVocabulary.regularFigures,
             count: regularFigures.length,
           ),
           const SizedBox(height: 14),
@@ -227,7 +228,7 @@ class _SeriesFigureGrid extends StatelessWidget {
         const _FigureSheetSectionRule(),
         const SizedBox(height: 16),
         _FigureSheetSectionHeader(
-          label: 'Secret Figure',
+          label: CollectionVocabulary.secretFigure,
           count: secretFigures.length,
           showCrown: true,
           accent: true,

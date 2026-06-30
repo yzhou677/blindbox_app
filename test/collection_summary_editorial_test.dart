@@ -29,6 +29,23 @@ ShelfSeries _seriesWithSecret({required String id, required String name}) {
   );
 }
 
+CollectionSnapshot _snapWithMasterCompleteCount(int count) {
+  final series = List.generate(
+    count,
+    (i) => _seriesWithSecret(id: 'm$i', name: 'Series $i'),
+  );
+  final states = <String, TrackedFigure>{};
+  for (final s in series) {
+    for (final f in s.figures) {
+      states[f.id] = TrackedFigure(
+        figureId: f.id,
+        state: FigureCollectionState.owned,
+      );
+    }
+  }
+  return CollectionSnapshot(shelfSeries: series, figureStates: states);
+}
+
 void main() {
   group('CollectionSummaryEditorial', () {
     test('beginning stage on empty shelf', () {
@@ -74,23 +91,26 @@ void main() {
     });
 
     test('master stage when master complete series exist', () {
-      final series = _seriesWithSecret(id: 'm', name: 'Macaron');
-      final snap = CollectionSnapshot(
-        shelfSeries: [series],
-        figureStates: {
-          'm_r0': TrackedFigure(
-            figureId: 'm_r0',
-            state: FigureCollectionState.owned,
-          ),
-          'm_s0': TrackedFigure(
-            figureId: 'm_s0',
-            state: FigureCollectionState.owned,
-          ),
-        },
-      );
+      final snap = _snapWithMasterCompleteCount(1);
       expect(
         CollectionSummaryEditorial.shelfMoodLine(snap),
-        anyOf(contains('Master Complete series'), contains('finishing every figure')),
+        'Your collection now includes a Master Complete series.',
+      );
+    });
+
+    test('master stage uses multiple wording for two series', () {
+      final snap = _snapWithMasterCompleteCount(2);
+      expect(
+        CollectionSummaryEditorial.shelfMoodLine(snap),
+        'Your collection now includes multiple Master Complete series.',
+      );
+    });
+
+    test('master stage uses explicit count for three or more', () {
+      final snap = _snapWithMasterCompleteCount(8);
+      expect(
+        CollectionSummaryEditorial.shelfMoodLine(snap),
+        'Your collection now includes 8 Master Complete series.',
       );
     });
   });
