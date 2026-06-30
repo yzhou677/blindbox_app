@@ -105,6 +105,9 @@ abstract final class CatalogBundleCache {
   /// Whether [_bundle] is safe to treat as a completed catalog load.
   static bool get isCatalogReady => _memoryOrigin.isCatalogReady && _bundle != null;
 
+  /// Whether a background Firestore refresh is in flight (UI hint only).
+  static bool get isRefreshInFlight => _refreshInFlight != null;
+
   @visibleForTesting
   static CatalogBundleMemoryOrigin get memoryOriginForTest => _memoryOrigin;
 
@@ -142,6 +145,12 @@ abstract final class CatalogBundleCache {
 
   static void prime(CatalogSeedBundle bundle) {
     _setMemoryBundle(bundle, CatalogBundleMemoryOrigin.firestore);
+  }
+
+  /// Non-ready bootstrap slot without starting a background Firestore refresh.
+  @visibleForTesting
+  static void primeBootstrapPlaceholderForTest() {
+    _setMemoryBundle(_emptyBundle(), CatalogBundleMemoryOrigin.bootstrapPlaceholder);
   }
 
   static void _setMemoryBundle(

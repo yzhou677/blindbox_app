@@ -4,8 +4,7 @@ import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
 import 'package:blindbox_app/features/home/application/home_discover_refresh_controller.dart';
 import 'package:blindbox_app/features/home/application/home_feed_provider.dart';
-import 'package:blindbox_app/features/home/widgets/latest_drops_section.dart';
-import 'package:blindbox_app/features/home/widgets/trending_series_section.dart';
+import 'package:blindbox_app/features/home/widgets/home_catalog_rails.dart';
 import 'package:blindbox_app/features/official_feed/widgets/official_feed_section.dart';
 import 'package:blindbox_app/shared/widgets/app_search_field.dart';
 import 'package:flutter/material.dart';
@@ -52,6 +51,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final feedAsync = ref.watch(homeFeedSnapshotProvider);
+    final feed = feedAsync.valueOrNull ??
+        const HomeFeedSnapshot(latest: [], trending: []);
 
     return Scaffold(
       backgroundColor: scheme.surfaceContainerLow,
@@ -91,54 +92,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 top: FeedRhythm.homeSearchToFirstSection,
                 bottom: FeedRhythm.tabScrollTailPadding,
               ),
-              child: feedAsync.when(
-                loading: () => const _HomeFeedLoading(),
-                error: (_, _) => const _HomeFeedBody(
-                  feed: HomeFeedSnapshot(latest: [], trending: []),
-                ),
-                data: (feed) => _HomeFeedBody(feed: feed),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  HomeCatalogRails(feed: feed),
+                  const SizedBox(height: FeedRhythm.homeMajorSectionGap),
+                  const OfficialFeedSection(),
+                ],
               ),
             ),
           ),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _HomeFeedBody extends StatelessWidget {
-  const _HomeFeedBody({required this.feed});
-
-  final HomeFeedSnapshot feed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        LatestDropsSection(releases: feed.latest),
-        const SizedBox(height: FeedRhythm.homeMajorSectionGap),
-        TrendingSeriesSection(releases: feed.trending),
-        const SizedBox(height: FeedRhythm.homeMajorSectionGap),
-        const OfficialFeedSection(),
-      ],
-    );
-  }
-}
-
-class _HomeFeedLoading extends StatelessWidget {
-  const _HomeFeedLoading();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SizedBox(height: 200, child: Center(child: CircularProgressIndicator())),
-        SizedBox(height: FeedRhythm.homeMajorSectionGap),
-        SizedBox(height: 200),
-      ],
     );
   }
 }

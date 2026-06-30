@@ -1,9 +1,12 @@
 import 'package:blindbox_app/features/catalog/adapters/catalog_seed_to_collection_template.dart';
+import 'package:blindbox_app/features/catalog/application/catalog_availability.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
 import 'package:blindbox_app/core/search/search_placeholders.dart';
+import 'package:blindbox_app/features/catalog/presentation/catalog_availability_copy.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_series_search_rows.dart';
+import 'package:blindbox_app/features/catalog/widgets/catalog_availability_card.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_history_provider.dart';
 import 'package:blindbox_app/features/catalog/widgets/catalog_series_search_row_card.dart';
 import 'package:blindbox_app/features/collection/application/add_series_catalog_providers.dart';
@@ -113,6 +116,8 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     final snap = ref.watch(collectionNotifierProvider);
     final notifier = ref.read(collectionNotifierProvider.notifier);
     final catalogAsync = ref.watch(catalogBundleProvider);
+    final availability = ref.watch(catalogAvailabilityProvider);
+    final retry = ref.read(catalogDownloadRetryProvider);
     final recommendationsAsync = ref.watch(addSeriesCatalogRecommendationsProvider);
     final catalogActive = _trimmedQuery.isNotEmpty;
     final sheetScroll = CollectibleSheetScope.scrollControllerOf(context);
@@ -162,7 +167,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
                   ),
                 ),
               )
-            else if (!catalogAsync.hasError && catalogBundle != null) ...[
+            else if (availability.isCatalogUsable && catalogBundle != null) ...[
               const SizedBox(height: 8),
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
@@ -187,6 +192,8 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
               snap,
               notifier,
               catalogAsync,
+              availability,
+              retry,
             )
           else
             _buildRecommendationsSliver(
@@ -194,9 +201,10 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
               scheme,
               textTheme,
               notifier,
-              catalogAsync,
+              availability,
               recommendationsAsync,
               catalogBundle,
+              retry,
             ),
           SliverToBoxAdapter(
             child: Padding(
@@ -230,25 +238,27 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     ColorScheme scheme,
     TextTheme textTheme,
     CollectionNotifier notifier,
-    AsyncValue<CatalogSeedBundle> catalogAsync,
+    CatalogAvailability availability,
     AsyncValue<List<CatalogSeries>> recommendationsAsync,
     CatalogSeedBundle? catalogBundle,
+    Future<void> Function() retry,
   ) {
-    if (catalogAsync.hasError) {
+    if (!availability.isCatalogUsable) {
       return SliverFillRemaining(
         hasScrollBody: false,
         child: Center(
-          child: Text(
-            'Couldn’t load the catalog. Check your connection and try again.',
-            textAlign: TextAlign.center,
-            style: textTheme.bodyMedium?.copyWith(
-              color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: CatalogAvailabilityCard(
+              availability: availability,
+              onRetry: availability.isOfflineFirstLaunch ? retry : null,
+              compact: true,
             ),
           ),
         ),
       );
     }
-    if (catalogAsync.isLoading || catalogBundle == null) {
+    if (catalogBundle == null) {
       return const SliverFillRemaining(
         hasScrollBody: false,
         child: Center(
@@ -341,18 +351,15 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     CollectionSnapshot snap,
     CollectionNotifier notifier,
     AsyncValue<CatalogSeedBundle> catalogAsync,
+    CatalogAvailability availability,
+    Future<void> Function() retry,
   ) {
-    if (catalogAsync.hasError) {
+    if (!availability.isCatalogUsable) {
       return SliverFillRemaining(
         hasScrollBody: false,
-        child: Center(
-          child: Text(
-            'Couldn’t load the catalog. Check your connection and try again.',
-            textAlign: TextAlign.center,
-            style: textTheme.bodyMedium?.copyWith(
-              color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
-            ),
-          ),
+        child: CatalogAvailabilitySearchMessage(
+          message: CatalogAvailabilityCopy.searchMessageFor(availability),
+          onRetry: availability.isOfflineFirstLaunch ? retry : null,
         ),
       );
     }
