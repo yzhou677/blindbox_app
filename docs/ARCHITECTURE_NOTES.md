@@ -108,6 +108,27 @@ Ready (catalog-ready)
 
 Background refresh can later move `seed` / `persisted` → `firestore` when Firestore succeeds. `onBundleReplaced` fires on that commit.
 
+#### Runtime propagation (provider graph)
+
+When the in-memory bundle is replaced, [catalogBundleRevisionProvider](../lib/features/catalog/application/catalog_bundle_provider.dart) bumps and **all dependents rebuild declaratively** — no per-feature `ref.invalidate` list.
+
+```
+CatalogBundleCache._commitFirestoreBundle
+        │
+        ▼
+addBundleReplacedListener → catalogBundleRevisionProvider (state++)
+        │
+        ├── catalogBundleProvider (FutureProvider re-reads cache)
+        │        ├── catalogSearchServiceProvider
+        │        ├── addSeriesCatalogRecommendationsProvider
+        │        ├── homeFeedSnapshotProvider → homeSeriesReleaseLookupProvider
+        │        └── collectibleRelationshipProviders (already watched bundle)
+        │
+        └── MarketCatalogIdentityCache.install (same bundle, no duplicate index)
+```
+
+[`CatalogBundleRefreshBridge`](../lib/features/home/application/catalog_bundle_refresh_bridge.dart) only keeps the revision notifier alive for the app lifetime; it does not invalidate individual features.
+
 #### Caller contract
 
 | `memoryOrigin` | `loadOfflineFirst()` | `getOrLoad()` |
@@ -124,6 +145,48 @@ This prevents the race where `loadOfflineFirst()` sets an empty bootstrap bundle
 
 ---
 
+## Catalog runtime architecture
+
+End-to-end path from cloud catalog to feature surfaces. This is the mental model to use when adding anything that reads catalog metadata at runtime.
+
+```
+Firestore
+        │
+        ▼
+CatalogBundleCache
+        │
+        ▼
+catalogBundleRevisionProvider
+        │
+        ▼
+catalogBundleProvider
+        │
+        ├──────── Search          (catalogSearchServiceProvider, catalog browse)
+        ├──────── Home            (homeFeedSnapshotProvider)
+        ├──────── Collection      (shelf search, relationship providers)
+        ├──────── Market          (MarketCatalogIdentityCache.install)
+        ├──────── Add Series      (addSeriesCatalogRecommendationsProvider)
+        └──────── Future features (new providers on catalogBundleProvider)
+```
+
+**Week-one gap:** `CatalogBundleCache` → `???` → features (ad hoc caches, `loadCatalogBundle()` in widgets, manual `ref.invalidate`). **Now:** the `???` is the revision bump + `catalogBundleProvider` graph — one declarative propagation path.
+
+Readiness (`CatalogBundleMemoryOrigin`), placeholder semantics, and the low-level listener wiring live under [Firestore Authoritative Catalog](#firestore-authoritative-catalog) above.
+
+### Catalog-derived runtime objects
+
+Any runtime object derived from catalog metadata (`CatalogSearchService`, identity indexes, relationship graphs, lookup tables, recommendation pickers, etc.) **must** be provided through Riverpod providers that depend on [`catalogBundleProvider`](../lib/features/catalog/application/catalog_bundle_provider.dart).
+
+- **Do not** manually cache catalog-derived state in widget fields, `late` singletons, or `initState` one-shot loads.
+- **Do not** refresh catalog-derived state imperatively (`ref.invalidate(homeFeedSnapshotProvider)` per feature, `onBundleReplaced` feature lists, etc.).
+- **Do** add a `Provider` / `FutureProvider` that `ref.watch(catalogBundleProvider)` (or a provider that watches it) and let bundle replacement propagate naturally.
+
+When adding something like `RelationshipIndex`, the first instinct should be **`final relationshipIndexProvider = Provider(...)`**, not `late RelationshipIndex _index` installed once at startup.
+
+**Exception (boundary, not a second cache):** [`MarketCatalogIdentityCache`](../lib/features/market/data/market_catalog_identity_cache.dart) remains the runtime slot for enricher code paths that run outside `WidgetRef`. It is **re-installed from the same bundle** when `catalogBundleRevisionProvider` bumps — not a separate source of truth.
+
+---
+
 ## Market Identity Architecture
 
 ### Components (retained in codebase)
@@ -135,7 +198,7 @@ This prevents the race where `loadOfflineFirst()` sets an empty bootstrap bundle
 | [`MarketIdentityMatcher`](../lib/features/market/application/market_identity_matcher.dart) | Listing title → `MarketListing.catalogMatch` |
 | [`enrichBrowseListingsIdentity`](../lib/features/market/application/market_listing_identity_enricher.dart) | Batch attach `catalogMatch` before aggregation |
 
-Installed at startup in [`main.dart`](../lib/main.dart): `MarketCatalogIdentityCache.install(catalogBundle)`.
+Installed at startup in [`main.dart`](../lib/main.dart) for pre–`ProviderScope` paths; kept in sync on bundle replacement via [`catalogBundleRevisionProvider`](../lib/features/catalog/application/catalog_bundle_provider.dart).
 
 ### Default production runtime reality (verified audit)
 
@@ -170,7 +233,7 @@ They remain useful for sandbox flows, fixture flows, gateway-disabled paths, dis
 
 ### Stale cache after catalog refresh (B3)
 
-`MarketCatalogIdentityCache` is installed once at startup and is **not** automatically rebuilt when `CatalogBundleCache` replaces the bundle. Impact is limited to non-gateway enrichment paths and market display name lookup — not catalog sync or collection filter chips.
+`MarketCatalogIdentityCache` is kept as the runtime slot for non-provider enrichment paths; it is **re-installed** when [catalogBundleRevisionProvider](../lib/features/catalog/application/catalog_bundle_provider.dart) observes a bundle replacement (same index as [catalogBundleProvider], no duplicate cache).
 
 ---
 

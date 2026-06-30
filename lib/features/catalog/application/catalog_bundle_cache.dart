@@ -162,7 +162,28 @@ abstract final class CatalogBundleCache {
   /// Registered by [CatalogBundleRefreshBridge] to invalidate Discover feed.
   static void Function()? onBundleReplaced;
 
-  static void _notifyBundleReplaced() => onBundleReplaced?.call();
+  static final List<void Function()> _bundleReplacedListeners = [];
+
+  /// Registers [listener] for successful in-memory bundle replacements.
+  ///
+  /// Returns a dispose callback. Listeners must not throw.
+  static void Function() addBundleReplacedListener(void Function() listener) {
+    _bundleReplacedListeners.add(listener);
+    return () {
+      _bundleReplacedListeners.remove(listener);
+    };
+  }
+
+  @visibleForTesting
+  static int get bundleReplacedListenerCountForTest =>
+      _bundleReplacedListeners.length;
+
+  static void _notifyBundleReplaced() {
+    onBundleReplaced?.call();
+    for (final listener in List<void Function()>.of(_bundleReplacedListeners)) {
+      listener();
+    }
+  }
 
   @visibleForTesting
   static void triggerBundleReplacedForTest() => _notifyBundleReplaced();
@@ -174,6 +195,7 @@ abstract final class CatalogBundleCache {
     _refreshInFlight = null;
     _lastFirestoreRefreshAt = null;
     onBundleReplaced = null;
+    _bundleReplacedListeners.clear();
     loadSeedOverride = null;
     loadFirestoreOverride = null;
     loadPersistedOverride = null;

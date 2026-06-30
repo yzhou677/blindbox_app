@@ -1,4 +1,5 @@
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
+import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
 import 'package:blindbox_app/features/catalog/catalog_seed_loader.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_brand.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_ip.dart';
@@ -27,19 +28,13 @@ CatalogSeries _series(String id, String date) => CatalogSeries(
     );
 
 void main() {
-  tearDown(() {
-    CatalogBundleCache.onBundleReplaced = null;
-  });
+  setUp(CatalogBundleCache.resetForTest);
+  tearDown(CatalogBundleCache.resetForTest);
 
   test('homeFeedSnapshotProvider recomputes after catalog bundle replaced', () async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
-
-    var invalidateCount = 0;
-    CatalogBundleCache.onBundleReplaced = () {
-      invalidateCount++;
-      container.invalidate(homeFeedSnapshotProvider);
-    };
+    container.read(catalogBundleRevisionProvider);
 
     final seedBundle = _bundle([
       _series('seed_only_series', '2026-05-10'),
@@ -51,15 +46,12 @@ void main() {
       feedBefore.latest.map((r) => r.dropId),
       contains('seed_only_series'),
     );
-    expect(invalidateCount, 0);
 
     final firestoreBundle = _bundle([
       _series('firestore_only_series', '2026-05-15'),
     ]);
     CatalogBundleCache.prime(firestoreBundle);
     CatalogBundleCache.triggerBundleReplacedForTest();
-
-    expect(invalidateCount, 1);
 
     final feedAfter = await container.read(homeFeedSnapshotProvider.future);
     expect(
