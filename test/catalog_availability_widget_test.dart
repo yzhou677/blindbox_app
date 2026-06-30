@@ -213,7 +213,9 @@ void main() {
     bundleGate.complete(_bundle());
   });
 
-  testWidgets('Discover keeps catalog rails visible while refreshing', (tester) async {
+  testWidgets('Discover keeps catalog rails without downloading banner while refreshing',
+      (tester) async {
+    final refreshGate = Completer<CatalogSeedBundle>();
     final container = ProviderContainer(
       overrides: [
         officialFeedListProvider.overrideWith((ref) async => []),
@@ -223,22 +225,26 @@ void main() {
             trending: const [],
           );
         }),
-        catalogAvailabilityProvider.overrideWith(
-          (ref) => const CatalogAvailability(CatalogAvailabilityUiState.refreshing),
-        ),
       ],
     );
     addTearDown(container.dispose);
 
     CatalogBundleCache.prime(_bundle());
+    CatalogBundleCache.loadFirestoreOverride = () => refreshGate.future;
     container.read(catalogBundleRevisionProvider);
     await container.read(catalogBundleProvider.future);
+    unawaited(CatalogBundleCache.refreshFromFirestore(force: true));
 
     await tester.pumpWidget(_homeHarness(container));
     await tester.pump();
 
     expect(find.text(LatestDropsCopy.sectionTitle), findsOneWidget);
-    expect(find.text(CatalogAvailabilityCopy.loadingTitle), findsOneWidget);
     expect(find.text('Home Series'), findsOneWidget);
+    expect(find.text(CatalogAvailabilityCopy.loadingTitle), findsNothing);
+
+    refreshGate.complete(_bundle(seriesId: 'fresh'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.text(CatalogAvailabilityCopy.loadingTitle), findsNothing);
   });
 }

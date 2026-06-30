@@ -25,11 +25,6 @@ class HomeCatalogRails extends ConsumerWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (availability.isRefreshing)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: CatalogAvailabilityCard(availability: availability),
-            ),
           LatestDropsSection(releases: feed.latest),
           const SizedBox(height: FeedRhythm.homeMajorSectionGap),
           TrendingSeriesSection(releases: feed.trending),
