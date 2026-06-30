@@ -12,9 +12,6 @@ enum CatalogAvailabilityUiState {
 
   /// Catalog-ready; normal browse/search behavior.
   ready,
-
-  /// Background Firestore refresh; keep showing current catalog.
-  refreshing,
 }
 
 /// Derived UI snapshot — do not read [CatalogBundleCache] from widgets directly.
@@ -23,25 +20,19 @@ class CatalogAvailability {
 
   final CatalogAvailabilityUiState state;
 
-  bool get isCatalogUsable =>
-      state == CatalogAvailabilityUiState.ready ||
-      state == CatalogAvailabilityUiState.refreshing;
+  bool get isCatalogUsable => state == CatalogAvailabilityUiState.ready;
 
   bool get isLoading =>
       state == CatalogAvailabilityUiState.loading;
 
   bool get isOfflineFirstLaunch =>
       state == CatalogAvailabilityUiState.offlineFirstLaunch;
-
-  bool get isRefreshing =>
-      state == CatalogAvailabilityUiState.refreshing;
 }
 
 CatalogAvailability _resolveCatalogAvailability({
   required AsyncValue<dynamic> bundleAsync,
   required CatalogBundleMemoryOrigin origin,
   required bool isCatalogReady,
-  required bool isRefreshInFlight,
 }) {
   if (!isCatalogReady) {
     if (bundleAsync.hasError) {
@@ -65,10 +56,7 @@ CatalogAvailability _resolveCatalogAvailability({
     }
   }
 
-  if (isRefreshInFlight) {
-    return const CatalogAvailability(CatalogAvailabilityUiState.refreshing);
-  }
-
+  // Usable catalog — background Firestore refresh must not regress to loading UI.
   return const CatalogAvailability(CatalogAvailabilityUiState.ready);
 }
 
@@ -80,7 +68,6 @@ final catalogAvailabilityProvider = Provider<CatalogAvailability>((ref) {
     bundleAsync: bundleAsync,
     origin: CatalogBundleCache.memoryOrigin,
     isCatalogReady: CatalogBundleCache.isCatalogReady,
-    isRefreshInFlight: CatalogBundleCache.isRefreshInFlight,
   );
 });
 

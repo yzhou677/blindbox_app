@@ -70,6 +70,30 @@ abstract final class FeedRhythm {
   /// Fixed height for the collection summary metric strip (aligned baselines).
   static const double collectionSummaryMetricStripHeight = 52;
 
+  /// Air between collection search field and summary card (~20–24dp total with search bottom inset).
+  static const double collectionSearchToSummaryGap = 12;
+
+  /// Vertical padding inside the collection summary metric card.
+  static const double collectionSummaryCardVerticalPadding = 16;
+
+  /// Gap between the two metric rows in the summary card.
+  static const double collectionSummaryMetricRowGap = 16;
+
+  /// Separation between summary metric card and editorial mood line.
+  static const double collectionSummaryToEditorial = 18;
+
+  /// Gap between editorial mood and recent-achievement whisper.
+  static const double collectionSummaryEditorialGap = 10;
+
+  /// Fixed height for summary count numerals (shared baseline).
+  static const double collectionSummaryCountHeight = 24;
+
+  /// Fixed height for summary metric labels (two-line safe).
+  static const double collectionSummaryLabelHeight = 32;
+
+  /// Air below summary block before the shelf section header.
+  static const double collectionSummaryToShelfHeader = 22;
+
   /// Vertical gap between full-width listing cards (shelf separation).
   static const double listingCardVerticalGap = 22;
 

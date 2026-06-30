@@ -157,6 +157,22 @@ abstract final class CatalogBundleCache {
   static void Function()? onBundleReplaced;
 
   static final List<void Function()> _bundleReplacedListeners = [];
+  static final List<void Function()> _refreshStateListeners = [];
+
+  /// Registers [listener] for refresh start/end (success, failure, or TTL skip).
+  ///
+  /// Used so Riverpod rebuilds when [isRefreshInFlight] clears without a bundle
+  /// replacement — e.g. failed background refresh over a persisted snapshot.
+  static void Function() addRefreshStateListener(void Function() listener) {
+    _refreshStateListeners.add(listener);
+    return () {
+      _refreshStateListeners.remove(listener);
+    };
+  }
+
+  @visibleForTesting
+  static int get refreshStateListenerCountForTest =>
+      _refreshStateListeners.length;
 
   /// Registers [listener] for successful in-memory bundle replacements.
   ///
@@ -179,6 +195,12 @@ abstract final class CatalogBundleCache {
     }
   }
 
+  static void _notifyRefreshStateChanged() {
+    for (final listener in List<void Function()>.of(_refreshStateListeners)) {
+      listener();
+    }
+  }
+
   @visibleForTesting
   static void triggerBundleReplacedForTest() => _notifyBundleReplaced();
 
@@ -190,6 +212,7 @@ abstract final class CatalogBundleCache {
     _lastFirestoreRefreshAt = null;
     onBundleReplaced = null;
     _bundleReplacedListeners.clear();
+    _refreshStateListeners.clear();
     loadFirestoreOverride = null;
     loadPersistedOverride = null;
     persistOverride = null;
@@ -269,10 +292,12 @@ abstract final class CatalogBundleCache {
 
     final refresh = _refreshFromFirestoreImpl();
     _refreshInFlight = refresh;
+    _notifyRefreshStateChanged();
     try {
       return await refresh;
     } finally {
       if (identical(_refreshInFlight, refresh)) _refreshInFlight = null;
+      _notifyRefreshStateChanged();
     }
   }
 
@@ -285,6 +310,7 @@ abstract final class CatalogBundleCache {
     } catch (e, st) {
       if (_memoryOrigin == CatalogBundleMemoryOrigin.bootstrapPlaceholder) {
         _memoryOrigin = CatalogBundleMemoryOrigin.resolved;
+        _notifyBundleReplaced();
       }
       debugPrint('CatalogBundleCache: Firestore refresh skipped: $e\n$st');
       return CatalogFirestoreRefreshResult.failed;

@@ -434,6 +434,9 @@ class CollectionSnapshot {
 
   bool get isWarmStart => totalOwnedFigures == 0 && totalWishlistFigures == 0;
 
+  /// Warm-start banner: shown only before the first owned figure.
+  bool get showWarmStartBanner => totalOwnedFigures == 0;
+
   TrackedFigure trackedOrDefault(String figureId) {
     return figureStates[figureId] ??
         TrackedFigure(figureId: figureId, state: FigureCollectionState.none);

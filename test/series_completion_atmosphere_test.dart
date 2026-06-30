@@ -26,7 +26,7 @@ void main() {
     expect(atm.complete, isFalse);
   });
 
-  test('missingSecret when chase unowned', () {
+  test('missingSecret when regular complete and chase unowned', () {
     final series = testShelfSeries(
       figures: [
         const ShelfFigure(
@@ -45,8 +45,48 @@ void main() {
         ),
       ],
     );
-    final atm = atmosphereForSeries(series, const {});
+    final atm = atmosphereForSeries(series, {
+      'reg': const TrackedFigure(
+        figureId: 'reg',
+        state: FigureCollectionState.owned,
+      ),
+    });
+    expect(atm.complete, isTrue);
     expect(atm.missingSecret, isTrue);
+    expect(atm.masterComplete, isFalse);
+  });
+
+  test('masterComplete when regular and secret owned', () {
+    final series = testShelfSeries(
+      figures: [
+        const ShelfFigure(
+          id: 'reg',
+          seriesId: 'series_test',
+          name: 'Regular',
+          rarity: 'Regular',
+          isSecret: false,
+        ),
+        const ShelfFigure(
+          id: 'sec',
+          seriesId: 'series_test',
+          name: 'Secret',
+          rarity: 'Secret',
+          isSecret: true,
+        ),
+      ],
+    );
+    final atm = atmosphereForSeries(series, {
+      'reg': const TrackedFigure(
+        figureId: 'reg',
+        state: FigureCollectionState.owned,
+      ),
+      'sec': const TrackedFigure(
+        figureId: 'sec',
+        state: FigureCollectionState.owned,
+      ),
+    });
+    expect(atm.masterComplete, isTrue);
+    expect(atm.missingSecret, isFalse);
   });
 
   test('complete when all owned', () {

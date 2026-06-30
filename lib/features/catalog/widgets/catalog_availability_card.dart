@@ -29,32 +29,6 @@ class CatalogAvailabilityCard extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    if (state == CatalogAvailabilityUiState.refreshing) {
-      return Padding(
-        padding: EdgeInsets.symmetric(horizontal: compact ? 0 : 20),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SizedBox(
-              width: 14,
-              height: 14,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: scheme.primary.withValues(alpha: 0.85),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Text(
-              CatalogAvailabilityCopy.loadingTitle,
-              style: textTheme.bodySmall?.copyWith(
-                color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
     final isLoading = state == CatalogAvailabilityUiState.loading;
     final title = isLoading
         ? CatalogAvailabilityCopy.loadingTitle

@@ -4,6 +4,7 @@ import 'package:blindbox_app/core/search/search_tokenizer.dart';
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_service.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/domain/series_completion_resolution.dart';
 import 'package:blindbox_app/features/collection/presentation/shelf_series_feed.dart';
 
 /// Display-only sort modes for the Collection shelf browse pipeline.
@@ -89,15 +90,13 @@ SeriesProgressCounts _seriesProgress(
 }) =>
     progress?.forSeries(series) ?? progressForSeries(series, states);
 
-/// Whether every figure in [series] is owned —matches shelf card completion rule.
+/// Whether all regular figures in [series] are owned — shelf Completed bucket rule.
 bool isShelfSeriesComplete(
   ShelfSeries series,
   Map<String, TrackedFigure> states, {
   ShelfBrowseProgressLookup? progress,
 }) {
-  final total = series.figureCount;
-  if (total <= 0) return false;
-  return _seriesProgress(series, states, progress: progress).owned >= total;
+  return resolveSeriesCompletion(series, states).isCompleted;
 }
 
 /// Single-pass split into in-progress and completed buckets.
@@ -157,8 +156,7 @@ double _seriesCompletionRatio(
   Map<String, TrackedFigure> states, {
   ShelfBrowseProgressLookup? progress,
 }) {
-  final total = series.figureCount;
-  return _seriesProgress(series, states, progress: progress).completion(total);
+  return resolveSeriesCompletion(series, states).progressRatio;
 }
 
 /// Display order for one bucket (In Progress or Completed) after filter/search.

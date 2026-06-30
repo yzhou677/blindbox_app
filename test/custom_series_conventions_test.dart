@@ -26,7 +26,7 @@ void main() {
     );
     expect(
       CustomSeriesConventions.rarityLine(isSecret: true, rarityLabel: null),
-      'Secret',
+      'Secret Figure',
     );
     expect(
       CustomSeriesConventions.rarityLine(isSecret: false, rarityLabel: null),

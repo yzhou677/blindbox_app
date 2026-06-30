@@ -1,4 +1,5 @@
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 
 /// Local-only id / [imageKey] conventions aligned with Firestore catalog shape.
 abstract final class CustomSeriesConventions {
@@ -53,7 +54,7 @@ abstract final class CustomSeriesConventions {
   static String rarityLine({required bool isSecret, String? rarityLabel}) {
     final label = rarityLabel?.trim();
     if (label != null && label.isNotEmpty) return label;
-    return isSecret ? 'Secret' : 'Regular';
+    return isSecret ? CollectionVocabulary.secretFigure : 'Regular';
   }
 }
 

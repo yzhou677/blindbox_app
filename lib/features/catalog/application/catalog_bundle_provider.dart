@@ -13,21 +13,27 @@ final catalogBundleRevisionProvider =
 );
 
 class CatalogBundleRevisionNotifier extends Notifier<int> {
-  void Function()? _removeListener;
+  void Function()? _removeBundleListener;
+  void Function()? _removeRefreshListener;
 
   @override
   int build() {
-    _removeListener?.call();
-    _removeListener =
-        CatalogBundleCache.addBundleReplacedListener(_onBundleReplaced);
+    _removeBundleListener?.call();
+    _removeRefreshListener?.call();
+    _removeBundleListener =
+        CatalogBundleCache.addBundleReplacedListener(_bumpRevision);
+    _removeRefreshListener =
+        CatalogBundleCache.addRefreshStateListener(_bumpRevision);
     ref.onDispose(() {
-      _removeListener?.call();
-      _removeListener = null;
+      _removeBundleListener?.call();
+      _removeRefreshListener?.call();
+      _removeBundleListener = null;
+      _removeRefreshListener = null;
     });
     return 0;
   }
 
-  void _onBundleReplaced() {
+  void _bumpRevision() {
     final bundle = CatalogBundleCache.current;
     if (bundle != null) {
       MarketCatalogIdentityCache.install(bundle);

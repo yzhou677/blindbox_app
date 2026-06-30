@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 import 'package:flutter/material.dart';
 
 /// Packaging-card style placeholder when there is no photo — reads like a tiny vinyl / blind-box tile.
@@ -194,25 +195,28 @@ class CollectibleFigurePlaceholder extends StatelessWidget {
                     bottom: 5,
                     left: 0,
                     right: 0,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.star_rounded,
-                          size: 11,
-                          color: deep.withValues(alpha: 0.5),
-                        ),
-                        const SizedBox(width: 3),
-                        Text(
-                          'chase',
-                          style: textTheme.labelSmall?.copyWith(
-                            color: deep.withValues(alpha: 0.62),
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.35,
-                            height: 1,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.star_rounded,
+                            size: 11,
+                            color: deep.withValues(alpha: 0.5),
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 3),
+                          Text(
+                            CollectionVocabulary.secretFigure,
+                            style: textTheme.labelSmall?.copyWith(
+                              color: deep.withValues(alpha: 0.62),
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.35,
+                              height: 1,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
               ],

@@ -1,4 +1,6 @@
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/domain/series_completion_resolution.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 import 'package:blindbox_app/features/collection/presentation/shelf_editorial_voice.dart';
 
 /// Human, shelf-first language for progress — not spreadsheet rows.
@@ -9,34 +11,26 @@ abstract final class CollectionProgressVoice {
     required SeriesProgressCounts progress,
     required Map<String, TrackedFigure> figureStates,
   }) {
+    final resolution = resolveSeriesCompletion(series, figureStates);
+    if (resolution.isCompleted) return '';
+
     final total = series.figureCount;
     if (total <= 0) return '';
 
     final owned = progress.owned;
-    final missing = progress.missing;
+    final missing = resolution.regularMissingCount > 0
+        ? resolution.regularMissingCount
+        : progress.missing;
     final wish = progress.wishlist;
-    final secrets = series.figures.where((f) => f.isSecret).toList();
-    final ownedSecrets = secrets
-        .where((f) => figureStates[f.id]?.owned == true)
-        .length;
-    final allSecretsHome = secrets.isNotEmpty && ownedSecrets == secrets.length;
-
-    if (owned >= total) {
-      if (allSecretsHome) return 'Complete — chase home';
-      if (secrets.isNotEmpty && ownedSecrets > 0) {
-        return 'Complete — with a chase on shelf';
-      }
-      return 'Complete on your shelf';
-    }
 
     if (missing == 0 && wish > 0 && owned < total) {
-      return wish == 1 ? 'One on wishlist' : 'Several on wishlist';
+      return wish == 1 ? 'One on Wishlist' : 'Several on Wishlist';
     }
 
     if (missing == 1) return 'One figure left';
     if (missing == 2) return '2 figures left';
 
-    final ratio = owned / total;
+    final ratio = resolution.progressRatio;
     if (missing > 0 && ratio >= 0.85) return 'Almost complete';
 
     if (wish > 0 && missing > 0) {
@@ -54,26 +48,36 @@ abstract final class CollectionProgressVoice {
   static String seriesStatPrimaryLine({
     required ShelfSeries series,
     required SeriesProgressCounts progress,
+    required Map<String, TrackedFigure> figureStates,
   }) {
-    final total = series.figureCount;
-    if (total <= 0) return '';
+    final resolution = resolveSeriesCompletion(series, figureStates);
+    if (resolution.isMasterComplete) {
+      return '👑 ${CollectionVocabulary.masterComplete}';
+    }
+    if (resolution.isCompleted) return CollectionVocabulary.seriesCompleteBadge;
 
-    final owned = progress.owned;
-    if (owned >= total) return '✓ Complete';
-    return '$owned / $total';
+    final denom = resolution.progressDenominator;
+    if (denom <= 0) return '';
+    return '${resolution.progressNumerator} / $denom';
   }
 
-  /// Optional factual secondary stat — missing count or full tally when complete.
+  /// Optional factual secondary stat — Secret Figure whisper when complete.
   static String seriesStatSecondaryLine({
     required ShelfSeries series,
     required SeriesProgressCounts progress,
+    required Map<String, TrackedFigure> figureStates,
   }) {
-    final total = series.figureCount;
-    if (total <= 0) return '';
+    final resolution = resolveSeriesCompletion(series, figureStates);
+    if (resolution.isCompleted) {
+      if (resolution.isMasterComplete || resolution.secretSlotCount == 0) {
+        return '';
+      }
+      return '☆ Secret Figure still to find';
+    }
 
-    final owned = progress.owned;
-    final missing = progress.missing;
-    if (owned >= total) return '$total / $total';
+    final missing = resolution.regularMissingCount > 0
+        ? resolution.regularMissingCount
+        : progress.missing;
     if (missing <= 0) return '';
     return missing == 1 ? 'Missing 1' : 'Missing $missing';
   }
@@ -84,27 +88,28 @@ abstract final class CollectionProgressVoice {
     required SeriesProgressCounts progress,
     required Map<String, TrackedFigure> figureStates,
   }) {
-    final total = series.figureCount;
-    if (total <= 0) return '';
+    final resolution = resolveSeriesCompletion(series, figureStates);
+    if (resolution.isCompleted) return '';
 
     final owned = progress.owned;
-    final missing = progress.missing;
     final wish = progress.wishlist;
     final secrets = series.figures.where((f) => f.isSecret).toList();
     final ownedSecrets = secrets
         .where((f) => figureStates[f.id]?.owned == true)
         .length;
 
-    if (owned >= total) {
-      return '';
-    }
-
     final parts = <String>[];
-    if (owned > 0) parts.add('$owned collected');
-    if (wish > 0) parts.add('$wish on wishlist');
-    if (missing > 0 && secrets.isNotEmpty && ownedSecrets < secrets.length) {
-      final openChase = secrets.length - ownedSecrets;
-      if (openChase > 0) parts.add('chase still hiding');
+    if (owned > 0) {
+      parts.add(CollectionVocabulary.countLabel(owned, CollectionVocabulary.figures));
+    }
+    if (wish > 0) {
+      parts.add('$wish on ${CollectionVocabulary.wishlist}');
+    }
+    if (secrets.isNotEmpty && ownedSecrets < secrets.length) {
+      final openSecrets = secrets.length - ownedSecrets;
+      if (openSecrets > 0) {
+        parts.add('${CollectionVocabulary.secretFigure} still to find');
+      }
     }
     if (parts.isEmpty) return '';
     return parts.join(' · ');

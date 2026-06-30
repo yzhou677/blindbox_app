@@ -106,6 +106,30 @@ void main() {
       expect(snap.isWarmStart, isFalse);
     });
 
+    test('showWarmStartBanner when no owned figures', () {
+      final snap = CollectionSnapshot(
+        shelfSeries: [testShelfSeries()],
+        figureStates: const {},
+      );
+      expect(snap.showWarmStartBanner, isTrue);
+    });
+
+    test('showWarmStartBanner hidden once any figure is owned', () {
+      final series = testShelfSeries();
+      final figId = series.figures.first.id;
+      final snap = CollectionSnapshot(
+        shelfSeries: [series],
+        figureStates: {
+          figId: TrackedFigure(
+            figureId: figId,
+            state: FigureCollectionState.owned,
+          ),
+        },
+      );
+      expect(snap.showWarmStartBanner, isFalse);
+      expect(snap.isWarmStart, isFalse);
+    });
+
     test('isWarmStart when no tracked figures', () {
       final snap = CollectionSnapshot(
         shelfSeries: [testShelfSeries()],

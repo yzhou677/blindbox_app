@@ -881,6 +881,7 @@ void main() {
   group('CollectionProgressVoice stat lines', () {
     test('in-progress series shows owned/total and missing', () {
       final series = _series(id: 's', name: 'Series', figureCount: 12);
+      final states = _ownedCount(series, 7);
       const progress = SeriesProgressCounts(
         owned: 7,
         wishlist: 0,
@@ -891,6 +892,7 @@ void main() {
         CollectionProgressVoice.seriesStatPrimaryLine(
           series: series,
           progress: progress,
+          figureStates: states,
         ),
         '7 / 12',
       );
@@ -898,6 +900,7 @@ void main() {
         CollectionProgressVoice.seriesStatSecondaryLine(
           series: series,
           progress: progress,
+          figureStates: states,
         ),
         'Missing 5',
       );
@@ -910,11 +913,13 @@ void main() {
         wishlist: 0,
         missing: 0,
       );
+      final states = _ownedAll(series);
 
       expect(
         CollectionProgressVoice.seriesStatPrimaryLine(
           series: series,
           progress: progress,
+          figureStates: states,
         ),
         '✓ Complete',
       );
@@ -922,9 +927,145 @@ void main() {
         CollectionProgressVoice.seriesStatSecondaryLine(
           series: series,
           progress: progress,
+          figureStates: states,
         ),
-        '12 / 12',
+        '',
       );
+    });
+
+    test('regular complete with secret missing shows chase whisper', () {
+      final series = testShelfSeries(
+        id: 'macaron',
+        name: 'Macaron',
+        figures: [
+          for (var i = 0; i < 3; i++)
+            ShelfFigure(
+              id: 'reg_$i',
+              seriesId: 'macaron',
+              name: 'R $i',
+              rarity: 'Regular',
+              isSecret: false,
+            ),
+          const ShelfFigure(
+            id: 'sec_0',
+            seriesId: 'macaron',
+            name: 'Chase',
+            rarity: 'Secret',
+            isSecret: true,
+          ),
+        ],
+      );
+      final states = {
+        for (var i = 0; i < 3; i++)
+          'reg_$i': TrackedFigure(
+            figureId: 'reg_$i',
+            state: FigureCollectionState.owned,
+          ),
+      };
+      const progress = SeriesProgressCounts(
+        owned: 3,
+        wishlist: 0,
+        missing: 1,
+      );
+
+      expect(
+        CollectionProgressVoice.seriesStatPrimaryLine(
+          series: series,
+          progress: progress,
+          figureStates: states,
+        ),
+        '✓ Complete',
+      );
+      expect(
+        CollectionProgressVoice.seriesStatSecondaryLine(
+          series: series,
+          progress: progress,
+          figureStates: states,
+        ),
+        '☆ Secret Figure still to find',
+      );
+    });
+
+    test('master complete shows crown badge', () {
+      final series = testShelfSeries(
+        id: 'macaron',
+        name: 'Macaron',
+        figures: [
+          const ShelfFigure(
+            id: 'reg_0',
+            seriesId: 'macaron',
+            name: 'R',
+            rarity: 'Regular',
+            isSecret: false,
+          ),
+          const ShelfFigure(
+            id: 'sec_0',
+            seriesId: 'macaron',
+            name: 'Chase',
+            rarity: 'Secret',
+            isSecret: true,
+          ),
+        ],
+      );
+      final states = {
+        'reg_0': const TrackedFigure(
+          figureId: 'reg_0',
+          state: FigureCollectionState.owned,
+        ),
+        'sec_0': const TrackedFigure(
+          figureId: 'sec_0',
+          state: FigureCollectionState.owned,
+        ),
+      };
+      const progress = SeriesProgressCounts(
+        owned: 2,
+        wishlist: 0,
+        missing: 0,
+      );
+
+      expect(
+        CollectionProgressVoice.seriesStatPrimaryLine(
+          series: series,
+          progress: progress,
+          figureStates: states,
+        ),
+        '👑 Master Complete',
+      );
+    });
+  });
+
+  group('partitionShelfSeries secrets', () {
+    test('regular complete without secret lands in completed bucket', () {
+      final series = testShelfSeries(
+        id: 's',
+        name: 'Series',
+        figures: [
+          const ShelfFigure(
+            id: 'reg_0',
+            seriesId: 's',
+            name: 'R',
+            rarity: 'Regular',
+            isSecret: false,
+          ),
+          const ShelfFigure(
+            id: 'sec_0',
+            seriesId: 's',
+            name: 'Chase',
+            rarity: 'Secret',
+            isSecret: true,
+          ),
+        ],
+      );
+      final states = {
+        'reg_0': const TrackedFigure(
+          figureId: 'reg_0',
+          state: FigureCollectionState.owned,
+        ),
+      };
+
+      final (inProgress, completed) = partitionShelfSeries([series], states);
+      expect(inProgress, isEmpty);
+      expect(completed.map((s) => s.id), ['s']);
     });
   });
 

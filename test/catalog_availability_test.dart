@@ -87,7 +87,7 @@ void main() {
     expect(availability.isCatalogUsable, isTrue);
   });
 
-  test('in-flight refresh keeps catalog usable as refreshing', () async {
+  test('in-flight refresh keeps catalog ready when bundle is already usable', () async {
     final container = _container();
     CatalogBundleCache.prime(_bundle());
     await container.read(catalogBundleProvider.future);
@@ -99,7 +99,23 @@ void main() {
     unawaited(CatalogBundleCache.refreshFromFirestore(force: true));
 
     final availability = container.read(catalogAvailabilityProvider);
-    expect(availability.state, CatalogAvailabilityUiState.refreshing);
+    expect(availability.state, CatalogAvailabilityUiState.ready);
     expect(availability.isCatalogUsable, isTrue);
+    expect(CatalogBundleCache.isRefreshInFlight, isTrue);
+  });
+
+  test('failed background refresh over persisted catalog stays ready', () async {
+    final container = _container();
+    CatalogBundleCache.prime(_bundle());
+    await container.read(catalogBundleProvider.future);
+
+    CatalogBundleCache.loadFirestoreOverride = () async {
+      throw StateError('offline');
+    };
+    await CatalogBundleCache.refreshFromFirestore(force: true);
+
+    final availability = container.read(catalogAvailabilityProvider);
+    expect(availability.state, CatalogAvailabilityUiState.ready);
+    expect(CatalogBundleCache.isRefreshInFlight, isFalse);
   });
 }

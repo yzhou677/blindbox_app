@@ -1,5 +1,6 @@
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_stats.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 import 'package:flutter/material.dart';
 
 class CollectorTypeTotalsRow extends StatelessWidget {
@@ -21,13 +22,34 @@ class CollectorTypeTotalsRow extends StatelessWidget {
       spacing: 12,
       runSpacing: 6,
       children: [
-        _Chip(label: '${stats.totalOwned} owned', style: meta),
+        _Chip(
+          label: CollectionVocabulary.countLabel(
+            stats.totalOwned,
+            CollectionVocabulary.figures,
+          ),
+          style: meta,
+        ),
         _Dot(scheme: scheme),
-        _Chip(label: '${stats.totalWishlist} wishlist', style: meta),
+        _Chip(
+          label: CollectionVocabulary.countLabel(
+            stats.totalWishlist,
+            CollectionVocabulary.wishlist,
+          ),
+          style: meta,
+        ),
         _Dot(scheme: scheme),
-        _Chip(label: '${stats.trackedSeries} series', style: meta),
+        _Chip(
+          label: CollectionVocabulary.countLabel(
+            stats.trackedSeries,
+            CollectionVocabulary.series,
+          ),
+          style: meta,
+        ),
         _Dot(scheme: scheme),
-        _Chip(label: '${stats.completionPercent}% complete', style: meta),
+        _Chip(
+          label: '${stats.completionPercent}% ${CollectionVocabulary.shelfProgress}',
+          style: meta,
+        ),
       ],
     );
   }

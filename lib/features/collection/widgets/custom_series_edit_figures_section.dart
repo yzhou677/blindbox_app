@@ -3,6 +3,7 @@ import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/collection/data/collection_input_formatters.dart';
 import 'package:blindbox_app/features/collection/data/collection_input_limits.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 import 'package:blindbox_app/features/collection/widgets/custom_series_quiet_field.dart';
 import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
 import 'package:flutter/material.dart';
@@ -191,7 +192,9 @@ class _ShelfFigureEditRow extends StatelessWidget {
   String? _secretMeta(ShelfFigure figure) {
     if (!figure.isSecret) return null;
     final ratio = figure.rarityLabel?.trim();
-    if (ratio != null && ratio.isNotEmpty) return 'Secret · $ratio';
-    return 'Secret';
+    if (ratio != null && ratio.isNotEmpty) {
+      return '${CollectionVocabulary.secretFigure} · $ratio';
+    }
+    return CollectionVocabulary.secretFigure;
   }
 }
