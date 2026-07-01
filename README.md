@@ -6,16 +6,16 @@ It focuses on an image-first, calm browsing experience with local-first collecti
 ## Demo
 
 <p align="center">
-  <a href="https://youtu.be/b30h-5_n_fA">
+  <a href="https://youtu.be/wK0dgNcDstE">
     <img
-      src="https://img.youtube.com/vi/b30h-5_n_fA/hqdefault.jpg"
+      src="https://img.youtube.com/vi/wK0dgNcDstE/hqdefault.jpg"
       alt="Shelfy V1 Preview"
       width="480">
   </a>
 </p>
 
 <p align="center">
-  <a href="https://youtu.be/b30h-5_n_fA">
+  <a href="https://youtu.be/wK0dgNcDstE">
     <strong>▶ Watch Shelfy V1 Preview on YouTube</strong>
   </a>
 </p>
