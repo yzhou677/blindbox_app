@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/core/theme/collectible_tokens.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_summary_editorial.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_insights_compact_summary.dart';
@@ -15,10 +16,10 @@ void main() {
   );
 
   group('CollectionInsightsCompactSummaryFormat', () {
-    test('numeric cells omit labels and wishlist', () {
+    test('compact counts omit labels and wishlist', () {
       expect(
-        CollectionInsightsCompactSummaryFormat.cells(stats),
-        ['48', '✓7', '👑5'],
+        CollectionInsightsCompactSummaryFormat.compactCounts(stats),
+        ['48', '7', '5'],
       );
       expect(
         CollectionInsightsCompactSummaryFormat.semanticsLabel(stats),
@@ -38,7 +39,7 @@ void main() {
     });
   });
 
-  testWidgets('collapsed dashboard shows numeric glance without labels', (
+  testWidgets('collapsed dashboard shows compact glyphs after morph', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -55,11 +56,13 @@ void main() {
         ),
       ),
     );
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     expect(find.text('48'), findsOneWidget);
-    expect(find.text('✓7'), findsOneWidget);
-    expect(find.text('👑5'), findsOneWidget);
+    expect(find.text('7'), findsOneWidget);
+    expect(find.text('5'), findsOneWidget);
+    expect(find.byIcon(Icons.check_rounded), findsOneWidget);
+    expect(find.text('👑'), findsOneWidget);
     expect(find.text(CollectionSummaryLabels.figures), findsNothing);
     expect(find.text(CollectionSummaryLabels.wishlist), findsNothing);
     expect(
@@ -79,13 +82,15 @@ void main() {
         home: const _ExpandableDashboardHarness(stats: stats),
       ),
     );
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     expect(find.text(CollectionSummaryLabels.wishlist), findsNothing);
 
     await tester.tap(find.byKey(const Key('collection_insights_dashboard_toggle')));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pump(CollectibleMotion.insightsGlanceMorph);
+    await tester.pump(CollectibleMotion.sectionReveal);
+    await tester.pump(const Duration(milliseconds: 50));
 
     expect(find.text(CollectionSummaryLabels.wishlist), findsOneWidget);
     expect(find.text(CollectionSummaryLabels.figures), findsOneWidget);
@@ -102,11 +107,13 @@ void main() {
         home: const _ExpandableDashboardHarness(stats: stats),
       ),
     );
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('collection_insights_compact_glance')));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pump(CollectibleMotion.insightsGlanceMorph);
+    await tester.pump(CollectibleMotion.sectionReveal);
+    await tester.pump(const Duration(milliseconds: 50));
 
     expect(find.text(CollectionSummaryLabels.wishlist), findsOneWidget);
   });

@@ -82,7 +82,8 @@ void main() {
           );
           expect(glanceFinder, findsOneWidget);
 
-          final cells = CollectionInsightsCompactSummaryFormat.cells(entry.value);
+          final counts =
+              CollectionInsightsCompactSummaryFormat.compactCounts(entry.value);
           final numericTexts = tester
               .widgetList<Text>(
                 find.descendant(
@@ -90,20 +91,20 @@ void main() {
                   matching: find.byType(Text),
                 ),
               )
-              .where((t) => t.data != null)
               .map((t) => t.data!)
+              .where((s) => RegExp(r'^\d+$').hasMatch(s))
               .toList();
-          expect(numericTexts, cells);
+          expect(numericTexts, counts);
 
           final rowHeight = tester.getSize(glanceFinder).height;
 
           // ignore: avoid_print
           print(
-            'STRESS|$width|${entry.key}|cells=${cells.join(' · ')}|'
+            'STRESS|$width|${entry.key}|counts=${counts.join(' · ')}|'
             'rowH=${rowHeight.toStringAsFixed(1)}',
           );
 
-          expect(rowHeight, lessThanOrEqualTo(52));
+          expect(rowHeight, lessThanOrEqualTo(56));
 
           expect(
             tester.takeException(),
@@ -146,7 +147,7 @@ void main() {
       final rowHeight = tester.getSize(
         find.byKey(const Key('collection_insights_compact_glance')),
       ).height;
-      expect(rowHeight, lessThanOrEqualTo(52), reason: '@${width}dp');
+      expect(rowHeight, lessThanOrEqualTo(56), reason: '@${width}dp');
     }
     tester.view.reset();
   });

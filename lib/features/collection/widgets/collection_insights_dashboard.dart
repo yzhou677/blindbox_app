@@ -13,7 +13,7 @@ abstract final class CollectionInsightsDashboardCopy {
   static const sectionTitle = 'Collection Insights';
 }
 
-class CollectionInsightsDashboard extends StatelessWidget {
+class CollectionInsightsDashboard extends StatefulWidget {
   const CollectionInsightsDashboard({
     super.key,
     required this.expanded,
@@ -33,7 +33,27 @@ class CollectionInsightsDashboard extends StatelessWidget {
   final VoidCallback? onInsightsTap;
   final String? collectorTypeName;
 
-  void _toggle() => onExpandedChanged(!expanded);
+  @override
+  State<CollectionInsightsDashboard> createState() =>
+      _CollectionInsightsDashboardState();
+}
+
+class _CollectionInsightsDashboardState extends State<CollectionInsightsDashboard> {
+  final _morphKey = GlobalKey<CollectionInsightsCompactSummaryState>();
+
+  Future<void> _toggle() async {
+    if (widget.expanded) {
+      widget.onExpandedChanged(false);
+      return;
+    }
+
+    final morph = _morphKey.currentState;
+    if (morph != null) {
+      await morph.animateToGlance();
+    }
+    if (!mounted) return;
+    widget.onExpandedChanged(true);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +65,7 @@ class CollectionInsightsDashboard extends StatelessWidget {
       curve: CollectibleMotion.easeOut,
       alignment: Alignment.topCenter,
       clipBehavior: Clip.hardEdge,
-      child: expanded
+      child: widget.expanded
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -59,11 +79,11 @@ class CollectionInsightsDashboard extends StatelessWidget {
                   ),
                 ),
                 CollectionSummarySection(
-                  stats: stats,
-                  shelfMoodLine: shelfMoodLine,
-                  memoryWhisper: memoryWhisper,
-                  onInsightsTap: onInsightsTap,
-                  collectorTypeName: collectorTypeName,
+                  stats: widget.stats,
+                  shelfMoodLine: widget.shelfMoodLine,
+                  memoryWhisper: widget.memoryWhisper,
+                  onInsightsTap: widget.onInsightsTap,
+                  collectorTypeName: widget.collectorTypeName,
                 ),
               ],
             )
@@ -90,7 +110,8 @@ class CollectionInsightsDashboard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     CollectionInsightsCompactSummary(
-                      stats: stats,
+                      key: _morphKey,
+                      stats: widget.stats,
                       onTap: _toggle,
                     ),
                     Divider(

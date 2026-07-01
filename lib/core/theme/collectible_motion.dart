@@ -17,6 +17,10 @@ abstract final class CollectibleMotion {
   static const Duration shimmer = Duration(milliseconds: 1400);
   static const Duration sectionReveal = Duration(milliseconds: 320);
 
+  /// Collapsed insights glance morph (label ↔ glyph). Short and quiet —
+  /// felt more than seen; ~180–220 ms sweet spot.
+  static const Duration insightsGlanceMorph = Duration(milliseconds: 200);
+
   // —— Curves (calm, tactile — no bounce gimmicks) ——
 
   static const Curve easeOut = Curves.easeOutCubic;
