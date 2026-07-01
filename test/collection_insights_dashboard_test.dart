@@ -1,5 +1,6 @@
 import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/core/theme/collectible_tokens.dart';
+import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_summary_editorial.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_insights_compact_summary.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_insights_dashboard.dart';
@@ -157,4 +158,101 @@ void main() {
     await tester.pump();
     await pumpTransitionFrames();
   });
+
+  testWidgets(
+    'expanded height remeasures after dashboard inputs grow asynchronously',
+    (tester) async {
+      const moodLine = 'Your collection is quietly taking shape.';
+      const whisper = 'A gentle milestone on the shelf.';
+      const collectorType = 'Curator';
+
+      Widget buildBody({
+        required String? shelfMoodLine,
+        required String? memoryWhisper,
+        required String? collectorTypeName,
+      }) {
+        return MaterialApp(
+          theme: ThemeData(
+            extensions: [CollectibleTokens.forBrightness(Brightness.light)],
+          ),
+          home: Scaffold(
+            body: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                KeyedSubtree(
+                  key: const Key('collection_insights_dashboard_slot'),
+                  child: CollectionInsightsDashboard(
+                    stats: stats,
+                    shelfMoodLine: shelfMoodLine,
+                    memoryWhisper: memoryWhisper,
+                    collectorTypeName: collectorTypeName,
+                    onInsightsTap: () {},
+                  ),
+                ),
+                const Text(
+                  'My collection',
+                  key: Key('my_collection_header'),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+
+      await tester.pumpWidget(
+        buildBody(
+          shelfMoodLine: null,
+          memoryWhisper: null,
+          collectorTypeName: null,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.pumpWidget(
+        buildBody(
+          shelfMoodLine: moodLine,
+          memoryWhisper: whisper,
+          collectorTypeName: collectorType,
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      await tester.tap(
+        find.byKey(const Key('collection_insights_dashboard_toggle')),
+      );
+      await tester.pump();
+      await tester.pump(CollectibleMotion.insightsDashboardTransition);
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text(moodLine), findsOneWidget);
+      expect(find.text(whisper), findsOneWidget);
+      expect(
+        find.text(
+          '${CollectorTypeCopy.entryRevealedPrefix}: $collectorType',
+        ),
+        findsOneWidget,
+      );
+
+      final slotRect = tester.getRect(
+        find.byKey(const Key('collection_insights_dashboard_slot')),
+      );
+      final moodRect = tester.getRect(find.text(moodLine));
+      final headerRect = tester.getRect(
+        find.byKey(const Key('my_collection_header')),
+      );
+
+      expect(
+        slotRect.bottom,
+        greaterThanOrEqualTo(moodRect.bottom - 1),
+        reason: 'editorial mood line must not be clipped by dashboard slot',
+      );
+      expect(
+        headerRect.top,
+        greaterThanOrEqualTo(slotRect.bottom - 1),
+        reason: 'My collection must sit below the full expanded dashboard',
+      );
+    },
+  );
 }

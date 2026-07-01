@@ -47,6 +47,7 @@ class _CollectionInsightsDashboardState extends State<CollectionInsightsDashboar
 
   double? _collapsedHeight;
   double? _expandedHeight;
+  bool _measureScheduled = false;
 
   @override
   void initState() {
@@ -68,6 +69,46 @@ class _CollectionInsightsDashboardState extends State<CollectionInsightsDashboar
     super.dispose();
   }
 
+  @override
+  void didUpdateWidget(CollectionInsightsDashboard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_collapsedLayoutInputsChanged(oldWidget, widget)) {
+      _collapsedHeight = null;
+    }
+    if (_expandedLayoutInputsChanged(oldWidget, widget)) {
+      _expandedHeight = null;
+    }
+  }
+
+  static bool _statsChanged(
+    CollectionAggregateStats a,
+    CollectionAggregateStats b,
+  ) {
+    return a.inCollection != b.inCollection ||
+        a.wantListCount != b.wantListCount ||
+        a.completedSeriesCount != b.completedSeriesCount ||
+        a.masterCompleteSeriesCount != b.masterCompleteSeriesCount;
+  }
+
+  static bool _collapsedLayoutInputsChanged(
+    CollectionInsightsDashboard oldWidget,
+    CollectionInsightsDashboard widget,
+  ) {
+    return _statsChanged(oldWidget.stats, widget.stats);
+  }
+
+  static bool _expandedLayoutInputsChanged(
+    CollectionInsightsDashboard oldWidget,
+    CollectionInsightsDashboard widget,
+  ) {
+    return _statsChanged(oldWidget.stats, widget.stats) ||
+        oldWidget.shelfMoodLine != widget.shelfMoodLine ||
+        oldWidget.memoryWhisper != widget.memoryWhisper ||
+        oldWidget.collectorTypeName != widget.collectorTypeName ||
+        (oldWidget.onInsightsTap == null) !=
+            (widget.onInsightsTap == null);
+  }
+
   void _toggle() {
     if (_expandController.isAnimating) return;
     if (_expandController.value >= 1.0) {
@@ -79,22 +120,39 @@ class _CollectionInsightsDashboardState extends State<CollectionInsightsDashboar
 
   void _scheduleMeasure() {
     if (_collapsedHeight != null && _expandedHeight != null) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
+    if (_measureScheduled) return;
+    _measureScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback(_commitMeasure);
+  }
+
+  void _commitMeasure(Duration _) {
+    _measureScheduled = false;
+    if (!mounted) return;
+    if (_collapsedHeight != null && _expandedHeight != null) return;
+
+    double? collapsed;
+    double? expanded;
+
+    if (_collapsedHeight == null) {
       final collapsedBox =
           _collapsedMeasureKey.currentContext?.findRenderObject() as RenderBox?;
+      if (collapsedBox != null && collapsedBox.hasSize) {
+        collapsed = collapsedBox.size.height;
+      }
+    }
+    if (_expandedHeight == null) {
       final expandedBox =
           _expandedMeasureKey.currentContext?.findRenderObject() as RenderBox?;
-      if (collapsedBox == null ||
-          expandedBox == null ||
-          !collapsedBox.hasSize ||
-          !expandedBox.hasSize) {
-        return;
+      if (expandedBox != null && expandedBox.hasSize) {
+        expanded = expandedBox.size.height;
       }
-      setState(() {
-        _collapsedHeight = collapsedBox.size.height;
-        _expandedHeight = expandedBox.size.height;
-      });
+    }
+
+    if (collapsed == null && expanded == null) return;
+
+    setState(() {
+      if (collapsed != null) _collapsedHeight = collapsed;
+      if (expanded != null) _expandedHeight = expanded;
     });
   }
 
@@ -167,6 +225,17 @@ class _CollectionInsightsDashboardState extends State<CollectionInsightsDashboar
                 t: t,
                 collapsedShell: collapsedShell,
                 expandedShell: expandedShell,
+              );
+            }
+            if (_collapsedHeight != null && _expandedHeight == null && t > 0) {
+              // Expanded inputs changed — intrinsic layout until remeasure lands.
+              return expandedShell;
+            }
+            if (_collapsedHeight != null && t == 0) {
+              return SizedBox(
+                height: _collapsedHeight,
+                width: double.infinity,
+                child: ClipRect(child: collapsedShell),
               );
             }
             return collapsedShell;
