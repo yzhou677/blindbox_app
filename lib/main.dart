@@ -51,7 +51,7 @@ class BlindboxApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'Blind Box',
+      title: 'Shelfy',
       debugShowCheckedModeBanner: false, 
       themeMode: ThemeMode.system,
       theme: AppTheme.light(),

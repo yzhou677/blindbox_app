@@ -203,7 +203,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 600));
 
     expect(find.text('My collection'), findsWidgets);
-    expect(find.text('In collection'), findsOneWidget);
+    expect(find.byKey(const Key('collection_insights_compact_glance')), findsOneWidget);
     expect(find.text('5'), findsOneWidget);
     expect(
       find.byKey(const Key('collection_header_add_series')),
@@ -212,40 +212,27 @@ void main() {
     expect(find.text('All Brands'), findsOneWidget);
     expect(find.text('All IPs'), findsOneWidget);
 
-    // The shelf uses SliverList.builder (lazy) — scroll until the series card
-    // enters the viewport before asserting its text is present.
-    await tester.scrollUntilVisible(
-      find.text('The Other One'),
-      120,
-      scrollable: find.byType(Scrollable).first,
-    );
+    // Completed series are collapsed by default — expand before asserting card text.
+    for (var i = 0; i < 4; i++) {
+      await tester.drag(find.byType(CustomScrollView).first, const Offset(0, -400));
+      await tester.pump();
+    }
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.tap(find.text('Completed (1)'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
     expect(find.text('The Other One'), findsOneWidget);
 
     // Brand chips are built from shelf brands only (POP MART for this seed).
-    await tester.scrollUntilVisible(
-      find.text('POP MART'),
-      80,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await tester.ensureVisible(find.text('POP MART'));
     await tester.tap(find.text('POP MART'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    await tester.scrollUntilVisible(
-      find.text('The Other One'),
-      120,
-      scrollable: find.byType(Scrollable).first,
-    );
     expect(find.text('The Other One'), findsOneWidget);
 
     await tester.tap(find.text('All Brands'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    // Scroll back to where 'The Other One' card is after filter reset.
-    await tester.scrollUntilVisible(
-      find.text('The Other One'),
-      120,
-      scrollable: find.byType(Scrollable).first,
-    );
     expect(find.text('The Other One'), findsOneWidget);
   });
 

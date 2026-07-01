@@ -9,7 +9,21 @@ Operational decisions and future assumptions captured so we do not re-investigat
 - [`KNOWN_RUNTIME_NOTES.md`](KNOWN_RUNTIME_NOTES.md) — logcat / debug console noise vs actionable failures
 - [`COLLECTION_ARCHITECTURE_NOTES.md`](COLLECTION_ARCHITECTURE_NOTES.md) — Collection maintenance-mode tradeoffs (snapshot persistence, journey history, collector identity)
 - [`EBAY_GATEWAY.md`](EBAY_GATEWAY.md) — live gateway configuration; notes identity skip on default path
-- [`FIREBASE_LOCAL_SETUP.md`](FIREBASE_LOCAL_SETUP.md) — Firebase / SHA local setup
+- [`FIREBASE_LOCAL_SETUP.md`](FIREBASE_LOCAL_SETUP.md) — Firebase local setup, services scope, and release checklist
+
+---
+
+## Firebase (release scope)
+
+**Used in production client:** Firebase Core, Cloud Firestore (catalog + `official_feed_items`), Cloud Storage (`catalog/series/*`, `catalog/figures/*`). Market tab calls the **market** HTTPS Cloud Function via `http` — not the `firebase_functions` Flutter SDK.
+
+**Not used:** Firebase Authentication, Google Sign-In, Phone Authentication, App Check, Analytics, Crashlytics, FCM, Remote Config, Dynamic Links.
+
+Firestore and Storage rules in repo allow **unauthenticated public read** on catalog paths. The shelf (`CollectionNotifier`) does not sync to Firestore.
+
+**Release gate:** verify backend deployment (rules, indexes, market function) per [`FIREBASE_LOCAL_SETUP.md` → Firebase release checklist](FIREBASE_LOCAL_SETUP.md#firebase-release-checklist-v100). **Release SHA / Play App Signing SHA registration is not a functional requirement** for the current feature set.
+
+**Future:** If Shelfy adopts Firebase Authentication, Google Sign-In, App Check, or Google APIs restricted by Android certificate fingerprints, configure Release SHA and Play App Signing SHA in Firebase Console at that time.
 
 ---
 
@@ -227,7 +241,7 @@ Before any `SliverList.builder` item is built, `CollectionScreen.build()` runs a
 | Summary aggregation | [`CollectionAggregateStats.fromSnapshot`](../lib/features/collection/widgets/collection_summary_section.dart) → [`countShelfCompletionTiers`](../lib/features/collection/domain/series_completion_resolution.dart) | O(n) full shelf |
 | Editorial interpretation | [`shelf_emotional_providers.dart`](../lib/features/collection/application/shelf_emotional_providers.dart) (profile, relationship insights, whispers) | O(n) full shelf per rebuild |
 
-Search text is **debounced** (125 ms) so the pipeline does not re-run on every keystroke; filters, sort, collapse, and provider updates still trigger full pipeline runs.
+Search text is **debounced** (125 ms) so the pipeline does not re-run on every keystroke; filters, sort, collapse, and provider updates still trigger full pipeline runs. **Dashboard expand/collapse does not** — session state lives in [`CollectionInsightsDashboardHost`](../lib/features/collection/widgets/collection_insights_dashboard_host.dart) and does not call `CollectionScreen.setState`.
 
 [`ShelfBrowseProgressLookup`](../lib/features/collection/domain/collection_domain.dart) memoizes per-series progress **within a single `build()`** — it does not persist across rebuilds.
 
@@ -338,6 +352,36 @@ When the pipeline exceeds a single-frame budget (**16 ms** total) or Search alon
 Profile/release builds compile the trace to a no-op — no overhead on shipped apps.
 
 Use this when shelf or catalog growth makes performance questionable; compare stage ms against the triggers in [`TECH_DEBT.md`](TECH_DEBT.md) instead of guessing bottlenecks.
+
+### Collection Insights Dashboard performance baseline
+
+Recorded after the 2026 dashboard animation + rebuild-isolation refactor ([`CollectionInsightsDashboard`](../lib/features/collection/widgets/collection_insights_dashboard.dart), [`CollectionInsightsDashboardHost`](../lib/features/collection/widgets/collection_insights_dashboard_host.dart)). Use this as a **regression check** when changing expand/collapse, morph, or summary layout — re-run the profile audit and compare numbers; do not rely on debug `CollectionPipeline` logs in profile mode (they are no-ops).
+
+**Reference device:** Samsung Galaxy S24 Ultra (SM-S947U1, wireless ADB)
+
+**Profile mode** (`flutter run --profile -t tools/profile/collection_dashboard_profile_audit.dart -d <device>`):
+
+| Metric | Baseline (2026-06) |
+|--------|-------------------|
+| Average frame time | ~4 ms |
+| Frames ≤ 16.7 ms (60 fps budget) | **97%+** |
+| Shelf sibling rebuilds during toggle | **0** (dashboard subtree only) |
+| First expand / cold layout | One-time offstage height measurement; occasional single-frame spike (~50–60 ms) acceptable |
+
+**Architecture constraints (do not regress without intent):**
+
+- Single `AnimationController` (~240 ms) drives morph + height lerp + opacity crossfade — not `AnimatedSize`.
+- Expanded/collapsed layers clipped via `ClipRect` + non-scrollable `SingleChildScrollView` to avoid `RenderFlex` overflow during lerp.
+- Dashboard inputs memoized via [`collectionInsightsDashboardInputsProvider`](../lib/features/collection/application/collection_insights_dashboard_providers.dart).
+
+**Quick checks without a device:**
+
+```bash
+flutter test test/collection_insights_dashboard_perf_test.dart
+flutter test test/collection_insights_dashboard_test.dart
+```
+
+`CatalogSearchPipeline` is unchanged by dashboard work; no baseline expected there.
 
 ---
 
@@ -492,4 +536,4 @@ Future work: bug fixes, UX polish, catalog content expansion, performance profil
 
 ---
 
-*Last updated: 2026-06 — reflects runtime bootstrap catalog removal, catalog persistence sync, provider propagation, and Performance Characteristics audit.*
+*Last updated: 2026-06 — reflects runtime bootstrap catalog removal, catalog persistence sync, provider propagation, Performance Characteristics audit, and Collection Insights Dashboard profile baseline.*

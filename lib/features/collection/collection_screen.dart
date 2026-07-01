@@ -5,7 +5,6 @@ import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
 import 'package:blindbox_app/features/collection/debug/collection_shelf_pipeline_trace.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_emotional_profile.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_relationship_insight.dart';
-import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
@@ -15,10 +14,7 @@ import 'package:blindbox_app/features/collection/widgets/custom_series_form_shee
 import 'package:blindbox_app/features/collection/widgets/add_to_collection_sheet.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_brand_filter_row.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_ip_filter_row.dart';
-import 'package:blindbox_app/features/collectible_relationship/application/collectible_relationship_providers.dart';
 import 'package:blindbox_app/features/collection/application/shelf_emotional_providers.dart';
-import 'package:blindbox_app/features/collection/insights/application/collector_type_providers.dart';
-import 'package:blindbox_app/features/collection/presentation/collection_summary_editorial.dart';
 import 'package:blindbox_app/features/collection/presentation/shelf_editorial_voice.dart';
 import 'package:blindbox_app/features/collection/application/collection_shelf_ui_prefs_provider.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
@@ -27,7 +23,7 @@ import 'package:blindbox_app/features/catalog/search/catalog_search_service.dart
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_browse.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_empty_state.dart';
-import 'package:blindbox_app/features/collection/widgets/collection_summary_section.dart';
+import 'package:blindbox_app/features/collection/widgets/collection_insights_dashboard_host.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_warm_start_banner.dart';
 import 'package:blindbox_app/features/collection/widgets/series_figures_sheet.dart';
 import 'package:blindbox_app/features/collection/presentation/shelf_series_feed.dart';
@@ -237,18 +233,10 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
 
     late final ShelfEmotionalProfile profile;
     late final List<ShelfRelationshipInsight> insights;
-    late final String interpretationLine;
-    late final String? memoryWhisper;
-    late final String? relationshipWhisper;
-    late final CollectorTypeIdentity? collectorIdentity;
     late final String? sectionSubtitle;
     trace.sectionVoid('Insights', () {
       profile = ref.watch(shelfEmotionalProfileProvider);
       insights = ref.watch(shelfRelationshipInsightsProvider);
-      interpretationLine = ref.watch(shelfInterpretationLineProvider);
-      memoryWhisper = ref.watch(shelfMemoryWhisperProvider);
-      relationshipWhisper = ref.watch(shelfRelationshipWhisperProvider);
-      collectorIdentity = ref.watch(collectorTypeIdentityProvider);
       sectionSubtitle = ShelfEditorialVoice.sectionSubtitle(
         profile,
         insights,
@@ -357,10 +345,6 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
         progress: progressLookup,
       );
     });
-    final summaryStats = trace.section(
-      'Summary',
-      () => CollectionAggregateStats.fromSnapshot(snap),
-    );
     final brandFilterExhausted = brandFiltered.isEmpty;
     final ipFilterExhausted = !brandFilterExhausted && visible.isEmpty;
     final searchExhausted =
@@ -458,13 +442,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               child: SizedBox(height: FeedRhythm.collectionSearchToSummaryGap),
             ),
           SliverToBoxAdapter(
-            child: CollectionSummarySection(
-              stats: summaryStats,
-              shelfMoodLine: interpretationLine.isNotEmpty
-                  ? interpretationLine
-                  : CollectionSummaryEditorial.shelfMoodLine(snap),
-              memoryWhisper: memoryWhisper ?? relationshipWhisper,
-              collectorTypeName: collectorIdentity?.archetype.displayName,
+            child: CollectionInsightsDashboardHost(
               onInsightsTap: () => context.push('/collection/insights'),
             ),
           ),

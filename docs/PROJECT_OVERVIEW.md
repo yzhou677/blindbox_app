@@ -1,4 +1,6 @@
-# Blind Box Collection App
+# Shelfy
+
+> **Display name:** Shelfy (package: `blindbox_app`, application id: `app.shelfy.collector`)
 
 > **Implementation architecture (current codebase):** see [`.cursor/ARCHITECTURE.md`](../.cursor/ARCHITECTURE.md).  
 > **Stack as built today:** collection persistence uses **SharedPreferences** (not Hive/Isar); market HTTP uses the **`http`** package (Dio is not in use).  

@@ -23,22 +23,30 @@ Recurring logcat / debug console output that is **not** an actionable bug until 
 
 - **Firestore catalog refresh and Storage may still function normally** while these appear.
 - Observed: `CatalogBundleCache: refresh source=firestore` succeeds alongside `DEVELOPER_ERROR`.
-- Likely causes: debug SHA-1 not registered in Firebase Console, `app.shelfy.collector` package vs production signing, or partial Play Services API registration — not necessarily broken Firestore reads.
+- Likely causes: partial Play Services registration, package name mismatch, or unregistered debug signing SHA — **not necessarily broken Firestore reads**. Shelfy does **not** use Firebase Auth or other SHA-gated flows; missing SHA is **log noise**, not a functional release gate for catalog/Storage.
 
 ### How to treat
 
 | Situation | Action |
 |-----------|--------|
 | Catalog loads, images resolve, features under test work | **Non-blocking** — document and move on |
-| Firestore refresh fails, Auth/Analytics broken, user-visible Firebase errors | **Investigate** — SHA, `google-services.json`, [`FIREBASE_LOCAL_SETUP.md`](FIREBASE_LOCAL_SETUP.md) |
+| Firestore refresh fails, user-visible empty catalog, `permission-denied` | **Investigate** — rules deployment, `google-services.json`, project id, network — see [`FIREBASE_LOCAL_SETUP.md`](FIREBASE_LOCAL_SETUP.md) release checklist |
 
 **Always verify Firestore behavior** (startup source, refresh log, catalog content) before treating this log noise as a product bug.
 
-### Dev checklist (before release)
+### Release checklist (Firebase backend — not SHA)
 
-- Production application id: `app.shelfy.collector` (Play Store / Firebase Android app **Shelfy Android**)
-- Run `tools/android/sync_firebase_android_sha.ps1`; confirm debug/release SHA in Firebase Console
-- Local `google-services.json` matches project (gitignored locally)
+Before shipping, verify **backend deployment** per [`FIREBASE_LOCAL_SETUP.md` → Firebase release checklist`](FIREBASE_LOCAL_SETUP.md#firebase-release-checklist-v100):
+
+- Firestore rules deployed
+- Storage rules deployed
+- Firestore indexes deployed (`official_feed_items`)
+- Market Cloud Function deployed (if live Market is in scope)
+- `google-services.json` present at Android release build time (`app.shelfy.collector` / `blindbox-collection`)
+
+**SHA:** Release / Play App Signing SHA registration is **not required** for the current Shelfy feature set. Optional `sync_firebase_android_sha.ps1` only reduces `DEVELOPER_ERROR` noise.
+
+**Future:** If Shelfy adopts Firebase Authentication, Google Sign-In, App Check, or cert-restricted Google APIs, configure Release SHA and Play App Signing SHA then.
 
 ---
 
@@ -72,7 +80,7 @@ Release builds do not emit bundled-phase debug traces.
 | Log | Meaning |
 |-----|---------|
 | `CatalogBundleCache: startup source=persisted` | Cold start from last Firestore snapshot on disk — see [`ARCHITECTURE_NOTES.md`](ARCHITECTURE_NOTES.md) |
-| `CatalogBundleCache: startup source=seed` | First install or never synced |
+| `CatalogBundleCache: startup source=empty` | First install or no persisted snapshot — bootstrap placeholder until Firestore sync |
 | `CatalogBundleCache: refresh source=firestore` | Background refresh succeeded |
 
 ---

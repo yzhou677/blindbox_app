@@ -15,7 +15,7 @@ flutter analyze
 flutter test
 ```
 
-**Target:** full suite green (546+ tests at last RC validation). Feature tests that touch catalog must override `catalogBundleProvider` — do not rely on the 12s Firestore timeout in unit tests.
+**Target:** full suite green (`flutter test` — 878 tests at v1.0.0 polish). Feature tests that touch catalog must override `catalogBundleProvider` — do not rely on the 12s Firestore timeout in unit tests.
 
 **Focused smoke** (when iterating on a subsystem):
 

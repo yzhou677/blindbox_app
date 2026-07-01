@@ -17,6 +17,10 @@ abstract final class CollectibleMotion {
   static const Duration shimmer = Duration(milliseconds: 1400);
   static const Duration sectionReveal = Duration(milliseconds: 320);
 
+  /// Unified expand/collapse for Collection insights dashboard (morph + size).
+  static const Duration insightsDashboardTransition =
+      Duration(milliseconds: 240);
+
   // —— Curves (calm, tactile — no bounce gimmicks) ——
 
   static const Curve easeOut = Curves.easeOutCubic;

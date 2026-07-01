@@ -17,7 +17,7 @@ This plan is **architecture-aware** and targets regressions that unit tests do n
 | System | What “good” means |
 |--------|-------------------|
 | **Shell navigation** | Cold launch on **Collection** tab; bottom nav order: **Collection → Discover → Market**; Discover uses explore icon + label |
-| **Collection (local-first)** | `CollectionNotifier` + `SharedPreferences` codec; optimistic add/remove; debounced persist |
+| **Collection (local-first)** | `CollectionNotifier` + `SharedPreferences` codec; optimistic add/remove; debounced persist; collapsible insights dashboard (`CollectionInsightsDashboardHost`) isolated from shelf rebuilds |
 | **Ownership presentation** | `CollectionSeriesShelfCtaPresentation` — same semantics on search rows, Latest releases, Home save chip, add sheet, catalog browse, **preview sticky CTA** (`previewSticky`) |
 | **Ownership detection** | `resolveCollectionSeriesOwnership()` — template id + **canonical brand+series** (no taxonomy false positives) |
 | **Modal overlays** | `showCollectibleBottomSheet` / `showCollectionModalBottomSheet`; `CollectionModalOverlayRegistry.dismissAll()` reentrancy guard |
@@ -33,7 +33,7 @@ This plan is **architecture-aware** and targets regressions that unit tests do n
 
 - Renaming `applicationId`, bundle id, repo folder `blindbox_app`, or Firebase project
 - Cloud sync of shelf / `firebase_auth` / multi-device collection
-- Mercari live gateway as primary market source (Functions exist; product default is asset browse)
+- Mercari live gateway as primary market source (Functions exist; **product default is live eBay gateway** via `MARKET_GATEWAY_EBAY=true`)
 - Full catalog ingestion pipeline (external Admin tooling)
 - Performance benchmarking / automated E2E framework build-out
 - iOS parity beyond smoke (Android is primary stress target per recent stabilization)
@@ -291,8 +291,33 @@ Simulate impatient collector behavior for **≥15 minutes** on a physical Androi
 
 ## 6. Firebase production hardening verification
 
-**Prerequisite:** Rules deployed from repo draft to **staging**, then production — `npx --prefix functions firebase deploy --only firestore:rules,storage --project <project-id>` (not `storage:rules`; see `docs/FIREBASE_LOCAL_SETUP.md`).  
-**Do not** conflate “rules in git” with “rules live in console.”
+**Scope:** Shelfy uses Firebase Core, Firestore, Storage, and the market HTTPS Cloud Function. It does **not** use Firebase Auth, Google Sign-In, Phone Auth, App Check, Analytics, Crashlytics, or FCM. **Release SHA registration is not a functional requirement** for §6 checks.
+
+**Prerequisite:** Backend deployed to `blindbox-collection` — see [`FIREBASE_LOCAL_SETUP.md` → Firebase release checklist](FIREBASE_LOCAL_SETUP.md#firebase-release-checklist-v100). Rules/indexes/functions in git ≠ live in console.
+
+Deploy (staging first, then production):
+
+```bash
+npx --prefix functions firebase deploy --only firestore:rules,storage --project blindbox-collection
+npx --prefix functions firebase deploy --only firestore:indexes --project blindbox-collection
+npx --prefix functions firebase deploy --only functions:market --project blindbox-collection
+```
+
+Use `storage`, not `storage:rules` (single-bucket config — see `FIREBASE_LOCAL_SETUP.md`).
+
+### 6.0 Backend deployment sign-off
+
+| # | Check | Pass |
+|---|--------|------|
+| F-0a | Firestore rules live match repo draft (public catalog + official feed read) | Y/N |
+| F-0b | Storage rules live (public `catalog/**` read) | Y/N |
+| F-0c | `firestore.indexes.json` deployed (`official_feed_items` composite) | Y/N |
+| F-0d | `functions:market` deployed; live eBay env if Market in ship scope | Y/N / N/A |
+| F-0e | Release build includes `google-services.json` for `app.shelfy.collector` | Y/N |
+
+**SHA:** Not required for F-0a–F-0e. Optional SHA sync is log-noise mitigation only — see `FIREBASE_LOCAL_SETUP.md`.
+
+**Future:** If Auth, Sign-In, or App Check is added later, add Release / Play App Signing SHA to the release gate at that time.
 
 ### 6.1 Read paths (client, unauthenticated)
 
@@ -449,7 +474,10 @@ Use debug build or temporary dev probe — **not shipped to users**.
 | Date | |
 | P0 failures | None / list |
 | P1 accepted | list |
-| Firebase rules deployed? | Y/N, environment |
+| Firestore + Storage rules deployed? | Y/N, environment |
+| Firestore indexes deployed? | Y/N |
+| Market function deployed (if in scope)? | Y/N / N/A |
+| `google-services.json` in release build? | Y/N |
 | **RC recommendation** | Ship / Hold |
 
 ---
