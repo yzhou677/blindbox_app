@@ -39,7 +39,9 @@ flutter run \
   --dart-define=MARKET_GATEWAY_BASE_URL=http://127.0.0.1:5001/blindbox-collection/us-central1/market
 ```
 
-Without flags, Market uses bundled asset feed only. Gateway failure falls back to asset rows (and optional stale eBay cache).
+Without flags (or with `MARKET_GATEWAY_EBAY=false`), Market browse sources are **empty** — the tab shows an empty state, not bundled fixture rows. Opt-in fixture data for local dev/tests: `--dart-define=MARKET_FIXTURE_SOURCE=true`.
+
+Gateway failure returns an empty page (stale disk cache may still hydrate earlier rows). There is no automatic fallback to bundled asset listings.
 
 Live gateway browse skips catalog identity matching (listing-level cards use eBay titles directly). Catalog matching remains available for offline/mock paths only. See [`ARCHITECTURE_NOTES.md`](ARCHITECTURE_NOTES.md) § Market Identity Architecture for runtime audit details and retention rationale.
 

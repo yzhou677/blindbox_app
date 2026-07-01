@@ -22,7 +22,7 @@ It focuses on an image-first, calm browsing experience with local-first collecti
 
 ## What The App Includes
 
-- `Collection` tab: local-first shelf, custom series, wishlist/owned states, completion tiers (`Completed Series`, `Master Complete`), Summary, and Insights
+- `Collection` tab: local-first shelf, custom series, wishlist/owned states, completion tiers (`Completed Series`, `Master Complete`), collapsible **Collection Insights** dashboard (compact glance + expandable summary), and Insights screen
 - `Discover` tab: Firestore-backed catalog browse, release rails, and shared token-based search (Search V2)
 - `Market` tab: live eBay browse/search via Firebase gateway (separate from catalog content)
 
@@ -91,25 +91,29 @@ flutter run
 
 ## Firebase Local Setup
 
+Shelfy uses **Firebase Core**, **Cloud Firestore**, and **Cloud Storage** for read-only catalog and official feed. Market browse calls the **HTTPS market Cloud Function** via the `http` package (not `firebase_functions`). Collection shelf data stays local.
+
 Use the full setup guide:
 
-- [docs/FIREBASE_LOCAL_SETUP.md](./docs/FIREBASE_LOCAL_SETUP.md)
+- [docs/FIREBASE_LOCAL_SETUP.md](./docs/FIREBASE_LOCAL_SETUP.md) — local dev setup and **[Firebase release checklist](./docs/FIREBASE_LOCAL_SETUP.md#firebase-release-checklist-v100)**
 
 Quick notes:
 
 - `firebase.json` is local and gitignored (copy from `firebase.json.example`)
-- `google-services.json` and `firebase_options.dart` are local/env-specific
+- `android/app/google-services.json` is gitignored; `lib/firebase_options.dart` is committed for project `blindbox-collection`
 - Collection data is local-first and not synced to Firestore
+- **Release SHA registration is not required** for the current feature set (no Firebase Auth, Sign-In, Phone Auth, or App Check). See the release checklist in `FIREBASE_LOCAL_SETUP.md`.
 
-### Rules deployment
+### Backend deployment (release)
 
-From repo root:
+Verify before shipping — not client code changes:
 
 ```bash
 npx --prefix functions firebase deploy --only firestore:rules,storage --project blindbox-collection
+npx --prefix functions firebase deploy --only functions:market --project blindbox-collection
 ```
 
-For single-bucket config, use `storage` (not `storage:rules`).
+Deploy Firestore indexes from `firestore.indexes.json` (required for Discover official feed). Use `storage`, not `storage:rules`, for single-bucket config. See [FIREBASE_LOCAL_SETUP.md](./docs/FIREBASE_LOCAL_SETUP.md#firebase-release-checklist-v100).
 
 ## Common Commands
 

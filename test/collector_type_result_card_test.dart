@@ -46,7 +46,7 @@ void main() {
   ) async {
     await pumpCard(tester, AppTheme.light());
     expect(find.text(archetype.displayName), findsOneWidget);
-    expect(find.textContaining('Rare pulls'), findsOneWidget);
+    expect(find.textContaining('Secret Figures'), findsOneWidget);
     expect(find.byIcon(archetype.icon!), findsOneWidget);
   });
 
@@ -55,7 +55,7 @@ void main() {
   ) async {
     await pumpCard(tester, AppTheme.dark());
     expect(find.text(archetype.displayName), findsOneWidget);
-    expect(find.textContaining('Rare pulls'), findsOneWidget);
+    expect(find.textContaining('Secret Figures'), findsOneWidget);
   });
 
   testWidgets('renders helper line when provided', (tester) async {

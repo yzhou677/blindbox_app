@@ -50,11 +50,9 @@ These are **not** current bugs. The Collection rendering audit (2026) confirmed 
 
 ### Memoize summary aggregates
 
-**Description:** [`countShelfCompletionTiers`](../lib/features/collection/domain/series_completion_resolution.dart) and [`CollectionAggregateStats.fromSnapshot`](../lib/features/collection/widgets/collection_summary_section.dart) recompute full-shelf completion metrics on every `CollectionScreen` rebuild, independent of scroll position.
+**Status (2026-06):** Collection Insights dashboard inputs are memoized via [`collectionInsightsDashboardInputsProvider`](../lib/features/collection/application/collection_insights_dashboard_providers.dart); expand/collapse state is isolated in [`CollectionInsightsDashboardHost`](../lib/features/collection/widgets/collection_insights_dashboard_host.dart) so toggling the dashboard does not rebuild the shelf pipeline.
 
-**Expected benefit:** Skip redundant O(n) shelf scans when only unrelated UI state changes (e.g. chip highlight) and snapshot is unchanged.
-
-**Current priority:** Low
+**Remaining (low priority):** [`countShelfCompletionTiers`](../lib/features/collection/domain/series_completion_resolution.dart) and other shelf-wide aggregates inside [`CollectionScreen.build`](../lib/features/collection/collection_screen.dart) still recompute when unrelated shelf UI state changes.
 
 **Trigger for revisiting:** Profiling shows summary calculations as a **measurable** fraction of frame time, or shelf sizes grow large enough that duplicate scans matter.
 
@@ -74,7 +72,7 @@ These are **not** current bugs. The Collection rendering audit (2026) confirmed 
 
 ### Feed pipeline optimization
 
-**Description:** The full browse pipeline in [`CollectionScreen.build`](../lib/features/collection/collection_screen.dart) — brand filter → IP filter → search → partition → sort → `buildShelfFeedItems` — executes on every rebuild that touches dependencies, not only when shelf data changes. Feed item lists are materialized eagerly even though `SliverList.builder` lazily builds widgets.
+**Description:** The full browse pipeline in [`CollectionScreen.build`](../lib/features/collection/collection_screen.dart) — brand filter → IP filter → search → partition → sort → `buildShelfFeedItems` — executes on every rebuild that touches dependencies, not only when shelf data changes. **Dashboard expand/collapse is excluded** (host owns that state). Feed item lists are materialized eagerly even though `SliverList.builder` lazily builds widgets.
 
 **Expected benefit:** Fewer passes and allocations when toggling UI prefs; optional `select`/memoization on snapshot + filter/sort keys.
 

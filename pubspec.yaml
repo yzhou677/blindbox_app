@@ -1,5 +1,5 @@
 name: blindbox_app
-description: "A new Flutter project."
+description: "Shelfy is a modern collection tracker for designer toys and blind box figures."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev

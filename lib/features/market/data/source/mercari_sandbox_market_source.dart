@@ -54,11 +54,15 @@ class MercariSandboxMarketSource implements MarketSource {
       );
     } on MercariGatewayException catch (e, st) {
       _recordFetchError(e);
-      debugPrint('MercariSandboxMarketSource: gateway failed: $e\n$st');
+      if (kDebugMode) {
+        debugPrint('MercariSandboxMarketSource: gateway failed: $e\n$st');
+      }
       return _fallbackPage();
     } catch (e, st) {
       _recordFetchError(e);
-      debugPrint('MercariSandboxMarketSource: fetch failed: $e\n$st');
+      if (kDebugMode) {
+        debugPrint('MercariSandboxMarketSource: fetch failed: $e\n$st');
+      }
       return _fallbackPage();
     }
   }
@@ -103,10 +107,14 @@ class MercariSandboxMarketSource implements MarketSource {
         replace: false,
       );
     } on MercariGatewayException catch (e, st) {
-      debugPrint('MercariSandboxMarketSource: next page failed: $e\n$st');
+      if (kDebugMode) {
+        debugPrint('MercariSandboxMarketSource: next page failed: $e\n$st');
+      }
       return _fallbackPage();
     } catch (e, st) {
-      debugPrint('MercariSandboxMarketSource: next page error: $e\n$st');
+      if (kDebugMode) {
+        debugPrint('MercariSandboxMarketSource: next page error: $e\n$st');
+      }
       return _fallbackPage();
     }
   }

@@ -9,7 +9,21 @@ Operational decisions and future assumptions captured so we do not re-investigat
 - [`KNOWN_RUNTIME_NOTES.md`](KNOWN_RUNTIME_NOTES.md) — logcat / debug console noise vs actionable failures
 - [`COLLECTION_ARCHITECTURE_NOTES.md`](COLLECTION_ARCHITECTURE_NOTES.md) — Collection maintenance-mode tradeoffs (snapshot persistence, journey history, collector identity)
 - [`EBAY_GATEWAY.md`](EBAY_GATEWAY.md) — live gateway configuration; notes identity skip on default path
-- [`FIREBASE_LOCAL_SETUP.md`](FIREBASE_LOCAL_SETUP.md) — Firebase / SHA local setup
+- [`FIREBASE_LOCAL_SETUP.md`](FIREBASE_LOCAL_SETUP.md) — Firebase local setup, services scope, and release checklist
+
+---
+
+## Firebase (release scope)
+
+**Used in production client:** Firebase Core, Cloud Firestore (catalog + `official_feed_items`), Cloud Storage (`catalog/series/*`, `catalog/figures/*`). Market tab calls the **market** HTTPS Cloud Function via `http` — not the `firebase_functions` Flutter SDK.
+
+**Not used:** Firebase Authentication, Google Sign-In, Phone Authentication, App Check, Analytics, Crashlytics, FCM, Remote Config, Dynamic Links.
+
+Firestore and Storage rules in repo allow **unauthenticated public read** on catalog paths. The shelf (`CollectionNotifier`) does not sync to Firestore.
+
+**Release gate:** verify backend deployment (rules, indexes, market function) per [`FIREBASE_LOCAL_SETUP.md` → Firebase release checklist](FIREBASE_LOCAL_SETUP.md#firebase-release-checklist-v100). **Release SHA / Play App Signing SHA registration is not a functional requirement** for the current feature set.
+
+**Future:** If Shelfy adopts Firebase Authentication, Google Sign-In, App Check, or Google APIs restricted by Android certificate fingerprints, configure Release SHA and Play App Signing SHA in Firebase Console at that time.
 
 ---
 
