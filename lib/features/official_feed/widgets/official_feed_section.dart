@@ -3,6 +3,7 @@ import 'package:blindbox_app/features/official_feed/application/official_feed_pr
 import 'package:blindbox_app/features/official_feed/domain/official_feed_item.dart';
 import 'package:blindbox_app/features/official_feed/presentation/official_feed_copy.dart';
 import 'package:blindbox_app/features/official_feed/widgets/official_feed_post_tile.dart';
+import 'package:blindbox_app/features/official_feed/widgets/official_feed_release_date_note.dart';
 import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -39,7 +40,15 @@ class _OfficialUpdatesFeed extends StatelessWidget {
           title: OfficialFeedCopy.sectionTitle,
           subtitle: OfficialFeedCopy.sectionSubtitle,
         ),
-        const SizedBox(height: FeedRhythm.sectionHeaderToRail),
+        const SizedBox(height: FeedRhythm.sectionTitleToSubtitle),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20),
+          child: OfficialFeedReleaseDateNote(),
+        ),
+        SizedBox(
+          height:
+              FeedRhythm.sectionHeaderToRail - FeedRhythm.sectionTitleToSubtitle,
+        ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(

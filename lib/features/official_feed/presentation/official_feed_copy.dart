@@ -6,6 +6,9 @@ abstract final class OfficialFeedCopy {
   static const String sectionSubtitle =
       'News, campaigns, and links from POP MART';
 
+  static const String releaseDateDisclosure =
+      'Release dates may vary by region.';
+
   /// Per-card deck when heuristics do not match a content type.
   static const String fallbackDeckLine = 'Official update';
 }
