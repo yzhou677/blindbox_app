@@ -242,7 +242,7 @@ Search V2 ([`lib/core/search/`](../lib/core/search/), [`CatalogSearchService`](.
 - **Acceptable today** at ~2.5k figures: scans complete in sub-frame time on target devices for typical queries.
 - Shelf-side search reuses [`catalogSearchServiceProvider`](../lib/features/catalog/application/catalog_bundle_provider.dart) when the bundle is loaded; custom rows fall back to display-field haystack matching.
 
-Future indexing (inverted index, trie, etc.) should be considered **only** if catalog size or profiling shows user-visible search latency — see [`TECH_DEBT.md`](TECH_DEBT.md).
+Future indexing (inverted index, trie, etc.) should be considered **only** if catalog size or profiling shows user-visible search latency — see [`TECH_DEBT.md`](TECH_DEBT.md). Use **`CatalogSearchPipeline`** in debug logcat to measure Search V2 directly across all callers.
 
 ### Firestore architecture (browsing is memory-only)
 
@@ -285,15 +285,35 @@ Debug pipeline profilers share a naming convention via [`AppPipelinePrefix`](../
 | Prefix | Tab / surface | Status |
 |--------|----------------|--------|
 | `CollectionPipeline` | Collection shelf browse | **Shipped** — [`CollectionShelfPipelineTrace`](../lib/features/collection/debug/collection_shelf_pipeline_trace.dart) |
+| `CatalogSearchPipeline` | Shared Search V2 (`CatalogSearchService`) | **Shipped** — [`CatalogSearchPipelineTrace`](../lib/features/catalog/debug/catalog_search_pipeline_trace.dart) |
 | `MarketPipeline` | Market browse/search | Planned (legacy debug: `MarketSearch` in [`market_search_trace.dart`](../lib/features/market/debug/market_search_trace.dart)) |
 | `DiscoverPipeline` | Discover home | Planned |
 | `FeedPipeline` | Home feed assembly | Planned |
 
 **Log line shape:** `{Prefix} #{run} [{tag}] {message}`
 
-**Grep / filter:** `Pipeline` surfaces all tab profilers; narrow with `CollectionPipeline [search]`, `MarketPipeline [warn]`, etc.
+**Grep / filter:** `Pipeline` surfaces all tab profilers; narrow with `CollectionPipeline [search]`, `CatalogSearchPipeline`, `MarketPipeline [warn]`, etc.
 
 New pipeline traces should use `AppPipelineLog.line` + `AppPipelineLog.nextRun` so run ids and tags stay consistent across tabs.
+
+### Debug profiling (`CatalogSearchPipeline`)
+
+[`CatalogSearchService`](../lib/features/catalog/search/catalog_search_service.dart) wraps its public entry points (`search`, `matchingSeriesIds`) with [`CatalogSearchPipelineTrace`](../lib/features/catalog/debug/catalog_search_pipeline_trace.dart). **Debug only** — complete no-op in profile/release builds.
+
+Because instrumentation lives in the **shared service**, every caller benefits automatically (Collection shelf filter, Add Series, Catalog Browse, future surfaces) without per-page pipeline wiring.
+
+Example log (filter logcat: `CatalogSearchPipeline`):
+
+```text
+CatalogSearchPipeline #42 [total] 5.0ms
+CatalogSearchPipeline #42 [query] "hello kitty monsters"
+CatalogSearchPipeline #42 [catalog] series=343 figures=2435
+CatalogSearchPipeline #42 [result] figures=16
+```
+
+`matchingSeriesIds` logs `series=N` instead of figure count. When total exceeds **50 ms**, a single `[warn]` line is emitted. Intended for long-term catalog growth visibility — **not** a performance optimization.
+
+Collection’s `[search]` stage may still call into this service; nested `CatalogSearchPipeline` lines are expected when both profilers are active.
 
 ### Debug profiling (`CollectionPipeline`)
 

@@ -1,4 +1,5 @@
-﻿import 'package:blindbox_app/core/search/search_matcher.dart';
+﻿import 'package:blindbox_app/features/catalog/debug/catalog_search_pipeline_trace.dart';
+import 'package:blindbox_app/core/search/search_matcher.dart';
 import 'package:blindbox_app/core/search/search_normalizer.dart';
 import 'package:blindbox_app/core/search/search_tokenizer.dart';
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
@@ -35,51 +36,67 @@ final class CatalogSearchService {
 
   /// Returns figures that match [rawQuery], best matches first. Empty query ??[].
   List<CatalogSearchResult> search(String rawQuery) {
-    final tokens = SearchTokenizer.tokenize(rawQuery);
-    if (tokens.isEmpty) return [];
+    return CatalogSearchPipelineTrace.run(
+      rawQuery: rawQuery,
+      catalogSeries: _seriesById.length,
+      catalogFigures: _figures.length,
+      resultLine: (results) => 'figures=${results.length}',
+      action: () {
+        final tokens = SearchTokenizer.tokenize(rawQuery);
+        if (tokens.isEmpty) return <CatalogSearchResult>[];
 
-    final normalizedFullQuery = SearchNormalizer.normalize(rawQuery);
-    final scored = <_ScoredResult>[];
-    for (final fig in _figures) {
-      final rank = _bestRank(fig, tokens, normalizedFullQuery);
-      if (rank == null) continue;
-      final series = _seriesById[fig.seriesId];
-      if (series == null) continue;
-      scored.add(
-        _ScoredResult(
-          rank: rank,
-          result: CatalogSearchResult(
-            figureId: fig.id,
-            figureName: fig.displayName,
-            seriesName: series.displayName,
-            brandId: fig.brandId,
-            ipId: fig.ipId,
-            imageKey: fig.imageKey,
-            isSecret: fig.isSecret,
-          ),
-          sortOrder: fig.sortOrder,
-          figureId: fig.id,
-        ),
-      );
-    }
+        final normalizedFullQuery = SearchNormalizer.normalize(rawQuery);
+        final scored = <_ScoredResult>[];
+        for (final fig in _figures) {
+          final rank = _bestRank(fig, tokens, normalizedFullQuery);
+          if (rank == null) continue;
+          final series = _seriesById[fig.seriesId];
+          if (series == null) continue;
+          scored.add(
+            _ScoredResult(
+              rank: rank,
+              result: CatalogSearchResult(
+                figureId: fig.id,
+                figureName: fig.displayName,
+                seriesName: series.displayName,
+                brandId: fig.brandId,
+                ipId: fig.ipId,
+                imageKey: fig.imageKey,
+                isSecret: fig.isSecret,
+              ),
+              sortOrder: fig.sortOrder,
+              figureId: fig.id,
+            ),
+          );
+        }
 
-    scored.sort(_compareScored);
-    return scored.map((e) => e.result).toList(growable: false);
+        scored.sort(_compareScored);
+        return scored.map((e) => e.result).toList(growable: false);
+      },
+    );
   }
 
   /// Series ids with at least one figure match —for filtering shelf rows by
   /// [ShelfSeries.catalogTemplateId] without duplicating match rules.
   Set<String> matchingSeriesIds(String rawQuery) {
-    final tokens = SearchTokenizer.tokenize(rawQuery);
-    if (tokens.isEmpty) return const {};
+    return CatalogSearchPipelineTrace.run(
+      rawQuery: rawQuery,
+      catalogSeries: _seriesById.length,
+      catalogFigures: _figures.length,
+      resultLine: (ids) => 'series=${ids.length}',
+      action: () {
+        final tokens = SearchTokenizer.tokenize(rawQuery);
+        if (tokens.isEmpty) return <String>{};
 
-    final normalizedFullQuery = SearchNormalizer.normalize(rawQuery);
-    final ids = <String>{};
-    for (final fig in _figures) {
-      if (_bestRank(fig, tokens, normalizedFullQuery) == null) continue;
-      ids.add(fig.seriesId);
-    }
-    return ids;
+        final normalizedFullQuery = SearchNormalizer.normalize(rawQuery);
+        final ids = <String>{};
+        for (final fig in _figures) {
+          if (_bestRank(fig, tokens, normalizedFullQuery) == null) continue;
+          ids.add(fig.seriesId);
+        }
+        return ids;
+      },
+    );
   }
 
   _Rank? _bestRank(

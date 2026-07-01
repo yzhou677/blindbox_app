@@ -19,6 +19,7 @@ void main() {
   group('AppPipelinePrefix', () {
     test('collection prefix ends with Pipeline for grep', () {
       expect(AppPipelinePrefix.collection, endsWith('Pipeline'));
+      expect(AppPipelinePrefix.catalogSearch, endsWith('Pipeline'));
       expect(AppPipelinePrefix.market, endsWith('Pipeline'));
       expect(AppPipelinePrefix.discover, endsWith('Pipeline'));
       expect(AppPipelinePrefix.feed, endsWith('Pipeline'));

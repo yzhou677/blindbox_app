@@ -7,11 +7,13 @@ import 'package:flutter/foundation.dart';
 ///
 /// Planned / adopted prefixes:
 /// - [collection] — Collection shelf browse (`CollectionShelfPipelineTrace`)
+/// - [catalogSearch] — shared Search V2 (`CatalogSearchPipelineTrace`)
 /// - [market] — Market browse/search (future `MarketPipeline`; legacy: `MarketSearch`)
 /// - [discover] — Discover home rails
 /// - [feed] — Home feed assembly
 abstract final class AppPipelinePrefix {
   static const collection = 'CollectionPipeline';
+  static const catalogSearch = 'CatalogSearchPipeline';
   static const market = 'MarketPipeline';
   static const discover = 'DiscoverPipeline';
   static const feed = 'FeedPipeline';
