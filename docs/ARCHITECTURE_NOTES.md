@@ -184,6 +184,143 @@ When adding something like `RelationshipIndex`, the first instinct should be **`
 
 ---
 
+## Performance Characteristics
+
+Documented after a Collection rendering audit (2026). **No runtime changes implied** — this section records why the current architecture is acceptable today, what it assumes, and when to revisit.
+
+**Related:** [`SEARCH_ARCHITECTURE.md`](SEARCH_ARCHITECTURE.md) · [`COLLECTION_ARCHITECTURE_NOTES.md`](COLLECTION_ARCHITECTURE_NOTES.md) · [`TECH_DEBT.md`](TECH_DEBT.md) (future opportunities)
+
+### Why the current implementation is acceptable
+
+Shelfy’s catalog is currently on the order of **~343 series / ~2,435 figures** (Firestore reference data). User shelves are typically much smaller (tens to low hundreds of series). At these sizes, measured behavior is smooth: widget construction is lazy, pre-render work is linear over small `n`, and normal Collection browsing does not hit the network.
+
+The codebase intentionally favors **readable, predictable pipelines** over caching layers that would only pay off at substantially larger scale.
+
+### Collection rendering
+
+[`CollectionScreen`](../lib/features/collection/collection_screen.dart) uses a **`CustomScrollView`** with mixed slivers.
+
+**Main shelf list — lazy widget construction**
+
+- In-progress and Completed buckets each render via **`SliverList.builder`** when their section is expanded.
+- Feed rows are driven by a flat `List<ShelfFeedItem>` from [`buildShelfFeedItems`](../lib/features/collection/presentation/shelf_series_feed.dart); [`buildShelfFeedItemWidget`](../lib/features/collection/presentation/shelf_series_feed.dart) builds one header, gap, or [`SeriesShelfCard`](../lib/features/collection/widgets/series_shelf_cards.dart) per visible index.
+- Off-screen series cards are **not** built or laid out. This avoids eagerly constructing hundreds of shelf cards even when a user’s shelf is large.
+
+**Legacy path (not used on the main screen):** [`buildShelfSeriesFeed`](../lib/features/collection/presentation/shelf_series_feed.dart) returns eager `Column` trees — retained for tests only. Production uses `buildShelfFeedItems` + `SliverList.builder`.
+
+**Fixed chrome — always built**
+
+Search field, Summary, filter chip rails, bucket headers, and editorial copy sit in `SliverToBoxAdapter` (or small fixed `Column`s). Filter rails use horizontal `ListView.separated` (lazy per chip). This overhead is bounded and independent of shelf scroll depth.
+
+### Current eager pipeline (intentional tradeoff)
+
+Before any `SliverList.builder` item is built, `CollectionScreen.build()` runs a **single-pass browse pipeline** over the filtered shelf subset:
+
+| Stage | Location | Complexity |
+|-------|----------|------------|
+| Brand filtering | [`collection_shelf_brand_facets.dart`](../lib/features/collection/presentation/collection_shelf_brand_facets.dart) | O(n) shelf |
+| IP filtering | [`collection_shelf_ip_facets.dart`](../lib/features/collection/presentation/collection_shelf_ip_facets.dart) | O(n) shelf |
+| Search filtering | [`filterShelfSeriesBySearch`](../lib/features/collection/presentation/collection_shelf_browse.dart) | O(n) shelf; with active query, catalog match set is O(figures) |
+| Partition | [`partitionShelfSeries`](../lib/features/collection/presentation/collection_shelf_browse.dart) | O(n) shelf |
+| Sort (per bucket) | [`sortShelfSeriesForDisplay`](../lib/features/collection/presentation/collection_shelf_browse.dart) | O(n log n) typical; includes IP grouping for most sort modes |
+| Grouping + feed flatten | [`buildShelfFeedItems`](../lib/features/collection/presentation/shelf_series_feed.dart) | O(n) shelf; [`groupShelfSeriesByUniverse`](../lib/features/collection/presentation/shelf_series_feed.dart) + per-series progress/atmosphere |
+| Summary aggregation | [`CollectionAggregateStats.fromSnapshot`](../lib/features/collection/widgets/collection_summary_section.dart) → [`countShelfCompletionTiers`](../lib/features/collection/domain/series_completion_resolution.dart) | O(n) full shelf |
+| Editorial interpretation | [`shelf_emotional_providers.dart`](../lib/features/collection/application/shelf_emotional_providers.dart) (profile, relationship insights, whispers) | O(n) full shelf per rebuild |
+
+Search text is **debounced** (125 ms) so the pipeline does not re-run on every keystroke; filters, sort, collapse, and provider updates still trigger full pipeline runs.
+
+[`ShelfBrowseProgressLookup`](../lib/features/collection/domain/collection_domain.dart) memoizes per-series progress **within a single `build()`** — it does not persist across rebuilds.
+
+**This is an intentional tradeoff:** for current shelf sizes, O(n) work over the user’s shelf is cheap relative to the cost of extra caching, invalidation, and stale-state bugs. Code simplicity and correctness are preferred until profiling or usage proves otherwise.
+
+### Search
+
+Search V2 ([`lib/core/search/`](../lib/core/search/), [`CatalogSearchService`](../lib/features/catalog/search/catalog_search_service.dart)) performs **linear, in-memory matching** over the catalog bundle held in RAM.
+
+- Tokenization, normalization, and AND-matching scan figures (and derived series ids) synchronously on device.
+- No Elasticsearch, SQLite FTS, or remote search index in the local path.
+- **Acceptable today** at ~2.5k figures: scans complete in sub-frame time on target devices for typical queries.
+- Shelf-side search reuses [`catalogSearchServiceProvider`](../lib/features/catalog/application/catalog_bundle_provider.dart) when the bundle is loaded; custom rows fall back to display-field haystack matching.
+
+Future indexing (inverted index, trie, etc.) should be considered **only** if catalog size or profiling shows user-visible search latency — see [`TECH_DEBT.md`](TECH_DEBT.md).
+
+### Firestore architecture (browsing is memory-only)
+
+**Firestore is not queried during normal Collection browsing.**
+
+Runtime catalog flow:
+
+```
+Firestore
+  → persisted cache (Application Support, after successful sync)
+  → CatalogBundleCache (in-memory + stale-while-revalidate refresh)
+  → catalogBundleRevisionProvider / catalogBundleProvider
+  → catalogSearchServiceProvider, home feeds, shelf search, etc.
+  → UI
+```
+
+Collection shelf rows come from **`CollectionNotifier`** (SharedPreferences codec) — not Firestore. Filtering, sorting, grouping, and feed construction operate on in-memory shelf + catalog objects only. Network I/O is limited to catalog refresh TTL / user-initiated retry, not per-scroll or per-filter.
+
+### Growth assumptions
+
+The current implementation assumes:
+
+| Assumption | Order of magnitude (today) | Revisit when |
+|------------|----------------------------|--------------|
+| Catalog figures in memory | Low thousands (~2.5k) | Approaching **10k–20k+** figures or search latency in profiling |
+| User shelf series | Hundreds or less | Consistently **~1,000+** series per user |
+| Rebuild frequency | Moderate (filters, sort, debounced search, provider updates) | Rebuild work becomes **user-visible** (jank, frame drops) in profiling |
+| Editorial / summary work | Simple O(n) scans per rebuild | Interpretation logic grows substantially or runs hot in traces |
+
+These assumptions should be re-evaluated if product usage, catalog content, or power-user shelf sizes change significantly — not preemptively.
+
+### Engineering principle
+
+Shelfy intentionally avoids premature optimization. Performance work should be driven by **profiling and real-world usage** rather than hypothetical future scale. Until measurable bottlenecks appear, maintaining readable, predictable architecture is preferred over introducing additional complexity.
+
+### App-wide pipeline log prefixes
+
+Debug pipeline profilers share a naming convention via [`AppPipelinePrefix`](../lib/core/debug/app_pipeline_log.dart) and [`AppPipelineLog`](../lib/core/debug/app_pipeline_log.dart):
+
+| Prefix | Tab / surface | Status |
+|--------|----------------|--------|
+| `CollectionPipeline` | Collection shelf browse | **Shipped** — [`CollectionShelfPipelineTrace`](../lib/features/collection/debug/collection_shelf_pipeline_trace.dart) |
+| `MarketPipeline` | Market browse/search | Planned (legacy debug: `MarketSearch` in [`market_search_trace.dart`](../lib/features/market/debug/market_search_trace.dart)) |
+| `DiscoverPipeline` | Discover home | Planned |
+| `FeedPipeline` | Home feed assembly | Planned |
+
+**Log line shape:** `{Prefix} #{run} [{tag}] {message}`
+
+**Grep / filter:** `Pipeline` surfaces all tab profilers; narrow with `CollectionPipeline [search]`, `MarketPipeline [warn]`, etc.
+
+New pipeline traces should use `AppPipelineLog.line` + `AppPipelineLog.nextRun` so run ids and tags stay consistent across tabs.
+
+### Debug profiling (`CollectionPipeline`)
+
+In **debug builds only**, [`CollectionScreen`](../lib/features/collection/collection_screen.dart) wraps each browse-pipeline stage with [`CollectionShelfPipelineTrace`](../lib/features/collection/debug/collection_shelf_pipeline_trace.dart). Each rebuild gets a monotonic run id (`#12`) and bracket tags for Android Studio / logcat filtering:
+
+```text
+CollectionPipeline #12 [total] 7ms
+CollectionPipeline #12 [size] series=343 figures=2435 shelf=48 visible=48
+CollectionPipeline #12 [insights] 3.0ms
+CollectionPipeline #12 [filter] 1.0ms
+CollectionPipeline #12 [search] 4.0ms
+CollectionPipeline #12 [partition] 142us
+CollectionPipeline #12 [sort] 2.0ms
+CollectionPipeline #12 [feed] 1.0ms
+CollectionPipeline #12 [summary] 1.0ms
+```
+
+**Filter examples:** `CollectionPipeline` (all) · `CollectionPipeline [search]` · `CollectionPipeline [warn]` · `CollectionPipeline #12` (one run).
+
+When the pipeline exceeds a single-frame budget (**16 ms** total) or Search alone exceeds **150 ms**, debug logs add `[warn]` lines, e.g. `CollectionPipeline #12 [warn] exceeded 16ms (29ms)` or `CollectionPipeline #12 [warn] slow Search: 132ms`.
+
+Profile/release builds compile the trace to a no-op — no overhead on shipped apps.
+
+Use this when shelf or catalog growth makes performance questionable; compare stage ms against the triggers in [`TECH_DEBT.md`](TECH_DEBT.md) instead of guessing bottlenecks.
+
+---
+
 ## Market Identity Architecture
 
 ### Components (retained in codebase)
@@ -335,4 +472,4 @@ Future work: bug fixes, UX polish, catalog content expansion, performance profil
 
 ---
 
-*Last updated: 2026-06 — reflects runtime bootstrap catalog removal, catalog persistence sync, and provider propagation.*
+*Last updated: 2026-06 — reflects runtime bootstrap catalog removal, catalog persistence sync, provider propagation, and Performance Characteristics audit.*

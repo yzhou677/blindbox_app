@@ -15,3 +15,69 @@ Current status:
 **Impact:** None
 
 **Priority:** Cleanup when convenient.
+
+---
+
+## Future Performance Opportunities
+
+These are **not** current bugs. The Collection rendering audit (2026) confirmed the app is performant at today’s catalog (~343 series / ~2,435 figures) and typical shelf sizes. Entries below are documentation-only placeholders for when scale or profiling demands action.
+
+**Principle:** Do not implement preemptively. See [Performance Characteristics](ARCHITECTURE_NOTES.md#performance-characteristics) in `ARCHITECTURE_NOTES.md`.
+
+### Reuse grouped shelf sections
+
+**Description:** [`groupShelfSeriesByUniverse`](../lib/features/collection/presentation/shelf_series_feed.dart) runs in both [`sortShelfSeriesForDisplay`](../lib/features/collection/presentation/collection_shelf_browse.dart) (for alphabetical, figure-count, and completion sorts) and again in [`buildShelfFeedItems`](../lib/features/collection/presentation/shelf_series_feed.dart) per bucket — duplicate O(n) grouping on the same series list within one `build()`.
+
+**Expected benefit:** Fewer allocations and passes over the shelf when sort modes regroup by IP/universe; marginal at current sizes.
+
+**Current priority:** Low
+
+**Trigger for revisiting:** Collection sizes consistently exceed **~1,000 series**, or profiling shows grouping as a hot spot during filter/sort interactions.
+
+---
+
+### Search indexing
+
+**Description:** Search V2 ([`CatalogSearchService`](../lib/features/catalog/search/catalog_search_service.dart)) linearly scans in-memory catalog figures for token matches. No inverted index or FTS layer.
+
+**Expected benefit:** Sub-linear or cached lookups for very large catalogs; reduced CPU on every debounced shelf search and catalog browse query.
+
+**Current priority:** Low
+
+**Trigger for revisiting:** Catalog grows beyond approximately **10k–20k figures**, or profiling identifies search latency as user-visible (typing lag, frame drops after debounce).
+
+---
+
+### Memoize summary aggregates
+
+**Description:** [`countShelfCompletionTiers`](../lib/features/collection/domain/series_completion_resolution.dart) and [`CollectionAggregateStats.fromSnapshot`](../lib/features/collection/widgets/collection_summary_section.dart) recompute full-shelf completion metrics on every `CollectionScreen` rebuild, independent of scroll position.
+
+**Expected benefit:** Skip redundant O(n) shelf scans when only unrelated UI state changes (e.g. chip highlight) and snapshot is unchanged.
+
+**Current priority:** Low
+
+**Trigger for revisiting:** Profiling shows summary calculations as a **measurable** fraction of frame time, or shelf sizes grow large enough that duplicate scans matter.
+
+---
+
+### Cache editorial interpretation
+
+**Description:** [`shelfEmotionalProfileProvider`](../lib/features/collection/application/shelf_emotional_providers.dart), [`shelfRelationshipInsightsProvider`](../lib/features/collection/application/shelf_emotional_providers.dart), and related editorial providers re-run [`interpretShelf`](../lib/features/collection/application/shelf_emotional_interpreter.dart) / relationship analysis on every dependent rebuild.
+
+**Expected benefit:** Stable derived copy when snapshot unchanged; less CPU on filter/sort-only rebuilds.
+
+**Current priority:** Low
+
+**Trigger for revisiting:** Interpretation logic becomes **significantly more complex**, rebuild frequency increases (e.g. high-frequency provider churn), or traces show editorial work as hot.
+
+---
+
+### Feed pipeline optimization
+
+**Description:** The full browse pipeline in [`CollectionScreen.build`](../lib/features/collection/collection_screen.dart) — brand filter → IP filter → search → partition → sort → `buildShelfFeedItems` — executes on every rebuild that touches dependencies, not only when shelf data changes. Feed item lists are materialized eagerly even though `SliverList.builder` lazily builds widgets.
+
+**Expected benefit:** Fewer passes and allocations when toggling UI prefs; optional `select`/memoization on snapshot + filter/sort keys.
+
+**Current priority:** Low
+
+**Trigger for revisiting:** **Measured rebuild time** becomes user-visible (jank, dropped frames) in DevTools timeline or production-adjacent profiling — not before.

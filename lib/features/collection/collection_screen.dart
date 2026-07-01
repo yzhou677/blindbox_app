@@ -2,6 +2,10 @@ import 'dart:async';
 
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
+import 'package:blindbox_app/features/collection/debug/collection_shelf_pipeline_trace.dart';
+import 'package:blindbox_app/features/collection/domain/shelf_emotional_profile.dart';
+import 'package:blindbox_app/features/collection/domain/shelf_relationship_insight.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
@@ -226,42 +230,65 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final trace = CollectionShelfPipelineTrace.start();
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final snap = ref.watch(collectionNotifierProvider);
-    final profile = ref.watch(shelfEmotionalProfileProvider);
-    final insights = ref.watch(shelfRelationshipInsightsProvider);
-    final interpretationLine = ref.watch(shelfInterpretationLineProvider);
-    final memoryWhisper = ref.watch(shelfMemoryWhisperProvider);
-    final relationshipWhisper = ref.watch(shelfRelationshipWhisperProvider);
-    final collectorIdentity = ref.watch(collectorTypeIdentityProvider);
-    final sectionSubtitle = ShelfEditorialVoice.sectionSubtitle(
-      profile,
-      insights,
-    );
-    final brandFilterOptions = buildCollectionShelfBrandFilterOptions(
-      snap.shelfSeries,
-    );
-    final activeBrandFilterId = resolveCollectionBrandFilterSelection(
-      selectedBrandFilterId: _brandFilterId,
-      options: brandFilterOptions,
-    );
+
+    late final ShelfEmotionalProfile profile;
+    late final List<ShelfRelationshipInsight> insights;
+    late final String interpretationLine;
+    late final String? memoryWhisper;
+    late final String? relationshipWhisper;
+    late final CollectorTypeIdentity? collectorIdentity;
+    late final String? sectionSubtitle;
+    trace.sectionVoid('Insights', () {
+      profile = ref.watch(shelfEmotionalProfileProvider);
+      insights = ref.watch(shelfRelationshipInsightsProvider);
+      interpretationLine = ref.watch(shelfInterpretationLineProvider);
+      memoryWhisper = ref.watch(shelfMemoryWhisperProvider);
+      relationshipWhisper = ref.watch(shelfRelationshipWhisperProvider);
+      collectorIdentity = ref.watch(collectorTypeIdentityProvider);
+      sectionSubtitle = ShelfEditorialVoice.sectionSubtitle(
+        profile,
+        insights,
+      );
+    });
+
+    late final List<CollectionBrandFilterOption> brandFilterOptions;
+    late final String activeBrandFilterId;
+    late final List<ShelfSeries> brandFiltered;
+    late final List<CollectionIpFilterOption> ipFilterOptions;
+    late final String activeIpFilterId;
+    late final List<ShelfSeries> visible;
+    trace.sectionVoid('Filter', () {
+      brandFilterOptions = buildCollectionShelfBrandFilterOptions(
+        snap.shelfSeries,
+      );
+      activeBrandFilterId = resolveCollectionBrandFilterSelection(
+        selectedBrandFilterId: _brandFilterId,
+        options: brandFilterOptions,
+      );
+      brandFiltered = shelfSeriesVisibleForBrandFilter(
+        snap.shelfSeries,
+        activeBrandFilterId,
+      );
+      ipFilterOptions = buildCollectionShelfIpFilterOptions(brandFiltered);
+      activeIpFilterId = resolveCollectionIpFilterSelection(
+        selectedIpFilterId: _ipFilterId,
+        options: ipFilterOptions,
+      );
+      visible = shelfSeriesVisibleForIpFilter(
+        brandFiltered,
+        activeIpFilterId,
+      );
+    });
     if (activeBrandFilterId != _brandFilterId) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         setState(() => _brandFilterId = activeBrandFilterId);
       });
     }
-
-    final brandFiltered = shelfSeriesVisibleForBrandFilter(
-      snap.shelfSeries,
-      activeBrandFilterId,
-    );
-    final ipFilterOptions = buildCollectionShelfIpFilterOptions(brandFiltered);
-    final activeIpFilterId = resolveCollectionIpFilterSelection(
-      selectedIpFilterId: _ipFilterId,
-      options: ipFilterOptions,
-    );
     if (activeIpFilterId != _ipFilterId) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -269,57 +296,70 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       });
     }
 
-    final visible = shelfSeriesVisibleForIpFilter(
-      brandFiltered,
-      activeIpFilterId,
-    );
-
     // Browse pipeline: brand → IP → search → partition → sort each bucket.
     final shelfUiPrefs = ref.watch(collectionShelfUiPrefsProvider);
     final catalog = ref.watch(catalogBundleProvider).valueOrNull;
     final catalogSearch = ref.watch(catalogSearchServiceProvider);
     final progressLookup = ShelfBrowseProgressLookup(snap.figureStates);
-    final searched = filterShelfSeriesBySearch(
-      visible,
-      _debouncedSearchQuery,
-      catalog: catalog,
-      catalogSearch: catalogSearch,
+    final searched = trace.section(
+      'Search',
+      () => filterShelfSeriesBySearch(
+        visible,
+        _debouncedSearchQuery,
+        catalog: catalog,
+        catalogSearch: catalogSearch,
+      ),
     );
-    final (inProgressRaw, completedRaw) = partitionShelfSeries(
-      searched,
-      snap.figureStates,
-      progress: progressLookup,
+    final (inProgressRaw, completedRaw) = trace.section(
+      'Partition',
+      () => partitionShelfSeries(
+        searched,
+        snap.figureStates,
+        progress: progressLookup,
+      ),
     );
-    final inProgress = sortShelfSeriesForDisplay(
-      inProgressRaw,
-      shelfUiPrefs.sort,
-      snap.figureStates,
-      progress: progressLookup,
-    );
-    final completed = sortShelfSeriesForDisplay(
-      completedRaw,
-      shelfUiPrefs.sort,
-      snap.figureStates,
-      progress: progressLookup,
-    );
+    late final List<ShelfSeries> inProgress;
+    late final List<ShelfSeries> completed;
+    trace.sectionVoid('Sort', () {
+      inProgress = sortShelfSeriesForDisplay(
+        inProgressRaw,
+        shelfUiPrefs.sort,
+        snap.figureStates,
+        progress: progressLookup,
+      );
+      completed = sortShelfSeriesForDisplay(
+        completedRaw,
+        shelfUiPrefs.sort,
+        snap.figureStates,
+        progress: progressLookup,
+      );
+    });
     final collapsedIpKeys = shelfUiPrefs.collapsedIpSectionKeys;
-    final inProgressFeed = buildShelfFeedItems(
-      context: context,
-      series: inProgress,
-      figureStates: snap.figureStates,
-      profile: profile,
-      collapseBucketKey: shelfCollapseBucketInProgress,
-      collapsedSectionKeys: collapsedIpKeys,
-      progress: progressLookup,
-    );
-    final completedFeed = buildShelfFeedItems(
-      context: context,
-      series: completed,
-      figureStates: snap.figureStates,
-      profile: profile,
-      collapseBucketKey: shelfCollapseBucketCompleted,
-      collapsedSectionKeys: collapsedIpKeys,
-      progress: progressLookup,
+    late final List<ShelfFeedItem> inProgressFeed;
+    late final List<ShelfFeedItem> completedFeed;
+    trace.sectionVoid('Feed', () {
+      inProgressFeed = buildShelfFeedItems(
+        context: context,
+        series: inProgress,
+        figureStates: snap.figureStates,
+        profile: profile,
+        collapseBucketKey: shelfCollapseBucketInProgress,
+        collapsedSectionKeys: collapsedIpKeys,
+        progress: progressLookup,
+      );
+      completedFeed = buildShelfFeedItems(
+        context: context,
+        series: completed,
+        figureStates: snap.figureStates,
+        profile: profile,
+        collapseBucketKey: shelfCollapseBucketCompleted,
+        collapsedSectionKeys: collapsedIpKeys,
+        progress: progressLookup,
+      );
+    });
+    final summaryStats = trace.section(
+      'Summary',
+      () => CollectionAggregateStats.fromSnapshot(snap),
     );
     final brandFilterExhausted = brandFiltered.isEmpty;
     final ipFilterExhausted = !brandFilterExhausted && visible.isEmpty;
@@ -329,6 +369,13 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     final showCompletedSection = completed.isNotEmpty;
 
     if (snap.trackedSeriesCount == 0) {
+      trace.finish(
+        shelfSeries: 0,
+        visibleSeries: 0,
+        catalogSeries: catalog?.series.length,
+        catalogFigures: catalog?.figures.length,
+        note: 'empty shelf',
+      );
       return Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: CustomScrollView(
@@ -360,7 +407,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       );
     }
 
-    return Scaffold(
+    final scaffold = Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: CustomScrollView(
         controller: _scrollController,
@@ -412,7 +459,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
             ),
           SliverToBoxAdapter(
             child: CollectionSummarySection(
-              stats: CollectionAggregateStats.fromSnapshot(snap),
+              stats: summaryStats,
               shelfMoodLine: interpretationLine.isNotEmpty
                   ? interpretationLine
                   : CollectionSummaryEditorial.shelfMoodLine(snap),
@@ -609,6 +656,13 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
         ],
       ),
     );
+    trace.finish(
+      shelfSeries: snap.shelfSeries.length,
+      visibleSeries: searched.length,
+      catalogSeries: catalog?.series.length,
+      catalogFigures: catalog?.figures.length,
+    );
+    return scaffold;
   }
 }
 
