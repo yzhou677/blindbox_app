@@ -17,9 +17,9 @@ It focuses on an image-first, calm browsing experience with local-first collecti
 
 ## What The App Includes
 
-- `Collection` tab: your private shelf, custom series, figure status tracking
-- `Discover` tab: catalog browsing and release-style exploration
-- `Market` tab: listing browse/search (separate from catalog content)
+- `Collection` tab: local-first shelf, custom series, wishlist/owned states, completion tiers (`Completed Series`, `Master Complete`), Summary, and Insights
+- `Discover` tab: Firestore-backed catalog browse, release rails, and shared token-based search (Search V2)
+- `Market` tab: live eBay browse/search via Firebase gateway (separate from catalog content)
 
 Bottom tab order and cold start are currently:
 
@@ -137,7 +137,15 @@ dart run flutter_native_splash:create
 
 ## Additional Docs
 
+**Architecture & testing**
+
+- [Catalog architecture](./docs/CATALOG_ARCHITECTURE.md)
+- [Search architecture](./docs/SEARCH_ARCHITECTURE.md)
+- [Testing notes](./docs/TESTING.md)
 - [Project overview](./docs/PROJECT_OVERVIEW.md)
+
+**Product & release**
+
 - [Release candidate test plan](./docs/release_candidate_test_plan.md)
 - [Collectible immersive presentation](./docs/COLLECTIBLE_IMMERSIVE_PRESENTATION.md)
 - [Collectible market intelligence](./docs/COLLECTIBLE_MARKET_INTELLIGENCE.md)

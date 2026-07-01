@@ -1,7 +1,8 @@
 # Blind Box Collection App
 
 > **Implementation architecture (current codebase):** see [`.cursor/ARCHITECTURE.md`](../.cursor/ARCHITECTURE.md).  
-> **Stack as built today:** collection persistence uses **SharedPreferences** (not Hive/Isar); market HTTP uses the **`http`** package (Dio is not in use).
+> **Stack as built today:** collection persistence uses **SharedPreferences** (not Hive/Isar); market HTTP uses the **`http`** package (Dio is not in use).  
+> **Deep dives:** [Catalog architecture](./CATALOG_ARCHITECTURE.md) · [Search architecture](./SEARCH_ARCHITECTURE.md) · [Testing notes](./TESTING.md)
 
 ## Project Goal
 
@@ -28,12 +29,12 @@ The goal is to help users:
 
 # Core Features
 
-## 1. Latest Drops Feed
+## 1. Discover (Home)
 
-A visual feed showing newly released collectibles.
+A visual discovery surface built on the **read-only catalog universe** (Firestore `brands` / `ips` / `series` / `figures`).
 
-Each item includes:
-- image
+Each release-style row includes:
+- image (`imageKey` → resolver)
 - name
 - series
 - brand
@@ -44,29 +45,30 @@ UI style:
 - rounded corners
 - soft shadows
 - modern minimal spacing
-- horizontal scrolling sections
+- horizontal scrolling sections (latest releases, official drops, trending)
 
-This data can initially come from:
-- local mock JSON
-- Firebase later
-
-No complex backend required for MVP.
+Catalog runtime:
+- Firestore is authoritative at runtime; a persisted disk cache provides offline baseline after first successful sync
+- Shared **Search V2** (token-based, deterministic) across catalog browse, Add Series, Collection search, and related surfaces
+- See [Catalog architecture](./CATALOG_ARCHITECTURE.md) and [Search architecture](./SEARCH_ARCHITECTURE.md)
 
 ---
 
 ## 2. Market Section
 
-Display market information from marketplace providers (bundled demo feed today; Mercari planned; eBay adapter retained).
+Live marketplace browse via **eBay Browse API** through the Firebase market gateway (`functions/` + client `MarketSource`).
 
-Features:
-- search collectibles
-- current market listings
-- average prices
-- trending collectibles
+Features (shipped):
+- keyword search and brand/IP filters
+- paginated listing browse
+- listing detail with external “View on eBay”
+- price sorting on browse (search stays relevance-first)
 
-This section should feel lightweight and fast.
+Mercari gateway code remains in-repo for internal sandbox use but is **paused for Product** — see [`MERCARI_SANDBOX.md`](./MERCARI_SANDBOX.md).
 
-Not intended to be a full marketplace.
+Market listings are a **separate universe** from catalog reference data and shelf state.
+
+This section should feel lightweight and fast — not a full marketplace.
 
 ---
 
@@ -77,11 +79,16 @@ Local-first collection tracking.
 No login required for MVP.
 
 Users can:
-- add collectibles
-- track quantities
-- save purchase price
-- mark owned items
-- add notes
+- add catalog series or custom series to the shelf
+- track owned vs wishlist figure states
+- save purchase price and notes
+- use custom series with canonical taxonomy fields
+- filter and sort the shelf (brand, IP, completion-oriented browse)
+
+Collection intelligence (shipped):
+- **Summary** — Figures, Wishlist, Completed Series, Master Complete
+- **Insights** — at-a-glance progress, collector type reveal, editorial tone
+- **Completion tiers** — regular series complete vs all secrets owned (`Master Complete`)
 
 Local persistence (implemented):
 - **SharedPreferences** — `CollectionSnapshot` encoded via `collection_snapshot_codec` (schema v2)
@@ -122,11 +129,11 @@ Prioritize:
 
 # Navigation
 
-Use Bottom Navigation with 3 tabs:
+Bottom navigation with 3 tabs (cold start on Collection):
 
-1. Home
-2. Market
-3. Collection
+1. **Collection**
+2. **Discover**
+3. **Market**
 
 ---
 
@@ -144,11 +151,14 @@ go_router
 ## Local Storage
 SharedPreferences (collection snapshot codec)
 
+## Backend (catalog-only)
+Firebase Firestore + Storage for read-only catalog metadata and art resolution — not shelf sync
+
 ## Networking
-`http` package (optional eBay Browse adapter in `features/market/data/`)
+`http` package — eBay gateway client in `features/market/data/`; Firebase Functions for market gateway
 
 ## Image Caching
-cached_network_image
+cached_network_image; catalog art via `CatalogImageResolver` (`imageKey` only in UI)
 
 ---
 
@@ -156,13 +166,20 @@ cached_network_image
 
 Current folder structure:
 
+```text
 lib/
   core/           # router, theme, layout, Firebase init
   features/       # catalog, collection, home, market (primary slices)
-  models/         # legacy shared presentation models
+  models/         # legacy shared presentation models (frozen)
   shared/widgets/ # cross-feature UI only
+```
 
 See [`.cursor/ARCHITECTURE.md`](../.cursor/ARCHITECTURE.md) for boundaries (catalog vs shelf vs market).
+
+Three universes — do not mix:
+- **Catalog** — read-only reference
+- **Collection** — user-private shelf
+- **Market / Home** — listings and discovery surfaces
 
 Use:
 - repository pattern
@@ -201,16 +218,16 @@ Animations:
 DO NOT overbuild.
 
 MVP should only include:
-- latest releases
-- market listings
-- local collection tracking
+- catalog-backed discovery
+- live market listings (eBay)
+- local collection tracking with completion and insights surfaces
 
 No:
 - social features
 - chat
 - comments
 - authentication
-- cloud sync
+- cloud sync of shelf
 - payments
 
 ---
@@ -274,30 +291,21 @@ Text should support the visuals, not dominate the screen.
 
 ## Current Backend Status
 
-The app currently runs on local mock/demo data.
+**Catalog:** Firestore + Storage (read-only); offline disk cache after sync; Search V2 over in-memory bundle.
 
-Architecture has been prepared for backend integration:
-- feature-based structure
-- Riverpod state management
-- separation between presentation / domain / data
-- reusable filtering and taxonomy models
+**Collection:** SharedPreferences codec only — local-first, no Firestore sync.
 
-Next integration target:
-- **eBay Browse API** (official) — OAuth, wire mapping, production `MarketSource`
-- search listings, pricing, sorting via stable provider contracts
-- Mercari gateway path retained in-repo but **paused** (no Product live; see `docs/MERCARI_SANDBOX.md`)
+**Market:** eBay Browse via Firebase gateway is the live Product path. Mercari gateway retained but paused.
 
-## Planned API Integration
+**Docs to read before changing runtime behavior:**
+- [Catalog architecture](./CATALOG_ARCHITECTURE.md)
+- [Search architecture](./SEARCH_ARCHITECTURE.md)
+- [eBay gateway](./EBAY_GATEWAY.md)
+- [Testing notes](./TESTING.md)
 
-First **Product** live provider:
-- **eBay Browse API** (official developer program)
+## Integration Roadmap (future)
 
-Retained but paused (internal architecture only):
-- Mercari gateway sandbox (`functions/` + `MARKET_SANDBOX_MERCARI` flag)
-
-Planned capabilities:
-- keyword search
-- brand/IP filtering
-- listing price sorting
-- trending market feed
-- sold/completed price research (future)
+Possible next capabilities (not all shipped):
+- sold/completed price research
+- additional official marketplace providers beyond eBay
+- optional account/sync for shelf (explicit product decision required)
