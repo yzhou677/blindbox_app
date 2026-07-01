@@ -68,8 +68,6 @@ void main() {
               ),
               home: Scaffold(
                 body: CollectionInsightsDashboard(
-                  expanded: false,
-                  onExpandedChanged: (_) {},
                   stats: entry.value,
                 ),
               ),
@@ -134,8 +132,6 @@ void main() {
           theme: AppTheme.light(),
           home: Scaffold(
             body: CollectionInsightsDashboard(
-              expanded: false,
-              onExpandedChanged: (_) {},
               stats: absurd,
             ),
           ),

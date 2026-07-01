@@ -39,20 +39,14 @@ void main() {
     });
   });
 
-  testWidgets('collapsed dashboard shows compact glyphs after morph', (
-    tester,
-  ) async {
+  testWidgets('collapsed dashboard shows compact glyphs at rest', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: ThemeData(
           extensions: [CollectibleTokens.forBrightness(Brightness.light)],
         ),
         home: Scaffold(
-          body: CollectionInsightsDashboard(
-            expanded: false,
-            onExpandedChanged: (_) {},
-            stats: stats,
-          ),
+          body: CollectionInsightsDashboard(stats: stats),
         ),
       ),
     );
@@ -79,7 +73,9 @@ void main() {
         theme: ThemeData(
           extensions: [CollectibleTokens.forBrightness(Brightness.light)],
         ),
-        home: const _ExpandableDashboardHarness(stats: stats),
+        home: Scaffold(
+          body: CollectionInsightsDashboard(stats: stats),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -88,8 +84,7 @@ void main() {
 
     await tester.tap(find.byKey(const Key('collection_insights_dashboard_toggle')));
     await tester.pump();
-    await tester.pump(CollectibleMotion.insightsGlanceMorph);
-    await tester.pump(CollectibleMotion.sectionReveal);
+    await tester.pump(CollectibleMotion.insightsDashboardTransition);
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(find.text(CollectionSummaryLabels.wishlist), findsOneWidget);
@@ -104,42 +99,62 @@ void main() {
         theme: ThemeData(
           extensions: [CollectibleTokens.forBrightness(Brightness.light)],
         ),
-        home: const _ExpandableDashboardHarness(stats: stats),
+        home: Scaffold(
+          body: CollectionInsightsDashboard(stats: stats),
+        ),
       ),
     );
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('collection_insights_compact_glance')));
     await tester.pump();
-    await tester.pump(CollectibleMotion.insightsGlanceMorph);
-    await tester.pump(CollectibleMotion.sectionReveal);
+    await tester.pump(CollectibleMotion.insightsDashboardTransition);
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(find.text(CollectionSummaryLabels.wishlist), findsOneWidget);
   });
-}
 
-class _ExpandableDashboardHarness extends StatefulWidget {
-  const _ExpandableDashboardHarness({required this.stats});
-
-  final CollectionAggregateStats stats;
-
-  @override
-  State<_ExpandableDashboardHarness> createState() =>
-      _ExpandableDashboardHarnessState();
-}
-
-class _ExpandableDashboardHarnessState extends State<_ExpandableDashboardHarness> {
-  bool _expanded = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: CollectionInsightsDashboard(
-        expanded: _expanded,
-        onExpandedChanged: (value) => setState(() => _expanded = value),
-        stats: widget.stats,
+  testWidgets('expand and collapse transitions do not overflow layout', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(
+          extensions: [CollectibleTokens.forBrightness(Brightness.light)],
+        ),
+        home: Scaffold(
+          body: CollectionInsightsDashboard(
+            stats: stats,
+            shelfMoodLine: 'Your collection is quietly taking shape.',
+            memoryWhisper: 'A gentle milestone on the shelf.',
+            collectorTypeName: 'Curator',
+            onInsightsTap: () {},
+          ),
+        ),
       ),
     );
-  }
+    await tester.pumpAndSettle();
+
+    Future<void> pumpTransitionFrames() async {
+      var elapsed = 0;
+      const step = 16;
+      final total =
+          CollectibleMotion.insightsDashboardTransition.inMilliseconds;
+      while (elapsed <= total) {
+        await tester.pump(const Duration(milliseconds: step));
+        expect(tester.takeException(), isNull);
+        elapsed += step;
+      }
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    }
+
+    await tester.tap(find.byKey(const Key('collection_insights_dashboard_toggle')));
+    await tester.pump();
+    await pumpTransitionFrames();
+
+    await tester.tap(find.byKey(const Key('collection_insights_dashboard_toggle')));
+    await tester.pump();
+    await pumpTransitionFrames();
+  });
 }

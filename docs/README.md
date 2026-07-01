@@ -7,7 +7,7 @@ Human-oriented notes for the Blindbox app. **Agent rules and architecture live u
 - [`CATALOG_ARCHITECTURE.md`](CATALOG_ARCHITECTURE.md) — **canonical** catalog spec (Firestore → cache → providers, Search V2, availability UX)
 - [`SEARCH_ARCHITECTURE.md`](SEARCH_ARCHITECTURE.md) — **canonical** search spec (normalization, token AND, haystack, ranking)
 - [`PROJECT_OVERVIEW.md`](PROJECT_OVERVIEW.md) — product goals and feature outline
-- [`ARCHITECTURE_NOTES.md`](ARCHITECTURE_NOTES.md) — recent architecture decisions (catalog sync, market identity, figure IDs, brand/IP rules, collection scope)
+- [`ARCHITECTURE_NOTES.md`](ARCHITECTURE_NOTES.md) — recent architecture decisions (catalog sync, market identity, figure IDs, brand/IP rules, collection scope, **dashboard performance baseline**)
 - [`KNOWN_RUNTIME_NOTES.md`](KNOWN_RUNTIME_NOTES.md) — logcat / debug noise vs actionable failures (Firebase, images, Android)
 - [`TESTING.md`](TESTING.md) — emulator smoke scripts, ADB `input text` (`%s` for spaces)
 - [`TECH_DEBT.md`](TECH_DEBT.md) — non-blocking debt items (analyzer warnings, cleanup when convenient)

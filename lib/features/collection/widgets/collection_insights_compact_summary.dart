@@ -1,6 +1,4 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
-import 'package:blindbox_app/core/theme/app_typography.dart';
-import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/core/theme/collectible_shape.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_summary_editorial.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
@@ -32,7 +30,9 @@ class CollectionInsightsCompactMetric {
 abstract final class CollectionInsightsCompactSummaryFormat {
   CollectionInsightsCompactSummaryFormat._();
 
-  static List<CollectionInsightsCompactMetric> metrics(CollectionAggregateStats stats) {
+  static List<CollectionInsightsCompactMetric> metrics(
+    CollectionAggregateStats stats,
+  ) {
     return [
       CollectionInsightsCompactMetric(
         count: stats.inCollection,
@@ -60,6 +60,7 @@ abstract final class CollectionInsightsCompactSummaryFormat {
 
   /// Compact crown glyph — emoji reads better than icon font at this size.
   static const masterCompleteGlyph = '👑';
+
   static String semanticsLabel(CollectionAggregateStats stats) {
     return '${stats.inCollection} ${CollectionVocabulary.figures}, '
         '${stats.completedSeriesCount} ${CollectionVocabulary.completedSeries}, '
@@ -67,114 +68,61 @@ abstract final class CollectionInsightsCompactSummaryFormat {
   }
 }
 
-/// Collapsed achievement summary — morphs between labeled glance and compact glyphs.
-class CollectionInsightsCompactSummary extends StatefulWidget {
+/// Collapsed achievement summary — morph progress driven by parent animation.
+class CollectionInsightsCompactSummary extends StatelessWidget {
   const CollectionInsightsCompactSummary({
     super.key,
     required this.stats,
     required this.onTap,
-    this.morphOnMount = true,
+    required this.compactT,
+    required this.valueStyle,
+    required this.labelStyle,
+    required this.glyphColor,
   });
 
   final CollectionAggregateStats stats;
   final VoidCallback onTap;
 
-  /// When true, plays labeled → compact morph after the collapsed card appears.
-  final bool morphOnMount;
-
-  @override
-  State<CollectionInsightsCompactSummary> createState() =>
-      CollectionInsightsCompactSummaryState();
-}
-
-class CollectionInsightsCompactSummaryState
-    extends State<CollectionInsightsCompactSummary>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _morph;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: CollectibleMotion.insightsGlanceMorph,
-    );
-    _morph = CurvedAnimation(
-      parent: _controller,
-      curve: CollectibleMotion.easeOut,
-      reverseCurve: CollectibleMotion.easeIn,
-    );
-    if (widget.morphOnMount) {
-      _controller.forward();
-    } else {
-      _controller.value = 1;
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  /// Morph compact glyphs back to labeled glance (before expanding dashboard).
-  Future<void> animateToGlance() {
-    return _controller.reverse();
-  }
+  /// `0` = labeled glance, `1` = compact glyphs.
+  final double compactT;
+  final TextStyle valueStyle;
+  final TextStyle labelStyle;
+  final Color glyphColor;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    final metrics = CollectionInsightsCompactSummaryFormat.metrics(widget.stats);
-    final valueStyle = AppTypography.insightsTotals(textTheme, scheme).copyWith(
-      height: 1.0,
-      color: scheme.onSurface.withValues(alpha: 0.9),
+    final metrics = CollectionInsightsCompactSummaryFormat.metrics(stats);
+    final row = Row(
+      children: [
+        for (var i = 0; i < metrics.length; i++) ...[
+          if (i > 0) const SizedBox(width: 4),
+          Expanded(
+            child: _MorphMetricColumn(
+              metric: metrics[i],
+              compactT: compactT,
+              valueStyle: valueStyle,
+              labelStyle: labelStyle,
+              glyphColor: glyphColor,
+            ),
+          ),
+        ],
+      ],
     );
-    final labelStyle = AppTypography.deckText(textTheme, scheme).copyWith(
-      fontSize: 11.5,
-      fontWeight: FontWeight.w500,
-      height: 1.18,
-      color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
-    );
-    final glyphColor = scheme.primary.withValues(alpha: 0.82);
 
     return Semantics(
       button: true,
-      label: CollectionInsightsCompactSummaryFormat.semanticsLabel(widget.stats),
+      label: CollectionInsightsCompactSummaryFormat.semanticsLabel(stats),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           key: const Key('collection_insights_compact_glance'),
-          onTap: widget.onTap,
+          onTap: onTap,
           borderRadius: BorderRadius.vertical(
             top: CollectibleShape.shellRadius.topLeft,
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-            child: AnimatedBuilder(
-              animation: _morph,
-              builder: (context, child) {
-                final t = _morph.value;
-                return Row(
-                  children: [
-                    for (var i = 0; i < metrics.length; i++) ...[
-                      if (i > 0) const SizedBox(width: 4),
-                      Expanded(
-                        child: _MorphMetricColumn(
-                          metric: metrics[i],
-                          compactT: t,
-                          valueStyle: valueStyle,
-                          labelStyle: labelStyle,
-                          glyphColor: glyphColor,
-                        ),
-                      ),
-                    ],
-                  ],
-                );
-              },
-            ),
+            child: row,
           ),
         ),
       ),
