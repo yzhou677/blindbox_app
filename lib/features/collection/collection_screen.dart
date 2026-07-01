@@ -27,6 +27,7 @@ import 'package:blindbox_app/features/catalog/search/catalog_search_service.dart
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_browse.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_empty_state.dart';
+import 'package:blindbox_app/features/collection/widgets/collection_insights_dashboard.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_summary_section.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_warm_start_banner.dart';
 import 'package:blindbox_app/features/collection/widgets/series_figures_sheet.dart';
@@ -61,6 +62,9 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
 
   /// Debounced query for the browse pipeline — text field updates immediately.
   String _debouncedSearchQuery = '';
+
+  /// Session-only expanded state for the insights dashboard (search stays fixed).
+  bool _insightsDashboardExpanded = false;
 
   @override
   void initState() {
@@ -458,7 +462,10 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               child: SizedBox(height: FeedRhythm.collectionSearchToSummaryGap),
             ),
           SliverToBoxAdapter(
-            child: CollectionSummarySection(
+            child: CollectionInsightsDashboard(
+              expanded: _insightsDashboardExpanded,
+              onExpandedChanged: (expanded) =>
+                  setState(() => _insightsDashboardExpanded = expanded),
               stats: summaryStats,
               shelfMoodLine: interpretationLine.isNotEmpty
                   ? interpretationLine

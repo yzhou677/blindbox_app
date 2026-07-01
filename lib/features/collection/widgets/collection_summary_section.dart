@@ -42,6 +42,12 @@ class CollectionSummarySection extends StatelessWidget {
     this.memoryWhisper,
     this.onInsightsTap,
     this.collectorTypeName,
+    this.padding = const EdgeInsets.fromLTRB(
+      AppSpacing.pageHorizontal,
+      0,
+      AppSpacing.pageHorizontal,
+      FeedRhythm.collectionSummaryToShelfHeader,
+    ),
   });
 
   final CollectionAggregateStats stats;
@@ -49,6 +55,7 @@ class CollectionSummarySection extends StatelessWidget {
   final String? memoryWhisper;
   final VoidCallback? onInsightsTap;
   final String? collectorTypeName;
+  final EdgeInsetsGeometry padding;
 
   @override
   Widget build(BuildContext context) {
@@ -57,12 +64,7 @@ class CollectionSummarySection extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.pageHorizontal,
-        0,
-        AppSpacing.pageHorizontal,
-        FeedRhythm.collectionSummaryToShelfHeader,
-      ),
+      padding: padding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
