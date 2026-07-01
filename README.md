@@ -6,13 +6,18 @@ It focuses on an image-first, calm browsing experience with local-first collecti
 ## Demo
 
 <p align="center">
-  <a href="https://youtu.be/yJ6qO82F5Zs">
-    <img src="https://img.youtube.com/vi/yJ6qO82F5Zs/hqdefault.jpg" alt="Shelfy app demo" width="480">
+  <a href="https://youtu.be/b30h-5_n_fA">
+    <img
+      src="https://img.youtube.com/vi/b30h-5_n_fA/hqdefault.jpg"
+      alt="Shelfy V1 Preview"
+      width="480">
   </a>
 </p>
 
 <p align="center">
-  <a href="https://youtu.be/yJ6qO82F5Zs"><strong>▶ Watch Shelfy Demo on YouTube</strong></a>
+  <a href="https://youtu.be/b30h-5_n_fA">
+    <strong>▶ Watch Shelfy V1 Preview on YouTube</strong>
+  </a>
 </p>
 
 ## What The App Includes
