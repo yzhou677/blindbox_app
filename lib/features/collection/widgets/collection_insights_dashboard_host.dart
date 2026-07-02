@@ -13,8 +13,16 @@ class CollectionInsightsDashboardHost extends ConsumerWidget {
 
   final VoidCallback? onInsightsTap;
 
+  /// Test-only rebuild counter for search typing perf regression.
+  @visibleForTesting
+  static int debugBuildCount = 0;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    assert(() {
+      debugBuildCount++;
+      return true;
+    }());
     final inputs = ref.watch(collectionInsightsDashboardInputsProvider);
     return CollectionInsightsDashboard(
       stats: inputs.stats,

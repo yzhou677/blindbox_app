@@ -46,12 +46,6 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
   final _search = TextEditingController();
 
   @override
-  void initState() {
-    super.initState();
-    _search.addListener(() => setState(() {}));
-  }
-
-  @override
   void dispose() {
     _search.dispose();
     super.dispose();
@@ -59,7 +53,16 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
 
   String get _trimmedQuery => _search.text.trim();
 
-  bool get _hasSearchText => _trimmedQuery.isNotEmpty;
+  /// Live catalog search — one rebuild per query change (no debounce).
+  void _onSearchChanged(String _) {
+    setState(() {});
+  }
+
+  void _clearSearch() {
+    final hadText = _search.text.isNotEmpty;
+    _search.clear();
+    if (hadText) setState(() {});
+  }
 
   void _recordSearch(String query) {
     final q = query.trim();
@@ -140,21 +143,22 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
               controller: _search,
               padding: EdgeInsets.zero,
               hintText: SearchPlaceholders.localCatalog,
-              onChanged: (_) => setState(() {}),
+              onChanged: _onSearchChanged,
               onSubmitted: () => _recordSearch(_trimmedQuery),
-              suffixIcon: !_hasSearchText
-                  ? null
-                  : IconButton(
-                      tooltip: 'Clear',
-                      icon: Icon(
-                        Icons.close_rounded,
-                        color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
-                      ),
-                      onPressed: () {
-                        _search.clear();
-                        setState(() {});
-                      },
+              suffixIcon: ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _search,
+                builder: (context, value, _) {
+                  if (value.text.isEmpty) return const SizedBox.shrink();
+                  return IconButton(
+                    tooltip: 'Clear',
+                    icon: Icon(
+                      Icons.close_rounded,
+                      color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
                     ),
+                    onPressed: _clearSearch,
+                  );
+                },
+              ),
             ),
             if (catalogActive)
               Padding(

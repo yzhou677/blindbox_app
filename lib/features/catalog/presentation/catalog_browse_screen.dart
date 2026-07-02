@@ -23,6 +23,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class CatalogBrowseScreen extends ConsumerStatefulWidget {
   const CatalogBrowseScreen({super.key});
 
+  /// Test-only rebuild counter for search typing regression.
+  @visibleForTesting
+  static int debugBuildCount = 0;
+
   @override
   ConsumerState<CatalogBrowseScreen> createState() =>
       _CatalogBrowseScreenState();
@@ -32,19 +36,25 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
   final _search = TextEditingController();
 
   @override
-  void initState() {
-    super.initState();
-    _search.addListener(() => setState(() {}));
-  }
-
-  @override
   void dispose() {
     _search.dispose();
     super.dispose();
   }
 
   String get _trimmedQuery => _search.text.trim();
+
   bool get _hasSearchText => _trimmedQuery.isNotEmpty;
+
+  /// Live catalog search — one rebuild per query change (no debounce).
+  void _onSearchChanged(String _) {
+    setState(() {});
+  }
+
+  void _clearSearch() {
+    final hadText = _search.text.trim().isNotEmpty;
+    _search.clear();
+    if (hadText) setState(() {});
+  }
 
   void _recordSearch(String query) {
     final q = query.trim();
@@ -101,6 +111,10 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
 
   @override
   Widget build(BuildContext context) {
+    assert(() {
+      CatalogBrowseScreen.debugBuildCount++;
+      return true;
+    }());
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final bundleAsync = ref.watch(catalogBundleProvider);
@@ -199,10 +213,9 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
       hintText: SearchPlaceholders.localCatalog,
       emptyPrompt: 'Search by series, figure, or IP.',
       controller: _search,
-      hasSearchText: _hasSearchText,
-      onChanged: (_) => setState(() {}),
+      onChanged: _onSearchChanged,
       onSubmitted: () => _recordSearch(_trimmedQuery),
-      onClear: _search.clear,
+      onClear: _clearSearch,
       historySection: historySection,
       results: results,
     );

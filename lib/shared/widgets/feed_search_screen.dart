@@ -28,7 +28,6 @@ class FeedSearchScreen extends StatelessWidget {
     required this.hintText,
     required this.emptyPrompt,
     required this.controller,
-    required this.hasSearchText,
     required this.results,
     this.onChanged,
     this.onClear,
@@ -41,7 +40,6 @@ class FeedSearchScreen extends StatelessWidget {
   final String hintText;
   final String emptyPrompt;
   final TextEditingController controller;
-  final bool hasSearchText;
   final Widget results;
   final ValueChanged<String>? onChanged;
   final VoidCallback? onClear;
@@ -52,10 +50,13 @@ class FeedSearchScreen extends StatelessWidget {
   /// Called when the user presses the keyboard Search/Done action.
   final VoidCallback? onSubmitted;
 
-  /// Optional widget shown below the search field when [hasSearchText] is false.
+  /// Optional widget shown below the search field when the trimmed query is empty.
   /// Typically a [CatalogSearchHistorySection]. Rendered instead of [emptyPrompt]
   /// when provided and non-null; falls back to [emptyPrompt] when null.
   final Widget? historySection;
+
+  static bool _trimmedHasQuery(TextEditingValue value) =>
+      value.text.trim().isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
@@ -99,64 +100,86 @@ class FeedSearchScreen extends StatelessWidget {
               hintText: hintText,
               onChanged: onChanged,
               onSubmitted: onSubmitted,
-              suffixIcon: !hasSearchText || onClear == null
-                  ? null
-                  : IconButton(
-                      tooltip: 'Clear',
-                      icon: Icon(
-                        Icons.close_rounded,
-                        color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
-                      ),
-                      onPressed: onClear,
+              suffixIcon: ValueListenableBuilder<TextEditingValue>(
+                valueListenable: controller,
+                builder: (context, value, _) {
+                  if (!_trimmedHasQuery(value) || onClear == null) {
+                    return const SizedBox.shrink();
+                  }
+                  return IconButton(
+                    tooltip: 'Clear',
+                    icon: Icon(
+                      Icons.close_rounded,
+                      color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
                     ),
+                    onPressed: onClear,
+                  );
+                },
+              ),
             ),
           ),
-          if (hasSearchText)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.pageHorizontal,
-                AppSpacing.lg,
-                AppSpacing.pageHorizontal,
-                AppSpacing.sm,
-              ),
-              child: Text(
-                'Matches',
-                style: textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.12,
-                  color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
-                ),
-              ),
-            ),
           Expanded(
-            child: hasSearchText
-                ? results
-                : historySection != null
-                    ? SingleChildScrollView(
-                        child: Padding(
-                          padding: const EdgeInsets.only(
-                            top: SearchHistorySectionSpacing.belowSearchField,
-                          ),
-                          child: historySection,
+            child: ValueListenableBuilder<TextEditingValue>(
+              valueListenable: controller,
+              builder: (context, value, _) {
+                final hasSearchText = _trimmedHasQuery(value);
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (hasSearchText)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.pageHorizontal,
+                          AppSpacing.lg,
+                          AppSpacing.pageHorizontal,
+                          AppSpacing.sm,
                         ),
-                      )
-                    : Center(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.emptyStateHorizontal,
-                          ),
-                          child: Text(
-                            emptyPrompt,
-                            textAlign: TextAlign.center,
-                            style: textTheme.bodyLarge?.copyWith(
-                              color: scheme.onSurfaceVariant.withValues(
-                                alpha: 0.82,
-                              ),
-                              height: 1.4,
+                        child: Text(
+                          'Matches',
+                          style: textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.12,
+                            color: scheme.onSurfaceVariant.withValues(
+                              alpha: 0.88,
                             ),
                           ),
                         ),
                       ),
+                    Expanded(
+                      child: hasSearchText
+                          ? results
+                          : historySection != null
+                              ? SingleChildScrollView(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(
+                                      top: SearchHistorySectionSpacing
+                                          .belowSearchField,
+                                    ),
+                                    child: historySection,
+                                  ),
+                                )
+                              : Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal:
+                                          AppSpacing.emptyStateHorizontal,
+                                    ),
+                                    child: Text(
+                                      emptyPrompt,
+                                      textAlign: TextAlign.center,
+                                      style: textTheme.bodyLarge?.copyWith(
+                                        color: scheme.onSurfaceVariant
+                                            .withValues(alpha: 0.82),
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                    ),
+                  ],
+                );
+              },
+            ),
           ),
         ],
       ),

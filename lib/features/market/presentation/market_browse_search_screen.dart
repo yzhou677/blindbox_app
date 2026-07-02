@@ -26,6 +26,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class MarketBrowseSearchScreen extends ConsumerStatefulWidget {
   const MarketBrowseSearchScreen({super.key});
 
+  /// Test-only rebuild counter for search typing regression.
+  @visibleForTesting
+  static int debugBuildCount = 0;
+
   @override
   ConsumerState<MarketBrowseSearchScreen> createState() =>
       _MarketBrowseSearchScreenState();
@@ -74,7 +78,6 @@ class _MarketBrowseSearchScreenState
     _search.selection = TextSelection.collapsed(offset: query.length);
     _debounce?.cancel();
     ref.read(marketSearchBrowseNotifierProvider.notifier).commitQuery(query);
-    setState(() {});
   }
 
   void _applySuggestedQuery(String query) {
@@ -88,14 +91,12 @@ class _MarketBrowseSearchScreenState
     if (q.isEmpty) return;
     _recordSearch(q);
     ref.read(marketSearchBrowseNotifierProvider.notifier).commitQuery(q);
-    setState(() {});
   }
 
   void _onSearchChanged(String value) {
     MarketSearchTrace.event(
-      'TextField.onChanged len=${value.length} (local setState)',
+      'TextField.onChanged len=${value.length}',
     );
-    setState(() {});
     _debounce?.cancel();
     if (value.trim().isEmpty) {
       _exitSearch(clearField: false);
@@ -121,6 +122,10 @@ class _MarketBrowseSearchScreenState
 
   @override
   Widget build(BuildContext context) {
+    assert(() {
+      MarketBrowseSearchScreen.debugBuildCount++;
+      return true;
+    }());
     MarketSearchTrace.event(
       'MarketBrowseSearchScreen.build hasText=$_hasSearchText',
     );
@@ -187,7 +192,6 @@ class _MarketBrowseSearchScreenState
       hintText: SearchPlaceholders.localMarket,
       emptyPrompt: 'Search by series, figure, or brand.',
       controller: _search,
-      hasSearchText: _hasSearchText,
       onChanged: _onSearchChanged,
       onSubmitted: _onSearchSubmitted,
       onClear: _clearSearch,

@@ -147,17 +147,39 @@ class _MorphMetricColumn extends StatelessWidget {
 
   static const double _glyphSize = 20;
 
-  Widget? _compactGlyph(double t) {
+  bool get _muted {
+    return switch (metric.kind) {
+      CollectionInsightsCompactMetricKind.figures => false,
+      CollectionInsightsCompactMetricKind.completedSeries ||
+      CollectionInsightsCompactMetricKind.masterComplete =>
+        metric.count == 0,
+    };
+  }
+
+  /// Matches expanded [_ShelfGlanceStatCell] muted count alpha (0.36).
+  Color _mutedCountColor(ColorScheme scheme) =>
+      scheme.onSurface.withValues(alpha: 0.36);
+
+  TextStyle _effectiveValueStyle(BuildContext context) {
+    if (!_muted) return valueStyle;
+    return valueStyle.copyWith(color: _mutedCountColor(Theme.of(context).colorScheme));
+  }
+
+  Widget? _compactGlyph(double t, ColorScheme scheme) {
     final size = _glyphSize * t.clamp(0.01, 1.0);
+    final color = _muted ? _mutedCountColor(scheme) : glyphColor;
     return switch (metric.kind) {
       CollectionInsightsCompactMetricKind.completedSeries => Icon(
           Icons.check_rounded,
           size: size,
-          color: glyphColor,
+          color: color,
         ),
-      CollectionInsightsCompactMetricKind.masterComplete => Text(
-          CollectionInsightsCompactSummaryFormat.masterCompleteGlyph,
-          style: TextStyle(fontSize: size, height: 1.0),
+      CollectionInsightsCompactMetricKind.masterComplete => Opacity(
+          opacity: _muted ? 0.36 : 1,
+          child: Text(
+            CollectionInsightsCompactSummaryFormat.masterCompleteGlyph,
+            style: TextStyle(fontSize: size, height: 1.0),
+          ),
         ),
       CollectionInsightsCompactMetricKind.figures => null,
     };
@@ -165,8 +187,9 @@ class _MorphMetricColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     final labelFactor = (1 - compactT).clamp(0.0, 1.0);
-    final glyph = _compactGlyph(compactT);
+    final glyph = _compactGlyph(compactT, scheme);
 
     return FittedBox(
       fit: BoxFit.scaleDown,
@@ -184,7 +207,7 @@ class _MorphMetricColumn extends StatelessWidget {
               Text(
                 '${metric.count}',
                 textAlign: TextAlign.center,
-                style: valueStyle,
+                style: _effectiveValueStyle(context),
               ),
             ],
           ),

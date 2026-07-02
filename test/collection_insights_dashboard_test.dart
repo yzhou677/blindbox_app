@@ -40,6 +40,38 @@ void main() {
     });
   });
 
+  testWidgets('compact dashboard mutes zero completed and master counts', (
+    tester,
+  ) async {
+    const zeroAchievementStats = CollectionAggregateStats(
+      inCollection: 12,
+      wantListCount: 0,
+      completedSeriesCount: 0,
+      masterCompleteSeriesCount: 0,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(
+          extensions: [CollectibleTokens.forBrightness(Brightness.light)],
+        ),
+        home: Scaffold(
+          body: CollectionInsightsDashboard(stats: zeroAchievementStats),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final figureCount = tester.widget<Text>(find.text('12'));
+    final zeroCounts = tester.widgetList<Text>(find.text('0')).toList();
+    expect(zeroCounts, hasLength(2));
+
+    expect(figureCount.style!.color!.a, closeTo(0.9, 0.06));
+    for (final zero in zeroCounts) {
+      expect(zero.style!.color!.a, closeTo(0.36, 0.06));
+    }
+  });
+
   testWidgets('collapsed dashboard shows compact glyphs at rest', (tester) async {
     await tester.pumpWidget(
       MaterialApp(

@@ -79,7 +79,6 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
   }
 
   void _onSearchChanged(String value) {
-    setState(() {});
     _searchDebounceTimer?.cancel();
     if (normalizeCatalogSearchQuery(value).isEmpty) {
       if (_debouncedSearchQuery.isNotEmpty) {
@@ -420,20 +419,22 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                 controller: _searchController,
                 hintText: SearchPlaceholders.localCatalog,
                 onChanged: _onSearchChanged,
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.close_rounded, size: 20),
-                        onPressed: () {
-                          _searchDebounceTimer?.cancel();
-                          _searchController.clear();
-                          if (_debouncedSearchQuery.isNotEmpty) {
-                            setState(() => _debouncedSearchQuery = '');
-                          } else {
-                            setState(() {});
-                          }
-                        },
-                      )
-                    : null,
+                suffixIcon: ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: _searchController,
+                  builder: (context, value, _) {
+                    if (value.text.isEmpty) return const SizedBox.shrink();
+                    return IconButton(
+                      icon: const Icon(Icons.close_rounded, size: 20),
+                      onPressed: () {
+                        _searchDebounceTimer?.cancel();
+                        _searchController.clear();
+                        if (_debouncedSearchQuery.isNotEmpty) {
+                          setState(() => _debouncedSearchQuery = '');
+                        }
+                      },
+                    );
+                  },
+                ),
               ),
             ),
           ),
