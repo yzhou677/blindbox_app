@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""Capture Play Store tablet screenshots on Pixel Tablet emulator (Android 15)."""
+"""Capture polished Play Store tablet screenshots on Pixel Tablet (landscape 2560x1600)."""
 from __future__ import annotations
 
 import re
 import subprocess
-import sys
 import time
 from pathlib import Path
 
@@ -16,9 +15,21 @@ SERIAL = "emulator-5554"
 OUT_10 = REPO / "assets" / "play_store" / "screenshots" / "tablet_10"
 OUT_7 = REPO / "assets" / "play_store" / "screenshots" / "tablet_7"
 
-# Play 10": shortest side >= 1200. Pixel Tablet landscape = 2560x1600.
-# Play 7": shortest side >= 1080. Export 1920x1080 landscape from capture.
+# Pixel Tablet landscape
+W, H = 2560, 1600
 TABLET_7_SIZE = (1920, 1080)
+
+# Bottom nav centers (landscape)
+NAV_COLLECTION = (427, 1520)
+NAV_DISCOVER = (1280, 1520)
+NAV_MARKET = (2133, 1520)
+
+SEED_SERIES = (
+    "Peach Riot",
+    "Macaron",
+    "Hirono",
+    "PUCKY",
+)
 
 
 def adb(*args: str) -> str:
@@ -27,11 +38,59 @@ def adb(*args: str) -> str:
     return (r.stdout or "") + (r.stderr or "")
 
 
+def dismiss_overlays() -> None:
+    """Close sheets only — never tap launcher/home coordinates."""
+    for _ in range(3):
+        ui = dump()
+        lowered = ui.lower()
+        if "add a series" not in lowered and "latest releases" not in lowered:
+            return
+        back()
+        time.sleep(0.8)
+
+
+def ensure_shelfy_foreground() -> None:
+    fg = adb("shell", "dumpsys", "activity", "activities")
+    if PKG not in fg:
+        launch(wait_seconds=10)
+        return
+    # Bring task forward without clearing data.
+    adb(
+        "shell",
+        "am",
+        "start",
+        "-n",
+        f"{PKG}/.MainActivity",
+        "-a",
+        "android.intent.action.MAIN",
+        "-c",
+        "android.intent.category.LAUNCHER",
+    )
+    time.sleep(2.5)
+
+
+def assert_shelfy_screen(ui: str, label: str) -> None:
+    lowered = ui.lower()
+    if label == "05_figure_detail":
+        if "reveal collector type" in lowered or "collector journey" in lowered:
+            raise RuntimeError(f"{label}: still on insights, not figure gallery.")
+        if 'content-desc="close"' not in lowered:
+            raise RuntimeError(f"{label}: figure gallery not open.")
+        return
+    if label == "02_insights":
+        if "collector journey" not in lowered:
+            raise RuntimeError(f"{label}: full insights screen not open.")
+        return
+    markers = ("my collection", "discover", "market", "collection insights", "chasers", "latest drops")
+    if not any(m in lowered for m in markers):
+        raise RuntimeError(f"{label}: Shelfy not in foreground (got unrelated screen).")
+
+
 def tap(x: int, y: int) -> None:
     adb("shell", "input", "tap", str(x), str(y))
 
 
-def swipe(x1: int, y1: int, x2: int, y2: int, ms: int = 400) -> None:
+def swipe(x1: int, y1: int, x2: int, y2: int, ms: int = 450) -> None:
     adb("shell", "input", "swipe", str(x1), str(y1), str(x2), str(y2), str(ms))
 
 
@@ -44,6 +103,11 @@ def dump() -> str:
     return adb("shell", "cat", "/sdcard/play_ss.xml").replace("&#10;", " ")
 
 
+def _bounds_center(m: re.Match[str]) -> tuple[int, int]:
+    x1, y1, x2, y2 = map(int, m.groups()[-4:])
+    return (x1 + x2) // 2, (y1 + y2) // 2
+
+
 def tap_desc(ui: str, needle: str, wait: float = 2.0) -> bool:
     pat = re.compile(
         rf'content-desc="([^"]*{re.escape(needle)}[^"]*)"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"',
@@ -52,136 +116,335 @@ def tap_desc(ui: str, needle: str, wait: float = 2.0) -> bool:
     m = pat.search(ui)
     if not m:
         return False
-    x1, y1, x2, y2 = map(int, m.groups()[1:])
-    tap((x1 + x2) // 2, (y1 + y2) // 2)
+    x, y = _bounds_center(m)
+    tap(x, y)
     time.sleep(wait)
     return True
 
 
-def launch() -> None:
-    adb("shell", "am", "force-stop", PKG)
-    time.sleep(0.5)
+def tap_text(ui: str, needle: str, wait: float = 2.0) -> bool:
+    pat = re.compile(
+        rf'text="([^"]*{re.escape(needle)}[^"]*)"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"',
+        re.I,
+    )
+    for m in pat.finditer(ui):
+        x, y = _bounds_center(m)
+        tap(x, y)
+        time.sleep(wait)
+        return True
+    return False
+
+
+def wait_for(needle: str, timeout: float = 20.0, interval: float = 0.8) -> str:
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        ui = dump()
+        if needle.lower() in ui.lower():
+            return ui
+        time.sleep(interval)
+    return dump()
+
+
+def prep_emulator() -> None:
+    adb("shell", "settings", "put", "system", "show_angle_in_use_dialog_box", "0")
+    adb("shell", "settings", "put", "global", "development_settings_enabled", "0")
+    # Snappier capture; restore manually if needed.
+    for scale in ("window_animation_scale", "transition_animation_scale", "animator_duration_scale"):
+        adb("shell", "settings", "put", "global", scale, "0")
+
+
+def clear_shelf() -> None:
+    print("Clearing app data for a clean demo shelf…")
+    adb("shell", "pm", "clear", PKG)
+    time.sleep(2)
+
+
+def launch(wait_seconds: float = 18.0) -> None:
     adb("shell", "monkey", "-p", PKG, "-c", "android.intent.category.LAUNCHER", "1")
-    time.sleep(12)
+    time.sleep(wait_seconds)
+
+
+def open_add_series_sheet() -> None:
+    nav_collection()
+    ui = dump()
+    if not (tap_text(ui, "Add series", 2.5) or tap_desc(ui, "Add series", 2.5)):
+        tap(W // 2, H // 2 - 80)
+    wait_for("Latest releases", 45)
+
+
+def tap_nth_desc(ui: str, needle: str, index: int, wait: float = 2.5) -> bool:
+    pat = re.compile(
+        rf'content-desc="([^"]*{re.escape(needle)}[^"]*)"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"',
+        re.I,
+    )
+    matches = list(pat.finditer(ui))
+    if index >= len(matches):
+        return False
+    x, y = _bounds_center(matches[index])
+    tap(x, y)
+    time.sleep(wait)
+    return True
+
+
+def close_gallery_and_sheets() -> None:
+    for _ in range(5):
+        ui = dump()
+        lowered = ui.lower()
+        if 'content-desc="close"' in lowered:
+            back()
+            time.sleep(1.0)
+            continue
+        if "scrim" in lowered and "figures" in lowered:
+            back()
+            time.sleep(1.0)
+            continue
+        if " of " in lowered and "close" in lowered:
+            back()
+            time.sleep(1.0)
+            continue
+        break
+    pop_to_collection_main()
+
+
+def pop_to_collection_main() -> None:
+    """Leave pushed routes (insights, sheets) and land on shelf home."""
+    for _ in range(6):
+        ui = dump()
+        lowered = ui.lower()
+        if "my collection" in lowered and "reveal collector type" not in lowered:
+            dismiss_overlays()
+            return
+        if "collection insights" in lowered or "reveal collector type" in lowered:
+            back()
+            time.sleep(1.2)
+            continue
+        if "owned" in lowered or "wishlist" in lowered:
+            back()
+            time.sleep(1.2)
+            continue
+        dismiss_overlays()
+        nav_collection()
+        time.sleep(1.5)
+        return
+    nav_collection()
+
+
+def count_add_buttons(ui: str) -> int:
+    return len(re.findall(r'content-desc="[^"]*Add to (?:my )?collection[^"]*"', ui, re.I))
+
+
+def add_from_latest_releases(count: int = 4) -> None:
+    """Tap the first remaining Add chip on each row — one new series per pass."""
+    open_add_series_sheet()
+    added = 0
+    for attempt in range(count * 3):
+        if added >= count:
+            break
+        ui = dump()
+        before = count_add_buttons(ui)
+        if before == 0 and added > 0:
+            break
+        if tap_nth_desc(ui, "Add to collection", 0) or tap_nth_desc(ui, "Add to my collection", 0):
+            time.sleep(4.0)
+            ui2 = dump()
+            if count_add_buttons(ui2) < before or "already in your collection" in ui2.lower():
+                added += 1
+                print(f"    + series {added}/{count}")
+            continue
+        # Fallback: tap trailing Add on recommendation row by index.
+        tap(2380, 680 + added * 132)
+        time.sleep(4.0)
+        added += 1
+        print(f"    + series {added}/{count} (coords)")
+    print(f"  Seeded {added} series from Latest releases.")
+    dismiss_overlays()
+    pop_to_collection_main()
+
+
+def seed_shelf() -> None:
+    launch(wait_seconds=22)
+    add_from_latest_releases(4)
+    ui = dump()
+    if "empty shelf" in ui.lower():
+        raise RuntimeError("Shelf seeding failed — collection still empty.")
+    print("  Shelf seeded.")
+
+
+def nav_collection() -> None:
+    ui = dump()
+    if not tap_desc(ui, "Collection", 2.0):
+        tap(*NAV_COLLECTION)
+    time.sleep(2.5)
+
+
+def collapse_insights_if_expanded() -> None:
+    ui = dump()
+    if "at a glance" in ui.lower() or "your shelf feels" in ui.lower():
+        tap_text(ui, "Collection Insights", 1.2) or tap(W // 2, 430)
+
+
+def nav_collection_shot() -> None:
+    ensure_shelfy_foreground()
+    pop_to_collection_main()
+    collapse_insights_if_expanded()
+    for _ in range(3):
+        swipe(W // 2, 480, W // 2, 1050, 320)
+        time.sleep(0.45)
+    # Frame in-progress bucket with multiple series cards.
+    for _ in range(2):
+        swipe(W // 2, 1250, W // 2, 550, 420)
+        time.sleep(0.6)
+    time.sleep(1.8)
+
+
+def nav_insights_shot() -> None:
+    ensure_shelfy_foreground()
+    close_gallery_and_sheets()
+    for _ in range(4):
+        swipe(W // 2, 460, W // 2, 1080, 300)
+        time.sleep(0.45)
+    ui = dump()
+    tap_desc(ui, "Collection Insights", 2.0) or tap_text(ui, "Collection Insights", 2.0)
+    time.sleep(2)
+    ui = dump()
+    if not (
+        tap_text(ui, "Reveal collector type", 3.5)
+        or tap_desc(ui, "Reveal collector type", 3.5)
+        or tap_text(ui, "Your collector type", 3.5)
+    ):
+        tap(W // 2, 590)
+        time.sleep(3)
+    ui = wait_for("Collector journey", 15)
+    if "collector journey" not in ui.lower():
+        tap(W // 2, 700)
+        time.sleep(3)
+    time.sleep(2)
+
+
+def nav_discover_shot() -> None:
+    ensure_shelfy_foreground()
+    ui = dump()
+    if not tap_desc(ui, "Discover", 2.5):
+        tap(*NAV_DISCOVER)
+    time.sleep(5)
+    # Scroll to top.
+    for _ in range(3):
+        swipe(W // 2, 420, W // 2, 1100, 280)
+        time.sleep(0.5)
+    time.sleep(1)
+    # Frame: Discover title + search + Latest drops (avoid cutting header).
+    swipe(W // 2, 980, W // 2, 760, 280)
+    time.sleep(2)
+
+
+def nav_market_shot() -> None:
+    ensure_shelfy_foreground()
+    pop_to_collection_main()
+    ui = dump()
+    if not tap_desc(ui, "Market", 2.5):
+        tap(*NAV_MARKET)
+    time.sleep(5)
+    ui = dump()
+    if not tap_desc(ui, "POP MART", 2.0):
+        if not tap_text(ui, "POP MART", 2.0):
+            swipe(700, 948, 1500, 948, 280)
+            time.sleep(0.8)
+            ui = dump()
+            tap_desc(ui, "POP MART", 2.0) or tap_text(ui, "POP MART", 2.0)
+    time.sleep(2.5)
+    swipe(W // 2, 1100, W // 2, 680, 350)
+    time.sleep(2)
+
+
+def tap_desc_all(ui: str, needle: str, wait: float = 2.0) -> bool:
+    """Tap first content-desc match (series cards use desc, not text)."""
+    return tap_desc(ui, needle, wait)
+
+
+def tap_first_series_card(ui: str) -> bool:
+    for needle in (
+        "Power Chords",
+        "Palico Series",
+        "Carry the Music",
+        "Vinyl Plush",
+        "Love Across Galaxies",
+    ):
+        if tap_desc_all(ui, needle, 3.0):
+            return True
+    return False
+
+
+def open_figure_gallery_from_sheet(ui: str) -> None:
+    pat = re.compile(
+        r'class="android\.widget\.ImageView"[^>]*clickable="true"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"',
+    )
+    m = pat.search(ui)
+    if m:
+        x1, y1, x2, y2 = map(int, m.groups())
+        tap((x1 + x2) // 2, (y1 + y2) // 2)
+        time.sleep(3.5)
+        return
+    if tap_desc(ui, "tap", 3.0):
+        return
+    tap(1280, 636)
+    time.sleep(3.5)
+
+
+def nav_figure_detail_shot() -> None:
+    ensure_shelfy_foreground()
+    pop_to_collection_main()
+    # Reveal a multi-figure series lower on the shelf.
+    swipe(W // 2, 1200, W // 2, 600, 420)
+    time.sleep(1.5)
+    ui = dump()
+    if not tap_first_series_card(ui):
+        tap_desc(ui, "Series", 3.0) or tap(W // 2, 1250)
+    time.sleep(3.5)
+    ui = wait_for("Figures", 15)
+    open_figure_gallery_from_sheet(ui)
+    wait_for("Close", 12)
 
 
 def screencap(name: str) -> Path:
     raw = OUT_10 / f"{name}.png"
     adb("shell", "screencap", "-p", "/sdcard/ss.png")
     adb("pull", "/sdcard/ss.png", str(raw))
-    # 10" native (2560x1600)
     img = Image.open(raw).convert("RGB")
     w, h = img.size
     if w < 1200 or h < 1200:
         raise RuntimeError(f"Capture {name} too small for 10-inch tablet: {w}x{h}")
-    # 7" export: landscape 1920x1080
     out7 = OUT_7 / f"{name}.png"
-    fitted = img.resize(TABLET_7_SIZE, Image.Resampling.LANCZOS)
-    fitted.save(out7, format="PNG", optimize=True)
+    img.resize(TABLET_7_SIZE, Image.Resampling.LANCZOS).save(out7, format="PNG", optimize=True)
     img.save(raw, format="PNG", optimize=True)
     return raw
-
-
-def seed_shelf() -> None:
-    ui = dump()
-    if "empty shelf" not in ui.lower() and ("collected" in ui.lower() or "series" in ui.lower()):
-        return
-    if not tap_desc(ui, "Add series", 2.5):
-        tap_desc(dump(), "Add series", 2.5)
-    ui = dump()
-    tap_desc(ui, "Search catalog", 1.0) or tap(1280, 400)
-    time.sleep(0.5)
-    adb("shell", "input", "text", "Peach%sRiot")
-    time.sleep(5)
-    ui = dump()
-    if tap_desc(ui, "Add to collection", 2.5):
-        time.sleep(3)
-    tap(200, 200)  # dismiss scrim if sheet open
-    time.sleep(1)
-    tap_desc(dump(), "Collection", 2.0) or tap(427, 1520)
-
-
-def nav_collection() -> None:
-    tap_desc(dump(), "Collection", 2.0) or tap(427, 1520)
-    time.sleep(2)
-
-
-def nav_insights() -> None:
-    nav_collection()
-    ui = dump()
-    if not (
-        tap_desc(ui, "Your collector type", 3.0)
-        or tap_desc(ui, "Trend Chaser", 3.0)
-        or tap_desc(ui, "Reveal collector type", 3.0)
-    ):
-        tap(1280, 520)
-        time.sleep(3)
-    time.sleep(2)
-    if tap_desc(dump(), "Reveal collector type", 4.0):
-        time.sleep(2.5)
-
-
-def nav_discover() -> None:
-    tap_desc(dump(), "Discover", 2.5) or tap(1280, 1520)
-    time.sleep(4)
-    swipe(1280, 1200, 1280, 500)
-    time.sleep(2)
-
-
-def nav_market() -> None:
-    tap_desc(dump(), "Market", 2.5) or tap(2133, 1520)
-    time.sleep(4)
-
-
-def nav_figure_detail() -> None:
-    adb("shell", "am", "force-stop", PKG)
-    time.sleep(0.5)
-    adb("shell", "monkey", "-p", PKG, "-c", "android.intent.category.LAUNCHER", "1")
-    time.sleep(8)
-    nav_collection()
-    ui = dump()
-    if not (
-        tap_desc(ui, "CUBIEC", 2.5)
-        or tap_desc(ui, "Disney", 2.5)
-        or tap_desc(ui, "POP CUBE", 2.5)
-    ):
-        tap(1280, 900)
-        time.sleep(2.5)
-    ui = dump()
-    # Series figures sheet — tap first figure thumb
-    if not tap_desc(ui, "Owned", 1.5):
-        tap(700, 750)
-        time.sleep(2.5)
-    ui = dump()
-    if "gallery" not in ui.lower():
-        tap(900, 650)
-        time.sleep(2.5)
 
 
 def main() -> int:
     OUT_10.mkdir(parents=True, exist_ok=True)
     OUT_7.mkdir(parents=True, exist_ok=True)
-    adb("shell", "settings", "put", "system", "show_angle_in_use_dialog_box", "0")
-    adb("shell", "settings", "put", "global", "development_settings_enabled", "0")
-
-    launch()
+    prep_emulator()
+    clear_shelf()
     seed_shelf()
 
     shots = [
-        ("01_collection", nav_collection),
-        ("02_insights", nav_insights),
-        ("03_discover", nav_discover),
-        ("04_market", nav_market),
-        ("05_figure_detail", nav_figure_detail),
+        ("01_collection", nav_collection_shot),
+        ("05_figure_detail", nav_figure_detail_shot),
+        ("02_insights", nav_insights_shot),
+        ("03_discover", nav_discover_shot),
+        ("04_market", nav_market_shot),
     ]
 
     for name, nav in shots:
         print(f"Capturing {name}…")
         nav()
-        time.sleep(2)
+        time.sleep(1.5)
+        ui = dump()
+        assert_shelfy_screen(ui, name)
         path = screencap(name)
         print(f"  10\": {path} ({Image.open(path).size})")
         print(f"  7\":  {OUT_7 / (name + '.png')}")
+        if name == "05_figure_detail":
+            close_gallery_and_sheets()
 
     return 0
 
