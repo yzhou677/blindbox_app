@@ -174,6 +174,16 @@ void main() {
     );
   });
 
+  test('catalogSearchServiceProvider uses ready cache before provider completes',
+      () {
+    final container = _container();
+    CatalogBundleCache.prime(_bundle(seriesId: 'cached', figureName: 'Cached'));
+
+    final search = container.read(catalogSearchServiceProvider);
+    expect(search, isNotNull);
+    expect(search!.search('Cached'), hasLength(1));
+  });
+
   test('multiple bundle replacements bump revision and refresh search', () async {
     final container = _container();
     CatalogBundleCache.prime(_bundle(seriesId: 'v1', figureName: 'V1 Figure'));

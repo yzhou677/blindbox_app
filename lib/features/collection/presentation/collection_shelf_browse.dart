@@ -55,22 +55,62 @@ List<ShelfSeries> filterShelfSeriesBySearch(
           ? CatalogSearchService(catalog).matchingSeriesIds(query)
           : const <String>{};
 
+  final figureSeriesLookup = catalog != null && catalogSeriesIds.isNotEmpty
+      ? _catalogFigureIdToSeriesId(catalog)
+      : null;
+
   return [
     for (final row in series)
-      if (_shelfSeriesMatchesSearch(row, tokens, catalogSeriesIds)) row,
+      if (_shelfSeriesMatchesSearch(
+        row,
+        tokens,
+        catalogSeriesIds,
+        figureSeriesLookup: figureSeriesLookup,
+      ))
+        row,
   ];
+}
+
+Map<String, String> _catalogFigureIdToSeriesId(CatalogSeedBundle catalog) {
+  return {
+    for (final fig in catalog.figures) fig.id: fig.seriesId,
+  };
+}
+
+/// Catalog series ids a shelf row may represent (template key and drop imports).
+Iterable<String> shelfCatalogSeriesIdCandidates(ShelfSeries series) sync* {
+  final templateId = series.catalogTemplateId?.trim();
+  if (templateId == null || templateId.isEmpty) return;
+  yield templateId;
+  if (series.isDropImport && templateId.startsWith('drop-')) {
+    final bare = templateId.substring('drop-'.length).trim();
+    if (bare.isNotEmpty && bare != templateId) {
+      yield bare;
+    }
+  }
 }
 
 bool _shelfSeriesMatchesSearch(
   ShelfSeries series,
   List<String> tokens,
-  Set<String> catalogSeriesIds,
-) {
-  final templateId = series.catalogTemplateId?.trim();
-  if (templateId != null &&
-      templateId.isNotEmpty &&
-      catalogSeriesIds.contains(templateId)) {
-    return true;
+  Set<String> catalogSeriesIds, {
+  Map<String, String>? figureSeriesLookup,
+}) {
+  if (catalogSeriesIds.isNotEmpty) {
+    for (final candidate in shelfCatalogSeriesIdCandidates(series)) {
+      if (catalogSeriesIds.contains(candidate)) return true;
+    }
+    final lookup = figureSeriesLookup;
+    if (lookup != null) {
+      for (final fig in series.figures) {
+        final templateId = fig.catalogFigureTemplateId?.trim();
+        if (templateId == null || templateId.isEmpty) continue;
+        final seriesId = lookup[templateId];
+        if (seriesId != null && catalogSeriesIds.contains(seriesId)) {
+          return true;
+        }
+      }
+    }
   }
   return SearchMatcher.allTokensMatch(_shelfDisplayHaystack(series), tokens);
 }

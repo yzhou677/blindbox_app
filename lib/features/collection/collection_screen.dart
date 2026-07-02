@@ -286,7 +286,9 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
 
     // Browse pipeline: brand → IP → search → partition → sort each bucket.
     final shelfUiPrefs = ref.watch(collectionShelfUiPrefsProvider);
-    final catalog = ref.watch(catalogBundleProvider).valueOrNull;
+    final catalog = resolveCatalogBundleForSearch(
+      providerBundle: ref.watch(catalogBundleProvider).valueOrNull,
+    );
     final catalogSearch = ref.watch(catalogSearchServiceProvider);
     final progressLookup = ShelfBrowseProgressLookup(snap.figureStates);
     final searched = trace.section(

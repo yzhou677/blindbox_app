@@ -50,10 +50,25 @@ final catalogBundleProvider = FutureProvider<CatalogSeedBundle>((ref) async {
   return bundle;
 });
 
+/// Synchronous catalog bundle for local search — matches Discover semantics without
+/// waiting on [catalogBundleProvider] when [CatalogBundleCache] is already ready.
+CatalogSeedBundle? resolveCatalogBundleForSearch({
+  CatalogSeedBundle? providerBundle,
+}) {
+  if (providerBundle != null) return providerBundle;
+  if (CatalogBundleCache.isCatalogReady) {
+    return CatalogBundleCache.current;
+  }
+  return null;
+}
+
 /// Catalog search over the current bundle; recreated when [catalogBundleProvider]
 /// updates.
 final catalogSearchServiceProvider = Provider<CatalogSearchService?>((ref) {
-  final catalog = ref.watch(catalogBundleProvider).valueOrNull;
+  ref.watch(catalogBundleRevisionProvider);
+  final catalog = resolveCatalogBundleForSearch(
+    providerBundle: ref.watch(catalogBundleProvider).valueOrNull,
+  );
   if (catalog == null) return null;
   return CatalogSearchService(catalog);
 });

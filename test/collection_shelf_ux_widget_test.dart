@@ -218,5 +218,58 @@ void main() {
       expect(find.text('No series match your search.'), findsOneWidget);
       expect(find.byType(SeriesShelfCard), findsNothing);
     });
+
+    testWidgets('figure name search uses catalog semantics like Discover', (
+      tester,
+    ) async {
+      final catalog = CatalogSeedBundle(
+        brands: parseCatalogBrandsJson(r'''[
+          {"id": "pop_mart", "displayName": "POP MART", "aliases": []}
+        ]'''),
+        ips: parseCatalogIpsJson(r'''[
+          {"id": "hirono", "brandId": "pop_mart", "displayName": "Hirono", "aliases": []}
+        ]'''),
+        series: parseCatalogSeriesJson(r'''[
+          {"id": "wildgrass", "brandId": "pop_mart", "ipId": "hirono",
+           "displayName": "Tamed Wildgrass", "releaseDate": "2024-01-01",
+           "isBlindBox": true, "thumbnailAsset": "assets/s/wildgrass.png"}
+        ]'''),
+        figures: parseCatalogFiguresJson(r'''[
+          {"id": "fig_lumi", "seriesId": "wildgrass", "brandId": "pop_mart",
+           "ipId": "hirono", "displayName": "Hi Lumi", "isSecret": false,
+           "sortOrder": 1, "thumbnailAsset": "assets/f/lumi.png"}
+        ]'''),
+      );
+      final owned = testShelfSeries(
+        id: 'shelf_wildgrass',
+        name: 'Tamed Wildgrass',
+        catalogTemplateId: 'wildgrass',
+        ipName: 'Hirono',
+        brand: 'POP MART',
+      );
+
+      await _pumpCollectionScreen(
+        tester,
+        snap: CollectionSnapshot(
+          shelfSeries: [owned],
+          figureStates: const {},
+        ),
+        overrides: [
+          catalogBundleProvider.overrideWith((ref) async => catalog),
+        ],
+      );
+
+      await _scrollShelfIntoView(tester);
+      expect(find.text('Tamed Wildgrass'), findsOneWidget);
+
+      await _scrollToTop(tester);
+      await tester.enterText(_searchField, 'Hi Lumi');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 150));
+      await _scrollShelfIntoView(tester);
+
+      expect(find.text('Tamed Wildgrass'), findsOneWidget);
+      expect(find.text('No series match your search.'), findsNothing);
+    });
   });
 }

@@ -1,4 +1,5 @@
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
+import 'package:blindbox_app/features/catalog/search/catalog_search_service.dart';
 import 'package:blindbox_app/features/collection/application/collection_shelf_ui_prefs_provider.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_browse.dart';
@@ -32,6 +33,9 @@ CatalogSeedBundle _catalogSearchTestBundle() {
       {"id": "fig_soy", "seriesId": "macaron", "brandId": "pop_mart",
        "ipId": "the_monsters", "displayName": "Soymilk", "isSecret": false,
        "sortOrder": 1, "thumbnailAsset": "assets/f/soy.png"},
+      {"id": "fig_lumi", "seriesId": "macaron", "brandId": "pop_mart",
+       "ipId": "the_monsters", "displayName": "Hi Lumi", "isSecret": false,
+       "sortOrder": 2, "thumbnailAsset": "assets/f/lumi.png"},
       {"id": "fig_apple", "seriesId": "nommi_party", "brandId": "pop_mart",
        "ipId": "nommi", "displayName": "Apple", "isSecret": false,
        "sortOrder": 1, "thumbnailAsset": "assets/f/apple.png"}
@@ -197,6 +201,125 @@ void main() {
       final filtered = filterShelfSeriesBySearch(series, 'nommi');
       expect(filtered, hasLength(1));
       expect(filtered.first.id, 'a');
+    });
+
+    test('matches figure display name via catalogTemplateId', () {
+      final catalog = _catalogSearchTestBundle();
+      final series = [
+        testShelfSeries(
+          id: 'a',
+          name: 'Exciting Macaron',
+          catalogTemplateId: 'macaron',
+          ipName: 'THE MONSTERS',
+        ),
+      ];
+      expect(
+        filterShelfSeriesBySearch(series, 'Hi Lumi', catalog: catalog),
+        hasLength(1),
+      );
+      expect(
+        filterShelfSeriesBySearch(series, 'soymilk', catalog: catalog),
+        hasLength(1),
+      );
+    });
+
+    test('matches series display name via catalog search', () {
+      final catalog = _catalogSearchTestBundle();
+      final series = [
+        testShelfSeries(
+          id: 'a',
+          name: 'Shelf label differs',
+          catalogTemplateId: 'macaron',
+        ),
+      ];
+      expect(
+        filterShelfSeriesBySearch(series, 'exciting macaron', catalog: catalog),
+        hasLength(1),
+      );
+    });
+
+    test('matches brand via catalog search', () {
+      final catalog = _catalogSearchTestBundle();
+      final series = [
+        testShelfSeries(
+          id: 'a',
+          name: 'Shelf label differs',
+          catalogTemplateId: 'macaron',
+          brand: 'Other label',
+        ),
+      ];
+      expect(
+        filterShelfSeriesBySearch(series, 'pop mart', catalog: catalog),
+        hasLength(1),
+      );
+    });
+
+    test('matches drop-import catalogTemplateId for figure queries', () {
+      final catalog = _catalogSearchTestBundle();
+      final series = [
+        testShelfSeries(
+          id: 'a',
+          name: 'Exciting Macaron',
+          catalogTemplateId: 'drop-macaron',
+          ipName: 'THE MONSTERS',
+        ),
+      ];
+      expect(
+        filterShelfSeriesBySearch(series, 'Hi Lumi', catalog: catalog),
+        hasLength(1),
+      );
+    });
+
+    test('matches via shelf figure catalogFigureTemplateId', () {
+      final catalog = _catalogSearchTestBundle();
+      final series = [
+        testShelfSeries(
+          id: 'a',
+          name: 'Release shelf label',
+          catalogTemplateId: 'drop-macaron',
+          figures: [
+            const ShelfFigure(
+              id: 'fig_0',
+              seriesId: 'a',
+              name: 'Slot label',
+              rarity: 'Regular',
+              isSecret: false,
+              catalogFigureTemplateId: 'fig_lumi',
+            ),
+          ],
+        ),
+      ];
+      expect(
+        filterShelfSeriesBySearch(series, 'Hi Lumi', catalog: catalog),
+        hasLength(1),
+      );
+    });
+
+    test('agrees with CatalogSearchService matchingSeriesIds', () {
+      final catalog = _catalogSearchTestBundle();
+      final svc = CatalogSearchService(catalog);
+      final shelf = [
+        testShelfSeries(
+          id: 'a',
+          name: 'Exciting Macaron',
+          catalogTemplateId: 'macaron',
+        ),
+        testShelfSeries(
+          id: 'b',
+          name: 'Apple Party',
+          catalogTemplateId: 'nommi_party',
+        ),
+      ];
+
+      for (final query in ['Hi Lumi', 'exciting macaron', 'labubu', 'pop mart']) {
+        final expectedIds = svc.matchingSeriesIds(query);
+        final filtered = filterShelfSeriesBySearch(shelf, query, catalog: catalog);
+        expect(
+          filtered.map((s) => s.catalogTemplateId).toSet(),
+          expectedIds,
+          reason: 'query=$query',
+        );
+      }
     });
   });
 
