@@ -44,9 +44,85 @@
     "popmart_us_kubo_love_still_7836",
     "popmart_us_mega_molly_400_got_7838",
     "popmart_us_demon_slayer_unwavering_resolve_arc_block",
-    "popmart_us_angry_molly_crocs_angry_cheese"
+    "popmart_us_angry_molly_crocs_angry_cheese",
+    "popmart_us_the_monsters_hair_salon_vinyl_plush_pendant_7890",
+    "popmart_us_hirono_leah_dou_in_the_air_7883",
+    "popmart_us_the_monsters_hair_salon_series_7892",
+    "popmart_us_skullpanda_punk_panda_plush_7893",
+    "popmart_us_1001moons_moona_variant_6355",
+    "popmart_us_the_monsters_hair_salon"
   ],
   "items": [
+    {
+      "id": "popmart_us_barbershop_styling_challenge",
+      "releaseType": "announcement",
+      "title": "Barbershop Styling Challenge!",
+      "summary": "GIVEAWAY: Barbershop Styling Challenge — share your look and tag @popmart_us.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Fpopmart_us%2FBARBERSHOPSTYLINGCHALLENGE.png?alt=media&token=c9ce1890-a9bc-4457-a469-03e421bf3720",
+      "officialUrl": "https://www.instagram.com/p/DaUx9xSn5OM/",
+      "publishedAt": "2026-07-03T00:00:00Z",
+      "status": "active"
+    },
+    {
+      "id": "popmart_us_hacipupu_take_me_home_pendant_8061",
+      "releaseType": "product",
+      "productId": "8061",
+      "productIdConfirmed": true,
+      "title": "HACIPUPU Take Me Home Series - Pendant Blind Box",
+      "summary": "New HACIPUPU Take Me Home pendant blind box. Online July 9, 7:00 PM PT.",
+      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1783072978043_b5815b9c6e35ce9e781873ece8cf3833__1200x1810.jpg?x-oss-process=image/format,webp",
+      "officialUrl": "https://www.popmart.com/us/products/8061/HACIPUPU-Take-Me-Home-Series---Pendant-Blind-Box",
+      "publishedAt": "2026-07-03T00:00:00Z",
+      "status": "active"
+    },
+    {
+      "id": "popmart_us_spongebob_krabby_patty_bestsellers_8063",
+      "releaseType": "product",
+      "productId": "8063",
+      "productIdConfirmed": true,
+      "title": "SpongeBob: Krabby Patty Bestsellers Series Figures",
+      "summary": "New SpongeBob Krabby Patty Bestsellers figures. Online July 9, 7:00 PM PT.",
+      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1783072583544_5d5e9d0eb88c8b7c4eb3dda95d6ea687__1200x1726.jpg?x-oss-process=image/format,webp",
+      "officialUrl": "https://www.popmart.com/us/products/8063/SpongeBob%3A-Krabby-Patty-Bestsellers-Series-Figures",
+      "publishedAt": "2026-07-03T00:00:00Z",
+      "status": "active"
+    },
+    {
+      "id": "popmart_us_jujutsu_kaisen_scene_blocks_8064",
+      "releaseType": "product",
+      "productId": "8064",
+      "productIdConfirmed": true,
+      "title": "Jujutsu Kaisen Series Scene Blocks",
+      "summary": "New Jujutsu Kaisen Series Scene Blocks. Online July 9, 7:00 PM PT.",
+      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1783073825540_a96595cbcfbcc0a6b03d4b6c1252a4a0__1200x1775.jpg?x-oss-process=image/format,webp",
+      "officialUrl": "https://www.popmart.com/us/products/8064/Jujutsu%20Kaisen%20Series%20Scene%20Blocks",
+      "publishedAt": "2026-07-03T00:00:00Z",
+      "status": "active"
+    },
+    {
+      "id": "popmart_us_hacipupu_take_me_home_vinyl_plush_pendant_8062",
+      "releaseType": "product",
+      "productId": "8062",
+      "productIdConfirmed": true,
+      "title": "HACIPUPU Take Me Home Series - Vinyl Plush Pendant Blind Box",
+      "summary": "New HACIPUPU Take Me Home vinyl plush pendant. Online July 9, 7:00 PM PT.",
+      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1783073250321_b905b854eddaf781f85f947c2f3b5b75__1200x1842.jpg?x-oss-process=image/format,webp",
+      "officialUrl": "https://www.popmart.com/us/products/8062/HACIPUPU%20Take%20Me%20Home%20Series%20-%20Vinyl%20Plush%20Pendant%20Blind%20Box",
+      "publishedAt": "2026-07-03T00:00:00Z",
+      "status": "active"
+    },
+    {
+      "id": "popmart_us_mini_duckoo_citywalk_7996",
+      "releaseType": "product",
+      "productId": "7996",
+      "productIdConfirmed": true,
+      "title": "mini DUCKOO Citywalk Series Figures",
+      "summary": "New mini DUCKOO Citywalk Series figures. Online July 9, 7:00 PM PT.",
+      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1782484105841_6c66978951699fbd16f17b3c31d2cf58__1200x1984.jpg?x-oss-process=image/format,webp",
+      "officialUrl": "https://www.popmart.com/us/products/7996/mini%20DUCKOO%20Citywalk%20Series%20Figures",
+      "publishedAt": "2026-07-03T00:00:00Z",
+      "status": "active"
+    },
     {
       "id": "popmart_us_who_are_the_monsters",
       "releaseType": "announcement",
@@ -113,76 +189,6 @@
       "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Fpopmart_us%2Ffifa-matchday-giveaway.png?alt=media&token=dff2878a-1499-4eff-8eb6-f324a1d16844",
       "officialUrl": "https://www.instagram.com/p/DZbgLVcDIDW/",
       "publishedAt": "2026-06-11T00:00:00Z",
-      "status": "active"
-    },
-    {
-      "id": "popmart_us_the_monsters_hair_salon",
-      "releaseType": "announcement",
-      "title": "The Monsters Hair Salon",
-      "summary": "New hair new you.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Fpopmart_us%2Fpopmart_us_the_monsters_hair_salon.png?alt=media&token=243b7c70-1491-497b-92ca-7a5a7b0e1b37",
-      "officialUrl": "https://www.instagram.com/reel/DZr_ABCktUL/",
-      "publishedAt": "2026-06-17T00:00:00Z",
-      "status": "active"
-    },
-    {
-      "id": "popmart_us_1001moons_moona_variant_6355",
-      "releaseType": "product",
-      "productId": "6355",
-      "productIdConfirmed": true,
-      "title": "1001MOONS Confession in the Wind — Moona (Variant)",
-      "summary": "New 1001MOONS designer figurine. Purchase in app.",
-      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1781860207851_d67a873eff9239de4f3c05f60563a7b8.jpg?x-oss-process=image/format,webp",
-      "officialUrl": "https://www.popmart.com/us/products/6355/1001MOONS%20Confession%20in%20the%20Wind%20%C2%B7%20Moona%20(Variant)",
-      "publishedAt": "2026-06-19T00:00:00Z",
-      "status": "active"
-    },
-    {
-      "id": "popmart_us_skullpanda_punk_panda_plush_7893",
-      "releaseType": "product",
-      "productId": "7893",
-      "productIdConfirmed": true,
-      "title": "SKULLPANDA Punk Panda Plush Doll",
-      "summary": "New SKULLPANDA Punk Panda plush doll. Online June 25, 7:00 PM PT.",
-      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1781860714116_68769a4303ad21c72c734cec81859fd2.jpg?x-oss-process=image/format,webp",
-      "officialUrl": "https://www.popmart.com/us/products/7893/SKULLPANDA-Punk-Panda-Plush-Doll",
-      "publishedAt": "2026-06-19T00:00:00Z",
-      "status": "active"
-    },
-    {
-      "id": "popmart_us_the_monsters_hair_salon_series_7892",
-      "releaseType": "product",
-      "productId": "7892",
-      "productIdConfirmed": true,
-      "title": "THE MONSTERS Hair Salon Series Figures",
-      "summary": "New THE MONSTERS Hair Salon blind box figures. Online June 25, 7:00 PM PT.",
-      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1781862656282_ae1d518a356ac6e5ab7afe75d1e4f3e1__1200x1787.jpg?x-oss-process=image/format,webp",
-      "officialUrl": "https://www.popmart.com/us/products/7892/THE-MONSTERS-Hair-Salon-Series-Figures",
-      "publishedAt": "2026-06-19T00:00:00Z",
-      "status": "active"
-    },
-    {
-      "id": "popmart_us_hirono_leah_dou_in_the_air_7883",
-      "releaseType": "product",
-      "productId": "7883",
-      "productIdConfirmed": true,
-      "title": "Hirono × Leah Dou In the Air Figurine",
-      "summary": "New Hirono × Leah Dou designer figurine. Online June 25, 7:00 PM PT.",
-      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1781861740516_e9bc0b3f33ed5ec2724829992a222615__1200x1725.jpg?x-oss-process=image/format,webp",
-      "officialUrl": "https://www.popmart.com/us/products/7883/Hirono-x-Leah-Dou-In-the-Air-Figurine",
-      "publishedAt": "2026-06-19T00:00:00Z",
-      "status": "active"
-    },
-    {
-      "id": "popmart_us_the_monsters_hair_salon_vinyl_plush_pendant_7890",
-      "releaseType": "product",
-      "productId": "7890",
-      "productIdConfirmed": true,
-      "title": "THE MONSTERS Hair Salon Series — Vinyl Plush Pendant Blind Box",
-      "summary": "New THE MONSTERS Hair Salon vinyl plush pendants. Online June 25, 7:00 PM PT.",
-      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1781861535663_7adf500e88631d8bf1518d65d3f25f76__1200x1838.jpg?x-oss-process=image/format,webp",
-      "officialUrl": "https://www.popmart.com/us/products/7890/THE-MONSTERS-Hair-Salon-Series-Vinyl-Plush-Pendant-Blind-Box",
-      "publishedAt": "2026-06-19T00:00:00Z",
       "status": "active"
     }
   ]
