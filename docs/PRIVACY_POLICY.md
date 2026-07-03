@@ -1,6 +1,6 @@
 # Shelfy Privacy Policy
 
-**Last updated:** May 29, 2026
+**Last updated:** July 3, 2026
 
 **App:** Shelfy (`app.shelfy.collector`)  
 **Contact:** [yzhou677@gmail.com](mailto:yzhou677@gmail.com)
@@ -26,6 +26,7 @@ This policy explains what information Shelfy handles, where it stays, and what l
 | **Ads** | **No** advertising SDKs are enabled in the app today. |
 | **Selling your data** | **We do not sell** your personal information. |
 | **Catalog content** | Public-style reference data (brands, series, figures, images) may be loaded from **Google Firebase** (Firestore and Storage). |
+| **Official updates** | Curated brand announcements (links and images) may load from **Firestore** and official or hosted image URLs—not your personal collection. |
 | **Market browse** | When enabled, the app may request **listing data from third-party marketplace services** to show browse results. Shelfy does not send your collection contents to those services as part of normal browse. |
 
 ---
@@ -73,8 +74,8 @@ To improve offline browsing, Shelfy may cache catalog images and catalog bundle 
 
 Shelfy uses **Google Firebase** services in a **read-oriented, catalog-only** way:
 
-- **Cloud Firestore** — reference documents such as brands, IPs, series, and figures (release metadata, identifiers, and similar catalog fields).
-- **Cloud Storage** — hosted **catalog images** referenced by the app’s image system.
+- **Cloud Firestore** — reference documents such as brands, IPs, series, and figures (release metadata, identifiers, and similar catalog fields), plus curated **official feed** items (`official_feed_items`).
+- **Cloud Storage** — hosted **catalog images** and, in some cases, **curated official-announcement artwork** mirrored for the official updates feed (not your shelf photos).
 
 When your device contacts Firebase, Google processes that network traffic under [Google’s Privacy Policy](https://policies.google.com/privacy). Firebase project configuration is tied to the app package; **no Shelfy user account** is created as part of this flow.
 
@@ -82,7 +83,9 @@ We do **not** use Firebase to store your private shelf state in the current vers
 
 ### Official updates feed
 
-Discover may show curated “official updates” items loaded from Firestore (`official_feed_items`). These are editorial links and product references (for example, brand announcement URLs), not your personal collection.
+Home may show curated **“Official updates”** items loaded from Firestore (`official_feed_items`). These are editorial links and product references (for example, POP MART US announcement or product URLs from official Instagram posts). They are **not** your personal collection.
+
+Official update cards may load preview images from **Firebase Storage**, a **brand’s official CDN** (for example, `popmart.com`), or similar HTTPS hosts when you browse the feed. Tapping an item opens the **official destination** (product page or Instagram post) in your system browser or the relevant app.
 
 ### Market browse (optional network feature)
 

@@ -91,7 +91,7 @@
     <header>
       <h1>Shelfy Privacy Policy</h1>
       <p class="meta">
-        <strong>Last updated:</strong> May 29, 2026<br />
+        <strong>Last updated:</strong> July 3, 2026<br />
         <strong>App:</strong> Shelfy (<code>app.shelfy.collector</code>)<br />
         <strong>Contact:</strong> <a href="mailto:yzhou677@gmail.com">yzhou677@gmail.com</a>
       </p>
@@ -121,6 +121,7 @@
           <tr><td>Ads</td><td><strong>No</strong> advertising SDKs enabled today.</td></tr>
           <tr><td>Selling your data</td><td><strong>We do not sell</strong> your personal information.</td></tr>
           <tr><td>Catalog content</td><td>Reference data may load from <strong>Google Firebase</strong> (Firestore &amp; Storage).</td></tr>
+          <tr><td>Official updates</td><td>Curated brand announcements (links and images) from Firestore and official or hosted image URLs—not your collection.</td></tr>
           <tr><td>Market browse</td><td>May fetch <strong>public listing data</strong> from third-party marketplace services when enabled.</td></tr>
         </tbody>
       </table>
@@ -165,10 +166,17 @@
       </p>
       <ul>
         <li><strong>Cloud Firestore</strong> — brands, IPs, series, figures, and official feed items</li>
-        <li><strong>Cloud Storage</strong> — catalog artwork</li>
+        <li><strong>Cloud Storage</strong> — catalog artwork and, in some cases, curated official-announcement images mirrored for the feed (not your shelf photos)</li>
       </ul>
       <p>
         Google processes network traffic under the <a href="https://policies.google.com/privacy" rel="noopener noreferrer">Google Privacy Policy</a>. No Shelfy user account is created for this.
+      </p>
+      <h3 style="font-size:1rem;margin:1.25rem 0 0.5rem;">Official updates feed</h3>
+      <p>
+        Home may show curated <strong>Official updates</strong> from Firestore (<code>official_feed_items</code>)—editorial links and product references (for example, POP MART US announcement or product URLs from official Instagram posts). These are <strong>not</strong> your personal collection.
+      </p>
+      <p>
+        Cards may load preview images from Firebase Storage, a brand’s official CDN (for example, <code>popmart.com</code>), or similar HTTPS hosts. Tapping an item opens the official destination in your system browser or the relevant app.
       </p>
       <h3 style="font-size:1rem;margin:1.25rem 0 0.5rem;">Market browse</h3>
       <p>
