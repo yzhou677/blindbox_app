@@ -20,6 +20,7 @@ function mediaIdToPublishedAt(mediaId) {
   const m = String(d.getUTCMonth() + 1).padStart(2, '0');
   const day = String(d.getUTCDate()).padStart(2, '0');
   return {
+    isoUtc: d.toISOString(),
     isoDay: `${y}-${m}-${day}T00:00:00Z`,
     ms: Number(ms),
     utc: d.toISOString(),

@@ -54,18 +54,20 @@ announcement times. Before every push:
 
 ## publishedAt policy
 
-`publishedAt` = **official announcement calendar day** (Instagram post date, or
-official POP MART announcement when no IG post exists).
+`publishedAt` = **official Instagram post instant** (or official POP MART
+announcement time when no IG post exists).
 
-- Day-level accuracy is enough — use midnight UTC: `2026-05-29T00:00:00Z`
-- For Instagram posts, derive the calendar day from the post shortcode:
-  `node tools/official_feed/_ig_shortcode_date.mjs DZbgLVcDIDW`
-  (decodes media id → UTC post day; no browser or embed scrape needed)
-- **Do not** use release-day sort buckets, manual hour stagger, or PT→UTC release
-  conversions
+- For Instagram posts, copy the full UTC timestamp from the post shortcode:
+  `node tools/official_feed/_ig_shortcode_date.mjs DZbgLVcDIDW` → use the `utc`
+  field (e.g. `2026-07-03T08:52:21.758Z`). **Do not** truncate to
+  `T00:00:00Z` — midnight UTC becomes the previous calendar evening in US
+  timezones and the app will show the wrong day.
+- Product rows announced in the same IG carousel share that post's `utc`
+  timestamp.
+- **Do not** use release-day sort buckets or PT→UTC release conversions
 
-The app shows month+day from `publishedAt` in the card header (`May 29`). It is
-not the product release time.
+The app shows the **local** month+day from `publishedAt` in the card header
+(`Jul 3`). It is not the product release time.
 
 ## Summary policy
 
@@ -129,7 +131,7 @@ Optional: `node tools/official_feed/check_url.mjs "<officialUrl>"` — shows
 | `productId` | Optional. When set, must match `officialUrl` and `id` suffix `…_{productId}`. |
 | `productIdConfirmed` | Seed only. `true` after copying id from a hydrated browser session. |
 | `summary` | ≤ ~80 chars. Descriptive only, or `… Online June 4, 7:00 PM PT.` when copied from official product page Online Release block. |
-| `publishedAt` | ISO-8601 UTC — **Instagram / official announcement day** at `T00:00:00Z`. |
+| `publishedAt` | ISO-8601 UTC — full Instagram post instant from shortcode `utc` field. |
 | `retiredItemIds` | Archives removed doc ids in Firestore on push. |
 
 ### Curation severity
