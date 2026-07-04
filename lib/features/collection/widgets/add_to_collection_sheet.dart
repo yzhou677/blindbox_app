@@ -1,5 +1,4 @@
-﻿import 'package:blindbox_app/features/catalog/adapters/catalog_seed_to_collection_template.dart';
-import 'package:blindbox_app/features/catalog/application/catalog_availability.dart';
+﻿import 'package:blindbox_app/features/catalog/application/catalog_availability.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
@@ -383,6 +382,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     final matches = buildCatalogSeriesSearchRows(
       bundle: bundle,
       query: _trimmedQuery,
+      lookup: ref.watch(catalogBundleLookupProvider),
     );
     if (matches.isEmpty) {
       return SliverFillRemaining(
@@ -416,14 +416,11 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
           key: ValueKey<String>('add-series-search:${row.seriesId}'),
           row: row,
           shelfCta: shelfCta,
-          onOpenPreview: () async {
+          onOpenPreview: () {
             _recordSearch(_trimmedQuery);
-            final template = await catalogTemplateFromSeedSeries(
-              bundle,
-              row.seriesId,
-              resolveFigureImages: false,
-            );
-            if (!ctx.mounted || template == null) return;
+            final template =
+                ref.read(catalogSeriesTemplateProvider(row.seriesId));
+            if (template == null) return;
             _openCatalogSeriesPreview(
               ctx,
               series: template,
@@ -431,14 +428,11 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
               onAdd: () => commitCatalogSeriesToShelf(notifier, template),
             );
           },
-          onShelfCtaPressed: () async {
+          onShelfCtaPressed: () {
             _recordSearch(_trimmedQuery);
             if (!shelfCta.isAddable) return;
-            final template = await catalogTemplateFromSeedSeries(
-              bundle,
-              row.seriesId,
-              resolveFigureImages: false,
-            );
+            final template =
+                ref.read(catalogSeriesTemplateProvider(row.seriesId));
             if (template != null) {
               commitCatalogSeriesToShelf(notifier, template);
             }

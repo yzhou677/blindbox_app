@@ -1,9 +1,7 @@
 ﻿import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/search/search_placeholders.dart';
-import 'package:blindbox_app/features/catalog/adapters/catalog_seed_to_collection_template.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_availability.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
-import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_availability_copy.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_series_search_rows.dart';
 import 'package:blindbox_app/features/catalog/widgets/catalog_availability_card.dart';
@@ -75,15 +73,10 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
 
   Future<void> _openSeriesPreview(
     BuildContext context,
-    CatalogSeedBundle bundle,
     String seriesId,
-  ) async {
-    final template = await catalogTemplateFromSeedSeries(
-      bundle,
-      seriesId,
-      resolveFigureImages: false,
-    );
-    if (!context.mounted || template == null) return;
+  ) {
+    final template = ref.read(catalogSeriesTemplateProvider(seriesId));
+    if (template == null) return Future.value();
 
     final notifier = ref.read(collectionNotifierProvider.notifier);
     final snap = ref.read(collectionNotifierProvider);
@@ -97,7 +90,7 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
       taxonomyIpId: template.taxonomyIpId,
     );
 
-    await showCollectibleBottomSheet<void>(
+    return showCollectibleBottomSheet<void>(
       context: context,
       useRootNavigator: true,
       heightFraction: FeedRhythm.sheetPreviewOpenScreenFraction,
@@ -156,9 +149,11 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
       if (bundle == null) {
         results = const Center(child: CircularProgressIndicator());
       } else if (_hasSearchText) {
+        final lookup = ref.watch(catalogBundleLookupProvider);
         final matches = buildCatalogSeriesSearchRows(
           bundle: bundle,
           query: _trimmedQuery,
+          lookup: lookup,
         );
         results = matches.isEmpty
             ? Center(
@@ -194,11 +189,11 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
                     shelfCta: shelfCta,
                     onOpenPreview: () {
                       _recordSearch(_trimmedQuery);
-                      _openSeriesPreview(ctx, bundle, row.seriesId);
+                      _openSeriesPreview(ctx, row.seriesId);
                     },
                     onShelfCtaPressed: () {
                       _recordSearch(_trimmedQuery);
-                      _openSeriesPreview(ctx, bundle, row.seriesId);
+                      _openSeriesPreview(ctx, row.seriesId);
                     },
                   );
                 },

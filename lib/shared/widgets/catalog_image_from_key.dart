@@ -44,6 +44,7 @@ class CatalogImageFromKey extends StatefulWidget {
     this.borderRadius,
     this.width,
     this.height,
+    this.deferInitialResolve = false,
   });
 
   final String imageKey;
@@ -55,6 +56,9 @@ class CatalogImageFromKey extends StatefulWidget {
   final BorderRadius? borderRadius;
   final double? width;
   final double? height;
+
+  /// When true, image resolve starts after the first frame (sheet open jank).
+  final bool deferInitialResolve;
 
   /// Series vs figure + compact hint (legacy call sites).
   factory CatalogImageFromKey.legacy({
@@ -107,14 +111,21 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
   @override
   void initState() {
     super.initState();
-    _startResolve();
+    if (widget.deferInitialResolve) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _startResolve();
+      });
+    } else {
+      _startResolve();
+    }
   }
 
   @override
   void didUpdateWidget(CatalogImageFromKey oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.imageKey != widget.imageKey ||
-        oldWidget.displayMode != widget.displayMode) {
+        oldWidget.displayMode != widget.displayMode ||
+        oldWidget.deferInitialResolve != widget.deferInitialResolve) {
       _startResolve();
     }
   }
