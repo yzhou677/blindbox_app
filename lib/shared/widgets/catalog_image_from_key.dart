@@ -31,6 +31,32 @@ class CatalogImageResolveCoordinator {
   bool shouldApply(int generation) => generation == _generation;
 }
 
+/// Frame waits before starting resolve when [deferInitialResolve] is true.
+/// Batch 0 → 1 frame; batch 1 → 2 frames (~4 thumbnails per batch).
+@visibleForTesting
+int catalogImageResolveFrameWaits(int staggerBatch) =>
+    1 + staggerBatch.clamp(0, 999);
+
+/// Schedules [onReady] after [staggerBatch] additional frames (post sheet open).
+@visibleForTesting
+void scheduleCatalogImageResolveAfterFrames({
+  required VoidCallback onReady,
+  required int staggerBatch,
+  required bool Function() isMounted,
+}) {
+  var waits = catalogImageResolveFrameWaits(staggerBatch);
+  void onFrame() {
+    if (!isMounted()) return;
+    waits--;
+    if (waits <= 0) {
+      onReady();
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) => onFrame());
+  }
+  WidgetsBinding.instance.addPostFrameCallback((_) => onFrame());
+}
+
 /// Resolves a catalog [imageKey] then renders via [CatalogImageDisplaySpec].
 class CatalogImageFromKey extends StatefulWidget {
   const CatalogImageFromKey({
@@ -45,6 +71,7 @@ class CatalogImageFromKey extends StatefulWidget {
     this.width,
     this.height,
     this.deferInitialResolve = false,
+    this.resolveStaggerBatch = 0,
   });
 
   final String imageKey;
@@ -59,6 +86,9 @@ class CatalogImageFromKey extends StatefulWidget {
 
   /// When true, image resolve starts after the first frame (sheet open jank).
   final bool deferInitialResolve;
+
+  /// Stagger resolve across frames (~4 cells per batch) when deferring.
+  final int resolveStaggerBatch;
 
   /// Series vs figure + compact hint (legacy call sites).
   factory CatalogImageFromKey.legacy({
@@ -111,10 +141,16 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
   @override
   void initState() {
     super.initState();
+    _scheduleInitialResolve();
+  }
+
+  void _scheduleInitialResolve() {
     if (widget.deferInitialResolve) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _startResolve();
-      });
+      scheduleCatalogImageResolveAfterFrames(
+        staggerBatch: widget.resolveStaggerBatch,
+        isMounted: () => mounted,
+        onReady: _startResolve,
+      );
     } else {
       _startResolve();
     }
@@ -125,8 +161,13 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.imageKey != widget.imageKey ||
         oldWidget.displayMode != widget.displayMode ||
-        oldWidget.deferInitialResolve != widget.deferInitialResolve) {
-      _startResolve();
+        oldWidget.deferInitialResolve != widget.deferInitialResolve ||
+        oldWidget.resolveStaggerBatch != widget.resolveStaggerBatch) {
+      if (widget.deferInitialResolve) {
+        _scheduleInitialResolve();
+      } else {
+        _startResolve();
+      }
     }
   }
 

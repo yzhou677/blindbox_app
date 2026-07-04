@@ -215,6 +215,7 @@ class CatalogResolvedImage extends StatelessWidget {
         alignment: spec.alignment,
         filterQuality: spec.filterQuality,
         fillBounds: expansive,
+        decodeExtent: decodeExtent,
         errorBuilder: (context, error, stackTrace) {
           debugPrint('CatalogResolvedImage: asset "$ref" failed: $error');
           return onError();
@@ -230,6 +231,7 @@ class CatalogResolvedImage extends StatelessWidget {
         alignment: spec.alignment,
         filterQuality: spec.filterQuality,
         fillBounds: expansive,
+        decodeExtent: decodeExtent,
         errorBuilder: (context, error, stackTrace) {
           debugPrint('CatalogResolvedImage: disk cache "$ref" failed: $error');
           return onError();

@@ -28,6 +28,7 @@ abstract final class CatalogAspectImage {
     FilterQuality filterQuality = FilterQuality.high,
     BoxFit fit = BoxFit.cover,
     bool fillBounds = true,
+    int? decodeExtent,
     ImageErrorWidgetBuilder? errorBuilder,
   }) {
     assertAspectPreservingFit(fit);
@@ -37,6 +38,7 @@ abstract final class CatalogAspectImage {
       fit: fit,
       alignment: alignment,
       filterQuality: filterQuality,
+      cacheWidth: decodeExtent,
       errorBuilder: errorBuilder,
     );
     if (fillBounds) {
@@ -131,6 +133,7 @@ abstract final class CatalogAspectImage {
     FilterQuality filterQuality = FilterQuality.high,
     BoxFit fit = BoxFit.cover,
     bool fillBounds = true,
+    int? decodeExtent,
     ImageErrorWidgetBuilder? errorBuilder,
   }) {
     assertAspectPreservingFit(fit);
@@ -139,6 +142,7 @@ abstract final class CatalogAspectImage {
       fit: fit,
       alignment: alignment,
       filterQuality: filterQuality,
+      cacheWidth: decodeExtent,
       errorBuilder: errorBuilder,
     );
     if (fillBounds) {

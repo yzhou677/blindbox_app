@@ -7,6 +7,7 @@ import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_series_shelf_cta_presentation.dart';
 import 'package:blindbox_app/features/collection/presentation/catalog_search_row_summary.dart';
 import 'package:blindbox_app/features/collection/presentation/figure_secret_rarity_style.dart';
+import 'package:blindbox_app/features/collection/widgets/catalog_series_preview_warm.dart';
 import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_radii.dart';
@@ -18,7 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Read-only catalog lineup preview before adding a series to the shelf.
-class CatalogSeriesPreviewSheet extends ConsumerWidget {
+class CatalogSeriesPreviewSheet extends ConsumerStatefulWidget {
   const CatalogSeriesPreviewSheet({
     super.key,
     required this.series,
@@ -29,10 +30,27 @@ class CatalogSeriesPreviewSheet extends ConsumerWidget {
   final CatalogSeries series;
   final CollectionSeriesShelfCtaPresentation shelfCta;
   final VoidCallback onAdd;
+
+  @override
+  ConsumerState<CatalogSeriesPreviewSheet> createState() =>
+      _CatalogSeriesPreviewSheetState();
+}
+
+class _CatalogSeriesPreviewSheetState
+    extends ConsumerState<CatalogSeriesPreviewSheet> {
   static const double _stickyActionBarReserve = 92;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void initState() {
+    super.initState();
+    CatalogSeriesPreviewWarm.schedule(context, widget.series);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final series = widget.series;
+    final shelfCta = widget.shelfCta;
+    final onAdd = widget.onAdd;
     final scheme = Theme.of(context).colorScheme;
     final hasChase = series.figures.any((f) => f.isSecret);
     final figureLine = catalogSearchRowSummary(
@@ -77,6 +95,7 @@ class CatalogSeriesPreviewSheet extends ConsumerWidget {
                       return _PreviewFigureRow(
                         key: ValueKey<String>(f.templateFigureId),
                         figure: f,
+                        figureIndex: i,
                         accent: series.shelfAccent,
                         onTap: () {
                           showCatalogFigureGallery(
@@ -204,11 +223,15 @@ class _PreviewFigureRow extends StatelessWidget {
   const _PreviewFigureRow({
     super.key,
     required this.figure,
+    required this.figureIndex,
     required this.accent,
     required this.onTap,
   });
 
+  static const _resolveBatchSize = 4;
+
   final CatalogFigure figure;
+  final int figureIndex;
   final Color accent;
   final VoidCallback onTap;
 
@@ -250,6 +273,7 @@ class _PreviewFigureRow extends StatelessWidget {
                           isSecret: figure.isSecret,
                           compact: true,
                           deferInitialResolve: true,
+                          resolveStaggerBatch: figureIndex ~/ _resolveBatchSize,
                           displayMode: CatalogImageDisplayMode.figureThumb,
                           borderRadius: BorderRadius.zero,
                         )
