@@ -258,6 +258,10 @@ Search V2 ([`lib/core/search/`](../lib/core/search/), [`CatalogSearchService`](.
 
 Future indexing (inverted index, trie, etc.) should be considered **only** if catalog size or profiling shows user-visible search latency — see [`TECH_DEBT.md`](TECH_DEBT.md). Use **`CatalogSearchPipeline`** in debug logcat to measure Search V2 directly across all callers.
 
+### Catalog image format (thumbnails)
+
+**Catalog thumbnails should use WebP.** Android AVIF decoding was measured to be significantly slower on tested Android devices (internal performance investigation, July 2026). Until the catalog art pipeline is fully migrated off AVIF, expect multi-second preview latency when many figure thumbs decode concurrently — this is a platform codec cost, not a Riverpod/search/rebuild issue.
+
 ### Firestore architecture (browsing is memory-only)
 
 **Firestore is not queried during normal Collection browsing.**
@@ -355,11 +359,11 @@ Use this when shelf or catalog growth makes performance questionable; compare st
 
 ### Collection Insights Dashboard performance baseline
 
-Recorded after the 2026 dashboard animation + rebuild-isolation refactor ([`CollectionInsightsDashboard`](../lib/features/collection/widgets/collection_insights_dashboard.dart), [`CollectionInsightsDashboardHost`](../lib/features/collection/widgets/collection_insights_dashboard_host.dart)). Use this as a **regression check** when changing expand/collapse, morph, or summary layout — re-run the profile audit and compare numbers; do not rely on debug `CollectionPipeline` logs in profile mode (they are no-ops).
+Recorded after the 2026 dashboard animation + rebuild-isolation refactor ([`CollectionInsightsDashboard`](../lib/features/collection/widgets/collection_insights_dashboard.dart), [`CollectionInsightsDashboardHost`](../lib/features/collection/widgets/collection_insights_dashboard_host.dart)). Use this as a **regression check** when changing expand/collapse, morph, or summary layout — use Flutter DevTools Performance in profile mode; do not rely on debug `CollectionPipeline` logs in profile mode (they are no-ops).
 
 **Reference device:** Samsung Galaxy S24 Ultra (SM-S947U1, wireless ADB)
 
-**Profile mode** (`flutter run --profile -t tools/profile/collection_dashboard_profile_audit.dart -d <device>`):
+**Profile mode** (`flutter run --profile` + DevTools Performance timeline):
 
 | Metric | Baseline (2026-06) |
 |--------|-------------------|
