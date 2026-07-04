@@ -69,6 +69,7 @@ class CatalogGalleryStage extends StatelessWidget {
           file: file!,
           fit: fit,
           fillBounds: fillBounds,
+          decodeExtent: decode,
         );
         return key != null ? KeyedSubtree(key: key, child: layer) : layer;
       }
@@ -79,6 +80,7 @@ class CatalogGalleryStage extends StatelessWidget {
           fit: fit,
           fillBounds: fillBounds,
           filterQuality: spec.filterQuality,
+          decodeExtent: decode,
         );
       }
       return CatalogAspectImage.presentNetwork(

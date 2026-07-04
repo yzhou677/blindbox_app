@@ -7,6 +7,7 @@ import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_series_shelf_cta_presentation.dart';
 import 'package:blindbox_app/features/collection/presentation/catalog_search_row_summary.dart';
 import 'package:blindbox_app/features/collection/presentation/figure_secret_rarity_style.dart';
+import 'package:blindbox_app/features/collection/widgets/catalog_series_preview_warm.dart';
 import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_radii.dart';
@@ -18,7 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Read-only catalog lineup preview before adding a series to the shelf.
-class CatalogSeriesPreviewSheet extends ConsumerWidget {
+class CatalogSeriesPreviewSheet extends ConsumerStatefulWidget {
   const CatalogSeriesPreviewSheet({
     super.key,
     required this.series,
@@ -29,10 +30,27 @@ class CatalogSeriesPreviewSheet extends ConsumerWidget {
   final CatalogSeries series;
   final CollectionSeriesShelfCtaPresentation shelfCta;
   final VoidCallback onAdd;
+
+  @override
+  ConsumerState<CatalogSeriesPreviewSheet> createState() =>
+      _CatalogSeriesPreviewSheetState();
+}
+
+class _CatalogSeriesPreviewSheetState
+    extends ConsumerState<CatalogSeriesPreviewSheet> {
   static const double _stickyActionBarReserve = 92;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void initState() {
+    super.initState();
+    CatalogSeriesPreviewWarm.schedule(context, widget.series);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final series = widget.series;
+    final shelfCta = widget.shelfCta;
+    final onAdd = widget.onAdd;
     final scheme = Theme.of(context).colorScheme;
     final hasChase = series.figures.any((f) => f.isSecret);
     final figureLine = catalogSearchRowSummary(
@@ -41,9 +59,7 @@ class CatalogSeriesPreviewSheet extends ConsumerWidget {
       matchedFigureNames: const {},
     );
     final scroll = CollectibleSheetScope.scrollControllerOf(context);
-    final relationshipLine = ref.watch(
-      relationshipHintForCatalogSeriesProvider(series.templateId),
-    );
+    final galleryItems = catalogGalleryItemsFromCatalogSeries(series);
 
     return CollectibleSheetInsets(
       extraBottom: 0,
@@ -60,13 +76,11 @@ class CatalogSeriesPreviewSheet extends ConsumerWidget {
                 trailingMeta: figureLine,
               ),
               slivers: [
-                if (relationshipLine != null && relationshipLine.isNotEmpty)
-                  SliverToBoxAdapter(
-                    child: CollectibleRelationshipLine(
-                      text: relationshipLine,
-                      padding: const EdgeInsets.only(top: 10),
-                    ),
+                SliverToBoxAdapter(
+                  child: _DeferredPreviewRelationshipLine(
+                    templateId: series.templateId,
                   ),
+                ),
                 SliverPadding(
                   padding: const EdgeInsets.only(
                     top: FeedRhythm.sheetFigureRailGap,
@@ -74,17 +88,19 @@ class CatalogSeriesPreviewSheet extends ConsumerWidget {
                   ),
                   sliver: SliverList.separated(
                     itemCount: series.figures.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 14),
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 14),
                     itemBuilder: (context, i) {
                       final f = series.figures[i];
                       return _PreviewFigureRow(
+                        key: ValueKey<String>(f.templateFigureId),
                         figure: f,
+                        figureIndex: i,
                         accent: series.shelfAccent,
                         onTap: () {
-                          final items = catalogGalleryItemsFromCatalogSeries(series);
                           showCatalogFigureGallery(
                             context,
-                            items: items,
+                            items: galleryItems,
                             initialIndex: i,
                             seriesTitle: series.name,
                           );
@@ -164,14 +180,58 @@ class CatalogSeriesPreviewSheet extends ConsumerWidget {
   }
 }
 
+/// Defers relationship index work until after the sheet's first frame paints.
+class _DeferredPreviewRelationshipLine extends ConsumerStatefulWidget {
+  const _DeferredPreviewRelationshipLine({required this.templateId});
+
+  final String templateId;
+
+  @override
+  ConsumerState<_DeferredPreviewRelationshipLine> createState() =>
+      _DeferredPreviewRelationshipLineState();
+}
+
+class _DeferredPreviewRelationshipLineState
+    extends ConsumerState<_DeferredPreviewRelationshipLine> {
+  var _ready = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _ready = true);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_ready) return const SizedBox.shrink();
+    final relationshipLine = ref.watch(
+      relationshipHintForCatalogSeriesProvider(widget.templateId),
+    );
+    if (relationshipLine == null || relationshipLine.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return CollectibleRelationshipLine(
+      text: relationshipLine,
+      padding: const EdgeInsets.only(top: 10),
+    );
+  }
+}
+
 class _PreviewFigureRow extends StatelessWidget {
   const _PreviewFigureRow({
+    super.key,
     required this.figure,
+    required this.figureIndex,
     required this.accent,
     required this.onTap,
   });
 
+  static const _resolveBatchSize = 4;
+
   final CatalogFigure figure;
+  final int figureIndex;
   final Color accent;
   final VoidCallback onTap;
 
@@ -190,70 +250,77 @@ class _PreviewFigureRow extends StatelessWidget {
         ? secretLook.cardTint(rowBase)
         : rowBase;
 
-    return Material(
-      color: rowColor,
-      borderRadius: AppRadii.matRadius,
-      shadowColor: secretLook?.accent.withValues(alpha: 0.12),
-      elevation: secretLook != null ? 0.5 : 0,
-      child: InkWell(
-        onTap: onTap,
+    return RepaintBoundary(
+      child: Material(
+        color: rowColor,
         borderRadius: AppRadii.matRadius,
-        child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
-        child: Row(
-          children: [
-            CatalogImageSlot(
-              displayMode: CatalogImageDisplayMode.figureThumb,
-              child: (figure.catalogImageKey?.trim().isNotEmpty ?? false)
-                  ? CatalogImageFromKey(
-                      imageKey: figure.catalogImageKey!,
-                      name: figure.name,
-                      seedKey: figure.templateFigureId,
-                      isSecret: figure.isSecret,
-                      compact: true,
-                      displayMode: CatalogImageDisplayMode.figureThumb,
-                      borderRadius: BorderRadius.zero,
-                    )
-                  : ColoredBox(
-                      color: scheme.surfaceContainerHighest.withValues(
-                        alpha: 0.5,
+        shadowColor: secretLook?.accent.withValues(alpha: 0.12),
+        elevation: secretLook != null ? 0.5 : 0,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: AppRadii.matRadius,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
+            child: Row(
+              children: [
+                CatalogImageSlot(
+                  displayMode: CatalogImageDisplayMode.figureThumb,
+                  child: (figure.catalogImageKey?.trim().isNotEmpty ?? false)
+                      ? CatalogImageFromKey(
+                          imageKey: figure.catalogImageKey!,
+                          name: figure.name,
+                          seedKey: figure.templateFigureId,
+                          isSecret: figure.isSecret,
+                          compact: true,
+                          deferInitialResolve: true,
+                          resolveStaggerBatch: figureIndex ~/ _resolveBatchSize,
+                          displayMode: CatalogImageDisplayMode.figureThumb,
+                          borderRadius: BorderRadius.zero,
+                        )
+                      : ColoredBox(
+                          color: scheme.surfaceContainerHighest.withValues(
+                            alpha: 0.5,
+                          ),
+                        ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        figure.name,
+                        style: CollectibleTypography.figureCaption(
+                          textTheme,
+                          scheme,
+                        ),
                       ),
-                    ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    figure.name,
-                    style: CollectibleTypography.figureCaption(
-                      textTheme,
-                      scheme,
-                    ),
+                      const SizedBox(height: 3),
+                      Text(
+                        figure.rarity,
+                        style: CollectibleTypography.figureMeta(
+                          textTheme,
+                          scheme,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 3),
-                  Text(
-                    figure.rarity,
-                    style: CollectibleTypography.figureMeta(textTheme, scheme),
+                ),
+                if (figure.isSecret)
+                  Icon(
+                    Icons.star_rounded,
+                    size: 20,
+                    color: (secretLook?.accent ?? accent).withValues(alpha: 0.88),
                   ),
-                ],
-              ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 22,
+                  color: scheme.onSurfaceVariant.withValues(alpha: 0.45),
+                ),
+              ],
             ),
-            if (figure.isSecret)
-              Icon(
-                Icons.star_rounded,
-                size: 20,
-                color: (secretLook?.accent ?? accent).withValues(alpha: 0.88),
-              ),
-            Icon(
-              Icons.chevron_right_rounded,
-              size: 22,
-              color: scheme.onSurfaceVariant.withValues(alpha: 0.45),
-            ),
-          ],
+          ),
         ),
-      ),
       ),
     );
   }

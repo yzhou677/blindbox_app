@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/foundation.dart';
 
+import 'package:blindbox_app/features/catalog/data/catalog_bundle_lookup.dart';
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_series.dart'
     as seed_catalog;
@@ -50,6 +51,7 @@ List<CatalogSeriesSearchRow> buildCatalogSeriesSearchRows({
   required CatalogSeedBundle bundle,
   required String query,
   bool Function(String seriesId)? excludeSeriesId,
+  CatalogBundleLookup? lookup,
 }) {
   final svc = CatalogSearchService(bundle);
   final raw = svc.search(query);
@@ -85,7 +87,8 @@ List<CatalogSeriesSearchRow> buildCatalogSeriesSearchRows({
         if (series == null) {
           throw StateError('Catalog seed missing series $sid');
         }
-        final figureCount = _figureCountInSeries(bundle, sid);
+        final figureCount = lookup?.figureCountInSeries(sid) ??
+            _figureCountInSeries(bundle, sid);
         final summaryLine = catalogSearchRowSummary(
           figureCount: figureCount,
           hasChase: agg.hasAnySecret,

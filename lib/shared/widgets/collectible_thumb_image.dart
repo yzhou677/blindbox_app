@@ -103,6 +103,7 @@ class CollectibleThumbImage extends StatelessWidget {
               asset: ref,
               fit: effectiveFit,
               fillBounds: fillBounds,
+              decodeExtent: decodeExtent,
               errorBuilder: (context, error, stackTrace) {
                 debugPrint(
                   'CollectibleThumbImage: failed to load asset "$ref": $error',

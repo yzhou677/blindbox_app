@@ -1,4 +1,3 @@
-import 'package:blindbox_app/features/catalog/adapters/catalog_seed_to_collection_template.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
 import 'package:blindbox_app/features/catalog/catalog_latest_series.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
@@ -11,17 +10,10 @@ final addSeriesCatalogRecommendationsProvider =
   final bundle = await ref.watch(catalogBundleProvider.future);
   final snap = ref.watch(collectionNotifierProvider);
   final picks = pickLatestSeriesRecommendations(bundle, snap);
-  final templates = await Future.wait(
-    picks.map(
-      (seedSeries) => catalogTemplateFromSeedSeries(
-        bundle,
-        seedSeries.id,
-        resolveFigureImages: false,
-      ),
-    ),
-  );
+  final lookup = ref.watch(catalogBundleLookupProvider);
+  if (lookup == null) return const [];
   return [
-    for (final t in templates)
-      ?t,
+    for (final seedSeries in picks)
+      if (lookup.seriesTemplate(seedSeries.id) case final template?) template,
   ];
 });

@@ -1,6 +1,8 @@
 ﻿import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
+import 'package:blindbox_app/features/catalog/data/catalog_bundle_lookup.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_service.dart';
+import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/market/data/market_catalog_identity_cache.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -61,6 +63,22 @@ CatalogSeedBundle? resolveCatalogBundleForSearch({
   }
   return null;
 }
+
+/// Indexed catalog lookups — one build per in-memory bundle revision.
+final catalogBundleLookupProvider = Provider<CatalogBundleLookup?>((ref) {
+  ref.watch(catalogBundleRevisionProvider);
+  final bundle = resolveCatalogBundleForSearch(
+    providerBundle: ref.watch(catalogBundleProvider).valueOrNull,
+  );
+  if (bundle == null) return null;
+  return CatalogBundleLookup.fromBundle(bundle);
+});
+
+/// Sync series template for preview / add flows (no async gap before sheet open).
+final catalogSeriesTemplateProvider =
+    Provider.family<CatalogSeries?, String>((ref, seriesId) {
+  return ref.watch(catalogBundleLookupProvider)?.seriesTemplate(seriesId);
+});
 
 /// Catalog search over the current bundle; recreated when [catalogBundleProvider]
 /// updates.

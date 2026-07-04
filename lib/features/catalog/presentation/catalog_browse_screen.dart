@@ -1,9 +1,7 @@
 ﻿import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/search/search_placeholders.dart';
-import 'package:blindbox_app/features/catalog/adapters/catalog_seed_to_collection_template.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_availability.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
-import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_availability_copy.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_series_search_rows.dart';
 import 'package:blindbox_app/features/catalog/widgets/catalog_availability_card.dart';
@@ -75,15 +73,11 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
 
   Future<void> _openSeriesPreview(
     BuildContext context,
-    CatalogSeedBundle bundle,
-    String seriesId,
-  ) async {
-    final template = await catalogTemplateFromSeedSeries(
-      bundle,
-      seriesId,
-      resolveFigureImages: false,
-    );
-    if (!context.mounted || template == null) return;
+    String seriesId, {
+    String? recordSearchQuery,
+  }) {
+    final template = ref.read(catalogSeriesTemplateProvider(seriesId));
+    if (template == null) return Future.value();
 
     final notifier = ref.read(collectionNotifierProvider.notifier);
     final snap = ref.read(collectionNotifierProvider);
@@ -97,15 +91,23 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
       taxonomyIpId: template.taxonomyIpId,
     );
 
-    await showCollectibleBottomSheet<void>(
+    final queryToRecord = recordSearchQuery?.trim();
+
+    return showCollectibleBottomSheet<void>(
       context: context,
       useRootNavigator: true,
       heightFraction: FeedRhythm.sheetPreviewOpenScreenFraction,
-      builder: (ctx, scroll) => CatalogSeriesPreviewSheet(
-        series: template,
-        shelfCta: shelfCta,
-        onAdd: () => commitCatalogSeriesToShelf(notifier, template),
-      ),
+      builder: (ctx, scroll) {
+        return _DeferredSearchHistoryOnPreviewMount(
+          searchQuery: queryToRecord,
+          onRecordSearch: _recordSearch,
+          child: CatalogSeriesPreviewSheet(
+            series: template,
+            shelfCta: shelfCta,
+            onAdd: () => commitCatalogSeriesToShelf(notifier, template),
+          ),
+        );
+      },
     );
   }
 
@@ -156,9 +158,11 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
       if (bundle == null) {
         results = const Center(child: CircularProgressIndicator());
       } else if (_hasSearchText) {
+        final lookup = ref.watch(catalogBundleLookupProvider);
         final matches = buildCatalogSeriesSearchRows(
           bundle: bundle,
           query: _trimmedQuery,
+          lookup: lookup,
         );
         results = matches.isEmpty
             ? Center(
@@ -193,12 +197,18 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
                     row: row,
                     shelfCta: shelfCta,
                     onOpenPreview: () {
-                      _recordSearch(_trimmedQuery);
-                      _openSeriesPreview(ctx, bundle, row.seriesId);
+                      _openSeriesPreview(
+                        ctx,
+                        row.seriesId,
+                        recordSearchQuery: _trimmedQuery,
+                      );
                     },
                     onShelfCtaPressed: () {
-                      _recordSearch(_trimmedQuery);
-                      _openSeriesPreview(ctx, bundle, row.seriesId);
+                      _openSeriesPreview(
+                        ctx,
+                        row.seriesId,
+                        recordSearchQuery: _trimmedQuery,
+                      );
                     },
                   );
                 },
@@ -220,4 +230,42 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
       results: results,
     );
   }
+}
+
+/// Schedules [onRecordSearch] once after the preview sheet's first frame.
+///
+/// [initState] runs exactly once per sheet opening; rebuilds of [child] do not
+/// re-register the callback. History is still recorded if the user dismisses
+/// the sheet quickly after tap — the callback was already scheduled on mount
+/// and does not depend on this wrapper staying mounted.
+class _DeferredSearchHistoryOnPreviewMount extends StatefulWidget {
+  const _DeferredSearchHistoryOnPreviewMount({
+    required this.searchQuery,
+    required this.onRecordSearch,
+    required this.child,
+  });
+
+  final String? searchQuery;
+  final ValueChanged<String> onRecordSearch;
+  final Widget child;
+
+  @override
+  State<_DeferredSearchHistoryOnPreviewMount> createState() =>
+      _DeferredSearchHistoryOnPreviewMountState();
+}
+
+class _DeferredSearchHistoryOnPreviewMountState
+    extends State<_DeferredSearchHistoryOnPreviewMount> {
+  @override
+  void initState() {
+    super.initState();
+    final q = widget.searchQuery?.trim();
+    if (q == null || q.isEmpty) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.onRecordSearch(q);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

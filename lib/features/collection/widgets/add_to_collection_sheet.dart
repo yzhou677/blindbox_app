@@ -1,5 +1,4 @@
-﻿import 'package:blindbox_app/features/catalog/adapters/catalog_seed_to_collection_template.dart';
-import 'package:blindbox_app/features/catalog/application/catalog_availability.dart';
+﻿import 'package:blindbox_app/features/catalog/application/catalog_availability.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
@@ -19,7 +18,6 @@ import 'package:blindbox_app/features/collection/presentation/add_series_catalog
 import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart';
 import 'package:blindbox_app/features/collection/widgets/catalog_series_preview_sheet.dart';
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
-import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/shared/widgets/app_search_field.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:blindbox_app/core/theme/app_radii.dart';
@@ -43,6 +41,8 @@ class AddToCollectionSheet extends ConsumerStatefulWidget {
 }
 
 class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
+  static const double _stickyCreateBarReserve = 72;
+
   final _search = TextEditingController();
 
   @override
@@ -127,109 +127,138 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     final catalogBundle = catalogAsync.valueOrNull;
 
     return CollectibleSheetInsets(
-      extraBottom: AppSpacing.md,
-      child: CollectibleSheetScrollView(
-        controller: sheetScroll,
-        header: CollectibleSheetChrome(
-          editorialTitle: 'Add a series',
-          editorialSubtitle: AddSeriesCatalogCopy.sheetSubtitle,
-        ),
-        slivers: [
-          SliverToBoxAdapter(
-            child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            AppSearchField(
-              controller: _search,
-              padding: EdgeInsets.zero,
-              hintText: SearchPlaceholders.localCatalog,
-              onChanged: _onSearchChanged,
-              onSubmitted: () => _recordSearch(_trimmedQuery),
-              suffixIcon: ValueListenableBuilder<TextEditingValue>(
-                valueListenable: _search,
-                builder: (context, value, _) {
-                  if (value.text.isEmpty) return const SizedBox.shrink();
-                  return IconButton(
-                    tooltip: 'Clear',
-                    icon: Icon(
-                      Icons.close_rounded,
-                      color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
-                    ),
-                    onPressed: _clearSearch,
-                  );
-                },
+      extraBottom: 0,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: CollectibleSheetScrollView(
+              controller: sheetScroll,
+              header: CollectibleSheetChrome(
+                editorialTitle: 'Add a series',
+                editorialSubtitle: AddSeriesCatalogCopy.sheetSubtitle,
               ),
-            ),
-            if (catalogActive)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text(
-                  AddSeriesCatalogCopy.catalogListHeading(searchActive: true),
-                  style: CollectibleTypography.catalogSeriesRowMeta(
-                    textTheme,
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      AppSearchField(
+                        controller: _search,
+                        padding: EdgeInsets.zero,
+                        hintText: SearchPlaceholders.localCatalog,
+                        onChanged: _onSearchChanged,
+                        onSubmitted: () => _recordSearch(_trimmedQuery),
+                        suffixIcon: ValueListenableBuilder<TextEditingValue>(
+                          valueListenable: _search,
+                          builder: (context, value, _) {
+                            if (value.text.isEmpty) {
+                              return const SizedBox.shrink();
+                            }
+                            return IconButton(
+                              tooltip: 'Clear',
+                              icon: Icon(
+                                Icons.close_rounded,
+                                color: scheme.onSurfaceVariant.withValues(
+                                  alpha: 0.7,
+                                ),
+                              ),
+                              onPressed: _clearSearch,
+                            );
+                          },
+                        ),
+                      ),
+                      if (catalogActive)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Text(
+                            AddSeriesCatalogCopy.catalogListHeading(
+                              searchActive: true,
+                            ),
+                            style: CollectibleTypography.catalogSeriesRowMeta(
+                              textTheme,
+                              scheme,
+                            ),
+                          ),
+                        )
+                      else if (availability.isCatalogUsable &&
+                          catalogBundle != null) ...[
+                        const SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Text(
+                            'Latest releases',
+                            style: textTheme.labelLarge?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.12,
+                              color: scheme.onSurfaceVariant.withValues(
+                                alpha: 0.88,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                if (catalogActive)
+                  _buildCatalogSearchSliver(
+                    context,
                     scheme,
+                    textTheme,
+                    snap,
+                    notifier,
+                    catalogAsync,
+                    availability,
+                    retry,
+                  )
+                else
+                  _buildRecommendationsSliver(
+                    context,
+                    scheme,
+                    textTheme,
+                    notifier,
+                    availability,
+                    recommendationsAsync,
+                    catalogBundle,
+                    retry,
                   ),
+                const SliverToBoxAdapter(
+                  child: SizedBox(height: _stickyCreateBarReserve),
                 ),
-              )
-            else if (availability.isCatalogUsable && catalogBundle != null) ...[
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text(
-                  'Latest releases',
-                  style: textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.12,
-                    color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
-                  ),
-                ),
-              ),
-            ],
-          ],
+              ],
             ),
           ),
-          if (catalogActive)
-            _buildCatalogSearchSliver(
-              context,
-              scheme,
-              textTheme,
-              snap,
-              notifier,
-              catalogAsync,
-              availability,
-              retry,
-            )
-          else
-            _buildRecommendationsSliver(
-              context,
-              scheme,
-              textTheme,
-              notifier,
-              availability,
-              recommendationsAsync,
-              catalogBundle,
-              retry,
-            ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: FilledButton.tonal(
-              onPressed: widget.onCreateCustom,
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+          Material(
+            color: scheme.surface,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(
+                    color: scheme.outlineVariant.withValues(alpha: 0.28),
+                  ),
                 ),
               ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.draw_rounded, size: 20),
-                  SizedBox(width: 8),
-                  Text('Create my own series'),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.only(top: 10, bottom: 8),
+                child: FilledButton.tonal(
+                  onPressed: widget.onCreateCustom,
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.draw_rounded, size: 20),
+                      SizedBox(width: 8),
+                      Text('Create my own series'),
+                    ],
+                  ),
+                ),
               ),
-            ),
             ),
           ),
         ],
@@ -383,6 +412,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     final matches = buildCatalogSeriesSearchRows(
       bundle: bundle,
       query: _trimmedQuery,
+      lookup: ref.watch(catalogBundleLookupProvider),
     );
     if (matches.isEmpty) {
       return SliverFillRemaining(
@@ -416,14 +446,11 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
           key: ValueKey<String>('add-series-search:${row.seriesId}'),
           row: row,
           shelfCta: shelfCta,
-          onOpenPreview: () async {
+          onOpenPreview: () {
             _recordSearch(_trimmedQuery);
-            final template = await catalogTemplateFromSeedSeries(
-              bundle,
-              row.seriesId,
-              resolveFigureImages: false,
-            );
-            if (!ctx.mounted || template == null) return;
+            final template =
+                ref.read(catalogSeriesTemplateProvider(row.seriesId));
+            if (template == null) return;
             _openCatalogSeriesPreview(
               ctx,
               series: template,
@@ -431,14 +458,11 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
               onAdd: () => commitCatalogSeriesToShelf(notifier, template),
             );
           },
-          onShelfCtaPressed: () async {
+          onShelfCtaPressed: () {
             _recordSearch(_trimmedQuery);
             if (!shelfCta.isAddable) return;
-            final template = await catalogTemplateFromSeedSeries(
-              bundle,
-              row.seriesId,
-              resolveFigureImages: false,
-            );
+            final template =
+                ref.read(catalogSeriesTemplateProvider(row.seriesId));
             if (template != null) {
               commitCatalogSeriesToShelf(notifier, template);
             }
