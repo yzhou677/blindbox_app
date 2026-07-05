@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Shelfy — a collectible collection tracker for designer toys and blind box figures." />
+  <title>Shelfy</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --text: #1a1a1a;
+      --muted: #555;
+      --bg: #faf9f7;
+      --card: #ffffff;
+      --accent: #5c4d7a;
+      --border: #e8e4df;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --text: #f2f0ec;
+        --muted: #b8b3ab;
+        --bg: #121110;
+        --card: #1c1a18;
+        --accent: #c4b5e8;
+        --border: #2e2b28;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      line-height: 1.65;
+      color: var(--text);
+      background: var(--bg);
+    }
+    main {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2.5rem 1.25rem 4rem;
+    }
+    header {
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      margin: 0 0 0.5rem;
+      letter-spacing: -0.02em;
+    }
+    .tagline {
+      font-size: 1.1rem;
+      color: var(--muted);
+      margin: 0;
+    }
+    .meta {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-top: 1rem;
+    }
+    h2 {
+      font-size: 1.2rem;
+      margin: 2rem 0 0.75rem;
+      color: var(--accent);
+    }
+    p { font-size: 1.02rem; }
+    ul {
+      padding-left: 1.25rem;
+      font-size: 1.02rem;
+    }
+    .links {
+      list-style: none;
+      padding: 0;
+      margin: 1rem 0 0;
+    }
+    .links li {
+      margin: 0.65rem 0;
+      padding: 0.85rem 1rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 0.95rem;
+    }
+    .links a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .links a:hover { text-decoration: underline; }
+    .links span {
+      display: block;
+      margin-top: 0.25rem;
+      font-weight: 400;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+    a { color: var(--accent); }
+    footer {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Shelfy</h1>
+      <p class="tagline">A calm, collectible-first shelf for designer toys and blind box figures.</p>
+      <p class="meta">
+        <strong>Package:</strong> <code>app.shelfy.collector</code><br />
+        <strong>Contact:</strong> <a href="mailto:yzhou677@gmail.com">yzhou677@gmail.com</a>
+      </p>
+    </header>
+
+    <section>
+      <h2>About</h2>
+      <p>
+        Shelfy helps collectors browse catalog releases, track what they own, and explore market listings —
+        with your shelf stored locally on your device.
+      </p>
+    </section>
+
+    <section>
+      <h2>Links</h2>
+      <ul class="links">
+        <li>
+          <a href="privacy-policy.html">Privacy Policy</a>
+          <span>How Shelfy handles your data — local-first collection, Firebase catalog, and market browse.</span>
+        </li>
+        <li>
+          <a href="https://github.com/yzhou677/blindbox_app">GitHub repository</a>
+          <span>Source code and developer documentation.</span>
+        </li>
+        <li>
+          <a href="https://github.com/yzhou677/blindbox_app/blob/main/docs/README.md">Documentation index</a>
+          <span>Architecture notes, testing guides, and project overview.</span>
+        </li>
+      </ul>
+    </section>
+
+    <footer>
+      <p>Shelfy · <code>app.shelfy.collector</code></p>
+    </footer>
+  </main>
+</body>
+</html>

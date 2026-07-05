@@ -2,6 +2,8 @@
 
 Human-oriented notes for the Blindbox app. **Agent rules and architecture live under `.cursor/`, not here.**
 
+**GitHub Pages:** [Site home](https://yzhou677.github.io/blindbox_app/) · [Privacy Policy (HTML)](privacy-policy.html)
+
 ## In this folder
 
 - [`CATALOG_ARCHITECTURE.md`](CATALOG_ARCHITECTURE.md) — **canonical** catalog spec (Firestore → cache → providers, Search V2, availability UX)
