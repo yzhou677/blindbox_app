@@ -9,8 +9,8 @@ import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/domain/series_completion_atmosphere.dart';
 import 'package:blindbox_app/features/collection/domain/series_completion_resolution.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_series_thumbnail.dart';
-import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_progress_voice.dart';
+import 'package:blindbox_app/features/collection/widgets/master_complete_celebration.dart';
 import 'package:flutter/material.dart';
 
 /// One series row on the collector shelf — emotional progress + subtle completion glow.
@@ -40,6 +40,8 @@ class _SeriesShelfCardState extends State<SeriesShelfCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _completeGlow;
   bool _wasComplete = false;
+  bool _wasMasterComplete = false;
+  int _masterCelebrateTick = 0;
 
   @override
   void initState() {
@@ -49,12 +51,18 @@ class _SeriesShelfCardState extends State<SeriesShelfCard>
       duration: CollectibleMotion.glow,
     );
     _wasComplete = _isSeriesComplete;
+    _wasMasterComplete = _isMasterComplete;
   }
 
   bool get _isSeriesComplete => resolveSeriesCompletion(
         widget.series,
         widget.figureStates,
       ).isCompleted;
+
+  bool get _isMasterComplete => resolveSeriesCompletion(
+        widget.series,
+        widget.figureStates,
+      ).isMasterComplete;
 
   @override
   void didUpdateWidget(SeriesShelfCard oldWidget) {
@@ -66,6 +74,12 @@ class _SeriesShelfCardState extends State<SeriesShelfCard>
       });
     }
     _wasComplete = now;
+
+    final nowMaster = _isMasterComplete;
+    if (nowMaster && !_wasMasterComplete) {
+      _masterCelebrateTick++;
+    }
+    _wasMasterComplete = nowMaster;
   }
 
   @override
@@ -137,6 +151,7 @@ class _SeriesShelfCardState extends State<SeriesShelfCard>
           figureStates: widget.figureStates,
           series: widget.series,
           atmosphere: widget.atmosphere,
+          masterCelebrateTick: _masterCelebrateTick,
         ),
       ),
     );
@@ -242,6 +257,7 @@ class _SeriesMatContent extends StatelessWidget {
     required this.progress,
     required this.figureStates,
     required this.series,
+    required this.masterCelebrateTick,
     this.atmosphere,
     this.extraLine,
   });
@@ -254,6 +270,7 @@ class _SeriesMatContent extends StatelessWidget {
   final Map<String, TrackedFigure> figureStates;
   final ShelfSeries series;
   final SeriesCompletionAtmosphere? atmosphere;
+  final int masterCelebrateTick;
 
   @override
   Widget build(BuildContext context) {
@@ -332,29 +349,29 @@ class _SeriesMatContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 11),
-        if (isMasterComplete)
-          Semantics(
-            label: CollectionVocabulary.masterComplete,
-            child: Text.rich(
-              TextSpan(
-                style: CollectibleTypography.shelfMasterCompleteStatLine(
-                  textTheme,
-                  scheme,
-                ),
-                children: const [
-                  TextSpan(text: '👑 '),
-                  TextSpan(text: CollectionVocabulary.masterComplete),
-                ],
-              ),
-            ),
-          )
-        else if (statPrimary.isNotEmpty)
-          Text(
-            statPrimary,
-            style: isComplete
-                ? CollectibleTypography.shelfCompleteStatLine(textTheme, scheme)
-                : CollectibleTypography.shelfProgressLine(textTheme, scheme),
+        MasterCompleteCelebrationBadge(
+          isMasterComplete: isMasterComplete,
+          celebrateTick: masterCelebrateTick,
+          ambientStaggerSeed: series.id,
+          textStyle: CollectibleTypography.shelfMasterCompleteStatLine(
+            textTheme,
+            scheme,
           ),
+          fallback: statPrimary.isEmpty
+              ? null
+              : Text(
+                  statPrimary,
+                  style: isComplete
+                      ? CollectibleTypography.shelfCompleteStatLine(
+                          textTheme,
+                          scheme,
+                        )
+                      : CollectibleTypography.shelfProgressLine(
+                          textTheme,
+                          scheme,
+                        ),
+                ),
+        ),
         if (statSecondary.isNotEmpty) ...[
           const SizedBox(height: 4),
           Text(
