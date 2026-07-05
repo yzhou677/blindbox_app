@@ -37,6 +37,10 @@ abstract final class CollectibleMotion {
   /// Completion glow peak scale on shelf cards.
   static const double shelfCompleteScaleHump = 0.004;
 
+  /// Global Master Complete achievement overlay (~0.95s, root navigator).
+  static const Duration masterCompleteAchievementOverlay =
+      Duration(milliseconds: 950);
+
   /// Builds a curved animation for route / sheet transitions.
   static Animation<double> curved(Animation<double> parent, {bool reverse = false}) {
     return CurvedAnimation(

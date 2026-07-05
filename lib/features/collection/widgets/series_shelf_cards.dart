@@ -9,8 +9,8 @@ import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/domain/series_completion_atmosphere.dart';
 import 'package:blindbox_app/features/collection/domain/series_completion_resolution.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_series_thumbnail.dart';
-import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_progress_voice.dart';
+import 'package:blindbox_app/features/collection/widgets/series_completion_stat_slot.dart';
 import 'package:flutter/material.dart';
 
 /// One series row on the collector shelf — emotional progress + subtle completion glow.
@@ -283,6 +283,7 @@ class _SeriesMatContent extends StatelessWidget {
     );
     final isComplete = resolution.isCompleted;
     final isMasterComplete = resolution.isMasterComplete;
+    final statLevel = seriesCompletionStatLevel(resolution);
     final missingSecret = atmosphere?.missingSecret ?? false;
 
     return Column(
@@ -332,29 +333,23 @@ class _SeriesMatContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 11),
-        if (isMasterComplete)
-          Semantics(
-            label: CollectionVocabulary.masterComplete,
-            child: Text.rich(
-              TextSpan(
-                style: CollectibleTypography.shelfMasterCompleteStatLine(
-                  textTheme,
-                  scheme,
-                ),
-                children: const [
-                  TextSpan(text: '👑 '),
-                  TextSpan(text: CollectionVocabulary.masterComplete),
-                ],
-              ),
-            ),
-          )
-        else if (statPrimary.isNotEmpty)
-          Text(
-            statPrimary,
-            style: isComplete
-                ? CollectibleTypography.shelfCompleteStatLine(textTheme, scheme)
-                : CollectibleTypography.shelfProgressLine(textTheme, scheme),
+        SeriesCompletionStatSlot(
+          level: statLevel,
+          statPrimary: statPrimary,
+          masterTextStyle: CollectibleTypography.shelfMasterCompleteStatLine(
+            textTheme,
+            scheme,
           ),
+          completeTextStyle: CollectibleTypography.shelfCompleteStatLine(
+            textTheme,
+            scheme,
+          ),
+          progressTextStyle: CollectibleTypography.shelfProgressLine(
+            textTheme,
+            scheme,
+          ),
+          colorScheme: scheme,
+        ),
         if (statSecondary.isNotEmpty) ...[
           const SizedBox(height: 4),
           Text(

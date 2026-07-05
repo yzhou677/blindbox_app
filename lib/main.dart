@@ -10,6 +10,7 @@ import 'package:blindbox_app/features/collection/persistence/collection_snapshot
 import 'package:blindbox_app/features/home/application/catalog_bundle_refresh_bridge.dart';
 import 'package:blindbox_app/features/home/application/home_feed_provider.dart';
 import 'package:blindbox_app/features/market/data/market_catalog_identity_cache.dart';
+import 'package:blindbox_app/features/collection/widgets/master_complete_celebration_host.dart';
 import 'package:blindbox_app/features/market/data/market_listings_bootstrap.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -45,18 +46,23 @@ Future<void> main() async {
   );
 }
 
-class BlindboxApp extends StatelessWidget {
+class BlindboxApp extends ConsumerWidget {
   const BlindboxApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp.router(
       title: 'Shelfy',
-      debugShowCheckedModeBanner: false, 
+      debugShowCheckedModeBanner: false,
       themeMode: ThemeMode.system,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       routerConfig: appRouter,
+      builder: (context, child) {
+        return MasterCompleteCelebrationHost(
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
     );
   }
 }

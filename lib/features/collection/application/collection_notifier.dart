@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:blindbox_app/features/collection/application/master_complete_celebration_controller.dart';
 import 'package:blindbox_app/features/collection/bootstrap/collection_app_bootstrap.dart';
+import 'package:blindbox_app/features/collection/domain/master_complete_transition.dart';
 import 'package:blindbox_app/features/collection/data/collection_input_sanitizer.dart';
 import 'package:blindbox_app/features/collection/data/collection_taxonomy_canonicalizer.dart';
 import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
@@ -44,6 +46,8 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
     final previous = state;
     state = next;
 
+    _celebrateNewlyMasterCompleteSeries(previous, next);
+
     // Capture the snapshot that preceded this debounce window on first tap.
     _pendingPersistencePrevious ??= previous;
 
@@ -53,6 +57,18 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       _persistenceDebounce,
       () => unawaited(_persistPendingSnapshot()),
     );
+  }
+
+  void _celebrateNewlyMasterCompleteSeries(
+    CollectionSnapshot previous,
+    CollectionSnapshot next,
+  ) {
+    final earned = newlyMasterCompleteSeries(previous, next);
+    if (earned.isEmpty) return;
+    final celebration = ref.read(masterCompleteCelebrationProvider.notifier);
+    for (final _ in earned) {
+      celebration.celebrate();
+    }
   }
 
   /// Persists the coalesced debounce window — snapshot + journey memory.
