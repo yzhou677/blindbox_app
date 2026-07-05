@@ -10,7 +10,11 @@ import 'package:blindbox_app/shared/widgets/main_shell_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+/// Root navigator — used for app-wide achievement overlays above modal sheets.
+final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
+
 final GoRouter appRouter = GoRouter(
+  navigatorKey: rootNavigatorKey,
   initialLocation: '/collection',
   routes: [
     GoRoute(
