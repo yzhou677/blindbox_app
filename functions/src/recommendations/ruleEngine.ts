@@ -6,7 +6,7 @@ import type {
 } from './types';
 import { catalogExplorationFingerprint } from './catalogFingerprint';
 
-const MAX_RECOMMENDATIONS = 10;
+export const MAX_RECOMMENDATIONS = 10;
 const EXPLORATION_RATIO = 0.2;
 const RECENCY_WINDOW_DAYS = 90;
 

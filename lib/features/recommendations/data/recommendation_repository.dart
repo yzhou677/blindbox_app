@@ -37,7 +37,7 @@ class RecommendationRepository {
     return _preferences ??= await SharedPreferences.getInstance();
   }
 
-  String _cacheKey(String installId) => 'reco_cache_v1_$installId';
+  String _cacheKey(String installId) => 'reco_cache_v2_$installId';
 
   Future<RecommendationResult> getRecommendations(
     String installId,
@@ -45,7 +45,7 @@ class RecommendationRepository {
   ) async {
     final cached = await _readCache(installId);
     if (cached != null) {
-      return _resolveSeries(cached, bundle);
+      return _resolveSeries(_normalizeResult(cached), bundle);
     }
 
     if (RecommendationGatewayConfig.isHttpActive) {
@@ -59,15 +59,16 @@ class RecommendationRepository {
           // not stable cacheable state.
           // They typically occur before profile synchronization completes.
         } else {
-          await _writeCache(installId, remote);
-          return _resolveSeries(remote, bundle);
+          final normalized = _normalizeResult(remote);
+          await _writeCache(installId, normalized);
+          return _resolveSeries(normalized, bundle);
         }
       } catch (_) {
         // Fall through to local engine.
       }
     }
 
-    final local = _computeLocal(bundle);
+    final local = _normalizeResult(_computeLocal(bundle));
     if (local.items.isNotEmpty) {
       await _writeCache(installId, local);
     }
@@ -118,6 +119,10 @@ class RecommendationRepository {
         // They typically occur before profile synchronization completes.
         return null;
       }
+      if (result.items.length > RecommendationGatewayConfig.forYouResultLimit) {
+        // Stale cache from before the result cap changed.
+        return null;
+      }
       final age = DateTime.now().difference(result.fetchedAt);
       if (age > RecommendationGatewayConfig.cacheTTL) return null;
       return result;
@@ -129,6 +134,15 @@ class RecommendationRepository {
   Future<void> _writeCache(String installId, RecommendationResult result) async {
     final prefs = await _prefs();
     await prefs.setString(_cacheKey(installId), jsonEncode(result.toJson()));
+  }
+
+  RecommendationResult _normalizeResult(RecommendationResult result) {
+    final limit = RecommendationGatewayConfig.forYouResultLimit;
+    if (result.items.length <= limit) return result;
+    return RecommendationResult(
+      items: result.items.take(limit).toList(),
+      fetchedAt: result.fetchedAt,
+    );
   }
 
   RecommendationResult _resolveSeries(

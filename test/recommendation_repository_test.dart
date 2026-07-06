@@ -101,7 +101,7 @@ RecommendationHttpClient _httpClient({
   );
 }
 
-String _cacheKey() => 'reco_cache_v1_$_installId';
+String _cacheKey() => 'reco_cache_v2_$_installId';
 
 void main() {
   setUp(() {
@@ -148,6 +148,36 @@ void main() {
       final decoded = jsonDecode(raw!) as Map<String, dynamic>;
       final items = decoded['items'] as List<dynamic>;
       expect(items, isNotEmpty);
+    });
+
+    test('oversized stale cache is ignored and local fallback still runs', () async {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        _cacheKey(),
+        jsonEncode({
+          'fetchedAt': DateTime.now().toIso8601String(),
+          'items': [
+            for (var i = 0; i < 20; i++)
+              {
+                'seriesId': 'dimoo_new',
+                'reasonType': RecommendationReasonType.ownedIp,
+                'reasonMeta': 'DIMOO',
+              },
+          ],
+        }),
+      );
+
+      final repo = RecommendationRepository(
+        collectionSnapshot: _ownedCollectionSnapshot(),
+        httpClient: _httpClient(
+          forYouResponse: http.Response(jsonEncode({'items': []}), 200),
+        ),
+        preferences: prefs,
+      );
+
+      final result = await repo.getRecommendations(_installId, _testBundle());
+
+      expect(result.items.length, lessThanOrEqualTo(10));
     });
 
     test('stale empty cache is ignored and local fallback still runs', () async {

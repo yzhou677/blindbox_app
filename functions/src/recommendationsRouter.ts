@@ -1,6 +1,10 @@
 import type { Request, Response } from 'express';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
-import { computeRecommendations } from './recommendations/ruleEngine';
+import { catalogExplorationFingerprint } from './recommendations/catalogFingerprint';
+import {
+  computeRecommendations,
+  MAX_RECOMMENDATIONS,
+} from './recommendations/ruleEngine';
 import type {
   CatalogIpDoc,
   CatalogSeriesDoc,
@@ -69,6 +73,7 @@ export async function handleRecommendationProfileRequest(
   );
 
   const catalog = await loadCatalogDocs();
+  const catalogFingerprint = catalogExplorationFingerprint(catalog.series);
   const items = computeRecommendations({
     profile,
     series: catalog.series,
@@ -78,6 +83,7 @@ export async function handleRecommendationProfileRequest(
   await firestore().collection('recommendations').doc(installId).set({
     items,
     profileHash: profile.profileHash,
+    catalogFingerprint,
     computedAt: FieldValue.serverTimestamp(),
   });
 
@@ -109,18 +115,21 @@ export async function handleRecommendationForYouRequest(
   }
 
   const profile = profileSnap.data() as RecommendationProfile;
+  const catalog = await loadCatalogDocs();
+  const catalogFingerprint = catalogExplorationFingerprint(catalog.series);
   const cacheSnap = await firestore().collection('recommendations').doc(installId).get();
   const cache = cacheSnap.data();
   if (
     cache &&
     cache.profileHash === profile.profileHash &&
-    Array.isArray(cache.items)
+    cache.catalogFingerprint === catalogFingerprint &&
+    Array.isArray(cache.items) &&
+    cache.items.length <= MAX_RECOMMENDATIONS
   ) {
     res.status(200).json({ items: cache.items });
     return;
   }
 
-  const catalog = await loadCatalogDocs();
   const items = computeRecommendations({
     profile,
     series: catalog.series,
@@ -130,6 +139,7 @@ export async function handleRecommendationForYouRequest(
   await firestore().collection('recommendations').doc(installId).set({
     items,
     profileHash: profile.profileHash,
+    catalogFingerprint,
     computedAt: FieldValue.serverTimestamp(),
   });
 
