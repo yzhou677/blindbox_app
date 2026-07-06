@@ -6,7 +6,6 @@ import 'package:blindbox_app/features/collection/application/collection_notifier
 import 'package:blindbox_app/features/collection/application/catalog_series_shelf_commit.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_series_shelf_cta_presentation.dart';
 import 'package:blindbox_app/features/collection/widgets/catalog_series_preview_sheet.dart';
-import 'package:blindbox_app/features/home/data/home_section_zones.dart';
 import 'package:blindbox_app/features/recommendations/application/recommendation_readiness_provider.dart';
 import 'package:blindbox_app/features/recommendations/application/recommendations_provider.dart';
 import 'package:blindbox_app/features/recommendations/domain/recommendation_item.dart';
@@ -176,9 +175,6 @@ class _ForYouLoadedRail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final brightness = Theme.of(context).brightness;
-
     return NotificationListener<ScrollNotification>(
       onNotification: (notification) {
         if (showFirstUnlockBadge && notification is ScrollUpdateNotification) {
@@ -194,37 +190,46 @@ class _ForYouLoadedRail extends StatelessWidget {
             subtitle: showFirstUnlockBadge
                 ? ForYouCopy.firstUnlockSubtitle
                 : ForYouCopy.sectionSubtitle,
-            titleAccessory: showFirstUnlockBadge
+            titleAccessory: const _ForYouTitleIcon(),
+            trailing: showFirstUnlockBadge
                 ? _FirstUnlockBadge(label: ForYouCopy.firstUnlockBadge)
                 : null,
           ),
           const SizedBox(height: FeedRhythm.sectionHeaderToRail),
-          ColoredBox(
-            color: HomeSectionZones.trendingSeriesMat(scheme, brightness),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              child: SizedBox(
-                height: FeedRhythm.homeSeriesRailHeight,
-                child: ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: items.length,
-                  separatorBuilder: (context, index) =>
-                      SizedBox(width: FeedRhythm.horizontalRailCardGap),
-                  itemBuilder: (context, index) {
-                    final item = items[index];
-                    return ForYouSeriesCard(
-                      item: item,
-                      onTap: () => onOpenSeries(context, item.seriesId),
-                    );
-                  },
-                ),
-              ),
+          SizedBox(
+            height: FeedRhythm.marketChasersRailHeight,
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: items.length,
+              separatorBuilder: (context, index) =>
+                  SizedBox(width: FeedRhythm.horizontalRailCardGap),
+              itemBuilder: (context, index) {
+                final item = items[index];
+                return ForYouSeriesCard(
+                  item: item,
+                  onTap: () => onOpenSeries(context, item.seriesId),
+                );
+              },
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ForYouTitleIcon extends StatelessWidget {
+  const _ForYouTitleIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Icon(
+      Icons.auto_awesome_outlined,
+      size: 20,
+      color: scheme.primary.withValues(alpha: 0.82),
     );
   }
 }
@@ -261,40 +266,72 @@ class _ForYouLoadingRail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final brightness = Theme.of(context).brightness;
+    final fill = scheme.surfaceContainerHighest.withValues(alpha: 0.72);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const CollectibleSectionHeader(title: ForYouCopy.sectionTitle),
+        const CollectibleSectionHeader(
+          title: ForYouCopy.sectionTitle,
+          titleAccessory: _ForYouTitleIcon(),
+        ),
         const SizedBox(height: FeedRhythm.sectionHeaderToRail),
-        ColoredBox(
-          color: HomeSectionZones.trendingSeriesMat(scheme, brightness),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 18),
-            child: SizedBox(
-              height: FeedRhythm.homeSeriesRailHeight,
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                scrollDirection: Axis.horizontal,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: 3,
-                separatorBuilder: (context, index) =>
-                    SizedBox(width: FeedRhythm.horizontalRailCardGap),
-                itemBuilder: (context, index) {
-                  return SizedBox(
-                    width: FeedRhythm.homeSeriesRailCardWidth,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: scheme.surfaceContainerHighest
-                            .withValues(alpha: 0.45),
-                        borderRadius: AppRadii.shellRadius,
-                      ),
+        SizedBox(
+          height: FeedRhythm.marketChasersRailHeight,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            scrollDirection: Axis.horizontal,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: 3,
+            separatorBuilder: (context, index) =>
+                SizedBox(width: FeedRhythm.horizontalRailCardGap),
+            itemBuilder: (context, index) {
+              return SizedBox(
+                width: kForYouRailCardWidth,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: scheme.surface,
+                    borderRadius: AppRadii.cardRadius,
+                    border: Border.all(
+                      color: scheme.outlineVariant.withValues(alpha: 0.32),
                     ),
-                  );
-                },
-              ),
-            ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(10, 10, 10, 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              borderRadius: AppRadii.matRadius,
+                              color: fill,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Container(
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: fill,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Container(
+                          width: 88,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: fill,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ],

@@ -54,11 +54,14 @@ class RecommendationRepository {
           baseUrl: RecommendationGatewayConfig.gatewayUri!,
           installId: installId,
         );
-        if (remote.items.isNotEmpty) {
+        if (remote.items.isEmpty) {
+          // Empty recommendation responses are treated as transient,
+          // not stable cacheable state.
+          // They typically occur before profile synchronization completes.
+        } else {
           await _writeCache(installId, remote);
           return _resolveSeries(remote, bundle);
         }
-        // Empty remote is transient (profile not synced yet, etc.) — local fallback.
       } catch (_) {
         // Fall through to local engine.
       }
@@ -109,7 +112,12 @@ class RecommendationRepository {
       final decoded = jsonDecode(raw);
       if (decoded is! Map<String, dynamic>) return null;
       final result = RecommendationResult.fromJson(decoded);
-      if (result.items.isEmpty) return null;
+      if (result.items.isEmpty) {
+        // Empty recommendation responses are treated as transient,
+        // not stable cacheable state.
+        // They typically occur before profile synchronization completes.
+        return null;
+      }
       final age = DateTime.now().difference(result.fetchedAt);
       if (age > RecommendationGatewayConfig.cacheTTL) return null;
       return result;

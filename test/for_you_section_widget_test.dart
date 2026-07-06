@@ -150,6 +150,53 @@ void main() {
     expect(find.text(ForYouCopy.sectionTitle), findsOneWidget);
     expect(find.text('Because you collect DIMOO'), findsOneWidget);
     expect(find.text('Dimoo New'), findsOneWidget);
+    expect(find.byIcon(Icons.auto_awesome_outlined), findsOneWidget);
+  });
+
+  testWidgets('ForYou title icon stays visible after horizontal scroll', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          recommendationReadinessProvider.overrideWith(
+            () => _ReadyReadinessNotifier(),
+          ),
+          catalogBundleProvider.overrideWith((ref) async => _testBundle()),
+          anonymousInstallIdProvider.overrideWith((ref) async => 'test-install'),
+          recommendationsProvider.overrideWith(
+            (ref) async => RecommendationResult(
+              items: List.generate(
+                6,
+                (index) => RecommendationItem(
+                  seriesId: 'dimoo_new',
+                  reasonType: RecommendationReasonType.ownedIp,
+                  reasonMeta: 'DIMOO',
+                  series: _testBundle().series.first,
+                ),
+              ),
+              fetchedAt: DateTime.now(),
+            ),
+          ),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: const Scaffold(
+            body: SingleChildScrollView(child: ForYouSection()),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.byIcon(Icons.auto_awesome_outlined), findsOneWidget);
+
+    await tester.drag(find.byType(ListView), const Offset(-240, 0));
+    await tester.pump();
+
+    expect(find.byIcon(Icons.auto_awesome_outlined), findsOneWidget);
   });
 }
 

@@ -18,6 +18,9 @@ abstract final class RecommendationGatewayConfig {
   static const Duration requestTimeout = Duration(seconds: 12);
   static const Duration profileSyncDebounce = Duration(seconds: 30);
 
+  /// Curated For You rail length — short enough to feel hand-picked, not catalog-browse.
+  static const int forYouResultLimit = 10;
+
   static const String readinessUnlockedKey = 'reco_readiness_unlocked_v1';
   static const String firstUnlockShownKey = 'reco_first_unlock_shown_v1';
 

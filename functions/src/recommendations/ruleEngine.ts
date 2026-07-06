@@ -5,7 +5,7 @@ import type {
   RecommendationProfile,
 } from './types';
 
-const MAX_RECOMMENDATIONS = 20;
+const MAX_RECOMMENDATIONS = 10;
 const RECENCY_WINDOW_DAYS = 90;
 
 interface ScoredCandidate {

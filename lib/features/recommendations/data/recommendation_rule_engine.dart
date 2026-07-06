@@ -1,11 +1,11 @@
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_series.dart'
     as catalog;
+import 'package:blindbox_app/features/recommendations/data/recommendation_gateway_config.dart';
 import 'package:blindbox_app/features/recommendations/data/preference_signal_extractor.dart';
 import 'package:blindbox_app/features/recommendations/domain/recommendation_item.dart';
 import 'package:blindbox_app/features/recommendations/domain/recommendation_reason_type.dart';
 
-const int _maxRecommendations = 20;
 const int _recencyWindowDays = 90;
 
 class _ScoredCandidate {
@@ -27,7 +27,7 @@ List<RecommendationItem> computeLocalRecommendations({
   required PreferenceSignals signals,
   required CatalogSeedBundle bundle,
   DateTime? clock,
-  int limit = _maxRecommendations,
+  int limit = RecommendationGatewayConfig.forYouResultLimit,
 }) {
   final now = clock ?? DateTime.now();
   final ipNameById = {

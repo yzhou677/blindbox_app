@@ -49,3 +49,28 @@ test('computeRecommendations ranks owned IP matches and excludes owned series', 
     false,
   );
 });
+
+test('computeRecommendations caps at 10 curated picks', () => {
+  const series = Array.from({ length: 30 }, (_, i) => ({
+    id: `series_${i}`,
+    ipId: 'dimoo',
+    displayName: `Series ${i}`,
+    releaseDate: `2026-05-${String((i % 28) + 1).padStart(2, '0')}`,
+  }));
+
+  const items = computeRecommendations({
+    profile: {
+      installId: 'install-1',
+      ownedCatalogSeriesIds: [],
+      wishlistCatalogSeriesIds: [],
+      ownedIpIds: [],
+      wishlistIpIds: [],
+      profileHash: 'hash',
+    },
+    series,
+    ips: [{ id: 'dimoo', displayName: 'DIMOO' }],
+    now: new Date('2026-05-21T00:00:00.000Z'),
+  });
+
+  assert.equal(items.length, 10);
+});

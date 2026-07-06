@@ -6,9 +6,10 @@ import 'package:blindbox_app/features/catalog/models/catalog_series.dart'
     as catalog;
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/recommendations/data/preference_signal_extractor.dart';
+import 'package:blindbox_app/features/recommendations/data/recommendation_gateway_config.dart';
+import 'package:blindbox_app/features/recommendations/data/recommendation_rule_engine.dart';
 import 'package:blindbox_app/features/recommendations/domain/recommendation_confidence.dart';
 import 'package:blindbox_app/features/recommendations/domain/recommendation_reason_type.dart';
-import 'package:blindbox_app/features/recommendations/data/recommendation_rule_engine.dart';
 import 'package:blindbox_app/features/recommendations/presentation/for_you_copy.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'helpers/collection_fixtures.dart';
@@ -262,6 +263,47 @@ void main() {
         'Similar to your LABUBU wishlist',
       );
       expect(forYouReason(RecommendationReasonType.newInCatalog, null), 'New in catalog');
+    });
+
+    test('caps results at forYouResultLimit for a large catalog', () {
+      final signals = PreferenceSignals(
+        ownedCatalogSeriesIds: const {},
+        wishlistCatalogSeriesIds: const {},
+        ownedIpIds: const {},
+        wishlistIpIds: const {},
+        ownedCatalogSeriesCount: 0,
+        wishlistCatalogSeriesCount: 0,
+        profileHash: 'hash',
+      );
+      final manySeries = [
+        for (var i = 0; i < 30; i++)
+          catalog.CatalogSeries(
+            id: 'series_$i',
+            brandId: 'popmart',
+            ipId: 'dimoo',
+            displayName: 'Series $i',
+            releaseDate: '2026-05-${(i % 28 + 1).toString().padLeft(2, '0')}',
+            isBlindBox: true,
+            imageKey: 'series_$i',
+          ),
+      ];
+
+      final items = computeLocalRecommendations(
+        signals: signals,
+        bundle: CatalogSeedBundle(
+          brands: const [
+            CatalogBrand(id: 'popmart', displayName: 'POP MART'),
+          ],
+          ips: const [
+            CatalogIp(id: 'dimoo', brandId: 'popmart', displayName: 'DIMOO'),
+          ],
+          series: manySeries,
+          figures: const [],
+        ),
+        clock: DateTime(2026, 5, 21),
+      );
+
+      expect(items.length, RecommendationGatewayConfig.forYouResultLimit);
     });
   });
 }
