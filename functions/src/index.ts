@@ -2,6 +2,10 @@ import { initializeApp } from 'firebase-admin/app';
 import { onRequest } from 'firebase-functions/v2/https';
 import { handleMarketBrowseRequest } from './marketBrowseRouter';
 import { handleMarketItemRequest } from './marketItemRouter';
+import {
+  handleRecommendationForYouRequest,
+  handleRecommendationProfileRequest,
+} from './recommendationsRouter';
 
 initializeApp();
 
@@ -44,6 +48,44 @@ export const market = onRequest(
     res.status(404).json({
       error: 'not_found',
       message: 'Supported: GET /v1/browse, GET /v1/item',
+    });
+  },
+);
+
+/**
+ * Anonymous recommendation profile + for-you gateway.
+ *
+ * Routes:
+ *   POST /v1/profile
+ *   GET  /v1/for-you?installId=
+ */
+export const recommendations = onRequest(
+  {
+    cors: true,
+    region: process.env.FUNCTION_REGION ?? 'us-central1',
+    timeoutSeconds: 30,
+    memory: '256MiB',
+    maxInstances: 10,
+  },
+  async (req, res) => {
+    if (req.method === 'OPTIONS') {
+      res.status(204).send('');
+      return;
+    }
+
+    const path = normalizePath(req.path);
+    if (path === '/v1/profile') {
+      await handleRecommendationProfileRequest(req, res);
+      return;
+    }
+    if (path === '/v1/for-you') {
+      await handleRecommendationForYouRequest(req, res);
+      return;
+    }
+
+    res.status(404).json({
+      error: 'not_found',
+      message: 'Supported: POST /v1/profile, GET /v1/for-you',
     });
   },
 );

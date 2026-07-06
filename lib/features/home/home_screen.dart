@@ -6,6 +6,7 @@ import 'package:blindbox_app/features/home/application/home_discover_refresh_con
 import 'package:blindbox_app/features/home/application/home_feed_provider.dart';
 import 'package:blindbox_app/features/home/widgets/home_catalog_rails.dart';
 import 'package:blindbox_app/features/official_feed/widgets/official_feed_section.dart';
+import 'package:blindbox_app/features/recommendations/widgets/for_you_section.dart';
 import 'package:blindbox_app/shared/widgets/app_search_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -95,6 +96,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  const ForYouSection(),
+                  const SizedBox(height: FeedRhythm.homeMajorSectionGap),
                   HomeCatalogRails(feed: feed),
                   const SizedBox(height: FeedRhythm.homeMajorSectionGap),
                   const OfficialFeedSection(),
