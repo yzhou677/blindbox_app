@@ -75,7 +75,7 @@ test('computeRecommendations caps at 10 curated picks', () => {
   assert.equal(items.length, 10);
 });
 
-test('computeRecommendations keeps stable top picks and rotates exploration', () => {
+test('computeRecommendations keeps stable top picks; exploration follows profile and catalog', () => {
   const series = Array.from({ length: 15 }, (_, i) => ({
     id: `labubu_${i}`,
     ipId: 'labubu',
@@ -83,35 +83,62 @@ test('computeRecommendations keeps stable top picks and rotates exploration', ()
     releaseDate: `2026-05-${String(15 - i).padStart(2, '0')}`,
   }));
 
-  const profile = {
+  const profileFor = (profileHash) => ({
     installId: 'install-1',
     ownedCatalogSeriesIds: ['labubu_0'],
     wishlistCatalogSeriesIds: [],
     ownedIpIds: ['labubu'],
     wishlistIpIds: [],
-    profileHash: 'profile-hash',
-  };
+    profileHash,
+  });
 
-  const run = (now) =>
+  const run = ({ profile, seriesList, now = new Date('2026-05-21T00:00:00.000Z') }) =>
     computeRecommendations({
       profile,
-      series,
+      series: seriesList,
       ips: [{ id: 'labubu', displayName: 'LABUBU' }],
       now,
     });
 
-  const weekA = run(new Date('2026-05-21T00:00:00.000Z'));
-  const weekB = run(new Date('2026-05-28T00:00:00.000Z'));
-  const stableA = weekA.slice(0, 8).map((item) => item.seriesId);
-  const stableB = weekB.slice(0, 8).map((item) => item.seriesId);
+  const baseline = run({ profile: profileFor('profile-hash'), seriesList: series });
+  const stable = baseline.slice(0, 8).map((item) => item.seriesId);
+  const explore = baseline.slice(8).map((item) => item.seriesId);
 
-  assert.deepEqual(stableA, stableB);
+  assert.deepEqual(stable, Array.from({ length: 8 }, (_, i) => `labubu_${i + 1}`));
+
   assert.deepEqual(
-    stableA,
-    Array.from({ length: 8 }, (_, i) => `labubu_${i + 1}`),
+    run({
+      profile: profileFor('profile-hash'),
+      seriesList: series,
+      now: new Date('2026-06-02T00:00:00.000Z'),
+    })
+      .slice(8)
+      .map((item) => item.seriesId),
+    explore,
   );
+
   assert.notDeepEqual(
-    weekA.slice(8).map((item) => item.seriesId),
-    weekB.slice(8).map((item) => item.seriesId),
+    run({ profile: profileFor('profile-hash-v2'), seriesList: series })
+      .slice(8)
+      .map((item) => item.seriesId),
+    explore,
+  );
+
+  assert.notDeepEqual(
+    run({
+      profile: profileFor('profile-hash'),
+      seriesList: [
+        ...series,
+        {
+          id: 'labubu_new_drop',
+          ipId: 'labubu',
+          displayName: 'Labubu New',
+          releaseDate: '2026-06-01',
+        },
+      ],
+    })
+      .slice(8)
+      .map((item) => item.seriesId),
+    explore,
   );
 });

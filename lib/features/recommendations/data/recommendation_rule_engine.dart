@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_series.dart'
     as catalog;
+import 'package:blindbox_app/features/recommendations/data/catalog_exploration_fingerprint.dart';
 import 'package:blindbox_app/features/recommendations/data/recommendation_gateway_config.dart';
 import 'package:blindbox_app/features/recommendations/data/preference_signal_extractor.dart';
 import 'package:blindbox_app/features/recommendations/domain/recommendation_item.dart';
@@ -154,7 +155,10 @@ List<RecommendationItem> computeLocalRecommendations({
     _composeCuratedResults(
       ranked: ranked,
       limit: limit,
-      explorationSeed: _explorationSeed(signals.profileHash, now),
+      explorationSeed: _explorationSeed(
+        signals.profileHash,
+        catalogExplorationFingerprint(bundle),
+      ),
     ),
   );
 
@@ -206,12 +210,8 @@ List<RecommendationItem> _composeCuratedResults({
   ];
 }
 
-int _explorationSeed(String profileHash, DateTime clock) {
-  final utc = clock.toUtc();
-  final yearStart = DateTime.utc(utc.year, 1, 1);
-  final weekBucket =
-      utc.year * 1000 + utc.difference(yearStart).inDays ~/ 7;
-  return Object.hash(profileHash, weekBucket);
+int _explorationSeed(String profileHash, String catalogFingerprint) {
+  return Object.hash(profileHash, catalogFingerprint);
 }
 
 List<_ScoredCandidate> _pickExploration(

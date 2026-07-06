@@ -21,7 +21,8 @@ abstract final class RecommendationGatewayConfig {
   /// Curated For You rail length — short enough to feel hand-picked, not catalog-browse.
   static const int forYouResultLimit = 10;
 
-  /// Share of slots filled from lower-ranked picks (rotates weekly). Rest = top stable.
+  /// Share of slots filled from lower-ranked picks. Rest = top stable.
+  /// Exploration order rotates when [profileHash] or catalog content changes.
   static const double forYouExplorationRatio = 0.2;
 
   static int forYouStableSlotCount([int limit = forYouResultLimit]) {

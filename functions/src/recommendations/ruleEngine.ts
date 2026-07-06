@@ -4,6 +4,7 @@ import type {
   RecommendationItemWire,
   RecommendationProfile,
 } from './types';
+import { catalogExplorationFingerprint } from './catalogFingerprint';
 
 const MAX_RECOMMENDATIONS = 10;
 const EXPLORATION_RATIO = 0.2;
@@ -17,13 +18,8 @@ function explorationSlotCount(limit = MAX_RECOMMENDATIONS): number {
   return limit - stableSlotCount(limit);
 }
 
-function explorationSeed(profileHash: string, now: Date): number {
-  const year = now.getUTCFullYear();
-  const yearStart = Date.UTC(year, 0, 1);
-  const weekBucket =
-    year * 1000 +
-    Math.floor((now.getTime() - yearStart) / (7 * 24 * 60 * 60 * 1000));
-  const key = `${profileHash}:${weekBucket}`;
+function explorationSeed(profileHash: string, catalogFingerprint: string): number {
+  const key = `${profileHash}:${catalogFingerprint}`;
   let hash = 0;
   for (let i = 0; i < key.length; i++) {
     hash = (hash * 31 + key.charCodeAt(i)) | 0;
@@ -149,7 +145,10 @@ export function computeRecommendations(params: {
   const results = composeCuratedResults(
     ranked,
     MAX_RECOMMENDATIONS,
-    explorationSeed(params.profile.profileHash, now),
+    explorationSeed(
+      params.profile.profileHash,
+      catalogExplorationFingerprint(params.series),
+    ),
   );
 
   if (results.length >= MAX_RECOMMENDATIONS) {

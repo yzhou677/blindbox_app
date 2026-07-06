@@ -306,7 +306,7 @@ void main() {
       expect(items.length, RecommendationGatewayConfig.forYouResultLimit);
     });
 
-    test('keeps top stable slots and rotates lower-ranked exploration picks', () {
+    test('keeps top stable slots; exploration tied to profile and catalog', () {
       final manySeries = [
         for (var i = 0; i < 15; i++)
           catalog.CatalogSeries(
@@ -320,56 +320,93 @@ void main() {
             imageKey: 'labubu_$i',
           ),
       ];
-      final signals = PreferenceSignals(
-        ownedCatalogSeriesIds: {'labubu_0'},
-        wishlistCatalogSeriesIds: const {},
-        ownedIpIds: {'labubu'},
-        wishlistIpIds: const {},
-        ownedCatalogSeriesCount: 1,
-        wishlistCatalogSeriesCount: 0,
-        profileHash: 'profile-hash',
+      CatalogSeedBundle bundleFor(List<catalog.CatalogSeries> series) {
+        return CatalogSeedBundle(
+          brands: const [
+            CatalogBrand(id: 'popmart', displayName: 'POP MART'),
+          ],
+          ips: const [
+            CatalogIp(id: 'labubu', brandId: 'popmart', displayName: 'LABUBU'),
+          ],
+          series: series,
+          figures: const [],
+        );
+      }
+
+      PreferenceSignals signalsFor(String profileHash) {
+        return PreferenceSignals(
+          ownedCatalogSeriesIds: {'labubu_0'},
+          wishlistCatalogSeriesIds: const {},
+          ownedIpIds: {'labubu'},
+          wishlistIpIds: const {},
+          ownedCatalogSeriesCount: 1,
+          wishlistCatalogSeriesCount: 0,
+          profileHash: profileHash,
+        );
+      }
+
+      final bundle = bundleFor(manySeries);
+      final signals = signalsFor('profile-hash');
+      final run = ({
+        required PreferenceSignals signals,
+        required CatalogSeedBundle bundle,
+        DateTime? clock,
+      }) =>
+          computeLocalRecommendations(
+            signals: signals,
+            bundle: bundle,
+            clock: clock ?? DateTime.utc(2026, 5, 21),
+          );
+
+      final baseline = run(signals: signals, bundle: bundle);
+      final stable = baseline.take(8).map((item) => item.seriesId).toList();
+      final explore = baseline.skip(8).map((item) => item.seriesId).toList();
+
+      expect(baseline, hasLength(10));
+      expect(
+        stable,
+        [for (var i = 1; i <= 8; i++) 'labubu_$i'],
       );
-      final bundle = CatalogSeedBundle(
-        brands: const [
-          CatalogBrand(id: 'popmart', displayName: 'POP MART'),
-        ],
-        ips: const [
-          CatalogIp(id: 'labubu', brandId: 'popmart', displayName: 'LABUBU'),
-        ],
-        series: manySeries,
-        figures: const [],
+      expect(explore.toSet(), isNot(containsAll(stable)));
+
+      // Same profile + same catalog → stable exploration (not calendar-driven).
+      expect(
+        run(signals: signals, bundle: bundle, clock: DateTime.utc(2026, 6, 2))
+            .skip(8)
+            .map((item) => item.seriesId)
+            .toList(),
+        explore,
       );
 
-      final weekA = DateTime.utc(2026, 5, 21);
-      final weekB = DateTime.utc(2026, 5, 28);
-      final run = (DateTime clock) => computeLocalRecommendations(
-        signals: signals,
+      // Profile change → exploration may change.
+      final profileChanged = run(
+        signals: signalsFor('profile-hash-v2'),
         bundle: bundle,
-        clock: clock,
+      );
+      expect(
+        profileChanged.skip(8).map((item) => item.seriesId).toList(),
+        isNot(equals(explore)),
       );
 
-      final itemsA = run(weekA);
-      final itemsB = run(weekB);
-      final stableA = itemsA.take(8).map((item) => item.seriesId).toList();
-      final stableB = itemsB.take(8).map((item) => item.seriesId).toList();
-
-      expect(itemsA, hasLength(10));
-      expect(stableA, stableB);
-      expect(
-        stableA,
-        [
-          for (var i = 1; i <= 8; i++) 'labubu_$i',
-        ],
+      // Catalog change → exploration may change.
+      final catalogChanged = run(
+        signals: signals,
+        bundle: bundleFor([
+          ...manySeries,
+          const catalog.CatalogSeries(
+            id: 'labubu_new_drop',
+            brandId: 'popmart',
+            ipId: 'labubu',
+            displayName: 'Labubu New',
+            releaseDate: '2026-06-01',
+            isBlindBox: true,
+            imageKey: 'labubu_new_drop',
+          ),
+        ]),
       );
       expect(
-        itemsA.skip(8).map((item) => item.seriesId).toSet(),
-        isNot(containsAll(stableA)),
-      );
-      expect(run(weekA).skip(8).map((item) => item.seriesId).toList(),
-          run(weekA).skip(8).map((item) => item.seriesId).toList());
-      expect(
-        itemsA.skip(8).map((item) => item.seriesId).toList(),
-        isNot(itemsB.skip(8).map((item) => item.seriesId).toList()),
+        catalogChanged.skip(8).map((item) => item.seriesId).toList(),
+        isNot(equals(explore)),
       );
     });
   });
