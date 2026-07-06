@@ -305,5 +305,72 @@ void main() {
 
       expect(items.length, RecommendationGatewayConfig.forYouResultLimit);
     });
+
+    test('keeps top stable slots and rotates lower-ranked exploration picks', () {
+      final manySeries = [
+        for (var i = 0; i < 15; i++)
+          catalog.CatalogSeries(
+            id: 'labubu_$i',
+            brandId: 'popmart',
+            ipId: 'labubu',
+            displayName: 'Labubu $i',
+            releaseDate:
+                '2026-05-${(15 - i).toString().padLeft(2, '0')}',
+            isBlindBox: true,
+            imageKey: 'labubu_$i',
+          ),
+      ];
+      final signals = PreferenceSignals(
+        ownedCatalogSeriesIds: {'labubu_0'},
+        wishlistCatalogSeriesIds: const {},
+        ownedIpIds: {'labubu'},
+        wishlistIpIds: const {},
+        ownedCatalogSeriesCount: 1,
+        wishlistCatalogSeriesCount: 0,
+        profileHash: 'profile-hash',
+      );
+      final bundle = CatalogSeedBundle(
+        brands: const [
+          CatalogBrand(id: 'popmart', displayName: 'POP MART'),
+        ],
+        ips: const [
+          CatalogIp(id: 'labubu', brandId: 'popmart', displayName: 'LABUBU'),
+        ],
+        series: manySeries,
+        figures: const [],
+      );
+
+      final weekA = DateTime.utc(2026, 5, 21);
+      final weekB = DateTime.utc(2026, 5, 28);
+      final run = (DateTime clock) => computeLocalRecommendations(
+        signals: signals,
+        bundle: bundle,
+        clock: clock,
+      );
+
+      final itemsA = run(weekA);
+      final itemsB = run(weekB);
+      final stableA = itemsA.take(8).map((item) => item.seriesId).toList();
+      final stableB = itemsB.take(8).map((item) => item.seriesId).toList();
+
+      expect(itemsA, hasLength(10));
+      expect(stableA, stableB);
+      expect(
+        stableA,
+        [
+          for (var i = 1; i <= 8; i++) 'labubu_$i',
+        ],
+      );
+      expect(
+        itemsA.skip(8).map((item) => item.seriesId).toSet(),
+        isNot(containsAll(stableA)),
+      );
+      expect(run(weekA).skip(8).map((item) => item.seriesId).toList(),
+          run(weekA).skip(8).map((item) => item.seriesId).toList());
+      expect(
+        itemsA.skip(8).map((item) => item.seriesId).toList(),
+        isNot(itemsB.skip(8).map((item) => item.seriesId).toList()),
+      );
+    });
   });
 }

@@ -74,3 +74,44 @@ test('computeRecommendations caps at 10 curated picks', () => {
 
   assert.equal(items.length, 10);
 });
+
+test('computeRecommendations keeps stable top picks and rotates exploration', () => {
+  const series = Array.from({ length: 15 }, (_, i) => ({
+    id: `labubu_${i}`,
+    ipId: 'labubu',
+    displayName: `Labubu ${i}`,
+    releaseDate: `2026-05-${String(15 - i).padStart(2, '0')}`,
+  }));
+
+  const profile = {
+    installId: 'install-1',
+    ownedCatalogSeriesIds: ['labubu_0'],
+    wishlistCatalogSeriesIds: [],
+    ownedIpIds: ['labubu'],
+    wishlistIpIds: [],
+    profileHash: 'profile-hash',
+  };
+
+  const run = (now) =>
+    computeRecommendations({
+      profile,
+      series,
+      ips: [{ id: 'labubu', displayName: 'LABUBU' }],
+      now,
+    });
+
+  const weekA = run(new Date('2026-05-21T00:00:00.000Z'));
+  const weekB = run(new Date('2026-05-28T00:00:00.000Z'));
+  const stableA = weekA.slice(0, 8).map((item) => item.seriesId);
+  const stableB = weekB.slice(0, 8).map((item) => item.seriesId);
+
+  assert.deepEqual(stableA, stableB);
+  assert.deepEqual(
+    stableA,
+    Array.from({ length: 8 }, (_, i) => `labubu_${i + 1}`),
+  );
+  assert.notDeepEqual(
+    weekA.slice(8).map((item) => item.seriesId),
+    weekB.slice(8).map((item) => item.seriesId),
+  );
+});

@@ -6,7 +6,76 @@ import type {
 } from './types';
 
 const MAX_RECOMMENDATIONS = 10;
+const EXPLORATION_RATIO = 0.2;
 const RECENCY_WINDOW_DAYS = 90;
+
+function stableSlotCount(limit = MAX_RECOMMENDATIONS): number {
+  return Math.round(limit * (1 - EXPLORATION_RATIO));
+}
+
+function explorationSlotCount(limit = MAX_RECOMMENDATIONS): number {
+  return limit - stableSlotCount(limit);
+}
+
+function explorationSeed(profileHash: string, now: Date): number {
+  const year = now.getUTCFullYear();
+  const yearStart = Date.UTC(year, 0, 1);
+  const weekBucket =
+    year * 1000 +
+    Math.floor((now.getTime() - yearStart) / (7 * 24 * 60 * 60 * 1000));
+  const key = `${profileHash}:${weekBucket}`;
+  let hash = 0;
+  for (let i = 0; i < key.length; i++) {
+    hash = (hash * 31 + key.charCodeAt(i)) | 0;
+  }
+  return hash;
+}
+
+function mulberry32(seed: number): () => number {
+  let t = seed >>> 0;
+  return () => {
+    t += 0x6d2b79f5;
+    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function pickExploration<T>(pool: T[], count: number, seed: number): T[] {
+  if (pool.length === 0 || count <= 0) return [];
+  const rng = mulberry32(seed);
+  const copy = [...pool];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy.slice(0, count);
+}
+
+function composeCuratedResults(
+  ranked: ScoredCandidate[],
+  limit: number,
+  seed: number,
+): RecommendationItemWire[] {
+  if (ranked.length === 0) return [];
+
+  const stableSlots = stableSlotCount(limit);
+  const exploreSlots = explorationSlotCount(limit);
+  const stableCount = Math.min(stableSlots, ranked.length);
+  const stable = ranked.slice(0, stableCount);
+  const explorePool = ranked.slice(stableCount);
+  const explored = pickExploration(
+    explorePool,
+    Math.min(exploreSlots, limit - stableCount),
+    seed,
+  );
+
+  return [...stable, ...explored].map((candidate) => ({
+    seriesId: candidate.seriesId,
+    reasonType: candidate.reasonType,
+    ...(candidate.reasonMeta ? { reasonMeta: candidate.reasonMeta } : {}),
+  }));
+}
 
 interface ScoredCandidate {
   seriesId: string;
@@ -77,13 +146,11 @@ export function computeRecommendations(params: {
   }
 
   const ranked = [...scored.values()].sort((a, b) => b.score - a.score);
-  const results: RecommendationItemWire[] = ranked
-    .slice(0, MAX_RECOMMENDATIONS)
-    .map((candidate) => ({
-      seriesId: candidate.seriesId,
-      reasonType: candidate.reasonType,
-      ...(candidate.reasonMeta ? { reasonMeta: candidate.reasonMeta } : {}),
-    }));
+  const results = composeCuratedResults(
+    ranked,
+    MAX_RECOMMENDATIONS,
+    explorationSeed(params.profile.profileHash, now),
+  );
 
   if (results.length >= MAX_RECOMMENDATIONS) {
     return results;

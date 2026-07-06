@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_series.dart'
     as catalog;
@@ -148,14 +150,13 @@ List<RecommendationItem> computeLocalRecommendations({
       return _compareNewestFirst(seriesA, seriesB, orderIndex);
     });
 
-  final results = <RecommendationItem>[
-    for (final candidate in ranked.take(limit))
-      RecommendationItem(
-        seriesId: candidate.seriesId,
-        reasonType: candidate.reasonType,
-        reasonMeta: candidate.reasonMeta,
-      ),
-  ];
+  final results = List<RecommendationItem>.from(
+    _composeCuratedResults(
+      ranked: ranked,
+      limit: limit,
+      explorationSeed: _explorationSeed(signals.profileHash, now),
+    ),
+  );
 
   if (results.length >= limit) return results;
 
@@ -175,6 +176,52 @@ List<RecommendationItem> computeLocalRecommendations({
   }
 
   return results;
+}
+
+List<RecommendationItem> _composeCuratedResults({
+  required List<_ScoredCandidate> ranked,
+  required int limit,
+  required int explorationSeed,
+}) {
+  if (ranked.isEmpty) return <RecommendationItem>[];
+
+  final stableSlots = RecommendationGatewayConfig.forYouStableSlotCount(limit);
+  final exploreSlots = RecommendationGatewayConfig.forYouExplorationSlotCount(limit);
+  final stableCount = min(stableSlots, ranked.length);
+  final stable = ranked.take(stableCount);
+  final explorePool = ranked.skip(stableCount).toList();
+  final explored = _pickExploration(
+    explorePool,
+    min(exploreSlots, limit - stableCount),
+    explorationSeed,
+  );
+
+  return [
+    for (final candidate in [...stable, ...explored])
+      RecommendationItem(
+        seriesId: candidate.seriesId,
+        reasonType: candidate.reasonType,
+        reasonMeta: candidate.reasonMeta,
+      ),
+  ];
+}
+
+int _explorationSeed(String profileHash, DateTime clock) {
+  final utc = clock.toUtc();
+  final yearStart = DateTime.utc(utc.year, 1, 1);
+  final weekBucket =
+      utc.year * 1000 + utc.difference(yearStart).inDays ~/ 7;
+  return Object.hash(profileHash, weekBucket);
+}
+
+List<_ScoredCandidate> _pickExploration(
+  List<_ScoredCandidate> pool,
+  int count,
+  int seed,
+) {
+  if (pool.isEmpty || count <= 0) return const [];
+  final shuffled = List<_ScoredCandidate>.from(pool)..shuffle(Random(seed));
+  return shuffled.take(count).toList();
 }
 
 bool _isRecentRelease(catalog.CatalogSeries series, DateTime clock) {

@@ -21,6 +21,17 @@ abstract final class RecommendationGatewayConfig {
   /// Curated For You rail length — short enough to feel hand-picked, not catalog-browse.
   static const int forYouResultLimit = 10;
 
+  /// Share of slots filled from lower-ranked picks (rotates weekly). Rest = top stable.
+  static const double forYouExplorationRatio = 0.2;
+
+  static int forYouStableSlotCount([int limit = forYouResultLimit]) {
+    return (limit * (1 - forYouExplorationRatio)).round();
+  }
+
+  static int forYouExplorationSlotCount([int limit = forYouResultLimit]) {
+    return limit - forYouStableSlotCount(limit);
+  }
+
   static const String readinessUnlockedKey = 'reco_readiness_unlocked_v1';
   static const String firstUnlockShownKey = 'reco_first_unlock_shown_v1';
 
