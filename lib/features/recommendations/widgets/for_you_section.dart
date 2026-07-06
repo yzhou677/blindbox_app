@@ -1,5 +1,6 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_radii.dart';
+import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/application/catalog_series_shelf_commit.dart';
@@ -30,11 +31,14 @@ class _ForYouSectionState extends ConsumerState<ForYouSection> {
     if (!ready) return const SizedBox.shrink();
 
     final recommendationsAsync = ref.watch(recommendationsProvider);
-    return recommendationsAsync.when(
+    final Widget? sectionBody = recommendationsAsync.when<Widget?>(
       loading: () => _ForYouLoadingRail(),
-      error: (error, stackTrace) => const SizedBox.shrink(),
+      error: (error, stackTrace) => null,
       data: (result) {
-        if (result.items.isEmpty) return const SizedBox.shrink();
+        // Intentionally hide the section when no recommendations are available.
+        // Discover remains useful via other content rails; showing an empty
+        // personalization section would add unnecessary UI noise.
+        if (result.items.isEmpty) return null;
         return _ForYouLoadedRail(
           items: result.items,
           showFirstUnlockBadge: ref.watch(forYouFirstUnlockBadgeProvider),
@@ -42,6 +46,11 @@ class _ForYouSectionState extends ConsumerState<ForYouSection> {
           onDismissFirstUnlock: () => dismissForYouFirstUnlockBadge(ref),
         );
       },
+    );
+
+    return _ForYouSectionReveal(
+      show: sectionBody != null,
+      child: sectionBody ?? const SizedBox.shrink(),
     );
   }
 
@@ -72,6 +81,82 @@ class _ForYouSectionState extends ConsumerState<ForYouSection> {
           onAdd: () => commitCatalogSeriesToShelf(notifier, template),
         );
       },
+    );
+  }
+}
+
+/// Gentle fade + vertical expand when For You first becomes visible.
+class _ForYouSectionReveal extends StatefulWidget {
+  const _ForYouSectionReveal({
+    required this.show,
+    required this.child,
+  });
+
+  final bool show;
+  final Widget child;
+
+  @override
+  State<_ForYouSectionReveal> createState() => _ForYouSectionRevealState();
+}
+
+class _ForYouSectionRevealState extends State<_ForYouSectionReveal>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _fade;
+  late final Animation<double> _expand;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: CollectibleMotion.crossfade,
+    );
+    _fade = CollectibleMotion.curved(_controller);
+    _expand = CurvedAnimation(
+      parent: _controller,
+      curve: CollectibleMotion.easeOut,
+    );
+    if (widget.show) {
+      _controller.forward();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _ForYouSectionReveal oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.show && !oldWidget.show) {
+      _controller.forward(from: 0);
+    } else if (!widget.show) {
+      _controller.reset();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!widget.show) return const SizedBox.shrink();
+
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return ClipRect(
+          child: Align(
+            alignment: Alignment.topCenter,
+            heightFactor: _expand.value.clamp(0.001, 1.0),
+            child: Opacity(
+              opacity: _fade.value,
+              child: child,
+            ),
+          ),
+        );
+      },
+      child: widget.child,
     );
   }
 }

@@ -54,15 +54,20 @@ class RecommendationRepository {
           baseUrl: RecommendationGatewayConfig.gatewayUri!,
           installId: installId,
         );
-        await _writeCache(installId, remote);
-        return _resolveSeries(remote, bundle);
+        if (remote.items.isNotEmpty) {
+          await _writeCache(installId, remote);
+          return _resolveSeries(remote, bundle);
+        }
+        // Empty remote is transient (profile not synced yet, etc.) — local fallback.
       } catch (_) {
         // Fall through to local engine.
       }
     }
 
     final local = _computeLocal(bundle);
-    await _writeCache(installId, local);
+    if (local.items.isNotEmpty) {
+      await _writeCache(installId, local);
+    }
     return _resolveSeries(local, bundle);
   }
 
@@ -78,6 +83,12 @@ class RecommendationRepository {
       installId: installId,
       signals: signals,
     );
+    await invalidateRecommendationCache(installId);
+  }
+
+  Future<void> invalidateRecommendationCache(String installId) async {
+    final prefs = await _prefs();
+    await prefs.remove(_cacheKey(installId));
   }
 
   RecommendationResult _computeLocal(CatalogSeedBundle bundle) {
@@ -98,6 +109,7 @@ class RecommendationRepository {
       final decoded = jsonDecode(raw);
       if (decoded is! Map<String, dynamic>) return null;
       final result = RecommendationResult.fromJson(decoded);
+      if (result.items.isEmpty) return null;
       final age = DateTime.now().difference(result.fetchedAt);
       if (age > RecommendationGatewayConfig.cacheTTL) return null;
       return result;
