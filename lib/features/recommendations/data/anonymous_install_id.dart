@@ -13,17 +13,23 @@ abstract final class AnonymousInstallId {
     final cached = peek();
     if (cached != null) return cached;
 
-    final prefs = await SharedPreferences.getInstance();
-    final stored = prefs.getString(_prefsKey)?.trim();
-    if (stored != null && stored.isNotEmpty) {
-      _memoryCache = stored;
-      return stored;
-    }
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final stored = prefs.getString(_prefsKey)?.trim();
+      if (stored != null && stored.isNotEmpty) {
+        _memoryCache = stored;
+        return stored;
+      }
 
-    final generated = _uuid.v4();
-    await prefs.setString(_prefsKey, generated);
-    _memoryCache = generated;
-    return generated;
+      final generated = _uuid.v4();
+      await prefs.setString(_prefsKey, generated);
+      _memoryCache = generated;
+      return generated;
+    } catch (_) {
+      final generated = _uuid.v4();
+      _memoryCache = generated;
+      return generated;
+    }
   }
 
   static String? peek() {

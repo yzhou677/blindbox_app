@@ -71,9 +71,16 @@ class RecommendationHttpClient {
       );
     }
 
-    final decoded = jsonDecode(response.body);
-    if (decoded is! Map<String, dynamic>) {
-      throw RecommendationHttpException('For-you response is not a JSON object');
+    Map<String, dynamic> decoded;
+    try {
+      final parsed = jsonDecode(response.body);
+      if (parsed is! Map<String, dynamic>) {
+        throw RecommendationHttpException('For-you response is not a JSON object');
+      }
+      decoded = parsed;
+    } catch (error) {
+      if (error is RecommendationHttpException) rethrow;
+      throw RecommendationHttpException('For-you response is not valid JSON');
     }
 
     final rawItems = decoded['items'];
@@ -81,11 +88,11 @@ class RecommendationHttpClient {
         ? [
             for (final entry in rawItems)
               if (entry is Map<String, dynamic>)
-                RecommendationItem.fromJson(entry),
-          ]
+                RecommendationItem.tryFromJson(entry),
+          ].whereType<RecommendationItem>()
         : const <RecommendationItem>[];
 
-    return RecommendationResult(items: items);
+    return RecommendationResult(items: items.toList());
   }
 
   String _normalizedPath(String path) {

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_brand.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_ip.dart';
@@ -124,7 +126,7 @@ void main() {
       );
     });
 
-    test('keeps previous result on error when available', () {
+    test('keeps previous result on refresh error when available', () {
       final previous = resultWithItems();
       expect(
         resolveForYouDisplayResult(
@@ -135,6 +137,19 @@ void main() {
           previousResult: previous,
         ),
         previous,
+      );
+    });
+
+    test('returns null on first-load error when no previous result exists', () {
+      expect(
+        resolveForYouDisplayResult(
+          recommendationsAsync: AsyncError(
+            Exception('offline'),
+            StackTrace.empty,
+          ),
+          previousResult: null,
+        ),
+        isNull,
       );
     });
 
@@ -190,6 +205,97 @@ void main() {
     );
 
     await tester.pump();
+    expect(find.text(ForYouCopy.sectionTitle), findsNothing);
+  });
+
+  testWidgets('ForYouSection shows skeleton on first load', (tester) async {
+    final completer = Completer<RecommendationResult>();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          recommendationReadinessProvider.overrideWith(
+            () => _ReadyReadinessNotifier(),
+          ),
+          catalogBundleProvider.overrideWith((ref) async => _testBundle()),
+          anonymousInstallIdProvider.overrideWith((ref) async => 'test-install'),
+          recommendationsProvider.overrideWith((ref) => completer.future),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: const Scaffold(body: ForYouSection()),
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    expect(find.text(ForYouCopy.sectionTitle), findsOneWidget);
+    expect(find.text('Dimoo New'), findsNothing);
+
+    completer.complete(const RecommendationResult(items: []));
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('ForYouSection hidden when recommendations fail', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          recommendationReadinessProvider.overrideWith(
+            () => _ReadyReadinessNotifier(),
+          ),
+          catalogBundleProvider.overrideWith((ref) async => _testBundle()),
+          anonymousInstallIdProvider.overrideWith((ref) async => 'test-install'),
+          recommendationsProvider.overrideWith(
+            (ref) async => throw Exception('offline'),
+          ),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: const Scaffold(body: ForYouSection()),
+        ),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text(ForYouCopy.sectionTitle), findsNothing);
+  });
+
+  testWidgets('ForYouSection hidden while catalog bundle is unavailable',
+      (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          recommendationReadinessProvider.overrideWith(
+            () => _ReadyReadinessNotifier(),
+          ),
+          catalogBundleProvider.overrideWith(
+            (ref) async => throw Exception('catalog offline'),
+          ),
+          recommendationsProvider.overrideWith(
+            (ref) async => RecommendationResult(
+              items: [
+                RecommendationItem(
+                  seriesId: 'dimoo_new',
+                  reasonType: RecommendationReasonType.ownedIp,
+                  reasonMeta: 'DIMOO',
+                  series: _testBundle().series.first,
+                ),
+              ],
+            ),
+          ),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: const Scaffold(body: ForYouSection()),
+        ),
+      ),
+    );
+
+    await tester.pump();
+
     expect(find.text(ForYouCopy.sectionTitle), findsNothing);
   });
 

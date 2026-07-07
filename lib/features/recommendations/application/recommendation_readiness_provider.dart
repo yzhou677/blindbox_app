@@ -40,11 +40,16 @@ class RecommendationReadinessNotifier extends Notifier<bool> {
 
   Future<void> _loadPersistedUnlocked() async {
     if (_prefsLoaded) return;
-    final prefs = await SharedPreferences.getInstance();
-    _persistedUnlocked =
-        prefs.getBool(RecommendationGatewayConfig.readinessUnlockedKey) ??
-            false;
-    _prefsLoaded = true;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _persistedUnlocked =
+          prefs.getBool(RecommendationGatewayConfig.readinessUnlockedKey) ??
+              false;
+    } catch (_) {
+      _persistedUnlocked = false;
+    } finally {
+      _prefsLoaded = true;
+    }
     if (_persistedUnlocked && !state) {
       state = true;
       return;
@@ -71,8 +76,12 @@ class RecommendationReadinessNotifier extends Notifier<bool> {
 
   Future<void> _persistUnlocked() async {
     _persistedUnlocked = true;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(RecommendationGatewayConfig.readinessUnlockedKey, true);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(RecommendationGatewayConfig.readinessUnlockedKey, true);
+    } catch (_) {
+      // In-memory unlock still applies for this session.
+    }
   }
 }
 
@@ -84,19 +93,27 @@ class _ForYouFirstUnlockShownNotifier extends Notifier<bool> {
   }
 
   Future<void> _load() async {
-    final prefs = await SharedPreferences.getInstance();
-    final shown =
-        prefs.getBool(RecommendationGatewayConfig.firstUnlockShownKey) ?? false;
-    if (shown) {
-      state = true;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final shown =
+          prefs.getBool(RecommendationGatewayConfig.firstUnlockShownKey) ?? false;
+      if (shown) {
+        state = true;
+      }
+    } catch (_) {
+      // Badge defaults to hidden on prefs failure.
     }
   }
 
   Future<void> markShown() async {
     if (state) return;
     state = true;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(RecommendationGatewayConfig.firstUnlockShownKey, true);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(RecommendationGatewayConfig.firstUnlockShownKey, true);
+    } catch (_) {
+      // Session-only dismissal is enough.
+    }
   }
 }
 

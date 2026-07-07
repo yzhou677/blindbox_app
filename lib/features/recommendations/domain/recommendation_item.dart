@@ -40,4 +40,12 @@ class RecommendationItem {
       reasonMeta: json['reasonMeta'] as String?,
     );
   }
+
+  static RecommendationItem? tryFromJson(Map<String, dynamic> json) {
+    try {
+      return RecommendationItem.fromJson(json);
+    } catch (_) {
+      return null;
+    }
+  }
 }

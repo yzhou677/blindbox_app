@@ -66,6 +66,17 @@ class RecommendationRepository {
     String installId,
     CatalogSeedBundle bundle,
   ) async {
+    try {
+      return await _getRecommendationsUnsafe(installId, bundle);
+    } catch (_) {
+      return const RecommendationResult(items: []);
+    }
+  }
+
+  Future<RecommendationResult> _getRecommendationsUnsafe(
+    String installId,
+    CatalogSeedBundle bundle,
+  ) async {
     final signals = _signals();
     final memo = _lastComputed;
     if (memo != null &&
@@ -123,7 +134,7 @@ class RecommendationRepository {
       }
     }
 
-    final local = _normalizeResult(_computeLocal(bundle, signals));
+    final local = _safeComputeLocal(bundle, signals);
     if (local.items.isNotEmpty) {
       await _writeCache(installId, local);
     }
@@ -135,6 +146,17 @@ class RecommendationRepository {
     );
   }
 
+  RecommendationResult _safeComputeLocal(
+    CatalogSeedBundle bundle,
+    PreferenceSignals signals,
+  ) {
+    try {
+      return _normalizeResult(_computeLocal(bundle, signals));
+    } catch (_) {
+      return const RecommendationResult(items: []);
+    }
+  }
+
   Future<void> updateProfile(
     String installId,
     PreferenceSignals signals,
@@ -142,20 +164,28 @@ class RecommendationRepository {
     if (signals.trackedCatalogSeriesCount == 0) return;
     if (!RecommendationGatewayConfig.isHttpActive) return;
 
-    await _httpClient.updateProfile(
-      baseUrl: RecommendationGatewayConfig.gatewayUri!,
-      installId: installId,
-      signals: signals,
-    );
-    await invalidateRecommendationCache(installId);
+    try {
+      await _httpClient.updateProfile(
+        baseUrl: RecommendationGatewayConfig.gatewayUri!,
+        installId: installId,
+        signals: signals,
+      );
+      await invalidateRecommendationCache(installId);
+    } catch (_) {
+      // Best-effort cloud sync; local engine remains authoritative offline.
+    }
   }
 
   Future<void> invalidateRecommendationCache(String installId) async {
     if (_lastComputed?.installId == installId) {
       _lastComputed = null;
     }
-    final prefs = await _prefs();
-    await prefs.remove(_cacheKey(installId));
+    try {
+      final prefs = await _prefs();
+      await prefs.remove(_cacheKey(installId));
+    } catch (_) {
+      // In-memory memo already cleared.
+    }
   }
 
   RecommendationResult _finalizeResult({
@@ -165,15 +195,20 @@ class RecommendationRepository {
     required CatalogSeedBundle bundle,
     bool remember = true,
   }) {
-    final sanitized = excludeTrackedCatalogSeries(_normalizeResult(result), signals);
-    if (remember) {
-      _lastComputed = _ComputedRecommendationMemo(
-        installId: installId,
-        profileHash: signals.profileHash,
-        result: sanitized,
-      );
+    try {
+      final sanitized =
+          excludeTrackedCatalogSeries(_normalizeResult(result), signals);
+      if (remember) {
+        _lastComputed = _ComputedRecommendationMemo(
+          installId: installId,
+          profileHash: signals.profileHash,
+          result: sanitized,
+        );
+      }
+      return _resolveSeries(sanitized, bundle);
+    } catch (_) {
+      return const RecommendationResult(items: []);
     }
-    return _resolveSeries(sanitized, bundle);
   }
 
   bool _isCloudResultStale(
@@ -206,12 +241,12 @@ class RecommendationRepository {
     String installId,
     String currentProfileHash,
   ) async {
-    // Cache validity: schemaVersion + profileHash only — not age.
-    final prefs = await _prefs();
-    final raw = prefs.getString(_cacheKey(installId));
-    if (raw == null || raw.isEmpty) return null;
-
     try {
+      // Cache validity: schemaVersion + profileHash only — not age.
+      final prefs = await _prefs();
+      final raw = prefs.getString(_cacheKey(installId));
+      if (raw == null || raw.isEmpty) return null;
+
       final decoded = jsonDecode(raw);
       if (decoded is! Map<String, dynamic>) return null;
       final schemaVersion = decoded['schemaVersion'];
@@ -236,15 +271,19 @@ class RecommendationRepository {
   }
 
   Future<void> _writeCache(String installId, RecommendationResult result) async {
-    final prefs = await _prefs();
-    await prefs.setString(
-      _cacheKey(installId),
-      jsonEncode({
-        'schemaVersion':
-            RecommendationGatewayConfig.recommendationCacheSchemaVersion,
-        ...result.toJson(),
-      }),
-    );
+    try {
+      final prefs = await _prefs();
+      await prefs.setString(
+        _cacheKey(installId),
+        jsonEncode({
+          'schemaVersion':
+              RecommendationGatewayConfig.recommendationCacheSchemaVersion,
+          ...result.toJson(),
+        }),
+      );
+    } catch (_) {
+      // Cache is optional; recommendations still return in-memory.
+    }
   }
 
   RecommendationResult _withProfileHash(

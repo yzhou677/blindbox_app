@@ -58,19 +58,29 @@ class _ForYouSectionState extends ConsumerState<ForYouSection> {
     final ready = ref.watch(recommendationReadinessProvider);
     if (!ready) return const SizedBox.shrink();
 
+    final catalogAsync = ref.watch(catalogBundleProvider);
+    if (!catalogAsync.hasValue) return const SizedBox.shrink();
+
     ref.listen<AsyncValue<RecommendationResult>>(recommendationsProvider, (
       _,
       next,
     ) {
       next.whenData((result) {
+        if (!mounted) return;
         if (_previousResult != result) {
           setState(() => _previousResult = result);
         }
       });
     });
 
+    PreferenceSignals signals;
+    try {
+      signals = extractSignals(ref.watch(collectionNotifierProvider));
+    } catch (_) {
+      return const SizedBox.shrink();
+    }
+
     final recommendationsAsync = ref.watch(recommendationsProvider);
-    final signals = extractSignals(ref.watch(collectionNotifierProvider));
     final displayResult = visibleForYouResult(
       displayResult: resolveForYouDisplayResult(
         recommendationsAsync: recommendationsAsync,
@@ -94,9 +104,7 @@ class _ForYouSectionState extends ConsumerState<ForYouSection> {
     required AsyncValue<RecommendationResult> recommendationsAsync,
     required RecommendationResult? displayResult,
   }) {
-    if (displayResult != null) {
-      // Intentionally hide the section when no recommendations are available.
-      if (displayResult.items.isEmpty) return null;
+    if (displayResult != null && displayResult.items.isNotEmpty) {
       return _ForYouLoadedRail(
         items: displayResult.items,
         showFirstUnlockBadge: ref.watch(forYouFirstUnlockBadgeProvider),
@@ -105,7 +113,8 @@ class _ForYouSectionState extends ConsumerState<ForYouSection> {
       );
     }
 
-    if (recommendationsAsync.isLoading) {
+    // First paint only — loading is normal, not a failure.
+    if (recommendationsAsync.isLoading && _previousResult == null) {
       return _ForYouLoadingRail();
     }
 

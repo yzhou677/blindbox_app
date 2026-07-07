@@ -87,6 +87,33 @@ Readiness is a **one-way latch** (`reco_readiness_unlocked_v1` in SharedPreferen
 
 ---
 
+## 4b. For You visibility
+
+The For You section is an **optional enhancement**. It must never block, crash, or degrade the Discover experience. When anything goes wrong, the correct default is to hide the section — except where loading or stale content is explicitly allowed below.
+
+**Visibility rules:**
+
+| State | Behavior |
+|-------|----------|
+| Readiness not met | Hidden |
+| Catalog unavailable | Hidden |
+| First loading | Skeleton |
+| Refresh loading | Keep previous content |
+| Empty recommendations | Hidden |
+| Refresh error with previous content | Keep previous content |
+| Initial error | Hidden |
+
+**Rationale (product, not implementation):**
+
+- **Loading ≠ error.** A short first-load skeleton (100–300ms) is normal; it should not be treated like a failure.
+- **Recommendations are not real-time.** If the user already saw a valid rail and a background refresh fails, keeping the previous cards is better than making the section disappear.
+- **Empty is not a placeholder.** Zero picks after filtering means hide — do not show an empty rail or error chrome.
+- **Discover always wins.** No error widgets, no toasts, no red screens. Repository and provider failures degrade to hidden or empty; they never propagate into the feed.
+
+Implementation lives in [`for_you_section.dart`](../lib/features/recommendations/widgets/for_you_section.dart) (`resolveForYouDisplayResult`, `visibleForYouResult`). Widgets project only; they do not score or fetch.
+
+---
+
 ## 5. Result count (quality-first)
 
 | Scored picks (after 80/20 compose) | Behavior |
@@ -149,6 +176,7 @@ When editing recommendation behavior, verify:
 
 - [ ] `extractSignals` — tracked vs owned vs wishlist still distinct
 - [ ] `computeConfidence` — readiness still `tracked ≥ 3`
+- [ ] For You visibility matrix (§4b): loading skeleton, refresh keep-previous, errors/empty hide
 - [ ] Gap fill only below `forYouMinimumResultCount` (5)
 - [ ] IP diversity: max `forYouMaxSeriesPerIp` (2) before exploration and during gap fill
 - [ ] Gap fill random pool: newest `forYouGapFillRecentPoolSize` (20), profile-seeded shuffle

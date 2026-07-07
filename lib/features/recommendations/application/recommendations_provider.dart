@@ -6,8 +6,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final recommendationsProvider =
     FutureProvider<RecommendationResult>((ref) async {
-  final id = await ref.watch(anonymousInstallIdProvider.future);
-  final bundle = await ref.watch(catalogBundleProvider.future);
-  final repo = ref.watch(recommendationRepositoryProvider);
-  return repo.getRecommendations(id, bundle);
+  try {
+    final id = await ref.watch(anonymousInstallIdProvider.future);
+    final bundle = await ref.watch(catalogBundleProvider.future);
+    final repo = ref.watch(recommendationRepositoryProvider);
+    return await repo.getRecommendations(id, bundle);
+  } catch (_) {
+    return const RecommendationResult(items: []);
+  }
 });
