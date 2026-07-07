@@ -82,11 +82,9 @@ Iterable<String> shelfCatalogSeriesIdCandidates(ShelfSeries series) sync* {
   final templateId = series.catalogTemplateId?.trim();
   if (templateId == null || templateId.isEmpty) return;
   yield templateId;
-  if (series.isDropImport && templateId.startsWith('drop-')) {
-    final bare = templateId.substring('drop-'.length).trim();
-    if (bare.isNotEmpty && bare != templateId) {
-      yield bare;
-    }
+  final catalogId = recommendationCatalogSeriesId(series);
+  if (catalogId != null && catalogId != templateId) {
+    yield catalogId;
   }
 }
 

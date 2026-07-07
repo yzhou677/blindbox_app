@@ -60,7 +60,7 @@ ShelfSeries _wishlistSeries({
 
 void main() {
   group('extractSignals', () {
-    test('excludes custom-local and drop-import series', () {
+    test('excludes custom-local and legacy mock drop imports', () {
       final snap = CollectionSnapshot(
         shelfSeries: [
           testShelfSeries(
@@ -70,7 +70,7 @@ void main() {
           ),
           testShelfSeries(
             id: 'drop',
-            catalogTemplateId: 'drop-legacy',
+            catalogTemplateId: 'drop-drop-luna',
             taxonomyIpId: 'dimoo',
           ),
           _ownedSeries(
@@ -92,6 +92,23 @@ void main() {
       expect(signals.ownedCatalogSeriesIds, {'dimoo_a'});
       expect(signals.ownedIpIds, {'dimoo'});
       expect(signals.ownedCatalogSeriesCount, 1);
+    });
+
+    test('tracks catalog series saved from Home release drop import', () {
+      final snap = CollectionSnapshot(
+        shelfSeries: [
+          testShelfSeries(
+            id: 'drop_saved',
+            catalogTemplateId: 'drop-the_monsters_macaron',
+            taxonomyIpId: 'the_monsters',
+          ),
+        ],
+        figureStates: const {},
+      );
+
+      final signals = extractSignals(snap);
+      expect(signals.trackedCatalogSeriesIds, {'the_monsters_macaron'});
+      expect(isRecommendationReady(signals), isFalse);
     });
 
     test('classifies purely wishlisted series without owned figures', () {
@@ -135,6 +152,24 @@ void main() {
       expect(signals.trackedCatalogSeriesCount, 1);
       expect(signals.ownedCatalogSeriesIds, isEmpty);
       expect(signals.ownedCatalogSeriesCount, 0);
+      expect(isRecommendationReady(signals), isFalse);
+    });
+
+    test('readiness unlocks at three tracked catalog series', () {
+      final snap = CollectionSnapshot(
+        shelfSeries: [
+          for (var i = 0; i < 3; i++)
+            testShelfSeries(
+              id: 'shelf_$i',
+              catalogTemplateId: 'catalog_$i',
+              taxonomyIpId: 'dimoo',
+            ),
+        ],
+        figureStates: const {},
+      );
+
+      final signals = extractSignals(snap);
+      expect(signals.trackedCatalogSeriesCount, 3);
       expect(isRecommendationReady(signals), isTrue);
     });
 
@@ -190,20 +225,28 @@ void main() {
       expect(isRecommendationReady(signals()), isFalse);
     });
 
-    test('low when one tracked catalog series on shelf', () {
+    test('low when three tracked catalog series on shelf', () {
       expect(
-        computeConfidence(signals(tracked: 1)),
+        computeConfidence(signals(tracked: 3)),
         RecommendationConfidence.low,
       );
-      expect(isRecommendationReady(signals(tracked: 1)), isTrue);
+      expect(isRecommendationReady(signals(tracked: 3)), isTrue);
+    });
+
+    test('none when fewer than three tracked catalog series', () {
+      expect(
+        computeConfidence(signals(tracked: 2)),
+        RecommendationConfidence.none,
+      );
+      expect(isRecommendationReady(signals(tracked: 2)), isFalse);
     });
 
     test('low when tracked on shelf without owned figures', () {
       expect(
-        computeConfidence(signals(tracked: 1, owned: 0)),
+        computeConfidence(signals(tracked: 3, owned: 0)),
         RecommendationConfidence.low,
       );
-      expect(isRecommendationReady(signals(tracked: 1, owned: 0)), isTrue);
+      expect(isRecommendationReady(signals(tracked: 3, owned: 0)), isTrue);
     });
 
     test('medium at three owned series', () {
@@ -319,7 +362,309 @@ void main() {
       expect(items.map((item) => item.seriesId), contains('dimoo_new'));
     });
 
-    test('caps results at forYouResultLimit for a large catalog', () {
+    test('gap fills to minimum when scored picks are below 5', () {
+      final signals = PreferenceSignals(
+        trackedCatalogSeriesIds: {'dimoo_owned'},
+        ownedCatalogSeriesIds: {'dimoo_owned'},
+        wishlistCatalogSeriesIds: const {},
+        ownedIpIds: {'dimoo'},
+        wishlistIpIds: const {},
+        trackedCatalogSeriesCount: 1,
+        ownedCatalogSeriesCount: 1,
+        wishlistCatalogSeriesCount: 0,
+        profileHash: 'hash',
+      );
+      final items = computeLocalRecommendations(
+        signals: signals,
+        bundle: CatalogSeedBundle(
+          brands: const [
+            CatalogBrand(id: 'popmart', displayName: 'POP MART'),
+          ],
+          ips: const [
+            CatalogIp(id: 'dimoo', brandId: 'popmart', displayName: 'DIMOO'),
+            CatalogIp(id: 'labubu', brandId: 'popmart', displayName: 'LABUBU'),
+            CatalogIp(id: 'crybaby', brandId: 'popmart', displayName: 'CRYBABY'),
+          ],
+          series: const [
+            catalog.CatalogSeries(
+              id: 'dimoo_owned',
+              brandId: 'popmart',
+              ipId: 'dimoo',
+              displayName: 'Dimoo Owned',
+              releaseDate: '2026-01-01',
+              isBlindBox: true,
+              imageKey: 'dimoo_owned',
+            ),
+            catalog.CatalogSeries(
+              id: 'dimoo_a',
+              brandId: 'popmart',
+              ipId: 'dimoo',
+              displayName: 'Dimoo A',
+              releaseDate: '2026-05-03',
+              isBlindBox: true,
+              imageKey: 'dimoo_a',
+            ),
+            catalog.CatalogSeries(
+              id: 'dimoo_b',
+              brandId: 'popmart',
+              ipId: 'dimoo',
+              displayName: 'Dimoo B',
+              releaseDate: '2026-05-02',
+              isBlindBox: true,
+              imageKey: 'dimoo_b',
+            ),
+            catalog.CatalogSeries(
+              id: 'dimoo_c',
+              brandId: 'popmart',
+              ipId: 'dimoo',
+              displayName: 'Dimoo C',
+              releaseDate: '2026-05-01',
+              isBlindBox: true,
+              imageKey: 'dimoo_c',
+            ),
+            catalog.CatalogSeries(
+              id: 'labubu_gap_1',
+              brandId: 'popmart',
+              ipId: 'labubu',
+              displayName: 'Labubu Gap 1',
+              releaseDate: '2026-06-01',
+              isBlindBox: true,
+              imageKey: 'labubu_gap_1',
+            ),
+            catalog.CatalogSeries(
+              id: 'labubu_gap_2',
+              brandId: 'popmart',
+              ipId: 'labubu',
+              displayName: 'Labubu Gap 2',
+              releaseDate: '2026-06-02',
+              isBlindBox: true,
+              imageKey: 'labubu_gap_2',
+            ),
+            catalog.CatalogSeries(
+              id: 'crybaby_gap',
+              brandId: 'popmart',
+              ipId: 'crybaby',
+              displayName: 'Crybaby Gap',
+              releaseDate: '2026-06-03',
+              isBlindBox: true,
+              imageKey: 'crybaby_gap',
+            ),
+          ],
+          figures: const [],
+        ),
+        clock: DateTime(2026, 5, 21),
+      );
+
+      expect(items.length, RecommendationGatewayConfig.forYouMinimumResultCount);
+      expect(
+        items.where((item) => item.reasonType == RecommendationReasonType.newInCatalog).length,
+        3,
+      );
+    });
+
+    test('limits scored picks to two per IP while preserving score order', () {
+      final signals = PreferenceSignals(
+        trackedCatalogSeriesIds: const {},
+        ownedCatalogSeriesIds: const {},
+        wishlistCatalogSeriesIds: const {},
+        ownedIpIds: {'labubu'},
+        wishlistIpIds: const {},
+        trackedCatalogSeriesCount: 0,
+        ownedCatalogSeriesCount: 0,
+        wishlistCatalogSeriesCount: 0,
+        profileHash: 'hash',
+      );
+      final items = computeLocalRecommendations(
+        signals: signals,
+        bundle: CatalogSeedBundle(
+          brands: const [
+            CatalogBrand(id: 'popmart', displayName: 'POP MART'),
+          ],
+          ips: const [
+            CatalogIp(id: 'labubu', brandId: 'popmart', displayName: 'LABUBU'),
+            CatalogIp(id: 'dimoo', brandId: 'popmart', displayName: 'DIMOO'),
+            CatalogIp(id: 'crybaby', brandId: 'popmart', displayName: 'CRYBABY'),
+            CatalogIp(id: 'nommi', brandId: 'popmart', displayName: 'NOMMI'),
+            CatalogIp(id: 'molly', brandId: 'popmart', displayName: 'MOLLY'),
+          ],
+          series: [
+            for (var i = 1; i <= 6; i++)
+              catalog.CatalogSeries(
+                id: 'labubu_$i',
+                brandId: 'popmart',
+                ipId: 'labubu',
+                displayName: 'Labubu $i',
+                releaseDate: '2026-05-${i.toString().padLeft(2, '0')}',
+                isBlindBox: true,
+                imageKey: 'labubu_$i',
+              ),
+            catalog.CatalogSeries(
+              id: 'dimoo_1',
+              brandId: 'popmart',
+              ipId: 'dimoo',
+              displayName: 'Dimoo 1',
+              releaseDate: '2026-04-01',
+              isBlindBox: true,
+              imageKey: 'dimoo_1',
+            ),
+            catalog.CatalogSeries(
+              id: 'crybaby_1',
+              brandId: 'popmart',
+              ipId: 'crybaby',
+              displayName: 'Crybaby 1',
+              releaseDate: '2026-04-02',
+              isBlindBox: true,
+              imageKey: 'crybaby_1',
+            ),
+            catalog.CatalogSeries(
+              id: 'nommi_1',
+              brandId: 'popmart',
+              ipId: 'nommi',
+              displayName: 'Nommi 1',
+              releaseDate: '2026-04-03',
+              isBlindBox: true,
+              imageKey: 'nommi_1',
+            ),
+            catalog.CatalogSeries(
+              id: 'molly_1',
+              brandId: 'popmart',
+              ipId: 'molly',
+              displayName: 'Molly 1',
+              releaseDate: '2026-04-04',
+              isBlindBox: true,
+              imageKey: 'molly_1',
+            ),
+          ],
+          figures: const [],
+        ),
+        clock: DateTime(2026, 5, 21),
+      );
+
+      final ipCounts = <String, int>{};
+      for (final item in items) {
+        final ipId = switch (item.seriesId) {
+          final id when id.startsWith('labubu_') => 'labubu',
+          final id when id.startsWith('dimoo_') => 'dimoo',
+          final id when id.startsWith('crybaby_') => 'crybaby',
+          final id when id.startsWith('nommi_') => 'nommi',
+          final id when id.startsWith('molly_') => 'molly',
+          _ => item.seriesId,
+        };
+        ipCounts[ipId] = (ipCounts[ipId] ?? 0) + 1;
+      }
+      for (final count in ipCounts.values) {
+        expect(count, lessThanOrEqualTo(2));
+      }
+      expect(ipCounts['labubu'], 2);
+      expect(items.map((item) => item.seriesId), containsAll(['labubu_6', 'labubu_5']));
+      expect(items.map((item) => item.seriesId), isNot(contains('labubu_4')));
+    });
+
+    test('skips gap fill when scored picks reach minimum', () {
+      final signals = PreferenceSignals(
+        trackedCatalogSeriesIds: {'labubu_0', 'dimoo_0', 'crybaby_0'},
+        ownedCatalogSeriesIds: {'labubu_0', 'dimoo_0', 'crybaby_0'},
+        wishlistCatalogSeriesIds: const {},
+        ownedIpIds: {'labubu', 'dimoo', 'crybaby'},
+        wishlistIpIds: const {},
+        trackedCatalogSeriesCount: 3,
+        ownedCatalogSeriesCount: 3,
+        wishlistCatalogSeriesCount: 0,
+        profileHash: 'hash',
+      );
+      final manySeries = [
+        for (final ip in ['labubu', 'dimoo', 'crybaby'])
+          for (var i = 0; i < 3; i++)
+            catalog.CatalogSeries(
+              id: '${ip}_$i',
+              brandId: 'popmart',
+              ipId: ip,
+              displayName: '$ip $i',
+              releaseDate: '2026-05-${(9 - i).toString().padLeft(2, '0')}',
+              isBlindBox: true,
+              imageKey: '${ip}_$i',
+            ),
+      ];
+
+      final items = computeLocalRecommendations(
+        signals: signals,
+        bundle: CatalogSeedBundle(
+          brands: const [
+            CatalogBrand(id: 'popmart', displayName: 'POP MART'),
+          ],
+          ips: const [
+            CatalogIp(id: 'labubu', brandId: 'popmart', displayName: 'LABUBU'),
+            CatalogIp(id: 'dimoo', brandId: 'popmart', displayName: 'DIMOO'),
+            CatalogIp(id: 'crybaby', brandId: 'popmart', displayName: 'CRYBABY'),
+          ],
+          series: manySeries,
+          figures: const [],
+        ),
+        clock: DateTime(2026, 5, 21),
+      );
+
+      expect(items.length, 6);
+      expect(
+        items.any((item) => item.reasonType == RecommendationReasonType.newInCatalog),
+        isFalse,
+      );
+    });
+
+    test('caps scored results at forYouResultLimit for a large catalog', () {
+      final signals = PreferenceSignals(
+        trackedCatalogSeriesIds: const {},
+        ownedCatalogSeriesIds: const {},
+        wishlistCatalogSeriesIds: const {},
+        ownedIpIds: {for (var i = 0; i < 10; i++) 'ip_$i'},
+        wishlistIpIds: const {},
+        trackedCatalogSeriesCount: 0,
+        ownedCatalogSeriesCount: 0,
+        wishlistCatalogSeriesCount: 0,
+        profileHash: 'hash',
+      );
+      final manySeries = [
+        for (var ip = 0; ip < 10; ip++)
+          for (var i = 0; i < 3; i++)
+            catalog.CatalogSeries(
+              id: 'series_${ip}_$i',
+              brandId: 'popmart',
+              ipId: 'ip_$ip',
+              displayName: 'Series $ip-$i',
+              releaseDate: '2026-05-${(ip * 3 + i + 1).toString().padLeft(2, '0')}',
+              isBlindBox: true,
+              imageKey: 'series_${ip}_$i',
+            ),
+      ];
+
+      final items = computeLocalRecommendations(
+        signals: signals,
+        bundle: CatalogSeedBundle(
+          brands: const [
+            CatalogBrand(id: 'popmart', displayName: 'POP MART'),
+          ],
+          ips: [
+            for (var i = 0; i < 10; i++)
+              CatalogIp(id: 'ip_$i', brandId: 'popmart', displayName: 'IP $i'),
+          ],
+          series: manySeries,
+          figures: const [],
+        ),
+        clock: DateTime(2026, 5, 21),
+      );
+
+      expect(items.length, RecommendationGatewayConfig.forYouResultLimit);
+      final ipCounts = <String, int>{};
+      for (final item in items) {
+        final parts = item.seriesId.split('_');
+        final ipId = 'ip_${parts[1]}';
+        ipCounts[ipId] = (ipCounts[ipId] ?? 0) + 1;
+      }
+      for (final count in ipCounts.values) {
+        expect(count, lessThanOrEqualTo(2));
+      }
+    });
+
+    test('gap fills only to minimum when no scored picks exist', () {
       final signals = PreferenceSignals(
         trackedCatalogSeriesIds: const {},
         ownedCatalogSeriesIds: const {},
@@ -332,13 +677,13 @@ void main() {
         profileHash: 'hash',
       );
       final manySeries = [
-        for (var i = 0; i < 30; i++)
+        for (var i = 0; i < 5; i++)
           catalog.CatalogSeries(
             id: 'series_$i',
             brandId: 'popmart',
-            ipId: 'dimoo',
+            ipId: 'ip_$i',
             displayName: 'Series $i',
-            releaseDate: '2026-05-${(i % 28 + 1).toString().padLeft(2, '0')}',
+            releaseDate: '2026-05-${(5 - i).toString().padLeft(2, '0')}',
             isBlindBox: true,
             imageKey: 'series_$i',
           ),
@@ -350,8 +695,9 @@ void main() {
           brands: const [
             CatalogBrand(id: 'popmart', displayName: 'POP MART'),
           ],
-          ips: const [
-            CatalogIp(id: 'dimoo', brandId: 'popmart', displayName: 'DIMOO'),
+          ips: [
+            for (var i = 0; i < 5; i++)
+              CatalogIp(id: 'ip_$i', brandId: 'popmart', displayName: 'IP $i'),
           ],
           series: manySeries,
           figures: const [],
@@ -359,30 +705,106 @@ void main() {
         clock: DateTime(2026, 5, 21),
       );
 
-      expect(items.length, RecommendationGatewayConfig.forYouResultLimit);
+      expect(items.length, RecommendationGatewayConfig.forYouMinimumResultCount);
+      expect(
+        items.every((item) => item.reasonType == RecommendationReasonType.newInCatalog),
+        isTrue,
+      );
+    });
+
+    test('gap fill randomizes within recent pool and stays stable per profile', () {
+      CatalogSeedBundle bundleForPool() {
+        return CatalogSeedBundle(
+          brands: const [
+            CatalogBrand(id: 'popmart', displayName: 'POP MART'),
+          ],
+          ips: [
+            for (var i = 0; i < 25; i++)
+              CatalogIp(id: 'ip_$i', brandId: 'popmart', displayName: 'IP $i'),
+          ],
+          series: [
+            for (var i = 0; i < 25; i++)
+              catalog.CatalogSeries(
+                id: 'series_$i',
+                brandId: 'popmart',
+                ipId: 'ip_$i',
+                displayName: 'Series $i',
+                releaseDate: '2026-05-${(25 - i).toString().padLeft(2, '0')}',
+                isBlindBox: true,
+                imageKey: 'series_$i',
+              ),
+          ],
+          figures: const [],
+        );
+      }
+
+      PreferenceSignals signalsFor(String profileHash) {
+        return PreferenceSignals(
+          trackedCatalogSeriesIds: const {},
+          ownedCatalogSeriesIds: const {},
+          wishlistCatalogSeriesIds: const {},
+          ownedIpIds: const {},
+          wishlistIpIds: const {},
+          trackedCatalogSeriesCount: 0,
+          ownedCatalogSeriesCount: 0,
+          wishlistCatalogSeriesCount: 0,
+          profileHash: profileHash,
+        );
+      }
+
+      final bundle = bundleForPool();
+      final run = (String profileHash) => computeLocalRecommendations(
+            signals: signalsFor(profileHash),
+            bundle: bundle,
+            clock: DateTime(2026, 5, 21),
+          );
+
+      final stableRun = run('profile-gap-fill');
+      final repeatRun = run('profile-gap-fill');
+      final alternateRun = run('profile-gap-fill-v2');
+
+      expect(stableRun.map((item) => item.seriesId).toList(),
+          repeatRun.map((item) => item.seriesId).toList());
+      expect(stableRun, hasLength(5));
+      for (final item in stableRun) {
+        final index = int.parse(item.seriesId.split('_').last);
+        expect(index, lessThan(20));
+      }
+      expect(
+        stableRun.map((item) => item.seriesId).toList(),
+        isNot(equals(
+          [for (var i = 0; i < 5; i++) 'series_$i'],
+        )),
+      );
+      expect(
+        alternateRun.map((item) => item.seriesId).toList(),
+        isNot(equals(stableRun.map((item) => item.seriesId).toList())),
+      );
     });
 
     test('keeps top stable slots; exploration tied to profile and catalog', () {
       final manySeries = [
-        for (var i = 0; i < 15; i++)
-          catalog.CatalogSeries(
-            id: 'labubu_$i',
-            brandId: 'popmart',
-            ipId: 'labubu',
-            displayName: 'Labubu $i',
-            releaseDate:
-                '2026-05-${(15 - i).toString().padLeft(2, '0')}',
-            isBlindBox: true,
-            imageKey: 'labubu_$i',
-          ),
+        for (var ip = 0; ip < 10; ip++)
+          for (var i = 0; i < 2; i++)
+            catalog.CatalogSeries(
+              id: 'ip${ip}_$i',
+              brandId: 'popmart',
+              ipId: 'ip_$ip',
+              displayName: 'IP $ip series $i',
+              releaseDate:
+                  '2026-05-${(20 - ip * 2 - i).toString().padLeft(2, '0')}',
+              isBlindBox: true,
+              imageKey: 'ip${ip}_$i',
+            ),
       ];
       CatalogSeedBundle bundleFor(List<catalog.CatalogSeries> series) {
         return CatalogSeedBundle(
           brands: const [
             CatalogBrand(id: 'popmart', displayName: 'POP MART'),
           ],
-          ips: const [
-            CatalogIp(id: 'labubu', brandId: 'popmart', displayName: 'LABUBU'),
+          ips: [
+            for (var i = 0; i < 10; i++)
+              CatalogIp(id: 'ip_$i', brandId: 'popmart', displayName: 'IP $i'),
           ],
           series: series,
           figures: const [],
@@ -391,13 +813,13 @@ void main() {
 
       PreferenceSignals signalsFor(String profileHash) {
         return PreferenceSignals(
-          trackedCatalogSeriesIds: {'labubu_0'},
-          ownedCatalogSeriesIds: {'labubu_0'},
+          trackedCatalogSeriesIds: const {},
+          ownedCatalogSeriesIds: const {},
           wishlistCatalogSeriesIds: const {},
-          ownedIpIds: {'labubu'},
+          ownedIpIds: {for (var i = 0; i < 10; i++) 'ip_$i'},
           wishlistIpIds: const {},
-          trackedCatalogSeriesCount: 1,
-          ownedCatalogSeriesCount: 1,
+          trackedCatalogSeriesCount: 0,
+          ownedCatalogSeriesCount: 0,
           wishlistCatalogSeriesCount: 0,
           profileHash: profileHash,
         );
@@ -421,10 +843,8 @@ void main() {
       final explore = baseline.skip(8).map((item) => item.seriesId).toList();
 
       expect(baseline, hasLength(10));
-      expect(
-        stable,
-        [for (var i = 1; i <= 8; i++) 'labubu_$i'],
-      );
+      expect(stable, hasLength(8));
+      expect(explore, hasLength(2));
       expect(explore.toSet(), isNot(containsAll(stable)));
 
       // Same profile + same catalog → stable exploration (not calendar-driven).
@@ -451,14 +871,14 @@ void main() {
         signals: signals,
         bundle: bundleFor([
           ...manySeries,
-          const catalog.CatalogSeries(
-            id: 'labubu_new_drop',
+          catalog.CatalogSeries(
+            id: 'ip_new_drop',
             brandId: 'popmart',
-            ipId: 'labubu',
-            displayName: 'Labubu New',
+            ipId: 'ip_9',
+            displayName: 'IP 9 new',
             releaseDate: '2026-06-01',
             isBlindBox: true,
-            imageKey: 'labubu_new_drop',
+            imageKey: 'ip_new_drop',
           ),
         ]),
       );

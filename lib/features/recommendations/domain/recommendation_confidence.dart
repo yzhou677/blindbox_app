@@ -1,3 +1,4 @@
+import 'package:blindbox_app/features/recommendations/data/recommendation_gateway_config.dart';
 import 'package:blindbox_app/features/recommendations/data/preference_signal_extractor.dart';
 
 enum RecommendationConfidence {
@@ -8,6 +9,7 @@ enum RecommendationConfidence {
 }
 
 /// Readiness threshold — adjust without changing provider logic.
+/// Low confidence requires [RecommendationGatewayConfig.recommendationReadinessTrackedMinimum].
 const RecommendationConfidence recommendationReadinessThreshold =
     RecommendationConfidence.low;
 
@@ -27,7 +29,8 @@ RecommendationConfidence computeConfidence(PreferenceSignals signals) {
   if (signals.ownedCatalogSeriesCount >= 3) {
     return RecommendationConfidence.medium;
   }
-  if (signals.trackedCatalogSeriesCount >= 1) {
+  if (signals.trackedCatalogSeriesCount >=
+      RecommendationGatewayConfig.recommendationReadinessTrackedMinimum) {
     return RecommendationConfidence.low;
   }
   return RecommendationConfidence.none;

@@ -151,9 +151,15 @@ List<RecommendationItem> computeLocalRecommendations({
       return _compareNewestFirst(seriesA, seriesB, orderIndex);
     });
 
+  final seriesById = {for (final series in bundle.series) series.id: series};
+  final diversified = _applyIpDiversity(
+    ranked: ranked,
+    ipIdForSeries: (seriesId) => seriesById[seriesId]?.ipId ?? seriesId,
+  );
+
   final results = List<RecommendationItem>.from(
     _composeCuratedResults(
-      ranked: ranked,
+      ranked: diversified,
       limit: limit,
       explorationSeed: _explorationSeed(
         signals.profileHash,
@@ -162,24 +168,118 @@ List<RecommendationItem> computeLocalRecommendations({
     ),
   );
 
-  if (results.length >= limit) return results;
+  final minimum = RecommendationGatewayConfig.forYouMinimumResultCount;
+  if (results.length >= minimum) return results;
 
-  final gapFill = bundle.series.toList()
+  final gapFillSorted = bundle.series.toList()
     ..sort((a, b) => _compareNewestFirst(a, b, orderIndex));
+  final gapFillIpCounts = _ipCountsForResults(results, seriesById);
+  final catalogFingerprint = catalogExplorationFingerprint(bundle);
 
-  for (final series in gapFill) {
-    if (results.length >= limit) break;
-    if (isTracked(series)) continue;
-    if (scored.containsKey(series.id)) continue;
-    results.add(
-      RecommendationItem(
-        seriesId: series.id,
-        reasonType: RecommendationReasonType.newInCatalog,
-      ),
-    );
-  }
+  _appendGapFillResults(
+    results: results,
+    minimum: minimum,
+    sortedCatalog: gapFillSorted,
+    isTracked: isTracked,
+    scoredIds: scored.keys.toSet(),
+    gapFillIpCounts: gapFillIpCounts,
+    gapFillSeed: _gapFillSeed(signals.profileHash, catalogFingerprint),
+  );
 
   return results;
+}
+
+void _appendGapFillResults({
+  required List<RecommendationItem> results,
+  required int minimum,
+  required List<catalog.CatalogSeries> sortedCatalog,
+  required bool Function(catalog.CatalogSeries series) isTracked,
+  required Set<String> scoredIds,
+  required Map<String, int> gapFillIpCounts,
+  required int gapFillSeed,
+}) {
+  final eligible = <catalog.CatalogSeries>[];
+  for (final series in sortedCatalog) {
+    if (isTracked(series)) continue;
+    if (scoredIds.contains(series.id)) continue;
+    eligible.add(series);
+  }
+
+  final poolSize = RecommendationGatewayConfig.forYouGapFillRecentPoolSize;
+  final recentPool = eligible.take(poolSize).toList();
+  final remainder = eligible.skip(poolSize).toList();
+
+  void addFromCandidates(
+    List<catalog.CatalogSeries> candidates, {
+    required bool shuffle,
+  }) {
+    final queue = List<catalog.CatalogSeries>.from(candidates);
+    if (shuffle) {
+      queue.shuffle(Random(gapFillSeed));
+    }
+    for (final series in queue) {
+      if (results.length >= minimum) return;
+      if (!_canAddSeriesForIp(
+        series.ipId,
+        gapFillIpCounts,
+        RecommendationGatewayConfig.forYouMaxSeriesPerIp,
+      )) {
+        continue;
+      }
+      gapFillIpCounts[series.ipId] = (gapFillIpCounts[series.ipId] ?? 0) + 1;
+      results.add(
+        RecommendationItem(
+          seriesId: series.id,
+          reasonType: RecommendationReasonType.newInCatalog,
+        ),
+      );
+    }
+  }
+
+  addFromCandidates(recentPool, shuffle: true);
+  if (results.length < minimum) {
+    addFromCandidates(remainder, shuffle: false);
+  }
+}
+
+int _gapFillSeed(String profileHash, String catalogFingerprint) {
+  return Object.hash('gap_fill', profileHash, catalogFingerprint);
+}
+
+List<_ScoredCandidate> _applyIpDiversity({
+  required List<_ScoredCandidate> ranked,
+  required String Function(String seriesId) ipIdForSeries,
+  int maxPerIp = RecommendationGatewayConfig.forYouMaxSeriesPerIp,
+}) {
+  final ipCounts = <String, int>{};
+  final diversified = <_ScoredCandidate>[];
+  for (final candidate in ranked) {
+    final ipId = ipIdForSeries(candidate.seriesId);
+    if (!_canAddSeriesForIp(ipId, ipCounts, maxPerIp)) continue;
+    ipCounts[ipId] = (ipCounts[ipId] ?? 0) + 1;
+    diversified.add(candidate);
+  }
+  return diversified;
+}
+
+bool _canAddSeriesForIp(
+  String ipId,
+  Map<String, int> ipCounts,
+  int maxPerIp,
+) {
+  return (ipCounts[ipId] ?? 0) < maxPerIp;
+}
+
+Map<String, int> _ipCountsForResults(
+  List<RecommendationItem> results,
+  Map<String, catalog.CatalogSeries> seriesById,
+) {
+  final ipCounts = <String, int>{};
+  for (final item in results) {
+    final ipId = seriesById[item.seriesId]?.ipId ?? item.seriesId;
+    ipCounts[ipId] = (ipCounts[ipId] ?? 0) + 1;
+  }
+  return ipCounts;
 }
 
 List<RecommendationItem> _composeCuratedResults({

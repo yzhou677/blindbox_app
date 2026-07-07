@@ -23,6 +23,18 @@ abstract final class RecommendationGatewayConfig {
   /// Curated For You rail length — short enough to feel hand-picked, not catalog-browse.
   static const int forYouResultLimit = 10;
 
+  /// Minimum desirable For You picks — gap fill runs only below this count.
+  static const int forYouMinimumResultCount = 5;
+
+  /// Maximum scored or gap-fill picks per catalog IP in one For You rail.
+  static const int forYouMaxSeriesPerIp = 2;
+
+  /// Recent catalog window for gap-fill random pool (newest-first slice).
+  static const int forYouGapFillRecentPoolSize = 20;
+
+  /// Tracked official catalog series required before For You unlocks.
+  static const int recommendationReadinessTrackedMinimum = 3;
+
   /// Share of slots filled from lower-ranked picks. Rest = top stable.
   /// Exploration order rotates when [profileHash] or catalog content changes.
   static const double forYouExplorationRatio = 0.2;

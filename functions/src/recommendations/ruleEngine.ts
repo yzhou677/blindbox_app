@@ -7,6 +7,9 @@ import type {
 import { catalogExplorationFingerprint } from './catalogFingerprint';
 
 export const MAX_RECOMMENDATIONS = 10;
+export const MIN_RECOMMENDATIONS = 5;
+export const MAX_SERIES_PER_IP = 2;
+export const GAP_FILL_RECENT_POOL_SIZE = 20;
 const EXPLORATION_RATIO = 0.2;
 const RECENCY_WINDOW_DAYS = 90;
 
@@ -20,6 +23,15 @@ function explorationSlotCount(limit = MAX_RECOMMENDATIONS): number {
 
 function explorationSeed(profileHash: string, catalogFingerprint: string): number {
   const key = `${profileHash}:${catalogFingerprint}`;
+  let hash = 0;
+  for (let i = 0; i < key.length; i++) {
+    hash = (hash * 31 + key.charCodeAt(i)) | 0;
+  }
+  return hash;
+}
+
+function gapFillSeed(profileHash: string, catalogFingerprint: string): number {
+  const key = `gap_fill:${profileHash}:${catalogFingerprint}`;
   let hash = 0;
   for (let i = 0; i < key.length; i++) {
     hash = (hash * 31 + key.charCodeAt(i)) | 0;
@@ -146,8 +158,12 @@ export function computeRecommendations(params: {
   const ranked = [...scored.values()].sort((a, b) =>
     compareRankedCandidates(a, b, seriesById, orderIndex),
   );
-  const results = composeCuratedResults(
+  const diversified = applyIpDiversity(
     ranked,
+    (seriesId) => seriesById.get(seriesId)?.ipId ?? seriesId,
+  );
+  const results = composeCuratedResults(
+    diversified,
     MAX_RECOMMENDATIONS,
     explorationSeed(
       params.profile.profileHash,
@@ -155,22 +171,113 @@ export function computeRecommendations(params: {
     ),
   );
 
-  if (results.length >= MAX_RECOMMENDATIONS) {
+  if (results.length >= MIN_RECOMMENDATIONS) {
     return results;
   }
 
-  const gapFill = [...params.series].sort((a, b) =>
+  const gapFillSorted = [...params.series].sort((a, b) =>
     compareSeriesNewestFirst(a, b, orderIndex),
   );
+  const gapFillIpCounts = ipCountsForResults(results, seriesById);
+  const catalogFingerprint = catalogExplorationFingerprint(params.series);
 
-  for (const series of gapFill) {
-    if (results.length >= MAX_RECOMMENDATIONS) break;
-    if (trackedSeries.has(series.id)) continue;
-    if (scored.has(series.id)) continue;
-    results.push({ seriesId: series.id, reasonType: 'new_in_catalog' });
-  }
+  appendGapFillResults({
+    results,
+    minimum: MIN_RECOMMENDATIONS,
+    sortedCatalog: gapFillSorted,
+    trackedSeries,
+    scored,
+    gapFillIpCounts,
+    gapFillSeed: gapFillSeed(params.profile.profileHash, catalogFingerprint),
+  });
 
   return results;
+}
+
+function appendGapFillResults(params: {
+  results: RecommendationItemWire[];
+  minimum: number;
+  sortedCatalog: CatalogSeriesDoc[];
+  trackedSeries: Set<string>;
+  scored: Map<string, ScoredCandidate>;
+  gapFillIpCounts: Map<string, number>;
+  gapFillSeed: number;
+}): void {
+  const eligible: CatalogSeriesDoc[] = [];
+  for (const series of params.sortedCatalog) {
+    if (params.trackedSeries.has(series.id)) continue;
+    if (params.scored.has(series.id)) continue;
+    eligible.push(series);
+  }
+
+  const recentPool = eligible.slice(0, GAP_FILL_RECENT_POOL_SIZE);
+  const remainder = eligible.slice(GAP_FILL_RECENT_POOL_SIZE);
+
+  const addFromCandidates = (
+    candidates: CatalogSeriesDoc[],
+    shuffle: boolean,
+  ) => {
+    const queue = [...candidates];
+    if (shuffle) {
+      const rng = mulberry32(params.gapFillSeed >>> 0);
+      for (let i = queue.length - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        [queue[i], queue[j]] = [queue[j], queue[i]];
+      }
+    }
+    for (const series of queue) {
+      if (params.results.length >= params.minimum) return;
+      if (!canAddSeriesForIp(series.ipId, params.gapFillIpCounts, MAX_SERIES_PER_IP)) {
+        continue;
+      }
+      params.gapFillIpCounts.set(
+        series.ipId,
+        (params.gapFillIpCounts.get(series.ipId) ?? 0) + 1,
+      );
+      params.results.push({ seriesId: series.id, reasonType: 'new_in_catalog' });
+    }
+  };
+
+  addFromCandidates(recentPool, true);
+  if (params.results.length < params.minimum) {
+    addFromCandidates(remainder, false);
+  }
+}
+
+function applyIpDiversity(
+  ranked: ScoredCandidate[],
+  ipIdForSeries: (seriesId: string) => string,
+  maxPerIp = MAX_SERIES_PER_IP,
+): ScoredCandidate[] {
+  const ipCounts = new Map<string, number>();
+  const diversified: ScoredCandidate[] = [];
+  for (const candidate of ranked) {
+    const ipId = ipIdForSeries(candidate.seriesId);
+    if (!canAddSeriesForIp(ipId, ipCounts, maxPerIp)) continue;
+    ipCounts.set(ipId, (ipCounts.get(ipId) ?? 0) + 1);
+    diversified.push(candidate);
+  }
+  return diversified;
+}
+
+function canAddSeriesForIp(
+  ipId: string,
+  ipCounts: Map<string, number>,
+  maxPerIp: number,
+): boolean {
+  return (ipCounts.get(ipId) ?? 0) < maxPerIp;
+}
+
+function ipCountsForResults(
+  results: RecommendationItemWire[],
+  seriesById: Map<string, CatalogSeriesDoc>,
+): Map<string, number> {
+  const ipCounts = new Map<string, number>();
+  for (const item of results) {
+    const ipId = seriesById.get(item.seriesId)?.ipId ?? item.seriesId;
+    ipCounts.set(ipId, (ipCounts.get(ipId) ?? 0) + 1);
+  }
+  return ipCounts;
 }
 
 function trackedCatalogSeriesSet(profile: RecommendationProfile): Set<string> {

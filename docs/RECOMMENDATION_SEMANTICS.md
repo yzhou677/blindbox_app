@@ -28,7 +28,11 @@ For catalog vs shelf vs market boundaries, see [`.cursor/ARCHITECTURE.md`](../.c
 | **Owned figures increase confidence** | Figure `owned` state drives IP affinity scoring and confidence tiers (`medium` / `high`). It is **not** the gate for unlocking For You or excluding series. |
 | **Catalog series only** | Recommendations are catalog-backed `series.id` values. Custom-local rows and Home drop-imports (`drop-*`) are excluded from signals and must not be recommended. |
 | **Cloud ≡ Local** | Dart and TypeScript rule engines use the same scoring, exclusion, gap-fill, and 80/20 stable/exploration semantics. Divergence is a bug. |
+| **Quality over quantity** | Target **5–10** curated picks. Gap fill only when scored results fall below 5 — never pad to 10 with weak catalog filler. |
+| **Readiness waits for signal depth** | For You unlocks at **3 tracked** official catalog series — enough signal for a curated first impression. |
 | **Repository owns decisions** | Widgets project results for display (`visibleForYouResult`) but do not implement recommendation logic. |
+
+**One resolver rule:** Recommendation only cares which catalog `series.id` a `ShelfSeries` represents — via [`recommendationCatalogSeriesId()`](../lib/features/collection/domain/collection_domain.dart). UI entry points (Latest, Trending, Search, Feed) are not recommendation concepts.
 
 ---
 
@@ -44,7 +48,7 @@ Signals are distilled from the local collection snapshot — not a mirror of she
 | `ownedIpIds` / `wishlistIpIds` | Taxonomy IP ids from qualifying shelf rows | Rule-engine IP match reasons |
 | `profileHash` | SHA-256 of tracked + owned + wishlist series sets and IP sets | Cache invalidation, session memo, cloud profile dedupe |
 
-**Eligible catalog series** = `catalogTemplateId` present, not `isCustomLocal`, not `isDropImport`.
+**Eligible catalog series** = resolvable via [`recommendationCatalogSeriesId`](../lib/features/collection/domain/collection_domain.dart): direct catalog template id, or catalog-backed Home save (`drop-{catalogSeriesId}` → bare id). Custom-local and legacy mock drops (`drop-drop-*`) are excluded.
 
 **Important:** “On My Collection” (tracked) and “has owned figures” (owned) are **different concepts**. A user can track a series with zero owned figures; it is still excluded from For You.
 
@@ -58,7 +62,7 @@ Add catalog series to My Collection
         ▼
 trackedCatalogSeriesIds updated
         │
-        ├──► Readiness unlocks (trackedCatalogSeriesCount ≥ 1)
+        ├──► Readiness unlocks (trackedCatalogSeriesCount ≥ 3)
         │
         ├──► profileHash changes → cache / memo invalidate
         │
@@ -75,7 +79,7 @@ Marking figures **owned** later deepens IP signals and confidence but does not c
 
 | Gate | Threshold |
 |------|-----------|
-| **For You visible** | `trackedCatalogSeriesCount ≥ 1` (confidence ≥ `low`) |
+| **For You visible** | `trackedCatalogSeriesCount ≥ 3` (confidence ≥ `low`) |
 | **Medium confidence** | `ownedCatalogSeriesCount ≥ 3` |
 | **High confidence** | `ownedCatalogSeriesCount ≥ 5` |
 
@@ -83,7 +87,32 @@ Readiness is a **one-way latch** (`reco_readiness_unlocked_v1` in SharedPreferen
 
 ---
 
-## 5. Pipeline exclusions (where tracked series are filtered)
+## 5. Result count (quality-first)
+
+| Scored picks (after 80/20 compose) | Behavior |
+|-------------------------------------|----------|
+| ≥ 5 | Return scored results only (cap at 10). **No gap fill.** |
+| < 5 | Gap fill with `new_in_catalog` until **5** total or catalog exhausted. |
+
+Gap fill draws from the **newest 20** eligible catalog series (not tracked, not already scored), shuffled with a seed derived from `profileHash` + catalog fingerprint. Same profile + catalog → same gap-fill picks; profile change → picks may rotate. If the pool cannot reach 5 (e.g. IP diversity cap), older eligible series are considered in release order.
+
+Never gap fill simply to reach 10. An empty or thin rail is acceptable when signals are weak.
+
+---
+
+## 5b. IP diversity (selection constraint)
+
+After score ranking and **before** 80/20 exploration:
+
+- Walk candidates in score order (ties → newest release).
+- Keep at most **2 series per catalog IP** (`forYouMaxSeriesPerIp`).
+- Skipped over-limit candidates do not reduce scores; the next highest-scoring candidate is considered.
+
+Gap fill uses the same per-IP cap against IPs already present in the rail.
+
+---
+
+## 6. Pipeline exclusions (where tracked series are filtered)
 
 1. **Local rule engine** — skip tracked ids when scoring and gap-filling.
 2. **Cloud rule engine** — same; profile carries `trackedCatalogSeriesIds`.
@@ -92,7 +121,7 @@ Readiness is a **one-way latch** (`reco_readiness_unlocked_v1` in SharedPreferen
 
 ---
 
-## 6. What recommendations are not
+## 7. What recommendations are not
 
 - Not based on custom-local shelf rows or drop-import series.
 - Not a replacement for catalog search or market browse.
@@ -101,7 +130,7 @@ Readiness is a **one-way latch** (`reco_readiness_unlocked_v1` in SharedPreferen
 
 ---
 
-## 7. Cloud profile contract
+## 8. Cloud profile contract
 
 `POST /v1/profile` includes at minimum:
 
@@ -114,12 +143,15 @@ Readiness is a **one-way latch** (`reco_readiness_unlocked_v1` in SharedPreferen
 
 ---
 
-## 8. Change checklist
+## 9. Change checklist
 
 When editing recommendation behavior, verify:
 
 - [ ] `extractSignals` — tracked vs owned vs wishlist still distinct
-- [ ] `computeConfidence` — readiness still `tracked ≥ 1`
+- [ ] `computeConfidence` — readiness still `tracked ≥ 3`
+- [ ] Gap fill only below `forYouMinimumResultCount` (5)
+- [ ] IP diversity: max `forYouMaxSeriesPerIp` (2) before exploration and during gap fill
+- [ ] Gap fill random pool: newest `forYouGapFillRecentPoolSize` (20), profile-seeded shuffle
 - [ ] Dart `computeLocalRecommendations` and TS `computeRecommendations` stay in sync
 - [ ] `excludeTrackedCatalogSeries` used in repository and UI projection
 - [ ] Tests cover shelf-only tracked series (0 owned figures)

@@ -45,10 +45,8 @@ PreferenceSignals extractSignals(CollectionSnapshot snap) {
   final wishlistIpIds = <String>{};
 
   for (final series in snap.shelfSeries) {
-    if (!_isEligibleCatalogSeries(series)) continue;
-
-    final catalogId = series.catalogTemplateId!.trim();
-    if (catalogId.isEmpty) continue;
+    final catalogId = recommendationCatalogSeriesId(series);
+    if (catalogId == null) continue;
 
     trackedCatalogSeriesIds.add(catalogId);
 
@@ -91,14 +89,6 @@ PreferenceSignals extractSignals(CollectionSnapshot snap) {
     wishlistCatalogSeriesCount: wishlistCatalogSeriesIds.length,
     profileHash: _computeProfileHash(signals),
   );
-}
-
-bool _isEligibleCatalogSeries(ShelfSeries series) {
-  final templateId = series.catalogTemplateId?.trim();
-  if (templateId == null || templateId.isEmpty) return false;
-  if (series.isCustomLocal) return false;
-  if (series.isDropImport) return false;
-  return true;
 }
 
 String _computeProfileHash(PreferenceSignals signals) {
