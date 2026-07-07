@@ -513,6 +513,79 @@ void main() {
       expect(result.items, isEmpty);
     });
 
+    test(
+      'cloud response with matching profileHash but tracked series rejects whole payload',
+      () async {
+        final prefs = await SharedPreferences.getInstance();
+        final signals = extractSignals(_expandedCollectionSnapshot());
+        final repo = RecommendationRepository(
+          collectionSnapshot: _expandedCollectionSnapshot(),
+          httpClient: _httpClient(
+            forYouResponse: http.Response(
+              jsonEncode({
+                'profileHash': signals.profileHash,
+                'items': [
+                  {
+                    'seriesId': 'dimoo_new',
+                    'reasonType': RecommendationReasonType.trackedIp,
+                    'reasonMeta': 'DIMOO',
+                  },
+                ],
+              }),
+              200,
+            ),
+          ),
+          preferences: prefs,
+        );
+
+        final result = await repo.getRecommendations(_installId, _testBundle());
+
+        expect(result.items.map((item) => item.seriesId), isNot(contains('dimoo_new')));
+        expect(result.items, isEmpty);
+      },
+    );
+
+    test(
+      'cloud response with matching profileHash and mixed tracked picks rejects whole payload',
+      () async {
+        final prefs = await SharedPreferences.getInstance();
+        final signals = _ownedSignals();
+        final repo = RecommendationRepository(
+          collectionSnapshot: _ownedCollectionSnapshot(),
+          httpClient: _httpClient(
+            forYouResponse: http.Response(
+              jsonEncode({
+                'profileHash': signals.profileHash,
+                'items': [
+                  {
+                    'seriesId': 'dimoo_new',
+                    'reasonType': RecommendationReasonType.trackedIp,
+                    'reasonMeta': 'CLOUD_ONLY',
+                  },
+                  {
+                    'seriesId': 'dimoo_owned',
+                    'reasonType': RecommendationReasonType.trackedIp,
+                    'reasonMeta': 'DIMOO',
+                  },
+                ],
+              }),
+              200,
+            ),
+          ),
+          preferences: prefs,
+        );
+
+        final result = await repo.getRecommendations(_installId, _testBundle());
+
+        expect(
+          result.items
+              .where((item) => item.primaryReasonMeta == 'CLOUD_ONLY')
+              .map((item) => item.seriesId),
+          isEmpty,
+        );
+      },
+    );
+
     test('oversized stale cache is ignored and local fallback still runs', () async {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(

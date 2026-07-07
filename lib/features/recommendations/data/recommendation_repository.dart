@@ -107,12 +107,10 @@ class RecommendationRepository {
           baseUrl: RecommendationGatewayConfig.gatewayUri!,
           installId: installId,
         );
-        final normalized = excludeTrackedCatalogSeries(
-          _normalizeResult(remote),
-          signals,
-        );
-        if (normalized.items.isNotEmpty &&
-            _isResultForCurrentProfile(signals, normalized)) {
+        final bounded = _normalizeResult(remote);
+        if (_acceptCloudResult(signals, bounded)) {
+          final normalized =
+              excludeTrackedCatalogSeries(bounded, signals);
           await _writeCache(installId, normalized);
           return _finalizeResult(
             installId: installId,
@@ -203,21 +201,49 @@ class RecommendationRepository {
     }
   }
 
-  /// True when [result] was computed for the current shelf taste profile.
-  bool _isResultForCurrentProfile(
+  /// Identity + validity gate for cloud payloads before cache/UI normalization.
+  ///
+  /// 1. [profileHash] must match the current shelf taste profile.
+  /// 2. Payload must not recommend any tracked catalog series — a contract
+  ///    violation rejects the whole result (local fallback), never partial strip.
+  bool _acceptCloudResult(
+    PreferenceSignals signals,
+    RecommendationResult result,
+  ) {
+    if (!_matchesCurrentProfileHash(signals, result)) return false;
+    if (_containsTrackedSeries(signals, result)) {
+      assert(() {
+        assert(
+          false,
+          'Cloud returned tracked series. This violates recommendation invariant.',
+        );
+        return true;
+      }());
+      return false;
+    }
+    return result.items.isNotEmpty;
+  }
+
+  bool _matchesCurrentProfileHash(
     PreferenceSignals signals,
     RecommendationResult result,
   ) {
     final hash = result.profileHash?.trim();
-    if (hash == null || hash.isEmpty || hash != signals.profileHash) {
-      return false;
-    }
+    return hash != null &&
+        hash.isNotEmpty &&
+        hash == signals.profileHash;
+  }
+
+  bool _containsTrackedSeries(
+    PreferenceSignals signals,
+    RecommendationResult result,
+  ) {
     for (final item in result.items) {
       if (signals.trackedCatalogSeriesIds.contains(item.seriesId)) {
-        return false;
+        return true;
       }
     }
-    return true;
+    return false;
   }
 
   RecommendationResult _computeLocal(
@@ -310,7 +336,10 @@ class RecommendationRepository {
   }
 }
 
-/// Defensive pass — tracked catalog series must never reach For You UI.
+/// Final presentation pass — tracked catalog series must never reach For You UI.
+///
+/// Cloud payloads that violate this invariant are rejected whole upstream;
+/// this still guards cache restore, session memo, local results, and merges.
 RecommendationResult excludeTrackedCatalogSeries(
   RecommendationResult result,
   PreferenceSignals signals,
