@@ -9,7 +9,9 @@ import 'package:blindbox_app/features/catalog/models/catalog_brand.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_figure.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_ip.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_series.dart';
+import 'package:blindbox_app/features/catalog/presentation/catalog_browse_launch.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_browse_screen.dart';
+import 'package:blindbox_app/features/catalog/presentation/catalog_search_experience.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart'
     show CollectionSnapshot;
@@ -83,7 +85,7 @@ void main() {
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
-    CatalogBrowseScreen.debugBuildCount = 0;
+    CatalogSearchExperience.debugBuildCount = 0;
     tempCacheRoot = await Directory.systemTemp.createTemp('discover_search_test_');
     CatalogImageDiskCache.testRootOverride = tempCacheRoot;
     CatalogImageResolver.storageFallbackOverride = false;
@@ -101,13 +103,13 @@ void main() {
 
   testWidgets('single keystroke triggers exactly one screen rebuild', (tester) async {
     await _pumpDiscoverSearch(tester);
-    CatalogBrowseScreen.debugBuildCount = 0;
+    CatalogSearchExperience.debugBuildCount = 0;
 
     await tester.enterText(_searchField, 'w');
     await tester.pump();
 
     expect(
-      CatalogBrowseScreen.debugBuildCount,
+      CatalogSearchExperience.debugBuildCount,
       1,
       reason: 'live search should use a single onChanged setState path',
     );
@@ -124,6 +126,32 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Matches'), findsOneWidget);
+  });
+
+  testWidgets('launch prefills initial query from Add Series handoff', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          collectionNotifierProvider.overrideWith(_EmptyCollectionNotifier.new),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: const CatalogBrowseScreen(
+            launch: CatalogBrowseLaunch(initialQuery: 'where'),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    expect(find.text('where'), findsOneWidget);
+    expect(
+      find.text('Where Moments Meet Series Plush Doll'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('clear restores history chrome and drops matches', (tester) async {

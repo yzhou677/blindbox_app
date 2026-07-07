@@ -4,17 +4,18 @@ import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.d
 import 'package:blindbox_app/features/catalog/catalog_image_resolver.dart';
 import 'package:blindbox_app/features/catalog/data/catalog_image_disk_cache.dart';
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
-import 'package:blindbox_app/features/catalog/search/catalog_search_history_provider.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_brand.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_figure.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_ip.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_series.dart';
+import 'package:blindbox_app/features/catalog/search/catalog_search_history_provider.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
-import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart'
-    show CollectionSnapshot, ShelfFigure, ShelfSeries;
+    show CollectionSnapshot;
+import 'package:blindbox_app/features/collection/presentation/add_series_catalog_copy.dart';
 import 'package:blindbox_app/features/collection/widgets/add_to_collection_sheet.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
+import 'package:blindbox_app/shared/widgets/collectible_browse_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -26,45 +27,40 @@ class _SeededCollectionNotifier extends CollectionNotifier {
 
   @override
   CollectionSnapshot build() => _snapshot;
-
-  void setSnapshot(CollectionSnapshot next) {
-    state = next;
-  }
 }
 
-CatalogSeedBundle _bundle() {
-  const brandId = 'nyota';
-  const ipId = 'where_moments_meet_ip';
-  const seriesId = 'where_moments_meet';
-  return const CatalogSeedBundle(
-    brands: [
-      CatalogBrand(id: brandId, displayName: 'Nyota'),
+CatalogSeedBundle _browseBundle() {
+  return CatalogSeedBundle(
+    brands: const [
+      CatalogBrand(id: 'popmart', displayName: 'POP MART'),
     ],
-    ips: [
-      CatalogIp(id: ipId, brandId: brandId, displayName: 'Where Moments Meet'),
+    ips: const [
+      CatalogIp(id: 'popmart', brandId: 'popmart', displayName: 'POP MART'),
     ],
     series: [
-      CatalogSeries(
-        id: seriesId,
-        brandId: brandId,
-        ipId: ipId,
-        displayName: 'Where Moments Meet Series Plush Doll',
-        releaseDate: '2026-01-01',
-        isBlindBox: true,
-        imageKey: seriesId,
-      ),
+      for (var i = 0; i < 8; i++)
+        CatalogSeries(
+          id: 'series_$i',
+          brandId: 'popmart',
+          ipId: 'popmart',
+          displayName: 'Series $i',
+          releaseDate: '2026-05-${(20 - i).toString().padLeft(2, '0')}',
+          isBlindBox: true,
+          imageKey: 'series_$i',
+        ),
     ],
     figures: [
-      CatalogFigure(
-        id: 'where_moments_meet_fig_1',
-        seriesId: seriesId,
-        brandId: brandId,
-        ipId: ipId,
-        displayName: 'Where Moments Meet Plush Doll',
-        isSecret: false,
-        sortOrder: 0,
-        imageKey: 'where_moments_meet_fig_1',
-      ),
+      for (var i = 0; i < 8; i++)
+        CatalogFigure(
+          id: 'series_${i}_fig',
+          seriesId: 'series_$i',
+          brandId: 'popmart',
+          ipId: 'popmart',
+          displayName: 'Figure $i',
+          isSecret: false,
+          sortOrder: 0,
+          imageKey: 'series_${i}_fig',
+        ),
     ],
   );
 }
@@ -94,52 +90,9 @@ Future<void> _pumpSheet(
   await tester.pump(const Duration(milliseconds: 100));
 }
 
-CatalogSeedBundle _browseBundle() {
-  return CatalogSeedBundle(
-    brands: const [
-      CatalogBrand(id: 'popmart', displayName: 'POP MART'),
-    ],
-    ips: const [
-      CatalogIp(id: 'dimoo', brandId: 'popmart', displayName: 'DIMOO'),
-    ],
-    series: [
-      for (var i = 0; i < 8; i++)
-        CatalogSeries(
-          id: 'series_$i',
-          brandId: 'popmart',
-          ipId: 'dimoo',
-          displayName: 'Series $i',
-          releaseDate: '2026-01-${(i + 1).toString().padLeft(2, '0')}',
-          isBlindBox: true,
-          imageKey: 'series_$i',
-        ),
-    ],
-    figures: [
-      for (var i = 0; i < 8; i++)
-        CatalogFigure(
-          id: 'series_${i}_fig',
-          seriesId: 'series_$i',
-          brandId: 'popmart',
-          ipId: 'dimoo',
-          displayName: 'Figure $i',
-          isSecret: false,
-          sortOrder: 0,
-          imageKey: 'series_${i}_fig',
-        ),
-    ],
-  );
-}
-
-Finder _row(String seriesId) =>
-    find.byKey(ValueKey<String>('add-series-search:$seriesId'));
-
-Finder _inRow(String seriesId, Finder finder) {
-  return find.descendant(of: _row(seriesId), matching: finder);
-}
+Finder get _searchField => find.byType(TextField);
 
 void main() {
-  const seriesId = 'where_moments_meet';
-
   late Directory tempCacheRoot;
 
   setUp(() async {
@@ -148,7 +101,7 @@ void main() {
     CatalogImageDiskCache.testRootOverride = tempCacheRoot;
     CatalogImageResolver.storageFallbackOverride = false;
     CatalogImageResolver.resetSessionCachesForTest();
-    CatalogBundleCache.prime(_bundle());
+    CatalogBundleCache.prime(_browseBundle());
   });
 
   tearDown(() async {
@@ -159,8 +112,7 @@ void main() {
     }
   });
 
-  testWidgets('does not render Recent Searches even when history exists',
-      (tester) async {
+  testWidgets('shows Browse heading when query is empty', (tester) async {
     final container = ProviderContainer(
       overrides: [
         collectionNotifierProvider.overrideWith(
@@ -170,15 +122,61 @@ void main() {
     );
     addTearDown(container.dispose);
 
-    container.read(catalogSearchHistoryProvider.notifier).add('Labubu');
+    await _pumpSheet(tester, container);
+    await tester.pumpAndSettle();
+
+    expect(find.text(AddSeriesCatalogCopy.browseHeading), findsOneWidget);
+    expect(find.text('Latest releases'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
+  });
+
+  testWidgets('typing replaces Browse with shared catalog search results', (
+    tester,
+  ) async {
+    final container = ProviderContainer(
+      overrides: [
+        collectionNotifierProvider.overrideWith(
+          () => _SeededCollectionNotifier(CollectionSnapshot.emptyTest()),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
 
     await _pumpSheet(tester, container);
     await tester.pumpAndSettle();
 
-    expect(find.text('Recent Searches'), findsNothing);
-    expect(find.text('Labubu'), findsNothing);
-    expect(find.text('Latest releases'), findsOneWidget);
+    await tester.enterText(_searchField, 'Series 1');
+    await tester.pump();
+
+    expect(find.text(AddSeriesCatalogCopy.browseHeading), findsNothing);
+    expect(find.text('Matches'), findsOneWidget);
+    expect(find.widgetWithText(CollectibleBrowseCard, 'Series 1'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+  });
+
+  testWidgets('search writes to shared catalog history', (tester) async {
+    final container = ProviderContainer(
+      overrides: [
+        collectionNotifierProvider.overrideWith(
+          () => _SeededCollectionNotifier(CollectionSnapshot.emptyTest()),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await _pumpSheet(tester, container);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(_searchField, 'popmart');
+    await tester.pump();
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pump();
+
+    expect(container.read(catalogSearchHistoryProvider), ['popmart']);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
@@ -187,7 +185,6 @@ void main() {
   testWidgets('browse add avoids reload spinner and updates CTA in place', (
     tester,
   ) async {
-    CatalogBundleCache.prime(_browseBundle());
     final container = ProviderContainer(
       overrides: [
         collectionNotifierProvider.overrideWith(
@@ -211,115 +208,6 @@ void main() {
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(milliseconds: 400));
-    container.dispose();
-    await tester.pump();
-  });
-
-  testWidgets('add from search keeps result visible and switches CTA to owned', (
-    tester,
-  ) async {
-    final container = ProviderContainer(
-      overrides: [
-        collectionNotifierProvider.overrideWith(
-          () => _SeededCollectionNotifier(CollectionSnapshot.emptyTest()),
-        ),
-      ],
-    );
-
-    await _pumpSheet(tester, container);
-    await tester.enterText(find.byType(TextField), 'where');
-    await tester.pumpAndSettle();
-
-    expect(_row(seriesId), findsOneWidget);
-    expect(_inRow(seriesId, find.text('Add')), findsOneWidget);
-
-    await tester.tap(_inRow(seriesId, find.text('Add')));
-    await tester.pumpAndSettle();
-
-    expect(_row(seriesId), findsOneWidget);
-    expect(_inRow(seriesId, find.text('In collection')), findsOneWidget);
-    expect(_inRow(seriesId, find.text('Add')), findsNothing);
-
-    await tester.pumpWidget(const SizedBox.shrink());
-    container.dispose();
-    await tester.pump();
-  });
-
-  testWidgets('removing from collection restores search CTA to add', (tester) async {
-    final seeded = CollectionSnapshot(
-      shelfSeries: const [
-        ShelfSeries(
-          id: 'shelf-1',
-          name: 'Where Moments Meet Series Plush Doll',
-          brand: 'Nyota',
-          ipName: 'Where Moments Meet',
-          figures: [
-            ShelfFigure(
-              id: 'fig-1',
-              seriesId: 'shelf-1',
-              name: 'Where Moments Meet Plush Doll',
-              rarity: 'Regular',
-              isSecret: false,
-            ),
-          ],
-          shelfAccent: Color(0xFFE8DEF5),
-          catalogTemplateId: seriesId,
-        ),
-      ],
-      figureStates: {},
-    );
-    final container = ProviderContainer(
-      overrides: [
-        collectionNotifierProvider.overrideWith(
-          () => _SeededCollectionNotifier(seeded),
-        ),
-      ],
-    );
-
-    await _pumpSheet(tester, container);
-    await tester.enterText(find.byType(TextField), 'where');
-    await tester.pumpAndSettle();
-
-    expect(_inRow(seriesId, find.text('In collection')), findsOneWidget);
-
-    final notifier =
-        container.read(collectionNotifierProvider.notifier) as _SeededCollectionNotifier;
-    notifier.setSnapshot(CollectionSnapshot.emptyTest());
-    await tester.pumpAndSettle();
-
-    expect(_row(seriesId), findsOneWidget);
-    expect(_inRow(seriesId, find.text('Add')), findsOneWidget);
-    expect(_inRow(seriesId, find.text('In collection')), findsNothing);
-
-    await tester.pumpWidget(const SizedBox.shrink());
-    container.dispose();
-    await tester.pump();
-  });
-
-  testWidgets('canonical custom matches show owned state in search', (tester) async {
-    final container = ProviderContainer(
-      overrides: [
-        collectionNotifierProvider.overrideWith(
-          () => _SeededCollectionNotifier(CollectionSnapshot.emptyTest()),
-        ),
-      ],
-    );
-
-    container.read(collectionNotifierProvider.notifier).addCustomSeries(
-          seriesName: 'Where-Moments Meet Series Plush Doll',
-          brand: 'N Y O T A',
-          figures: const [CustomFigureDraft(displayName: 'Custom Figure')],
-        );
-
-    await _pumpSheet(tester, container);
-    await tester.enterText(find.byType(TextField), 'where moments');
-    await tester.pumpAndSettle();
-
-    expect(_row(seriesId), findsOneWidget);
-    expect(_inRow(seriesId, find.text('In collection')), findsOneWidget);
-    expect(_inRow(seriesId, find.text('Add')), findsNothing);
-
-    await tester.pumpWidget(const SizedBox.shrink());
     container.dispose();
     await tester.pump();
   });
