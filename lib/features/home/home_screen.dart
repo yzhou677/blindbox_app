@@ -97,7 +97,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const ForYouSection(),
-                  const SizedBox(height: FeedRhythm.homeMajorSectionGap),
                   HomeCatalogRails(feed: feed),
                   const SizedBox(height: FeedRhythm.homeMajorSectionGap),
                   const OfficialFeedSection(),

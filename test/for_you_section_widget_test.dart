@@ -5,6 +5,7 @@ import 'package:blindbox_app/features/catalog/models/catalog_brand.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_ip.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_series.dart';
 import 'package:blindbox_app/core/theme/app_theme.dart';
+import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
 import 'package:blindbox_app/features/collection/bootstrap/collection_app_bootstrap.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_series.dart'
@@ -206,6 +207,86 @@ void main() {
 
     await tester.pump();
     expect(find.text(ForYouCopy.sectionTitle), findsNothing);
+  });
+
+  testWidgets('ForYouSection reserves no vertical space when hidden', (tester) async {
+    CollectionAppBootstrap.prime(CollectionSnapshot.emptyTest());
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          recommendationReadinessProvider.overrideWith(
+            () => _HiddenReadinessNotifier(),
+          ),
+          catalogBundleProvider.overrideWith((ref) async => _testBundle()),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: const Scaffold(body: ForYouSection()),
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    final box = tester.renderObject<RenderBox>(find.byType(ForYouSection));
+    expect(box.size.height, 0);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is SizedBox &&
+            widget.height == FeedRhythm.homeMajorSectionGap,
+      ),
+      findsNothing,
+    );
+  });
+
+  testWidgets('ForYouSection includes major gap below when visible', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          recommendationReadinessProvider.overrideWith(
+            () => _ReadyReadinessNotifier(),
+          ),
+          catalogBundleProvider.overrideWith((ref) async => _testBundle()),
+          anonymousInstallIdProvider.overrideWith((ref) async => 'test-install'),
+          recommendationsProvider.overrideWith(
+            (ref) async => RecommendationResult(
+              items: [
+                RecommendationItem(
+                  seriesId: 'dimoo_new',
+                  reasonType: RecommendationReasonType.ownedIp,
+                  reasonMeta: 'DIMOO',
+                  series: _testBundle().series.first,
+                ),
+              ],
+            ),
+          ),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: const Scaffold(body: ForYouSection()),
+        ),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pump();
+
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is SizedBox &&
+            widget.height == FeedRhythm.homeMajorSectionGap,
+      ),
+      findsOneWidget,
+    );
+    expect(
+      tester.renderObject<RenderBox>(find.byType(ForYouSection)).size.height,
+      greaterThan(FeedRhythm.homeMajorSectionGap),
+    );
   });
 
   testWidgets('ForYouSection shows skeleton on first load', (tester) async {

@@ -94,9 +94,20 @@ class _ForYouSectionState extends ConsumerState<ForYouSection> {
       displayResult: displayResult,
     );
 
-    return _ForYouSectionReveal(
-      show: sectionBody != null,
-      child: sectionBody ?? const SizedBox.shrink(),
+    if (sectionBody == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _ForYouSectionReveal(
+          show: true,
+          child: sectionBody,
+        ),
+        const SizedBox(height: FeedRhythm.homeMajorSectionGap),
+      ],
     );
   }
 
