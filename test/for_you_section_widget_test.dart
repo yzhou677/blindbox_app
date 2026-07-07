@@ -76,6 +76,68 @@ void main() {
     );
   });
 
+  group('resolveForYouDisplayResult', () {
+    RecommendationResult resultWithItems() {
+      return RecommendationResult(
+        items: [
+          RecommendationItem(
+            seriesId: 'dimoo_new',
+            reasonType: RecommendationReasonType.ownedIp,
+            reasonMeta: 'DIMOO',
+            series: _testBundle().series.first,
+          ),
+        ],
+      );
+    }
+
+    test('returns previous result while loading after first paint', () {
+      final previous = resultWithItems();
+      expect(
+        resolveForYouDisplayResult(
+          recommendationsAsync: const AsyncLoading(),
+          previousResult: previous,
+        ),
+        previous,
+      );
+    });
+
+    test('returns null while loading when no previous result exists', () {
+      expect(
+        resolveForYouDisplayResult(
+          recommendationsAsync: const AsyncLoading(),
+          previousResult: null,
+        ),
+        isNull,
+      );
+    });
+
+    test('prefers latest data over previous result', () {
+      final previous = resultWithItems();
+      final latest = RecommendationResult(items: const []);
+      expect(
+        resolveForYouDisplayResult(
+          recommendationsAsync: AsyncData(latest),
+          previousResult: previous,
+        ),
+        latest,
+      );
+    });
+
+    test('keeps previous result on error when available', () {
+      final previous = resultWithItems();
+      expect(
+        resolveForYouDisplayResult(
+          recommendationsAsync: AsyncError(
+            Exception('offline'),
+            StackTrace.empty,
+          ),
+          previousResult: previous,
+        ),
+        previous,
+      );
+    });
+  });
+
   testWidgets('ForYouSection hidden when readiness is false', (tester) async {
     CollectionAppBootstrap.prime(CollectionSnapshot.emptyTest());
 

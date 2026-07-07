@@ -9,6 +9,7 @@ import 'package:blindbox_app/features/collection/widgets/catalog_series_preview_
 import 'package:blindbox_app/features/recommendations/application/recommendation_readiness_provider.dart';
 import 'package:blindbox_app/features/recommendations/application/recommendations_provider.dart';
 import 'package:blindbox_app/features/recommendations/domain/recommendation_item.dart';
+import 'package:blindbox_app/features/recommendations/domain/recommendation_result.dart';
 import 'package:blindbox_app/features/recommendations/presentation/for_you_copy.dart';
 import 'package:blindbox_app/features/recommendations/widgets/for_you_series_card.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
@@ -23,34 +24,75 @@ class ForYouSection extends ConsumerStatefulWidget {
   ConsumerState<ForYouSection> createState() => _ForYouSectionState();
 }
 
+/// Keeps the last rendered rail during [recommendationsProvider] refresh.
+@visibleForTesting
+RecommendationResult? resolveForYouDisplayResult({
+  required AsyncValue<RecommendationResult> recommendationsAsync,
+  required RecommendationResult? previousResult,
+}) {
+  return recommendationsAsync.when(
+    data: (result) => result,
+    loading: () => previousResult,
+    error: (_, stackTrace) => previousResult,
+  );
+}
+
 class _ForYouSectionState extends ConsumerState<ForYouSection> {
+  RecommendationResult? _previousResult;
+
   @override
   Widget build(BuildContext context) {
     final ready = ref.watch(recommendationReadinessProvider);
     if (!ready) return const SizedBox.shrink();
 
+    ref.listen<AsyncValue<RecommendationResult>>(recommendationsProvider, (
+      _,
+      next,
+    ) {
+      next.whenData((result) {
+        if (_previousResult != result) {
+          setState(() => _previousResult = result);
+        }
+      });
+    });
+
     final recommendationsAsync = ref.watch(recommendationsProvider);
-    final Widget? sectionBody = recommendationsAsync.when<Widget?>(
-      loading: () => _ForYouLoadingRail(),
-      error: (error, stackTrace) => null,
-      data: (result) {
-        // Intentionally hide the section when no recommendations are available.
-        // Discover remains useful via other content rails; showing an empty
-        // personalization section would add unnecessary UI noise.
-        if (result.items.isEmpty) return null;
-        return _ForYouLoadedRail(
-          items: result.items,
-          showFirstUnlockBadge: ref.watch(forYouFirstUnlockBadgeProvider),
-          onOpenSeries: _openSeriesPreview,
-          onDismissFirstUnlock: () => dismissForYouFirstUnlockBadge(ref),
-        );
-      },
+    final displayResult = resolveForYouDisplayResult(
+      recommendationsAsync: recommendationsAsync,
+      previousResult: _previousResult,
+    );
+
+    final Widget? sectionBody = _buildSectionBody(
+      recommendationsAsync: recommendationsAsync,
+      displayResult: displayResult,
     );
 
     return _ForYouSectionReveal(
       show: sectionBody != null,
       child: sectionBody ?? const SizedBox.shrink(),
     );
+  }
+
+  Widget? _buildSectionBody({
+    required AsyncValue<RecommendationResult> recommendationsAsync,
+    required RecommendationResult? displayResult,
+  }) {
+    if (displayResult != null) {
+      // Intentionally hide the section when no recommendations are available.
+      if (displayResult.items.isEmpty) return null;
+      return _ForYouLoadedRail(
+        items: displayResult.items,
+        showFirstUnlockBadge: ref.watch(forYouFirstUnlockBadgeProvider),
+        onOpenSeries: _openSeriesPreview,
+        onDismissFirstUnlock: () => dismissForYouFirstUnlockBadge(ref),
+      );
+    }
+
+    if (recommendationsAsync.isLoading) {
+      return _ForYouLoadingRail();
+    }
+
+    return null;
   }
 
   Future<void> _openSeriesPreview(BuildContext context, String seriesId) async {
