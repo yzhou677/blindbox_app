@@ -15,14 +15,16 @@ class _ScoredCandidate {
   _ScoredCandidate({
     required this.seriesId,
     required this.score,
-    required this.reasonType,
-    this.reasonMeta,
+    required this.primaryReasonType,
+    this.primaryReasonMeta,
   });
 
   final String seriesId;
   int score;
-  String reasonType;
-  String? reasonMeta;
+  String primaryReasonType;
+  String? primaryReasonMeta;
+  String? secondaryReasonType;
+  String? secondaryReasonMeta;
 }
 
 /// Local rule engine — mirrors the Cloud Function scoring pipeline.
@@ -45,24 +47,26 @@ List<RecommendationItem> computeLocalRecommendations({
   void upsert(
     catalog.CatalogSeries series, {
     required int score,
-    required String reasonType,
-    String? reasonMeta,
+    required String primaryReasonType,
+    String? primaryReasonMeta,
   }) {
     final existing = scored[series.id];
     if (existing == null) {
       scored[series.id] = _ScoredCandidate(
         seriesId: series.id,
         score: score,
-        reasonType: reasonType,
-        reasonMeta: reasonMeta,
+        primaryReasonType: primaryReasonType,
+        primaryReasonMeta: primaryReasonMeta,
       );
       return;
     }
     if (score > existing.score) {
       existing
         ..score = score
-        ..reasonType = reasonType
-        ..reasonMeta = reasonMeta;
+        ..primaryReasonType = primaryReasonType
+        ..primaryReasonMeta = primaryReasonMeta
+        ..secondaryReasonType = null
+        ..secondaryReasonMeta = null;
     }
   }
 
@@ -76,8 +80,8 @@ List<RecommendationItem> computeLocalRecommendations({
       upsert(
         series,
         score: 30,
-        reasonType: RecommendationReasonType.trackedIp,
-        reasonMeta: ipNameById[series.ipId] ?? series.ipId,
+        primaryReasonType: RecommendationReasonType.trackedIp,
+        primaryReasonMeta: ipNameById[series.ipId] ?? series.ipId,
       );
     }
   }
@@ -98,8 +102,8 @@ List<RecommendationItem> computeLocalRecommendations({
     if (_isRecentRelease(series, now)) {
       entry
         ..score += 10
-        ..reasonType = RecommendationReasonType.recentRelease
-        ..reasonMeta = null;
+        ..secondaryReasonType = RecommendationReasonType.recentRelease
+        ..secondaryReasonMeta = null;
     }
   }
 
@@ -167,6 +171,7 @@ List<RecommendationItem> computeLocalRecommendations({
     scoredIds: scored.keys.toSet(),
     gapFillIpCounts: gapFillIpCounts,
     gapFillSeed: _gapFillSeed(signals.profileHash, catalogFingerprint),
+    clock: now,
   );
 
   return results;
@@ -180,6 +185,7 @@ void _appendGapFillResults({
   required Set<String> scoredIds,
   required Map<String, int> gapFillIpCounts,
   required int gapFillSeed,
+  required DateTime clock,
 }) {
   final eligible = <catalog.CatalogSeries>[];
   for (final series in sortedCatalog) {
@@ -213,7 +219,10 @@ void _appendGapFillResults({
       results.add(
         RecommendationItem(
           seriesId: series.id,
-          reasonType: RecommendationReasonType.newInCatalog,
+          primaryReasonType: RecommendationReasonType.newInCatalog,
+          secondaryReasonType: _isRecentRelease(series, clock)
+              ? RecommendationReasonType.recentRelease
+              : null,
         ),
       );
     }
@@ -287,8 +296,10 @@ List<RecommendationItem> _composeCuratedResults({
     for (final candidate in [...stable, ...explored])
       RecommendationItem(
         seriesId: candidate.seriesId,
-        reasonType: candidate.reasonType,
-        reasonMeta: candidate.reasonMeta,
+        primaryReasonType: candidate.primaryReasonType,
+        primaryReasonMeta: candidate.primaryReasonMeta,
+        secondaryReasonType: candidate.secondaryReasonType,
+        secondaryReasonMeta: candidate.secondaryReasonMeta,
       ),
   ];
 }

@@ -6,38 +6,66 @@ import 'package:flutter/foundation.dart';
 class RecommendationItem {
   const RecommendationItem({
     required this.seriesId,
-    required this.reasonType,
-    this.reasonMeta,
+    required this.primaryReasonType,
+    this.primaryReasonMeta,
+    this.secondaryReasonType,
+    this.secondaryReasonMeta,
     this.series,
   });
 
   final String seriesId;
-  final String reasonType;
-  final String? reasonMeta;
+  final String primaryReasonType;
+  final String? primaryReasonMeta;
+  final String? secondaryReasonType;
+  final String? secondaryReasonMeta;
   final catalog.CatalogSeries? series;
+
+  /// Legacy alias for [primaryReasonType] (cached payloads, tests).
+  String get reasonType => primaryReasonType;
+
+  /// Legacy alias for [primaryReasonMeta].
+  String? get reasonMeta => primaryReasonMeta;
 
   RecommendationItem copyWith({
     catalog.CatalogSeries? series,
   }) {
     return RecommendationItem(
       seriesId: seriesId,
-      reasonType: reasonType,
-      reasonMeta: reasonMeta,
+      primaryReasonType: primaryReasonType,
+      primaryReasonMeta: primaryReasonMeta,
+      secondaryReasonType: secondaryReasonType,
+      secondaryReasonMeta: secondaryReasonMeta,
       series: series ?? this.series,
     );
   }
 
   Map<String, dynamic> toJson() => {
         'seriesId': seriesId,
-        'reasonType': reasonType,
-        if (reasonMeta != null) 'reasonMeta': reasonMeta,
+        'primaryReasonType': primaryReasonType,
+        if (primaryReasonMeta != null) 'primaryReasonMeta': primaryReasonMeta,
+        if (secondaryReasonType != null)
+          'secondaryReasonType': secondaryReasonType,
+        if (secondaryReasonMeta != null)
+          'secondaryReasonMeta': secondaryReasonMeta,
+        // Legacy fields mirror primary for older clients and cached rows.
+        'reasonType': primaryReasonType,
+        if (primaryReasonMeta != null) 'reasonMeta': primaryReasonMeta,
       };
 
   factory RecommendationItem.fromJson(Map<String, dynamic> json) {
+    final primaryType = json['primaryReasonType'] as String? ??
+        json['reasonType'] as String?;
+    if (primaryType == null) {
+      throw FormatException('Missing recommendation reason for series');
+    }
+
     return RecommendationItem(
       seriesId: json['seriesId'] as String,
-      reasonType: json['reasonType'] as String,
-      reasonMeta: json['reasonMeta'] as String?,
+      primaryReasonType: primaryType,
+      primaryReasonMeta: json['primaryReasonMeta'] as String? ??
+          json['reasonMeta'] as String?,
+      secondaryReasonType: json['secondaryReasonType'] as String?,
+      secondaryReasonMeta: json['secondaryReasonMeta'] as String?,
     );
   }
 

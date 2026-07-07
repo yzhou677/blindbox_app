@@ -9,6 +9,7 @@ import 'package:blindbox_app/features/recommendations/data/preference_signal_ext
 import 'package:blindbox_app/features/recommendations/data/recommendation_gateway_config.dart';
 import 'package:blindbox_app/features/recommendations/data/recommendation_rule_engine.dart';
 import 'package:blindbox_app/features/recommendations/domain/recommendation_confidence.dart';
+import 'package:blindbox_app/features/recommendations/domain/recommendation_item.dart';
 import 'package:blindbox_app/features/recommendations/domain/recommendation_reason_type.dart';
 import 'package:blindbox_app/features/recommendations/presentation/for_you_copy.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -387,7 +388,11 @@ void main() {
       expect(items.map((item) => item.seriesId), contains('dimoo_new'));
       expect(items.map((item) => item.seriesId), isNot(contains('dimoo_owned')));
       expect(
-        items.firstWhere((item) => item.seriesId == 'dimoo_new').reasonType,
+        items.firstWhere((item) => item.seriesId == 'dimoo_new').primaryReasonType,
+        RecommendationReasonType.trackedIp,
+      );
+      expect(
+        items.firstWhere((item) => item.seriesId == 'dimoo_new').secondaryReasonType,
         RecommendationReasonType.recentRelease,
       );
     });
@@ -418,14 +423,133 @@ void main() {
 
     test('forYouReason maps reason codes to copy', () {
       expect(
-        forYouReason(RecommendationReasonType.trackedIp, 'DIMOO'),
-        "Because you're collecting DIMOO",
+        forYouPrimaryReason(RecommendationReasonType.trackedIp, 'DIMOO'),
+        'Collecting DIMOO',
       );
       expect(
-        forYouReason(RecommendationReasonType.wishlistIp, 'LABUBU'),
+        forYouPrimaryReason(RecommendationReasonType.wishlistIp, 'LABUBU'),
         'Similar to your LABUBU wishlist',
       );
-      expect(forYouReason(RecommendationReasonType.newInCatalog, null), 'New in catalog');
+      expect(
+        forYouPrimaryReason(RecommendationReasonType.newInCatalog, null),
+        'Discover something new',
+      );
+      expect(
+        forYouSecondaryReason(RecommendationReasonType.recentRelease, null),
+        '✨ New release',
+      );
+    });
+
+    test('tracked + recent preserves both reason layers', () {
+      final signals = PreferenceSignals(
+        trackedCatalogSeriesIds: {'dimoo_owned'},
+        ownedCatalogSeriesIds: {'dimoo_owned'},
+        wishlistCatalogSeriesIds: const {},
+        trackedIpIds: {'dimoo'},
+        wishlistIpIds: const {},
+        trackedCatalogSeriesCount: 1,
+        ownedCatalogSeriesCount: 1,
+        wishlistCatalogSeriesCount: 0,
+        profileHash: 'hash',
+      );
+
+      final item = computeLocalRecommendations(
+        signals: signals,
+        bundle: bundle(),
+        clock: DateTime(2026, 5, 21),
+      ).firstWhere((entry) => entry.seriesId == 'dimoo_new');
+
+      expect(item.primaryReasonType, RecommendationReasonType.trackedIp);
+      expect(item.secondaryReasonType, RecommendationReasonType.recentRelease);
+      expect(
+        forYouReasonLines(item),
+        (
+          primary: 'Collecting DIMOO',
+          secondary: '✨ New release',
+        ),
+      );
+    });
+
+    test('tracked only renders primary reason line', () {
+      final signals = PreferenceSignals(
+        trackedCatalogSeriesIds: {'dimoo_owned'},
+        ownedCatalogSeriesIds: {'dimoo_owned'},
+        wishlistCatalogSeriesIds: const {},
+        trackedIpIds: {'dimoo'},
+        wishlistIpIds: const {},
+        trackedCatalogSeriesCount: 1,
+        ownedCatalogSeriesCount: 1,
+        wishlistCatalogSeriesCount: 0,
+        profileHash: 'hash',
+      );
+
+      final item = computeLocalRecommendations(
+        signals: signals,
+        bundle: bundle(),
+        clock: DateTime(2026, 12, 1),
+      ).firstWhere((entry) => entry.seriesId == 'dimoo_new');
+
+      expect(item.primaryReasonType, RecommendationReasonType.trackedIp);
+      expect(item.secondaryReasonType, isNull);
+      expect(forYouReasonLines(item).secondary, isNull);
+    });
+
+    test('gap fill + recent renders discover primary and release secondary', () {
+      final signals = PreferenceSignals(
+        trackedCatalogSeriesIds: const {},
+        ownedCatalogSeriesIds: const {},
+        wishlistCatalogSeriesIds: const {},
+        trackedIpIds: const {},
+        wishlistIpIds: const {},
+        trackedCatalogSeriesCount: 0,
+        ownedCatalogSeriesCount: 0,
+        wishlistCatalogSeriesCount: 0,
+        profileHash: 'hash-gap-recent',
+      );
+
+      final items = computeLocalRecommendations(
+        signals: signals,
+        bundle: bundle(),
+        clock: DateTime(2026, 5, 21),
+      );
+
+      final recentGap = items.firstWhere(
+        (item) =>
+            item.primaryReasonType == RecommendationReasonType.newInCatalog &&
+            item.secondaryReasonType == RecommendationReasonType.recentRelease,
+      );
+      expect(
+        forYouReasonLines(recentGap),
+        (
+          primary: 'Discover something new',
+          secondary: '✨ New release',
+        ),
+      );
+    });
+
+    test('RecommendationItem.fromJson supports legacy reasonType payloads', () {
+      final legacy = RecommendationItem.fromJson({
+        'seriesId': 'dimoo_new',
+        'reasonType': RecommendationReasonType.trackedIp,
+        'reasonMeta': 'DIMOO',
+      });
+
+      expect(legacy.primaryReasonType, RecommendationReasonType.trackedIp);
+      expect(legacy.primaryReasonMeta, 'DIMOO');
+      expect(legacy.secondaryReasonType, isNull);
+      expect(legacy.reasonType, RecommendationReasonType.trackedIp);
+    });
+
+    test('RecommendationItem.fromJson supports dual-reason payloads', () {
+      final item = RecommendationItem.fromJson({
+        'seriesId': 'dimoo_new',
+        'primaryReasonType': RecommendationReasonType.trackedIp,
+        'primaryReasonMeta': 'DIMOO',
+        'secondaryReasonType': RecommendationReasonType.recentRelease,
+      });
+
+      expect(item.primaryReasonType, RecommendationReasonType.trackedIp);
+      expect(item.secondaryReasonType, RecommendationReasonType.recentRelease);
     });
 
     test('does not score wishlist IP affinity', () {
@@ -601,7 +725,7 @@ void main() {
 
       expect(items.length, RecommendationGatewayConfig.forYouMinimumResultCount);
       expect(
-        items.where((item) => item.reasonType == RecommendationReasonType.newInCatalog).length,
+        items.where((item) => item.primaryReasonType == RecommendationReasonType.newInCatalog).length,
         3,
       );
     });
@@ -749,7 +873,7 @@ void main() {
 
       expect(items.length, 6);
       expect(
-        items.any((item) => item.reasonType == RecommendationReasonType.newInCatalog),
+        items.any((item) => item.primaryReasonType == RecommendationReasonType.newInCatalog),
         isFalse,
       );
     });
@@ -851,7 +975,7 @@ void main() {
 
       expect(items.length, RecommendationGatewayConfig.forYouMinimumResultCount);
       expect(
-        items.every((item) => item.reasonType == RecommendationReasonType.newInCatalog),
+        items.every((item) => item.primaryReasonType == RecommendationReasonType.newInCatalog),
         isTrue,
       );
     });

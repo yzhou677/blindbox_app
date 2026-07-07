@@ -18,7 +18,12 @@ export interface RecommendationProfile {
 
 export interface RecommendationItemWire {
   seriesId: string;
-  reasonType: RecommendationReasonType;
+  primaryReasonType: RecommendationReasonType;
+  primaryReasonMeta?: string;
+  secondaryReasonType?: RecommendationReasonType;
+  secondaryReasonMeta?: string;
+  /** @deprecated Legacy mirror of primary — emitted for older clients. */
+  reasonType?: RecommendationReasonType;
   reasonMeta?: string;
 }
 

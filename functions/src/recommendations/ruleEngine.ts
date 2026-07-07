@@ -80,16 +80,28 @@ function composeCuratedResults(
 
   return [...stable, ...explored].map((candidate) => ({
     seriesId: candidate.seriesId,
-    reasonType: candidate.reasonType,
-    ...(candidate.reasonMeta ? { reasonMeta: candidate.reasonMeta } : {}),
+    primaryReasonType: candidate.primaryReasonType,
+    ...(candidate.primaryReasonMeta
+      ? { primaryReasonMeta: candidate.primaryReasonMeta }
+      : {}),
+    ...(candidate.secondaryReasonType
+      ? { secondaryReasonType: candidate.secondaryReasonType }
+      : {}),
+    ...(candidate.secondaryReasonMeta
+      ? { secondaryReasonMeta: candidate.secondaryReasonMeta }
+      : {}),
+    reasonType: candidate.primaryReasonType,
+    ...(candidate.primaryReasonMeta ? { reasonMeta: candidate.primaryReasonMeta } : {}),
   }));
 }
 
 interface ScoredCandidate {
   seriesId: string;
   score: number;
-  reasonType: RecommendationItemWire['reasonType'];
-  reasonMeta?: string;
+  primaryReasonType: RecommendationItemWire['primaryReasonType'];
+  primaryReasonMeta?: string;
+  secondaryReasonType?: RecommendationItemWire['secondaryReasonType'];
+  secondaryReasonMeta?: string;
 }
 
 export function computeRecommendations(params: {
@@ -107,12 +119,17 @@ export function computeRecommendations(params: {
   const upsert = (
     series: CatalogSeriesDoc,
     score: number,
-    reasonType: RecommendationItemWire['reasonType'],
-    reasonMeta?: string,
+    primaryReasonType: RecommendationItemWire['primaryReasonType'],
+    primaryReasonMeta?: string,
   ) => {
     const existing = scored.get(series.id);
     if (!existing || score > existing.score) {
-      scored.set(series.id, { seriesId: series.id, score, reasonType, reasonMeta });
+      scored.set(series.id, {
+        seriesId: series.id,
+        score,
+        primaryReasonType,
+        primaryReasonMeta,
+      });
     }
   };
 
@@ -133,8 +150,8 @@ export function computeRecommendations(params: {
     if (!series) continue;
     if (isRecentRelease(series.releaseDate, now)) {
       candidate.score += 10;
-      candidate.reasonType = 'recent_release';
-      candidate.reasonMeta = undefined;
+      candidate.secondaryReasonType = 'recent_release';
+      candidate.secondaryReasonMeta = undefined;
     }
   }
 
@@ -174,6 +191,7 @@ export function computeRecommendations(params: {
     scored,
     gapFillIpCounts,
     gapFillSeed: gapFillSeed(params.profile.profileHash, catalogFingerprint),
+    now,
   });
 
   return results;
@@ -187,6 +205,7 @@ function appendGapFillResults(params: {
   scored: Map<string, ScoredCandidate>;
   gapFillIpCounts: Map<string, number>;
   gapFillSeed: number;
+  now: Date;
 }): void {
   const eligible: CatalogSeriesDoc[] = [];
   for (const series of params.sortedCatalog) {
@@ -219,7 +238,14 @@ function appendGapFillResults(params: {
         series.ipId,
         (params.gapFillIpCounts.get(series.ipId) ?? 0) + 1,
       );
-      params.results.push({ seriesId: series.id, reasonType: 'new_in_catalog' });
+      params.results.push({
+        seriesId: series.id,
+        primaryReasonType: 'new_in_catalog',
+        ...(isRecentRelease(series.releaseDate, params.now)
+          ? { secondaryReasonType: 'recent_release' as const }
+          : {}),
+        reasonType: 'new_in_catalog',
+      });
     }
   };
 

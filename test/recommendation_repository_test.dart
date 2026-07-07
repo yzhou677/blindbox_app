@@ -193,7 +193,11 @@ void main() {
       expect(result.items, isNotEmpty);
       expect(result.items.map((item) => item.seriesId), contains('dimoo_new'));
       expect(
-        result.items.firstWhere((item) => item.seriesId == 'dimoo_new').reasonType,
+        result.items.firstWhere((item) => item.seriesId == 'dimoo_new').primaryReasonType,
+        RecommendationReasonType.trackedIp,
+      );
+      expect(
+        result.items.firstWhere((item) => item.seriesId == 'dimoo_new').secondaryReasonType,
         RecommendationReasonType.recentRelease,
       );
       expect(result.profileHash, _ownedSignals().profileHash);
@@ -392,11 +396,11 @@ void main() {
           items: const [
             RecommendationItem(
               seriesId: 'dimoo_new',
-              reasonType: RecommendationReasonType.trackedIp,
+              primaryReasonType: RecommendationReasonType.trackedIp,
             ),
             RecommendationItem(
               seriesId: 'dimoo_owned',
-              reasonType: RecommendationReasonType.trackedIp,
+              primaryReasonType: RecommendationReasonType.trackedIp,
             ),
           ],
         ),

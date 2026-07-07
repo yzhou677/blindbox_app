@@ -9,7 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
 void main() {
-  test('RecommendationHttpClient parses for-you items with reasonType', () async {
+  test('RecommendationHttpClient parses for-you items with legacy reasonType', () async {
     final client = RecommendationHttpClient(
       client: MockClient((request) async {
         expect(request.url.path, endsWith('/v1/for-you'));
@@ -35,8 +35,36 @@ void main() {
 
     expect(result.items, hasLength(1));
     expect(result.items.first.seriesId, 'dimoo_new');
+    expect(result.items.first.primaryReasonType, RecommendationReasonType.trackedIp);
     expect(result.items.first.reasonType, RecommendationReasonType.trackedIp);
-    expect(result.items.first.reasonMeta, 'DIMOO');
+  });
+
+  test('RecommendationHttpClient parses dual-reason for-you items', () async {
+    final client = RecommendationHttpClient(
+      client: MockClient((request) async {
+        return http.Response(
+          jsonEncode({
+            'items': [
+              {
+                'seriesId': 'dimoo_new',
+                'primaryReasonType': RecommendationReasonType.trackedIp,
+                'primaryReasonMeta': 'DIMOO',
+                'secondaryReasonType': RecommendationReasonType.recentRelease,
+              },
+            ],
+          }),
+          200,
+        );
+      }),
+    );
+
+    final result = await client.fetchForYou(
+      baseUrl: Uri.parse(RecommendationGatewayConfig.gatewayBaseUrl),
+      installId: 'install-1',
+    );
+    expect(result.items.first.primaryReasonType, RecommendationReasonType.trackedIp);
+    expect(result.items.first.secondaryReasonType, RecommendationReasonType.recentRelease);
+    expect(result.items.first.primaryReasonMeta, 'DIMOO');
   });
 
   test('RecommendationHttpClient posts profile payload', () async {

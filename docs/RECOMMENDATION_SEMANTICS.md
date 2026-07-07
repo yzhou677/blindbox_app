@@ -163,7 +163,15 @@ Signals are distilled from the local collection snapshot — not a mirror of she
 
 **Important:** Tracking a series expresses collecting intent for that IP — an owned figure is **not** required for same-IP recommendations. Marking figures owned updates collection progress and confidence but does **not** refresh For You; only add/remove tracked series does.
 
-**Reason copy:** `tracked_ip` → *Because you're collecting {IP}* (legacy cached `owned_ip` maps to the same copy).
+**Reason copy (client-side):** Primary + optional secondary lines on each card — scoring unchanged.
+
+| Reason code | Layer | Copy |
+|-------------|-------|------|
+| `tracked_ip` | Primary | *Collecting {IP}* (legacy `owned_ip` maps to same copy) |
+| `new_in_catalog` | Primary (gap fill) | *Discover something new* |
+| `recent_release` | Secondary | *✨ New release* |
+
+Legacy cached payloads with only `reasonType` / `reasonMeta` still render (primary only).
 
 ---
 

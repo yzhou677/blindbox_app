@@ -86,8 +86,8 @@ void main() {
         items: [
           RecommendationItem(
             seriesId: 'dimoo_new',
-            reasonType: RecommendationReasonType.trackedIp,
-            reasonMeta: 'DIMOO',
+            primaryReasonType: RecommendationReasonType.trackedIp,
+            primaryReasonMeta: 'DIMOO',
             series: _testBundle().series.first,
           ),
         ],
@@ -190,8 +190,8 @@ void main() {
               items: [
                 RecommendationItem(
                   seriesId: 'dimoo_new',
-                  reasonType: RecommendationReasonType.trackedIp,
-                  reasonMeta: 'DIMOO',
+                  primaryReasonType: RecommendationReasonType.trackedIp,
+                  primaryReasonMeta: 'DIMOO',
                   series: _testBundle().series.first,
                 ),
               ],
@@ -257,8 +257,8 @@ void main() {
               items: [
                 RecommendationItem(
                   seriesId: 'dimoo_new',
-                  reasonType: RecommendationReasonType.trackedIp,
-                  reasonMeta: 'DIMOO',
+                  primaryReasonType: RecommendationReasonType.trackedIp,
+                  primaryReasonMeta: 'DIMOO',
                   series: _testBundle().series.first,
                 ),
               ],
@@ -360,8 +360,8 @@ void main() {
               items: [
                 RecommendationItem(
                   seriesId: 'dimoo_new',
-                  reasonType: RecommendationReasonType.trackedIp,
-                  reasonMeta: 'DIMOO',
+                  primaryReasonType: RecommendationReasonType.trackedIp,
+                  primaryReasonMeta: 'DIMOO',
                   series: _testBundle().series.first,
                 ),
               ],
@@ -395,8 +395,8 @@ void main() {
               items: [
                 RecommendationItem(
                   seriesId: 'dimoo_new',
-                  reasonType: RecommendationReasonType.trackedIp,
-                  reasonMeta: 'DIMOO',
+                  primaryReasonType: RecommendationReasonType.trackedIp,
+                  primaryReasonMeta: 'DIMOO',
                   series: _testBundle().series.first,
                 ),
               ],
@@ -416,9 +416,50 @@ void main() {
     await tester.pump();
 
     expect(find.text(ForYouCopy.sectionTitle), findsOneWidget);
-    expect(find.text("Because you're collecting DIMOO"), findsOneWidget);
+    expect(find.text('Collecting DIMOO'), findsOneWidget);
     expect(find.text('Dimoo New'), findsOneWidget);
     expect(find.byIcon(Icons.auto_awesome_outlined), findsOneWidget);
+  });
+
+  testWidgets('ForYouSection shows primary and secondary reason lines', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          recommendationReadinessProvider.overrideWith(
+            () => _ReadyReadinessNotifier(),
+          ),
+          catalogBundleProvider.overrideWith((ref) async => _testBundle()),
+          anonymousInstallIdProvider.overrideWith((ref) async => 'test-install'),
+          recommendationsProvider.overrideWith(
+            (ref) async => RecommendationResult(
+              items: [
+                RecommendationItem(
+                  seriesId: 'dimoo_new',
+                  primaryReasonType: RecommendationReasonType.trackedIp,
+                  primaryReasonMeta: 'DIMOO',
+                  secondaryReasonType: RecommendationReasonType.recentRelease,
+                  series: _testBundle().series.first,
+                ),
+              ],
+            ),
+          ),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: const Scaffold(
+            body: SingleChildScrollView(child: ForYouSection()),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Collecting DIMOO'), findsOneWidget);
+    expect(find.text('✨ New release'), findsOneWidget);
   });
 
   testWidgets('ForYou title icon stays visible after horizontal scroll', (
@@ -438,8 +479,8 @@ void main() {
                 6,
                 (index) => RecommendationItem(
                   seriesId: 'dimoo_new',
-                  reasonType: RecommendationReasonType.trackedIp,
-                  reasonMeta: 'DIMOO',
+                  primaryReasonType: RecommendationReasonType.trackedIp,
+                  primaryReasonMeta: 'DIMOO',
                   series: _testBundle().series.first,
                 ),
               ),

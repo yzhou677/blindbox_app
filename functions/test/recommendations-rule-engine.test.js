@@ -41,14 +41,83 @@ test('computeRecommendations ranks tracked IP matches and excludes tracked serie
   });
 
   assert.ok(items.some((item) => item.seriesId === 'dimoo_new'));
-  assert.equal(
-    items.find((item) => item.seriesId === 'dimoo_new')?.reasonType,
-    'recent_release',
-  );
+  const dimooNew = items.find((item) => item.seriesId === 'dimoo_new');
+  assert.equal(dimooNew?.primaryReasonType, 'tracked_ip');
+  assert.equal(dimooNew?.secondaryReasonType, 'recent_release');
   assert.equal(
     items.some((item) => item.seriesId === 'dimoo_owned'),
     false,
   );
+});
+
+test('computeRecommendations preserves tracked primary when recent bonus applies', () => {
+  const items = computeRecommendations({
+    profile: {
+      installId: 'install-1',
+      trackedCatalogSeriesIds: ['dimoo_owned'],
+      ownedCatalogSeriesIds: ['dimoo_owned'],
+      wishlistCatalogSeriesIds: [],
+      trackedIpIds: ['dimoo'],
+      wishlistIpIds: [],
+      profileHash: 'hash',
+    },
+    series: [
+      {
+        id: 'dimoo_owned',
+        ipId: 'dimoo',
+        displayName: 'Dimoo Owned',
+        releaseDate: '2026-01-01',
+      },
+      {
+        id: 'dimoo_new',
+        ipId: 'dimoo',
+        displayName: 'Dimoo New',
+        releaseDate: '2026-05-01',
+      },
+    ],
+    ips: [{ id: 'dimoo', displayName: 'DIMOO' }],
+    now: new Date('2026-05-21T00:00:00.000Z'),
+  });
+
+  const dimooNew = items.find((item) => item.seriesId === 'dimoo_new');
+  assert.equal(dimooNew?.primaryReasonType, 'tracked_ip');
+  assert.equal(dimooNew?.primaryReasonMeta, 'DIMOO');
+  assert.equal(dimooNew?.secondaryReasonType, 'recent_release');
+});
+
+test('computeRecommendations gap fill adds recent secondary without replacing primary', () => {
+  const series = Array.from({ length: 5 }, (_, i) => ({
+    id: `series_${i}`,
+    ipId: `ip_${i}`,
+    displayName: `Series ${i}`,
+    releaseDate: `2026-05-${String(5 - i).padStart(2, '0')}`,
+  }));
+
+  const items = computeRecommendations({
+    profile: {
+      installId: 'install-1',
+      trackedCatalogSeriesIds: [],
+      ownedCatalogSeriesIds: [],
+      wishlistCatalogSeriesIds: [],
+      trackedIpIds: [],
+      wishlistIpIds: [],
+      profileHash: 'hash-gap-recent',
+    },
+    series,
+    ips: Array.from({ length: 5 }, (_, i) => ({
+      id: `ip_${i}`,
+      displayName: `IP ${i}`,
+    })),
+    now: new Date('2026-05-21T00:00:00.000Z'),
+  });
+
+  const recentGap = items.find(
+    (item) =>
+      item.primaryReasonType === 'new_in_catalog' &&
+      item.secondaryReasonType === 'recent_release',
+  );
+  assert.ok(recentGap);
+  assert.equal(recentGap?.reasonType, 'new_in_catalog');
 });
 
 test('computeRecommendations limits scored picks to two per IP', () => {
@@ -132,7 +201,7 @@ test('computeRecommendations caps scored picks at 10 without gap fill', () => {
 
   assert.equal(items.length, 10);
   assert.equal(
-    items.some((item) => item.reasonType === 'new_in_catalog'),
+    items.some((item) => item.primaryReasonType === 'new_in_catalog'),
     false,
   );
 });
@@ -165,7 +234,7 @@ test('computeRecommendations gap fills only to minimum without scored picks', ()
 
   assert.equal(items.length, 5);
   assert.equal(
-    items.every((item) => item.reasonType === 'new_in_catalog'),
+    items.every((item) => item.primaryReasonType === 'new_in_catalog'),
     true,
   );
 });
@@ -399,7 +468,7 @@ test('computeRecommendations skips gap fill when diversified scored picks reach 
 
   assert.equal(items.length, 6);
   assert.equal(
-    items.some((item) => item.reasonType === 'new_in_catalog'),
+    items.some((item) => item.primaryReasonType === 'new_in_catalog'),
     false,
   );
 });
