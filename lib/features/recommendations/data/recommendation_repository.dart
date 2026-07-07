@@ -9,6 +9,7 @@ import 'package:blindbox_app/features/recommendations/data/recommendation_http_c
 import 'package:blindbox_app/features/recommendations/data/recommendation_rule_engine.dart';
 import 'package:blindbox_app/features/recommendations/domain/recommendation_item.dart';
 import 'package:blindbox_app/features/recommendations/domain/recommendation_result.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -20,7 +21,27 @@ final recommendationRepositoryProvider = Provider<RecommendationRepository>((ref
   );
 });
 
+class _ComputedRecommendationMemo {
+  const _ComputedRecommendationMemo({
+    required this.installId,
+    required this.profileHash,
+    required this.result,
+  });
+
+  final String installId;
+  final String profileHash;
+  final RecommendationResult result;
+}
+
 class RecommendationRepository {
+  /// Session memo intentionally keeps a single entry to remain lightweight.
+  static _ComputedRecommendationMemo? _lastComputed;
+
+  @visibleForTesting
+  static void resetComputedMemoForTest() {
+    _lastComputed = null;
+  }
+
   RecommendationRepository({
     required CollectionSnapshot collectionSnapshot,
     RecommendationHttpClient? httpClient,
@@ -39,13 +60,23 @@ class RecommendationRepository {
 
   String _cacheKey(String installId) => 'reco_cache_v2_$installId';
 
+  PreferenceSignals _signals() => extractSignals(_collectionSnapshot);
+
   Future<RecommendationResult> getRecommendations(
     String installId,
     CatalogSeedBundle bundle,
   ) async {
-    final cached = await _readCache(installId);
+    final signals = _signals();
+    final memo = _lastComputed;
+    if (memo != null &&
+        memo.installId == installId &&
+        memo.profileHash == signals.profileHash) {
+      return _resolveSeries(_normalizeResult(memo.result), bundle);
+    }
+
+    final cached = await _readCache(installId, signals.profileHash);
     if (cached != null) {
-      return _resolveSeries(_normalizeResult(cached), bundle);
+      return _rememberAndResolve(installId, signals.profileHash, cached, bundle);
     }
 
     if (RecommendationGatewayConfig.isHttpActive) {
@@ -54,25 +85,33 @@ class RecommendationRepository {
           baseUrl: RecommendationGatewayConfig.gatewayUri!,
           installId: installId,
         );
-        if (remote.items.isEmpty) {
+        final normalized = _normalizeResult(remote);
+        if (normalized.items.isEmpty) {
           // Empty recommendation responses are treated as transient,
           // not stable cacheable state.
           // They typically occur before profile synchronization completes.
+        } else if (_isCloudResultStale(signals, normalized)) {
+          // Server profile may lag local collection until debounced sync.
         } else {
-          final normalized = _normalizeResult(remote);
-          await _writeCache(installId, normalized);
-          return _resolveSeries(normalized, bundle);
+          final stamped = _withProfileHash(normalized, signals.profileHash);
+          await _writeCache(installId, stamped);
+          return _rememberAndResolve(
+            installId,
+            signals.profileHash,
+            stamped,
+            bundle,
+          );
         }
       } catch (_) {
         // Fall through to local engine.
       }
     }
 
-    final local = _normalizeResult(_computeLocal(bundle));
+    final local = _normalizeResult(_computeLocal(bundle, signals));
     if (local.items.isNotEmpty) {
       await _writeCache(installId, local);
     }
-    return _resolveSeries(local, bundle);
+    return _rememberAndResolve(installId, signals.profileHash, local, bundle);
   }
 
   Future<void> updateProfile(
@@ -91,20 +130,46 @@ class RecommendationRepository {
   }
 
   Future<void> invalidateRecommendationCache(String installId) async {
+    if (_lastComputed?.installId == installId) {
+      _lastComputed = null;
+    }
     final prefs = await _prefs();
     await prefs.remove(_cacheKey(installId));
   }
 
-  RecommendationResult _computeLocal(CatalogSeedBundle bundle) {
-    final signals = extractSignals(_collectionSnapshot);
+  RecommendationResult _rememberAndResolve(
+    String installId,
+    String profileHash,
+    RecommendationResult result,
+    CatalogSeedBundle bundle,
+  ) {
+    _lastComputed = _ComputedRecommendationMemo(
+      installId: installId,
+      profileHash: profileHash,
+      result: result,
+    );
+    return _resolveSeries(_normalizeResult(result), bundle);
+  }
+
+  RecommendationResult _computeLocal(
+    CatalogSeedBundle bundle,
+    PreferenceSignals signals,
+  ) {
     final items = computeLocalRecommendations(
       signals: signals,
       bundle: bundle,
     );
-    return RecommendationResult(items: items, fetchedAt: DateTime.now());
+    return RecommendationResult(
+      items: items,
+      profileHash: signals.profileHash,
+    );
   }
 
-  Future<RecommendationResult?> _readCache(String installId) async {
+  Future<RecommendationResult?> _readCache(
+    String installId,
+    String currentProfileHash,
+  ) async {
+    // Cache validity: schemaVersion + profileHash only — not age.
     final prefs = await _prefs();
     final raw = prefs.getString(_cacheKey(installId));
     if (raw == null || raw.isEmpty) return null;
@@ -112,19 +177,21 @@ class RecommendationRepository {
     try {
       final decoded = jsonDecode(raw);
       if (decoded is! Map<String, dynamic>) return null;
+      final schemaVersion = decoded['schemaVersion'];
+      if (schemaVersion != RecommendationGatewayConfig.recommendationCacheSchemaVersion) {
+        return null;
+      }
+      final cachedHash = decoded['profileHash'] as String?;
+      if (cachedHash == null || cachedHash != currentProfileHash) {
+        return null;
+      }
       final result = RecommendationResult.fromJson(decoded);
       if (result.items.isEmpty) {
-        // Empty recommendation responses are treated as transient,
-        // not stable cacheable state.
-        // They typically occur before profile synchronization completes.
         return null;
       }
       if (result.items.length > RecommendationGatewayConfig.forYouResultLimit) {
-        // Stale cache from before the result cap changed.
         return null;
       }
-      final age = DateTime.now().difference(result.fetchedAt);
-      if (age > RecommendationGatewayConfig.cacheTTL) return null;
       return result;
     } catch (_) {
       return null;
@@ -133,7 +200,36 @@ class RecommendationRepository {
 
   Future<void> _writeCache(String installId, RecommendationResult result) async {
     final prefs = await _prefs();
-    await prefs.setString(_cacheKey(installId), jsonEncode(result.toJson()));
+    await prefs.setString(
+      _cacheKey(installId),
+      jsonEncode({
+        'schemaVersion':
+            RecommendationGatewayConfig.recommendationCacheSchemaVersion,
+        ...result.toJson(),
+      }),
+    );
+  }
+
+  bool _isCloudResultStale(
+    PreferenceSignals signals,
+    RecommendationResult result,
+  ) {
+    for (final item in result.items) {
+      if (signals.ownedCatalogSeriesIds.contains(item.seriesId)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  RecommendationResult _withProfileHash(
+    RecommendationResult result,
+    String profileHash,
+  ) {
+    return RecommendationResult(
+      items: result.items,
+      profileHash: profileHash,
+    );
   }
 
   RecommendationResult _normalizeResult(RecommendationResult result) {
@@ -141,7 +237,7 @@ class RecommendationRepository {
     if (result.items.length <= limit) return result;
     return RecommendationResult(
       items: result.items.take(limit).toList(),
-      fetchedAt: result.fetchedAt,
+      profileHash: result.profileHash,
     );
   }
 
@@ -156,6 +252,9 @@ class RecommendationRepository {
       if (series == null) continue;
       resolved.add(item.copyWith(series: series));
     }
-    return RecommendationResult(items: resolved, fetchedAt: result.fetchedAt);
+    return RecommendationResult(
+      items: resolved,
+      profileHash: result.profileHash,
+    );
   }
 }

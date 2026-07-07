@@ -141,7 +141,11 @@ export function computeRecommendations(params: {
     }
   }
 
-  const ranked = [...scored.values()].sort((a, b) => b.score - a.score);
+  const orderIndex = buildOrderIndex(params.series);
+  const seriesById = new Map(params.series.map((series) => [series.id, series]));
+  const ranked = [...scored.values()].sort((a, b) =>
+    compareRankedCandidates(a, b, seriesById, orderIndex),
+  );
   const results = composeCuratedResults(
     ranked,
     MAX_RECOMMENDATIONS,
@@ -156,7 +160,7 @@ export function computeRecommendations(params: {
   }
 
   const gapFill = [...params.series].sort((a, b) =>
-    compareNewestFirst(a.releaseDate, b.releaseDate),
+    compareSeriesNewestFirst(a, b, orderIndex),
   );
 
   for (const series of gapFill) {
@@ -169,22 +173,52 @@ export function computeRecommendations(params: {
   return results;
 }
 
+function buildOrderIndex(series: CatalogSeriesDoc[]): Map<string, number> {
+  const orderIndex = new Map<string, number>();
+  series.forEach((entry, index) => {
+    orderIndex.set(entry.id, index);
+  });
+  return orderIndex;
+}
+
+function compareRankedCandidates(
+  a: ScoredCandidate,
+  b: ScoredCandidate,
+  seriesById: Map<string, CatalogSeriesDoc>,
+  orderIndex: Map<string, number>,
+): number {
+  const byScore = b.score - a.score;
+  if (byScore !== 0) return byScore;
+  const seriesA = seriesById.get(a.seriesId);
+  const seriesB = seriesById.get(b.seriesId);
+  if (!seriesA || !seriesB) return 0;
+  return compareSeriesNewestFirst(seriesA, seriesB, orderIndex);
+}
+
+function compareSeriesNewestFirst(
+  a: CatalogSeriesDoc,
+  b: CatalogSeriesDoc,
+  orderIndex: Map<string, number>,
+): number {
+  const parsedA = a.releaseDate ? Date.parse(a.releaseDate) : Number.NaN;
+  const parsedB = b.releaseDate ? Date.parse(b.releaseDate) : Number.NaN;
+  if (!Number.isNaN(parsedA) && !Number.isNaN(parsedB)) {
+    const byDate = parsedB - parsedA;
+    if (byDate !== 0) return byDate;
+  } else if (!Number.isNaN(parsedA)) {
+    return -1;
+  } else if (!Number.isNaN(parsedB)) {
+    return 1;
+  }
+  const ia = orderIndex.get(a.id) ?? 0;
+  const ib = orderIndex.get(b.id) ?? 0;
+  return ib - ia;
+}
+
 function isRecentRelease(releaseDate: string | null | undefined, now: Date): boolean {
   if (!releaseDate) return false;
   const parsed = Date.parse(releaseDate);
   if (Number.isNaN(parsed)) return false;
   const diffDays = (now.getTime() - parsed) / (1000 * 60 * 60 * 24);
   return diffDays <= RECENCY_WINDOW_DAYS;
-}
-
-function compareNewestFirst(
-  a: string | null | undefined,
-  b: string | null | undefined,
-): number {
-  const da = a ? Date.parse(a) : Number.NaN;
-  const db = b ? Date.parse(b) : Number.NaN;
-  if (!Number.isNaN(da) && !Number.isNaN(db)) return db - da;
-  if (!Number.isNaN(da)) return -1;
-  if (!Number.isNaN(db)) return 1;
-  return 0;
 }

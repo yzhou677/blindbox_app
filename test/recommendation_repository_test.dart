@@ -47,6 +47,53 @@ CollectionSnapshot _ownedCollectionSnapshot() {
   );
 }
 
+CollectionSnapshot _expandedCollectionSnapshot() {
+  return CollectionSnapshot(
+    shelfSeries: [
+      testShelfSeries(
+        id: 'owned',
+        catalogTemplateId: 'dimoo_owned',
+        taxonomyIpId: 'dimoo',
+        figures: [
+          const ShelfFigure(
+            id: 'owned_fig',
+            seriesId: 'owned',
+            name: 'Owned',
+            rarity: 'Regular',
+            isSecret: false,
+            catalogFigureTemplateId: 'fig_owned',
+          ),
+        ],
+      ),
+      testShelfSeries(
+        id: 'also_owned',
+        catalogTemplateId: 'dimoo_new',
+        taxonomyIpId: 'dimoo',
+        figures: [
+          const ShelfFigure(
+            id: 'also_owned_fig',
+            seriesId: 'also_owned',
+            name: 'Also Owned',
+            rarity: 'Regular',
+            isSecret: false,
+            catalogFigureTemplateId: 'fig_also_owned',
+          ),
+        ],
+      ),
+    ],
+    figureStates: const {
+      'owned_fig': TrackedFigure(
+        figureId: 'owned_fig',
+        state: FigureCollectionState.owned,
+      ),
+      'also_owned_fig': TrackedFigure(
+        figureId: 'also_owned_fig',
+        state: FigureCollectionState.owned,
+      ),
+    },
+  );
+}
+
 CatalogSeedBundle _testBundle() {
   return CatalogSeedBundle(
     brands: const [
@@ -86,10 +133,12 @@ PreferenceSignals _ownedSignals() {
 RecommendationHttpClient _httpClient({
   required http.Response forYouResponse,
   void Function(http.Request request)? onProfilePost,
+  void Function(http.Request request)? onForYouGet,
 }) {
   return RecommendationHttpClient(
     client: MockClient((request) async {
       if (request.method == 'GET') {
+        onForYouGet?.call(request);
         return forYouResponse;
       }
       if (request.method == 'POST') {
@@ -103,8 +152,21 @@ RecommendationHttpClient _httpClient({
 
 String _cacheKey() => 'reco_cache_v2_$_installId';
 
+Map<String, dynamic> _cacheJson({
+  required String profileHash,
+  required List<Map<String, dynamic>> items,
+  int schemaVersion = 1,
+}) {
+  return {
+    'schemaVersion': schemaVersion,
+    'profileHash': profileHash,
+    'items': items,
+  };
+}
+
 void main() {
   setUp(() {
+    RecommendationRepository.resetComputedMemoForTest();
     SharedPreferences.setMockInitialValues({
       'recommendation_install_id_v1': _installId,
     });
@@ -129,6 +191,7 @@ void main() {
         result.items.firstWhere((item) => item.seriesId == 'dimoo_new').reasonType,
         RecommendationReasonType.recentRelease,
       );
+      expect(result.profileHash, _ownedSignals().profileHash);
     });
 
     test('empty HTTP response is not cached', () async {
@@ -146,8 +209,202 @@ void main() {
       final raw = prefs.getString(_cacheKey());
       expect(raw, isNotNull);
       final decoded = jsonDecode(raw!) as Map<String, dynamic>;
+      expect(decoded['profileHash'], _ownedSignals().profileHash);
+      expect(decoded['schemaVersion'], 1);
       final items = decoded['items'] as List<dynamic>;
       expect(items, isNotEmpty);
+    });
+
+    test('returns session memo when profileHash unchanged without HTTP', () async {
+      final prefs = await SharedPreferences.getInstance();
+      var httpCalls = 0;
+      final repo = RecommendationRepository(
+        collectionSnapshot: _ownedCollectionSnapshot(),
+        httpClient: _httpClient(
+          forYouResponse: http.Response(
+            jsonEncode({
+              'items': [
+                {
+                  'seriesId': 'dimoo_new',
+                  'reasonType': RecommendationReasonType.ownedIp,
+                  'reasonMeta': 'DIMOO',
+                },
+              ],
+            }),
+            200,
+          ),
+          onForYouGet: (_) => httpCalls++,
+        ),
+        preferences: prefs,
+      );
+
+      await repo.getRecommendations(_installId, _testBundle());
+      expect(httpCalls, 1);
+
+      final secondPass = RecommendationRepository(
+        collectionSnapshot: _ownedCollectionSnapshot(),
+        httpClient: _httpClient(
+          forYouResponse: http.Response('should not be called', 500),
+          onForYouGet: (_) => httpCalls++,
+        ),
+        preferences: prefs,
+      );
+
+      final result = await secondPass.getRecommendations(_installId, _testBundle());
+
+      expect(httpCalls, 1);
+      expect(result.items.single.seriesId, 'dimoo_new');
+    });
+
+    test('returns cache when profileHash matches without HTTP', () async {
+      final prefs = await SharedPreferences.getInstance();
+      final signals = _ownedSignals();
+      await prefs.setString(
+        _cacheKey(),
+        jsonEncode(
+          _cacheJson(
+            profileHash: signals.profileHash,
+            items: [
+              {
+                'seriesId': 'dimoo_new',
+                'reasonType': RecommendationReasonType.ownedIp,
+                'reasonMeta': 'DIMOO',
+              },
+            ],
+          ),
+        ),
+      );
+
+      var httpCalled = false;
+      final repo = RecommendationRepository(
+        collectionSnapshot: _ownedCollectionSnapshot(),
+        httpClient: _httpClient(
+          forYouResponse: http.Response('should not be called', 500),
+          onForYouGet: (_) => httpCalled = true,
+        ),
+        preferences: prefs,
+      );
+
+      final result = await repo.getRecommendations(_installId, _testBundle());
+
+      expect(httpCalled, isFalse);
+      expect(result.items.single.seriesId, 'dimoo_new');
+    });
+
+    test('schema version mismatch bypasses cache and hits HTTP', () async {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        _cacheKey(),
+        jsonEncode(
+          _cacheJson(
+            profileHash: _ownedSignals().profileHash,
+            schemaVersion: 0,
+            items: [
+              {
+                'seriesId': 'dimoo_new',
+                'reasonType': RecommendationReasonType.ownedIp,
+                'reasonMeta': 'DIMOO',
+              },
+            ],
+          ),
+        ),
+      );
+
+      var httpCalled = false;
+      final repo = RecommendationRepository(
+        collectionSnapshot: _ownedCollectionSnapshot(),
+        httpClient: _httpClient(
+          forYouResponse: http.Response(
+            jsonEncode({
+              'items': [
+                {
+                  'seriesId': 'dimoo_new',
+                  'reasonType': RecommendationReasonType.ownedIp,
+                  'reasonMeta': 'DIMOO',
+                },
+              ],
+            }),
+            200,
+          ),
+          onForYouGet: (_) => httpCalled = true,
+        ),
+        preferences: prefs,
+      );
+
+      await repo.getRecommendations(_installId, _testBundle());
+
+      expect(httpCalled, isTrue);
+    });
+
+    test('profileHash mismatch bypasses cache and hits HTTP', () async {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        _cacheKey(),
+        jsonEncode(
+          _cacheJson(
+            profileHash: 'stale-profile-hash',
+            items: [
+              {
+                'seriesId': 'dimoo_new',
+                'reasonType': RecommendationReasonType.ownedIp,
+                'reasonMeta': 'DIMOO',
+              },
+            ],
+          ),
+        ),
+      );
+
+      var httpCalled = false;
+      final repo = RecommendationRepository(
+        collectionSnapshot: _ownedCollectionSnapshot(),
+        httpClient: _httpClient(
+          forYouResponse: http.Response(
+            jsonEncode({
+              'items': [
+                {
+                  'seriesId': 'dimoo_new',
+                  'reasonType': RecommendationReasonType.ownedIp,
+                  'reasonMeta': 'DIMOO',
+                },
+              ],
+            }),
+            200,
+          ),
+          onForYouGet: (_) => httpCalled = true,
+        ),
+        preferences: prefs,
+      );
+
+      await repo.getRecommendations(_installId, _testBundle());
+
+      expect(httpCalled, isTrue);
+    });
+
+    test('stale cloud response recommending owned series falls back to local', () async {
+      final prefs = await SharedPreferences.getInstance();
+      final repo = RecommendationRepository(
+        collectionSnapshot: _expandedCollectionSnapshot(),
+        httpClient: _httpClient(
+          forYouResponse: http.Response(
+            jsonEncode({
+              'items': [
+                {
+                  'seriesId': 'dimoo_new',
+                  'reasonType': RecommendationReasonType.ownedIp,
+                  'reasonMeta': 'DIMOO',
+                },
+              ],
+            }),
+            200,
+          ),
+        ),
+        preferences: prefs,
+      );
+
+      final result = await repo.getRecommendations(_installId, _testBundle());
+
+      expect(result.items.map((item) => item.seriesId), isNot(contains('dimoo_new')));
+      expect(result.items, isEmpty);
     });
 
     test('oversized stale cache is ignored and local fallback still runs', () async {
@@ -155,7 +412,8 @@ void main() {
       await prefs.setString(
         _cacheKey(),
         jsonEncode({
-          'fetchedAt': DateTime.now().toIso8601String(),
+          'schemaVersion': 1,
+          'profileHash': _ownedSignals().profileHash,
           'items': [
             for (var i = 0; i < 20; i++)
               {
@@ -185,7 +443,8 @@ void main() {
       await prefs.setString(
         _cacheKey(),
         jsonEncode({
-          'fetchedAt': DateTime.now().toIso8601String(),
+          'schemaVersion': 1,
+          'profileHash': _ownedSignals().profileHash,
           'items': [],
         }),
       );
@@ -209,16 +468,18 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(
         _cacheKey(),
-        jsonEncode({
-          'fetchedAt': DateTime.now().toIso8601String(),
-          'items': [
-            {
-              'seriesId': 'dimoo_new',
-              'reasonType': RecommendationReasonType.ownedIp,
-              'reasonMeta': 'DIMOO',
-            },
-          ],
-        }),
+        jsonEncode(
+          _cacheJson(
+            profileHash: _ownedSignals().profileHash,
+            items: [
+              {
+                'seriesId': 'dimoo_new',
+                'reasonType': RecommendationReasonType.ownedIp,
+                'reasonMeta': 'DIMOO',
+              },
+            ],
+          ),
+        ),
       );
 
       final repo = RecommendationRepository(

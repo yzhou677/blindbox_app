@@ -5,14 +5,16 @@ import 'package:flutter/foundation.dart';
 class RecommendationResult {
   const RecommendationResult({
     required this.items,
-    required this.fetchedAt,
+    this.profileHash,
   });
 
   final List<RecommendationItem> items;
-  final DateTime fetchedAt;
+
+  /// Collection profile snapshot this result was computed for.
+  final String? profileHash;
 
   Map<String, dynamic> toJson() => {
-        'fetchedAt': fetchedAt.toIso8601String(),
+        if (profileHash != null) 'profileHash': profileHash,
         'items': [for (final item in items) item.toJson()],
       };
 
@@ -25,12 +27,9 @@ class RecommendationResult {
                 RecommendationItem.fromJson(entry),
           ]
         : const <RecommendationItem>[];
-    final fetchedAtRaw = json['fetchedAt'] as String?;
     return RecommendationResult(
       items: items,
-      fetchedAt: fetchedAtRaw != null
-          ? DateTime.tryParse(fetchedAtRaw) ?? DateTime.now()
-          : DateTime.now(),
+      profileHash: json['profileHash'] as String?,
     );
   }
 }

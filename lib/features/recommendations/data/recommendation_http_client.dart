@@ -85,7 +85,7 @@ class RecommendationHttpClient {
           ]
         : const <RecommendationItem>[];
 
-    return RecommendationResult(items: items, fetchedAt: DateTime.now());
+    return RecommendationResult(items: items);
   }
 
   String _normalizedPath(String path) {

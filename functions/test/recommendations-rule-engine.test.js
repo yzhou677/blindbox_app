@@ -142,3 +142,43 @@ test('computeRecommendations keeps stable top picks; exploration follows profile
     explore,
   );
 });
+
+test('computeRecommendations breaks score ties by newest release date', () => {
+  const items = computeRecommendations({
+    profile: {
+      installId: 'install-1',
+      ownedCatalogSeriesIds: ['dimoo_owned'],
+      wishlistCatalogSeriesIds: [],
+      ownedIpIds: ['dimoo'],
+      wishlistIpIds: [],
+      profileHash: 'hash',
+    },
+    series: [
+      {
+        id: 'dimoo_owned',
+        ipId: 'dimoo',
+        displayName: 'Dimoo Owned',
+        releaseDate: '2026-01-01',
+      },
+      {
+        id: 'dimoo_older',
+        ipId: 'dimoo',
+        displayName: 'Dimoo Older',
+        releaseDate: '2026-03-01',
+      },
+      {
+        id: 'dimoo_newer',
+        ipId: 'dimoo',
+        displayName: 'Dimoo Newer',
+        releaseDate: '2026-05-01',
+      },
+    ],
+    ips: [{ id: 'dimoo', displayName: 'DIMOO' }],
+    now: new Date('2026-05-21T00:00:00.000Z'),
+  });
+
+  assert.deepEqual(
+    items.map((item) => item.seriesId),
+    ['dimoo_newer', 'dimoo_older'],
+  );
+});

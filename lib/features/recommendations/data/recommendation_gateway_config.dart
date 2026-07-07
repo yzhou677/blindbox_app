@@ -11,12 +11,14 @@ abstract final class RecommendationGatewayConfig {
         'https://us-central1-blindbox-collection.cloudfunctions.net/recommendations',
   );
 
-  /// TTL for the local recommendations cache.
-  /// Change here only — never hardcoded in repository or provider logic.
-  static const Duration cacheTTL = Duration(hours: 2);
+  /// Debounced window before uploading profile changes to Cloud.
+  static const Duration profileSyncDebounce = Duration(seconds: 10);
 
   static const Duration requestTimeout = Duration(seconds: 12);
-  static const Duration profileSyncDebounce = Duration(seconds: 30);
+
+  /// Bump when persisted recommendation cache shape changes (new item fields, etc.).
+  /// Mismatch → cache miss; no migration logic required.
+  static const int recommendationCacheSchemaVersion = 1;
 
   /// Curated For You rail length — short enough to feel hand-picked, not catalog-browse.
   static const int forYouResultLimit = 10;
