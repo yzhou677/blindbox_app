@@ -1,3 +1,4 @@
+import 'package:blindbox_app/features/catalog/presentation/catalog_browse_launch.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_browse_screen.dart';
 import 'package:blindbox_app/features/collection/collection_screen.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collection_insights_screen.dart';
@@ -77,7 +78,11 @@ final GoRouter appRouter = GoRouter(
                   path: 'catalog',
                   pageBuilder: (context, state) => CustomTransitionPage<void>(
                     key: state.pageKey,
-                    child: const CatalogBrowseScreen(),
+                    child: CatalogBrowseScreen(
+                      launch: state.extra is CatalogBrowseLaunch
+                          ? state.extra! as CatalogBrowseLaunch
+                          : null,
+                    ),
                     transitionDuration: const Duration(milliseconds: 320),
                     transitionsBuilder:
                         (context, animation, secondaryAnimation, child) {

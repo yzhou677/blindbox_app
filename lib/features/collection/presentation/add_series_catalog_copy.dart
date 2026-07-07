@@ -1,11 +1,9 @@
-/// Wording for the catalog-backed “Add series” sheet — search vs browse states.
+/// Wording for the catalog-backed “Add series” sheet — browse state.
 abstract final class AddSeriesCatalogCopy {
-  static const String sheetSubtitle = 'Search the catalog or create your own.';
+  static const String sheetSubtitle =
+      'Browse the catalog, search for a series, or create your own.';
 
-  /// List heading: search-active reads as results; idle reads as available catalog rows.
-  static String catalogListHeading({required bool searchActive}) {
-    return searchActive ? 'Matches' : 'From catalog';
-  }
+  static const String browseHeading = 'Browse';
 
-  static const String noSearchMatches = 'No matches for that search.';
+  static const String searchOfficialCatalogHint = 'Search official catalog…';
 }
