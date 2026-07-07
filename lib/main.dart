@@ -12,6 +12,7 @@ import 'package:blindbox_app/features/home/application/home_feed_provider.dart';
 import 'package:blindbox_app/features/market/data/market_catalog_identity_cache.dart';
 import 'package:blindbox_app/features/collection/widgets/master_complete_celebration_host.dart';
 import 'package:blindbox_app/features/market/data/market_listings_bootstrap.dart';
+import 'package:blindbox_app/features/recommendations/application/recommendation_sync_notifier.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -51,6 +52,12 @@ class BlindboxApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Eagerly start recommendation profile synchronization.
+    // This is app-level infrastructure and intentionally independent
+    // of whether Discover is visited. The notifier calls keepAlive() so
+    // it persists for the full app session; ref.read does not subscribe.
+    ref.read(recommendationSyncProvider);
+
     return MaterialApp.router(
       title: 'Shelfy',
       debugShowCheckedModeBanner: false,

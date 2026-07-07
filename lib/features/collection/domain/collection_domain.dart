@@ -136,6 +136,22 @@ class ShelfSeries {
       catalogTemplateId != null && catalogTemplateId!.startsWith('drop-');
 }
 
+/// Canonical catalog `series.id` for recommendation tracked/owned signals.
+///
+/// Catalog template rows use [ShelfSeries.catalogTemplateId] directly.
+/// Home catalog releases save as `drop-{catalogSeriesId}` — this returns the
+/// bare catalog id. Legacy mock drops (`drop-drop-*`) return null.
+String? recommendationCatalogSeriesId(ShelfSeries series) {
+  if (series.isCustomLocal) return null;
+  final templateId = series.catalogTemplateId?.trim();
+  if (templateId == null || templateId.isEmpty) return null;
+  if (!series.isDropImport) return templateId;
+  if (!templateId.startsWith('drop-')) return null;
+  final bare = templateId.substring('drop-'.length).trim();
+  if (bare.isEmpty || bare.startsWith('drop-')) return null;
+  return bare;
+}
+
 /// IP line for shelf UI — plain [ShelfSeries.ipName] or legacy `brand · ip` from Home imports.
 String shelfSeriesIpLabel(ShelfSeries series) {
   return shelfIpLabelFromBrandLine(
