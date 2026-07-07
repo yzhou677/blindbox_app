@@ -195,6 +195,69 @@ void main() {
       expect(a.profileHash, b.profileHash);
       expect(a.profileHash, isNotEmpty);
     });
+
+    test('profileHash changes only when tracked catalog series change', () {
+      final trackedOnly = CollectionSnapshot(
+        shelfSeries: [
+          testShelfSeries(
+            id: 'shelf_a',
+            catalogTemplateId: 'dimoo_a',
+            taxonomyIpId: 'dimoo',
+          ),
+          testShelfSeries(
+            id: 'shelf_b',
+            catalogTemplateId: 'dimoo_b',
+            taxonomyIpId: 'dimoo',
+          ),
+        ],
+        figureStates: const {},
+      );
+      final withOwned = CollectionSnapshot(
+        shelfSeries: trackedOnly.shelfSeries,
+        figureStates: const {
+          'shelf_a_fig': TrackedFigure(
+            figureId: 'shelf_a_fig',
+            state: FigureCollectionState.owned,
+          ),
+        },
+      );
+      final withWishlist = CollectionSnapshot(
+        shelfSeries: [
+          _wishlistSeries(
+            id: 'shelf_a',
+            catalogTemplateId: 'dimoo_a',
+            taxonomyIpId: 'dimoo',
+          ),
+          testShelfSeries(
+            id: 'shelf_b',
+            catalogTemplateId: 'dimoo_b',
+            taxonomyIpId: 'dimoo',
+          ),
+        ],
+        figureStates: const {
+          'shelf_a_fig': TrackedFigure(
+            figureId: 'shelf_a_fig',
+            state: FigureCollectionState.wishlist,
+          ),
+        },
+      );
+      final trackedAdded = CollectionSnapshot(
+        shelfSeries: [
+          ...trackedOnly.shelfSeries,
+          testShelfSeries(
+            id: 'shelf_c',
+            catalogTemplateId: 'dimoo_c',
+            taxonomyIpId: 'dimoo',
+          ),
+        ],
+        figureStates: const {},
+      );
+
+      final base = extractSignals(trackedOnly);
+      expect(extractSignals(withOwned).profileHash, base.profileHash);
+      expect(extractSignals(withWishlist).profileHash, base.profileHash);
+      expect(extractSignals(trackedAdded).profileHash, isNot(base.profileHash));
+    });
   });
 
   group('computeConfidence', () {
@@ -337,6 +400,61 @@ void main() {
         'Similar to your LABUBU wishlist',
       );
       expect(forYouReason(RecommendationReasonType.newInCatalog, null), 'New in catalog');
+    });
+
+    test('does not score wishlist IP affinity', () {
+      final signals = PreferenceSignals(
+        trackedCatalogSeriesIds: {'labubu_owned'},
+        ownedCatalogSeriesIds: const {},
+        wishlistCatalogSeriesIds: {'labubu_owned'},
+        ownedIpIds: const {},
+        wishlistIpIds: {'labubu'},
+        trackedCatalogSeriesCount: 1,
+        ownedCatalogSeriesCount: 0,
+        wishlistCatalogSeriesCount: 1,
+        profileHash: 'hash',
+      );
+
+      final items = computeLocalRecommendations(
+        signals: signals,
+        bundle: CatalogSeedBundle(
+          brands: const [
+            CatalogBrand(id: 'popmart', displayName: 'POP MART'),
+          ],
+          ips: const [
+            CatalogIp(id: 'labubu', brandId: 'popmart', displayName: 'LABUBU'),
+          ],
+          series: const [
+            catalog.CatalogSeries(
+              id: 'labubu_owned',
+              brandId: 'popmart',
+              ipId: 'labubu',
+              displayName: 'Labubu Owned',
+              releaseDate: '2026-01-01',
+              isBlindBox: true,
+              imageKey: 'labubu_owned',
+            ),
+            catalog.CatalogSeries(
+              id: 'labubu_new',
+              brandId: 'popmart',
+              ipId: 'labubu',
+              displayName: 'Labubu New',
+              releaseDate: '2026-05-01',
+              isBlindBox: true,
+              imageKey: 'labubu_new',
+            ),
+          ],
+          figures: const [],
+        ),
+        clock: DateTime(2026, 5, 21),
+      );
+
+      expect(
+        items.any(
+          (item) => item.reasonType == RecommendationReasonType.wishlistIp,
+        ),
+        isFalse,
+      );
     });
 
     test('never recommends shelf-tracked catalog series without owned figures', () {

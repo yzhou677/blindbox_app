@@ -100,9 +100,7 @@ export function computeRecommendations(params: {
 }): RecommendationItemWire[] {
   const now = params.now ?? new Date();
   const trackedSeries = trackedCatalogSeriesSet(params.profile);
-  const wishlistSeries = new Set(params.profile.wishlistCatalogSeriesIds);
   const ownedIpIds = new Set(params.profile.ownedIpIds);
-  const wishlistIpIds = new Set(params.profile.wishlistIpIds);
   const ipNameById = new Map(params.ips.map((ip) => [ip.id, ip.displayName]));
   const scored = new Map<string, ScoredCandidate>();
 
@@ -125,19 +123,6 @@ export function computeRecommendations(params: {
         series,
         30,
         'owned_ip',
-        ipNameById.get(series.ipId) ?? series.ipId,
-      );
-    }
-  }
-
-  for (const series of params.series) {
-    if (trackedSeries.has(series.id) || wishlistSeries.has(series.id)) continue;
-    if (scored.has(series.id)) continue;
-    if (wishlistIpIds.has(series.ipId)) {
-      upsert(
-        series,
-        25,
-        'wishlist_ip',
         ipNameById.get(series.ipId) ?? series.ipId,
       );
     }

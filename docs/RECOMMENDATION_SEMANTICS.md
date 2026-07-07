@@ -4,6 +4,20 @@
 
 This document is the canonical reference for what “personalized recommendations” mean in Shelfy: which user actions count as preference signals, what must never be recommended again, and how client and Cloud Functions stay aligned.
 
+> **Design philosophy**
+>
+> Recommendation refreshes only when the user's long-term collecting taste changes.
+>
+> Collection progress (owned figures) does not immediately trigger recommendation recomputation.
+>
+> However, whenever a recomputation does occur, the rule engine always uses the latest collection snapshot, including the current owned IP signals.
+>
+> This intentionally balances recommendation stability with recommendation quality.
+>
+> **Stability principle:** For You is intentionally stable. Recommendation refreshes only when the user's long-term collecting taste changes (tracked series). Collection progress and shopping intent do not immediately reshuffle recommendations.
+>
+> If someone asks later why marking an owned figure or updating a wishlist does not refresh For You — that is **product design**, not a bug.
+
 For catalog vs shelf vs market boundaries, see [`.cursor/ARCHITECTURE.md`](../.cursor/ARCHITECTURE.md). For catalog identity, see [`CATALOG_ARCHITECTURE.md`](CATALOG_ARCHITECTURE.md).
 
 **Related code:**
@@ -25,7 +39,10 @@ For catalog vs shelf vs market boundaries, see [`.cursor/ARCHITECTURE.md`](../.c
 |------|---------|
 | **Add Series = explicit interest** | Adding a catalog series to **My Collection** is the user’s first deliberate preference signal. No owned figure is required for personalization to begin. |
 | **Tracked series are never recommended** | Any catalog series currently on the user’s shelf must **never** appear in For You again — regardless of figure ownership, wishlist, or completion. |
-| **Owned figures increase confidence** | Figure `owned` state drives IP affinity scoring and confidence tiers (`medium` / `high`). It is **not** the gate for unlocking For You or excluding series. |
+| **Tracked series drive refresh** | `profileHash`, cache invalidation, and cloud profile sync react to **tracked catalog series** changes only — add/remove series is a taste change; owned figures and wishlist are not. |
+| **Owned figures inform scoring, not refresh** | Figure `owned` state still boosts **owned IP** ranking (+30) when recommendations are computed, but does not reshuffle For You on progress alone. |
+| **Wishlist is not taste** | Wishlist figure state does not score, hash, sync, or refresh recommendations — it remains for collection and Market. |
+| **Owned figures increase confidence** | Figure `owned` state drives confidence tiers (`medium` / `high`) for display — separate from For You refresh triggers. |
 | **Catalog series only** | Recommendations are catalog-backed `series.id` values. Custom-local rows and Home drop-imports (`drop-*`) are excluded from signals and must not be recommended. |
 | **Cloud ≡ Local** | Dart and TypeScript rule engines use the same scoring, exclusion, gap-fill, and 80/20 stable/exploration semantics. Divergence is a bug. |
 | **Quality over quantity** | Target **5–10** curated picks. Gap fill only when scored results fall below 5 — never pad to 10 with weak catalog filler. |
@@ -34,23 +51,36 @@ For catalog vs shelf vs market boundaries, see [`.cursor/ARCHITECTURE.md`](../.c
 
 **One resolver rule:** Recommendation only cares which catalog `series.id` a `ShelfSeries` represents — via [`recommendationCatalogSeriesId()`](../lib/features/collection/domain/collection_domain.dart). UI entry points (Latest, Trending, Search, Feed) are not recommendation concepts.
 
+**What triggers a full refresh (end-to-end):** Add Series or Remove Series → `profileHash` changes → profile HTTP upload → cloud recompute → cache miss → new rail.
+
+**What does not:** Mark owned, wishlist toggle, completion %, master complete — these may update collection UI and confidence display, but For You keeps the previous rail until tracked series change.
+
+**Operational benefit:** Fewer profile syncs and higher cache hit rate, because figure-level churn no longer invalidates recommendations. Users see a calmer rail; the client and Cloud do less work.
+
 ---
 
 ## 2. Signal definitions
 
+Three user signals — only **tracked series** represent collecting taste for For You refresh.
+
+| Signal | Meaning | Recommendation use |
+|--------|---------|-------------------|
+| `trackedCatalogSeriesIds` | “I decided to collect this series.” | **Exclusion**, **readiness**, **`profileHash`**, cloud profile, refresh triggers |
+| `ownedCatalogSeriesIds` / `ownedIpIds` | Progress inside tracked series | **Scoring only** (`owned_ip` +30) at compute time — **not** in `profileHash` |
+| `wishlistCatalogSeriesIds` / `wishlistIpIds` | Shopping intent inside a tracked series | **None** — extracted for collection/Market; not uploaded for recommendations |
+
 Signals are distilled from the local collection snapshot — not a mirror of shelf state.
 
-| Signal | Source | Used for |
+| Field | Source | Used for |
 |--------|--------|----------|
-| `trackedCatalogSeriesIds` | Eligible catalog series on shelf (`catalogTemplateId` set; not custom; not `drop-*`) | **Exclusion** from For You; **readiness** unlock; `profileHash`; cloud profile upload |
-| `ownedCatalogSeriesIds` | Shelf series with ≥1 figure in `FigureCollectionState.owned` | IP affinity scoring (`ownedIpIds`); confidence `medium` / `high` |
-| `wishlistCatalogSeriesIds` | Shelf series with wishlist figures and no owned figures | Wishlist IP affinity scoring |
-| `ownedIpIds` / `wishlistIpIds` | Taxonomy IP ids from qualifying shelf rows | Rule-engine IP match reasons |
-| `profileHash` | SHA-256 of tracked + owned + wishlist series sets and IP sets | Cache invalidation, session memo, cloud profile dedupe |
+| `trackedCatalogSeriesIds` | Eligible catalog series on shelf | Exclusion, readiness, `profileHash`, profile sync |
+| `ownedIpIds` | IPs with ≥1 owned figure on tracked series | Rule-engine owned IP scoring when recommendations are **computed** |
+| `ownedCatalogSeriesIds` | Tracked series with owned figures | Confidence tiers (`medium` / `high`) — UI only |
+| `profileHash` | SHA-256 of **tracked catalog series ids only** | Cache invalidation, session memo, cloud profile dedupe |
 
 **Eligible catalog series** = resolvable via [`recommendationCatalogSeriesId`](../lib/features/collection/domain/collection_domain.dart): direct catalog template id, or catalog-backed Home save (`drop-{catalogSeriesId}` → bare id). Custom-local and legacy mock drops (`drop-drop-*`) are excluded.
 
-**Important:** “On My Collection” (tracked) and “has owned figures” (owned) are **different concepts**. A user can track a series with zero owned figures; it is still excluded from For You.
+**Important:** “On My Collection” (tracked) and “has owned figures” (owned) are **different concepts**. A user can track a series with zero owned figures; it is still excluded from For You. Marking another figure owned does **not** refresh For You — only add/remove tracked series does.
 
 ---
 
@@ -162,9 +192,8 @@ Gap fill uses the same per-IP cap against IPs already present in the rail.
 `POST /v1/profile` includes at minimum:
 
 - `trackedCatalogSeriesIds`
-- `ownedCatalogSeriesIds`, `wishlistCatalogSeriesIds`
-- `ownedIpIds`, `wishlistIpIds`
-- `profileHash`
+- `ownedIpIds` (scoring snapshot at last tracked taste change)
+- `profileHash` (tracked-only)
 
 `GET /v1/for-you` returns catalog `seriesId` items with `reasonType` / optional `reasonMeta`. Client always re-applies tracked exclusion before render.
 
@@ -175,6 +204,9 @@ Gap fill uses the same per-IP cap against IPs already present in the rail.
 When editing recommendation behavior, verify:
 
 - [ ] `extractSignals` — tracked vs owned vs wishlist still distinct
+- [ ] `profileHash` — **tracked catalog series ids only**
+- [ ] Wishlist does not score, hash, or sync
+- [ ] Owned IP scoring preserved; owned progress does not invalidate cache
 - [ ] `computeConfidence` — readiness still `tracked ≥ 3`
 - [ ] For You visibility matrix (§4b): loading skeleton, refresh keep-previous, errors/empty hide
 - [ ] Gap fill only below `forYouMinimumResultCount` (5)

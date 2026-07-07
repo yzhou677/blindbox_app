@@ -72,6 +72,8 @@ void main() {
     expect(decoded['installId'], 'install-1');
     expect(decoded['profileHash'], 'hash-123');
     expect(decoded['trackedCatalogSeriesIds'], ['dimoo_owned']);
-    expect(decoded['ownedCatalogSeriesIds'], ['dimoo_owned']);
+    expect(decoded['ownedIpIds'], ['dimoo']);
+    expect(decoded.containsKey('wishlistCatalogSeriesIds'), isFalse);
+    expect(decoded.containsKey('wishlistIpIds'), isFalse);
   });
 }

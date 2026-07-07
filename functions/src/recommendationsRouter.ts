@@ -46,11 +46,7 @@ export async function handleRecommendationProfileRequest(
     return;
   }
 
-  const validSeriesIds = await validateSeriesIds([
-    ...profile.trackedCatalogSeriesIds,
-    ...profile.ownedCatalogSeriesIds,
-    ...profile.wishlistCatalogSeriesIds,
-  ]);
+  const validSeriesIds = await validateSeriesIds(profile.trackedCatalogSeriesIds);
   if (!validSeriesIds) {
     res.status(400).json({ error: 'invalid_series_ids' });
     return;
