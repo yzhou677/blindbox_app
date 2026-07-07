@@ -112,7 +112,7 @@ class RecommendationRepository {
           signals,
         );
         if (normalized.items.isNotEmpty &&
-            _isCloudResultCompatible(signals, normalized)) {
+            _isResultForCurrentProfile(signals, normalized)) {
           await _writeCache(installId, normalized);
           return _finalizeResult(
             installId: installId,
@@ -203,9 +203,8 @@ class RecommendationRepository {
     }
   }
 
-  /// Cloud results must match the current collection-derived [profileHash].
-  /// Never stamp a local hash onto a server response computed for another profile.
-  bool _isCloudResultCompatible(
+  /// True when [result] was computed for the current shelf taste profile.
+  bool _isResultForCurrentProfile(
     PreferenceSignals signals,
     RecommendationResult result,
   ) {
