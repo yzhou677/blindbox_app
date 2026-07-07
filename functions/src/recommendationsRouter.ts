@@ -108,7 +108,7 @@ export async function handleRecommendationForYouRequest(
     .doc(installId)
     .get();
   if (!profileSnap.exists) {
-    res.status(200).json({ items: [] });
+    res.status(200).json({ items: [], profileHash: '' });
     return;
   }
 
@@ -124,7 +124,10 @@ export async function handleRecommendationForYouRequest(
     Array.isArray(cache.items) &&
     cache.items.length <= MAX_RECOMMENDATIONS
   ) {
-    res.status(200).json({ items: cache.items });
+    res.status(200).json({
+      items: cache.items,
+      profileHash: profile.profileHash,
+    });
     return;
   }
 
@@ -141,7 +144,7 @@ export async function handleRecommendationForYouRequest(
     computedAt: FieldValue.serverTimestamp(),
   });
 
-  res.status(200).json({ items });
+  res.status(200).json({ items, profileHash: profile.profileHash });
 }
 
 async function validateSeriesIds(seriesIds: string[]): Promise<boolean> {

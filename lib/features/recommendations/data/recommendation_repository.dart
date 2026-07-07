@@ -107,27 +107,19 @@ class RecommendationRepository {
           baseUrl: RecommendationGatewayConfig.gatewayUri!,
           installId: installId,
         );
-        final normalized = _normalizeResult(remote);
-        if (normalized.items.isEmpty) {
-          // Empty recommendation responses are treated as transient,
-          // not stable cacheable state.
-          // They typically occur before profile synchronization completes.
-        } else if (_isCloudResultStale(signals, normalized)) {
-          // Server profile may lag local collection until debounced sync.
-        } else {
-          final stamped = _withProfileHash(
-            excludeTrackedCatalogSeries(normalized, signals),
-            signals.profileHash,
+        final normalized = excludeTrackedCatalogSeries(
+          _normalizeResult(remote),
+          signals,
+        );
+        if (normalized.items.isNotEmpty &&
+            _isCloudResultCompatible(signals, normalized)) {
+          await _writeCache(installId, normalized);
+          return _finalizeResult(
+            installId: installId,
+            signals: signals,
+            result: normalized,
+            bundle: bundle,
           );
-          if (stamped.items.isNotEmpty) {
-            await _writeCache(installId, stamped);
-            return _finalizeResult(
-              installId: installId,
-              signals: signals,
-              result: stamped,
-              bundle: bundle,
-            );
-          }
         }
       } catch (_) {
         // Fall through to local engine.
@@ -211,16 +203,22 @@ class RecommendationRepository {
     }
   }
 
-  bool _isCloudResultStale(
+  /// Cloud results must match the current collection-derived [profileHash].
+  /// Never stamp a local hash onto a server response computed for another profile.
+  bool _isCloudResultCompatible(
     PreferenceSignals signals,
     RecommendationResult result,
   ) {
+    final hash = result.profileHash?.trim();
+    if (hash == null || hash.isEmpty || hash != signals.profileHash) {
+      return false;
+    }
     for (final item in result.items) {
       if (signals.trackedCatalogSeriesIds.contains(item.seriesId)) {
-        return true;
+        return false;
       }
     }
-    return false;
+    return true;
   }
 
   RecommendationResult _computeLocal(
@@ -284,16 +282,6 @@ class RecommendationRepository {
     } catch (_) {
       // Cache is optional; recommendations still return in-memory.
     }
-  }
-
-  RecommendationResult _withProfileHash(
-    RecommendationResult result,
-    String profileHash,
-  ) {
-    return RecommendationResult(
-      items: result.items,
-      profileHash: profileHash,
-    );
   }
 
   RecommendationResult _normalizeResult(RecommendationResult result) {

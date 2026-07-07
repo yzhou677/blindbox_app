@@ -22,7 +22,8 @@ class RecommendationSyncNotifier extends Notifier<void> {
   @override
   void build() {
     ref.keepAlive();
-    ref.listen<CollectionSnapshot>(collectionNotifierProvider, (_, next) {
+    ref.listen<CollectionSnapshot>(collectionNotifierProvider, (_, __) {
+      ref.invalidate(recommendationsProvider);
       _scheduleSyncAfterDelay();
     });
     return;

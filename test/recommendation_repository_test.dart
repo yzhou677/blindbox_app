@@ -135,6 +135,82 @@ PreferenceSignals _ownedSignals() {
   return extractSignals(_ownedCollectionSnapshot());
 }
 
+CollectionSnapshot _nommiHeavyCollectionSnapshot() {
+  return CollectionSnapshot(
+    shelfSeries: [
+      for (var i = 1; i <= 3; i++)
+        testShelfSeries(
+          id: 'shelf_nommi_$i',
+          name: 'Nommi Owned $i',
+          catalogTemplateId: 'nommi_owned_$i',
+          taxonomyIpId: 'nommi',
+          ipName: 'NOMMI',
+        ),
+    ],
+    figureStates: const {},
+  );
+}
+
+CatalogSeedBundle _nommiBundle() {
+  return CatalogSeedBundle(
+    brands: const [
+      CatalogBrand(id: 'popmart', displayName: 'POP MART'),
+    ],
+    ips: const [
+      CatalogIp(id: 'nommi', brandId: 'popmart', displayName: 'NOMMI'),
+      CatalogIp(id: 'labubu', brandId: 'popmart', displayName: 'LABUBU'),
+    ],
+    series: const [
+      catalog.CatalogSeries(
+        id: 'nommi_owned_1',
+        brandId: 'popmart',
+        ipId: 'nommi',
+        displayName: 'Nommi Owned 1',
+        releaseDate: '2026-01-01',
+        isBlindBox: true,
+        imageKey: 'nommi_owned_1',
+      ),
+      catalog.CatalogSeries(
+        id: 'nommi_owned_2',
+        brandId: 'popmart',
+        ipId: 'nommi',
+        displayName: 'Nommi Owned 2',
+        releaseDate: '2026-01-02',
+        isBlindBox: true,
+        imageKey: 'nommi_owned_2',
+      ),
+      catalog.CatalogSeries(
+        id: 'nommi_owned_3',
+        brandId: 'popmart',
+        ipId: 'nommi',
+        displayName: 'Nommi Owned 3',
+        releaseDate: '2026-01-03',
+        isBlindBox: true,
+        imageKey: 'nommi_owned_3',
+      ),
+      catalog.CatalogSeries(
+        id: 'nommi_reco',
+        brandId: 'popmart',
+        ipId: 'nommi',
+        displayName: 'Nommi Reco',
+        releaseDate: '2026-05-01',
+        isBlindBox: true,
+        imageKey: 'nommi_reco',
+      ),
+      catalog.CatalogSeries(
+        id: 'labubu_other',
+        brandId: 'popmart',
+        ipId: 'labubu',
+        displayName: 'Labubu Other',
+        releaseDate: '2026-05-02',
+        isBlindBox: true,
+        imageKey: 'labubu_other',
+      ),
+    ],
+    figures: const [],
+  );
+}
+
 RecommendationHttpClient _httpClient({
   required http.Response forYouResponse,
   void Function(http.Request request)? onProfilePost,
@@ -555,6 +631,181 @@ void main() {
       final after = await repoAfter.getRecommendations(_installId, _testBundle());
 
       expect(after.items.map((item) => item.seriesId), isNot(contains('dimoo_owned')));
+    });
+
+    test('cloud response without profileHash uses local collection taste', () async {
+      final prefs = await SharedPreferences.getInstance();
+      final repo = RecommendationRepository(
+        collectionSnapshot: _nommiHeavyCollectionSnapshot(),
+        httpClient: _httpClient(
+          forYouResponse: http.Response(
+            jsonEncode({
+              'items': [
+                {
+                  'seriesId': 'labubu_other',
+                  'reasonType': RecommendationReasonType.newInCatalog,
+                },
+              ],
+            }),
+            200,
+          ),
+        ),
+        preferences: prefs,
+      );
+
+      final result = await repo.getRecommendations(_installId, _nommiBundle());
+
+      expect(
+        result.items.map((item) => item.seriesId),
+        contains('nommi_reco'),
+      );
+      expect(
+        result.items
+            .where((item) => item.seriesId == 'nommi_reco')
+            .first
+            .primaryReasonType,
+        RecommendationReasonType.trackedIp,
+      );
+    });
+
+    test('cloud response with stale profileHash uses local collection taste', () async {
+      final prefs = await SharedPreferences.getInstance();
+      final signals = extractSignals(_nommiHeavyCollectionSnapshot());
+      final repo = RecommendationRepository(
+        collectionSnapshot: _nommiHeavyCollectionSnapshot(),
+        httpClient: _httpClient(
+          forYouResponse: http.Response(
+            jsonEncode({
+              'profileHash': 'stale-profile-hash',
+              'items': [
+                {
+                  'seriesId': 'labubu_other',
+                  'reasonType': RecommendationReasonType.newInCatalog,
+                },
+              ],
+            }),
+            200,
+          ),
+        ),
+        preferences: prefs,
+      );
+
+      final result = await repo.getRecommendations(_installId, _nommiBundle());
+
+      expect(result.profileHash, signals.profileHash);
+      expect(
+        result.items.map((item) => item.seriesId),
+        contains('nommi_reco'),
+      );
+    });
+
+    test('cloud response with matching profileHash is accepted', () async {
+      final prefs = await SharedPreferences.getInstance();
+      final signals = _ownedSignals();
+      final repo = RecommendationRepository(
+        collectionSnapshot: _ownedCollectionSnapshot(),
+        httpClient: _httpClient(
+          forYouResponse: http.Response(
+            jsonEncode({
+              'profileHash': signals.profileHash,
+              'items': [
+                {
+                  'seriesId': 'dimoo_new',
+                  'reasonType': RecommendationReasonType.trackedIp,
+                  'reasonMeta': 'DIMOO',
+                },
+              ],
+            }),
+            200,
+          ),
+        ),
+        preferences: prefs,
+      );
+
+      final result = await repo.getRecommendations(_installId, _testBundle());
+
+      expect(result.items.single.seriesId, 'dimoo_new');
+      expect(result.profileHash, signals.profileHash);
+    });
+
+    test('add series via template updates recommendations from local shelf', () async {
+      CollectionAppBootstrap.prime(CollectionSnapshot.emptyTest());
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final prefs = await SharedPreferences.getInstance();
+      final repoBefore = RecommendationRepository(
+        collectionSnapshot: container.read(collectionNotifierProvider),
+        httpClient: _httpClient(
+          forYouResponse: http.Response(jsonEncode({'items': []}), 200),
+        ),
+        preferences: prefs,
+      );
+      final before = await repoBefore.getRecommendations(_installId, _nommiBundle());
+      expect(
+        before.items.map((item) => item.seriesId),
+        isNot(contains('nommi_reco')),
+      );
+
+      container.read(collectionNotifierProvider.notifier).addSeriesFromTemplate(
+            testCatalogTemplate(
+              templateId: 'nommi_owned_1',
+              taxonomyIpId: 'nommi',
+              name: 'Nommi Owned 1',
+            ),
+          );
+      container.read(collectionNotifierProvider.notifier).addSeriesFromTemplate(
+            testCatalogTemplate(
+              templateId: 'nommi_owned_2',
+              taxonomyIpId: 'nommi',
+              name: 'Nommi Owned 2',
+            ),
+          );
+      container.read(collectionNotifierProvider.notifier).addSeriesFromTemplate(
+            testCatalogTemplate(
+              templateId: 'nommi_owned_3',
+              taxonomyIpId: 'nommi',
+              name: 'Nommi Owned 3',
+            ),
+          );
+
+      final snapAfter = container.read(collectionNotifierProvider);
+      final signals = extractSignals(snapAfter);
+      expect(signals.trackedIpIds, {'nommi'});
+      expect(signals.trackedCatalogSeriesIds.length, 3);
+
+      RecommendationRepository.resetComputedMemoForTest();
+      final repoAfter = RecommendationRepository(
+        collectionSnapshot: snapAfter,
+        httpClient: _httpClient(
+          forYouResponse: http.Response(
+            jsonEncode({
+              'profileHash': 'stale-profile-hash',
+              'items': [
+                {
+                  'seriesId': 'labubu_other',
+                  'reasonType': RecommendationReasonType.newInCatalog,
+                },
+              ],
+            }),
+            200,
+          ),
+        ),
+        preferences: prefs,
+      );
+      final after = await repoAfter.getRecommendations(_installId, _nommiBundle());
+
+      expect(
+        after.items.map((item) => item.seriesId),
+        contains('nommi_reco'),
+      );
+      expect(
+        after.items
+            .where((item) => item.seriesId == 'nommi_reco')
+            .first
+            .primaryReasonType,
+        RecommendationReasonType.trackedIp,
+      );
     });
   });
 

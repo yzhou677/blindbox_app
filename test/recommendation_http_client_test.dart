@@ -39,6 +39,32 @@ void main() {
     expect(result.items.first.reasonType, RecommendationReasonType.trackedIp);
   });
 
+  test('RecommendationHttpClient parses profileHash on for-you responses', () async {
+    final client = RecommendationHttpClient(
+      client: MockClient((request) async {
+        return http.Response(
+          jsonEncode({
+            'profileHash': 'hash-abc',
+            'items': [
+              {
+                'seriesId': 'dimoo_new',
+                'reasonType': RecommendationReasonType.trackedIp,
+              },
+            ],
+          }),
+          200,
+        );
+      }),
+    );
+
+    final result = await client.fetchForYou(
+      baseUrl: Uri.parse(RecommendationGatewayConfig.gatewayBaseUrl),
+      installId: 'install-1',
+    );
+
+    expect(result.profileHash, 'hash-abc');
+  });
+
   test('RecommendationHttpClient parses dual-reason for-you items', () async {
     final client = RecommendationHttpClient(
       client: MockClient((request) async {
