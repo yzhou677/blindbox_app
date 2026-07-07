@@ -138,14 +138,16 @@ void main() {
       );
     });
 
-    test('visibleForYouResult drops owned series from stale keep-previous rail', () {
+    test('visibleForYouResult drops tracked series from stale keep-previous rail', () {
       final previous = resultWithItems();
       final signals = PreferenceSignals(
-        ownedCatalogSeriesIds: {'dimoo_new'},
+        trackedCatalogSeriesIds: {'dimoo_new'},
+        ownedCatalogSeriesIds: const {},
         wishlistCatalogSeriesIds: const {},
-        ownedIpIds: {'dimoo'},
+        ownedIpIds: const {},
         wishlistIpIds: const {},
-        ownedCatalogSeriesCount: 1,
+        trackedCatalogSeriesCount: 1,
+        ownedCatalogSeriesCount: 0,
         wishlistCatalogSeriesCount: 0,
         profileHash: 'hash',
       );

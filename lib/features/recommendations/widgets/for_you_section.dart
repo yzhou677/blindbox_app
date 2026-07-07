@@ -47,7 +47,7 @@ RecommendationResult? visibleForYouResult({
   required PreferenceSignals signals,
 }) {
   if (displayResult == null) return null;
-  return excludeOwnedCatalogSeries(displayResult, signals);
+  return excludeTrackedCatalogSeries(displayResult, signals);
 }
 
 class _ForYouSectionState extends ConsumerState<ForYouSection> {

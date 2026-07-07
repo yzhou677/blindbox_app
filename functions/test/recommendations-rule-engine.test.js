@@ -2,10 +2,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { computeRecommendations } from '../lib/recommendations/ruleEngine.js';
 
-test('computeRecommendations ranks owned IP matches and excludes owned series', () => {
+test('computeRecommendations ranks owned IP matches and excludes tracked series', () => {
   const items = computeRecommendations({
     profile: {
       installId: 'install-1',
+      trackedCatalogSeriesIds: ['dimoo_owned'],
       ownedCatalogSeriesIds: ['dimoo_owned'],
       wishlistCatalogSeriesIds: [],
       ownedIpIds: ['dimoo'],
@@ -61,6 +62,7 @@ test('computeRecommendations caps at 10 curated picks', () => {
   const items = computeRecommendations({
     profile: {
       installId: 'install-1',
+      trackedCatalogSeriesIds: [],
       ownedCatalogSeriesIds: [],
       wishlistCatalogSeriesIds: [],
       ownedIpIds: [],
@@ -85,6 +87,7 @@ test('computeRecommendations keeps stable top picks; exploration follows profile
 
   const profileFor = (profileHash) => ({
     installId: 'install-1',
+    trackedCatalogSeriesIds: ['labubu_0'],
     ownedCatalogSeriesIds: ['labubu_0'],
     wishlistCatalogSeriesIds: [],
     ownedIpIds: ['labubu'],
@@ -147,6 +150,7 @@ test('computeRecommendations breaks score ties by newest release date', () => {
   const items = computeRecommendations({
     profile: {
       installId: 'install-1',
+      trackedCatalogSeriesIds: ['dimoo_owned'],
       ownedCatalogSeriesIds: ['dimoo_owned'],
       wishlistCatalogSeriesIds: [],
       ownedIpIds: ['dimoo'],
@@ -181,4 +185,37 @@ test('computeRecommendations breaks score ties by newest release date', () => {
     items.map((item) => item.seriesId),
     ['dimoo_newer', 'dimoo_older'],
   );
+});
+
+test('computeRecommendations excludes shelf-tracked series without owned figures', () => {
+  const items = computeRecommendations({
+    profile: {
+      installId: 'install-1',
+      trackedCatalogSeriesIds: ['dimoo_owned'],
+      ownedCatalogSeriesIds: [],
+      wishlistCatalogSeriesIds: [],
+      ownedIpIds: [],
+      wishlistIpIds: [],
+      profileHash: 'hash',
+    },
+    series: [
+      {
+        id: 'dimoo_owned',
+        ipId: 'dimoo',
+        displayName: 'Dimoo Owned',
+        releaseDate: '2026-01-01',
+      },
+      {
+        id: 'dimoo_new',
+        ipId: 'dimoo',
+        displayName: 'Dimoo New',
+        releaseDate: '2026-05-01',
+      },
+    ],
+    ips: [{ id: 'dimoo', displayName: 'DIMOO' }],
+    now: new Date('2026-05-21T00:00:00.000Z'),
+  });
+
+  assert.equal(items.some((item) => item.seriesId === 'dimoo_owned'), false);
+  assert.ok(items.some((item) => item.seriesId === 'dimoo_new'));
 });

@@ -6,6 +6,7 @@ export type RecommendationReasonType =
 
 export interface RecommendationProfile {
   installId: string;
+  trackedCatalogSeriesIds: string[];
   ownedCatalogSeriesIds: string[];
   wishlistCatalogSeriesIds: string[];
   ownedIpIds: string[];

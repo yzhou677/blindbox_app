@@ -35,7 +35,7 @@ class RecommendationSyncNotifier extends Notifier<void> {
   Future<void> _sync() async {
     final snap = ref.read(collectionNotifierProvider);
     final signals = extractSignals(snap);
-    if (signals.ownedCatalogSeriesCount == 0) return;
+    if (signals.trackedCatalogSeriesCount == 0) return;
     if (signals.profileHash == _lastUploadedHash) return;
 
     final id = await ref.read(anonymousInstallIdProvider.future);

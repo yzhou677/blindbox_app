@@ -11,25 +11,34 @@ import 'package:flutter/foundation.dart';
 @immutable
 class PreferenceSignals {
   const PreferenceSignals({
+    required this.trackedCatalogSeriesIds,
     required this.ownedCatalogSeriesIds,
     required this.wishlistCatalogSeriesIds,
     required this.ownedIpIds,
     required this.wishlistIpIds,
+    required this.trackedCatalogSeriesCount,
     required this.ownedCatalogSeriesCount,
     required this.wishlistCatalogSeriesCount,
     required this.profileHash,
   });
 
+  /// Catalog series present on the user's shelf (My Collection), regardless of
+  /// figure ownership — drives recommendation exclusion.
+  final Set<String> trackedCatalogSeriesIds;
+
+  /// Catalog series with at least one owned figure — drives IP affinity scoring.
   final Set<String> ownedCatalogSeriesIds;
   final Set<String> wishlistCatalogSeriesIds;
   final Set<String> ownedIpIds;
   final Set<String> wishlistIpIds;
+  final int trackedCatalogSeriesCount;
   final int ownedCatalogSeriesCount;
   final int wishlistCatalogSeriesCount;
   final String profileHash;
 }
 
 PreferenceSignals extractSignals(CollectionSnapshot snap) {
+  final trackedCatalogSeriesIds = <String>{};
   final ownedCatalogSeriesIds = <String>{};
   final wishlistCatalogSeriesIds = <String>{};
   final ownedIpIds = <String>{};
@@ -40,6 +49,8 @@ PreferenceSignals extractSignals(CollectionSnapshot snap) {
 
     final catalogId = series.catalogTemplateId!.trim();
     if (catalogId.isEmpty) continue;
+
+    trackedCatalogSeriesIds.add(catalogId);
 
     final progress = progressForSeries(series, snap.figureStates);
     if (progress.owned > 0) {
@@ -58,20 +69,24 @@ PreferenceSignals extractSignals(CollectionSnapshot snap) {
   }
 
   final signals = PreferenceSignals(
+    trackedCatalogSeriesIds: trackedCatalogSeriesIds,
     ownedCatalogSeriesIds: ownedCatalogSeriesIds,
     wishlistCatalogSeriesIds: wishlistCatalogSeriesIds,
     ownedIpIds: ownedIpIds,
     wishlistIpIds: wishlistIpIds,
+    trackedCatalogSeriesCount: trackedCatalogSeriesIds.length,
     ownedCatalogSeriesCount: ownedCatalogSeriesIds.length,
     wishlistCatalogSeriesCount: wishlistCatalogSeriesIds.length,
     profileHash: '',
   );
 
   return PreferenceSignals(
+    trackedCatalogSeriesIds: trackedCatalogSeriesIds,
     ownedCatalogSeriesIds: ownedCatalogSeriesIds,
     wishlistCatalogSeriesIds: wishlistCatalogSeriesIds,
     ownedIpIds: ownedIpIds,
     wishlistIpIds: wishlistIpIds,
+    trackedCatalogSeriesCount: trackedCatalogSeriesIds.length,
     ownedCatalogSeriesCount: ownedCatalogSeriesIds.length,
     wishlistCatalogSeriesCount: wishlistCatalogSeriesIds.length,
     profileHash: _computeProfileHash(signals),
@@ -98,6 +113,7 @@ String _computeProfileHash(PreferenceSignals signals) {
       ..write(';');
   }
 
+  writeSet('trackedSeries', signals.trackedCatalogSeriesIds);
   writeSet('ownedSeries', signals.ownedCatalogSeriesIds);
   writeSet('wishlistSeries', signals.wishlistCatalogSeriesIds);
   writeSet('ownedIp', signals.ownedIpIds);
@@ -113,6 +129,7 @@ Map<String, dynamic> preferenceSignalsToProfileJson({
 }) {
   return {
     'installId': installId,
+    'trackedCatalogSeriesIds': signals.trackedCatalogSeriesIds.toList()..sort(),
     'ownedCatalogSeriesIds': signals.ownedCatalogSeriesIds.toList()..sort(),
     'wishlistCatalogSeriesIds': signals.wishlistCatalogSeriesIds.toList()
       ..sort(),

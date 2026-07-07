@@ -27,8 +27,7 @@ RecommendationConfidence computeConfidence(PreferenceSignals signals) {
   if (signals.ownedCatalogSeriesCount >= 3) {
     return RecommendationConfidence.medium;
   }
-  if (signals.ownedCatalogSeriesCount >= 1 ||
-      signals.wishlistCatalogSeriesCount >= 5) {
+  if (signals.trackedCatalogSeriesCount >= 1) {
     return RecommendationConfidence.low;
   }
   return RecommendationConfidence.none;

@@ -41,10 +41,12 @@ void main() {
 
   test('RecommendationHttpClient posts profile payload', () async {
     final signals = PreferenceSignals(
+      trackedCatalogSeriesIds: {'dimoo_owned'},
       ownedCatalogSeriesIds: {'dimoo_owned'},
       wishlistCatalogSeriesIds: const {},
       ownedIpIds: {'dimoo'},
       wishlistIpIds: const {},
+      trackedCatalogSeriesCount: 1,
       ownedCatalogSeriesCount: 1,
       wishlistCatalogSeriesCount: 0,
       profileHash: 'hash-123',
@@ -69,6 +71,7 @@ void main() {
     final decoded = jsonDecode(capturedBody!) as Map<String, dynamic>;
     expect(decoded['installId'], 'install-1');
     expect(decoded['profileHash'], 'hash-123');
+    expect(decoded['trackedCatalogSeriesIds'], ['dimoo_owned']);
     expect(decoded['ownedCatalogSeriesIds'], ['dimoo_owned']);
   });
 }

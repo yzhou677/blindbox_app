@@ -33,6 +33,7 @@ export async function handleRecommendationProfileRequest(
 
   const profile: RecommendationProfile = {
     installId,
+    trackedCatalogSeriesIds: normalizeIdList(body.trackedCatalogSeriesIds),
     ownedCatalogSeriesIds: normalizeIdList(body.ownedCatalogSeriesIds),
     wishlistCatalogSeriesIds: normalizeIdList(body.wishlistCatalogSeriesIds),
     ownedIpIds: normalizeIdList(body.ownedIpIds),
@@ -46,6 +47,7 @@ export async function handleRecommendationProfileRequest(
   }
 
   const validSeriesIds = await validateSeriesIds([
+    ...profile.trackedCatalogSeriesIds,
     ...profile.ownedCatalogSeriesIds,
     ...profile.wishlistCatalogSeriesIds,
   ]);

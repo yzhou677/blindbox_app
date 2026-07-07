@@ -88,6 +88,7 @@ void main() {
       );
 
       final signals = extractSignals(snap);
+      expect(signals.trackedCatalogSeriesIds, {'dimoo_a'});
       expect(signals.ownedCatalogSeriesIds, {'dimoo_a'});
       expect(signals.ownedIpIds, {'dimoo'});
       expect(signals.ownedCatalogSeriesCount, 1);
@@ -111,9 +112,30 @@ void main() {
       );
 
       final signals = extractSignals(snap);
+      expect(signals.trackedCatalogSeriesIds, {'labubu_a'});
       expect(signals.wishlistCatalogSeriesIds, {'labubu_a'});
       expect(signals.wishlistIpIds, {'labubu'});
       expect(signals.ownedCatalogSeriesIds, isEmpty);
+    });
+
+    test('tracks catalog series on shelf without owned figures', () {
+      final snap = CollectionSnapshot(
+        shelfSeries: [
+          testShelfSeries(
+            id: 'shelf_only',
+            catalogTemplateId: 'dimoo_shelf',
+            taxonomyIpId: 'dimoo',
+          ),
+        ],
+        figureStates: const {},
+      );
+
+      final signals = extractSignals(snap);
+      expect(signals.trackedCatalogSeriesIds, {'dimoo_shelf'});
+      expect(signals.trackedCatalogSeriesCount, 1);
+      expect(signals.ownedCatalogSeriesIds, isEmpty);
+      expect(signals.ownedCatalogSeriesCount, 0);
+      expect(isRecommendationReady(signals), isTrue);
     });
 
     test('profileHash is stable for identical signals', () {
@@ -142,44 +164,51 @@ void main() {
 
   group('computeConfidence', () {
     PreferenceSignals signals({
+      int tracked = 0,
       int owned = 0,
       int wishlist = 0,
     }) {
       return PreferenceSignals(
+        trackedCatalogSeriesIds: {
+          for (var i = 0; i < tracked; i++) 'tracked_$i',
+        },
         ownedCatalogSeriesIds: {for (var i = 0; i < owned; i++) 'owned_$i'},
         wishlistCatalogSeriesIds: {
           for (var i = 0; i < wishlist; i++) 'wish_$i',
         },
         ownedIpIds: const {},
         wishlistIpIds: const {},
+        trackedCatalogSeriesCount: tracked,
         ownedCatalogSeriesCount: owned,
         wishlistCatalogSeriesCount: wishlist,
         profileHash: 'hash',
       );
     }
 
-    test('none when no owned or wishlist threshold met', () {
+    test('none when no catalog series tracked on shelf', () {
       expect(computeConfidence(signals()), RecommendationConfidence.none);
+      expect(isRecommendationReady(signals()), isFalse);
     });
 
-    test('low when one owned series', () {
+    test('low when one tracked catalog series on shelf', () {
       expect(
-        computeConfidence(signals(owned: 1)),
+        computeConfidence(signals(tracked: 1)),
         RecommendationConfidence.low,
       );
-      expect(isRecommendationReady(signals(owned: 1)), isTrue);
+      expect(isRecommendationReady(signals(tracked: 1)), isTrue);
     });
 
-    test('low when five wishlist series', () {
+    test('low when tracked on shelf without owned figures', () {
       expect(
-        computeConfidence(signals(wishlist: 5)),
+        computeConfidence(signals(tracked: 1, owned: 0)),
         RecommendationConfidence.low,
       );
+      expect(isRecommendationReady(signals(tracked: 1, owned: 0)), isTrue);
     });
 
     test('medium at three owned series', () {
       expect(
-        computeConfidence(signals(owned: 3)),
+        computeConfidence(signals(tracked: 3, owned: 3)),
         RecommendationConfidence.medium,
       );
     });
@@ -228,12 +257,14 @@ void main() {
       );
     }
 
-    test('ranks owned IP matches ahead of gap-fill and excludes owned series', () {
+    test('ranks owned IP matches ahead of gap-fill and excludes tracked series', () {
       final signals = PreferenceSignals(
+        trackedCatalogSeriesIds: {'dimoo_owned'},
         ownedCatalogSeriesIds: {'dimoo_owned'},
         wishlistCatalogSeriesIds: const {},
         ownedIpIds: {'dimoo'},
         wishlistIpIds: const {},
+        trackedCatalogSeriesCount: 1,
         ownedCatalogSeriesCount: 1,
         wishlistCatalogSeriesCount: 0,
         profileHash: 'hash',
@@ -265,12 +296,37 @@ void main() {
       expect(forYouReason(RecommendationReasonType.newInCatalog, null), 'New in catalog');
     });
 
-    test('caps results at forYouResultLimit for a large catalog', () {
+    test('never recommends shelf-tracked catalog series without owned figures', () {
       final signals = PreferenceSignals(
+        trackedCatalogSeriesIds: {'dimoo_owned'},
         ownedCatalogSeriesIds: const {},
         wishlistCatalogSeriesIds: const {},
         ownedIpIds: const {},
         wishlistIpIds: const {},
+        trackedCatalogSeriesCount: 1,
+        ownedCatalogSeriesCount: 0,
+        wishlistCatalogSeriesCount: 0,
+        profileHash: 'hash',
+      );
+
+      final items = computeLocalRecommendations(
+        signals: signals,
+        bundle: bundle(),
+        clock: DateTime(2026, 5, 21),
+      );
+
+      expect(items.map((item) => item.seriesId), isNot(contains('dimoo_owned')));
+      expect(items.map((item) => item.seriesId), contains('dimoo_new'));
+    });
+
+    test('caps results at forYouResultLimit for a large catalog', () {
+      final signals = PreferenceSignals(
+        trackedCatalogSeriesIds: const {},
+        ownedCatalogSeriesIds: const {},
+        wishlistCatalogSeriesIds: const {},
+        ownedIpIds: const {},
+        wishlistIpIds: const {},
+        trackedCatalogSeriesCount: 0,
         ownedCatalogSeriesCount: 0,
         wishlistCatalogSeriesCount: 0,
         profileHash: 'hash',
@@ -335,10 +391,12 @@ void main() {
 
       PreferenceSignals signalsFor(String profileHash) {
         return PreferenceSignals(
+          trackedCatalogSeriesIds: {'labubu_0'},
           ownedCatalogSeriesIds: {'labubu_0'},
           wishlistCatalogSeriesIds: const {},
           ownedIpIds: {'labubu'},
           wishlistIpIds: const {},
+          trackedCatalogSeriesCount: 1,
           ownedCatalogSeriesCount: 1,
           wishlistCatalogSeriesCount: 0,
           profileHash: profileHash,

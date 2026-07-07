@@ -87,7 +87,7 @@ export function computeRecommendations(params: {
   now?: Date;
 }): RecommendationItemWire[] {
   const now = params.now ?? new Date();
-  const ownedSeries = new Set(params.profile.ownedCatalogSeriesIds);
+  const trackedSeries = trackedCatalogSeriesSet(params.profile);
   const wishlistSeries = new Set(params.profile.wishlistCatalogSeriesIds);
   const ownedIpIds = new Set(params.profile.ownedIpIds);
   const wishlistIpIds = new Set(params.profile.wishlistIpIds);
@@ -107,7 +107,7 @@ export function computeRecommendations(params: {
   };
 
   for (const series of params.series) {
-    if (ownedSeries.has(series.id)) continue;
+    if (trackedSeries.has(series.id)) continue;
     if (ownedIpIds.has(series.ipId)) {
       upsert(
         series,
@@ -119,7 +119,7 @@ export function computeRecommendations(params: {
   }
 
   for (const series of params.series) {
-    if (ownedSeries.has(series.id) || wishlistSeries.has(series.id)) continue;
+    if (trackedSeries.has(series.id) || wishlistSeries.has(series.id)) continue;
     if (scored.has(series.id)) continue;
     if (wishlistIpIds.has(series.ipId)) {
       upsert(
@@ -165,12 +165,21 @@ export function computeRecommendations(params: {
 
   for (const series of gapFill) {
     if (results.length >= MAX_RECOMMENDATIONS) break;
-    if (ownedSeries.has(series.id)) continue;
+    if (trackedSeries.has(series.id)) continue;
     if (scored.has(series.id)) continue;
     results.push({ seriesId: series.id, reasonType: 'new_in_catalog' });
   }
 
   return results;
+}
+
+function trackedCatalogSeriesSet(profile: RecommendationProfile): Set<string> {
+  const tracked = new Set(profile.trackedCatalogSeriesIds ?? []);
+  if (tracked.size > 0) return tracked;
+  // Legacy profiles uploaded before trackedCatalogSeriesIds shipped.
+  for (const id of profile.ownedCatalogSeriesIds) tracked.add(id);
+  for (const id of profile.wishlistCatalogSeriesIds) tracked.add(id);
+  return tracked;
 }
 
 function buildOrderIndex(series: CatalogSeriesDoc[]): Map<string, number> {

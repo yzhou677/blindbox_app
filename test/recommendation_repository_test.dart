@@ -5,6 +5,8 @@ import 'package:blindbox_app/features/catalog/models/catalog_brand.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_ip.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_series.dart'
     as catalog;
+import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
+import 'package:blindbox_app/features/collection/bootstrap/collection_app_bootstrap.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/recommendations/data/preference_signal_extractor.dart';
 import 'package:blindbox_app/features/recommendations/data/recommendation_http_client.dart';
@@ -12,6 +14,7 @@ import 'package:blindbox_app/features/recommendations/data/recommendation_reposi
 import 'package:blindbox_app/features/recommendations/domain/recommendation_item.dart';
 import 'package:blindbox_app/features/recommendations/domain/recommendation_reason_type.dart';
 import 'package:blindbox_app/features/recommendations/domain/recommendation_result.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -382,9 +385,9 @@ void main() {
       expect(httpCalled, isTrue);
     });
 
-    test('excludeOwnedCatalogSeries removes owned catalog picks', () {
+    test('excludeTrackedCatalogSeries removes tracked catalog picks', () {
       final signals = extractSignals(_ownedCollectionSnapshot());
-      final filtered = excludeOwnedCatalogSeries(
+      final filtered = excludeTrackedCatalogSeries(
         RecommendationResult(
           items: const [
             RecommendationItem(
@@ -403,7 +406,7 @@ void main() {
       expect(filtered.items.map((item) => item.seriesId), ['dimoo_new']);
     });
 
-    test('stale cloud response recommending owned series falls back to local', () async {
+    test('stale cloud response recommending tracked series falls back to local', () async {
       final prefs = await SharedPreferences.getInstance();
       final repo = RecommendationRepository(
         collectionSnapshot: _expandedCollectionSnapshot(),
@@ -483,6 +486,71 @@ void main() {
       final result = await repo.getRecommendations(_installId, _testBundle());
 
       expect(result.items, isNotEmpty);
+    });
+
+    test('shelf-only tracked series never returned by repository', () async {
+      final snap = CollectionSnapshot(
+        shelfSeries: [
+          testShelfSeries(
+            id: 'shelf_only',
+            catalogTemplateId: 'dimoo_owned',
+            taxonomyIpId: 'dimoo',
+          ),
+        ],
+        figureStates: const {},
+      );
+      final prefs = await SharedPreferences.getInstance();
+      final repo = RecommendationRepository(
+        collectionSnapshot: snap,
+        httpClient: _httpClient(
+          forYouResponse: http.Response(jsonEncode({'items': []}), 200),
+        ),
+        preferences: prefs,
+      );
+
+      final result = await repo.getRecommendations(_installId, _testBundle());
+
+      expect(
+        result.items.map((item) => item.seriesId),
+        isNot(contains('dimoo_owned')),
+      );
+      expect(result.items.map((item) => item.seriesId), contains('dimoo_new'));
+    });
+
+    test('add catalog series to shelf excludes it from next repository fetch', () async {
+      CollectionAppBootstrap.prime(CollectionSnapshot.emptyTest());
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final prefs = await SharedPreferences.getInstance();
+      final repoBefore = RecommendationRepository(
+        collectionSnapshot: container.read(collectionNotifierProvider),
+        httpClient: _httpClient(
+          forYouResponse: http.Response(jsonEncode({'items': []}), 200),
+        ),
+        preferences: prefs,
+      );
+      final before = await repoBefore.getRecommendations(_installId, _testBundle());
+      expect(before.items.map((item) => item.seriesId), contains('dimoo_owned'));
+
+      container.read(collectionNotifierProvider.notifier).addSeriesFromTemplate(
+            testCatalogTemplate(templateId: 'dimoo_owned'),
+          );
+      final snapAfter = container.read(collectionNotifierProvider);
+      expect(extractSignals(snapAfter).trackedCatalogSeriesIds, {'dimoo_owned'});
+      expect(extractSignals(snapAfter).ownedCatalogSeriesIds, isEmpty);
+
+      RecommendationRepository.resetComputedMemoForTest();
+      final repoAfter = RecommendationRepository(
+        collectionSnapshot: snapAfter,
+        httpClient: _httpClient(
+          forYouResponse: http.Response('should not hit', 500),
+        ),
+        preferences: prefs,
+      );
+      final after = await repoAfter.getRecommendations(_installId, _testBundle());
+
+      expect(after.items.map((item) => item.seriesId), isNot(contains('dimoo_owned')));
     });
   });
 

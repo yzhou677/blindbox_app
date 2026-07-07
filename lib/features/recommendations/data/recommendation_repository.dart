@@ -105,7 +105,7 @@ class RecommendationRepository {
           // Server profile may lag local collection until debounced sync.
         } else {
           final stamped = _withProfileHash(
-            excludeOwnedCatalogSeries(normalized, signals),
+            excludeTrackedCatalogSeries(normalized, signals),
             signals.profileHash,
           );
           if (stamped.items.isNotEmpty) {
@@ -139,7 +139,7 @@ class RecommendationRepository {
     String installId,
     PreferenceSignals signals,
   ) async {
-    if (signals.ownedCatalogSeriesCount == 0) return;
+    if (signals.trackedCatalogSeriesCount == 0) return;
     if (!RecommendationGatewayConfig.isHttpActive) return;
 
     await _httpClient.updateProfile(
@@ -165,7 +165,7 @@ class RecommendationRepository {
     required CatalogSeedBundle bundle,
     bool remember = true,
   }) {
-    final sanitized = excludeOwnedCatalogSeries(_normalizeResult(result), signals);
+    final sanitized = excludeTrackedCatalogSeries(_normalizeResult(result), signals);
     if (remember) {
       _lastComputed = _ComputedRecommendationMemo(
         installId: installId,
@@ -181,7 +181,7 @@ class RecommendationRepository {
     RecommendationResult result,
   ) {
     for (final item in result.items) {
-      if (signals.ownedCatalogSeriesIds.contains(item.seriesId)) {
+      if (signals.trackedCatalogSeriesIds.contains(item.seriesId)) {
         return true;
       }
     }
@@ -284,14 +284,14 @@ class RecommendationRepository {
   }
 }
 
-/// Defensive pass — owned catalog series must never reach For You UI.
-RecommendationResult excludeOwnedCatalogSeries(
+/// Defensive pass — tracked catalog series must never reach For You UI.
+RecommendationResult excludeTrackedCatalogSeries(
   RecommendationResult result,
   PreferenceSignals signals,
 ) {
-  if (signals.ownedCatalogSeriesIds.isEmpty) return result;
+  if (signals.trackedCatalogSeriesIds.isEmpty) return result;
   final filtered = result.items
-      .where((item) => !signals.ownedCatalogSeriesIds.contains(item.seriesId))
+      .where((item) => !signals.trackedCatalogSeriesIds.contains(item.seriesId))
       .toList();
   if (filtered.length == result.items.length) return result;
   return RecommendationResult(

@@ -66,14 +66,14 @@ List<RecommendationItem> computeLocalRecommendations({
     }
   }
 
-  bool isOwned(catalog.CatalogSeries series) =>
-      signals.ownedCatalogSeriesIds.contains(series.id);
+  bool isTracked(catalog.CatalogSeries series) =>
+      signals.trackedCatalogSeriesIds.contains(series.id);
 
   bool isWishlisted(catalog.CatalogSeries series) =>
       signals.wishlistCatalogSeriesIds.contains(series.id);
 
   for (final series in bundle.series) {
-    if (isOwned(series)) continue;
+    if (isTracked(series)) continue;
 
     if (signals.ownedIpIds.contains(series.ipId)) {
       upsert(
@@ -86,7 +86,7 @@ List<RecommendationItem> computeLocalRecommendations({
   }
 
   for (final series in bundle.series) {
-    if (isOwned(series) || isWishlisted(series)) continue;
+    if (isTracked(series) || isWishlisted(series)) continue;
     if (scored.containsKey(series.id)) continue;
 
     if (signals.wishlistIpIds.contains(series.ipId)) {
@@ -169,7 +169,7 @@ List<RecommendationItem> computeLocalRecommendations({
 
   for (final series in gapFill) {
     if (results.length >= limit) break;
-    if (isOwned(series)) continue;
+    if (isTracked(series)) continue;
     if (scored.containsKey(series.id)) continue;
     results.add(
       RecommendationItem(
