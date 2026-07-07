@@ -86,7 +86,7 @@ void main() {
         items: [
           RecommendationItem(
             seriesId: 'dimoo_new',
-            reasonType: RecommendationReasonType.ownedIp,
+            reasonType: RecommendationReasonType.trackedIp,
             reasonMeta: 'DIMOO',
             series: _testBundle().series.first,
           ),
@@ -160,7 +160,7 @@ void main() {
         trackedCatalogSeriesIds: {'dimoo_new'},
         ownedCatalogSeriesIds: const {},
         wishlistCatalogSeriesIds: const {},
-        ownedIpIds: const {},
+        trackedIpIds: const {},
         wishlistIpIds: const {},
         trackedCatalogSeriesCount: 1,
         ownedCatalogSeriesCount: 0,
@@ -190,7 +190,7 @@ void main() {
               items: [
                 RecommendationItem(
                   seriesId: 'dimoo_new',
-                  reasonType: RecommendationReasonType.ownedIp,
+                  reasonType: RecommendationReasonType.trackedIp,
                   reasonMeta: 'DIMOO',
                   series: _testBundle().series.first,
                 ),
@@ -257,7 +257,7 @@ void main() {
               items: [
                 RecommendationItem(
                   seriesId: 'dimoo_new',
-                  reasonType: RecommendationReasonType.ownedIp,
+                  reasonType: RecommendationReasonType.trackedIp,
                   reasonMeta: 'DIMOO',
                   series: _testBundle().series.first,
                 ),
@@ -360,7 +360,7 @@ void main() {
               items: [
                 RecommendationItem(
                   seriesId: 'dimoo_new',
-                  reasonType: RecommendationReasonType.ownedIp,
+                  reasonType: RecommendationReasonType.trackedIp,
                   reasonMeta: 'DIMOO',
                   series: _testBundle().series.first,
                 ),
@@ -395,7 +395,7 @@ void main() {
               items: [
                 RecommendationItem(
                   seriesId: 'dimoo_new',
-                  reasonType: RecommendationReasonType.ownedIp,
+                  reasonType: RecommendationReasonType.trackedIp,
                   reasonMeta: 'DIMOO',
                   series: _testBundle().series.first,
                 ),
@@ -416,7 +416,7 @@ void main() {
     await tester.pump();
 
     expect(find.text(ForYouCopy.sectionTitle), findsOneWidget);
-    expect(find.text('Because you collect DIMOO'), findsOneWidget);
+    expect(find.text("Because you're collecting DIMOO"), findsOneWidget);
     expect(find.text('Dimoo New'), findsOneWidget);
     expect(find.byIcon(Icons.auto_awesome_outlined), findsOneWidget);
   });
@@ -438,7 +438,7 @@ void main() {
                 6,
                 (index) => RecommendationItem(
                   seriesId: 'dimoo_new',
-                  reasonType: RecommendationReasonType.ownedIp,
+                  reasonType: RecommendationReasonType.trackedIp,
                   reasonMeta: 'DIMOO',
                   series: _testBundle().series.first,
                 ),

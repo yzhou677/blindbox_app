@@ -7,7 +7,7 @@ Human-oriented notes for the Blindbox app. **Agent rules and architecture live u
 ## In this folder
 
 - [`CATALOG_ARCHITECTURE.md`](CATALOG_ARCHITECTURE.md) — **canonical** catalog spec (Firestore → cache → providers, Search V2, availability UX)
-- [`RECOMMENDATION_SEMANTICS.md`](RECOMMENDATION_SEMANTICS.md) — **canonical** For You product rules (tracked vs owned signals, readiness, cloud/local parity)
+- [`RECOMMENDATION_SEMANTICS.md`](RECOMMENDATION_SEMANTICS.md) — **Accepted ADR** for For You (read before any recommendation change; tracked-only taste, stability, closed wishlist/owned rules)
 - [`SEARCH_ARCHITECTURE.md`](SEARCH_ARCHITECTURE.md) — **canonical** search spec (normalization, token AND, haystack, ranking)
 - [`PROJECT_OVERVIEW.md`](PROJECT_OVERVIEW.md) — product goals and feature outline
 - [`ARCHITECTURE_NOTES.md`](ARCHITECTURE_NOTES.md) — recent architecture decisions (catalog sync, market identity, figure IDs, brand/IP rules, collection scope, **dashboard performance baseline**)

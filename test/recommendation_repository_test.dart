@@ -231,7 +231,7 @@ void main() {
               'items': [
                 {
                   'seriesId': 'dimoo_new',
-                  'reasonType': RecommendationReasonType.ownedIp,
+                  'reasonType': RecommendationReasonType.trackedIp,
                   'reasonMeta': 'DIMOO',
                 },
               ],
@@ -272,7 +272,7 @@ void main() {
             items: [
               {
                 'seriesId': 'dimoo_new',
-                'reasonType': RecommendationReasonType.ownedIp,
+                'reasonType': RecommendationReasonType.trackedIp,
                 'reasonMeta': 'DIMOO',
               },
             ],
@@ -307,7 +307,7 @@ void main() {
             items: [
               {
                 'seriesId': 'dimoo_new',
-                'reasonType': RecommendationReasonType.ownedIp,
+                'reasonType': RecommendationReasonType.trackedIp,
                 'reasonMeta': 'DIMOO',
               },
             ],
@@ -324,7 +324,7 @@ void main() {
               'items': [
                 {
                   'seriesId': 'dimoo_new',
-                  'reasonType': RecommendationReasonType.ownedIp,
+                  'reasonType': RecommendationReasonType.trackedIp,
                   'reasonMeta': 'DIMOO',
                 },
               ],
@@ -351,7 +351,7 @@ void main() {
             items: [
               {
                 'seriesId': 'dimoo_new',
-                'reasonType': RecommendationReasonType.ownedIp,
+                'reasonType': RecommendationReasonType.trackedIp,
                 'reasonMeta': 'DIMOO',
               },
             ],
@@ -368,7 +368,7 @@ void main() {
               'items': [
                 {
                   'seriesId': 'dimoo_new',
-                  'reasonType': RecommendationReasonType.ownedIp,
+                  'reasonType': RecommendationReasonType.trackedIp,
                   'reasonMeta': 'DIMOO',
                 },
               ],
@@ -392,11 +392,11 @@ void main() {
           items: const [
             RecommendationItem(
               seriesId: 'dimoo_new',
-              reasonType: RecommendationReasonType.ownedIp,
+              reasonType: RecommendationReasonType.trackedIp,
             ),
             RecommendationItem(
               seriesId: 'dimoo_owned',
-              reasonType: RecommendationReasonType.ownedIp,
+              reasonType: RecommendationReasonType.trackedIp,
             ),
           ],
         ),
@@ -416,7 +416,7 @@ void main() {
               'items': [
                 {
                   'seriesId': 'dimoo_new',
-                  'reasonType': RecommendationReasonType.ownedIp,
+                  'reasonType': RecommendationReasonType.trackedIp,
                   'reasonMeta': 'DIMOO',
                 },
               ],
@@ -444,7 +444,7 @@ void main() {
             for (var i = 0; i < 20; i++)
               {
                 'seriesId': 'dimoo_new',
-                'reasonType': RecommendationReasonType.ownedIp,
+                'reasonType': RecommendationReasonType.trackedIp,
                 'reasonMeta': 'DIMOO',
               },
           ],
@@ -565,7 +565,7 @@ void main() {
             items: [
               {
                 'seriesId': 'dimoo_new',
-                'reasonType': RecommendationReasonType.ownedIp,
+                'reasonType': RecommendationReasonType.trackedIp,
                 'reasonMeta': 'DIMOO',
               },
             ],

@@ -36,7 +36,7 @@ export async function handleRecommendationProfileRequest(
     trackedCatalogSeriesIds: normalizeIdList(body.trackedCatalogSeriesIds),
     ownedCatalogSeriesIds: normalizeIdList(body.ownedCatalogSeriesIds),
     wishlistCatalogSeriesIds: normalizeIdList(body.wishlistCatalogSeriesIds),
-    ownedIpIds: normalizeIdList(body.ownedIpIds),
+    trackedIpIds: normalizeIdList(body.trackedIpIds),
     wishlistIpIds: normalizeIdList(body.wishlistIpIds),
     profileHash: (body.profileHash ?? '').trim(),
   };

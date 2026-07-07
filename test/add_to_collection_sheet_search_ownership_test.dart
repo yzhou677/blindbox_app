@@ -71,15 +71,17 @@ CatalogSeedBundle _bundle() {
 
 Future<void> _pumpSheet(
   WidgetTester tester,
-  ProviderContainer container,
-) async {
+  ProviderContainer container, {
+  ScrollController? scrollController,
+}) async {
+  final scroll = scrollController ?? ScrollController();
   await tester.pumpWidget(
     UncontrolledProviderScope(
       container: container,
       child: MaterialApp(
         home: Scaffold(
           body: CollectibleSheetScope(
-            scrollController: ScrollController(),
+            scrollController: scroll,
             child: AddToCollectionSheet(
               onCreateCustom: () {},
             ),
@@ -90,6 +92,42 @@ Future<void> _pumpSheet(
   );
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 100));
+}
+
+CatalogSeedBundle _browseBundle() {
+  return CatalogSeedBundle(
+    brands: const [
+      CatalogBrand(id: 'popmart', displayName: 'POP MART'),
+    ],
+    ips: const [
+      CatalogIp(id: 'dimoo', brandId: 'popmart', displayName: 'DIMOO'),
+    ],
+    series: [
+      for (var i = 0; i < 8; i++)
+        CatalogSeries(
+          id: 'series_$i',
+          brandId: 'popmart',
+          ipId: 'dimoo',
+          displayName: 'Series $i',
+          releaseDate: '2026-01-${(i + 1).toString().padLeft(2, '0')}',
+          isBlindBox: true,
+          imageKey: 'series_$i',
+        ),
+    ],
+    figures: [
+      for (var i = 0; i < 8; i++)
+        CatalogFigure(
+          id: 'series_${i}_fig',
+          seriesId: 'series_$i',
+          brandId: 'popmart',
+          ipId: 'dimoo',
+          displayName: 'Figure $i',
+          isSecret: false,
+          sortOrder: 0,
+          imageKey: 'series_${i}_fig',
+        ),
+    ],
+  );
 }
 
 Finder _row(String seriesId) =>
@@ -143,6 +181,37 @@ void main() {
     expect(find.text('Latest releases'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+  });
+
+  testWidgets('browse add avoids reload spinner and updates CTA in place', (
+    tester,
+  ) async {
+    CatalogBundleCache.prime(_browseBundle());
+    final container = ProviderContainer(
+      overrides: [
+        collectionNotifierProvider.overrideWith(
+          () => _SeededCollectionNotifier(CollectionSnapshot.emptyTest()),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await _pumpSheet(tester, container);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    final addButton = find.text('Add').first;
+    await tester.ensureVisible(addButton);
+    await tester.tap(addButton);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.text('In collection'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 400));
+    container.dispose();
     await tester.pump();
   });
 

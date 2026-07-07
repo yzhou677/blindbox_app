@@ -1,5 +1,5 @@
 export type RecommendationReasonType =
-  | 'owned_ip'
+  | 'tracked_ip'
   | 'wishlist_ip'
   | 'recent_release'
   | 'new_in_catalog';
@@ -7,10 +7,11 @@ export type RecommendationReasonType =
 export interface RecommendationProfile {
   installId: string;
   trackedCatalogSeriesIds: string[];
-  ownedCatalogSeriesIds: string[];
-  wishlistCatalogSeriesIds: string[];
-  ownedIpIds: string[];
-  wishlistIpIds: string[];
+  ownedCatalogSeriesIds?: string[];
+  wishlistCatalogSeriesIds?: string[];
+  trackedIpIds: string[];
+  ownedIpIds?: string[];
+  wishlistIpIds?: string[];
   profileHash: string;
   updatedAt?: unknown;
 }

@@ -2,14 +2,14 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { computeRecommendations } from '../lib/recommendations/ruleEngine.js';
 
-test('computeRecommendations ranks owned IP matches and excludes tracked series', () => {
+test('computeRecommendations ranks tracked IP matches and excludes tracked series', () => {
   const items = computeRecommendations({
     profile: {
       installId: 'install-1',
       trackedCatalogSeriesIds: ['dimoo_owned'],
       ownedCatalogSeriesIds: ['dimoo_owned'],
       wishlistCatalogSeriesIds: [],
-      ownedIpIds: ['dimoo'],
+      trackedIpIds: ['dimoo'],
       wishlistIpIds: [],
       profileHash: 'hash',
     },
@@ -71,7 +71,7 @@ test('computeRecommendations limits scored picks to two per IP', () => {
       trackedCatalogSeriesIds: [],
       ownedCatalogSeriesIds: [],
       wishlistCatalogSeriesIds: [],
-      ownedIpIds: ['labubu'],
+      trackedIpIds: ['labubu'],
       wishlistIpIds: [],
       profileHash: 'hash',
     },
@@ -118,7 +118,7 @@ test('computeRecommendations caps scored picks at 10 without gap fill', () => {
       trackedCatalogSeriesIds: [],
       ownedCatalogSeriesIds: [],
       wishlistCatalogSeriesIds: [],
-      ownedIpIds: Array.from({ length: 10 }, (_, i) => `ip_${i}`),
+      trackedIpIds: Array.from({ length: 10 }, (_, i) => `ip_${i}`),
       wishlistIpIds: [],
       profileHash: 'hash',
     },
@@ -151,7 +151,7 @@ test('computeRecommendations gap fills only to minimum without scored picks', ()
       trackedCatalogSeriesIds: [],
       ownedCatalogSeriesIds: [],
       wishlistCatalogSeriesIds: [],
-      ownedIpIds: [],
+      trackedIpIds: [],
       wishlistIpIds: [],
       profileHash: 'hash',
     },
@@ -185,7 +185,7 @@ test('computeRecommendations keeps stable top picks; exploration follows profile
     trackedCatalogSeriesIds: [],
     ownedCatalogSeriesIds: [],
     wishlistCatalogSeriesIds: [],
-    ownedIpIds: Array.from({ length: 10 }, (_, i) => `ip_${i}`),
+    trackedIpIds: Array.from({ length: 10 }, (_, i) => `ip_${i}`),
     wishlistIpIds: [],
     profileHash,
   });
@@ -253,7 +253,7 @@ test('computeRecommendations breaks score ties by newest release date', () => {
       trackedCatalogSeriesIds: ['dimoo_owned'],
       ownedCatalogSeriesIds: ['dimoo_owned'],
       wishlistCatalogSeriesIds: [],
-      ownedIpIds: ['dimoo'],
+      trackedIpIds: ['dimoo'],
       wishlistIpIds: [],
       profileHash: 'hash',
     },
@@ -294,7 +294,7 @@ test('computeRecommendations excludes shelf-tracked series without owned figures
       trackedCatalogSeriesIds: ['dimoo_owned'],
       ownedCatalogSeriesIds: [],
       wishlistCatalogSeriesIds: [],
-      ownedIpIds: [],
+      trackedIpIds: [],
       wishlistIpIds: [],
       profileHash: 'hash',
     },
@@ -333,7 +333,7 @@ test('computeRecommendations gap fill randomizes within recent pool', () => {
     trackedCatalogSeriesIds: [],
     ownedCatalogSeriesIds: [],
     wishlistCatalogSeriesIds: [],
-    ownedIpIds: [],
+    trackedIpIds: [],
     wishlistIpIds: [],
     profileHash,
   });
@@ -384,7 +384,7 @@ test('computeRecommendations skips gap fill when diversified scored picks reach 
       trackedCatalogSeriesIds: ['labubu_0', 'dimoo_0', 'crybaby_0'],
       ownedCatalogSeriesIds: ['labubu_0', 'dimoo_0', 'crybaby_0'],
       wishlistCatalogSeriesIds: [],
-      ownedIpIds: ['labubu', 'dimoo', 'crybaby'],
+      trackedIpIds: ['labubu', 'dimoo', 'crybaby'],
       wishlistIpIds: [],
       profileHash: 'hash',
     },

@@ -9,9 +9,10 @@ abstract final class ForYouCopy {
 }
 
 String forYouReason(String reasonType, String? meta) {
+  final ipLabel = meta?.trim().isNotEmpty == true ? meta!.trim() : 'this IP';
   return switch (reasonType) {
-    RecommendationReasonType.ownedIp =>
-      'Because you collect ${meta?.trim().isNotEmpty == true ? meta!.trim() : 'this IP'}',
+    RecommendationReasonType.trackedIp || 'owned_ip' =>
+      "Because you're collecting $ipLabel",
     RecommendationReasonType.wishlistIp =>
       'Similar to your ${meta?.trim().isNotEmpty == true ? meta!.trim() : 'wishlist'} wishlist',
     RecommendationReasonType.recentRelease => 'New release',

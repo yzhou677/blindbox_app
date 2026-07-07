@@ -14,7 +14,7 @@ class PreferenceSignals {
     required this.trackedCatalogSeriesIds,
     required this.ownedCatalogSeriesIds,
     required this.wishlistCatalogSeriesIds,
-    required this.ownedIpIds,
+    required this.trackedIpIds,
     required this.wishlistIpIds,
     required this.trackedCatalogSeriesCount,
     required this.ownedCatalogSeriesCount,
@@ -26,14 +26,14 @@ class PreferenceSignals {
   /// figure ownership — drives recommendation exclusion.
   final Set<String> trackedCatalogSeriesIds;
 
-  /// Catalog series with at least one owned figure — used for IP affinity scoring
-  /// at compute time only; does not affect [profileHash] or refresh triggers.
+  /// Catalog series with at least one owned figure — collection progress and
+  /// confidence tiers only; not used by the recommendation pipeline.
   final Set<String> ownedCatalogSeriesIds;
   /// Wishlist progress inside tracked series — collection/Market only; not used
   /// by the recommendation pipeline.
   final Set<String> wishlistCatalogSeriesIds;
-  /// Taxonomy IPs with owned figures — scoring snapshot at last tracked refresh.
-  final Set<String> ownedIpIds;
+  /// Taxonomy IPs from tracked catalog series — IP affinity scoring at compute.
+  final Set<String> trackedIpIds;
   /// Taxonomy IPs with wishlist figures — not used by recommendations.
   final Set<String> wishlistIpIds;
   final int trackedCatalogSeriesCount;
@@ -46,7 +46,7 @@ PreferenceSignals extractSignals(CollectionSnapshot snap) {
   final trackedCatalogSeriesIds = <String>{};
   final ownedCatalogSeriesIds = <String>{};
   final wishlistCatalogSeriesIds = <String>{};
-  final ownedIpIds = <String>{};
+  final trackedIpIds = <String>{};
   final wishlistIpIds = <String>{};
 
   for (final series in snap.shelfSeries) {
@@ -54,17 +54,16 @@ PreferenceSignals extractSignals(CollectionSnapshot snap) {
     if (catalogId == null) continue;
 
     trackedCatalogSeriesIds.add(catalogId);
+    final ipId = series.taxonomyIpId?.trim();
+    if (ipId != null && ipId.isNotEmpty) {
+      trackedIpIds.add(ipId);
+    }
 
     final progress = progressForSeries(series, snap.figureStates);
     if (progress.owned > 0) {
       ownedCatalogSeriesIds.add(catalogId);
-      final ipId = series.taxonomyIpId?.trim();
-      if (ipId != null && ipId.isNotEmpty) {
-        ownedIpIds.add(ipId);
-      }
     } else if (progress.wishlist > 0) {
       wishlistCatalogSeriesIds.add(catalogId);
-      final ipId = series.taxonomyIpId?.trim();
       if (ipId != null && ipId.isNotEmpty) {
         wishlistIpIds.add(ipId);
       }
@@ -75,7 +74,7 @@ PreferenceSignals extractSignals(CollectionSnapshot snap) {
     trackedCatalogSeriesIds: trackedCatalogSeriesIds,
     ownedCatalogSeriesIds: ownedCatalogSeriesIds,
     wishlistCatalogSeriesIds: wishlistCatalogSeriesIds,
-    ownedIpIds: ownedIpIds,
+    trackedIpIds: trackedIpIds,
     wishlistIpIds: wishlistIpIds,
     trackedCatalogSeriesCount: trackedCatalogSeriesIds.length,
     ownedCatalogSeriesCount: ownedCatalogSeriesIds.length,
@@ -87,7 +86,7 @@ PreferenceSignals extractSignals(CollectionSnapshot snap) {
     trackedCatalogSeriesIds: trackedCatalogSeriesIds,
     ownedCatalogSeriesIds: ownedCatalogSeriesIds,
     wishlistCatalogSeriesIds: wishlistCatalogSeriesIds,
-    ownedIpIds: ownedIpIds,
+    trackedIpIds: trackedIpIds,
     wishlistIpIds: wishlistIpIds,
     trackedCatalogSeriesCount: trackedCatalogSeriesIds.length,
     ownedCatalogSeriesCount: ownedCatalogSeriesIds.length,
@@ -112,9 +111,7 @@ Map<String, dynamic> preferenceSignalsToProfileJson({
   return {
     'installId': installId,
     'trackedCatalogSeriesIds': signals.trackedCatalogSeriesIds.toList()..sort(),
-    // Owned IP snapshot for cloud scoring when tracked taste changes — not part
-    // of profileHash, so figure progress alone does not reshuffle For You.
-    'ownedIpIds': signals.ownedIpIds.toList()..sort(),
+    'trackedIpIds': signals.trackedIpIds.toList()..sort(),
     'profileHash': signals.profileHash,
   };
 }

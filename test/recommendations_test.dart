@@ -90,7 +90,7 @@ void main() {
       final signals = extractSignals(snap);
       expect(signals.trackedCatalogSeriesIds, {'dimoo_a'});
       expect(signals.ownedCatalogSeriesIds, {'dimoo_a'});
-      expect(signals.ownedIpIds, {'dimoo'});
+      expect(signals.trackedIpIds, {'dimoo'});
       expect(signals.ownedCatalogSeriesCount, 1);
     });
 
@@ -130,6 +130,7 @@ void main() {
 
       final signals = extractSignals(snap);
       expect(signals.trackedCatalogSeriesIds, {'labubu_a'});
+      expect(signals.trackedIpIds, {'labubu'});
       expect(signals.wishlistCatalogSeriesIds, {'labubu_a'});
       expect(signals.wishlistIpIds, {'labubu'});
       expect(signals.ownedCatalogSeriesIds, isEmpty);
@@ -149,6 +150,7 @@ void main() {
 
       final signals = extractSignals(snap);
       expect(signals.trackedCatalogSeriesIds, {'dimoo_shelf'});
+      expect(signals.trackedIpIds, {'dimoo'});
       expect(signals.trackedCatalogSeriesCount, 1);
       expect(signals.ownedCatalogSeriesIds, isEmpty);
       expect(signals.ownedCatalogSeriesCount, 0);
@@ -274,7 +276,7 @@ void main() {
         wishlistCatalogSeriesIds: {
           for (var i = 0; i < wishlist; i++) 'wish_$i',
         },
-        ownedIpIds: const {},
+        trackedIpIds: const {},
         wishlistIpIds: const {},
         trackedCatalogSeriesCount: tracked,
         ownedCatalogSeriesCount: owned,
@@ -363,12 +365,12 @@ void main() {
       );
     }
 
-    test('ranks owned IP matches ahead of gap-fill and excludes tracked series', () {
+    test('ranks tracked IP matches ahead of gap-fill and excludes tracked series', () {
       final signals = PreferenceSignals(
         trackedCatalogSeriesIds: {'dimoo_owned'},
         ownedCatalogSeriesIds: {'dimoo_owned'},
         wishlistCatalogSeriesIds: const {},
-        ownedIpIds: {'dimoo'},
+        trackedIpIds: {'dimoo'},
         wishlistIpIds: const {},
         trackedCatalogSeriesCount: 1,
         ownedCatalogSeriesCount: 1,
@@ -390,10 +392,34 @@ void main() {
       );
     });
 
+    test('tracked IP affinity applies without owned figures', () {
+      final signals = extractSignals(
+        CollectionSnapshot(
+          shelfSeries: [
+            testShelfSeries(
+              id: 'shelf_only',
+              catalogTemplateId: 'dimoo_owned',
+              taxonomyIpId: 'dimoo',
+            ),
+          ],
+          figureStates: const {},
+        ),
+      );
+
+      final items = computeLocalRecommendations(
+        signals: signals,
+        bundle: bundle(),
+        clock: DateTime(2026, 5, 21),
+      );
+
+      expect(signals.trackedIpIds, {'dimoo'});
+      expect(items.map((item) => item.seriesId), contains('dimoo_new'));
+    });
+
     test('forYouReason maps reason codes to copy', () {
       expect(
-        forYouReason(RecommendationReasonType.ownedIp, 'DIMOO'),
-        'Because you collect DIMOO',
+        forYouReason(RecommendationReasonType.trackedIp, 'DIMOO'),
+        "Because you're collecting DIMOO",
       );
       expect(
         forYouReason(RecommendationReasonType.wishlistIp, 'LABUBU'),
@@ -407,7 +433,7 @@ void main() {
         trackedCatalogSeriesIds: {'labubu_owned'},
         ownedCatalogSeriesIds: const {},
         wishlistCatalogSeriesIds: {'labubu_owned'},
-        ownedIpIds: const {},
+        trackedIpIds: {'labubu'},
         wishlistIpIds: {'labubu'},
         trackedCatalogSeriesCount: 1,
         ownedCatalogSeriesCount: 0,
@@ -462,7 +488,7 @@ void main() {
         trackedCatalogSeriesIds: {'dimoo_owned'},
         ownedCatalogSeriesIds: const {},
         wishlistCatalogSeriesIds: const {},
-        ownedIpIds: const {},
+        trackedIpIds: const {},
         wishlistIpIds: const {},
         trackedCatalogSeriesCount: 1,
         ownedCatalogSeriesCount: 0,
@@ -485,7 +511,7 @@ void main() {
         trackedCatalogSeriesIds: {'dimoo_owned'},
         ownedCatalogSeriesIds: {'dimoo_owned'},
         wishlistCatalogSeriesIds: const {},
-        ownedIpIds: {'dimoo'},
+        trackedIpIds: {'dimoo'},
         wishlistIpIds: const {},
         trackedCatalogSeriesCount: 1,
         ownedCatalogSeriesCount: 1,
@@ -585,7 +611,7 @@ void main() {
         trackedCatalogSeriesIds: const {},
         ownedCatalogSeriesIds: const {},
         wishlistCatalogSeriesIds: const {},
-        ownedIpIds: {'labubu'},
+        trackedIpIds: {'labubu'},
         wishlistIpIds: const {},
         trackedCatalogSeriesCount: 0,
         ownedCatalogSeriesCount: 0,
@@ -683,7 +709,7 @@ void main() {
         trackedCatalogSeriesIds: {'labubu_0', 'dimoo_0', 'crybaby_0'},
         ownedCatalogSeriesIds: {'labubu_0', 'dimoo_0', 'crybaby_0'},
         wishlistCatalogSeriesIds: const {},
-        ownedIpIds: {'labubu', 'dimoo', 'crybaby'},
+        trackedIpIds: {'labubu', 'dimoo', 'crybaby'},
         wishlistIpIds: const {},
         trackedCatalogSeriesCount: 3,
         ownedCatalogSeriesCount: 3,
@@ -733,7 +759,7 @@ void main() {
         trackedCatalogSeriesIds: const {},
         ownedCatalogSeriesIds: const {},
         wishlistCatalogSeriesIds: const {},
-        ownedIpIds: {for (var i = 0; i < 10; i++) 'ip_$i'},
+        trackedIpIds: {for (var i = 0; i < 10; i++) 'ip_$i'},
         wishlistIpIds: const {},
         trackedCatalogSeriesCount: 0,
         ownedCatalogSeriesCount: 0,
@@ -787,7 +813,7 @@ void main() {
         trackedCatalogSeriesIds: const {},
         ownedCatalogSeriesIds: const {},
         wishlistCatalogSeriesIds: const {},
-        ownedIpIds: const {},
+        trackedIpIds: const {},
         wishlistIpIds: const {},
         trackedCatalogSeriesCount: 0,
         ownedCatalogSeriesCount: 0,
@@ -861,7 +887,7 @@ void main() {
           trackedCatalogSeriesIds: const {},
           ownedCatalogSeriesIds: const {},
           wishlistCatalogSeriesIds: const {},
-          ownedIpIds: const {},
+          trackedIpIds: const {},
           wishlistIpIds: const {},
           trackedCatalogSeriesCount: 0,
           ownedCatalogSeriesCount: 0,
@@ -934,7 +960,7 @@ void main() {
           trackedCatalogSeriesIds: const {},
           ownedCatalogSeriesIds: const {},
           wishlistCatalogSeriesIds: const {},
-          ownedIpIds: {for (var i = 0; i < 10; i++) 'ip_$i'},
+          trackedIpIds: {for (var i = 0; i < 10; i++) 'ip_$i'},
           wishlistIpIds: const {},
           trackedCatalogSeriesCount: 0,
           ownedCatalogSeriesCount: 0,

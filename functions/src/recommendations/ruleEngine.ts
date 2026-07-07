@@ -100,7 +100,7 @@ export function computeRecommendations(params: {
 }): RecommendationItemWire[] {
   const now = params.now ?? new Date();
   const trackedSeries = trackedCatalogSeriesSet(params.profile);
-  const ownedIpIds = new Set(params.profile.ownedIpIds);
+  const trackedIpIds = trackedIpIdSet(params.profile, params.series);
   const ipNameById = new Map(params.ips.map((ip) => [ip.id, ip.displayName]));
   const scored = new Map<string, ScoredCandidate>();
 
@@ -118,11 +118,11 @@ export function computeRecommendations(params: {
 
   for (const series of params.series) {
     if (trackedSeries.has(series.id)) continue;
-    if (ownedIpIds.has(series.ipId)) {
+    if (trackedIpIds.has(series.ipId)) {
       upsert(
         series,
         30,
-        'owned_ip',
+        'tracked_ip',
         ipNameById.get(series.ipId) ?? series.ipId,
       );
     }
@@ -269,9 +269,27 @@ function trackedCatalogSeriesSet(profile: RecommendationProfile): Set<string> {
   const tracked = new Set(profile.trackedCatalogSeriesIds ?? []);
   if (tracked.size > 0) return tracked;
   // Legacy profiles uploaded before trackedCatalogSeriesIds shipped.
-  for (const id of profile.ownedCatalogSeriesIds) tracked.add(id);
-  for (const id of profile.wishlistCatalogSeriesIds) tracked.add(id);
+  for (const id of profile.ownedCatalogSeriesIds ?? []) tracked.add(id);
+  for (const id of profile.wishlistCatalogSeriesIds ?? []) tracked.add(id);
   return tracked;
+}
+
+function trackedIpIdSet(
+  profile: RecommendationProfile,
+  series: CatalogSeriesDoc[],
+): Set<string> {
+  const explicit = (profile.trackedIpIds ?? []).filter((id) => id.trim().length > 0);
+  if (explicit.length > 0) {
+    return new Set(explicit);
+  }
+  const tracked = trackedCatalogSeriesSet(profile);
+  const ids = new Set<string>();
+  for (const entry of series) {
+    if (tracked.has(entry.id) && entry.ipId) {
+      ids.add(entry.ipId);
+    }
+  }
+  return ids;
 }
 
 function buildOrderIndex(series: CatalogSeriesDoc[]): Map<string, number> {

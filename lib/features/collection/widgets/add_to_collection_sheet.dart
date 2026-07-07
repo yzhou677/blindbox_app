@@ -121,7 +121,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     final catalogAsync = ref.watch(catalogBundleProvider);
     final availability = ref.watch(catalogAvailabilityProvider);
     final retry = ref.read(catalogDownloadRetryProvider);
-    final recommendationsAsync = ref.watch(addSeriesCatalogRecommendationsProvider);
+    final recommendations = ref.watch(addSeriesCatalogRecommendationsProvider);
     final catalogActive = _trimmedQuery.isNotEmpty;
     final sheetScroll = CollectibleSheetScope.scrollControllerOf(context);
     final catalogBundle = catalogAsync.valueOrNull;
@@ -217,9 +217,10 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
                     context,
                     scheme,
                     textTheme,
+                    snap,
                     notifier,
                     availability,
-                    recommendationsAsync,
+                    recommendations,
                     catalogBundle,
                     retry,
                   ),
@@ -270,9 +271,10 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
     BuildContext context,
     ColorScheme scheme,
     TextTheme textTheme,
+    CollectionSnapshot snap,
     CollectionNotifier notifier,
     CatalogAvailability availability,
-    AsyncValue<List<CatalogSeries>> recommendationsAsync,
+    List<CatalogSeries> recs,
     CatalogSeedBundle? catalogBundle,
     Future<void> Function() retry,
   ) {
@@ -302,76 +304,56 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
         ),
       );
     }
-    return recommendationsAsync.when(
-      loading: () => const SliverFillRemaining(
-        hasScrollBody: false,
-        child: Center(child: CircularProgressIndicator()),
-      ),
-      error: (_, _) => SliverFillRemaining(
+    if (recs.isEmpty) {
+      return SliverFillRemaining(
         hasScrollBody: false,
         child: Center(
-          child: Text(
-            'Couldn?�t load recommendations.',
-            style: textTheme.bodyMedium?.copyWith(
-              color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Text(
+              'No catalog series to show yet.',
+              textAlign: TextAlign.center,
+              style: textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
+                height: 1.4,
+              ),
             ),
           ),
         ),
-      ),
-      data: (recs) {
-        if (recs.isEmpty) {
-          return SliverFillRemaining(
-            hasScrollBody: false,
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Text(
-                  'No catalog series to show yet.',
-                  textAlign: TextAlign.center,
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
-                    height: 1.4,
-                  ),
-                ),
-              ),
-            ),
-          );
-        }
-        final snap = ref.watch(collectionNotifierProvider);
-        return SliverList.separated(
-          itemCount: recs.length,
-          separatorBuilder: (context, index) => const SizedBox(height: 12),
-          itemBuilder: (ctx, i) {
-            final s = recs[i];
-            final coverKey = _seriesCoverImageKey(
-              catalogBundle,
-              s.templateId,
-            );
-            final shelfCta = CollectionSeriesShelfCtaPresentation.resolve(
-              snapshot: snap,
-              layout: CollectionSeriesShelfCtaLayout.compactTrailing,
-              catalogTemplateId: s.templateId,
-              seriesName: s.name,
-              brandName: s.brand,
-              taxonomyBrandId: s.taxonomyBrandId,
-              taxonomyIpId: s.taxonomyIpId,
-            );
-            return _SuggestionCard(
-              key: ValueKey<String>('add-series-rec:${s.templateId}'),
+      );
+    }
+    return SliverList.separated(
+      itemCount: recs.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 12),
+      itemBuilder: (ctx, i) {
+        final s = recs[i];
+        final coverKey = _seriesCoverImageKey(
+          catalogBundle,
+          s.templateId,
+        );
+        final shelfCta = CollectionSeriesShelfCtaPresentation.resolve(
+          snapshot: snap,
+          layout: CollectionSeriesShelfCtaLayout.compactTrailing,
+          catalogTemplateId: s.templateId,
+          seriesName: s.name,
+          brandName: s.brand,
+          taxonomyBrandId: s.taxonomyBrandId,
+          taxonomyIpId: s.taxonomyIpId,
+        );
+        return _SuggestionCard(
+          key: ValueKey<String>('add-series-rec:${s.templateId}'),
+          series: s,
+          coverImageKey: coverKey,
+          shelfCta: shelfCta,
+          onOpenPreview: () {
+            _openCatalogSeriesPreview(
+              ctx,
               series: s,
-              coverImageKey: coverKey,
-              shelfCta: shelfCta,
-              onOpenPreview: () {
-                _openCatalogSeriesPreview(
-                  ctx,
-                  series: s,
-                  snap: snap,
-                  onAdd: () => commitCatalogSeriesToShelf(notifier, s),
-                );
-              },
+              snap: snap,
               onAdd: () => commitCatalogSeriesToShelf(notifier, s),
             );
           },
+          onAdd: () => commitCatalogSeriesToShelf(notifier, s),
         );
       },
     );

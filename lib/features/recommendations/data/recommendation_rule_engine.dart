@@ -72,11 +72,11 @@ List<RecommendationItem> computeLocalRecommendations({
   for (final series in bundle.series) {
     if (isTracked(series)) continue;
 
-    if (signals.ownedIpIds.contains(series.ipId)) {
+    if (signals.trackedIpIds.contains(series.ipId)) {
       upsert(
         series,
         score: 30,
-        reasonType: RecommendationReasonType.ownedIp,
+        reasonType: RecommendationReasonType.trackedIp,
         reasonMeta: ipNameById[series.ipId] ?? series.ipId,
       );
     }

@@ -18,7 +18,7 @@ void main() {
             'items': [
               {
                 'seriesId': 'dimoo_new',
-                'reasonType': RecommendationReasonType.ownedIp,
+                'reasonType': RecommendationReasonType.trackedIp,
                 'reasonMeta': 'DIMOO',
               },
             ],
@@ -35,7 +35,7 @@ void main() {
 
     expect(result.items, hasLength(1));
     expect(result.items.first.seriesId, 'dimoo_new');
-    expect(result.items.first.reasonType, RecommendationReasonType.ownedIp);
+    expect(result.items.first.reasonType, RecommendationReasonType.trackedIp);
     expect(result.items.first.reasonMeta, 'DIMOO');
   });
 
@@ -44,7 +44,7 @@ void main() {
       trackedCatalogSeriesIds: {'dimoo_owned'},
       ownedCatalogSeriesIds: {'dimoo_owned'},
       wishlistCatalogSeriesIds: const {},
-      ownedIpIds: {'dimoo'},
+      trackedIpIds: {'dimoo'},
       wishlistIpIds: const {},
       trackedCatalogSeriesCount: 1,
       ownedCatalogSeriesCount: 1,
@@ -72,7 +72,7 @@ void main() {
     expect(decoded['installId'], 'install-1');
     expect(decoded['profileHash'], 'hash-123');
     expect(decoded['trackedCatalogSeriesIds'], ['dimoo_owned']);
-    expect(decoded['ownedIpIds'], ['dimoo']);
+    expect(decoded['trackedIpIds'], ['dimoo']);
     expect(decoded.containsKey('wishlistCatalogSeriesIds'), isFalse);
     expect(decoded.containsKey('wishlistIpIds'), isFalse);
   });
