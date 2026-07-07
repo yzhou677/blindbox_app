@@ -189,7 +189,7 @@ class _MarketBrowseSearchScreenState
       },
       child: FeedSearchScreen(
       title: 'Search market',
-      hintText: SearchPlaceholders.localMarket,
+      hintText: SearchPlaceholders.market,
       emptyPrompt: 'Search by series, figure, or brand.',
       controller: _search,
       onChanged: _onSearchChanged,

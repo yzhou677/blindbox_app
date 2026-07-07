@@ -5,5 +5,6 @@ abstract final class AddSeriesCatalogCopy {
 
   static const String browseHeading = 'Browse';
 
-  static const String searchOfficialCatalogHint = 'Search official catalog…';
+  static const String searchOfficialCatalogHint =
+      'Search the official catalog…';
 }

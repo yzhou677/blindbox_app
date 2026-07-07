@@ -192,7 +192,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                   AppSearchField(
                     readOnly: true,
                     onTap: () => context.push('/market/search'),
-                    hintText: SearchPlaceholders.localMarket,
+                    hintText: SearchPlaceholders.market,
                   ),
                   if (!immersive) ...[
                     const SizedBox(height: FeedRhythm.blockGapMedium),

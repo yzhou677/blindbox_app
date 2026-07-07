@@ -83,7 +83,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: AppSearchField(
                 readOnly: true,
                 onTap: () => context.push('/home/catalog'),
-                hintText: SearchPlaceholders.localCatalog,
+                hintText: SearchPlaceholders.discoverCatalog,
               ),
             ),
           ),

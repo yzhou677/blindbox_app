@@ -82,7 +82,7 @@ class _CatalogSearchExperienceState
   bool get _hasSearchText => _trimmedQuery.isNotEmpty;
 
   String get _hintText =>
-      widget.hintText ?? SearchPlaceholders.localCatalog;
+      widget.hintText ?? SearchPlaceholders.discoverCatalog;
 
   bool get _autofocus =>
       widget.autofocus ??

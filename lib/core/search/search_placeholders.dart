@@ -1,10 +1,11 @@
-/// Shared search field hints for local search surfaces.
+/// Shared search field hints — scope-first copy per surface.
 abstract final class SearchPlaceholders {
-  /// Catalog bundle search (Discover, Add Series) and Collection shelf.
-  static const String localCatalog =
-      'Search figures, series, IPs, or brands…';
+  /// My Collection shelf filter.
+  static const String collection = 'Search your collection…';
 
-  /// Offline Market browse / search overlay (local filter path).
-  static const String localMarket =
-      'Search figures, series, IPs, or brands…';
+  /// Discover catalog search (home launcher + full-screen browse).
+  static const String discoverCatalog = 'Search the catalog…';
+
+  /// Market browse tab launcher and search overlay.
+  static const String market = 'Search market listings…';
 }

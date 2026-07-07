@@ -417,7 +417,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               padding: const EdgeInsets.only(top: FeedRhythm.headerToSearchField),
               child: AppSearchField(
                 controller: _searchController,
-                hintText: SearchPlaceholders.localCatalog,
+                hintText: SearchPlaceholders.collection,
                 onChanged: _onSearchChanged,
                 suffixIcon: ValueListenableBuilder<TextEditingValue>(
                   valueListenable: _searchController,

@@ -366,11 +366,23 @@ void main() {
   });
 
   group('SearchPlaceholders', () {
-    test('local catalog and market hints match for shared field coverage', () {
-      expect(SearchPlaceholders.localCatalog, SearchPlaceholders.localMarket);
+    test('each surface has a distinct scope-first hint', () {
       expect(
-        SearchPlaceholders.localCatalog,
-        'Search figures, series, IPs, or brands…',
+        SearchPlaceholders.collection,
+        'Search your collection…',
+      );
+      expect(
+        SearchPlaceholders.discoverCatalog,
+        'Search the catalog…',
+      );
+      expect(
+        SearchPlaceholders.market,
+        'Search market listings…',
+      );
+      expect(SearchPlaceholders.collection, isNot(SearchPlaceholders.market));
+      expect(
+        SearchPlaceholders.discoverCatalog,
+        isNot(SearchPlaceholders.collection),
       );
     });
   });
