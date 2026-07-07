@@ -26,10 +26,15 @@ class PreferenceSignals {
   /// figure ownership — drives recommendation exclusion.
   final Set<String> trackedCatalogSeriesIds;
 
-  /// Catalog series with at least one owned figure — drives IP affinity scoring.
+  /// Catalog series with at least one owned figure — used for IP affinity scoring
+  /// at compute time only; does not affect [profileHash] or refresh triggers.
   final Set<String> ownedCatalogSeriesIds;
+  /// Wishlist progress inside tracked series — collection/Market only; not used
+  /// by the recommendation pipeline.
   final Set<String> wishlistCatalogSeriesIds;
+  /// Taxonomy IPs with owned figures — scoring snapshot at last tracked refresh.
   final Set<String> ownedIpIds;
+  /// Taxonomy IPs with wishlist figures — not used by recommendations.
   final Set<String> wishlistIpIds;
   final int trackedCatalogSeriesCount;
   final int ownedCatalogSeriesCount;
@@ -92,23 +97,10 @@ PreferenceSignals extractSignals(CollectionSnapshot snap) {
 }
 
 String _computeProfileHash(PreferenceSignals signals) {
-  final buffer = StringBuffer();
-  void writeSet(String key, Set<String> values) {
-    buffer
-      ..write(key)
-      ..write(':');
-    final sorted = values.toList()..sort();
-    buffer
-      ..write(sorted.join(','))
-      ..write(';');
-  }
-
-  writeSet('trackedSeries', signals.trackedCatalogSeriesIds);
-  writeSet('ownedSeries', signals.ownedCatalogSeriesIds);
-  writeSet('wishlistSeries', signals.wishlistCatalogSeriesIds);
-  writeSet('ownedIp', signals.ownedIpIds);
-  writeSet('wishlistIp', signals.wishlistIpIds);
-
+  final sorted = signals.trackedCatalogSeriesIds.toList()..sort();
+  final buffer = StringBuffer()
+    ..write('trackedSeries:')
+    ..write(sorted.join(','));
   final digest = sha256.convert(utf8.encode(buffer.toString()));
   return digest.toString();
 }
@@ -120,11 +112,9 @@ Map<String, dynamic> preferenceSignalsToProfileJson({
   return {
     'installId': installId,
     'trackedCatalogSeriesIds': signals.trackedCatalogSeriesIds.toList()..sort(),
-    'ownedCatalogSeriesIds': signals.ownedCatalogSeriesIds.toList()..sort(),
-    'wishlistCatalogSeriesIds': signals.wishlistCatalogSeriesIds.toList()
-      ..sort(),
+    // Owned IP snapshot for cloud scoring when tracked taste changes — not part
+    // of profileHash, so figure progress alone does not reshuffle For You.
     'ownedIpIds': signals.ownedIpIds.toList()..sort(),
-    'wishlistIpIds': signals.wishlistIpIds.toList()..sort(),
     'profileHash': signals.profileHash,
   };
 }

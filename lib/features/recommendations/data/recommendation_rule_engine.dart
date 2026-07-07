@@ -69,9 +69,6 @@ List<RecommendationItem> computeLocalRecommendations({
   bool isTracked(catalog.CatalogSeries series) =>
       signals.trackedCatalogSeriesIds.contains(series.id);
 
-  bool isWishlisted(catalog.CatalogSeries series) =>
-      signals.wishlistCatalogSeriesIds.contains(series.id);
-
   for (final series in bundle.series) {
     if (isTracked(series)) continue;
 
@@ -80,20 +77,6 @@ List<RecommendationItem> computeLocalRecommendations({
         series,
         score: 30,
         reasonType: RecommendationReasonType.ownedIp,
-        reasonMeta: ipNameById[series.ipId] ?? series.ipId,
-      );
-    }
-  }
-
-  for (final series in bundle.series) {
-    if (isTracked(series) || isWishlisted(series)) continue;
-    if (scored.containsKey(series.id)) continue;
-
-    if (signals.wishlistIpIds.contains(series.ipId)) {
-      upsert(
-        series,
-        score: 25,
-        reasonType: RecommendationReasonType.wishlistIp,
         reasonMeta: ipNameById[series.ipId] ?? series.ipId,
       );
     }
