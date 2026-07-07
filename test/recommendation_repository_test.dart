@@ -9,7 +9,9 @@ import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/recommendations/data/preference_signal_extractor.dart';
 import 'package:blindbox_app/features/recommendations/data/recommendation_http_client.dart';
 import 'package:blindbox_app/features/recommendations/data/recommendation_repository.dart';
+import 'package:blindbox_app/features/recommendations/domain/recommendation_item.dart';
 import 'package:blindbox_app/features/recommendations/domain/recommendation_reason_type.dart';
+import 'package:blindbox_app/features/recommendations/domain/recommendation_result.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -378,6 +380,27 @@ void main() {
       await repo.getRecommendations(_installId, _testBundle());
 
       expect(httpCalled, isTrue);
+    });
+
+    test('excludeOwnedCatalogSeries removes owned catalog picks', () {
+      final signals = extractSignals(_ownedCollectionSnapshot());
+      final filtered = excludeOwnedCatalogSeries(
+        RecommendationResult(
+          items: const [
+            RecommendationItem(
+              seriesId: 'dimoo_new',
+              reasonType: RecommendationReasonType.ownedIp,
+            ),
+            RecommendationItem(
+              seriesId: 'dimoo_owned',
+              reasonType: RecommendationReasonType.ownedIp,
+            ),
+          ],
+        ),
+        signals,
+      );
+
+      expect(filtered.items.map((item) => item.seriesId), ['dimoo_new']);
     });
 
     test('stale cloud response recommending owned series falls back to local', () async {

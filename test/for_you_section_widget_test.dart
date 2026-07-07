@@ -11,6 +11,7 @@ import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/recommendations/application/anonymous_id_provider.dart';
 import 'package:blindbox_app/features/recommendations/application/recommendations_provider.dart';
 import 'package:blindbox_app/features/recommendations/application/recommendation_readiness_provider.dart';
+import 'package:blindbox_app/features/recommendations/data/preference_signal_extractor.dart';
 import 'package:blindbox_app/features/recommendations/domain/recommendation_item.dart';
 import 'package:blindbox_app/features/recommendations/domain/recommendation_reason_type.dart';
 import 'package:blindbox_app/features/recommendations/domain/recommendation_result.dart';
@@ -134,6 +135,24 @@ void main() {
           previousResult: previous,
         ),
         previous,
+      );
+    });
+
+    test('visibleForYouResult drops owned series from stale keep-previous rail', () {
+      final previous = resultWithItems();
+      final signals = PreferenceSignals(
+        ownedCatalogSeriesIds: {'dimoo_new'},
+        wishlistCatalogSeriesIds: const {},
+        ownedIpIds: {'dimoo'},
+        wishlistIpIds: const {},
+        ownedCatalogSeriesCount: 1,
+        wishlistCatalogSeriesCount: 0,
+        profileHash: 'hash',
+      );
+
+      expect(
+        visibleForYouResult(displayResult: previous, signals: signals)?.items,
+        isEmpty,
       );
     });
   });

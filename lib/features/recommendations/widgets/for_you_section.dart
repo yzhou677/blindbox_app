@@ -8,6 +8,8 @@ import 'package:blindbox_app/features/collection/presentation/collection_series_
 import 'package:blindbox_app/features/collection/widgets/catalog_series_preview_sheet.dart';
 import 'package:blindbox_app/features/recommendations/application/recommendation_readiness_provider.dart';
 import 'package:blindbox_app/features/recommendations/application/recommendations_provider.dart';
+import 'package:blindbox_app/features/recommendations/data/preference_signal_extractor.dart';
+import 'package:blindbox_app/features/recommendations/data/recommendation_repository.dart';
 import 'package:blindbox_app/features/recommendations/domain/recommendation_item.dart';
 import 'package:blindbox_app/features/recommendations/domain/recommendation_result.dart';
 import 'package:blindbox_app/features/recommendations/presentation/for_you_copy.dart';
@@ -37,6 +39,17 @@ RecommendationResult? resolveForYouDisplayResult({
   );
 }
 
+/// Display projection for For You — filters owned series for render only.
+/// Does not mutate the underlying [recommendationsProvider] result.
+@visibleForTesting
+RecommendationResult? visibleForYouResult({
+  required RecommendationResult? displayResult,
+  required PreferenceSignals signals,
+}) {
+  if (displayResult == null) return null;
+  return excludeOwnedCatalogSeries(displayResult, signals);
+}
+
 class _ForYouSectionState extends ConsumerState<ForYouSection> {
   RecommendationResult? _previousResult;
 
@@ -57,9 +70,13 @@ class _ForYouSectionState extends ConsumerState<ForYouSection> {
     });
 
     final recommendationsAsync = ref.watch(recommendationsProvider);
-    final displayResult = resolveForYouDisplayResult(
-      recommendationsAsync: recommendationsAsync,
-      previousResult: _previousResult,
+    final signals = extractSignals(ref.watch(collectionNotifierProvider));
+    final displayResult = visibleForYouResult(
+      displayResult: resolveForYouDisplayResult(
+        recommendationsAsync: recommendationsAsync,
+        previousResult: _previousResult,
+      ),
+      signals: signals,
     );
 
     final Widget? sectionBody = _buildSectionBody(

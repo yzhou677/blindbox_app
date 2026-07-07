@@ -71,12 +71,23 @@ class RecommendationRepository {
     if (memo != null &&
         memo.installId == installId &&
         memo.profileHash == signals.profileHash) {
-      return _resolveSeries(_normalizeResult(memo.result), bundle);
+      return _finalizeResult(
+        installId: installId,
+        signals: signals,
+        result: memo.result,
+        bundle: bundle,
+        remember: false,
+      );
     }
 
     final cached = await _readCache(installId, signals.profileHash);
     if (cached != null) {
-      return _rememberAndResolve(installId, signals.profileHash, cached, bundle);
+      return _finalizeResult(
+        installId: installId,
+        signals: signals,
+        result: cached,
+        bundle: bundle,
+      );
     }
 
     if (RecommendationGatewayConfig.isHttpActive) {
@@ -93,14 +104,19 @@ class RecommendationRepository {
         } else if (_isCloudResultStale(signals, normalized)) {
           // Server profile may lag local collection until debounced sync.
         } else {
-          final stamped = _withProfileHash(normalized, signals.profileHash);
-          await _writeCache(installId, stamped);
-          return _rememberAndResolve(
-            installId,
+          final stamped = _withProfileHash(
+            excludeOwnedCatalogSeries(normalized, signals),
             signals.profileHash,
-            stamped,
-            bundle,
           );
+          if (stamped.items.isNotEmpty) {
+            await _writeCache(installId, stamped);
+            return _finalizeResult(
+              installId: installId,
+              signals: signals,
+              result: stamped,
+              bundle: bundle,
+            );
+          }
         }
       } catch (_) {
         // Fall through to local engine.
@@ -111,7 +127,12 @@ class RecommendationRepository {
     if (local.items.isNotEmpty) {
       await _writeCache(installId, local);
     }
-    return _rememberAndResolve(installId, signals.profileHash, local, bundle);
+    return _finalizeResult(
+      installId: installId,
+      signals: signals,
+      result: local,
+      bundle: bundle,
+    );
   }
 
   Future<void> updateProfile(
@@ -137,18 +158,34 @@ class RecommendationRepository {
     await prefs.remove(_cacheKey(installId));
   }
 
-  RecommendationResult _rememberAndResolve(
-    String installId,
-    String profileHash,
+  RecommendationResult _finalizeResult({
+    required String installId,
+    required PreferenceSignals signals,
+    required RecommendationResult result,
+    required CatalogSeedBundle bundle,
+    bool remember = true,
+  }) {
+    final sanitized = excludeOwnedCatalogSeries(_normalizeResult(result), signals);
+    if (remember) {
+      _lastComputed = _ComputedRecommendationMemo(
+        installId: installId,
+        profileHash: signals.profileHash,
+        result: sanitized,
+      );
+    }
+    return _resolveSeries(sanitized, bundle);
+  }
+
+  bool _isCloudResultStale(
+    PreferenceSignals signals,
     RecommendationResult result,
-    CatalogSeedBundle bundle,
   ) {
-    _lastComputed = _ComputedRecommendationMemo(
-      installId: installId,
-      profileHash: profileHash,
-      result: result,
-    );
-    return _resolveSeries(_normalizeResult(result), bundle);
+    for (final item in result.items) {
+      if (signals.ownedCatalogSeriesIds.contains(item.seriesId)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   RecommendationResult _computeLocal(
@@ -210,18 +247,6 @@ class RecommendationRepository {
     );
   }
 
-  bool _isCloudResultStale(
-    PreferenceSignals signals,
-    RecommendationResult result,
-  ) {
-    for (final item in result.items) {
-      if (signals.ownedCatalogSeriesIds.contains(item.seriesId)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   RecommendationResult _withProfileHash(
     RecommendationResult result,
     String profileHash,
@@ -257,4 +282,20 @@ class RecommendationRepository {
       profileHash: result.profileHash,
     );
   }
+}
+
+/// Defensive pass — owned catalog series must never reach For You UI.
+RecommendationResult excludeOwnedCatalogSeries(
+  RecommendationResult result,
+  PreferenceSignals signals,
+) {
+  if (signals.ownedCatalogSeriesIds.isEmpty) return result;
+  final filtered = result.items
+      .where((item) => !signals.ownedCatalogSeriesIds.contains(item.seriesId))
+      .toList();
+  if (filtered.length == result.items.length) return result;
+  return RecommendationResult(
+    items: filtered,
+    profileHash: result.profileHash,
+  );
 }
