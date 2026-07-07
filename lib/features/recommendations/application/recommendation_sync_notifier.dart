@@ -22,7 +22,16 @@ class RecommendationSyncNotifier extends Notifier<void> {
   @override
   void build() {
     ref.keepAlive();
-    ref.listen<CollectionSnapshot>(collectionNotifierProvider, (_, next) {
+    // Taste-only: profileHash derives from tracked catalog series ids only.
+    // Owned, wishlist, rename, and notes must not refresh For You.
+    ref.listen<CollectionSnapshot>(collectionNotifierProvider, (previous, next) {
+      final previousHash = previous == null
+          ? null
+          : extractSignals(previous).profileHash;
+      final nextHash = extractSignals(next).profileHash;
+      if (previousHash == nextHash) return;
+
+      ref.invalidate(recommendationsProvider);
       _scheduleSyncAfterDelay();
     });
     return;

@@ -92,7 +92,10 @@ class RecommendationHttpClient {
           ].whereType<RecommendationItem>()
         : const <RecommendationItem>[];
 
-    return RecommendationResult(items: items.toList());
+    return RecommendationResult(
+      items: items.toList(),
+      profileHash: decoded['profileHash'] as String?,
+    );
   }
 
   String _normalizedPath(String path) {

@@ -107,27 +107,17 @@ class RecommendationRepository {
           baseUrl: RecommendationGatewayConfig.gatewayUri!,
           installId: installId,
         );
-        final normalized = _normalizeResult(remote);
-        if (normalized.items.isEmpty) {
-          // Empty recommendation responses are treated as transient,
-          // not stable cacheable state.
-          // They typically occur before profile synchronization completes.
-        } else if (_isCloudResultStale(signals, normalized)) {
-          // Server profile may lag local collection until debounced sync.
-        } else {
-          final stamped = _withProfileHash(
-            excludeTrackedCatalogSeries(normalized, signals),
-            signals.profileHash,
+        final bounded = _normalizeResult(remote);
+        if (_acceptCloudResult(signals, bounded)) {
+          final normalized =
+              excludeTrackedCatalogSeries(bounded, signals);
+          await _writeCache(installId, normalized);
+          return _finalizeResult(
+            installId: installId,
+            signals: signals,
+            result: normalized,
+            bundle: bundle,
           );
-          if (stamped.items.isNotEmpty) {
-            await _writeCache(installId, stamped);
-            return _finalizeResult(
-              installId: installId,
-              signals: signals,
-              result: stamped,
-              bundle: bundle,
-            );
-          }
         }
       } catch (_) {
         // Fall through to local engine.
@@ -211,7 +201,40 @@ class RecommendationRepository {
     }
   }
 
-  bool _isCloudResultStale(
+  /// Identity + validity gate for cloud payloads before cache/UI normalization.
+  ///
+  /// 1. [profileHash] must match the current shelf taste profile.
+  /// 2. Payload must not recommend any tracked catalog series — a contract
+  ///    violation rejects the whole result (local fallback), never partial strip.
+  bool _acceptCloudResult(
+    PreferenceSignals signals,
+    RecommendationResult result,
+  ) {
+    if (!_matchesCurrentProfileHash(signals, result)) return false;
+    if (_containsTrackedSeries(signals, result)) {
+      assert(() {
+        assert(
+          false,
+          'Cloud returned tracked series. This violates recommendation invariant.',
+        );
+        return true;
+      }());
+      return false;
+    }
+    return result.items.isNotEmpty;
+  }
+
+  bool _matchesCurrentProfileHash(
+    PreferenceSignals signals,
+    RecommendationResult result,
+  ) {
+    final hash = result.profileHash?.trim();
+    return hash != null &&
+        hash.isNotEmpty &&
+        hash == signals.profileHash;
+  }
+
+  bool _containsTrackedSeries(
     PreferenceSignals signals,
     RecommendationResult result,
   ) {
@@ -286,16 +309,6 @@ class RecommendationRepository {
     }
   }
 
-  RecommendationResult _withProfileHash(
-    RecommendationResult result,
-    String profileHash,
-  ) {
-    return RecommendationResult(
-      items: result.items,
-      profileHash: profileHash,
-    );
-  }
-
   RecommendationResult _normalizeResult(RecommendationResult result) {
     final limit = RecommendationGatewayConfig.forYouResultLimit;
     if (result.items.length <= limit) return result;
@@ -323,7 +336,10 @@ class RecommendationRepository {
   }
 }
 
-/// Defensive pass — tracked catalog series must never reach For You UI.
+/// Final presentation pass — tracked catalog series must never reach For You UI.
+///
+/// Cloud payloads that violate this invariant are rejected whole upstream;
+/// this still guards cache restore, session memo, local results, and merges.
 RecommendationResult excludeTrackedCatalogSeries(
   RecommendationResult result,
   PreferenceSignals signals,

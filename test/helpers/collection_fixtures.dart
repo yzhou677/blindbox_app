@@ -39,29 +39,31 @@ ShelfSeries testShelfSeries({
 
 CatalogSeries testCatalogTemplate({
   String templateId = 'catalog_series_test',
+  String name = 'Catalog Series',
+  String taxonomyIpId = 'the_monsters',
   List<CatalogFigure>? figures,
 }) {
   return CatalogSeries(
     templateId: templateId,
-    name: 'Catalog Series',
+    name: name,
     brand: 'POP MART',
-    ipName: 'THE MONSTERS',
+    ipName: taxonomyIpId == 'nommi' ? 'NOMMI' : 'THE MONSTERS',
     shelfAccent: const Color(0xFFE4F2EA),
     taxonomyBrandId: 'pop_mart',
-    taxonomyIpId: 'the_monsters',
+    taxonomyIpId: taxonomyIpId,
     figures: figures ??
         [
-          const CatalogFigure(
+          CatalogFigure(
             templateFigureId: 'fig_catalog_0',
-            catalogSeriesTemplateId: 'catalog_series_test',
+            catalogSeriesTemplateId: templateId,
             name: 'Secret Chase',
             catalogImageKey: 'fig_catalog_0',
             rarity: '1:144',
             isSecret: true,
           ),
-          const CatalogFigure(
+          CatalogFigure(
             templateFigureId: 'fig_catalog_1',
-            catalogSeriesTemplateId: 'catalog_series_test',
+            catalogSeriesTemplateId: templateId,
             name: 'Regular',
             catalogImageKey: 'fig_catalog_1',
             rarity: 'Regular',
