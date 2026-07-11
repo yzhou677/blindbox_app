@@ -29,5 +29,6 @@ abstract final class CollectorTypeCopy {
       'How your shelf story has unfolded over time.';
   static const String journeyEmpty =
       'Your journey starts the moment you add your first series.';
-  static const String journeyMostExploredIpsTitle = 'Most explored IPs';
+  static const String journeyStartedLabel = 'Started';
+  static const String journeyExploredLabel = 'Explored';
 }

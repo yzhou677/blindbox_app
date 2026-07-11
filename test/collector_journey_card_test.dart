@@ -43,10 +43,7 @@ void main() {
     expect(find.text('IP universes'), findsOneWidget);
     expect(find.text('Series explored over time'), findsNothing);
     expect(find.text('32'), findsNothing);
-    expect(
-      find.text(CollectorTypeCopy.journeyFavoriteUniversesTitle),
-      findsNothing,
-    );
+    expect(find.text('Favorite Universes'), findsNothing);
     expect(find.text('Smiski'), findsNothing);
     expect(find.text('Dora'), findsNothing);
     expect(find.textContaining('8 series'), findsNothing);
