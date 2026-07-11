@@ -1,13 +1,14 @@
 import 'package:blindbox_app/core/theme/app_theme.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_journey_summary.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_providers.dart';
+import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_journey_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('shows IP and top-IP journey metrics without series total', (
+  testWidgets('shows started and explored story beats without favorite chips', (
     tester,
   ) async {
     final summary = CollectorJourneySummary(
@@ -33,15 +34,21 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('IPs explored over time'), findsOneWidget);
+    expect(find.text(CollectorTypeCopy.journeyTitle), findsOneWidget);
+    expect(find.text(CollectorTypeCopy.journeySubtitle), findsOneWidget);
+    expect(find.text(CollectorTypeCopy.journeyStartedLabel), findsOneWidget);
+    expect(find.text('2 years ago'), findsOneWidget);
+    expect(find.text(CollectorTypeCopy.journeyExploredLabel), findsOneWidget);
     expect(find.text('16'), findsOneWidget);
+    expect(find.text('IP universes'), findsOneWidget);
     expect(find.text('Series explored over time'), findsNothing);
     expect(find.text('32'), findsNothing);
-    expect(find.text('Most explored IPs'), findsOneWidget);
-    expect(find.text('Smiski'), findsOneWidget);
-    expect(find.text('Dora'), findsOneWidget);
+    expect(
+      find.text(CollectorTypeCopy.journeyFavoriteUniversesTitle),
+      findsNothing,
+    );
+    expect(find.text('Smiski'), findsNothing);
+    expect(find.text('Dora'), findsNothing);
     expect(find.textContaining('8 series'), findsNothing);
-    expect(find.text('Journey began'), findsOneWidget);
-    expect(find.text('2 years ago'), findsOneWidget);
   });
 }

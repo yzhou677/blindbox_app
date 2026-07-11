@@ -101,14 +101,16 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('IPs explored over time'), findsOneWidget);
+    expect(find.text('Started'), findsOneWidget);
+    expect(find.text('Explored'), findsOneWidget);
     expect(find.text('3'), findsWidgets);
+    expect(find.text('IP universes'), findsOneWidget);
     expect(find.text('Series explored over time'), findsNothing);
     expect(find.text('14'), findsNothing);
-    expect(find.text('Most explored IPs'), findsOneWidget);
-    expect(find.text('Smiski'), findsOneWidget);
-    expect(find.text('Dora'), findsOneWidget);
-    expect(find.text('Maymei'), findsOneWidget);
+    expect(find.text('Favorite Universes'), findsNothing);
+    expect(find.text('Smiski'), findsNothing);
+    expect(find.text('Dora'), findsNothing);
+    expect(find.text('Maymei'), findsNothing);
     expect(find.textContaining('8 series'), findsNothing);
     expect(find.textContaining('3 series'), findsNothing);
     expect(find.textContaining('months ago'), findsOneWidget);

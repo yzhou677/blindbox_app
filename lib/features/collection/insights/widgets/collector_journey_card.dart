@@ -1,4 +1,5 @@
 import 'package:blindbox_app/core/theme/app_spacing.dart';
+import 'package:blindbox_app/core/theme/app_typography.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_providers.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
@@ -6,6 +7,7 @@ import 'package:blindbox_app/features/collection/insights/widgets/insights_dashb
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+/// Story card for how the shelf has unfolded — narrative rhythm, not key-value rows.
 class CollectorJourneyCard extends ConsumerWidget {
   const CollectorJourneyCard({super.key});
 
@@ -17,57 +19,77 @@ class CollectorJourneyCard extends ConsumerWidget {
 
     return InsightsDashboardPanel(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             CollectorTypeCopy.journeyTitle,
             style: CollectibleTypography.shelfSeriesTitle(textTheme, scheme),
           ),
-          const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             CollectorTypeCopy.journeySubtitle,
-            style: textTheme.bodySmall?.copyWith(
-              color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
-              height: 1.35,
+            style: AppTypography.insightsFlavor(textTheme, scheme).copyWith(
+              fontSize: 13,
+              height: 1.4,
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
             ),
           ),
-          const SizedBox(height: AppSpacing.xl),
-          if (!summary.hasHistory)
+          if (!summary.hasHistory) ...[
+            const SizedBox(height: AppSpacing.xl),
             Text(
               CollectorTypeCopy.journeyEmpty,
               style: textTheme.bodyMedium?.copyWith(
                 color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
+                height: 1.4,
               ),
-            )
-          else ...[
-            _MetricLine(
-              label: 'IPs explored over time',
-              value: summary.ipUniversesExplored.toString(),
             ),
-            if (summary.topIps.isNotEmpty) ...[
-              const SizedBox(height: AppSpacing.lg),
-              Text(
-                CollectorTypeCopy.journeyMostExploredIpsTitle,
-                style: textTheme.labelLarge?.copyWith(
-                  color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
-                  fontWeight: FontWeight.w600,
+          ] else ...[
+            if (summary.journeyAgeLabel != null) ...[
+              const SizedBox(height: AppSpacing.xl + AppSpacing.sm),
+              _StoryBeat(
+                label: CollectorTypeCopy.journeyStartedLabel,
+                child: Text(
+                  summary.journeyAgeLabel!,
+                  style: CollectibleTypography.shelfSeriesTitle(
+                    textTheme,
+                    scheme,
+                  ).copyWith(
+                    fontSize: 22,
+                    letterSpacing: -0.3,
+                    height: 1.15,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
-              const SizedBox(height: AppSpacing.sm),
-              Wrap(
-                spacing: AppSpacing.sm,
-                runSpacing: AppSpacing.sm,
-                children: [
-                  for (final entry in summary.topIps)
-                    _IpChip(label: entry.label),
-                ],
-              ),
             ],
-            if (summary.journeyAgeLabel != null) ...[
-              const SizedBox(height: AppSpacing.lg),
-              _MetricLine(
-                label: 'Journey began',
-                value: summary.journeyAgeLabel!,
+            if (summary.ipUniversesExplored > 0) ...[
+              const SizedBox(height: AppSpacing.xl + AppSpacing.sm),
+              _StoryBeat(
+                label: CollectorTypeCopy.journeyExploredLabel,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${summary.ipUniversesExplored}',
+                      style: CollectibleTypography.shelfSeriesTitle(
+                        textTheme,
+                        scheme,
+                      ).copyWith(
+                        fontSize: 28,
+                        letterSpacing: -0.4,
+                        height: 1.05,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      summary.ipUniversesExplored == 1
+                          ? 'IP universe'
+                          : 'IP universes',
+                      style: AppTypography.insightsCaption(textTheme, scheme),
+                    ),
+                  ],
+                ),
               ),
             ],
           ],
@@ -77,60 +99,31 @@ class CollectorJourneyCard extends ConsumerWidget {
   }
 }
 
-class _MetricLine extends StatelessWidget {
-  const _MetricLine({required this.label, required this.value});
+class _StoryBeat extends StatelessWidget {
+  const _StoryBeat({required this.label, required this.child});
 
   final String label;
-  final String value;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
-    return Row(
+    final textTheme = Theme.of(context).textTheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Text(
-            label,
-            style: textTheme.bodyMedium?.copyWith(
-              color: scheme.onSurfaceVariant.withValues(alpha: 0.8),
-            ),
-          ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
         Text(
-          value,
-          style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-        ),
-      ],
-    );
-  }
-}
-
-class _IpChip extends StatelessWidget {
-  const _IpChip({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(999),
-        color: scheme.primaryContainer.withValues(alpha: 0.45),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        child: Text(
           label,
-          style: textTheme.labelLarge?.copyWith(
+          style: AppTypography.insightsCaption(textTheme, scheme).copyWith(
+            letterSpacing: 0.4,
             fontWeight: FontWeight.w600,
-            color: scheme.onPrimaryContainer.withValues(alpha: 0.88),
+            color: scheme.onSurfaceVariant.withValues(alpha: 0.62),
           ),
         ),
-      ),
+        const SizedBox(height: AppSpacing.md),
+        child,
+      ],
     );
   }
 }
