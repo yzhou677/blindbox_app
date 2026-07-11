@@ -92,9 +92,16 @@ void main() {
     expect(find.text('👑'), findsOneWidget);
     expect(find.text(CollectionSummaryLabels.figures), findsNothing);
     expect(find.text(CollectionSummaryLabels.wishlist), findsNothing);
+    // Persistent Summary header communicates expand/collapse.
+    expect(
+      find.text(CollectionInsightsDashboardCopy.summaryHeader),
+      findsOneWidget,
+    );
+    expect(find.byIcon(Icons.expand_more_rounded), findsOneWidget);
+    // Insights navigation lives in the Shelf | Insights segment — not here.
     expect(
       find.text(CollectionInsightsDashboardCopy.sectionTitle),
-      findsOneWidget,
+      findsNothing,
     );
   });
 

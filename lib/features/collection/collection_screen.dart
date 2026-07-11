@@ -464,9 +464,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               child: SizedBox(height: FeedRhythm.collectionSearchToSummaryGap),
             ),
           SliverToBoxAdapter(
-            child: CollectionInsightsDashboardHost(
-              onInsightsTap: () => context.push('/collection/insights'),
-            ),
+            child: CollectionInsightsDashboardHost(),
           ),
           SliverToBoxAdapter(
             child: CollectionPageSegmentControl(
@@ -481,7 +479,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
             child: CollectibleSectionHeader(
               title: 'My collection',
               subtitle: sectionSubtitle,
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 10),
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 10),
               trailing: _CollectionAddSeriesButton(
                 onPressed: () => _openAddToCollection(context),
               ),
@@ -727,9 +725,9 @@ class _CollectionBrowseFilterLabel extends StatelessWidget {
         child: Text(
           text,
           style: textTheme.labelSmall?.copyWith(
-            fontWeight: FontWeight.w500,
-            letterSpacing: 0.28,
-            color: scheme.onSurfaceVariant.withValues(alpha: 0.58),
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.32,
+            color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
           ),
         ),
       ),
@@ -758,10 +756,10 @@ class _CollectionAddSeriesButton extends StatelessWidget {
       label: Text(
         'Add series',
         style: textTheme.labelMedium?.copyWith(
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600,
           letterSpacing: 0.02,
           height: 1.1,
-          color: scheme.primary.withValues(alpha: 0.78),
+          color: scheme.primary.withValues(alpha: 0.88),
         ),
       ),
       style: TextButton.styleFrom(
@@ -862,8 +860,8 @@ class _CollectionShelfSortMenu extends StatelessWidget {
           Text(
             selected.menuLabel,
             style: textTheme.labelMedium?.copyWith(
-              color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
-              fontWeight: FontWeight.w500,
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
+              fontWeight: FontWeight.w600,
             ),
           ),
           Icon(
@@ -906,8 +904,8 @@ class _ShelfBucketSectionHeader extends StatelessWidget {
               child: Text(
                 '$title ($count)',
                 style: textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: scheme.onSurface.withValues(alpha: 0.88),
+                  fontWeight: FontWeight.w700,
+                  color: scheme.onSurface.withValues(alpha: 0.92),
                 ),
               ),
             ),

@@ -73,6 +73,15 @@ abstract final class FeedRhythm {
   /// Air between collection search field and summary card (~20–24dp total with search bottom inset).
   static const double collectionSearchToSummaryGap = 12;
 
+  /// Gap between the Summary header row and the summary metrics card.
+  static const double collectionSummaryHeaderToCard = 6;
+
+  /// Air between the summary block and the Shelf / Insights segment.
+  static const double collectionSummaryToSegmentGap = 12;
+
+  /// Air below the segment before the shelf section header ("My collection").
+  static const double collectionSegmentToShelfHeader = 10;
+
   /// Vertical padding inside the collection summary metric card.
   static const double collectionSummaryCardVerticalPadding = 16;
 
