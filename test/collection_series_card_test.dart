@@ -1,5 +1,6 @@
 import 'package:blindbox_app/core/theme/app_theme.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_card_tokens.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_series_card.dart';
 import 'package:flutter/material.dart';
@@ -103,5 +104,56 @@ void main() {
     expect(find.text('Hirono Done'), findsOneWidget);
     expect(find.text(CollectionVocabulary.seriesCompleteBadge), findsOneWidget);
     expect(find.byType(LinearProgressIndicator), findsOneWidget);
+  });
+
+  testWidgets('compact density uses mini footprint without delete chrome', (
+    tester,
+  ) async {
+    final series = testShelfSeries(
+      id: 's3',
+      name: 'Mini Series',
+      ipName: 'Hirono',
+      figures: [
+        for (var i = 0; i < 4; i++)
+          ShelfFigure(
+            id: 'm$i',
+            seriesId: 's3',
+            name: 'Fig $i',
+            rarity: 'Regular',
+            isSecret: false,
+          ),
+      ],
+    );
+    final states = {
+      for (final f in series.figures.take(1))
+        f.id: TrackedFigure(
+          figureId: f.id,
+          state: FigureCollectionState.owned,
+        ),
+    };
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: CollectionSeriesCard(
+            series: series,
+            progress: progressForSeries(series, states),
+            figureStates: states,
+            density: CollectionSeriesCardDensity.compact,
+            onTap: () {},
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final card = tester.getSize(find.byKey(const Key('collection_series_card')));
+    expect(card.width, CollectionCardTokens.compactWidth);
+    expect(card.height, CollectionCardTokens.compactMinRailHeight);
+    expect(find.text('Mini Series'), findsOneWidget);
+    expect(find.text('Hirono'), findsOneWidget);
+    expect(find.text('1 / 4'), findsOneWidget);
+    expect(find.byIcon(Icons.delete_outline_rounded), findsNothing);
   });
 }

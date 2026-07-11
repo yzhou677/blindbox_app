@@ -6,6 +6,9 @@ import 'package:flutter/material.dart';
 /// Extends the shared [AppCardTokens] browse family — Collection adds a compact
 /// progress footer, so [minRailHeight] sits above [AppCardTokens.browseRailHeight]
 /// to keep the cover at full [coverExtent] (image-first).
+///
+/// [compactWidth] / [compactMinRailHeight] power Insights dashboard rails — same
+/// visual family, tighter footprint.
 abstract final class CollectionCardTokens {
   CollectionCardTokens._();
 
@@ -32,4 +35,24 @@ abstract final class CollectionCardTokens {
   ///
   /// The card owns this height; rails use [CollectionSeriesCard.railExtent].
   static const double minRailHeight = 276;
+
+  // —— Compact (Insights dashboard / mini shelf rail) ——
+
+  static const double compactWidth = 132;
+
+  static const EdgeInsets compactPadding =
+      EdgeInsets.fromLTRB(10, 10, 10, 12);
+
+  static const double compactImageInset = 20;
+
+  static double get compactCoverExtent => compactWidth - compactImageInset;
+
+  static const double compactImageToTitleGap = 8;
+
+  static const double compactTitleToMetaGap = 3;
+
+  static const double compactMetaToProgressGap = 6;
+
+  /// Image-first mini card height for dashboard rails.
+  static const double compactMinRailHeight = 228;
 }

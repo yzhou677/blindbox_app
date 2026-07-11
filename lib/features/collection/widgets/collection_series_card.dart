@@ -9,11 +9,21 @@ import 'package:blindbox_app/features/collection/presentation/collection_vocabul
 import 'package:blindbox_app/features/collection/widgets/collection_progress_voice.dart';
 import 'package:flutter/material.dart';
 
+/// Density for [CollectionSeriesCard] — same visual family, different footprint.
+enum CollectionSeriesCardDensity {
+  /// Collection shelf rails (full browse card).
+  standard,
+
+  /// Insights / dashboard rails — image-first mini presentation.
+  compact,
+}
+
 /// Canonical owned-series presentation throughout the app.
 ///
 /// Use this card for Collection rails and any future owned-series surfaces
-/// (search results, favorites, See All, Continue Collecting). Do not introduce
-/// parallel widgets such as `OwnedSeriesTile` / `SeriesGridCard` / `CollectionCard2`.
+/// (search results, favorites, See All, Continue Collecting, Insights Top Series).
+/// Do not introduce parallel widgets such as `OwnedSeriesTile` / `SeriesGridCard`
+/// / `CollectionCard2`.
 ///
 /// ## Token family
 ///
@@ -31,15 +41,29 @@ class CollectionSeriesCard extends StatelessWidget {
     required this.progress,
     required this.figureStates,
     required this.onTap,
+    this.density = CollectionSeriesCardDensity.standard,
   });
 
   final ShelfSeries series;
   final SeriesProgressCounts progress;
   final Map<String, TrackedFigure> figureStates;
   final VoidCallback onTap;
+  final CollectionSeriesCardDensity density;
 
   /// Cross-axis extent for horizontal rails — sized by the card tokens.
-  static double get railExtent => CollectionCardTokens.minRailHeight;
+  static double get railExtent =>
+      railExtentFor(CollectionSeriesCardDensity.standard);
+
+  static double railExtentFor(CollectionSeriesCardDensity density) {
+    return switch (density) {
+      CollectionSeriesCardDensity.standard =>
+        CollectionCardTokens.minRailHeight,
+      CollectionSeriesCardDensity.compact =>
+        CollectionCardTokens.compactMinRailHeight,
+    };
+  }
+
+  bool get _compact => density == CollectionSeriesCardDensity.compact;
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +83,27 @@ class CollectionSeriesCard extends StatelessWidget {
       progress: progress,
       figureStates: figureStates,
     );
-    final coverExtent = CollectionCardTokens.coverExtent;
+
+    final width = _compact
+        ? CollectionCardTokens.compactWidth
+        : CollectionCardTokens.width;
+    final height = _compact
+        ? CollectionCardTokens.compactMinRailHeight
+        : CollectionCardTokens.minRailHeight;
+    final padding =
+        _compact ? CollectionCardTokens.compactPadding : CollectionCardTokens.padding;
+    final coverExtent = _compact
+        ? CollectionCardTokens.compactCoverExtent
+        : CollectionCardTokens.coverExtent;
+    final imageToTitleGap = _compact
+        ? CollectionCardTokens.compactImageToTitleGap
+        : CollectionCardTokens.imageToTitleGap;
+    final titleToMetaGap = _compact
+        ? CollectionCardTokens.compactTitleToMetaGap
+        : CollectionCardTokens.titleToMetaGap;
+    final metaToProgressGap = _compact
+        ? CollectionCardTokens.compactMetaToProgressGap
+        : CollectionCardTokens.metaToProgressGap;
 
     final borderColor = isMasterComplete
         ? const Color(0xFFE8C547).withValues(alpha: isDark ? 0.42 : 0.4)
@@ -81,8 +125,8 @@ class CollectionSeriesCard extends StatelessWidget {
 
     return SizedBox(
       key: const Key('collection_series_card'),
-      width: CollectionCardTokens.width,
-      height: CollectionCardTokens.minRailHeight,
+      width: width,
+      height: height,
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: AppRadii.cardRadius,
@@ -99,7 +143,7 @@ class CollectionSeriesCard extends StatelessWidget {
           child: InkWell(
             onTap: onTap,
             child: Padding(
-              padding: CollectionCardTokens.padding,
+              padding: padding,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -112,18 +156,21 @@ class CollectionSeriesCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: CollectionCardTokens.imageToTitleGap),
+                  SizedBox(height: imageToTitleGap),
                   Text(
                     series.name,
-                    maxLines: 2,
+                    maxLines: _compact ? 1 : 2,
                     overflow: TextOverflow.ellipsis,
                     style: CollectibleTypography.catalogSeriesRowTitle(
                       textTheme,
                       scheme,
+                    ).copyWith(
+                      fontSize: _compact ? 13 : null,
+                      height: _compact ? 1.2 : null,
                     ),
                   ),
                   if (meta.isNotEmpty) ...[
-                    const SizedBox(height: CollectionCardTokens.titleToMetaGap),
+                    SizedBox(height: titleToMetaGap),
                     Text(
                       meta,
                       maxLines: 1,
@@ -131,11 +178,13 @@ class CollectionSeriesCard extends StatelessWidget {
                       style: CollectibleTypography.seriesIpLine(
                         textTheme,
                         scheme,
+                      ).copyWith(
+                        fontSize: _compact ? 11 : null,
                       ),
                     ),
                   ],
                   const Spacer(),
-                  const SizedBox(height: CollectionCardTokens.metaToProgressGap),
+                  SizedBox(height: metaToProgressGap),
                   if (isComplete)
                     _CompletedFooter(
                       isMasterComplete: isMasterComplete,
@@ -143,6 +192,7 @@ class CollectionSeriesCard extends StatelessWidget {
                       scheme: scheme,
                       barColor: barColor,
                       isDark: isDark,
+                      compact: _compact,
                     )
                   else
                     _InProgressFooter(
@@ -152,6 +202,7 @@ class CollectionSeriesCard extends StatelessWidget {
                       scheme: scheme,
                       barColor: barColor,
                       isDark: isDark,
+                      compact: _compact,
                     ),
                 ],
               ),
@@ -171,6 +222,7 @@ class _InProgressFooter extends StatelessWidget {
     required this.scheme,
     required this.barColor,
     required this.isDark,
+    required this.compact,
   });
 
   final double ratio;
@@ -179,6 +231,7 @@ class _InProgressFooter extends StatelessWidget {
   final ColorScheme scheme;
   final Color barColor;
   final bool isDark;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -202,7 +255,8 @@ class _InProgressFooter extends StatelessWidget {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: CollectibleTypography.shelfProgressLine(textTheme, scheme),
+            style: CollectibleTypography.shelfProgressLine(textTheme, scheme)
+                .copyWith(fontSize: compact ? 11 : null),
           ),
         ],
       ],
@@ -217,6 +271,7 @@ class _CompletedFooter extends StatelessWidget {
     required this.scheme,
     required this.barColor,
     required this.isDark,
+    required this.compact,
   });
 
   final bool isMasterComplete;
@@ -224,6 +279,7 @@ class _CompletedFooter extends StatelessWidget {
   final ColorScheme scheme;
   final Color barColor;
   final bool isDark;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -241,7 +297,7 @@ class _CompletedFooter extends StatelessWidget {
           label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: style,
+          style: style.copyWith(fontSize: compact ? 11 : null),
         ),
         const SizedBox(height: CollectionCardTokens.progressToLabelGap),
         ClipRRect(

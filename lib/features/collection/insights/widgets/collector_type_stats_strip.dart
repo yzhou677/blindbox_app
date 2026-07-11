@@ -6,7 +6,7 @@ import 'package:blindbox_app/features/collection/insights/presentation/collector
 import 'package:blindbox_app/features/collection/insights/presentation/collector_type_palette.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_brand_donut.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_shelf_progress_card.dart';
-import 'package:blindbox_app/features/collection/insights/widgets/collector_type_top_series_list.dart';
+import 'package:blindbox_app/features/collection/insights/widgets/collector_type_top_series_rail.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_totals_row.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/insights_dashboard_panel.dart';
 import 'package:blindbox_app/features/market/catalog/market_taxonomy.dart';
@@ -68,18 +68,42 @@ class CollectorTypeStatsStrip extends StatelessWidget {
             if (stats.topSeries.isNotEmpty) ...[
               const SizedBox(height: FeedRhythm.blockGapMedium),
               InsightsDashboardPanel(
+                padding: const EdgeInsets.fromLTRB(
+                  0,
+                  AppSpacing.xl,
+                  0,
+                  AppSpacing.xl,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      'Top series',
-                      style: CollectibleTypography.shelfSeriesTitle(
-                        textTheme,
-                        scheme,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.pageHorizontal,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Top series',
+                              style: CollectibleTypography.shelfSeriesTitle(
+                                textTheme,
+                                scheme,
+                              ),
+                            ),
+                          ),
+                          Icon(
+                            Icons.chevron_right_rounded,
+                            size: 22,
+                            color: scheme.onSurfaceVariant.withValues(
+                              alpha: 0.45,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.md),
-                    CollectorTypeTopSeriesList(seriesNames: stats.topSeries),
+                    const SizedBox(height: AppSpacing.lg),
+                    CollectorTypeTopSeriesRail(seriesNames: stats.topSeries),
                   ],
                 ),
               ),
