@@ -47,7 +47,10 @@ void main() {
     await pumpCard(tester, AppTheme.light());
     expect(find.text(archetype.displayName), findsOneWidget);
     expect(find.textContaining('Secret Figures'), findsOneWidget);
-    expect(find.byIcon(archetype.icon!), findsOneWidget);
+    expect(
+      find.byKey(const Key('collector_type_mascot_hunter')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('renders archetype name and flavor in dark theme', (

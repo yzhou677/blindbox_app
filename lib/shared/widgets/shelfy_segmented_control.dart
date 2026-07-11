@@ -72,13 +72,16 @@ class ShelfySegmentedControl<T> extends StatelessWidget {
     final trackColor = scheme.surfaceContainer.withValues(
       alpha: isDark ? 0.72 : 0.88,
     );
-    // Selected thumb uses primaryContainer — same selection language as brand chips.
+    // Deeper selected thumb for clear purple presence; light onPrimary label
+    // for contrast (mid-tone text on mid-purple was unreadable).
     final thumbColor = Color.lerp(
-      scheme.surface,
       scheme.primaryContainer,
-      isDark ? 0.55 : 0.72,
+      scheme.primary,
+      isDark ? 0.32 : 0.44,
     )!;
-    final selectedFg = scheme.onPrimaryContainer.withValues(alpha: 0.9);
+    final selectedFg = isDark
+        ? scheme.onPrimaryContainer.withValues(alpha: 0.96)
+        : scheme.onPrimary.withValues(alpha: 0.98);
     final unselectedFg = scheme.onSurfaceVariant.withValues(alpha: 0.72);
     final labelStyle = textTheme.labelLarge?.copyWith(
       fontWeight: FontWeight.w600,
