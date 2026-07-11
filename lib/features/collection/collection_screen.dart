@@ -29,9 +29,9 @@ import 'package:blindbox_app/features/collection/insights/presentation/collector
 import 'package:blindbox_app/features/collection/widgets/collection_empty_state.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_insights_dashboard_host.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_page_segment_control.dart';
+import 'package:blindbox_app/features/collection/widgets/collection_shelf_series_rail.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_warm_start_banner.dart';
 import 'package:blindbox_app/features/collection/widgets/series_figures_sheet.dart';
-import 'package:blindbox_app/features/collection/presentation/shelf_series_feed.dart';
 import 'package:blindbox_app/shared/widgets/app_search_field.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
@@ -150,35 +150,6 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       heightFraction: FeedRhythm.sheetFiguresOpenScreenFraction,
       builder: (_, scroll) => SeriesFiguresSheet(seriesId: seriesId),
     );
-  }
-
-  Future<void> _confirmRemoveSeries(
-    BuildContext context,
-    String id,
-    String name,
-  ) async {
-    final go = await showDialog<bool>(
-      context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          title: const Text('Remove series?'),
-          content: Text('“$name” will leave your shelf.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Remove'),
-            ),
-          ],
-        );
-      },
-    );
-    if (go == true && context.mounted) {
-      ref.read(collectionNotifierProvider.notifier).removeSeries(id);
-    }
   }
 
   void _openAddCustom(BuildContext context) {
@@ -328,29 +299,6 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
         completedRaw,
         shelfUiPrefs.sort,
         snap.figureStates,
-        progress: progressLookup,
-      );
-    });
-    final collapsedIpKeys = shelfUiPrefs.collapsedIpSectionKeys;
-    late final List<ShelfFeedItem> inProgressFeed;
-    late final List<ShelfFeedItem> completedFeed;
-    trace.sectionVoid('Feed', () {
-      inProgressFeed = buildShelfFeedItems(
-        context: context,
-        series: inProgress,
-        figureStates: snap.figureStates,
-        profile: profile,
-        collapseBucketKey: shelfCollapseBucketInProgress,
-        collapsedSectionKeys: collapsedIpKeys,
-        progress: progressLookup,
-      );
-      completedFeed = buildShelfFeedItems(
-        context: context,
-        series: completed,
-        figureStates: snap.figureStates,
-        profile: profile,
-        collapseBucketKey: shelfCollapseBucketCompleted,
-        collapsedSectionKeys: collapsedIpKeys,
         progress: progressLookup,
       );
     });
@@ -577,25 +525,18 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                 ),
               ),
             if (showInProgressSection && shelfUiPrefs.inProgressSectionExpanded)
-              SliverPadding(
-                padding: EdgeInsets.fromLTRB(
-                  20,
-                  0,
-                  20,
-                  showCompletedSection ? 8 : FeedRhythm.tabScrollTailPadding,
-                ),
-                sliver: SliverList.builder(
-                  itemCount: inProgressFeed.length,
-                  itemBuilder: (context, i) => buildShelfFeedItemWidget(
-                    context: context,
-                    inProgressFeed[i],
-                    collapsedSectionKeys: collapsedIpKeys,
-                    onToggleIpSection: (key) => ref
-                        .read(collectionShelfUiPrefsProvider.notifier)
-                        .toggleIpSection(key),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    bottom: showCompletedSection
+                        ? 8
+                        : FeedRhythm.tabScrollTailPadding,
+                  ),
+                  child: CollectionShelfSeriesRail(
+                    series: inProgress,
+                    figureStates: snap.figureStates,
+                    progress: progressLookup,
                     onOpen: (s) => _openFiguresSheet(context, s.id),
-                    onRemove: (s) =>
-                        _confirmRemoveSeries(context, s.id, s.name),
                   ),
                 ),
               ),
@@ -621,25 +562,16 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                 ),
               ),
             if (showCompletedSection && shelfUiPrefs.completedSectionExpanded)
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(
-                  20,
-                  0,
-                  20,
-                  FeedRhythm.tabScrollTailPadding,
-                ),
-                sliver: SliverList.builder(
-                  itemCount: completedFeed.length,
-                  itemBuilder: (context, i) => buildShelfFeedItemWidget(
-                    context: context,
-                    completedFeed[i],
-                    collapsedSectionKeys: collapsedIpKeys,
-                    onToggleIpSection: (key) => ref
-                        .read(collectionShelfUiPrefsProvider.notifier)
-                        .toggleIpSection(key),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(
+                    bottom: FeedRhythm.tabScrollTailPadding,
+                  ),
+                  child: CollectionShelfSeriesRail(
+                    series: completed,
+                    figureStates: snap.figureStates,
+                    progress: progressLookup,
                     onOpen: (s) => _openFiguresSheet(context, s.id),
-                    onRemove: (s) =>
-                        _confirmRemoveSeries(context, s.id, s.name),
                   ),
                 ),
               ),

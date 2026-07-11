@@ -88,6 +88,37 @@ void _openEditCustomSeries(
   );
 }
 
+Future<void> _confirmRemoveSeries(
+  BuildContext context,
+  WidgetRef ref,
+  String id,
+  String name,
+) async {
+  final go = await showDialog<bool>(
+    context: context,
+    builder: (ctx) {
+      return AlertDialog(
+        title: const Text('Remove series?'),
+        content: Text('“$name” will leave your shelf.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Remove'),
+          ),
+        ],
+      );
+    },
+  );
+  if (go == true && context.mounted) {
+    ref.read(collectionNotifierProvider.notifier).removeSeries(id);
+    Navigator.of(context).pop();
+  }
+}
+
 /// Figure-first sheet — replaces numeric slot chips.
 class SeriesFiguresSheet extends ConsumerWidget {
   const SeriesFiguresSheet({super.key, required this.seriesId});
@@ -133,17 +164,40 @@ class SeriesFiguresSheet extends ConsumerWidget {
           trailingMeta: trailingMeta,
         ),
         slivers: [
-          if (series.isCustomLocal)
-            SliverToBoxAdapter(
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: TextButton.icon(
-                  onPressed: () => _openEditCustomSeries(context, ref, series),
-                  icon: const Icon(Icons.edit_outlined, size: 18),
-                  label: const Text('Edit series'),
-                ),
+          SliverToBoxAdapter(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Wrap(
+                spacing: 4,
+                alignment: WrapAlignment.end,
+                children: [
+                  if (series.isCustomLocal)
+                    TextButton.icon(
+                      onPressed: () =>
+                          _openEditCustomSeries(context, ref, series),
+                      icon: const Icon(Icons.edit_outlined, size: 18),
+                      label: const Text('Edit series'),
+                    ),
+                  TextButton.icon(
+                    onPressed: () => _confirmRemoveSeries(
+                      context,
+                      ref,
+                      series.id,
+                      series.name,
+                    ),
+                    icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                    label: const Text('Remove'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Theme.of(context)
+                          .colorScheme
+                          .onSurfaceVariant
+                          .withValues(alpha: 0.72),
+                    ),
+                  ),
+                ],
               ),
             ),
+          ),
           if (contextualLine != null && contextualLine.isNotEmpty)
             SliverToBoxAdapter(
               child: CollectibleRelationshipLine(

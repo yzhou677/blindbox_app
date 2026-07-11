@@ -103,6 +103,13 @@ abstract final class FeedRhythm {
   /// Air below summary block before the shelf section header.
   static const double collectionSummaryToShelfHeader = 22;
 
+  /// Compact Collection shelf carousel card width — matches For You / Chasers (168).
+  static const double collectionShelfRailCardWidth = 168;
+
+  /// Collection series rail height — For You uses [marketChasersRailHeight] (196);
+  /// Collection adds compact progress footer (~28dp).
+  static const double collectionShelfRailHeight = 224;
+
   /// Vertical gap between full-width listing cards (shelf separation).
   static const double listingCardVerticalGap = 22;
 

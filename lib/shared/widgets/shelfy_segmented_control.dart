@@ -25,7 +25,7 @@ class ShelfySegmentedControl<T> extends StatelessWidget {
     required this.value,
     required this.segments,
     required this.onChanged,
-    this.height = 54,
+    this.height = 44,
     this.duration = CollectibleMotion.crossfade,
     this.curve = CollectibleMotion.easeOut,
   });
@@ -40,12 +40,12 @@ class ShelfySegmentedControl<T> extends StatelessWidget {
   final Duration duration;
   final Curve curve;
 
-  static const double _trackInset = 4;
-  static const double _trackRadius = 18;
-  static const double _thumbRadius = 14;
-  static const double _iconSize = 20;
-  static const double _iconLabelGap = 10;
-  static const double _segmentHorizontalPadding = 8;
+  static const double _trackInset = 3;
+  static const double _trackRadius = 14;
+  static const double _thumbRadius = 11;
+  static const double _iconSize = 18;
+  static const double _iconLabelGap = 8;
+  static const double _segmentHorizontalPadding = 6;
 
   int get _selectedIndex {
     final i = segments.indexWhere((s) => s.value == value);
@@ -70,20 +70,20 @@ class ShelfySegmentedControl<T> extends StatelessWidget {
     final selectedIndex = _selectedIndex;
 
     final trackColor = scheme.surfaceContainer.withValues(
-      alpha: isDark ? 0.88 : 1,
+      alpha: isDark ? 0.72 : 0.88,
     );
     // Selected thumb uses primaryContainer — same selection language as brand chips.
     final thumbColor = Color.lerp(
       scheme.surface,
       scheme.primaryContainer,
-      isDark ? 0.72 : 0.88,
+      isDark ? 0.55 : 0.72,
     )!;
-    final selectedFg = scheme.onPrimaryContainer.withValues(alpha: 0.92);
-    final unselectedFg = scheme.onSurfaceVariant.withValues(alpha: 0.78);
-    final labelStyle = textTheme.titleSmall?.copyWith(
+    final selectedFg = scheme.onPrimaryContainer.withValues(alpha: 0.9);
+    final unselectedFg = scheme.onSurfaceVariant.withValues(alpha: 0.72);
+    final labelStyle = textTheme.labelLarge?.copyWith(
       fontWeight: FontWeight.w600,
-      letterSpacing: 0.1,
-      height: 1.1,
+      letterSpacing: 0.08,
+      height: 1.05,
     );
 
     return SizedBox(
@@ -116,10 +116,10 @@ class ShelfySegmentedControl<T> extends StatelessWidget {
                       boxShadow: [
                         BoxShadow(
                           color: scheme.shadow.withValues(
-                            alpha: isDark ? 0.28 : 0.1,
+                            alpha: isDark ? 0.18 : 0.06,
                           ),
-                          blurRadius: isDark ? 8 : 10,
-                          offset: const Offset(0, 2),
+                          blurRadius: isDark ? 5 : 6,
+                          offset: const Offset(0, 1),
                           spreadRadius: -1,
                         ),
                       ],
