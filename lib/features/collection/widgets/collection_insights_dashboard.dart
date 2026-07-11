@@ -323,18 +323,16 @@ class _CollectionInsightsDashboardState extends State<CollectionInsightsDashboar
         AppSpacing.pageHorizontal,
         0,
         AppSpacing.pageHorizontal,
-        FeedRhythm.collectionSummaryToShelfHeader,
+        AppSpacing.sm,
       ),
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: CollectibleShape.shellRadius,
-          color: scheme.surfaceContainerLow,
+          color: scheme.surface,
           border: Border.all(
-            color: Color.lerp(
-              scheme.outlineVariant,
-              scheme.primary,
-              isDark ? 0.12 : 0.18,
-            )!,
+            color: scheme.outlineVariant.withValues(
+              alpha: isDark ? 0.28 : 0.4,
+            ),
           ),
         ),
         child: Column(
@@ -353,7 +351,7 @@ class _CollectionInsightsDashboardState extends State<CollectionInsightsDashboar
               height: 1,
               thickness: 1,
               color: scheme.outlineVariant.withValues(
-                alpha: isDark ? 0.2 : 0.28,
+                alpha: isDark ? 0.16 : 0.22,
               ),
             ),
             _InsightsDisclosureRow(
@@ -428,7 +426,7 @@ class _InsightsDisclosureRow extends StatelessWidget {
         child: Padding(
           padding: EdgeInsets.symmetric(
             horizontal: expanded ? 4 : 14,
-            vertical: expanded ? 6 : 11,
+            vertical: expanded ? 6 : 9,
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,

@@ -20,9 +20,9 @@ class CollectionPageSegmentControl extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.pageHorizontal,
-        AppSpacing.md,
+        AppSpacing.xs,
         AppSpacing.pageHorizontal,
-        AppSpacing.sm,
+        AppSpacing.md,
       ),
       child: SizedBox(
         width: double.infinity,
@@ -45,9 +45,15 @@ class CollectionPageSegmentControl extends StatelessWidget {
             onChanged(next.first);
           },
           showSelectedIcon: false,
-          style: const ButtonStyle(
+          style: ButtonStyle(
             visualDensity: VisualDensity.compact,
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            side: WidgetStateProperty.resolveWith((states) {
+              final scheme = Theme.of(context).colorScheme;
+              return BorderSide(
+                color: scheme.outlineVariant.withValues(alpha: 0.55),
+              );
+            }),
           ),
         ),
       ),

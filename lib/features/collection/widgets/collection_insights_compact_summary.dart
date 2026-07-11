@@ -121,7 +121,7 @@ class CollectionInsightsCompactSummary extends StatelessWidget {
             top: CollectibleShape.shellRadius.topLeft,
           ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             child: row,
           ),
         ),

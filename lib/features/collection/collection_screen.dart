@@ -457,15 +457,6 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               ),
             ),
           ),
-          SliverToBoxAdapter(
-            child: CollectionPageSegmentControl(
-              selected: _pageSegment,
-              onChanged: _onPageSegmentChanged,
-            ),
-          ),
-          if (_pageSegment == CollectionPageSegment.insights)
-            const SliverToBoxAdapter(child: CollectionInsightsBody())
-          else ...[
           if (snap.showWarmStartBanner)
             const SliverToBoxAdapter(child: CollectionWarmStartBanner()),
           if (!snap.showWarmStartBanner)
@@ -478,10 +469,19 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
             ),
           ),
           SliverToBoxAdapter(
+            child: CollectionPageSegmentControl(
+              selected: _pageSegment,
+              onChanged: _onPageSegmentChanged,
+            ),
+          ),
+          if (_pageSegment == CollectionPageSegment.insights)
+            const SliverToBoxAdapter(child: CollectionInsightsBody())
+          else ...[
+          SliverToBoxAdapter(
             child: CollectibleSectionHeader(
               title: 'My collection',
               subtitle: sectionSubtitle,
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 10),
               trailing: _CollectionAddSeriesButton(
                 onPressed: () => _openAddToCollection(context),
               ),

@@ -109,5 +109,35 @@ void main() {
     expect(find.text(CollectorTypeCopy.revealButton), findsOneWidget);
     expect(find.text(CollectorTypeCopy.journeyTitle), findsOneWidget);
     expect(find.text('Add series'), findsNothing);
+    // Summary stays above the segment on both tabs.
+    expect(
+      find.byKey(const Key('collection_insights_compact_glance')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('header order keeps summary above Shelf Insights segment', (
+    tester,
+  ) async {
+    final series = testShelfSeries(id: 's1', name: 'Dimoo One');
+    await pumpScreen(
+      tester,
+      CollectionSnapshot(
+        shelfSeries: [series],
+        figureStates: const {},
+      ),
+    );
+
+    final searchY = tester.getTopLeft(find.byType(AppSearchField)).dy;
+    final summaryY = tester
+        .getTopLeft(find.byKey(const Key('collection_insights_compact_glance')))
+        .dy;
+    final segmentY =
+        tester.getTopLeft(find.byType(CollectionPageSegmentControl)).dy;
+    final addSeriesY = tester.getTopLeft(find.text('Add series')).dy;
+
+    expect(searchY, lessThan(summaryY));
+    expect(summaryY, lessThan(segmentY));
+    expect(segmentY, lessThan(addSeriesY));
   });
 }
