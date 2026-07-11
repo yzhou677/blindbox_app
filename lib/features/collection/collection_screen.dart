@@ -22,8 +22,13 @@ import 'package:blindbox_app/core/search/search_placeholders.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_service.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_browse.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/insights/application/collector_type_providers.dart';
+import 'package:blindbox_app/features/collection/insights/application/collector_type_view_model.dart';
+import 'package:blindbox_app/features/collection/insights/presentation/collection_insights_body.dart';
+import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_empty_state.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_insights_dashboard_host.dart';
+import 'package:blindbox_app/features/collection/widgets/collection_page_segment_control.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_warm_start_banner.dart';
 import 'package:blindbox_app/features/collection/widgets/series_figures_sheet.dart';
 import 'package:blindbox_app/features/collection/presentation/shelf_series_feed.dart';
@@ -49,6 +54,9 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
 
   /// Presentation-only Collection shelf IP facet (scoped to brand-filtered series).
   String _ipFilterId = collectionAnyIpFilterId;
+
+  /// Presentation-only Shelf / Insights section switch.
+  CollectionPageSegment _pageSegment = CollectionPageSegment.shelf;
 
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -377,16 +385,26 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               centerTitle: false,
               titleSpacing: 20,
               title: Text('My collection', style: textTheme.titleLarge),
+              actions: _insightsAppBarActions(ref),
             ),
             SliverToBoxAdapter(
               child: SizedBox(height: FeedRhythm.belowMainTabAppBar),
             ),
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: CollectionEmptyState(
-                onAddSeries: () => _openAddToCollection(context),
+            SliverToBoxAdapter(
+              child: CollectionPageSegmentControl(
+                selected: _pageSegment,
+                onChanged: _onPageSegmentChanged,
               ),
             ),
+            if (_pageSegment == CollectionPageSegment.insights)
+              const SliverToBoxAdapter(child: CollectionInsightsBody())
+            else
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: CollectionEmptyState(
+                  onAddSeries: () => _openAddToCollection(context),
+                ),
+              ),
           ],
         ),
       );
@@ -408,6 +426,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
             centerTitle: false,
             titleSpacing: 20,
             title: Text('My collection', style: textTheme.titleLarge),
+            actions: _insightsAppBarActions(ref),
           ),
           SliverToBoxAdapter(
             child: SizedBox(height: FeedRhythm.belowMainTabAppBar),
@@ -438,6 +457,15 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               ),
             ),
           ),
+          SliverToBoxAdapter(
+            child: CollectionPageSegmentControl(
+              selected: _pageSegment,
+              onChanged: _onPageSegmentChanged,
+            ),
+          ),
+          if (_pageSegment == CollectionPageSegment.insights)
+            const SliverToBoxAdapter(child: CollectionInsightsBody())
+          else ...[
           if (snap.showWarmStartBanner)
             const SliverToBoxAdapter(child: CollectionWarmStartBanner()),
           if (!snap.showWarmStartBanner)
@@ -634,6 +662,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                 ),
               ),
           ],
+          ],
         ],
       ),
     );
@@ -644,6 +673,40 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       catalogFigures: catalog?.figures.length,
     );
     return scaffold;
+  }
+
+  void _onPageSegmentChanged(CollectionPageSegment next) {
+    if (next == _pageSegment) return;
+    setState(() => _pageSegment = next);
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(0);
+    }
+  }
+
+  List<Widget> _insightsAppBarActions(WidgetRef ref) {
+    if (_pageSegment != CollectionPageSegment.insights) {
+      return const [];
+    }
+    final needsReveal = ref.watch(collectorTypeNeedsRevealProvider);
+    final stage = ref.watch(collectorTypeViewModelProvider);
+    final showRevealAgainMenu =
+        stage is CollectorTypeRevealRevealed && !needsReveal;
+    if (!showRevealAgainMenu) return const [];
+    return [
+      PopupMenuButton<String>(
+        onSelected: (value) {
+          if (value == 'reveal') {
+            ref.read(collectorTypeViewModelProvider.notifier).requestReveal();
+          }
+        },
+        itemBuilder: (context) => [
+          const PopupMenuItem(
+            value: 'reveal',
+            child: Text(CollectorTypeCopy.revealAgain),
+          ),
+        ],
+      ),
+    ];
   }
 }
 
