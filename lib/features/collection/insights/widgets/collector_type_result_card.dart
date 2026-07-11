@@ -1,13 +1,14 @@
+import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/app_typography.dart';
-import 'package:blindbox_app/core/theme/collectible_shape.dart';
-import 'package:blindbox_app/core/theme/collectible_shelf_shadow.dart';
+import 'package:blindbox_app/core/theme/collectible_elevation.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_glyph.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_reveal_dashboard_footer.dart';
 import 'package:flutter/material.dart';
 
+/// Hero identity surface for the revealed collector type — visual anchor of Insights.
 class CollectorTypeResultCard extends StatelessWidget {
   const CollectorTypeResultCard({
     super.key,
@@ -28,69 +29,92 @@ class CollectorTypeResultCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final archetype = identity.archetype;
     final accent = archetype.accentFor(Theme.of(context).brightness);
+    final hasHelper = helperLine != null && helperLine!.trim().isNotEmpty;
 
     return RepaintBoundary(
       child: DecoratedBox(
         decoration: BoxDecoration(
-          borderRadius: CollectibleShape.shellRadius,
-          color: Color.lerp(
-            scheme.surfaceContainerLow,
-            accent,
-            Theme.of(context).brightness == Brightness.dark ? 0.08 : 0.06,
-          ),
-          border: Border.all(color: accent.withValues(alpha: 0.22)),
-          boxShadow: CollectibleShelfShadow.productShell(
-            context,
-            accent: accent,
-          ),
+          borderRadius: AppRadii.cardRadius,
+          boxShadow: CollectibleElevation.softCard(context),
         ),
-        child: Padding(
-          // Intentionally wider than pageHorizontal — the result card is a
-          // featured hero surface that benefits from extra breathing room.
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.xl + AppSpacing.xs, // 22
-            AppSpacing.xl + AppSpacing.sm, // 28
-            AppSpacing.xl + AppSpacing.xs, // 22
-            AppSpacing.xxl, // 24
+        child: Material(
+          color: Color.lerp(
+            scheme.surface,
+            accent,
+            isDark ? 0.12 : 0.08,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CollectorTypeGlyph(archetype: archetype),
-              const SizedBox(height: AppSpacing.md),
-              Text(
-                archetype.displayName,
-                textAlign: TextAlign.center,
-                style: CollectibleTypography.seriesHeroTitle(
-                  textTheme,
-                  scheme,
-                ).copyWith(letterSpacing: -0.3),
-              ),
-              const SizedBox(height: AppSpacing.sm + AppSpacing.xs),
-              Text(
-                archetype.flavorText,
-                textAlign: TextAlign.center,
-                style: AppTypography.insightsFlavor(textTheme, scheme),
-              ),
-              if (helperLine != null && helperLine!.isNotEmpty) ...[
-                const SizedBox(height: AppSpacing.sm),
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: AppRadii.cardRadius,
+            side: BorderSide(color: accent.withValues(alpha: 0.22)),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.xl + AppSpacing.sm,
+              AppSpacing.xl + AppSpacing.md,
+              AppSpacing.xl + AppSpacing.sm,
+              AppSpacing.xl,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: CollectorTypeGlyph(archetype: archetype, size: 96),
+                ),
+                const SizedBox(height: AppSpacing.lg),
                 Text(
-                  helperLine!,
+                  archetype.displayName,
                   textAlign: TextAlign.center,
-                  style: textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: CollectibleTypography.seriesHeroTitle(
+                    textTheme,
+                    scheme,
+                  ).copyWith(
+                    fontSize: 28,
+                    letterSpacing: -0.5,
+                    height: 1.12,
+                    fontWeight: FontWeight.w700,
+                    color: scheme.onSurface.withValues(alpha: 0.96),
                   ),
                 ),
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  archetype.flavorText,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.insightsFlavor(textTheme, scheme).copyWith(
+                    fontSize: 14,
+                    height: 1.4,
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
+                  ),
+                ),
+                if (hasHelper) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  Text(
+                    helperLine!,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant.withValues(alpha: 0.62),
+                      height: 1.35,
+                    ),
+                  ),
+                ],
+                CollectorTypeRevealDashboardFooter(
+                  revealedAt: identity.revealedAt,
+                  showRevealAgain: showRevealAgain,
+                  onRevealAgain: onRevealAgain ?? () {},
+                  now: updatedAtNow,
+                ),
               ],
-              CollectorTypeRevealDashboardFooter(
-                revealedAt: identity.revealedAt,
-                showRevealAgain: showRevealAgain,
-                onRevealAgain: onRevealAgain ?? () {},
-                now: updatedAtNow,
-              ),
-            ],
+            ),
           ),
         ),
       ),

@@ -16,6 +16,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class CollectionInsightsBody extends ConsumerWidget {
   const CollectionInsightsBody({super.key});
 
+  static const double _panelGap = 22;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final showEvolutionHint = ref.watch(collectorTypeEvolutionHintProvider);
@@ -26,11 +28,12 @@ class CollectionInsightsBody extends ConsumerWidget {
         const CollectibleSectionHeader(
           title: CollectorTypeCopy.screenTitle,
           subtitle: CollectorTypeCopy.screenSubtitle,
+          padding: EdgeInsets.fromLTRB(20, 4, 20, 0),
         ),
         Padding(
           padding: EdgeInsets.fromLTRB(
             AppSpacing.pageHorizontal,
-            AppSpacing.sm,
+            AppSpacing.lg,
             AppSpacing.pageHorizontal,
             FeedRhythm.tabScrollTailPadding,
           ),
@@ -39,10 +42,10 @@ class CollectionInsightsBody extends ConsumerWidget {
             children: [
               if (showEvolutionHint) ...[
                 const CollectorTypeEvolutionHintBanner(),
-                const SizedBox(height: FeedRhythm.blockGapMedium),
+                const SizedBox(height: _panelGap),
               ],
               const CollectorTypeRevealCard(),
-              const SizedBox(height: FeedRhythm.blockGapMedium),
+              const SizedBox(height: _panelGap),
               const CollectorJourneyCard(),
             ],
           ),

@@ -38,8 +38,9 @@ class CollectorTypeRevealDashboardFooter extends StatelessWidget {
 
     return Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: AppSpacing.lg),
         if (updatedLabel != null)
           Text(
             updatedLabel,

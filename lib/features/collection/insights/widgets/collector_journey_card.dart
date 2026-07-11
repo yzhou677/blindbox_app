@@ -1,8 +1,8 @@
-import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
-import 'package:blindbox_app/core/theme/collectible_shape.dart';
+import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_providers.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
+import 'package:blindbox_app/features/collection/insights/widgets/insights_dashboard_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -15,80 +15,63 @@ class CollectorJourneyCard extends ConsumerWidget {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: CollectibleShape.matRadius,
-        color: scheme.surfaceContainerLow.withValues(alpha: 0.6),
-        border: Border.all(
-          color: scheme.outlineVariant.withValues(alpha: 0.32),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.pageHorizontal,
-          AppSpacing.lg,
-          AppSpacing.pageHorizontal,
-          AppSpacing.lg,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              CollectorTypeCopy.journeyTitle,
-              style: textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.1,
-              ),
+    return InsightsDashboardPanel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            CollectorTypeCopy.journeyTitle,
+            style: CollectibleTypography.shelfSeriesTitle(textTheme, scheme),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            CollectorTypeCopy.journeySubtitle,
+            style: textTheme.bodySmall?.copyWith(
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
+              height: 1.35,
             ),
-            const SizedBox(height: AppSpacing.xs),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          if (!summary.hasHistory)
             Text(
-              CollectorTypeCopy.journeySubtitle,
-              style: textTheme.bodySmall?.copyWith(
-                color: scheme.onSurfaceVariant,
+              CollectorTypeCopy.journeyEmpty,
+              style: textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
               ),
+            )
+          else ...[
+            _MetricLine(
+              label: 'IPs explored over time',
+              value: summary.ipUniversesExplored.toString(),
             ),
-            const SizedBox(height: FeedRhythm.blockGapMedium),
-            if (!summary.hasHistory)
+            if (summary.topIps.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.lg),
               Text(
-                CollectorTypeCopy.journeyEmpty,
-                style: textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurfaceVariant,
+                CollectorTypeCopy.journeyMostExploredIpsTitle,
+                style: textTheme.labelLarge?.copyWith(
+                  color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
+                  fontWeight: FontWeight.w600,
                 ),
-              )
-            else ...[
-              _MetricLine(
-                label: 'IPs explored over time',
-                value: summary.ipUniversesExplored.toString(),
               ),
-              if (summary.topIps.isNotEmpty) ...[
-                const SizedBox(height: AppSpacing.md),
-                Text(
-                  CollectorTypeCopy.journeyMostExploredIpsTitle,
-                  style: textTheme.labelLarge?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                for (final entry in summary.topIps)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-                    child: Text(
-                      entry.label,
-                      style: textTheme.bodyMedium,
-                    ),
-                  ),
-              ],
-              if (summary.journeyAgeLabel != null) ...[
-                const SizedBox(height: AppSpacing.md),
-                _MetricLine(
-                  label: 'Journey began',
-                  value: summary.journeyAgeLabel!,
-                ),
-              ],
+              const SizedBox(height: AppSpacing.sm),
+              Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.sm,
+                children: [
+                  for (final entry in summary.topIps)
+                    _IpChip(label: entry.label),
+                ],
+              ),
+            ],
+            if (summary.journeyAgeLabel != null) ...[
+              const SizedBox(height: AppSpacing.lg),
+              _MetricLine(
+                label: 'Journey began',
+                value: summary.journeyAgeLabel!,
+              ),
             ],
           ],
-        ),
+        ],
       ),
     );
   }
@@ -110,7 +93,7 @@ class _MetricLine extends StatelessWidget {
           child: Text(
             label,
             style: textTheme.bodyMedium?.copyWith(
-              color: scheme.onSurfaceVariant,
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.8),
             ),
           ),
         ),
@@ -120,6 +103,34 @@ class _MetricLine extends StatelessWidget {
           style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
         ),
       ],
+    );
+  }
+}
+
+class _IpChip extends StatelessWidget {
+  const _IpChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        color: scheme.primaryContainer.withValues(alpha: 0.45),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        child: Text(
+          label,
+          style: textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: scheme.onPrimaryContainer.withValues(alpha: 0.88),
+          ),
+        ),
+      ),
     );
   }
 }

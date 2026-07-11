@@ -1,8 +1,10 @@
-import 'package:blindbox_app/core/theme/collectible_typography.dart';
+import 'package:blindbox_app/core/theme/app_spacing.dart';
+import 'package:blindbox_app/core/theme/app_typography.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_stats.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 import 'package:flutter/material.dart';
 
+/// Quick statistics summary for Insights — counts only, no progress chrome.
 class CollectorTypeTotalsRow extends StatelessWidget {
   const CollectorTypeTotalsRow({super.key, required this.stats});
 
@@ -10,74 +12,89 @@ class CollectorTypeTotalsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    // shelfProgressLine is bodyMedium w500 — matches the readable-but-quiet
-    // stat pill style used across shelf surfaces.
-    final meta = CollectibleTypography.shelfProgressLine(textTheme, scheme)
-        .copyWith(height: 1.3);
-
-    return Wrap(
-      alignment: WrapAlignment.center,
-      spacing: 12,
-      runSpacing: 6,
+    return Column(
       children: [
-        _Chip(
-          label: CollectionVocabulary.countLabel(
-            stats.totalOwned,
-            CollectionVocabulary.figures,
-          ),
-          style: meta,
+        Row(
+          children: [
+            Expanded(
+              child: _MetricTile(
+                value: '${stats.totalOwned}',
+                label: CollectionVocabulary.figures,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: _MetricTile(
+                value: '${stats.totalWishlist}',
+                label: CollectionVocabulary.wishlist,
+              ),
+            ),
+          ],
         ),
-        _Dot(scheme: scheme),
-        _Chip(
-          label: CollectionVocabulary.countLabel(
-            stats.totalWishlist,
-            CollectionVocabulary.wishlist,
-          ),
-          style: meta,
-        ),
-        _Dot(scheme: scheme),
-        _Chip(
-          label: CollectionVocabulary.countLabel(
-            stats.trackedSeries,
-            CollectionVocabulary.series,
-          ),
-          style: meta,
-        ),
-        _Dot(scheme: scheme),
-        _Chip(
-          label: '${stats.completionPercent}% ${CollectionVocabulary.shelfProgress}',
-          style: meta,
+        const SizedBox(height: AppSpacing.md),
+        Row(
+          children: [
+            Expanded(
+              child: _MetricTile(
+                value: '${stats.trackedSeries}',
+                label: CollectionVocabulary.series,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: _MetricTile(
+                value: '${stats.secretOwned}',
+                label: CollectionVocabulary.secretFigure,
+              ),
+            ),
+          ],
         ),
       ],
     );
   }
 }
 
-class _Chip extends StatelessWidget {
-  const _Chip({required this.label, required this.style});
+class _MetricTile extends StatelessWidget {
+  const _MetricTile({required this.value, required this.label});
 
+  final String value;
   final String label;
-  final TextStyle? style;
-
-  @override
-  Widget build(BuildContext context) => Text(label, style: style);
-}
-
-class _Dot extends StatelessWidget {
-  const _Dot({required this.scheme});
-
-  final ColorScheme scheme;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 3,
-      height: 3,
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return DecoratedBox(
       decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: scheme.primary.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(16),
+        color: scheme.surfaceContainerLow.withValues(alpha: isDark ? 0.55 : 0.72),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.lg,
+        ),
+        child: Column(
+          children: [
+            Text(
+              value,
+              style: AppTypography.insightsTotals(textTheme, scheme).copyWith(
+                fontSize: 22,
+                height: 1.05,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.insightsCaption(textTheme, scheme),
+            ),
+          ],
+        ),
       ),
     );
   }

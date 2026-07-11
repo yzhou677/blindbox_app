@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('at-a-glance chips use collection vocabulary', (tester) async {
+  testWidgets('at-a-glance tiles use collection vocabulary', (tester) async {
     const stats = CollectorTypeStats(
       totalOwned: 11,
       totalWishlist: 2,
@@ -26,24 +26,14 @@ void main() {
       ),
     );
 
-    expect(
-      find.text(
-        CollectionVocabulary.countLabel(11, CollectionVocabulary.figures),
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.text(
-        CollectionVocabulary.countLabel(2, CollectionVocabulary.wishlist),
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.text(
-        CollectionVocabulary.countLabel(3, CollectionVocabulary.series),
-      ),
-      findsOneWidget,
-    );
-    expect(find.text('72% ${CollectionVocabulary.shelfProgress}'), findsOneWidget);
+    expect(find.text('11'), findsOneWidget);
+    expect(find.text(CollectionVocabulary.figures), findsOneWidget);
+    expect(find.text('2'), findsOneWidget);
+    expect(find.text(CollectionVocabulary.wishlist), findsOneWidget);
+    expect(find.text('3'), findsOneWidget);
+    expect(find.text(CollectionVocabulary.series), findsOneWidget);
+    expect(find.text('1'), findsOneWidget);
+    expect(find.text(CollectionVocabulary.secretFigure), findsOneWidget);
+    expect(find.textContaining(CollectionVocabulary.shelfProgress), findsNothing);
   });
 }

@@ -19,15 +19,33 @@ class CollectorTypeTopSeriesList extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (final name in seriesNames)
-          Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-            child: Text(
-              name,
-              style: CollectibleTypography.shelfProgressLine(textTheme, scheme)
-                  .copyWith(height: 1.35),
-            ),
+        for (var i = 0; i < seriesNames.length; i++) ...[
+          if (i > 0) const SizedBox(height: AppSpacing.sm),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 22,
+                child: Text(
+                  '${i + 1}',
+                  style: textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: scheme.primary.withValues(alpha: 0.55),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  seriesNames[i],
+                  style: CollectibleTypography.shelfProgressLine(
+                    textTheme,
+                    scheme,
+                  ).copyWith(height: 1.35),
+                ),
+              ),
+            ],
           ),
+        ],
       ],
     );
   }
