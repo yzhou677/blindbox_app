@@ -88,7 +88,7 @@ abstract final class AppTypography {
         color: s.onSurface.withValues(alpha: 0.72),
       );
 
-  /// Section / strip caption labels inside Insights (e.g. "Brands", "Top series").
+  /// Section / strip caption labels inside Insights (e.g. "Brands").
   /// labelSmall w600 with light letter spacing — quieter than [sectionTitle].
   static TextStyle insightsCaption(TextTheme t, ColorScheme s) =>
       t.labelSmall!.copyWith(
