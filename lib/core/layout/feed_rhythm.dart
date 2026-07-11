@@ -1,3 +1,5 @@
+import 'package:blindbox_app/core/theme/app_card_tokens.dart';
+
 /// Shared vertical rhythm for main-tab scroll feeds (Home / Market / Collection).
 /// Keeps compact headers aligned while giving the status-bar area a little air.
 abstract final class FeedRhythm {
@@ -48,8 +50,8 @@ abstract final class FeedRhythm {
   /// Showcase thumb for Market browse rows.
   static const double marketListingThumbnailExtent = 96;
 
-  /// Chasers rail height (image-first mini cards).
-  static const double marketChasersRailHeight = 196;
+  /// Chasers / For You compact rail height.
+  static const double marketChasersRailHeight = AppCardTokens.browseRailHeight;
 
   /// @deprecated Use [marketChasersRailHeight].
   static const double marketTrendingRailHeight = marketChasersRailHeight;
@@ -102,13 +104,6 @@ abstract final class FeedRhythm {
 
   /// Air below summary block before the shelf section header.
   static const double collectionSummaryToShelfHeader = 22;
-
-  /// Compact Collection shelf carousel card width — matches For You / Chasers (168).
-  static const double collectionShelfRailCardWidth = 168;
-
-  /// Collection series rail height — For You uses [marketChasersRailHeight] (196);
-  /// Collection adds compact progress footer (~28dp).
-  static const double collectionShelfRailHeight = 224;
 
   /// Vertical gap between full-width listing cards (shelf separation).
   static const double listingCardVerticalGap = 22;

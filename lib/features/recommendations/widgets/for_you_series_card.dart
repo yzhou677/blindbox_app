@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/theme/app_card_tokens.dart';
 import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/collectible_elevation.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
@@ -8,7 +9,10 @@ import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
 import 'package:flutter/material.dart';
 
 /// Compact image-first card — same footprint as Market Chasers mini cards.
-const double kForYouRailCardWidth = 168;
+///
+/// Width comes from [AppCardTokens.browseRailWidth] (shared with Collection /
+/// Chasers). Prefer that token over this alias in new code.
+const double kForYouRailCardWidth = AppCardTokens.browseRailWidth;
 
 class ForYouSeriesCard extends StatelessWidget {
   const ForYouSeriesCard({
@@ -30,10 +34,10 @@ class ForYouSeriesCard extends StatelessWidget {
     final textTheme = theme.textTheme;
     final isDark = theme.brightness == Brightness.dark;
     final reasons = forYouReasonLines(item);
-    final thumbExtent = kForYouRailCardWidth - 24;
+    final thumbExtent = AppCardTokens.browseRailThumbExtent();
 
     return SizedBox(
-      width: kForYouRailCardWidth,
+      width: AppCardTokens.browseRailWidth,
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: AppRadii.cardRadius,
@@ -45,14 +49,16 @@ class ForYouSeriesCard extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: AppRadii.cardRadius,
             side: BorderSide(
-              color: scheme.outlineVariant.withValues(alpha: isDark ? 0.32 : 0.38),
+              color: scheme.outlineVariant.withValues(
+                alpha: isDark ? 0.32 : 0.38,
+              ),
             ),
           ),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: onTap,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 14),
+              padding: AppCardTokens.browseRailPadding,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -75,7 +81,7 @@ class ForYouSeriesCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AppCardTokens.browseRailImageToTitleGap),
                   Text(
                     series.displayName,
                     maxLines: 2,
@@ -86,7 +92,9 @@ class ForYouSeriesCard extends StatelessWidget {
                     ),
                   ),
                   if (reasons.primary != null) ...[
-                    const SizedBox(height: 4),
+                    const SizedBox(
+                      height: AppCardTokens.browseRailTitleToMetaGap,
+                    ),
                     Text(
                       reasons.primary!,
                       maxLines: 1,

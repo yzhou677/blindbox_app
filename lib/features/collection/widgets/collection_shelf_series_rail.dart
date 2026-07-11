@@ -1,10 +1,13 @@
-import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
+import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_series_card.dart';
 import 'package:flutter/material.dart';
 
 /// Horizontal rail of [CollectionSeriesCard] for an In Progress / Completed bucket.
+///
+/// Rail height comes from [CollectionSeriesCard.railExtent] (card tokens), not a
+/// separate FeedRhythm magic number.
 class CollectionShelfSeriesRail extends StatelessWidget {
   const CollectionShelfSeriesRail({
     super.key,
@@ -24,7 +27,7 @@ class CollectionShelfSeriesRail extends StatelessWidget {
     if (series.isEmpty) return const SizedBox.shrink();
 
     return SizedBox(
-      height: FeedRhythm.collectionShelfRailHeight,
+      height: CollectionSeriesCard.railExtent,
       child: ListView.separated(
         key: const Key('collection_shelf_series_rail'),
         padding: const EdgeInsets.symmetric(

@@ -1,39 +1,29 @@
-import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/collectible_elevation.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/domain/series_completion_resolution.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_card_tokens.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_series_thumbnail.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_progress_voice.dart';
 import 'package:flutter/material.dart';
 
-/// Primary browse card for an owned [ShelfSeries] on Collection rails.
+/// Canonical owned-series presentation throughout the app.
 ///
-/// ## Token parity with For You (`ForYouSeriesCard`)
+/// Use this card for Collection rails and any future owned-series surfaces
+/// (search results, favorites, See All, Continue Collecting). Do not introduce
+/// parallel widgets such as `OwnedSeriesTile` / `SeriesGridCard` / `CollectionCard2`.
 ///
-/// **Shared (same design family — reuse tokens, not the widget):**
-/// - Card width: [FeedRhythm.collectionShelfRailCardWidth] (= 168, For You width)
-/// - Outer radius: [AppRadii.cardRadius]
-/// - Image mat radius: [AppRadii.matRadius]
-/// - Elevation: [CollectibleElevation.softCard]
-/// - Fill: [ColorScheme.surface]
-/// - Hairline: [ColorScheme.outlineVariant] @ 0.32 dark / 0.38 light
-/// - Inner padding: `12, 12, 12, 14`
-/// - Image → title gap: `10`
-/// - Title → meta gap: `4`
-/// - Title style: [CollectibleTypography.catalogSeriesRowTitle]
-/// - Square cover footprint: `width - 24`
+/// ## Token family
 ///
-/// **Intentional differences (ownership / progress):**
-/// - Media: [CollectionSeriesThumbnail] (shelf cover + catalog `imageKey`)
-/// - Meta: IP (fallback brand) via [CollectibleTypography.seriesIpLine]
-///   — not For You recommendation reason lines
-/// - Footer: progress bar + `N / D`, or Complete / Master Complete
-/// - Rail height: [FeedRhythm.collectionShelfRailHeight] (taller than For You’s
-///   [FeedRhythm.marketChasersRailHeight] to fit progress)
-/// - No Remove / Edit chrome — management stays in the figures sheet
+/// Shared browse chrome comes from [AppCardTokens] via [CollectionCardTokens]
+/// (width, padding, cover inset, title gaps). Progress footer spacing is
+/// Collection-only. Prefer tokens over magic numbers so iPad / fold / grid
+/// layouts can retarget sizes in one place.
+///
+/// Intentional differences vs For You: shelf media, IP meta, progress / Complete
+/// / Master footer — not recommendation reason lines; no management chrome.
 class CollectionSeriesCard extends StatelessWidget {
   const CollectionSeriesCard({
     super.key,
@@ -48,12 +38,8 @@ class CollectionSeriesCard extends StatelessWidget {
   final Map<String, TrackedFigure> figureStates;
   final VoidCallback onTap;
 
-  static const EdgeInsets _padding = EdgeInsets.fromLTRB(12, 12, 12, 14);
-  static const double _imageToTitleGap = 10;
-  static const double _titleToMetaGap = 4;
-  static const double _metaToProgressGap = 10;
-  static const double _progressBarHeight = 5;
-  static const double _progressToLabelGap = 6;
+  /// Cross-axis extent for horizontal rails — sized by the card tokens.
+  static double get railExtent => CollectionCardTokens.minRailHeight;
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +59,7 @@ class CollectionSeriesCard extends StatelessWidget {
       progress: progress,
       figureStates: figureStates,
     );
-    final thumbExtent = FeedRhythm.collectionShelfRailCardWidth - 24;
+    final coverExtent = CollectionCardTokens.coverExtent;
 
     final borderColor = isMasterComplete
         ? const Color(0xFFE8C547).withValues(alpha: isDark ? 0.42 : 0.4)
@@ -95,8 +81,8 @@ class CollectionSeriesCard extends StatelessWidget {
 
     return SizedBox(
       key: const Key('collection_series_card'),
-      width: FeedRhythm.collectionShelfRailCardWidth,
-      height: FeedRhythm.collectionShelfRailHeight,
+      width: CollectionCardTokens.width,
+      height: CollectionCardTokens.minRailHeight,
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: AppRadii.cardRadius,
@@ -113,28 +99,20 @@ class CollectionSeriesCard extends StatelessWidget {
           child: InkWell(
             onTap: onTap,
             child: Padding(
-              padding: _padding,
+              padding: CollectionCardTokens.padding,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
-                    child: Center(
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          final side = constraints.biggest.shortestSide
-                              .clamp(0.0, thumbExtent);
-                          return ClipRRect(
-                            borderRadius: AppRadii.matRadius,
-                            child: CollectionSeriesThumbnail(
-                              series: series,
-                              extent: side,
-                            ),
-                          );
-                        },
+                  Center(
+                    child: ClipRRect(
+                      borderRadius: AppRadii.matRadius,
+                      child: CollectionSeriesThumbnail(
+                        series: series,
+                        extent: coverExtent,
                       ),
                     ),
                   ),
-                  const SizedBox(height: _imageToTitleGap),
+                  const SizedBox(height: CollectionCardTokens.imageToTitleGap),
                   Text(
                     series.name,
                     maxLines: 2,
@@ -145,7 +123,7 @@ class CollectionSeriesCard extends StatelessWidget {
                     ),
                   ),
                   if (meta.isNotEmpty) ...[
-                    const SizedBox(height: _titleToMetaGap),
+                    const SizedBox(height: CollectionCardTokens.titleToMetaGap),
                     Text(
                       meta,
                       maxLines: 1,
@@ -156,7 +134,8 @@ class CollectionSeriesCard extends StatelessWidget {
                       ),
                     ),
                   ],
-                  const SizedBox(height: _metaToProgressGap),
+                  const Spacer(),
+                  const SizedBox(height: CollectionCardTokens.metaToProgressGap),
                   if (isComplete)
                     _CompletedFooter(
                       isMasterComplete: isMasterComplete,
@@ -210,7 +189,7 @@ class _InProgressFooter extends StatelessWidget {
           borderRadius: BorderRadius.circular(999),
           child: LinearProgressIndicator(
             value: ratio,
-            minHeight: CollectionSeriesCard._progressBarHeight,
+            minHeight: CollectionCardTokens.progressBarHeight,
             backgroundColor: scheme.surfaceContainerHighest.withValues(
               alpha: isDark ? 1 : 0.45,
             ),
@@ -218,7 +197,7 @@ class _InProgressFooter extends StatelessWidget {
           ),
         ),
         if (label.isNotEmpty) ...[
-          const SizedBox(height: CollectionSeriesCard._progressToLabelGap),
+          const SizedBox(height: CollectionCardTokens.progressToLabelGap),
           Text(
             label,
             maxLines: 1,
@@ -264,12 +243,12 @@ class _CompletedFooter extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: style,
         ),
-        const SizedBox(height: CollectionSeriesCard._progressToLabelGap),
+        const SizedBox(height: CollectionCardTokens.progressToLabelGap),
         ClipRRect(
           borderRadius: BorderRadius.circular(999),
           child: LinearProgressIndicator(
             value: 1,
-            minHeight: CollectionSeriesCard._progressBarHeight,
+            minHeight: CollectionCardTokens.progressBarHeight,
             backgroundColor: scheme.surfaceContainerHighest.withValues(
               alpha: isDark ? 1 : 0.45,
             ),

@@ -1,4 +1,5 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/theme/app_card_tokens.dart';
 import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/collectible_elevation.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
@@ -9,8 +10,6 @@ import 'package:blindbox_app/features/market/utils/market_format.dart';
 import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
-const double _kChasersCardWidth = 168;
 
 /// Horizontal market-heat rail — identity-level chasers, not editorial trending.
 class ChasersMarketSection extends StatelessWidget {
@@ -78,7 +77,7 @@ class _ChasersSkeletonCard extends StatelessWidget {
     final fill = scheme.surfaceContainerHighest.withValues(alpha: 0.72);
 
     return SizedBox(
-      width: _kChasersCardWidth,
+      width: AppCardTokens.browseRailWidth,
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: scheme.surface,
@@ -136,10 +135,10 @@ class _ChasersMiniCard extends StatelessWidget {
     final subtitle = CollectibleMarketMoodCopy.chaserRailSubtitle(
       ipLabel: entry.ipLabel,
     );
-    final thumbExtent = _kChasersCardWidth - 24;
+    final thumbExtent = AppCardTokens.browseRailThumbExtent();
 
     return SizedBox(
-      width: _kChasersCardWidth,
+      width: AppCardTokens.browseRailWidth,
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: AppRadii.cardRadius,
