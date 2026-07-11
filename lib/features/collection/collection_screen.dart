@@ -479,7 +479,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
             child: CollectibleSectionHeader(
               title: 'My collection',
               subtitle: sectionSubtitle,
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 10),
+              padding: const EdgeInsets.fromLTRB(20, 2, 20, 10),
               trailing: _CollectionAddSeriesButton(
                 onPressed: () => _openAddToCollection(context),
               ),

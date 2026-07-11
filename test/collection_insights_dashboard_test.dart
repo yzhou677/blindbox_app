@@ -66,7 +66,7 @@ void main() {
     final zeroCounts = tester.widgetList<Text>(find.text('0')).toList();
     expect(zeroCounts, hasLength(2));
 
-    expect(figureCount.style!.color!.a, closeTo(0.9, 0.06));
+    expect(figureCount.style!.color!.a, closeTo(0.97, 0.06));
     for (final zero in zeroCounts) {
       expect(zero.style!.color!.a, closeTo(0.36, 0.06));
     }

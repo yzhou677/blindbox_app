@@ -94,7 +94,7 @@ class CollectionInsightsCompactSummary extends StatelessWidget {
     final row = Row(
       children: [
         for (var i = 0; i < metrics.length; i++) ...[
-          if (i > 0) const SizedBox(width: 12),
+          if (i > 0) const SizedBox(width: 14),
           Expanded(
             child: _MorphMetricColumn(
               metric: metrics[i],
@@ -118,7 +118,7 @@ class CollectionInsightsCompactSummary extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(14),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             child: row,
           ),
         ),

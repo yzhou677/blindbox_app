@@ -85,6 +85,8 @@ void main() {
     );
 
     expect(find.byType(CollectionPageSegmentControl), findsOneWidget);
+    expect(find.byKey(const Key('shelfy_segmented_control')), findsOneWidget);
+    expect(find.byType(SegmentedButton<CollectionPageSegment>), findsNothing);
     expect(find.text('Shelf'), findsOneWidget);
     expect(find.text('Insights'), findsOneWidget);
     expect(find.byType(AppSearchField), findsOneWidget);

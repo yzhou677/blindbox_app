@@ -165,11 +165,11 @@ class _CollectionInsightsDashboardState extends State<CollectionInsightsDashboar
     final textTheme = Theme.of(context).textTheme;
 
     final valueStyle = AppTypography.insightsTotals(textTheme, scheme).copyWith(
-      fontSize: 26,
+      fontSize: 28,
       height: 1.0,
       fontWeight: FontWeight.w700,
-      letterSpacing: -0.6,
-      color: scheme.onSurface.withValues(alpha: 0.96),
+      letterSpacing: -0.7,
+      color: scheme.onSurface.withValues(alpha: 0.97),
     );
     final labelStyle = AppTypography.deckText(textTheme, scheme).copyWith(
       fontSize: 12,
@@ -392,8 +392,9 @@ class _SummaryHeaderRow extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(10),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
                 child: Text(
@@ -402,6 +403,7 @@ class _SummaryHeaderRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
+                    height: 1.0,
                     color: scheme.onSurface.withValues(alpha: 0.88),
                     letterSpacing: 0.05,
                   ),
@@ -409,9 +411,10 @@ class _SummaryHeaderRow extends StatelessWidget {
               ),
               Transform.rotate(
                 angle: chevronTurns * 3.141592653589793,
+                alignment: Alignment.center,
                 child: Icon(
                   Icons.expand_more_rounded,
-                  size: 22,
+                  size: 20,
                   color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
                 ),
               ),
