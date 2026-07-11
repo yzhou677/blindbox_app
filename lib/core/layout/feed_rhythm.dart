@@ -144,6 +144,12 @@ abstract final class FeedRhythm {
   /// Vertical gap between stacked blocks inside a tab (e.g. search vs chips).
   static const double blockGapMedium = 18;
 
+  /// Insights editorial section gaps — intentionally uneven (not identical cards).
+  static const double insightsHeroToStats = 28;
+  static const double insightsStatsToProgress = 20;
+  static const double insightsProgressToBrand = 24;
+  static const double insightsDashboardToJourney = 30;
+
   /// Extra air below the last block inside main-tab scroll bodies.
   static const double tabScrollTailPadding = 36;
 

@@ -25,30 +25,32 @@ class CollectorTypeShelfProgressCard extends StatelessWidget {
             'Shelf Progress',
             style: CollectibleTypography.shelfSeriesTitle(textTheme, scheme),
           ),
-          const SizedBox(height: AppSpacing.xl),
+          const SizedBox(height: AppSpacing.lg + 2),
           Row(
             children: [
               SizedBox(
-                width: 96,
-                height: 96,
+                width: 88,
+                height: 88,
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
                     SizedBox.expand(
                       child: CircularProgressIndicator(
                         value: ratio,
-                        strokeWidth: 8,
+                        strokeWidth: 5.5,
+                        strokeCap: StrokeCap.round,
                         backgroundColor: scheme.surfaceContainerHighest
-                            .withValues(alpha: 0.55),
-                        color: scheme.primary.withValues(alpha: 0.78),
+                            .withValues(alpha: 0.38),
+                        color: scheme.primary.withValues(alpha: 0.58),
                       ),
                     ),
                     Text(
                       '${stats.completionPercent}%',
-                      style: textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.4,
+                      style: textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: -0.35,
                         height: 1,
+                        color: scheme.onSurface.withValues(alpha: 0.86),
                       ),
                     ),
                   ],
@@ -63,18 +65,20 @@ class CollectorTypeShelfProgressCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(999),
                       child: LinearProgressIndicator(
                         value: ratio,
-                        minHeight: 6,
+                        minHeight: 4.5,
                         backgroundColor: scheme.surfaceContainerHighest
-                            .withValues(alpha: 0.45),
-                        color: scheme.primary.withValues(alpha: 0.55),
+                            .withValues(alpha: 0.32),
+                        color: scheme.primary.withValues(alpha: 0.42),
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.lg),
+                    const SizedBox(height: AppSpacing.md + 2),
                     Text(
                       '${stats.trackedSeries} ${CollectionVocabulary.series}',
                       style: CollectibleTypography.shelfProgressLine(
                         textTheme,
                         scheme,
+                      ).copyWith(
+                        color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
                       ),
                     ),
                   ],

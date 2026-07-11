@@ -19,7 +19,7 @@ import 'package:go_router/go_router.dart';
 class CollectionInsightsBody extends ConsumerWidget {
   const CollectionInsightsBody({super.key});
 
-  static const double _panelGap = 22;
+  static const double _panelGap = FeedRhythm.insightsDashboardToJourney;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

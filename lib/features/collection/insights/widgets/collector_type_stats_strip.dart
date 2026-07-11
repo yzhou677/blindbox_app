@@ -1,5 +1,6 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
+import 'package:blindbox_app/core/theme/app_typography.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_stats.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
@@ -23,7 +24,7 @@ class CollectorTypeStatsStrip extends StatelessWidget {
 
     return RepaintBoundary(
       child: Padding(
-        padding: const EdgeInsets.only(top: FeedRhythm.blockGapMedium + 4),
+        padding: const EdgeInsets.only(top: FeedRhythm.insightsHeroToStats),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -43,10 +44,10 @@ class CollectorTypeStatsStrip extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: FeedRhythm.blockGapMedium),
+            const SizedBox(height: FeedRhythm.insightsStatsToProgress),
             CollectorTypeShelfProgressCard(stats: stats),
             if (stats.brandBreakdown.isNotEmpty) ...[
-              const SizedBox(height: FeedRhythm.blockGapMedium),
+              const SizedBox(height: FeedRhythm.insightsProgressToBrand),
               InsightsDashboardPanel(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -87,12 +88,27 @@ class _BrandDistributionRow extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final colors = CollectorTypePalette.sectorColors;
 
+    // Single brand: quiet emphasis — no oversized empty donut.
+    if (entries.length == 1) {
+      final entry = entries.first;
+      final label =
+          MarketTaxonomy.brandById(entry.key)?.displayLabel ?? entry.key;
+      return _SingleBrandEmphasis(
+        color: colors.first,
+        label: label,
+        percent: 100,
+        figureCount: entry.value,
+        textTheme: textTheme,
+        scheme: scheme,
+      );
+    }
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         CollectorTypeBrandDonut(
           brandBreakdown: brandBreakdown,
-          size: 120,
+          size: 112,
         ),
         const SizedBox(width: AppSpacing.md),
         Expanded(
@@ -114,6 +130,93 @@ class _BrandDistributionRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _SingleBrandEmphasis extends StatelessWidget {
+  const _SingleBrandEmphasis({
+    required this.color,
+    required this.label,
+    required this.percent,
+    required this.figureCount,
+    required this.textTheme,
+    required this.scheme,
+  });
+
+  final Color color;
+  final String label;
+  final int percent;
+  final int figureCount;
+  final TextTheme textTheme;
+  final ColorScheme scheme;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        color: color.withValues(alpha: isDark ? 0.14 : 0.10),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.lg,
+          AppSpacing.lg,
+          AppSpacing.lg,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.88),
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: CollectibleTypography.shelfSeriesTitle(
+                      textTheme,
+                      scheme,
+                    ).copyWith(
+                      fontSize: 17,
+                      letterSpacing: -0.2,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '$figureCount ${figureCount == 1 ? 'figure' : 'figures'}',
+                    style: AppTypography.insightsCaption(textTheme, scheme)
+                        .copyWith(
+                      color: scheme.onSurfaceVariant.withValues(alpha: 0.64),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              '$percent%',
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.2,
+                color: scheme.onSurface.withValues(alpha: 0.78),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -157,8 +260,8 @@ class _BrandLegendLine extends StatelessWidget {
         Text(
           '$percent%',
           style: textTheme.labelLarge?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: scheme.onSurface.withValues(alpha: 0.72),
+            fontWeight: FontWeight.w600,
+            color: scheme.onSurface.withValues(alpha: 0.68),
           ),
         ),
       ],

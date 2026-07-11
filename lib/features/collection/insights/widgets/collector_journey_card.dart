@@ -18,6 +18,12 @@ class CollectorJourneyCard extends ConsumerWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return InsightsDashboardPanel(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.pageHorizontal,
+        AppSpacing.lg + 2,
+        AppSpacing.pageHorizontal,
+        AppSpacing.lg + 2,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -25,17 +31,17 @@ class CollectorJourneyCard extends ConsumerWidget {
             CollectorTypeCopy.journeyTitle,
             style: CollectibleTypography.shelfSeriesTitle(textTheme, scheme),
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: 6),
           Text(
             CollectorTypeCopy.journeySubtitle,
             style: AppTypography.insightsFlavor(textTheme, scheme).copyWith(
               fontSize: 13,
-              height: 1.4,
-              color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
+              height: 1.35,
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.68),
             ),
           ),
           if (!summary.hasHistory) ...[
-            const SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: AppSpacing.lg),
             Text(
               CollectorTypeCopy.journeyEmpty,
               style: textTheme.bodyMedium?.copyWith(
@@ -44,54 +50,67 @@ class CollectorJourneyCard extends ConsumerWidget {
               ),
             ),
           ] else ...[
-            if (summary.journeyAgeLabel != null) ...[
-              const SizedBox(height: AppSpacing.xl + AppSpacing.sm),
-              _StoryBeat(
-                label: CollectorTypeCopy.journeyStartedLabel,
-                child: Text(
-                  summary.journeyAgeLabel!,
-                  style: CollectibleTypography.shelfSeriesTitle(
-                    textTheme,
-                    scheme,
-                  ).copyWith(
-                    fontSize: 22,
-                    letterSpacing: -0.3,
-                    height: 1.15,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-            if (summary.ipUniversesExplored > 0) ...[
-              const SizedBox(height: AppSpacing.xl + AppSpacing.sm),
-              _StoryBeat(
-                label: CollectorTypeCopy.journeyExploredLabel,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${summary.ipUniversesExplored}',
-                      style: CollectibleTypography.shelfSeriesTitle(
-                        textTheme,
-                        scheme,
-                      ).copyWith(
-                        fontSize: 28,
-                        letterSpacing: -0.4,
-                        height: 1.05,
-                        fontWeight: FontWeight.w700,
+            const SizedBox(height: AppSpacing.lg),
+            // Group Started + Explored as related story beats.
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (summary.journeyAgeLabel != null)
+                  Expanded(
+                    child: _StoryBeat(
+                      label: CollectorTypeCopy.journeyStartedLabel,
+                      child: Text(
+                        summary.journeyAgeLabel!,
+                        style: CollectibleTypography.shelfSeriesTitle(
+                          textTheme,
+                          scheme,
+                        ).copyWith(
+                          fontSize: 18,
+                          letterSpacing: -0.25,
+                          height: 1.2,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      summary.ipUniversesExplored == 1
-                          ? 'IP universe'
-                          : 'IP universes',
-                      style: AppTypography.insightsCaption(textTheme, scheme),
+                  ),
+                if (summary.journeyAgeLabel != null &&
+                    summary.ipUniversesExplored > 0)
+                  const SizedBox(width: AppSpacing.lg),
+                if (summary.ipUniversesExplored > 0)
+                  Expanded(
+                    child: _StoryBeat(
+                      label: CollectorTypeCopy.journeyExploredLabel,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${summary.ipUniversesExplored}',
+                            style: CollectibleTypography.shelfSeriesTitle(
+                              textTheme,
+                              scheme,
+                            ).copyWith(
+                              fontSize: 22,
+                              letterSpacing: -0.35,
+                              height: 1.05,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            summary.ipUniversesExplored == 1
+                                ? 'IP universe'
+                                : 'IP universes',
+                            style: AppTypography.insightsCaption(
+                              textTheme,
+                              scheme,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
-                ),
-              ),
-            ],
+                  ),
+              ],
+            ),
           ],
         ],
       ),
@@ -116,12 +135,12 @@ class _StoryBeat extends StatelessWidget {
         Text(
           label,
           style: AppTypography.insightsCaption(textTheme, scheme).copyWith(
-            letterSpacing: 0.4,
+            letterSpacing: 0.35,
             fontWeight: FontWeight.w600,
-            color: scheme.onSurfaceVariant.withValues(alpha: 0.62),
+            color: scheme.onSurfaceVariant.withValues(alpha: 0.58),
           ),
         ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: 6),
         child,
       ],
     );

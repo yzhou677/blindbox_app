@@ -22,7 +22,7 @@ class CollectorTypeTotalsRow extends StatelessWidget {
                 label: CollectionVocabulary.figures,
               ),
             ),
-            const SizedBox(width: AppSpacing.md),
+            const SizedBox(width: AppSpacing.lg),
             Expanded(
               child: _MetricTile(
                 value: '${stats.totalWishlist}',
@@ -31,7 +31,7 @@ class CollectorTypeTotalsRow extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: AppSpacing.lg),
         Row(
           children: [
             Expanded(
@@ -40,7 +40,7 @@ class CollectorTypeTotalsRow extends StatelessWidget {
                 label: CollectionVocabulary.series,
               ),
             ),
-            const SizedBox(width: AppSpacing.md),
+            const SizedBox(width: AppSpacing.lg),
             Expanded(
               child: _MetricTile(
                 value: '${stats.secretOwned}',
@@ -68,30 +68,39 @@ class _MetricTile extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: scheme.surfaceContainerLow.withValues(alpha: isDark ? 0.55 : 0.72),
+        borderRadius: BorderRadius.circular(20),
+        color: scheme.surfaceContainerLow.withValues(
+          alpha: isDark ? 0.38 : 0.48,
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.md,
-          vertical: AppSpacing.lg,
+          vertical: AppSpacing.lg + 2,
         ),
         child: Column(
           children: [
             Text(
               value,
               style: AppTypography.insightsTotals(textTheme, scheme).copyWith(
-                fontSize: 22,
-                height: 1.05,
+                fontSize: 26,
+                height: 1.02,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.4,
+                color: scheme.onSurface.withValues(alpha: 0.92),
               ),
             ),
-            const SizedBox(height: AppSpacing.xs),
+            const SizedBox(height: 6),
             Text(
               label,
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: AppTypography.insightsCaption(textTheme, scheme),
+              style: AppTypography.insightsCaption(textTheme, scheme).copyWith(
+                fontSize: 11.5,
+                letterSpacing: 0.15,
+                color: scheme.onSurfaceVariant.withValues(alpha: 0.62),
+              ),
             ),
           ],
         ),

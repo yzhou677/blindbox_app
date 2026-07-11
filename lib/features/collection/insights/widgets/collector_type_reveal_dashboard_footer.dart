@@ -1,4 +1,3 @@
-import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_reveal_age.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
 import 'package:flutter/material.dart';
@@ -31,16 +30,17 @@ class CollectorTypeRevealDashboardFooter extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final captionStyle = textTheme.labelMedium?.copyWith(
-      color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
-      letterSpacing: 0.08,
+    // Quiet meta — parent owns the gap above this footer.
+    final captionStyle = textTheme.labelSmall?.copyWith(
+      color: scheme.onSurfaceVariant.withValues(alpha: 0.52),
+      letterSpacing: 0.12,
+      fontWeight: FontWeight.w500,
     );
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const SizedBox(height: AppSpacing.lg),
         if (updatedLabel != null)
           Text(
             updatedLabel,

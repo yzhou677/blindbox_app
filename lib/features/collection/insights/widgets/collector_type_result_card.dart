@@ -63,9 +63,10 @@ class CollectorTypeResultCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Center(
-                  child: CollectorTypeGlyph(archetype: archetype, size: 96),
+                  child: CollectorTypeGlyph(archetype: archetype, size: 112),
                 ),
-                const SizedBox(height: AppSpacing.lg),
+                // Uneven editorial rhythm: mascot → title → flavor → meta.
+                const SizedBox(height: 24),
                 Text(
                   archetype.displayName,
                   textAlign: TextAlign.center,
@@ -75,38 +76,39 @@ class CollectorTypeResultCard extends StatelessWidget {
                     textTheme,
                     scheme,
                   ).copyWith(
-                    fontSize: 28,
-                    letterSpacing: -0.5,
-                    height: 1.12,
+                    fontSize: 30,
+                    letterSpacing: -0.55,
+                    height: 1.1,
                     fontWeight: FontWeight.w700,
                     color: scheme.onSurface.withValues(alpha: 0.96),
                   ),
                 ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: 10),
                 Text(
                   archetype.flavorText,
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.insightsFlavor(textTheme, scheme).copyWith(
-                    fontSize: 14,
-                    height: 1.4,
-                    color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
+                    fontSize: 13.5,
+                    height: 1.45,
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.68),
                   ),
                 ),
                 if (hasHelper) ...[
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: 12),
                   Text(
                     helperLine!,
                     textAlign: TextAlign.center,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant.withValues(alpha: 0.62),
+                      color: scheme.onSurfaceVariant.withValues(alpha: 0.55),
                       height: 1.35,
                     ),
                   ),
                 ],
+                const SizedBox(height: 20),
                 CollectorTypeRevealDashboardFooter(
                   revealedAt: identity.revealedAt,
                   showRevealAgain: showRevealAgain,
