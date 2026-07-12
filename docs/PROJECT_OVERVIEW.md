@@ -83,13 +83,14 @@ No login required for MVP.
 Users can:
 - add catalog series or custom series to the shelf
 - track owned vs wishlist figure states
-- save purchase price and notes
+- create **custom series** with notes, covers, and local figure photos
+  (official catalog rows on the shelf do not expose those editors)
 - use custom series with canonical taxonomy fields
 - filter and sort the shelf (brand, IP, completion-oriented browse)
 
 Collection intelligence (shipped):
 - **Summary** — Figures, Wishlist, Completed Series, Master Complete
-- **Insights** — at-a-glance progress, collector type reveal, editorial tone
+- **Insights** — at-a-glance progress, collector type reveal (**10** types, resolver 5.1), editorial tone
 - **Completion tiers** — regular series complete vs all secrets owned (`Master Complete`)
 
 Local persistence (implemented):
