@@ -286,6 +286,28 @@ Custom data remains user-controlled.
 
 ---
 
+### Series figures sheet progress (Regular ≠ Secret)
+
+**Product decision:** The Series figures sheet presents collection progress from
+the collector’s perspective, not the database’s.
+
+Regular Figures and Secret Figures are **two different collection goals**. Do
+**not** summarize them into a single `X of Y Figures` value.
+
+The UI should consistently answer **“What am I still collecting?”** instead of
+exposing how many figure rows exist in the database.
+
+| Surface | Behavior |
+| ------- | -------- |
+| Sheet header | `Regular Figures N of M Collected`; if secrets exist, also `Secret Figures A of B Collected` |
+| Section headers | Same Regular / Secret split; progress `(owned of total)` |
+| No secrets | Omit Secret lines and Secret section entirely |
+| Complete / Master Complete | Unchanged — still from `resolveSeriesCompletion` |
+
+Presentation only — do not change completion calculation or Collector Type logic.
+
+---
+
 ### Flat shelf sorting
 
 Collection sorting operates on a **flat** series list per bucket.
@@ -313,7 +335,7 @@ Sort modes do **not** group by IP. IP filters remain available as a filter facet
 | Recently Added | Preserve shelf / bucket encounter order | N/A |
 | Alphabetical (A–Z) | Series name (case-insensitive) | shelf `id` |
 | Figure Count | `figureCount` (desc) | series name → shelf `id` |
-| Completion | `owned ÷ slots` per series (desc) | series name → shelf `id` |
+| Completion | **Tier first:** Master Complete → Complete → Near Complete (≥ 0.85) → In Progress; then progress ratio (desc) | series name → shelf `id` |
 
 **Product rule:** Collection sorting is flat. New sort modes should define a **series-level** comparator — not reintroduce hidden IP aggregates.
 

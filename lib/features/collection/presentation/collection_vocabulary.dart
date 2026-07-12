@@ -10,7 +10,9 @@ abstract final class CollectionVocabulary {
   static const completedSeries = 'Completed Series';
   static const masterComplete = 'Master Complete';
   static const secretFigure = 'Secret Figure';
+  static const secretFigures = 'Secret Figures';
   static const regularFigures = 'Regular Figures';
+  static const collected = 'Collected';
   static const series = 'Series';
 
   /// Compact series card badge when all regular figures are owned.

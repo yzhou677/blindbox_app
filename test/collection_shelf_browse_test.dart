@@ -439,6 +439,169 @@ void main() {
       expect(sorted.first.id, 's1');
     });
 
+    test('completion prefers Master Complete over Complete', () {
+      final master = testShelfSeries(
+        id: 'master',
+        name: 'Zebra Master',
+        figures: [
+          const ShelfFigure(
+            id: 'm_r0',
+            seriesId: 'master',
+            name: 'R',
+            rarity: 'Regular',
+            isSecret: false,
+          ),
+          const ShelfFigure(
+            id: 'm_sec',
+            seriesId: 'master',
+            name: 'Chase',
+            rarity: 'Secret',
+            isSecret: true,
+          ),
+        ],
+      );
+      final complete = testShelfSeries(
+        id: 'complete',
+        name: 'Alpha Complete',
+        figures: [
+          const ShelfFigure(
+            id: 'c_r0',
+            seriesId: 'complete',
+            name: 'R',
+            rarity: 'Regular',
+            isSecret: false,
+          ),
+          const ShelfFigure(
+            id: 'c_sec',
+            seriesId: 'complete',
+            name: 'Chase',
+            rarity: 'Secret',
+            isSecret: true,
+          ),
+        ],
+      );
+      final states = {
+        ..._ownedAll(master),
+        'c_r0': TrackedFigure(
+          figureId: 'c_r0',
+          state: FigureCollectionState.owned,
+        ),
+      };
+      final sorted = sortShelfSeriesForDisplay(
+        [complete, master],
+        CollectionShelfSort.completion,
+        states,
+      );
+      expect(sorted.map((s) => s.id).toList(), ['master', 'complete']);
+    });
+
+    test('completion keeps name order among Master Complete peers', () {
+      ShelfSeries masterNamed(String id, String name) {
+        return testShelfSeries(
+          id: id,
+          name: name,
+          figures: [
+            ShelfFigure(
+              id: '${id}_r',
+              seriesId: id,
+              name: 'R',
+              rarity: 'Regular',
+              isSecret: false,
+            ),
+            ShelfFigure(
+              id: '${id}_sec',
+              seriesId: id,
+              name: 'Chase',
+              rarity: 'Secret',
+              isSecret: true,
+            ),
+          ],
+        );
+      }
+
+      final zebra = masterNamed('z', 'Zebra');
+      final alpha = masterNamed('a', 'Alpha');
+      final states = {..._ownedAll(zebra), ..._ownedAll(alpha)};
+      final sorted = sortShelfSeriesForDisplay(
+        [zebra, alpha],
+        CollectionShelfSort.completion,
+        states,
+      );
+      expect(sorted.map((s) => s.id).toList(), ['a', 'z']);
+    });
+
+    test('completion keeps name order among Complete peers', () {
+      final zebra = _series(id: 'z', name: 'Zebra', figureCount: 2);
+      final alpha = _series(id: 'a', name: 'Alpha', figureCount: 2);
+      final states = {..._ownedAll(zebra), ..._ownedAll(alpha)};
+      final sorted = sortShelfSeriesForDisplay(
+        [zebra, alpha],
+        CollectionShelfSort.completion,
+        states,
+      );
+      expect(sorted.map((s) => s.id).toList(), ['a', 'z']);
+    });
+
+    test('completion prefers Near Complete over lower In Progress', () {
+      // 4 slots: 4 owned → ratio 1.0 complete; 3/4 = 0.75 not near;
+      // use 6 slots: 6*0.85=5.1 → 6 owned of regular path with 6 figs:
+      // near = progressRatio >= 0.85 and not complete → 6 regulars, own 6? that's complete.
+      // 5 of 6 = ~0.833 < 0.85; 6 of 7 ≈ 0.857 near.
+      final near = _series(id: 'near', name: 'Near', figureCount: 7);
+      final low = _series(id: 'low', name: 'Low', figureCount: 7);
+      final states = {
+        ..._ownedCount(near, 6), // 6/7 ≈ 0.857
+        ..._ownedCount(low, 2),
+      };
+      final sorted = sortShelfSeriesForDisplay(
+        [low, near],
+        CollectionShelfSort.completion,
+        states,
+      );
+      expect(sorted.map((s) => s.id).toList(), ['near', 'low']);
+    });
+
+    test('completion mixed tiers: Master → Complete → Near → In Progress', () {
+      final master = testShelfSeries(
+        id: 'master',
+        name: 'Master',
+        figures: [
+          const ShelfFigure(
+            id: 'm_r',
+            seriesId: 'master',
+            name: 'R',
+            rarity: 'Regular',
+            isSecret: false,
+          ),
+          const ShelfFigure(
+            id: 'm_sec',
+            seriesId: 'master',
+            name: 'Chase',
+            rarity: 'Secret',
+            isSecret: true,
+          ),
+        ],
+      );
+      final complete = _series(id: 'complete', name: 'Complete', figureCount: 3);
+      final near = _series(id: 'near', name: 'Near', figureCount: 7);
+      final low = _series(id: 'low', name: 'Low', figureCount: 4);
+      final states = {
+        ..._ownedAll(master),
+        ..._ownedAll(complete),
+        ..._ownedCount(near, 6),
+        ..._ownedCount(low, 1),
+      };
+      final sorted = sortShelfSeriesForDisplay(
+        [low, complete, near, master],
+        CollectionShelfSort.completion,
+        states,
+      );
+      expect(
+        sorted.map((s) => s.id).toList(),
+        ['master', 'complete', 'near', 'low'],
+      );
+    });
+
     test('completion sorts all series globally (ignores IP weighted ratio)', () {
       ShelfSeries withCount({
         required String id,

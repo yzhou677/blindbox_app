@@ -83,10 +83,61 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('Regular Figures (3)'), findsOneWidget);
-    expect(find.text('Secret Figure (1)'), findsOneWidget);
+    expect(find.text('Regular Figures (0 of 3)'), findsOneWidget);
+    expect(find.text('Secret Figures (0 of 1)'), findsOneWidget);
+    expect(find.textContaining('Regular Figures 0 of 3 Collected'), findsOneWidget);
+    expect(find.textContaining('Secret Figures 0 of 1 Collected'), findsOneWidget);
+    expect(find.text('0 of 4 Figures'), findsNothing);
     expect(find.text('Regular 0'), findsOneWidget);
     expect(find.text('Chase'), findsOneWidget);
+  });
+
+  testWidgets('header shows owned progress for master-complete series', (
+    tester,
+  ) async {
+    final series = _seriesWithSecrets();
+    final states = <String, TrackedFigure>{
+      for (final f in series.figures)
+        f.id: TrackedFigure(
+          figureId: f.id,
+          state: FigureCollectionState.owned,
+        ),
+    };
+    final snap = CollectionSnapshot(shelfSeries: [series], figureStates: states);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          collectionNotifierProvider.overrideWith(
+            () => _SheetTestNotifier(snap),
+          ),
+          catalogBundleProvider.overrideWith(
+            (ref) async => const CatalogSeedBundle(
+              brands: [],
+              ips: [],
+              series: [],
+              figures: [],
+            ),
+          ),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: Scaffold(
+            body: CollectibleSheetScope(
+              scrollController: ScrollController(),
+              child: SeriesFiguresSheet(seriesId: series.id),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.textContaining('Regular Figures 3 of 3 Collected'), findsOneWidget);
+    expect(find.textContaining('Secret Figures 1 of 1 Collected'), findsOneWidget);
+    expect(find.text('Regular Figures (3 of 3)'), findsOneWidget);
+    expect(find.text('Secret Figures (1 of 1)'), findsOneWidget);
+    expect(find.textContaining('of 4 Figures'), findsNothing);
   });
 
   testWidgets('no section labels when series has no secrets', (tester) async {
@@ -134,7 +185,9 @@ void main() {
     await tester.pump();
 
     expect(find.text('Regular Figures'), findsNothing);
-    expect(find.text('Secret Figure'), findsNothing);
+    expect(find.text('Secret Figures'), findsNothing);
+    expect(find.textContaining('Secret Figures'), findsNothing);
+    expect(find.textContaining('Regular Figures 0 of 1 Collected'), findsOneWidget);
     expect(find.text('Only'), findsOneWidget);
   });
 }

@@ -61,6 +61,32 @@ abstract final class CollectionProgressVoice {
     return '${resolution.progressNumerator} / $denom';
   }
 
+  /// Series figures sheet header: Regular and Secret progress as separate lines.
+  ///
+  /// Answers “what am I still collecting?” — never a combined “X of Y Figures”
+  /// that mixes Regular + Secret inventory.
+  static String? seriesFiguresSheetProgressMeta(
+    SeriesCompletionResolution resolution,
+  ) {
+    final lines = <String>[];
+    if (resolution.regularSlotCount > 0) {
+      lines.add(
+        '${CollectionVocabulary.regularFigures} '
+        '${resolution.regularOwnedCount} of ${resolution.regularSlotCount} '
+        '${CollectionVocabulary.collected}',
+      );
+    }
+    if (resolution.secretSlotCount > 0) {
+      lines.add(
+        '${CollectionVocabulary.secretFigures} '
+        '${resolution.secretOwnedCount} of ${resolution.secretSlotCount} '
+        '${CollectionVocabulary.collected}',
+      );
+    }
+    if (lines.isEmpty) return null;
+    return lines.join('\n');
+  }
+
   /// Optional factual secondary stat — Secret Figure whisper when complete.
   static String seriesStatSecondaryLine({
     required ShelfSeries series,

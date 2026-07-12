@@ -7,8 +7,10 @@ import 'package:blindbox_app/features/collectible_relationship/widgets/collectib
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/application/shelf_emotional_providers.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/domain/series_completion_resolution.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 import 'package:blindbox_app/features/collection/presentation/shelf_editorial_voice.dart';
+import 'package:blindbox_app/features/collection/widgets/collection_progress_voice.dart';
 import 'package:blindbox_app/features/collection/widgets/figure_capsule_card.dart';
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
@@ -36,13 +38,9 @@ class SeriesFiguresSheet extends ConsumerWidget {
     final series = _findSeries(snap, seriesId);
     if (series == null) return const SizedBox.shrink();
 
-    final progress = progressForSeries(series, snap.figureStates);
-    final isComplete =
-        series.figureCount > 0 && progress.owned >= series.figureCount;
-    final secrets = series.figures.where((f) => f.isSecret).toList();
-    final chasesHome =
-        secrets.isNotEmpty &&
-        secrets.every((f) => snap.trackedOrDefault(f.id).owned);
+    final resolution = resolveSeriesCompletion(series, snap.figureStates);
+    final isComplete = resolution.isCompleted;
+    final chasesHome = resolution.isMasterComplete;
     final scroll = CollectibleSheetScope.scrollControllerOf(context);
     final relationshipLine = ref.watch(
       relationshipHintForShelfSeriesProvider(seriesId),
@@ -50,9 +48,8 @@ class SeriesFiguresSheet extends ConsumerWidget {
     final memoryReflection = ref.watch(
       collectionMemoryReflectionForSeriesProvider(seriesId),
     );
-    final trailingMeta = series.figureCount > 0
-        ? '${progress.owned} of ${series.figureCount} ${CollectionVocabulary.figures}'
-        : null;
+    final trailingMeta =
+        CollectionProgressVoice.seriesFiguresSheetProgressMeta(resolution);
     final contextualLine =
         (relationshipLine != null && relationshipLine.isNotEmpty)
             ? relationshipLine
@@ -80,7 +77,7 @@ class SeriesFiguresSheet extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.only(top: 14),
                 child: _SeriesCompleteBanner(
-                  chasesHome: chasesHome && secrets.isNotEmpty,
+                  chasesHome: chasesHome,
                 ),
               ),
             ),
@@ -93,6 +90,7 @@ class SeriesFiguresSheet extends ConsumerWidget {
               child: _SeriesFigureGrid(
                 series: series,
                 snap: snap,
+                resolution: resolution,
                 onCycleFigure: notifier.cycleFigure,
               ),
             ),
@@ -107,11 +105,13 @@ class _SeriesFigureGrid extends StatelessWidget {
   const _SeriesFigureGrid({
     required this.series,
     required this.snap,
+    required this.resolution,
     required this.onCycleFigure,
   });
 
   final ShelfSeries series;
   final CollectionSnapshot snap;
+  final SeriesCompletionResolution resolution;
   final void Function(String figureId) onCycleFigure;
 
   @override
@@ -138,7 +138,8 @@ class _SeriesFigureGrid extends StatelessWidget {
           const SizedBox(height: 16),
           _FigureSheetSectionHeader(
             label: CollectionVocabulary.regularFigures,
-            count: regularFigures.length,
+            owned: resolution.regularOwnedCount,
+            total: resolution.regularSlotCount,
           ),
           const SizedBox(height: 14),
           _FigureCapsuleWrap(
@@ -152,8 +153,9 @@ class _SeriesFigureGrid extends StatelessWidget {
         const _FigureSheetSectionRule(),
         const SizedBox(height: 16),
         _FigureSheetSectionHeader(
-          label: CollectionVocabulary.secretFigure,
-          count: secretFigures.length,
+          label: CollectionVocabulary.secretFigures,
+          owned: resolution.secretOwnedCount,
+          total: resolution.secretSlotCount,
           showCrown: true,
           accent: true,
         ),
@@ -186,18 +188,19 @@ class _FigureSheetSectionRule extends StatelessWidget {
 class _FigureSheetSectionHeader extends StatelessWidget {
   const _FigureSheetSectionHeader({
     required this.label,
-    this.count,
+    required this.owned,
+    required this.total,
     this.showCrown = false,
     this.accent = false,
   });
 
   final String label;
-  final int? count;
+  final int owned;
+  final int total;
   final bool showCrown;
   final bool accent;
 
-  String get _displayLabel =>
-      count != null ? '$label ($count)' : label;
+  String get _displayLabel => '$label ($owned of $total)';
 
   @override
   Widget build(BuildContext context) {

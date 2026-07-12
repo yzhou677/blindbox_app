@@ -153,6 +153,22 @@ int _compareShelfSeriesByNameThenId(ShelfSeries a, ShelfSeries b) {
   return a.id.compareTo(b.id);
 }
 
+/// Completion-sort tier — higher sorts first.
+///
+/// Matches product achievement order: Master Complete → Complete →
+/// Near Complete (≥ 0.85 progress, not yet complete) → In Progress.
+/// Threshold matches [atmosphereForSeries] / shelf “almost complete” voice.
+int _completionSortTier(
+  ShelfSeries series,
+  Map<String, TrackedFigure> states,
+) {
+  final resolution = resolveSeriesCompletion(series, states);
+  if (resolution.isMasterComplete) return 3;
+  if (resolution.isCompleted) return 2;
+  if (resolution.progressRatio >= 0.85) return 1;
+  return 0;
+}
+
 double _seriesCompletionRatio(
   ShelfSeries series,
   Map<String, TrackedFigure> states, {
@@ -196,11 +212,14 @@ List<ShelfSeries> sortShelfSeriesForDisplay(
     case CollectionShelfSort.completion:
       return List<ShelfSeries>.from(series)
         ..sort((a, b) {
-          final cmp = _seriesCompletionRatio(b, states, progress: progress)
+          final tierCmp = _completionSortTier(b, states)
+              .compareTo(_completionSortTier(a, states));
+          if (tierCmp != 0) return tierCmp;
+          final ratioCmp = _seriesCompletionRatio(b, states, progress: progress)
               .compareTo(
             _seriesCompletionRatio(a, states, progress: progress),
           );
-          if (cmp != 0) return cmp;
+          if (ratioCmp != 0) return ratioCmp;
           return _compareShelfSeriesByNameThenId(a, b);
         });
   }
