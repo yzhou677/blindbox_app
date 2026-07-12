@@ -11,15 +11,14 @@ enum CollectorTypeReasonKey {
 
   dominantUniverse,
   highWishlist,
-  wishlistDominates,
   manySecrets,
   fortunateSecrets,
   deepCompletion,
   nearCompletion,
   intentionalSpread,
   compactShelf,
-  livingArchive,
-  composedShelf,
+  /// Custom worlds / notes / personal imagery — Worldbuilder.
+  inventedWorlds,
   freshDrops,
 }
 
@@ -27,6 +26,14 @@ extension CollectorTypeReasonKeyCodec on CollectorTypeReasonKey {
   static CollectorTypeReasonKey fromName(String? name) {
     if (name == null || name.isEmpty) {
       return CollectorTypeReasonKey.stillUnfolding;
+    }
+    // Legacy Archivist key → Worldbuilder fantasy.
+    if (name == 'livingArchive') {
+      return CollectorTypeReasonKey.inventedWorlds;
+    }
+    // Legacy Daydream Collector key → Dreamer Because.
+    if (name == 'wishlistDominates') {
+      return CollectorTypeReasonKey.highWishlist;
     }
     return CollectorTypeReasonKey.values.asNameMap()[name] ??
         CollectorTypeReasonKey.stillUnfolding;

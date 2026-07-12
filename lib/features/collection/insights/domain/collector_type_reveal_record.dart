@@ -13,6 +13,38 @@ import 'package:flutter/foundation.dart';
 /// same shelf snapshot could resolve to a different collector identity or
 /// explanation under the new rules.
 ///
+/// **2.0** — Signal ownership freeze: Identity scores from **current shelf**
+/// only. Journey memory (`ipSeriesDepth`, `firstSeriesAddedAt`) removed from
+/// Curator / Worldbuilder scoring. See scoring signal table on
+/// [resolveCollectorType] / `_scoreArchetypes`.
+///
+/// Display rename Archivist → Worldbuilder is copy/id only (same signals).
+///
+/// **3.0** — Taxonomy simplify: removed Stylist and Daydream Collector.
+/// Daydream → Dreamer. Stylist removed (no successor).
+///
+/// **4.0** — Worldbuilder authorship rewrite: custom series ratio is primary;
+/// notes/covers/photos deepen score only on custom rows (product UI never
+/// attaches those to official catalog series). Catalog-only shelves do not
+/// qualify.
+///
+/// **5.0** — Behavior inference: Identity requires defining shelf behavior
+/// (ratio / share / density / composition), not isolated evidence counts.
+/// Trend / Curator / Hunter / Completionist no longer score from presence
+/// alone; soft-capped scale bonuses only after eligibility.
+///
+/// **5.1** — Evolution gate: `shouldEvolve` compares candidate vs previous
+/// identity via margin (+ cooldown-scaled margin) only. Resolution.confidence
+/// no longer blocks evolution (it remains on the Resolution for analytics).
+///
+/// **5.2** — Reveal lifecycle: signature / `needsReveal` answer **When** only.
+/// A reveal started while `needsReveal` persists the resolver candidate;
+/// `sameSignature` must not Still-override that reinterpretation. `shouldEvolve`
+/// (incl. sameSignature) applies only on unchanged-shelf repeated reveals.
+///
+/// **5.3** — Tie-break: Worldbuilder ranks above Minimalist (authorship over
+/// compact shelf size when scores tie within epsilon).
+///
 /// **Bump when** a change can alter Identity or Explainability for the same
 /// shelf:
 /// - scoring weights
@@ -23,6 +55,7 @@ import 'package:flutter/foundation.dart';
 /// - archetype qualification / scoring branches
 /// - reasonKey generation rules
 /// - taxonomy interpretation (e.g. what “Curator” means in scoring)
+/// - signal ownership / bounded-context inputs
 ///
 /// **Do NOT bump for:**
 /// - copy / text (`becauseLine`, flavor)
@@ -32,21 +65,20 @@ import 'package:flutter/foundation.dart';
 /// - Flutter-layer performance work
 ///
 /// Stamped onto every [CollectorTypeRevealRecord]. Do not branch on this in
-/// Collector Type 1.0 UI or resolver logic — Timeline / Personality Memory
+/// Collector Type UI or resolver logic — Timeline / Personality Memory
 /// replay past results without re-running a future resolver.
-const String kCollectorTypeResolverVersion = '1.0';
+const String kCollectorTypeResolverVersion = '5.3';
 
 /// Append-only resolve snapshot — Personality Memory / Timeline / replay.
 ///
-/// Collector Type 1.0 does not surface Timeline UI. Persist enough of the
-/// resolve pass that v2 can answer “why were you The Loyalist then?” without
-/// re-running the Resolver.
+/// Persist enough of the resolve pass that later Timeline / Personality Memory
+/// can answer “why were you The Loyalist then?” without re-running the Resolver.
 ///
 /// Causal copy: [CollectorTypeCopy.becauseLineForRecord] only — never
 /// re-resolve or `switch` on archetype for Because text.
 ///
 /// [confidence] and [resolverVersion] are historical metadata only. Do not show
-/// them in Collector Type 1.0 product UI.
+/// them in Collector Type product UI.
 @immutable
 class CollectorTypeRevealRecord {
   const CollectorTypeRevealRecord({
@@ -123,8 +155,7 @@ class CollectorTypeRevealRecord {
 
   factory CollectorTypeRevealRecord.fromJson(Map<String, dynamic> json) {
     final idName = json['archetypeId'] as String? ?? '';
-    final id = CollectorTypeArchetypeId.values.asNameMap()[idName] ??
-        CollectorTypeArchetypeId.wanderer;
+    final id = CollectorTypeArchetypeIdCodec.fromName(idName);
     final ms = json['revealedAtMs'] as int? ?? 0;
     final raw = CollectorTypeReasonKeyCodec.fromName(
       json['reasonKey'] as String?,

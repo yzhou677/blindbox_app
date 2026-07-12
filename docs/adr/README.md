@@ -112,8 +112,8 @@ Examples only — **not created yet**:
 | Topic | Why it might become an ADR |
 | ----- | -------------------------- |
 | Recommendation taste semantics | Tracked-only taste; stable For You; wishlist/owned out of pipeline — [`RECOMMENDATION_SEMANTICS.md`](../RECOMMENDATION_SEMANTICS.md) (**Accepted ADR**) |
-| Collection Hierarchy | Bucket → IP → Series; local shelf vs catalog |
-| Collection Sorting | Hierarchical browser, not flat ranked list; aggregate metrics |
+| Collection Hierarchy | Progress buckets (In Progress / Completed); flat series rail; local shelf vs catalog |
+| Collection Sorting | Flat series list per bucket; one global comparator; no hidden IP ordering |
 | Catalog Identity | `imageKey`, Firestore catalog universe, persisted cache offline baseline |
 | Market Intelligence | Market universe separate from shelf and catalog |
 | Offline-first / Local-first | Collection local persistence; progressive hydration |

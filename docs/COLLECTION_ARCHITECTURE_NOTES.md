@@ -139,6 +139,17 @@ Canonical code: `lib/features/collection/insights/`.
 This section exists so future maintainers do **not** “fix” Journey into a
 reveal snapshot or re-derive Because copy from archetype switches.
 
+### ADR: Snapshot invalidation is not identity inference
+
+1. Signature exists only to determine whether a reveal is needed.
+2. Resolver is the sole authority for interpreting the current shelf.
+3. Identity stability applies only when no new reveal is required.
+4. A reveal triggered by `needsReveal` must always persist the resolver's current interpretation.
+
+Do not reintroduce `sameSignature` (or any other evolution gate) into the
+`needsReveal` → Reveal path. Evolution answers *how* to present change on an
+unchanged shelf only.
+
 ### Live state vs reveal snapshot
 
 | Kind | Object | Behavior |
@@ -191,8 +202,41 @@ by re-running today’s Resolver over an old shelf.
 3. **UI never switches on archetype for causal copy.** Title/accent/flavor may read archetype catalog metadata; **Because** must not.
 4. **`reasonKey` is the only explanation source** for Because. Map via `CollectorTypeCopy` only (`becauseLineFor` / `becauseLineForRecord`).
 5. **`resolverVersion` protects historical semantics.** Stamped on every `CollectorTypeRevealRecord`. Policy and bump rules live on `kCollectorTypeResolverVersion` — schema/policy version, not app version. Bump only when the same shelf could resolve to a different identity or explanation.
+6. **Identity scores the current shelf only (2.0+).** Resolver must not read Journey memory (`ipSeriesDepth`, `firstSeriesAddedAt`, …) or Reveal History. Prior Identity is allowed only inside `shouldEvolve`. Catalog metadata may join shelf items (Trend Chaser freshness). Scoring signal table lives as a comment on `collector_type_resolver.dart` and below.
+7. **Identity requires defining behavior (5.0).** Signals are evidence, not identity. Eligibility uses ratio / share / density / composition before strength and soft-capped scale. Presence alone does not assign personality.
+8. **Reveal lifecycle (5.2):** Hero shows **last revealed** identity (persisted). Live shelf continuously resolves a **candidate** (`collectorTypeLiveResolutionProvider`) that is never auto-persisted. `needsReveal` is true when **signature** drifts or **resolverVersion** changed — signature answers **When** only. A reveal while `needsReveal` always persists the resolver candidate (no `sameSignature` Still override). `shouldEvolve` (margin / cooldown / sameSignature) applies only to repeated reveals on an unchanged shelf. Persist only on explicit Reveal.
+9. **Evolution:** On unchanged-shelf reveals, `shouldEvolve` answers whether the challenger earned the title. Confidence remains on `CollectorTypeResolution` for analytics only. Ceremony reflects whether the persisted archetype changed.
 
-Related: evolution constants in `collector_type_evolution_gate.dart`; scoring thresholds in `collector_type_resolver.dart`; prefs key `collection_memory_v3`.
+Related: evolution constants in `collector_type_evolution_gate.dart`; scoring thresholds in `collector_type_resolver.dart`; prefs key `collection_memory_v3`. Canonical registry: `CollectorTypeArchetypes` (**10 types**).
+
+### Collector Types (resolver 5.0) — 10 archetypes
+
+Each type is a collecting **verb** on the current shelf. Pipeline: Signals → Behavior eligibility → Strength → Soft-capped scale. Winner = highest scoreboard score (ties use `tieBreakPriority`).
+
+| Type | Verb | Defining behavior | Eligibility then strength |
+| ---- | ---- | ----------------- | ------------------------- |
+| **Completionist** | Finish | Finishing defines the shelf | `finishRatio` / `nearRatio` ≥ 0.4 + avg / near gates; soft-capped complete count |
+| **Hunter** | Chase | Hunting rarity defines shelf | Secret density ≥ 0.35 (+ ≥2 secrets or secrets theme); soft-capped secret count |
+| **Lucky One** | Fortune | Compact high hit-rate fortune | Secret ratio + small shelf; **not** when Hunter eligible |
+| **Loyalist** | Commit | One universe dominates | Dominant brand/IP share ≥ 0.6 |
+| **Curator** | Curate | Multi-world gallery | Spread ≥ 2 brands/IPs **and** not Loyalist-dominant; soft-capped spreads |
+| **Wanderer** | Explore | Curious unfinished spread / empty fallback | Brand spread + low completion; empty shelf fallback |
+| **Minimalist** | Refine | Small carefully finished shelf | Few series + few owned + high completion |
+| **Worldbuilder** | Create | Authorship of custom worlds | ≥1 custom **and** `customRatio ≥ 0.3`; notes/covers/photos deepen custom rows only |
+| **Dreamer** | Imagine | Wishlist-forward collecting | `wishlistRatio ≥ 0.45` + wishlist count |
+| **Trend Chaser** | Chase now | Chasing fresh drops defines shelf | `recentRatio ≥ 0.4` and ≥2 recent catalog series; soft-capped recent count |
+
+**Not Identity signals:** Journey `ipSeriesDepth` / `firstSeriesAddedAt`; Reveal History / prior Identity (except `shouldEvolve`).
+
+**Legacy id migration (persist load):** `archivist` → Worldbuilder; `daydreamCollector` → Dreamer. Stylist removed (no successor mapping).
+
+**Tie-break order (high → low):** Completionist → Hunter → Loyalist → Curator → Worldbuilder → Minimalist → Trend Chaser → Dreamer → Lucky One → Wanderer.
+
+**Tie-break role (5.3):** Insurance, not the primary identity mechanism. Behavior
+eligibility usually separates the scoreboard. Structural exclusions never both
+score: Hunter ⊥ Lucky One; Loyalist ⊥ Curator. Prefer keeping the table short
+and product-ordered (authorship / long-horizon verbs above shelf-shape verbs
+such as Minimalist).
 
 ---
 
@@ -227,6 +271,12 @@ Users are allowed to:
 * Edit IP
 * Edit notes
 * Change cover image
+* Attach local figure photos
+
+**Product boundary:** series notes, custom covers, and local figure photos are
+available on **custom series only**. Official catalog series tracked onto the
+shelf do not expose those editors — do not document or test catalog rows as if
+they carried user notes/covers.
 
 The application should not attempt to second-guess or override user intent.
 
@@ -236,9 +286,9 @@ Custom data remains user-controlled.
 
 ---
 
-### Hierarchical shelf sorting
+### Flat shelf sorting
 
-Collection sorting is hierarchical.
+Collection sorting operates on a **flat** series list per bucket.
 
 The Collection page is organized as:
 
@@ -247,29 +297,29 @@ Collection
     ↓
 Bucket (In Progress / Completed)
         ↓
-IP
-            ↓
-Series
+Flat List<ShelfSeries>
+        ↓
+One global comparator
+        ↓
+Render (series rail)
 ```
 
-All sort modes preserve this hierarchy: determine the order of **IP groups** first, then the order of **series within each IP**. The feed builder renders that order; it does not re-rank.
-
-This is a deliberate product decision. A global flat series ranking would fight the grouped shelf UI and can make on-screen order disagree with the selected sort.
+Sort modes do **not** group by IP. IP filters remain available as a filter facet only — they do not affect display order after the list is built.
 
 #### Collection sorting reference
 
-| Sort | IP aggregate | Series aggregate | Tie-breakers |
-| ---- | ------------ | ---------------- | ------------ |
-| Recently Added | Most recent addition (encounter order in bucket) | Recently added (shelf order within IP) | N/A (no comparator) |
-| Alphabetical (A–Z) | IP label | Series name | IP group key → shelf `id` |
-| Figure Count | `Σ figureCount` per IP (desc) | `figureCount` (desc) | IP label → IP key; series name → shelf `id` |
-| Completion | `Σ owned ÷ Σ slots` per IP (desc) — **weighted**, not average of series % | `owned ÷ slots` per series (desc) | IP label → IP key; series name → shelf `id` |
+| Sort | Series comparator | Tie-breakers |
+| ---- | ----------------- | ------------ |
+| Recently Added | Preserve shelf / bucket encounter order | N/A |
+| Alphabetical (A–Z) | Series name (case-insensitive) | shelf `id` |
+| Figure Count | `figureCount` (desc) | series name → shelf `id` |
+| Completion | `owned ÷ slots` per series (desc) | series name → shelf `id` |
 
-**Product rule:** Collection sorting is hierarchical. New sort modes (Market Value, Estimated Value, Release Date, Last Updated, Rarity, etc.) should define an **IP aggregate** and a **series aggregate** — not introduce flat global ranking — unless Product explicitly chooses a flat ranked list.
+**Product rule:** Collection sorting is flat. New sort modes should define a **series-level** comparator — not reintroduce hidden IP aggregates.
 
 Implementation: [`sortShelfSeriesForDisplay`](../lib/features/collection/presentation/collection_shelf_browse.dart) in `collection_shelf_browse.dart`.
 
-**The Collection page is a hierarchical browser, not a flat ranked list.**
+**The Collection page is a flat series browser within each progress bucket.**
 
 ---
 
@@ -331,3 +381,37 @@ Consider architecture review if any of the following become common:
 Until then:
 
 **Prefer simplicity over infrastructure complexity.**
+
+---
+
+## Collector Type 5.3
+
+Status: Active policy version. Scoring remains 5.0 behavior inference;
+reveal lifecycle remains 5.2; tie-break order is 5.3.
+
+See **ADR: Snapshot invalidation is not identity inference** above.
+
+**Reveal lifecycle (5.2):** Signature / `needsReveal` answer **When** only. A
+reveal while `needsReveal` always persists the resolver candidate.
+`shouldEvolve` (margin / cooldown / sameSignature) applies only to repeated
+reveals on an unchanged shelf.
+
+**Tie-break (5.3):** Worldbuilder ranks above Minimalist when scores tie —
+authorship over compact shelf size. Tie-break is insurance; structural pairs
+Hunter/Lucky and Loyalist/Curator never both score.
+
+**Evolution (unchanged-shelf):** `shouldEvolve` compares candidate vs previous
+identity via scoreboard margin (and cooldown-scaled margin). Resolution.confidence
+is analytics-only.
+
+**Behavior inference (5.0):** Identity answers “does this behavior define how I
+collect today?” Eligibility (ratio / share / density / composition) precedes
+strength and soft-capped scale.
+
+**Worldbuilder (4.0):** authorship-first — custom series ratio is the gate and
+primary signal. Notes/covers/photos deepen score only on custom series.
+
+Do not adjust scoring without product evidence from real collectors. Prefer
+eligibility / composition fixes over arbitrary weight nerfs.
+
+Future work should build on this architecture rather than expand the resolver.

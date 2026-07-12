@@ -26,13 +26,11 @@ These are **not** current bugs. The Collection rendering audit (2026) confirmed 
 
 ### Reuse grouped shelf sections
 
-**Description:** [`groupShelfSeriesByUniverse`](../lib/features/collection/presentation/shelf_series_feed.dart) runs in both [`sortShelfSeriesForDisplay`](../lib/features/collection/presentation/collection_shelf_browse.dart) (for alphabetical, figure-count, and completion sorts) and again in [`buildShelfFeedItems`](../lib/features/collection/presentation/shelf_series_feed.dart) per bucket — duplicate O(n) grouping on the same series list within one `build()`.
+**Status:** Obsolete for Collection browse ordering (2026-07). Sort no longer calls [`groupShelfSeriesByUniverse`](../lib/features/collection/presentation/shelf_series_feed.dart); the live Collection UI renders a flat series rail. Grouping remains only for legacy feed helpers / tests if still referenced.
 
-**Expected benefit:** Fewer allocations and passes over the shelf when sort modes regroup by IP/universe; marginal at current sizes.
+**Previous description:** Grouping ran in both sort and feed flatten — duplicate O(n) on the same list.
 
-**Current priority:** Low
-
-**Trigger for revisiting:** Collection sizes consistently exceed **~1,000 series**, or profiling shows grouping as a hot spot during filter/sort interactions.
+**Current priority:** None for sort path.
 
 ---
 

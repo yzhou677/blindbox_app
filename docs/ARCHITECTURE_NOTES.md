@@ -236,8 +236,8 @@ Before any `SliverList.builder` item is built, `CollectionScreen.build()` runs a
 | IP filtering | [`collection_shelf_ip_facets.dart`](../lib/features/collection/presentation/collection_shelf_ip_facets.dart) | O(n) shelf |
 | Search filtering | [`filterShelfSeriesBySearch`](../lib/features/collection/presentation/collection_shelf_browse.dart) | O(n) shelf; with active query, catalog match set is O(figures) |
 | Partition | [`partitionShelfSeries`](../lib/features/collection/presentation/collection_shelf_browse.dart) | O(n) shelf |
-| Sort (per bucket) | [`sortShelfSeriesForDisplay`](../lib/features/collection/presentation/collection_shelf_browse.dart) | O(n log n) typical; includes IP grouping for most sort modes |
-| Grouping + feed flatten | [`buildShelfFeedItems`](../lib/features/collection/presentation/shelf_series_feed.dart) | O(n) shelf; [`groupShelfSeriesByUniverse`](../lib/features/collection/presentation/shelf_series_feed.dart) + per-series progress/atmosphere |
+| Sort (per bucket) | [`sortShelfSeriesForDisplay`](../lib/features/collection/presentation/collection_shelf_browse.dart) | O(n log n); flat series comparator (no IP grouping) |
+| Feed / rail | [`CollectionShelfSeriesRail`](../lib/features/collection/widgets/collection_shelf_series_rail.dart) | O(n) visible series; flat list (no IP headers) |
 | Summary aggregation | [`CollectionAggregateStats.fromSnapshot`](../lib/features/collection/widgets/collection_summary_section.dart) → [`countShelfCompletionTiers`](../lib/features/collection/domain/series_completion_resolution.dart) | O(n) full shelf |
 | Editorial interpretation | [`shelf_emotional_providers.dart`](../lib/features/collection/application/shelf_emotional_providers.dart) (profile, relationship insights, whispers) | O(n) full shelf per rebuild |
 
@@ -519,11 +519,11 @@ See also [`COLLECTION_ARCHITECTURE_NOTES.md`](COLLECTION_ARCHITECTURE_NOTES.md) 
 | Area | Notes |
 |------|-------|
 | Custom Series | Create via `addCustomSeries` |
-| Edit Series | Metadata, cover, notes, advanced brand/IP |
+| Edit Custom Series | Metadata, cover, notes, advanced brand/IP (**custom rows only**) |
 | Add Figure | `addCustomFigure` from edit sheet (Phase 2.8) |
-| Edit Figure | Name, secret, rarity, local image |
-| Figure images | `localImageUri` on shelf only |
-| Insights | Collector Type reveal (Identity snapshot) + live Journey; At a Glance / progress |
+| Edit Figure | Name, secret, rarity, local image (**custom figures**) |
+| Figure images | `localImageUri` on custom shelf figures only |
+| Insights | Collector Type reveal (**10** Identity archetypes, resolver 5.1) + live Journey; At a Glance / progress |
 | Journey | Live exploration metrics on Insights (not frozen with reveal) |
 | Brand / IP filters | Collection shelf chip facets |
 | Offline-first catalog | Persisted Firestore snapshot + bootstrap placeholder + background refresh |

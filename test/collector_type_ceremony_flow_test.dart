@@ -109,7 +109,7 @@ void main() {
     await CollectionMemoryStore.instance.saveCollectorType(
       CollectorTypeIdentity(
         // Intentionally different from resolver outcome for this shelf.
-        archetypeId: CollectorTypeArchetypeId.archivist,
+        archetypeId: CollectorTypeArchetypeId.worldbuilder,
         revealedAt: DateTime(2026, 1, 1),
         // Different signature so the evolution gate may consider a type change.
         signatureHash: 'prior-signature',
@@ -139,20 +139,12 @@ void main() {
     await container.read(collectorTypeViewModelProvider.notifier).requestReveal();
 
     final event = container.read(collectorTypeCeremonyProvider);
-    final revealed = container.read(collectorTypeViewModelProvider);
-    expect(revealed, isA<CollectorTypeRevealRevealed>());
-    // Evolution only when shouldEvolve clears — may Still if challenger is weak.
-    if (event != null) {
-      expect(event.isFirstReveal, isFalse);
-      expect(
-        event.identity.archetypeId,
-        isNot(CollectorTypeArchetypeId.archivist),
-      );
-    } else {
-      expect(
-        (revealed as CollectorTypeRevealRevealed).identity.archetypeId,
-        CollectorTypeArchetypeId.archivist,
-      );
-    }
+    final revealed = container.read(collectorTypeViewModelProvider)
+        as CollectorTypeRevealRevealed;
+    // needsReveal (stale signature) → always persist resolver candidate.
+    expect(revealed.identity.archetypeId, isNot(CollectorTypeArchetypeId.worldbuilder));
+    expect(event, isNotNull);
+    expect(event!.isFirstReveal, isFalse);
+    expect(event.identity.archetypeId, revealed.identity.archetypeId);
   });
 }

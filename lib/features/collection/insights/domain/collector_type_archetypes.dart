@@ -12,26 +12,25 @@ abstract final class CollectorTypeArchetypes {
     loyalist,
     curator,
     trendChaser,
-    archivist,
+    worldbuilder,
     minimalist,
     wanderer,
-    stylist,
-    daydreamCollector,
     luckyOne,
   ];
 
   /// Stable tie-break order when scores tie (earlier = higher priority).
+  ///
+  /// Worldbuilder ranks above Minimalist: authorship beats compact shelf size
+  /// when scores are equal within epsilon.
   static const List<CollectorTypeArchetypeId> tieBreakPriority = [
     CollectorTypeArchetypeId.completionist,
     CollectorTypeArchetypeId.hunter,
     CollectorTypeArchetypeId.loyalist,
     CollectorTypeArchetypeId.curator,
+    CollectorTypeArchetypeId.worldbuilder,
     CollectorTypeArchetypeId.minimalist,
-    CollectorTypeArchetypeId.archivist,
-    CollectorTypeArchetypeId.stylist,
     CollectorTypeArchetypeId.trendChaser,
     CollectorTypeArchetypeId.dreamer,
-    CollectorTypeArchetypeId.daydreamCollector,
     CollectorTypeArchetypeId.luckyOne,
     CollectorTypeArchetypeId.wanderer,
   ];
@@ -45,6 +44,12 @@ abstract final class CollectorTypeArchetypes {
 
   static CollectorTypeArchetype? tryByIdName(String? name) {
     if (name == null || name.isEmpty) return null;
+    if (name == 'archivist') {
+      return byId(CollectorTypeArchetypeId.worldbuilder);
+    }
+    if (name == 'daydreamCollector') {
+      return byId(CollectorTypeArchetypeId.dreamer);
+    }
     final id = CollectorTypeArchetypeId.values.asNameMap()[name];
     if (id == null) return null;
     return byId(id);
@@ -110,14 +115,15 @@ abstract final class CollectorTypeArchetypes {
     icon: Icons.bolt_outlined,
   );
 
-  static const archivist = CollectorTypeArchetype(
-    id: CollectorTypeArchetypeId.archivist,
-    displayName: 'The Archivist',
+  static const worldbuilder = CollectorTypeArchetype(
+    id: CollectorTypeArchetypeId.worldbuilder,
+    displayName: 'The Worldbuilder',
     flavorText:
-        'You preserve the story — notes, covers, and the shelf as a living archive.',
-    accentColorLight: Color(0xFF9A9488),
-    accentColorDark: Color(0xFFACA69A),
-    icon: Icons.menu_book_outlined,
+        'You imagine shelves that don\'t exist yet. Instead of fitting into '
+        'the catalog, you expand it with worlds of your own.',
+    accentColorLight: Color(0xFFB8A0C8),
+    accentColorDark: Color(0xFFC8B0D8),
+    icon: Icons.public_outlined,
   );
 
   static const minimalist = CollectorTypeArchetype(
@@ -138,26 +144,6 @@ abstract final class CollectorTypeArchetypes {
     accentColorLight: Color(0xFFA8B0C0),
     accentColorDark: Color(0xFFB8C0D0),
     icon: Icons.explore_outlined,
-  );
-
-  static const stylist = CollectorTypeArchetype(
-    id: CollectorTypeArchetypeId.stylist,
-    displayName: 'The Stylist',
-    flavorText:
-        'Presentation is part of the collectible — your shelf is composed, not crowded.',
-    accentColorLight: Color(0xFFD4A8C8),
-    accentColorDark: Color(0xFFE0B4D4),
-    icon: Icons.brush_outlined,
-  );
-
-  static const daydreamCollector = CollectorTypeArchetype(
-    id: CollectorTypeArchetypeId.daydreamCollector,
-    displayName: 'The Daydream Collector',
-    flavorText:
-        'More lives on your Wishlist than on the shelf — and that is part of the joy.',
-    accentColorLight: Color(0xFFB0C4E8),
-    accentColorDark: Color(0xFFC0D0F0),
-    icon: Icons.cloud_outlined,
   );
 
   static const luckyOne = CollectorTypeArchetype(

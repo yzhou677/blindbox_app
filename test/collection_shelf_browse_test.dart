@@ -4,7 +4,6 @@ import 'package:blindbox_app/features/collection/application/collection_shelf_ui
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_browse.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_brand_facets.dart';
-import 'package:blindbox_app/features/collection/presentation/shelf_series_feed.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_progress_voice.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -109,14 +108,6 @@ ShelfSeries _ipSeries({
         ),
     ],
   );
-}
-
-/// Hierarchical sorts emit IP-consolidated order; feed grouping must not reorder.
-void expectSortMatchesGroupedFeedOrder(List<ShelfSeries> sorted) {
-  final regrouped = [
-    for (final section in groupShelfSeriesByUniverse(sorted)) ...section.series,
-  ];
-  expect(sorted.map((s) => s.id).toList(), regrouped.map((s) => s.id).toList());
 }
 
 void main() {
@@ -340,7 +331,7 @@ void main() {
       expect(sorted.map((s) => s.id).toList(), ['c', 'a', 'b']);
     });
 
-    test('alphabetical sorts IP groups A-Z then series within each IP', () {
+    test('alphabetical sorts all series by name globally (ignores IP)', () {
       final series = [
         testShelfSeries(
           id: 'n2',
@@ -372,10 +363,11 @@ void main() {
         CollectionShelfSort.alphabetical,
         states,
       );
-      expect(sorted.map((s) => s.id).toList(), ['d1', 'd2', 'n1', 'n2']);
+      // Global A→Z by series name — not Disney block then Nommi block.
+      expect(sorted.map((s) => s.id).toList(), ['d1', 'n1', 'n2', 'd2']);
     });
 
-    test('alphabetical sorts by series name within a single IP', () {
+    test('alphabetical sorts by series name', () {
       final sorted = sortShelfSeriesForDisplay(
         series,
         CollectionShelfSort.alphabetical,
@@ -384,7 +376,7 @@ void main() {
       expect(sorted.map((s) => s.id).toList(), ['a', 'b', 'c']);
     });
 
-    test('figureCount sorts descending within a single IP', () {
+    test('figureCount sorts descending by series figureCount', () {
       final sorted = sortShelfSeriesForDisplay(
         series,
         CollectionShelfSort.figureCount,
@@ -393,7 +385,7 @@ void main() {
       expect(sorted.map((s) => s.id).toList(), ['b', 'c', 'a']);
     });
 
-    test('figureCount sorts IP groups by summed figure count then series', () {
+    test('figureCount sorts all series globally (ignores IP totals)', () {
       ShelfSeries withCount({
         required String id,
         required String name,
@@ -428,10 +420,11 @@ void main() {
         CollectionShelfSort.figureCount,
         states,
       );
-      expect(sorted.map((s) => s.id).toList(), ['da', 'db', 'na']);
+      // Flat: 20, 18, 17 — not Disney (37) then Nommi.
+      expect(sorted.map((s) => s.id).toList(), ['da', 'na', 'db']);
     });
 
-    test('completion sorts by ratio descending within a single IP', () {
+    test('completion sorts by series ratio descending', () {
       final s1 = _series(id: 's1', name: 'One', figureCount: 4);
       final s2 = _series(id: 's2', name: 'Two', figureCount: 4);
       final states = {
@@ -446,7 +439,7 @@ void main() {
       expect(sorted.first.id, 's1');
     });
 
-    test('completion sorts IP groups by weighted ratio then series', () {
+    test('completion sorts all series globally (ignores IP weighted ratio)', () {
       ShelfSeries withCount({
         required String id,
         required String name,
@@ -501,10 +494,11 @@ void main() {
         states,
       );
 
-      expect(sorted.map((s) => s.id).toList(), ['na', 'da', 'db']);
+      // Flat by series ratio: 1.0, 0.9, 0.0 — not Nommi-first via IP weighting.
+      expect(sorted.map((s) => s.id).toList(), ['da', 'na', 'db']);
     });
 
-    test('alphabetical is case-insensitive for IP and series names', () {
+    test('alphabetical is case-insensitive for series names', () {
       final sorted = sortShelfSeriesForDisplay(
         [
           _ipSeries(id: 'z', name: 'zebra', ipId: 'zeta', ipLabel: 'ZETA'),
@@ -538,7 +532,7 @@ void main() {
       expect(sorted.map((s) => s.id).toList(), ['a_id', 'z_id']);
     });
 
-    test('alphabetical tie-breaks equal IP labels by group key', () {
+    test('alphabetical does not group by equal IP labels', () {
       final sorted = sortShelfSeriesForDisplay(
         [
           _ipSeries(
@@ -560,7 +554,7 @@ void main() {
       expect(sorted.map((s) => s.id).toList(), ['s1', 's2']);
     });
 
-    test('figureCount tie-breaks equal IP totals by IP label A-Z', () {
+    test('figureCount tie-breaks equal counts by series name A-Z', () {
       final sorted = sortShelfSeriesForDisplay(
         [
           _ipSeries(
@@ -709,7 +703,7 @@ void main() {
       expect(sorted.map((s) => s.id).toList(), ['partial', 'empty']);
     });
 
-    test('completion tie-breaks equal IP weighted ratios by IP label A-Z', () {
+    test('completion tie-breaks equal ratios by series name A-Z', () {
       final alpha = _ipSeries(
         id: 'a1',
         name: 'A One',
@@ -747,10 +741,10 @@ void main() {
     });
   });
 
-  group('hierarchical sort feed faithfulness', () {
+  group('flat sort does not preserve IP adjacency', () {
     const states = <String, TrackedFigure>{};
 
-    test('alphabetical order matches feed grouping order', () {
+    test('alphabetical interleaves series across IPs by name', () {
       final sorted = sortShelfSeriesForDisplay(
         [
           _ipSeries(id: 'da', name: 'Disney A', ipId: 'disney', ipLabel: 'Disney'),
@@ -760,10 +754,10 @@ void main() {
         CollectionShelfSort.alphabetical,
         states,
       );
-      expectSortMatchesGroupedFeedOrder(sorted);
+      expect(sorted.map((s) => s.id).toList(), ['da', 'db', 'na']);
     });
 
-    test('figureCount order matches feed grouping order', () {
+    test('figureCount orders by series count across IPs', () {
       final sorted = sortShelfSeriesForDisplay(
         [
           _ipSeries(
@@ -791,11 +785,10 @@ void main() {
         CollectionShelfSort.figureCount,
         states,
       );
-      expectSortMatchesGroupedFeedOrder(sorted);
-      expect(sorted.map((s) => s.id).toList(), ['da', 'db', 'na']);
+      expect(sorted.map((s) => s.id).toList(), ['da', 'na', 'db']);
     });
 
-    test('completion order matches feed grouping order', () {
+    test('completion orders by series ratio across IPs', () {
       final disneyDone = _ipSeries(
         id: 'da',
         name: 'Disney Done',
@@ -826,7 +819,7 @@ void main() {
         CollectionShelfSort.completion,
         owned,
       );
-      expectSortMatchesGroupedFeedOrder(sorted);
+      expect(sorted.map((s) => s.id).toList(), ['da', 'na', 'db']);
     });
   });
 
@@ -850,7 +843,7 @@ void main() {
       expect(display.map((s) => s.id).toList(), ['open_new', 'open_old']);
     });
 
-    test('brand filter then figureCount keeps hierarchical order', () {
+    test('brand filter then figureCount keeps flat series order', () {
       final pop = testShelfSeries(
         id: 'pop',
         name: 'Pop Series',
@@ -933,7 +926,7 @@ void main() {
       final filtered = filterShelfSeriesBySearch(sorted, 'Disney');
       expect(filtered.map((s) => s.id).toList(), ['da', 'db']);
       final restored = filterShelfSeriesBySearch(sorted, '');
-      expect(restored.map((s) => s.id).toList(), ['da', 'db', 'na']);
+      expect(restored.map((s) => s.id).toList(), ['da', 'na', 'db']);
     });
   });
 

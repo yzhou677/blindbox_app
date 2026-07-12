@@ -8,12 +8,25 @@ enum CollectorTypeArchetypeId {
   loyalist,
   curator,
   trendChaser,
-  archivist,
+  worldbuilder,
   minimalist,
   wanderer,
-  stylist,
-  daydreamCollector,
   luckyOne,
+}
+
+extension CollectorTypeArchetypeIdCodec on CollectorTypeArchetypeId {
+  /// Parses persisted id names, including retired / renamed ids.
+  static CollectorTypeArchetypeId fromName(String? name) {
+    if (name == null || name.isEmpty) {
+      return CollectorTypeArchetypeId.wanderer;
+    }
+    // Archivist → Worldbuilder (rename).
+    if (name == 'archivist') return CollectorTypeArchetypeId.worldbuilder;
+    // Daydream Collector retired — Dreamer owns the wishlist fantasy.
+    if (name == 'daydreamCollector') return CollectorTypeArchetypeId.dreamer;
+    return CollectorTypeArchetypeId.values.asNameMap()[name] ??
+        CollectorTypeArchetypeId.wanderer;
+  }
 }
 
 /// Display metadata for a resolved collector archetype.

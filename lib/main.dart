@@ -33,7 +33,8 @@ Future<void> main() async {
   }
   await bootstrapMarketBrowseListings();
   final restored = await CollectionSnapshotStorage.load();
-  CollectionAppBootstrap.prime(restored ?? CollectionSeedData.initialSnapshot());
+  final snapshot = restored ?? CollectionSeedData.initialSnapshot();
+  CollectionAppBootstrap.prime(snapshot);
   await CollectionMemoryStore.instance.ensureLoaded();
   runApp(
     ProviderScope(

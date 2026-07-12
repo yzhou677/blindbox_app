@@ -1,35 +1,70 @@
+import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/application/shelf_emotional_providers.dart';
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_journey_summary.dart';
+import 'package:blindbox_app/features/collection/insights/application/collector_type_needs_reveal.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_resolver.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_view_model.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_archetype.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_resolution.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_reveal_record.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Cached collector identity from local memory store.
+/// Last **revealed** Collector Type — persisted snapshot for Hero / dashboard.
+///
+/// Never the live candidate. Updates after Reveal persists (watches ViewModel).
 final collectorTypeIdentityProvider = Provider<CollectorTypeIdentity?>((ref) {
   ref.watch(collectionMemoryBootstrapProvider);
+  // Rebuild when a reveal writes a new snapshot to the memory store.
+  ref.watch(collectorTypeViewModelProvider);
   return CollectionMemoryStore.instance.cachedCollectorTypeIdentity;
 });
 
-/// Whether the live shelf signature differs from the last persisted reveal.
+/// Live resolve of the current shelf — transient candidate, never persisted.
 ///
-/// Drives the lightweight Reveal Again affordance. Separate from
-/// [collectorTypeEvolutionHintProvider], which handles era-shift messaging.
-final collectorTypeNeedsRevealProvider = Provider<bool>((ref) {
+/// Recomputes whenever collection (or catalog / emotional profile) changes.
+/// Does **not** overwrite SharedPreferences identity.
+final collectorTypeLiveResolutionProvider =
+    Provider<CollectorTypeResolution>((ref) {
   final snap = ref.watch(collectionNotifierProvider);
+  final profile = ref.watch(shelfEmotionalProfileProvider);
+  final catalog = ref.watch(catalogBundleProvider).valueOrNull;
+  return resolveCollectorType(
+    snapshot: snap,
+    profile: profile,
+    catalog: catalog,
+  );
+});
+
+/// Live candidate archetype id (convenience for affordances / tests).
+final collectorTypeCandidateArchetypeProvider =
+    Provider<CollectorTypeArchetypeId>((ref) {
+  return ref.watch(collectorTypeLiveResolutionProvider).archetypeId;
+});
+
+/// Whether Insights should encourage another Reveal.
+///
+/// True when shelf **signature** or **resolverVersion** drifted vs last reveal
+/// (**When** only — does not decide the reveal result).
+final collectorTypeNeedsRevealProvider = Provider<bool>((ref) {
   ref.watch(collectionMemoryBootstrapProvider);
-  // Recompute after reveal persists a fresh signature to memory store.
+  // Recompute after reveal persists.
   ref.watch(collectorTypeViewModelProvider);
+  final live = ref.watch(collectorTypeLiveResolutionProvider);
   final cached = CollectionMemoryStore.instance.cached;
   final hasRevealed =
       (cached.collectorTypeArchetypeId?.isNotEmpty ?? false) &&
       cached.collectorTypeRevealedAtMs != null;
-  if (!hasRevealed) return false;
-  final storedHash = cached.collectorTypeSignatureHash;
-  if (storedHash == null || storedHash.isEmpty) return false;
-  return computeCollectorTypeSignatureHash(snap) != storedHash;
+
+  return computeCollectorTypeNeedsReveal(
+    hasRevealed: hasRevealed,
+    persistedSignatureHash: cached.collectorTypeSignatureHash,
+    persistedResolverVersion: cached.revealedResolverVersion,
+    liveCandidate: live,
+    currentResolverVersion: kCollectorTypeResolverVersion,
+  );
 });
 
 /// Whether the shelf signature drifted and an era transition was recorded.

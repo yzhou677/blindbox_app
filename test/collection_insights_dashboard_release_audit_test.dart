@@ -81,7 +81,7 @@ const _longWhisper =
     'A gentle milestone on the shelf — each figure a memory, each series a '
     'chapter you return to when the day finally slows down.';
 const _longCollectorType =
-    'Archivist of Midnight Market Finds and Rare Chase Variants';
+    'Worldbuilder of Midnight Market Finds and Rare Chase Variants';
 
 @immutable
 class _DashboardScenario {

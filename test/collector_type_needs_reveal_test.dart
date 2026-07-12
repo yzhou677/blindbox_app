@@ -1,4 +1,5 @@
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
+import 'package:blindbox_app/features/collection/application/shelf_emotional_interpreter.dart';
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_providers.dart';
@@ -6,6 +7,8 @@ import 'package:blindbox_app/features/collection/insights/application/collector_
 import 'package:blindbox_app/features/collection/insights/application/collector_type_view_model.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_archetype.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_reason_key.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_reveal_record.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_stats.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -19,6 +22,34 @@ final class NeedsRevealTestNotifier extends CollectionNotifier {
 
   @override
   CollectionSnapshot build() => _snap;
+}
+
+Future<void> _saveRevealMatchingLive(CollectionSnapshot snap) async {
+  final resolution = resolveCollectorType(
+    snapshot: snap,
+    profile: interpretShelf(snap),
+    revealedAt: DateTime(2026, 1, 1),
+  );
+  await CollectionMemoryStore.instance.saveCollectorType(
+    CollectorTypeIdentity(
+      archetypeId: resolution.archetypeId,
+      revealedAt: DateTime(2026, 1, 1),
+      signatureHash: resolution.signatureHash,
+      stats: resolution.stats,
+      reasonKey: resolution.reasonKey,
+    ),
+    revealRecord: CollectorTypeRevealRecord.fromResolvePass(
+      identity: CollectorTypeIdentity(
+        archetypeId: resolution.archetypeId,
+        revealedAt: DateTime(2026, 1, 1),
+        signatureHash: resolution.signatureHash,
+        stats: resolution.stats,
+        reasonKey: resolution.reasonKey,
+      ),
+      resolution: resolution,
+      isEvolution: false,
+    ),
+  );
 }
 
 void main() {
@@ -44,30 +75,13 @@ void main() {
     expect(container.read(collectorTypeNeedsRevealProvider), isFalse);
   });
 
-  test('false when stored signature matches live shelf', () async {
+  test('false when candidate matches last reveal under current version',
+      () async {
     final snap = CollectionSnapshot(
       shelfSeries: [testShelfSeries()],
       figureStates: const {},
     );
-    final signature = computeCollectorTypeSignatureHash(snap);
-    await CollectionMemoryStore.instance.saveCollectorType(
-      CollectorTypeIdentity(
-        archetypeId: CollectorTypeArchetypeId.wanderer,
-        revealedAt: DateTime(2026, 1, 1),
-        signatureHash: signature,
-        stats: const CollectorTypeStats(
-          totalOwned: 0,
-          totalWishlist: 0,
-          trackedSeries: 1,
-          completionPercent: 0,
-          secretOwned: 0,
-          secretSlots: 0,
-          brandBreakdown: {},
-          topSeries: [],
-          customSeriesRatio: 0,
-        ),
-      ),
-    );
+    await _saveRevealMatchingLive(snap);
 
     final container = ProviderContainer(
       overrides: [
@@ -79,6 +93,10 @@ void main() {
     addTearDown(container.dispose);
 
     expect(container.read(collectorTypeNeedsRevealProvider), isFalse);
+    expect(
+      container.read(collectorTypeLiveResolutionProvider).archetypeId,
+      CollectionMemoryStore.instance.cachedCollectorTypeIdentity!.archetypeId,
+    );
   });
 
   test('true when stored signature differs from live shelf', () async {
@@ -117,7 +135,65 @@ void main() {
     expect(container.read(collectorTypeNeedsRevealProvider), isTrue);
   });
 
-  test('false after successful reveal persists matching signature', () async {
+  test('true when resolverVersion on reveal is outdated', () async {
+    final snap = CollectionSnapshot(
+      shelfSeries: [testShelfSeries()],
+      figureStates: const {},
+    );
+    final resolution = resolveCollectorType(
+      snapshot: snap,
+      profile: interpretShelf(snap),
+      revealedAt: DateTime(2026, 1, 1),
+    );
+    final identity = CollectorTypeIdentity(
+      archetypeId: resolution.archetypeId,
+      revealedAt: DateTime(2026, 1, 1),
+      signatureHash: resolution.signatureHash,
+      stats: resolution.stats,
+      reasonKey: resolution.reasonKey,
+    );
+    await CollectionMemoryStore.instance.saveCollectorType(
+      identity,
+      revealRecord: CollectorTypeRevealRecord(
+        archetypeId: identity.archetypeId,
+        revealedAt: identity.revealedAt,
+        signatureHash: identity.signatureHash,
+        reasonKey: identity.reasonKey,
+        score: resolution.score,
+        confidence: resolution.confidence,
+        resolverVersion: '4.0',
+      ),
+    );
+
+    final container = ProviderContainer(
+      overrides: [
+        collectionNotifierProvider.overrideWith(
+          () => NeedsRevealTestNotifier(snap),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    expect(container.read(collectorTypeNeedsRevealProvider), isTrue);
+    // Hero still shows last revealed — not live candidate overwrite.
+    expect(
+      container.read(collectorTypeIdentityProvider)?.archetypeId,
+      identity.archetypeId,
+    );
+
+    await container
+        .read(collectorTypeViewModelProvider.notifier)
+        .requestReveal();
+
+    // Version stamped to current; signature unchanged → loop must end.
+    expect(container.read(collectorTypeNeedsRevealProvider), isFalse);
+    expect(
+      CollectionMemoryStore.instance.cached.revealedResolverVersion,
+      kCollectorTypeResolverVersion,
+    );
+  });
+
+  test('false after successful reveal persists matching candidate', () async {
     final snap = CollectionSnapshot(
       shelfSeries: [testShelfSeries()],
       figureStates: const {},
@@ -138,6 +214,7 @@ void main() {
           topSeries: [],
           customSeriesRatio: 0,
         ),
+        reasonKey: CollectorTypeReasonKey.stillUnfolding,
       ),
     );
 
@@ -171,25 +248,7 @@ void main() {
         shelfSeries: [popMart],
         figureStates: const {},
       );
-      final signature = computeCollectorTypeSignatureHash(revealedSnap);
-      await CollectionMemoryStore.instance.saveCollectorType(
-        CollectorTypeIdentity(
-          archetypeId: CollectorTypeArchetypeId.loyalist,
-          revealedAt: DateTime(2026, 1, 1),
-          signatureHash: signature,
-          stats: const CollectorTypeStats(
-            totalOwned: 0,
-            totalWishlist: 0,
-            trackedSeries: 1,
-            completionPercent: 0,
-            secretOwned: 0,
-            secretSlots: 0,
-            brandBreakdown: {'POP MART': 1},
-            topSeries: [],
-            customSeriesRatio: 0,
-          ),
-        ),
-      );
+      await _saveRevealMatchingLive(revealedSnap);
 
       final nommi = testShelfSeries(
         id: 's_nommi',

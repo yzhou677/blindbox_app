@@ -62,8 +62,7 @@ class CollectorTypeIdentity {
 
   factory CollectorTypeIdentity.fromJson(Map<String, dynamic> json) {
     final idName = json['archetypeId'] as String? ?? '';
-    final id = CollectorTypeArchetypeId.values.asNameMap()[idName] ??
-        CollectorTypeArchetypeId.wanderer;
+    final id = CollectorTypeArchetypeIdCodec.fromName(idName);
     final statsRaw = json['stats'];
     final stats = statsRaw is Map<String, dynamic>
         ? CollectorTypeStats.fromJson(statsRaw)

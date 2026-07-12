@@ -2,6 +2,7 @@ import 'package:blindbox_app/features/collection/data/collection_memory_store.da
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_archetype.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_reason_key.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_reveal_record.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_stats.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -53,6 +54,8 @@ void main() {
     );
     expect(store.cached.collectorTypeRevealHistory.single.score, 0);
     expect(store.cached.collectorTypeRevealHistory.single.confidence, 0);
+    expect(store.cached.collectorTypeResolverVersion, kCollectorTypeResolverVersion);
+    expect(store.cached.revealedResolverVersion, kCollectorTypeResolverVersion);
 
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.containsKey('collection_memory_v3'), isTrue);
@@ -60,6 +63,7 @@ void main() {
     expect(raw, contains('curator'));
     expect(raw, contains('hash'));
     expect(raw, contains('intentionalSpread'));
+    expect(raw, contains('collectorTypeResolverVersion'));
   });
 
   test('clearCollectorType removes identity fields', () async {

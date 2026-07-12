@@ -5,7 +5,6 @@ import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_service.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/domain/series_completion_resolution.dart';
-import 'package:blindbox_app/features/collection/presentation/shelf_series_feed.dart';
 
 /// Display-only sort modes for the Collection shelf browse pipeline.
 enum CollectionShelfSort {
@@ -121,13 +120,6 @@ String _shelfDisplayHaystack(ShelfSeries series) {
   ].map(SearchNormalizer.normalizeForMatch).join(' ');
 }
 
-SeriesProgressCounts _seriesProgress(
-  ShelfSeries series,
-  Map<String, TrackedFigure> states, {
-  ShelfBrowseProgressLookup? progress,
-}) =>
-    progress?.forSeries(series) ?? progressForSeries(series, states);
-
 /// Whether all regular figures in [series] are owned — shelf Completed bucket rule.
 bool isShelfSeriesComplete(
   ShelfSeries series,
@@ -155,34 +147,6 @@ bool isShelfSeriesComplete(
   return (inProgress, completed);
 }
 
-int _ipFigureCountTotal(ShelfUniverseSection section) =>
-    section.series.fold<int>(0, (sum, row) => sum + row.figureCount);
-
-/// Owned figures / total figure slots across every series in the IP group.
-double _ipWeightedCompletion(
-  ShelfUniverseSection section,
-  Map<String, TrackedFigure> states, {
-  ShelfBrowseProgressLookup? progress,
-}) {
-  var owned = 0;
-  var total = 0;
-  for (final row in section.series) {
-    final slots = row.figureCount;
-    if (slots <= 0) continue;
-    total += slots;
-    owned += _seriesProgress(row, states, progress: progress).owned;
-  }
-  if (total <= 0) return 0;
-  return owned / total;
-}
-
-int _compareIpSectionLabels(ShelfUniverseSection a, ShelfUniverseSection b) {
-  final labelCmp =
-      a.label.toLowerCase().compareTo(b.label.toLowerCase());
-  if (labelCmp != 0) return labelCmp;
-  return a.key.compareTo(b.key);
-}
-
 int _compareShelfSeriesByNameThenId(ShelfSeries a, ShelfSeries b) {
   final nameCmp = a.name.toLowerCase().compareTo(b.name.toLowerCase());
   if (nameCmp != 0) return nameCmp;
@@ -199,21 +163,17 @@ double _seriesCompletionRatio(
 
 /// Display order for one bucket (In Progress or Completed) after filter/search.
 ///
-/// The Collection page is a hierarchical browser, not a flat ranked list.
+/// The Collection rail is a **flat** series list. Sort modes operate on that
+/// list only — no hidden IP grouping affects order.
 ///
 /// ```text
-/// Bucket ??IP ??Series
+/// Bucket → flat List<ShelfSeries> → one global comparator → render
 /// ```
 ///
-/// Every sort mode defines an IP aggregate and a series aggregate (see
-/// `docs/COLLECTION_ARCHITECTURE_NOTES.md` ??Collection sorting reference).
-/// The feed builder only renders that order.
-///
 /// [CollectionShelfSort.recentlyAdded] preserves shelf traversal order within
-/// the bucket (IP blocks follow encounter order when regrouped for display).
+/// the bucket.
 ///
-/// Future sort modes should follow this model unless Product intentionally
-/// introduces a flat ranked list.
+/// See `docs/COLLECTION_ARCHITECTURE_NOTES.md` → Collection sorting.
 List<ShelfSeries> sortShelfSeriesForDisplay(
   List<ShelfSeries> series,
   CollectionShelfSort sort,
@@ -224,56 +184,24 @@ List<ShelfSeries> sortShelfSeriesForDisplay(
     case CollectionShelfSort.recentlyAdded:
       return series;
     case CollectionShelfSort.alphabetical:
-      final sectionOrder = List<ShelfUniverseSection>.from(
-        groupShelfSeriesByUniverse(series),
-      )..sort(_compareIpSectionLabels);
-      final ordered = <ShelfSeries>[];
-      for (final section in sectionOrder) {
-        final copy = List<ShelfSeries>.from(section.series)
-          ..sort(_compareShelfSeriesByNameThenId);
-        ordered.addAll(copy);
-      }
-      return ordered;
+      return List<ShelfSeries>.from(series)
+        ..sort(_compareShelfSeriesByNameThenId);
     case CollectionShelfSort.figureCount:
-      final sectionOrder = List<ShelfUniverseSection>.from(
-        groupShelfSeriesByUniverse(series),
-      )..sort((a, b) {
-          final cmp =
-              _ipFigureCountTotal(b).compareTo(_ipFigureCountTotal(a));
+      return List<ShelfSeries>.from(series)
+        ..sort((a, b) {
+          final cmp = b.figureCount.compareTo(a.figureCount);
           if (cmp != 0) return cmp;
-          return _compareIpSectionLabels(a, b);
+          return _compareShelfSeriesByNameThenId(a, b);
         });
-      final byFigureCount = <ShelfSeries>[];
-      for (final section in sectionOrder) {
-        final copy = List<ShelfSeries>.from(section.series)
-          ..sort((a, b) {
-            final cmp = b.figureCount.compareTo(a.figureCount);
-            if (cmp != 0) return cmp;
-            return _compareShelfSeriesByNameThenId(a, b);
-          });
-        byFigureCount.addAll(copy);
-      }
-      return byFigureCount;
     case CollectionShelfSort.completion:
-      final sectionOrder = List<ShelfUniverseSection>.from(
-        groupShelfSeriesByUniverse(series),
-      )..sort((a, b) {
-          final cmp = _ipWeightedCompletion(b, states, progress: progress)
-              .compareTo(_ipWeightedCompletion(a, states, progress: progress));
+      return List<ShelfSeries>.from(series)
+        ..sort((a, b) {
+          final cmp = _seriesCompletionRatio(b, states, progress: progress)
+              .compareTo(
+            _seriesCompletionRatio(a, states, progress: progress),
+          );
           if (cmp != 0) return cmp;
-          return _compareIpSectionLabels(a, b);
+          return _compareShelfSeriesByNameThenId(a, b);
         });
-      final byCompletion = <ShelfSeries>[];
-      for (final section in sectionOrder) {
-        final copy = List<ShelfSeries>.from(section.series)
-          ..sort((a, b) {
-            final cmp = _seriesCompletionRatio(b, states, progress: progress)
-                .compareTo(_seriesCompletionRatio(a, states, progress: progress));
-            if (cmp != 0) return cmp;
-            return _compareShelfSeriesByNameThenId(a, b);
-          });
-        byCompletion.addAll(copy);
-      }
-      return byCompletion;
   }
 }

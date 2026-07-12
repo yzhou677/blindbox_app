@@ -16,7 +16,7 @@ void main() {
     expect(identity.archetypeId, CollectorTypeArchetypeId.wanderer);
   });
 
-  test('custom-only shelf with notes resolves stylist or archivist', () {
+  test('custom-only shelf with notes resolves to worldbuilder', () {
     final series = ShelfSeries(
       id: 'custom_1',
       name: 'My Custom',
@@ -50,13 +50,6 @@ void main() {
       revealedAt: DateTime(2026, 1, 1),
     );
     expect(identity.stats.customSeriesRatio, greaterThan(0.5));
-    expect(
-      identity.archetypeId,
-      anyOf(
-        CollectorTypeArchetypeId.stylist,
-        CollectorTypeArchetypeId.archivist,
-        CollectorTypeArchetypeId.minimalist,
-      ),
-    );
+    expect(identity.archetypeId, CollectorTypeArchetypeId.worldbuilder);
   });
 }

@@ -44,7 +44,7 @@ Document important product principles or trade-offs.
 
 Examples:
 
-### Collection is a hierarchical browser, not a flat ranked list.
+### Collection sorting is flat per bucket (no hidden IP ordering).
 
 ### Official content is curated, not algorithmic.
 
