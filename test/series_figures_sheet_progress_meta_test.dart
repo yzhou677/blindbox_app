@@ -49,14 +49,23 @@ void main() {
       );
     });
 
-    test('incomplete regular with missing secret', () {
+    test('hides Secret header when none owned', () {
+      final series = _series(regular: 8, secrets: 1);
+      final owned = [for (var i = 0; i < 7; i++) 'r$i'];
+      final resolution = resolveSeriesCompletion(series, _own(owned));
+      expect(
+        CollectionProgressVoice.seriesFiguresSheetProgressMeta(resolution),
+        'Regular Figures 7 of 8 Collected',
+      );
+    });
+
+    test('hides Secret header when regulars complete but no secret owned', () {
       final series = _series(regular: 8, secrets: 1);
       final owned = [for (var i = 0; i < 8; i++) 'r$i'];
       final resolution = resolveSeriesCompletion(series, _own(owned));
       expect(
         CollectionProgressVoice.seriesFiguresSheetProgressMeta(resolution),
-        'Regular Figures 8 of 8 Collected\n'
-        'Secret Figures 0 of 1 Collected',
+        'Regular Figures 8 of 8 Collected',
       );
     });
 
@@ -75,14 +84,14 @@ void main() {
       );
     });
 
-    test('multiple secrets track independently', () {
-      final series = _series(regular: 2, secrets: 2);
+    test('multiple secrets show once any owned', () {
+      final series = _series(regular: 2, secrets: 3);
       final resolution =
-          resolveSeriesCompletion(series, _own(['r0', 'r1', 'sec0']));
+          resolveSeriesCompletion(series, _own(['r0', 'r1', 'sec0', 'sec1']));
       expect(
         CollectionProgressVoice.seriesFiguresSheetProgressMeta(resolution),
         'Regular Figures 2 of 2 Collected\n'
-        'Secret Figures 1 of 2 Collected',
+        'Secret Figures 2 of 3 Collected',
       );
     });
 
@@ -96,6 +105,7 @@ void main() {
           CollectionProgressVoice.seriesFiguresSheetProgressMeta(resolution)!;
       expect(meta.contains('of 9'), isFalse);
       expect(meta.contains('Figures 8 of 9'), isFalse);
+      expect(meta.contains('Secret'), isFalse);
     });
   });
 }

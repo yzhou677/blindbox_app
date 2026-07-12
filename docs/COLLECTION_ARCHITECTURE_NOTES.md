@@ -299,12 +299,12 @@ exposing how many figure rows exist in the database.
 
 | Surface | Behavior |
 | ------- | -------- |
-| Sheet header | `Regular Figures N of M Collected`; if secrets exist, also `Secret Figures A of B Collected` |
-| Section headers | Same Regular / Secret split; progress `(owned of total)` |
+| Sheet header | `Regular Figures N of M Collected`; show `Secret Figures A of B Collected` **only if** `ownedSecretCount > 0` (never `0 of N` in the header) |
+| Section headers | Same Regular / Secret split; progress `(owned of total)` — including `0 of N` when secrets exist but none owned |
 | No secrets | Omit Secret lines and Secret section entirely |
 | Complete / Master Complete | Unchanged — still from `resolveSeriesCompletion` |
 
-Presentation only — do not change completion calculation or Collector Type logic.
+Presentation only — do not change completion calculation or Collector Type logic. Header Secret summary is ownership-gated; the Secret figures section body is not.
 
 ---
 

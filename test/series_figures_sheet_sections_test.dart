@@ -86,7 +86,8 @@ void main() {
     expect(find.text('Regular Figures (0 of 3)'), findsOneWidget);
     expect(find.text('Secret Figures (0 of 1)'), findsOneWidget);
     expect(find.textContaining('Regular Figures 0 of 3 Collected'), findsOneWidget);
-    expect(find.textContaining('Secret Figures 0 of 1 Collected'), findsOneWidget);
+    // Header hides Secret summary until at least one Secret is owned.
+    expect(find.textContaining('Secret Figures 0 of 1 Collected'), findsNothing);
     expect(find.text('0 of 4 Figures'), findsNothing);
     expect(find.text('Regular 0'), findsOneWidget);
     expect(find.text('Chase'), findsOneWidget);

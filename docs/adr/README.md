@@ -114,7 +114,7 @@ Examples only — **not created yet**:
 | Recommendation taste semantics | Tracked-only taste; stable For You; wishlist/owned out of pipeline — [`RECOMMENDATION_SEMANTICS.md`](../RECOMMENDATION_SEMANTICS.md) (**Accepted ADR**) |
 | Collection Hierarchy | Progress buckets (In Progress / Completed); flat series rail; local shelf vs catalog |
 | Collection Sorting | Flat series list per bucket; one global comparator; no hidden IP ordering |
-| Series figures progress | Regular and Secret shown separately — never combined “X of Y Figures” |
+| Series figures progress | Regular and Secret shown separately; header Secret line only if owned ≥ 1 — never combined “X of Y Figures” |
 | Catalog Identity | `imageKey`, Firestore catalog universe, persisted cache offline baseline |
 | Market Intelligence | Market universe separate from shelf and catalog |
 | Offline-first / Local-first | Collection local persistence; progressive hydration |

@@ -63,8 +63,10 @@ abstract final class CollectionProgressVoice {
 
   /// Series figures sheet header: Regular and Secret progress as separate lines.
   ///
-  /// Answers “what am I still collecting?” — never a combined “X of Y Figures”
-  /// that mixes Regular + Secret inventory.
+  /// Never a combined “X of Y Figures” that mixes Regular + Secret inventory.
+  /// Secret progress appears only once the collector owns at least one Secret —
+  /// hide `0 of N` so the header celebrates what is collected, not what is missing.
+  /// (The Secret section body below is unchanged.)
   static String? seriesFiguresSheetProgressMeta(
     SeriesCompletionResolution resolution,
   ) {
@@ -76,7 +78,7 @@ abstract final class CollectionProgressVoice {
         '${CollectionVocabulary.collected}',
       );
     }
-    if (resolution.secretSlotCount > 0) {
+    if (resolution.secretOwnedCount > 0) {
       lines.add(
         '${CollectionVocabulary.secretFigures} '
         '${resolution.secretOwnedCount} of ${resolution.secretSlotCount} '
