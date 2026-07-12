@@ -16,6 +16,11 @@ abstract final class CollectionVocabulary {
   /// Compact series card badge when all regular figures are owned.
   static const seriesCompleteBadge = '✓ Complete';
 
+  /// Long-press management actions on Collection cards.
+  static const editSeries = 'Edit Series';
+  static const removeFromCollection = 'Remove from Collection';
+  static const cancel = 'Cancel';
+
   /// Average figure completion across the shelf (Insights at-a-glance).
   static const shelfProgress = 'shelf progress';
 

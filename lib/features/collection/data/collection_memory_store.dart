@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:blindbox_app/features/collection/application/shelf_emotional_interpreter.dart';
@@ -7,6 +8,7 @@ import 'package:blindbox_app/features/collection/domain/series_completion_resolu
 import 'package:blindbox_app/features/collection/domain/shelf_era.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_mood.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_reveal_record.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -27,6 +29,8 @@ class CollectionMemoryData {
     this.collectorTypeSignatureHash,
     this.collectorTypeStatsJson,
     this.collectorTypeStatsVersion,
+    this.collectorTypeReasonKey,
+    this.collectorTypeRevealHistory = const [],
   });
 
   final int? firstSecretOwnedAtMs;
@@ -37,7 +41,13 @@ class CollectionMemoryData {
   final ShelfEra? priorEraForEvolution;
   final int? priorEraSetAtMs;
 
-  /// Taxonomy IP id → count of series added over time (depth, not social score).
+  /// Explored IP universes source of truth — intentionally historical.
+  ///
+  /// Map of taxonomy IP id → count of series **adds** over time.
+  /// Keys are append-only: removing a series does **not** remove an IP or
+  /// shrink [CollectorJourneySummary.ipUniversesExplored]
+  /// (`ipSeriesDepth.length`). Journey tells the collector’s story over time,
+  /// not current shelf composition.
   final Map<String, int> ipSeriesDepth;
 
   /// Persisted collector type (stable until user re-reveals).
@@ -46,6 +56,10 @@ class CollectionMemoryData {
   final String? collectorTypeSignatureHash;
   final String? collectorTypeStatsJson;
   final int? collectorTypeStatsVersion;
+  final String? collectorTypeReasonKey;
+
+  /// Append-only Personality Memory interface (v2). No UI in Collector Type 1.0.
+  final List<CollectorTypeRevealRecord> collectorTypeRevealHistory;
 
   CollectorTypeIdentity? get collectorTypeIdentity {
     final idName = collectorTypeArchetypeId;
@@ -62,6 +76,7 @@ class CollectionMemoryData {
         'revealedAtMs': revealedMs,
         'signatureHash': collectorTypeSignatureHash ?? '',
         'stats': statsMap,
+        'reasonKey': collectorTypeReasonKey,
       });
     } catch (_) {
       return null;
@@ -126,21 +141,59 @@ final class CollectionMemoryStore {
         }
       }
     }
-    _cachedCollectorTypeIdentity = _cached.collectorTypeIdentity;
+    final loaded = _cached.collectorTypeIdentity?.healed();
+    _cachedCollectorTypeIdentity = loaded;
     _loaded = true;
+    // Rewrite prefs when legacy stillUnfolding was stored for a non-Wanderer.
+    if (loaded != null &&
+        _cached.collectorTypeReasonKey != loaded.reasonKey.name) {
+      _cached = _copy(
+        _cached,
+        collectorTypeReasonKey: loaded.reasonKey.name,
+      );
+      unawaited(_persist());
+    }
   }
 
-  Future<void> saveCollectorType(CollectorTypeIdentity identity) async {
+  /// Persists the live identity and appends a replayable [revealRecord].
+  ///
+  /// Prefer [CollectorTypeRevealRecord.fromResolvePass] so score/confidence
+  /// survive for Personality Memory without re-resolving.
+  Future<void> saveCollectorType(
+    CollectorTypeIdentity identity, {
+    CollectorTypeRevealRecord? revealRecord,
+  }) async {
     await ensureLoaded();
+    final healed = identity.healed();
+    final record = revealRecord ??
+        CollectorTypeRevealRecord(
+          archetypeId: healed.archetypeId,
+          revealedAt: healed.revealedAt,
+          signatureHash: healed.signatureHash,
+          reasonKey: healed.displayReasonKey,
+          score: 0,
+          confidence: 0,
+          resolverVersion: kCollectorTypeResolverVersion,
+        );
+    final history = [
+      ..._cached.collectorTypeRevealHistory,
+      record,
+    ];
+    // Cap dormant log so prefs stay small until Personality Memory ships.
+    final capped = history.length <= 32
+        ? history
+        : history.sublist(history.length - 32);
     _cached = _copy(
       _cached,
-      collectorTypeArchetypeId: identity.archetypeId.name,
-      collectorTypeRevealedAtMs: identity.revealedAt.millisecondsSinceEpoch,
-      collectorTypeSignatureHash: identity.signatureHash,
-      collectorTypeStatsJson: jsonEncode(identity.stats.toJson()),
+      collectorTypeArchetypeId: healed.archetypeId.name,
+      collectorTypeRevealedAtMs: healed.revealedAt.millisecondsSinceEpoch,
+      collectorTypeSignatureHash: healed.signatureHash,
+      collectorTypeStatsJson: jsonEncode(healed.stats.toJson()),
       collectorTypeStatsVersion: 1,
+      collectorTypeReasonKey: healed.reasonKey.name,
+      collectorTypeRevealHistory: capped,
     );
-    _cachedCollectorTypeIdentity = identity;
+    _cachedCollectorTypeIdentity = healed;
     await _persist();
   }
 
@@ -153,6 +206,8 @@ final class CollectionMemoryStore {
       collectorTypeSignatureHash: '',
       collectorTypeStatsJson: '',
       collectorTypeStatsVersion: 0,
+      collectorTypeReasonKey: '',
+      collectorTypeRevealHistory: const [],
     );
     _cachedCollectorTypeIdentity = null;
     await _persist();
@@ -177,6 +232,8 @@ final class CollectionMemoryStore {
     }
 
     final prevIds = previous.shelfSeries.map((s) => s.id).toSet();
+    // Append-only exploration history: newly added series deepen an IP key.
+    // Removals are intentionally ignored so Explored universes never shrink.
     var depth = Map<String, int>.from(data.ipSeriesDepth);
     for (final series in next.shelfSeries) {
       if (prevIds.contains(series.id)) continue;
@@ -267,6 +324,13 @@ final class CollectionMemoryStore {
           'collectorTypeStatsJson': _cached.collectorTypeStatsJson,
         if (_cached.collectorTypeStatsVersion != null)
           'collectorTypeStatsVersion': _cached.collectorTypeStatsVersion,
+        if (_cached.collectorTypeReasonKey != null &&
+            _cached.collectorTypeReasonKey!.isNotEmpty)
+          'collectorTypeReasonKey': _cached.collectorTypeReasonKey,
+        if (_cached.collectorTypeRevealHistory.isNotEmpty)
+          'collectorTypeRevealHistory': [
+            for (final r in _cached.collectorTypeRevealHistory) r.toJson(),
+          ],
       }),
     );
   }
@@ -296,6 +360,10 @@ final class CollectionMemoryStore {
         collectorTypeSignatureHash: m['collectorTypeSignatureHash'] as String?,
         collectorTypeStatsJson: m['collectorTypeStatsJson'] as String?,
         collectorTypeStatsVersion: m['collectorTypeStatsVersion'] as int?,
+        collectorTypeReasonKey: m['collectorTypeReasonKey'] as String?,
+        collectorTypeRevealHistory: _decodeRevealHistory(
+          m['collectorTypeRevealHistory'],
+        ),
       );
     } catch (_) {
       return const CollectionMemoryData();
@@ -353,6 +421,8 @@ final class CollectionMemoryStore {
     String? collectorTypeSignatureHash,
     String? collectorTypeStatsJson,
     int? collectorTypeStatsVersion,
+    String? collectorTypeReasonKey,
+    List<CollectorTypeRevealRecord>? collectorTypeRevealHistory,
   }) {
     return CollectionMemoryData(
       firstSecretOwnedAtMs:
@@ -384,7 +454,31 @@ final class CollectionMemoryStore {
       collectorTypeStatsVersion: collectorTypeStatsVersion == 0
           ? null
           : (collectorTypeStatsVersion ?? data.collectorTypeStatsVersion),
+      collectorTypeReasonKey: collectorTypeReasonKey != null &&
+              collectorTypeReasonKey.isEmpty
+          ? null
+          : (collectorTypeReasonKey ?? data.collectorTypeReasonKey),
+      collectorTypeRevealHistory:
+          collectorTypeRevealHistory ?? data.collectorTypeRevealHistory,
     );
+  }
+
+  static List<CollectorTypeRevealRecord> _decodeRevealHistory(Object? raw) {
+    if (raw is! List) return const [];
+    final out = <CollectorTypeRevealRecord>[];
+    for (final item in raw) {
+      if (item is! Map) continue;
+      try {
+        out.add(
+          CollectorTypeRevealRecord.fromJson(
+            Map<String, dynamic>.from(item),
+          ),
+        );
+      } catch (_) {
+        // Skip corrupt dormant records.
+      }
+    }
+    return out;
   }
 
   static bool _hasOwnedSecret(CollectionSnapshot snap) {

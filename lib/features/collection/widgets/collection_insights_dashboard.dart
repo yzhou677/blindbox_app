@@ -4,7 +4,6 @@ import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/app_typography.dart';
 import 'package:blindbox_app/core/theme/collectible_motion.dart';
-import 'package:blindbox_app/core/theme/collectible_shape.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_insights_compact_summary.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_summary_section.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +13,7 @@ abstract final class CollectionInsightsDashboardCopy {
   CollectionInsightsDashboardCopy._();
 
   static const sectionTitle = 'Collection Insights';
+  static const summaryHeader = 'Summary';
 }
 
 class CollectionInsightsDashboard extends StatefulWidget {
@@ -165,83 +165,86 @@ class _CollectionInsightsDashboardState extends State<CollectionInsightsDashboar
     final textTheme = Theme.of(context).textTheme;
 
     final valueStyle = AppTypography.insightsTotals(textTheme, scheme).copyWith(
+      fontSize: 28,
       height: 1.0,
-      color: scheme.onSurface.withValues(alpha: 0.9),
+      fontWeight: FontWeight.w700,
+      letterSpacing: -0.7,
+      color: scheme.onSurface.withValues(alpha: 0.97),
     );
     final labelStyle = AppTypography.deckText(textTheme, scheme).copyWith(
-      fontSize: 11.5,
-      fontWeight: FontWeight.w500,
+      fontSize: 12,
+      fontWeight: FontWeight.w600,
       height: 1.18,
-      color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
+      color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
     );
-    final glyphColor = scheme.primary.withValues(alpha: 0.82);
+    final glyphColor = scheme.primary.withValues(alpha: 0.88);
 
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        if (_collapsedHeight == null || _expandedHeight == null)
-          Offstage(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                KeyedSubtree(
-                  key: _collapsedMeasureKey,
-                  child: _buildCollapsedShell(
-                    scheme: scheme,
-                    isDark: isDark,
-                    compactMorphT: 1,
-                    valueStyle: valueStyle,
-                    labelStyle: labelStyle,
-                    glyphColor: glyphColor,
-                  ),
+    return AnimatedBuilder(
+      animation: _expand,
+      builder: (context, child) {
+        final t = _expand.value;
+        final compactMorphT = (1 - t).clamp(0.0, 1.0);
+        final collapsedShell = _buildCollapsedCard(
+          scheme: scheme,
+          isDark: isDark,
+          compactMorphT: compactMorphT,
+          valueStyle: valueStyle,
+          labelStyle: labelStyle,
+          glyphColor: glyphColor,
+        );
+        final expandedShell = _buildExpandedCard();
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (_collapsedHeight == null || _expandedHeight == null)
+              Offstage(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    KeyedSubtree(
+                      key: _collapsedMeasureKey,
+                      child: collapsedShell,
+                    ),
+                    KeyedSubtree(
+                      key: _expandedMeasureKey,
+                      child: expandedShell,
+                    ),
+                  ],
                 ),
-                KeyedSubtree(
-                  key: _expandedMeasureKey,
-                  child: _buildExpandedShell(scheme: scheme, expandT: 1),
-                ),
-              ],
+              ),
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.pageHorizontal,
+              ),
+              child: _SummaryHeaderRow(
+                chevronTurns: 0.5 * t.clamp(0.0, 1.0),
+                onTap: _toggle,
+              ),
             ),
-          ),
-        AnimatedBuilder(
-          animation: _expand,
-          builder: (context, child) {
-            final t = _expand.value;
-            final compactMorphT = (1 - t).clamp(0.0, 1.0);
-            final collapsedShell = _buildCollapsedShell(
-              scheme: scheme,
-              isDark: isDark,
-              compactMorphT: compactMorphT,
-              valueStyle: valueStyle,
-              labelStyle: labelStyle,
-              glyphColor: glyphColor,
-            );
-            final expandedShell = _buildExpandedShell(
-              scheme: scheme,
-              expandT: t,
-            );
-
-            if (_collapsedHeight != null && _expandedHeight != null) {
-              return _buildCrossfadeBody(
+            const SizedBox(height: FeedRhythm.collectionSummaryHeaderToCard),
+            if (_collapsedHeight != null && _expandedHeight != null)
+              _buildCrossfadeBody(
                 t: t,
                 collapsedShell: collapsedShell,
                 expandedShell: expandedShell,
-              );
-            }
-            if (_collapsedHeight != null && _expandedHeight == null && t > 0) {
-              // Expanded inputs changed — intrinsic layout until remeasure lands.
-              return expandedShell;
-            }
-            if (_collapsedHeight != null && t == 0) {
-              return SizedBox(
+              )
+            else if (_collapsedHeight != null &&
+                _expandedHeight == null &&
+                t > 0)
+              expandedShell
+            else if (_collapsedHeight != null && t == 0)
+              SizedBox(
                 height: _collapsedHeight,
                 width: double.infinity,
                 child: ClipRect(child: collapsedShell),
-              );
-            }
-            return collapsedShell;
-          },
-        ),
-      ],
+              )
+            else
+              collapsedShell,
+          ],
+        );
+      },
     );
   }
 
@@ -310,7 +313,7 @@ class _CollectionInsightsDashboardState extends State<CollectionInsightsDashboar
     );
   }
 
-  Widget _buildCollapsedShell({
+  Widget _buildCollapsedCard({
     required ColorScheme scheme,
     required bool isDark,
     required double compactMorphT,
@@ -319,29 +322,28 @@ class _CollectionInsightsDashboardState extends State<CollectionInsightsDashboar
     required Color glyphColor,
   }) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.pageHorizontal,
-        0,
-        AppSpacing.pageHorizontal,
-        FeedRhythm.collectionSummaryToShelfHeader,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.pageHorizontal,
       ),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: CollectibleShape.shellRadius,
-          color: scheme.surfaceContainerLow,
-          border: Border.all(
-            color: Color.lerp(
-              scheme.outlineVariant,
-              scheme.primary,
-              isDark ? 0.12 : 0.18,
-            )!,
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            CollectionInsightsCompactSummary(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _toggle,
+          borderRadius: BorderRadius.circular(16),
+          child: Ink(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              color: scheme.surfaceContainerLow.withValues(
+                alpha: isDark ? 0.62 : 0.88,
+              ),
+              border: Border.all(
+                width: 0.8,
+                color: scheme.outlineVariant.withValues(
+                  alpha: isDark ? 0.24 : 0.34,
+                ),
+              ),
+            ),
+            child: CollectionInsightsCompactSummary(
               stats: widget.stats,
               onTap: _toggle,
               compactT: compactMorphT,
@@ -349,64 +351,32 @@ class _CollectionInsightsDashboardState extends State<CollectionInsightsDashboar
               labelStyle: labelStyle,
               glyphColor: glyphColor,
             ),
-            Divider(
-              height: 1,
-              thickness: 1,
-              color: scheme.outlineVariant.withValues(
-                alpha: isDark ? 0.2 : 0.28,
-              ),
-            ),
-            _InsightsDisclosureRow(
-              expanded: false,
-              chevronTurns: 0,
-              onTap: _toggle,
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildExpandedShell({
-    required ColorScheme scheme,
-    required double expandT,
-  }) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.pageHorizontal,
-          ),
-          child: _InsightsDisclosureRow(
-            expanded: true,
-            chevronTurns: 0.5 * expandT.clamp(0.0, 1.0),
-            onTap: _toggle,
-          ),
-        ),
-        RepaintBoundary(
-          child: CollectionSummarySection(
-            stats: widget.stats,
-            shelfMoodLine: widget.shelfMoodLine,
-            memoryWhisper: widget.memoryWhisper,
-            onInsightsTap: widget.onInsightsTap,
-            collectorTypeName: widget.collectorTypeName,
-          ),
-        ),
-      ],
+  Widget _buildExpandedCard() {
+    return RepaintBoundary(
+      child: CollectionSummarySection(
+        stats: widget.stats,
+        shelfMoodLine: widget.shelfMoodLine,
+        memoryWhisper: widget.memoryWhisper,
+        onInsightsTap: widget.onInsightsTap,
+        collectorTypeName: widget.collectorTypeName,
+      ),
     );
   }
 }
 
-class _InsightsDisclosureRow extends StatelessWidget {
-  const _InsightsDisclosureRow({
-    required this.expanded,
+/// Persistent expand/collapse affordance above the summary card.
+class _SummaryHeaderRow extends StatelessWidget {
+  const _SummaryHeaderRow({
     required this.chevronTurns,
     required this.onTap,
   });
 
-  final bool expanded;
   final double chevronTurns;
   final VoidCallback onTap;
 
@@ -420,39 +390,32 @@ class _InsightsDisclosureRow extends StatelessWidget {
       child: InkWell(
         key: const Key('collection_insights_dashboard_toggle'),
         onTap: onTap,
-        borderRadius: expanded
-            ? BorderRadius.circular(10)
-            : BorderRadius.vertical(
-                bottom: CollectibleShape.shellRadius.bottomLeft,
-              ),
+        borderRadius: BorderRadius.circular(10),
         child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: expanded ? 4 : 14,
-            vertical: expanded ? 6 : 11,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              Expanded(
+                child: Text(
+                  CollectionInsightsDashboardCopy.summaryHeader,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    height: 1.0,
+                    color: scheme.onSurface.withValues(alpha: 0.88),
+                    letterSpacing: 0.05,
+                  ),
+                ),
+              ),
               Transform.rotate(
                 angle: chevronTurns * 3.141592653589793,
+                alignment: Alignment.center,
                 child: Icon(
                   Icons.expand_more_rounded,
                   size: 20,
-                  color: scheme.onSurfaceVariant.withValues(alpha: 0.62),
-                ),
-              ),
-              const SizedBox(width: 6),
-              Flexible(
-                child: Text(
-                  CollectionInsightsDashboardCopy.sectionTitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: scheme.onSurface.withValues(alpha: 0.82),
-                    letterSpacing: 0.01,
-                  ),
+                  color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
                 ),
               ),
             ],

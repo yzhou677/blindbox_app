@@ -9,8 +9,6 @@ import 'package:blindbox_app/features/collection/application/shelf_emotional_pro
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 import 'package:blindbox_app/features/collection/presentation/shelf_editorial_voice.dart';
-import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart';
-import 'package:blindbox_app/features/collection/widgets/custom_series_form_sheet.dart';
 import 'package:blindbox_app/features/collection/widgets/figure_capsule_card.dart';
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
@@ -23,69 +21,6 @@ ShelfSeries? _findSeries(CollectionSnapshot snap, String seriesId) {
     if (s.id == seriesId) return s;
   }
   return null;
-}
-
-void _openEditCustomSeries(
-  BuildContext context,
-  WidgetRef ref,
-  ShelfSeries series,
-) {
-  showCollectionModalBottomSheet<void>(
-    context: context,
-    backgroundColor: Theme.of(context).colorScheme.surface,
-    builder: (_, scroll) => CustomSeriesFormSheet.edit(
-      initialSeries: series,
-      onSubmit:
-          ({
-            required String seriesName,
-            String? brand,
-            String? ipDisplayName,
-            String? customCoverImageUri,
-            String? notes,
-          }) {
-            ref.read(collectionNotifierProvider.notifier).updateCustomSeries(
-                  seriesId: series.id,
-                  seriesName: seriesName,
-                  brand: brand,
-                  ipDisplayName: ipDisplayName,
-                  customCoverImageUri: customCoverImageUri,
-                  notes: notes,
-                );
-          },
-      onFigureSubmit:
-          ({
-            required String figureId,
-            required String name,
-            required bool isSecret,
-            String? rarityLabel,
-            String? localImageUri,
-          }) {
-            ref.read(collectionNotifierProvider.notifier).updateCustomFigure(
-                  seriesId: series.id,
-                  figureId: figureId,
-                  name: name,
-                  isSecret: isSecret,
-                  rarityLabel: rarityLabel,
-                  localImageUri: localImageUri,
-                );
-          },
-      onFigureAdd:
-          ({
-            required String name,
-            required bool isSecret,
-            String? rarityLabel,
-            String? localImageUri,
-          }) {
-            ref.read(collectionNotifierProvider.notifier).addCustomFigure(
-                  seriesId: series.id,
-                  name: name,
-                  isSecret: isSecret,
-                  rarityLabel: rarityLabel,
-                  localImageUri: localImageUri,
-                );
-          },
-    ),
-  );
 }
 
 /// Figure-first sheet — replaces numeric slot chips.
@@ -133,17 +68,6 @@ class SeriesFiguresSheet extends ConsumerWidget {
           trailingMeta: trailingMeta,
         ),
         slivers: [
-          if (series.isCustomLocal)
-            SliverToBoxAdapter(
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: TextButton.icon(
-                  onPressed: () => _openEditCustomSeries(context, ref, series),
-                  icon: const Icon(Icons.edit_outlined, size: 18),
-                  label: const Text('Edit series'),
-                ),
-              ),
-            ),
           if (contextualLine != null && contextualLine.isNotEmpty)
             SliverToBoxAdapter(
               child: CollectibleRelationshipLine(

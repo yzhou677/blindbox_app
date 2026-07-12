@@ -7,14 +7,69 @@ import 'package:blindbox_app/features/collection/domain/shelf_emotional_profile.
 import 'package:blindbox_app/features/collection/domain/shelf_interpretation_confidence.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_archetype.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_archetypes.dart';
-import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_reason_key.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_reason_resolve.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_resolution.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_stat_keys.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_stats.dart';
 
 /// Minimum analyzing hold duration (ms) —mirrored by view model.
 const int collectorTypeAnalyzingHoldMs = 1400;
 
-/// Computes a stable shelf signature for era-shift detection.
+// --- Scoring policy thresholds (bump [kCollectorTypeResolverVersion] when these change) ---
+
+/// Series owned/slots ratio treated as “near complete” for Completionist.
+const double kCollectorTypeNearCompleteRatio = 0.85;
+
+/// Dominant brand/IP share required to qualify as Loyalist.
+const double kCollectorTypeLoyalistDominanceThreshold = 0.6;
+
+/// Catalog release age (days) treated as “fresh” for Trend Chaser.
+const int kCollectorTypeRecentReleaseDays = 180;
+
+/// Wishlist share of (owned + wishlist) to qualify as Dreamer.
+const double kCollectorTypeDreamerWishlistRatio = 0.45;
+
+/// Secret owned/slots ratio + compact shelf for Lucky One.
+const double kCollectorTypeLuckyOneSecretRatio = 0.5;
+
+/// Max tracked series for Lucky One / single-drop Trend Chaser paths.
+const int kCollectorTypeCompactSeriesCap = 4;
+
+/// Custom-series share that contributes to Stylist.
+const double kCollectorTypeStylistCustomRatio = 0.3;
+
+/// Minimum average completion for Minimalist (with small shelf).
+const double kCollectorTypeMinimalistCompletion = 0.75;
+
+/// Max series count for Minimalist path.
+const int kCollectorTypeMinimalistSeriesCap = 3;
+
+/// Max owned figures for Minimalist path.
+const int kCollectorTypeMinimalistOwnedCap = 12;
+
+/// Days since first series add that boosts Archivist.
+const int kCollectorTypeArchivistTenureDays = 90;
+
+/// Absolute score epsilon for tie detection before priority order.
+const double kCollectorTypeScoreTieEpsilon = 0.01;
+
+/// Confidence when winner score is non-positive (empty / fallback).
+const double kCollectorTypeConfidenceEmptyFloor = 0.25;
+
+/// Confidence when winner does not lead the runner-up.
+const double kCollectorTypeConfidenceTiedFloor = 0.35;
+
+/// Minimum clamped lead-margin confidence.
+const double kCollectorTypeConfidenceMin = 0.05;
+
+/// Computes a stable shelf signature for era-shift / needs-reveal detection.
+///
+/// Must change when shelf **composition** changes (tracked series, brand mix,
+/// IP mix), not only when figure ownership flips. Brand Distribution and other
+/// reveal stats are frozen on [CollectorTypeIdentity] until re-reveal; if this
+/// hash misses series adds, Insights keeps showing stale breakdowns with no
+/// Reveal again affordance.
 String computeCollectorTypeSignatureHash(CollectionSnapshot snapshot) {
   final owned = <String>[];
   final wishlist = <String>[];
@@ -28,8 +83,13 @@ String computeCollectorTypeSignatureHash(CollectionSnapshot snapshot) {
   var customSeries = 0;
   final brandCounts = <String, int>{};
   final ipCounts = <String, int>{};
+  final seriesKeys = <String>[];
   for (final series in snapshot.shelfSeries) {
     if (series.isCustomLocal) customSeries++;
+    final templateId = series.catalogTemplateId?.trim();
+    seriesKeys.add(
+      (templateId != null && templateId.isNotEmpty) ? templateId : series.id,
+    );
     final brand = series.taxonomyBrandId?.trim();
     if (brand != null && brand.isNotEmpty) {
       final key = canonicalizeStatKey(brand);
@@ -41,12 +101,8 @@ String computeCollectorTypeSignatureHash(CollectionSnapshot snapshot) {
       if (key.isNotEmpty) ipCounts[key] = (ipCounts[key] ?? 0) + 1;
     }
   }
+  seriesKeys.sort();
 
-  final dominantBrand = _dominantKey(brandCounts);
-  final dominantIp = _dominantKey(ipCounts);
-
-  // Build a deterministic lightweight signature without jsonEncode/base64.
-  // This avoids expensive codec work on the UI isolate when providers re-evaluate.
   final sb = StringBuffer()
     ..write('o:')
     ..write(owned.join(','))
@@ -54,22 +110,30 @@ String computeCollectorTypeSignatureHash(CollectionSnapshot snapshot) {
     ..write(wishlist.join(','))
     ..write('|c:')
     ..write(customSeries)
+    ..write('|s:')
+    ..write(seriesKeys.join(','))
     ..write('|b:')
-    ..write(dominantBrand ?? '')
+    ..write(_sortedCountPairs(brandCounts))
     ..write('|i:')
-    ..write(dominantIp ?? '');
+    ..write(_sortedCountPairs(ipCounts));
   return sb.toString();
 }
 
-// TODO(perf/scale): resolveCollectorType is called from the UI isolate (inside
-// CollectorTypeViewModel.requestReveal, after a one-frame yield).  At current
-// catalog size (~100 figures, ~20 series) the full scoring pass completes in
-// <30 ms.  Move the call to Isolate.run / compute() when catalog grows beyond
-// ~1 000 figures or when profiling shows the reveal stall exceeding 100 ms on
-// target devices.  The function is pure (no Flutter context) so it is
-// isolate-safe without modification.
+String _sortedCountPairs(Map<String, int> counts) {
+  if (counts.isEmpty) return '';
+  final keys = counts.keys.toList()..sort();
+  final parts = <String>[];
+  for (final k in keys) {
+    parts.add('$k=${counts[k]}');
+  }
+  return parts.join(',');
+}
+
 /// Rule-based collector identity resolution (pure, no Riverpod).
-CollectorTypeIdentity resolveCollectorType({
+///
+/// Returns a [CollectorTypeResolution] — the shared domain outcome for Reveal,
+/// Hero, and future History. Callers apply [shouldEvolve] before persisting.
+CollectorTypeResolution resolveCollectorType({
   required CollectionSnapshot snapshot,
   required ShelfEmotionalProfile profile,
   CatalogSeedBundle? catalog,
@@ -82,19 +146,26 @@ CollectorTypeIdentity resolveCollectorType({
       : {for (final s in catalog.series) s.id: s};
   final stats = _buildStats(snapshot, profile, catalog);
   final signatureHash = computeCollectorTypeSignatureHash(snapshot);
+  final emptyScores = {
+    for (final id in CollectorTypeArchetypeId.values) id: 0.0,
+  };
 
   if (snapshot.shelfSeries.isEmpty ||
       (profile.interpretationConfidence == ShelfInterpretationConfidence.low &&
           snapshot.totalOwnedFigures == 0)) {
-    return CollectorTypeIdentity(
+    return CollectorTypeResolution(
       archetypeId: CollectorTypeArchetypeId.wanderer,
-      revealedAt: now,
+      score: 0,
+      confidence: kCollectorTypeConfidenceEmptyFloor,
+      reasonKey: CollectorTypeReasonKey.stillUnfolding,
       signatureHash: signatureHash,
       stats: stats,
+      scores: emptyScores,
+      reasons: const {},
     );
   }
 
-  final scores = _scoreArchetypes(
+  final scored = _scoreArchetypes(
     snapshot: snapshot,
     profile: profile,
     stats: stats,
@@ -104,13 +175,24 @@ CollectorTypeIdentity resolveCollectorType({
     now: now,
   );
 
-  final winner = _pickWinner(scores);
-  return CollectorTypeIdentity(
-    archetypeId: winner,
-    revealedAt: now,
+  final picked = _pickWinner(scored.scores, scored.reasons);
+  return CollectorTypeResolution(
+    archetypeId: picked.id,
+    score: picked.score,
+    confidence: _confidence(winner: picked.score, runnerUp: picked.runnerUp),
+    reasonKey: picked.reasonKey,
     signatureHash: signatureHash,
     stats: stats,
+    scores: scored.scores,
+    reasons: scored.reasons,
   );
+}
+
+double _confidence({required double winner, required double runnerUp}) {
+  if (winner <= 0) return kCollectorTypeConfidenceEmptyFloor;
+  final gap = winner - runnerUp;
+  if (gap <= 0) return kCollectorTypeConfidenceTiedFloor;
+  return (gap / winner).clamp(kCollectorTypeConfidenceMin, 1.0);
 }
 
 CollectorTypeStats _buildStats(
@@ -124,9 +206,8 @@ CollectorTypeStats _buildStats(
   for (final series in snapshot.shelfSeries) {
     final rawKey = series.taxonomyBrandId?.trim() ?? series.brand.trim();
     if (rawKey.isNotEmpty) {
-      final display = series.brand.trim().isNotEmpty
-          ? series.brand.trim()
-          : rawKey;
+      final display =
+          series.brand.trim().isNotEmpty ? series.brand.trim() : rawKey;
       brandEntries.add((displayLabel: display, rawKey: rawKey));
     }
     final progress = progressForSeries(series, snapshot.figureStates);
@@ -162,7 +243,10 @@ CollectorTypeStats _buildStats(
   );
 }
 
-Map<CollectorTypeArchetypeId, double> _scoreArchetypes({
+({
+  Map<CollectorTypeArchetypeId, double> scores,
+  Map<CollectorTypeArchetypeId, CollectorTypeReasonKey> reasons,
+}) _scoreArchetypes({
   required CollectionSnapshot snapshot,
   required ShelfEmotionalProfile profile,
   required CollectorTypeStats stats,
@@ -172,15 +256,15 @@ Map<CollectorTypeArchetypeId, double> _scoreArchetypes({
   required DateTime now,
 }) {
   final scores = {for (final id in CollectorTypeArchetypeId.values) id: 0.0};
+  final reasons = <CollectorTypeArchetypeId, CollectorTypeReasonKey>{};
 
   final seriesCount = snapshot.shelfSeries.length;
   final owned = stats.totalOwned;
   final wishlist = stats.totalWishlist;
   final totalTracked = owned + wishlist;
   final wishlistRatio = totalTracked == 0 ? 0.0 : wishlist / totalTracked;
-  final secretOwnedRatio = stats.secretSlots == 0
-      ? 0.0
-      : stats.secretOwned / stats.secretSlots;
+  final secretOwnedRatio =
+      stats.secretSlots == 0 ? 0.0 : stats.secretOwned / stats.secretSlots;
   final avgCompletion = stats.completionPercent / 100.0;
 
   var nearComplete = 0;
@@ -191,7 +275,9 @@ Map<CollectorTypeArchetypeId, double> _scoreArchetypes({
   for (final series in snapshot.shelfSeries) {
     final progress = progressForSeries(series, snapshot.figureStates);
     final total = series.figureCount;
-    if (total > 0 && progress.owned < total && progress.owned / total >= 0.85) {
+    if (total > 0 &&
+        progress.owned < total &&
+        progress.owned / total >= kCollectorTypeNearCompleteRatio) {
       nearComplete++;
     }
     if (series.notes != null && series.notes!.trim().isNotEmpty) notesCount++;
@@ -219,93 +305,128 @@ Map<CollectorTypeArchetypeId, double> _scoreArchetypes({
   final shelfIpSpread = _shelfIpSpread(snapshot);
   final ipDepthKeys = memory?.ipSeriesDepth.length ?? 0;
 
-  // Completionist
   if (profile.seriesCompleteCount >= 2 && avgCompletion >= 0.7) {
     scores[CollectorTypeArchetypeId.completionist] =
         40 + profile.seriesCompleteCount * 12 + avgCompletion * 30;
+    reasons[CollectorTypeArchetypeId.completionist] =
+        CollectorTypeReasonKey.deepCompletion;
   } else if (nearComplete >= 2) {
     scores[CollectorTypeArchetypeId.completionist] = 25 + nearComplete * 8;
+    reasons[CollectorTypeArchetypeId.completionist] =
+        CollectorTypeReasonKey.nearCompletion;
   }
 
-  // Hunter
   if (stats.secretOwned >= 2) {
     scores[CollectorTypeArchetypeId.hunter] =
         35 + stats.secretOwned * 10 + secretOwnedRatio * 25;
+    reasons[CollectorTypeArchetypeId.hunter] =
+        CollectorTypeReasonKey.manySecrets;
   } else if (profile.themeIncludes('secrets') && stats.secretOwned >= 1) {
     scores[CollectorTypeArchetypeId.hunter] = 20 + secretOwnedRatio * 20;
+    reasons[CollectorTypeArchetypeId.hunter] =
+        CollectorTypeReasonKey.manySecrets;
   }
 
-  // Lucky One —high secret hit rate with modest shelf
-  if (stats.secretOwned >= 1 && secretOwnedRatio >= 0.5 && seriesCount <= 4) {
+  if (stats.secretOwned >= 1 &&
+      secretOwnedRatio >= kCollectorTypeLuckyOneSecretRatio &&
+      seriesCount <= kCollectorTypeCompactSeriesCap) {
     scores[CollectorTypeArchetypeId.luckyOne] = 30 + secretOwnedRatio * 40;
+    reasons[CollectorTypeArchetypeId.luckyOne] =
+        CollectorTypeReasonKey.fortunateSecrets;
   }
 
-  // Loyalist —dominant brand/IP
   if (profile.dominantBrandId != null || profile.dominantIpId != null) {
     final dominantShare = _dominantShare(snapshot, profile);
-    if (dominantShare >= 0.6) {
+    if (dominantShare >= kCollectorTypeLoyalistDominanceThreshold) {
       scores[CollectorTypeArchetypeId.loyalist] = 35 + dominantShare * 40;
+      reasons[CollectorTypeArchetypeId.loyalist] =
+          CollectorTypeReasonKey.dominantUniverse;
     }
   }
 
-  // Curator —spread across brands/IPs
   if (brandSpread >= 2 || shelfIpSpread >= 2) {
     scores[CollectorTypeArchetypeId.curator] =
         25 + brandSpread * 8 + ipDepthKeys * 5;
+    reasons[CollectorTypeArchetypeId.curator] =
+        CollectorTypeReasonKey.intentionalSpread;
   }
 
-  // Wanderer —many IPs, low completion
   if (brandSpread >= 2 && avgCompletion < 0.5 && seriesCount >= 2) {
     scores[CollectorTypeArchetypeId.wanderer] =
         20 + brandSpread * 6 + (1 - avgCompletion) * 20;
+    reasons[CollectorTypeArchetypeId.wanderer] =
+        CollectorTypeReasonKey.curiousSpread;
   }
 
-  // Minimalist —small shelf, high completion
-  if (seriesCount <= 3 && owned <= 12 && avgCompletion >= 0.75) {
+  if (seriesCount <= kCollectorTypeMinimalistSeriesCap &&
+      owned <= kCollectorTypeMinimalistOwnedCap &&
+      avgCompletion >= kCollectorTypeMinimalistCompletion) {
     scores[CollectorTypeArchetypeId.minimalist] = 35 + avgCompletion * 25;
+    reasons[CollectorTypeArchetypeId.minimalist] =
+        CollectorTypeReasonKey.compactShelf;
   }
 
-  // Archivist —notes, photos, long tenure
   if (notesCount >= 1 || photoSeries >= 2) {
     scores[CollectorTypeArchetypeId.archivist] =
         20 + notesCount * 10 + photoSeries * 8;
+    reasons[CollectorTypeArchetypeId.archivist] =
+        CollectorTypeReasonKey.livingArchive;
   }
   final firstAdded = memory?.firstSeriesAddedAt;
-  if (firstAdded != null && now.difference(firstAdded).inDays >= 90) {
+  if (firstAdded != null &&
+      now.difference(firstAdded).inDays >= kCollectorTypeArchivistTenureDays) {
     scores[CollectorTypeArchetypeId.archivist] =
         (scores[CollectorTypeArchetypeId.archivist] ?? 0) + 15;
+    reasons.putIfAbsent(
+      CollectorTypeArchetypeId.archivist,
+      () => CollectorTypeReasonKey.livingArchive,
+    );
   }
 
-  // Stylist —custom + photos
-  if (stats.customSeriesRatio >= 0.3 || photoSeries >= 2) {
+  if (stats.customSeriesRatio >= kCollectorTypeStylistCustomRatio ||
+      photoSeries >= 2) {
     scores[CollectorTypeArchetypeId.stylist] =
         25 + stats.customSeriesRatio * 40 + photoSeries * 6;
+    reasons[CollectorTypeArchetypeId.stylist] =
+        CollectorTypeReasonKey.composedShelf;
   }
 
-  // Dreamer —wishlist leaning
-  if (wishlistRatio >= 0.45 && wishlist >= 2) {
+  if (wishlistRatio >= kCollectorTypeDreamerWishlistRatio && wishlist >= 2) {
     scores[CollectorTypeArchetypeId.dreamer] = 30 + wishlistRatio * 35;
+    reasons[CollectorTypeArchetypeId.dreamer] =
+        CollectorTypeReasonKey.highWishlist;
   }
 
-  // Daydream Collector —wishlist >> owned (stronger than dreamer when gap is wide)
   if (wishlist > owned && wishlist >= 3) {
     scores[CollectorTypeArchetypeId.daydreamCollector] =
         45 + (wishlist - owned) * 6 + wishlistRatio * 20;
+    reasons[CollectorTypeArchetypeId.daydreamCollector] =
+        CollectorTypeReasonKey.wishlistDominates;
   }
 
-  // Trend Chaser —recent catalog releases on shelf
   if (recentCatalogSeries >= 2) {
     scores[CollectorTypeArchetypeId.trendChaser] =
         50 + recentCatalogSeries * 14;
-  } else if (recentCatalogSeries == 1 && seriesCount <= 4) {
+    reasons[CollectorTypeArchetypeId.trendChaser] =
+        CollectorTypeReasonKey.freshDrops;
+  } else if (recentCatalogSeries == 1 &&
+      seriesCount <= kCollectorTypeCompactSeriesCap) {
     scores[CollectorTypeArchetypeId.trendChaser] = 28;
+    reasons[CollectorTypeArchetypeId.trendChaser] =
+        CollectorTypeReasonKey.freshDrops;
   }
 
-  return scores;
+  return (scores: scores, reasons: reasons);
 }
 
-CollectorTypeArchetypeId _pickWinner(
+({
+  CollectorTypeArchetypeId id,
+  double score,
+  double runnerUp,
+  CollectorTypeReasonKey reasonKey,
+}) _pickWinner(
   Map<CollectorTypeArchetypeId, double> scores,
+  Map<CollectorTypeArchetypeId, CollectorTypeReasonKey> reasons,
 ) {
   var bestScore = -1.0;
   CollectorTypeArchetypeId? bestId;
@@ -316,19 +437,41 @@ CollectorTypeArchetypeId _pickWinner(
     }
   }
   if (bestId == null || bestScore <= 0) {
-    return CollectorTypeArchetypeId.wanderer;
+    return (
+      id: CollectorTypeArchetypeId.wanderer,
+      score: 0,
+      runnerUp: 0,
+      reasonKey: CollectorTypeReasonKey.stillUnfolding,
+    );
   }
 
   final tied = scores.entries
-      .where((e) => (e.value - bestScore).abs() < 0.01)
+      .where((e) => (e.value - bestScore).abs() < kCollectorTypeScoreTieEpsilon)
       .map((e) => e.key)
       .toSet();
-  if (tied.length == 1) return bestId;
-
-  for (final id in CollectorTypeArchetypes.tieBreakPriority) {
-    if (tied.contains(id)) return id;
+  var winner = bestId;
+  if (tied.length > 1) {
+    for (final id in CollectorTypeArchetypes.tieBreakPriority) {
+      if (tied.contains(id)) {
+        winner = id;
+        break;
+      }
+    }
   }
-  return bestId;
+
+  var runnerUp = 0.0;
+  for (final e in scores.entries) {
+    if (e.key == winner) continue;
+    if (e.value > runnerUp) runnerUp = e.value;
+  }
+
+  return (
+    id: winner,
+    score: scores[winner] ?? bestScore,
+    runnerUp: runnerUp,
+    reasonKey: reasons[winner] ??
+        canonicalReasonKeyForArchetype(winner),
+  );
 }
 
 double _dominantShare(
@@ -386,23 +529,10 @@ bool _isRecentRelease(seed.CatalogSeries series, DateTime now) {
       int.parse(parts[1]),
       int.parse(parts[2]),
     );
-    return now.difference(released).inDays <= 180;
+    return now.difference(released).inDays <= kCollectorTypeRecentReleaseDays;
   } catch (_) {
     return false;
   }
-}
-
-String? _dominantKey(Map<String, int> counts) {
-  if (counts.isEmpty) return null;
-  String? best;
-  var bestCount = 0;
-  for (final e in counts.entries) {
-    if (e.value > bestCount) {
-      bestCount = e.value;
-      best = e.key;
-    }
-  }
-  return bestCount >= 2 ? best : null;
 }
 
 int _shelfIpSpread(CollectionSnapshot snapshot) {

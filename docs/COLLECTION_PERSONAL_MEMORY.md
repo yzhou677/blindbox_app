@@ -4,7 +4,7 @@ Calm remembrance of the collecting journey — not a social feed or achievement 
 
 ## Principles
 
-- **Offline-first** — small `SharedPreferences` payload (`collection_memory_v2`)
+- **Offline-first** — small `SharedPreferences` payload (`collection_memory_v3`)
 - **Derived** — moments from snapshot + milestones, not cloud timelines
 - **One whisper** — collection summary shows a single thoughtful line
 - **No engagement loops** — no streaks, push campaigns, or “on this day” spam

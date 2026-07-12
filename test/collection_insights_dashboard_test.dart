@@ -66,7 +66,7 @@ void main() {
     final zeroCounts = tester.widgetList<Text>(find.text('0')).toList();
     expect(zeroCounts, hasLength(2));
 
-    expect(figureCount.style!.color!.a, closeTo(0.9, 0.06));
+    expect(figureCount.style!.color!.a, closeTo(0.97, 0.06));
     for (final zero in zeroCounts) {
       expect(zero.style!.color!.a, closeTo(0.36, 0.06));
     }
@@ -92,9 +92,16 @@ void main() {
     expect(find.text('👑'), findsOneWidget);
     expect(find.text(CollectionSummaryLabels.figures), findsNothing);
     expect(find.text(CollectionSummaryLabels.wishlist), findsNothing);
+    // Persistent Summary header communicates expand/collapse.
+    expect(
+      find.text(CollectionInsightsDashboardCopy.summaryHeader),
+      findsOneWidget,
+    );
+    expect(find.byIcon(Icons.expand_more_rounded), findsOneWidget);
+    // Insights navigation lives in the Shelf | Insights segment — not here.
     expect(
       find.text(CollectionInsightsDashboardCopy.sectionTitle),
-      findsOneWidget,
+      findsNothing,
     );
   });
 

@@ -1,3 +1,5 @@
+import 'package:blindbox_app/core/theme/app_card_tokens.dart';
+
 /// Shared vertical rhythm for main-tab scroll feeds (Home / Market / Collection).
 /// Keeps compact headers aligned while giving the status-bar area a little air.
 abstract final class FeedRhythm {
@@ -48,8 +50,8 @@ abstract final class FeedRhythm {
   /// Showcase thumb for Market browse rows.
   static const double marketListingThumbnailExtent = 96;
 
-  /// Chasers rail height (image-first mini cards).
-  static const double marketChasersRailHeight = 196;
+  /// Chasers / For You compact rail height.
+  static const double marketChasersRailHeight = AppCardTokens.browseRailHeight;
 
   /// @deprecated Use [marketChasersRailHeight].
   static const double marketTrendingRailHeight = marketChasersRailHeight;
@@ -70,8 +72,17 @@ abstract final class FeedRhythm {
   /// Fixed height for the collection summary metric strip (aligned baselines).
   static const double collectionSummaryMetricStripHeight = 52;
 
-  /// Air between collection search field and summary card (~20–24dp total with search bottom inset).
-  static const double collectionSearchToSummaryGap = 12;
+  /// Air between collection search field and summary block.
+  static const double collectionSearchToSummaryGap = 18;
+
+  /// Gap between the Summary header row and the summary metrics card.
+  static const double collectionSummaryHeaderToCard = 10;
+
+  /// Air between the summary block and the Shelf / Insights segment.
+  static const double collectionSummaryToSegmentGap = 16;
+
+  /// Air below the segment before the shelf section header ("My collection").
+  static const double collectionSegmentToShelfHeader = 16;
 
   /// Vertical padding inside the collection summary metric card.
   static const double collectionSummaryCardVerticalPadding = 16;
@@ -132,6 +143,12 @@ abstract final class FeedRhythm {
 
   /// Vertical gap between stacked blocks inside a tab (e.g. search vs chips).
   static const double blockGapMedium = 18;
+
+  /// Insights editorial section gaps — intentionally uneven (not identical cards).
+  static const double insightsHeroToStats = 28;
+  static const double insightsStatsToProgress = 20;
+  static const double insightsProgressToBrand = 24;
+  static const double insightsDashboardToJourney = 30;
 
   /// Extra air below the last block inside main-tab scroll bodies.
   static const double tabScrollTailPadding = 36;

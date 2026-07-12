@@ -1,6 +1,7 @@
 import 'package:blindbox_app/features/catalog/presentation/catalog_browse_launch.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_browse_screen.dart';
 import 'package:blindbox_app/features/collection/collection_screen.dart';
+import 'package:blindbox_app/features/collection/insights/debug/collector_type_mascot_gallery_screen.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collection_insights_screen.dart';
 import 'package:blindbox_app/features/home/drop_detail_screen.dart';
 import 'package:blindbox_app/features/home/home_screen.dart';
@@ -8,6 +9,7 @@ import 'package:blindbox_app/features/market/market_detail_screen.dart';
 import 'package:blindbox_app/features/market/market_screen.dart';
 import 'package:blindbox_app/features/market/presentation/market_browse_search_screen.dart';
 import 'package:blindbox_app/shared/widgets/main_shell_scaffold.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -205,5 +207,11 @@ final GoRouter appRouter = GoRouter(
         ),
       ],
     ),
+    if (kDebugMode)
+      GoRoute(
+        path: CollectorTypeMascotGalleryScreen.routePath,
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) => const CollectorTypeMascotGalleryScreen(),
+      ),
   ],
 );

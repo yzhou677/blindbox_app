@@ -1,5 +1,4 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
-import 'package:blindbox_app/core/theme/collectible_shape.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_summary_editorial.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_summary_section.dart';
@@ -95,7 +94,7 @@ class CollectionInsightsCompactSummary extends StatelessWidget {
     final row = Row(
       children: [
         for (var i = 0; i < metrics.length; i++) ...[
-          if (i > 0) const SizedBox(width: 4),
+          if (i > 0) const SizedBox(width: 14),
           Expanded(
             child: _MorphMetricColumn(
               metric: metrics[i],
@@ -117,11 +116,9 @@ class CollectionInsightsCompactSummary extends StatelessWidget {
         child: InkWell(
           key: const Key('collection_insights_compact_glance'),
           onTap: onTap,
-          borderRadius: BorderRadius.vertical(
-            top: CollectibleShape.shellRadius.topLeft,
-          ),
+          borderRadius: BorderRadius.circular(14),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             child: row,
           ),
         ),
@@ -145,7 +142,7 @@ class _MorphMetricColumn extends StatelessWidget {
   final TextStyle labelStyle;
   final Color glyphColor;
 
-  static const double _glyphSize = 20;
+  static const double _glyphSize = 22;
 
   bool get _muted {
     return switch (metric.kind) {

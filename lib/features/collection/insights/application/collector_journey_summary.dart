@@ -1,9 +1,6 @@
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 
-const int substantialJourneyUniverseCount = 8;
-const int misleadingRecentJourneyDays = 3;
-
 class CollectorJourneyTopIp {
   const CollectorJourneyTopIp({
     required this.id,
@@ -16,6 +13,24 @@ class CollectorJourneyTopIp {
   final int seriesCount;
 }
 
+/// Live collection-history summary — never frozen into a Collector Type reveal.
+///
+/// Collector Journey is intentionally LIVE (recomputed from memory + shelf),
+/// but its **metrics are historical by design** — not current shelf composition.
+///
+/// - **Started** → first series added (`firstSeriesAddedAt`)
+/// - **Explored IP universes** → unique IPs ever explored (`ipSeriesDepth.length`);
+///   append-only; does **not** decrease when series are removed
+/// - **Identity** (elsewhere) → snapshot at last reveal
+///
+/// Journey tells the collector’s path over time. Do not “fix” Explored to
+/// match current unique IPs on the shelf.
+///
+/// Unlike Collector Type and other insight cards,
+/// Journey is not part of the Reveal snapshot.
+///
+/// Presentation keeps **stable field slots** (Started, Explored, …); null/zero
+/// values still occupy their place — do not suppress slots for “truthiness.”
 class CollectorJourneySummary {
   const CollectorJourneySummary({
     required this.ipUniversesExplored,
@@ -24,6 +39,8 @@ class CollectorJourneySummary {
     required this.journeyAgeLabel,
   });
 
+  /// Unique IPs ever recorded in [CollectionMemoryData.ipSeriesDepth] — historical,
+  /// not “IPs currently on the shelf.”
   final int ipUniversesExplored;
   final int seriesExploredOverTime;
   final List<CollectorJourneyTopIp> topIps;
@@ -62,23 +79,17 @@ CollectorJourneySummary buildCollectorJourneySummary({
         ),
       )
       .toList(growable: false);
-  final startedAt = memory.firstSeriesAddedAt;
-  final ageDays = startedAt == null
-      ? null
-      : current.difference(startedAt).inDays;
-  final shouldSuppressAge =
-      ageDays != null &&
-      ageDays >= 0 &&
-      ageDays <= misleadingRecentJourneyDays &&
-      universeCount >= substantialJourneyUniverseCount;
 
   return CollectorJourneySummary(
     ipUniversesExplored: universeCount,
     seriesExploredOverTime: totalSeries,
     topIps: topIps,
-    journeyAgeLabel: shouldSuppressAge
-        ? null
-        : formatJourneyAgeLabel(startedAt: startedAt, now: current),
+    // Always surface Started when memory has a start date — Journey answers
+    // both "when did collecting begin?" and "how many universes explored?"
+    journeyAgeLabel: formatJourneyAgeLabel(
+      startedAt: memory.firstSeriesAddedAt,
+      now: current,
+    ),
   );
 }
 

@@ -2,63 +2,112 @@ import 'package:blindbox_app/core/theme/app_theme.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_archetype.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_archetypes.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_reason_key.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_stats.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_result_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-CollectorTypeIdentity _sampleIdentity() {
+const _stats = CollectorTypeStats(
+  totalOwned: 3,
+  totalWishlist: 0,
+  trackedSeries: 1,
+  completionPercent: 50,
+  secretOwned: 2,
+  secretSlots: 3,
+  brandBreakdown: {},
+  topSeries: [],
+  customSeriesRatio: 0,
+);
+
+CollectorTypeIdentity _sampleIdentity({
+  CollectorTypeArchetypeId id = CollectorTypeArchetypeId.hunter,
+  CollectorTypeReasonKey reasonKey = CollectorTypeReasonKey.manySecrets,
+}) {
   return CollectorTypeIdentity(
-    archetypeId: CollectorTypeArchetypeId.hunter,
+    archetypeId: id,
     revealedAt: DateTime(2026, 6, 1),
     signatureHash: 'hash',
-    stats: const CollectorTypeStats(
-      totalOwned: 3,
-      totalWishlist: 0,
-      trackedSeries: 1,
-      completionPercent: 50,
-      secretOwned: 2,
-      secretSlots: 3,
-      brandBreakdown: {},
-      topSeries: [],
-      customSeriesRatio: 0,
-    ),
+    stats: _stats,
+    reasonKey: reasonKey,
   );
 }
 
 void main() {
   final archetype = CollectorTypeArchetypes.hunter;
 
-  Future<void> pumpCard(WidgetTester tester, ThemeData theme) async {
+  Future<void> pumpCard(
+    WidgetTester tester,
+    ThemeData theme, {
+    CollectorTypeIdentity? identity,
+  }) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: theme,
         home: Scaffold(
-          body: CollectorTypeResultCard(identity: _sampleIdentity()),
+          body: CollectorTypeResultCard(
+            identity: identity ?? _sampleIdentity(),
+          ),
         ),
       ),
     );
     await tester.pump();
   }
 
-  testWidgets('renders archetype name and flavor in light theme', (
+  testWidgets('renders archetype name; flavor behind Why this type', (
     tester,
   ) async {
     await pumpCard(tester, AppTheme.light());
     expect(find.text(archetype.displayName), findsOneWidget);
-    expect(find.textContaining('Secret Figures'), findsOneWidget);
-    expect(find.byIcon(archetype.icon!), findsOneWidget);
+    expect(find.text('Why this type'), findsOneWidget);
+    expect(find.textContaining('quiet focus'), findsNothing);
+
+    await tester.tap(find.byKey(const Key('collector_type_why_this_type')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('quiet focus'), findsOneWidget);
+    expect(
+      find.byKey(const Key('collector_type_mascot_hunter')),
+      findsOneWidget,
+    );
   });
 
-  testWidgets('renders archetype name and flavor in dark theme', (
-    tester,
-  ) async {
+  testWidgets('renders archetype name in dark theme', (tester) async {
     await pumpCard(tester, AppTheme.dark());
     expect(find.text(archetype.displayName), findsOneWidget);
-    expect(find.textContaining('Secret Figures'), findsOneWidget);
+    expect(find.text('Why this type'), findsOneWidget);
   });
 
-  testWidgets('renders helper line when provided', (tester) async {
+  testWidgets('derives Because from identity reasonKey', (tester) async {
+    await pumpCard(tester, AppTheme.light());
+    expect(
+      find.text('Because Secret Figures keep drawing your focus.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('heals Loyalist stillUnfolding to dominantUniverse Because', (
+    tester,
+  ) async {
+    await pumpCard(
+      tester,
+      AppTheme.light(),
+      identity: _sampleIdentity(
+        id: CollectorTypeArchetypeId.loyalist,
+        reasonKey: CollectorTypeReasonKey.stillUnfolding,
+      ),
+    );
+    expect(find.text('The Loyalist'), findsOneWidget);
+    expect(
+      find.text('Because your shelf keeps returning to the same universe.'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Because your shelf is still finding its shape.'),
+      findsNothing,
+    );
+  });
+
+  testWidgets('helper line expands under Why this type', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(),
@@ -74,6 +123,14 @@ void main() {
     );
     await tester.pump();
 
+    expect(
+      find.textContaining(
+        'your collecting journey has explored many different worlds',
+      ),
+      findsNothing,
+    );
+    await tester.tap(find.byKey(const Key('collector_type_why_this_type')));
+    await tester.pumpAndSettle();
     expect(
       find.textContaining(
         'your collecting journey has explored many different worlds',

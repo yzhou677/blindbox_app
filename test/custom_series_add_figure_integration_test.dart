@@ -4,7 +4,8 @@ import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
-import 'package:blindbox_app/features/collection/widgets/series_figures_sheet.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_series_management.dart';
+import 'package:blindbox_app/features/collection/widgets/custom_series_form_sheet.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -79,9 +80,7 @@ void main() {
     CollectionMemoryStore.instance.resetForTest();
   });
 
-  testWidgets('figures sheet edit series path can add a new figure', (
-    tester,
-  ) async {
+  testWidgets('edit series path can add a new figure', (tester) async {
     tester.view.physicalSize = const Size(400, 1200);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
@@ -100,18 +99,9 @@ void main() {
         child: MaterialApp(
           theme: AppTheme.light(),
           home: Scaffold(
-            body: Builder(
-              builder: (ctx) => TextButton(
-                onPressed: () {
-                  showModalBottomSheet<void>(
-                    context: ctx,
-                    isScrollControlled: true,
-                    builder: (_) => CollectibleSheetScope(
-                      scrollController: ScrollController(),
-                      child: SeriesFiguresSheet(seriesId: series.id),
-                    ),
-                  );
-                },
+            body: Consumer(
+              builder: (ctx, ref, _) => TextButton(
+                onPressed: () => openEditCustomSeriesSheet(ctx, ref, series),
                 child: const Text('open'),
               ),
             ),
@@ -124,9 +114,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    await tester.tap(find.text('Edit series'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.byType(CustomSeriesFormSheet), findsOneWidget);
 
     final addField = find.byKey(const Key('custom-series-edit-add-figure-field'));
     await tester.scrollUntilVisible(

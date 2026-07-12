@@ -7,6 +7,7 @@ import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_resolver.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_stat_keys.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_archetype.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_reason_key.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -52,6 +53,7 @@ void main() {
       revealedAt: DateTime(2026, 1, 1),
     );
     expect(identity.archetypeId, CollectorTypeArchetypeId.wanderer);
+    expect(identity.reasonKey, CollectorTypeReasonKey.stillUnfolding);
   });
 
   test('hunter when multiple secrets owned', () {
@@ -91,6 +93,7 @@ void main() {
       revealedAt: DateTime(2026, 1, 1),
     );
     expect(identity.archetypeId, CollectorTypeArchetypeId.hunter);
+    expect(identity.reasonKey, CollectorTypeReasonKey.manySecrets);
   });
 
   test('completionist when series fully owned', () {
@@ -199,6 +202,56 @@ void main() {
     expect(
       computeCollectorTypeSignatureHash(before),
       isNot(computeCollectorTypeSignatureHash(after)),
+    );
+  });
+
+  test('signature hash changes when a second brand series is added', () {
+    final popMart = testShelfSeries(
+      id: 's_pop',
+      catalogTemplateId: 'catalog_pop',
+      taxonomyBrandId: 'pop_mart',
+      brand: 'POP MART',
+    );
+    final nommi = testShelfSeries(
+      id: 's_nommi',
+      name: 'NOMMI Series',
+      catalogTemplateId: 'catalog_nommi',
+      taxonomyBrandId: 'toptoy',
+      brand: 'TOPTOY',
+      taxonomyIpId: 'nommi',
+      ipName: 'NOMMI',
+      figures: const [
+        ShelfFigure(
+          id: 'fig_nommi_0',
+          seriesId: 's_nommi',
+          name: 'Nommi Fig',
+          rarity: 'Regular',
+          isSecret: false,
+        ),
+      ],
+    );
+    final before = CollectionSnapshot(
+      shelfSeries: [popMart],
+      figureStates: const {},
+    );
+    final after = CollectionSnapshot(
+      shelfSeries: [popMart, nommi],
+      figureStates: const {},
+    );
+    expect(
+      computeCollectorTypeSignatureHash(before),
+      isNot(computeCollectorTypeSignatureHash(after)),
+    );
+
+    final identity = resolveCollectorType(
+      snapshot: after,
+      profile: interpretShelf(after),
+      revealedAt: DateTime(2026, 1, 1),
+    );
+    expect(identity.stats.brandBreakdown.length, 2);
+    expect(
+      identity.stats.brandBreakdown.keys.map(canonicalizeStatKey).toSet(),
+      containsAll(['popmart', 'toptoy']),
     );
   });
 

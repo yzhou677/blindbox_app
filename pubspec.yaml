@@ -78,6 +78,7 @@ flutter:
     - assets/market/fake_market_browse_items.json
     - assets/catalog/figures/
     - assets/catalog/series/
+    - assets/insights/collector_types/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

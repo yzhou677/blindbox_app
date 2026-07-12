@@ -6,7 +6,7 @@ import 'package:blindbox_app/features/collection/application/collection_shelf_ui
 import 'package:blindbox_app/features/collection/collection_screen.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_browse.dart';
-import 'package:blindbox_app/features/collection/widgets/series_shelf_cards.dart';
+import 'package:blindbox_app/features/collection/widgets/collection_series_card.dart';
 import 'package:blindbox_app/shared/widgets/app_search_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -117,8 +117,8 @@ Future<void> _scrollShelfIntoView(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 200));
 }
 
-double _top(WidgetTester tester, Finder finder) {
-  return tester.getTopLeft(finder).dy;
+double _left(WidgetTester tester, Finder finder) {
+  return tester.getTopLeft(finder).dx;
 }
 
 Finder get _searchField => find.descendant(
@@ -183,10 +183,10 @@ void main() {
 
       await _scrollShelfIntoView(tester);
 
-      expect(_top(tester, find.text('Alpha Apple')),
-          lessThan(_top(tester, find.text('Mango Mix'))));
-      expect(_top(tester, find.text('Mango Mix')),
-          lessThan(_top(tester, find.text('Zeta Zzz'))));
+      expect(_left(tester, find.text('Alpha Apple')),
+          lessThan(_left(tester, find.text('Mango Mix'))));
+      expect(_left(tester, find.text('Mango Mix')),
+          lessThan(_left(tester, find.text('Zeta Zzz'))));
 
       await _scrollToTop(tester);
       await tester.enterText(_searchField, 'Apple');
@@ -206,8 +206,8 @@ void main() {
       expect(find.text('Alpha Apple'), findsOneWidget);
       expect(find.text('Mango Mix'), findsOneWidget);
       expect(find.text('Zeta Zzz'), findsOneWidget);
-      expect(_top(tester, find.text('Alpha Apple')),
-          lessThan(_top(tester, find.text('Zeta Zzz'))));
+      expect(_left(tester, find.text('Alpha Apple')),
+          lessThan(_left(tester, find.text('Zeta Zzz'))));
 
       await _scrollToTop(tester);
       await tester.enterText(_searchField, 'NoMatchQuery');
@@ -216,7 +216,7 @@ void main() {
       await _scrollShelfIntoView(tester);
 
       expect(find.text('No series match your search.'), findsOneWidget);
-      expect(find.byType(SeriesShelfCard), findsNothing);
+      expect(find.byType(CollectionSeriesCard), findsNothing);
     });
 
     testWidgets('figure name search uses catalog semantics like Discover', (

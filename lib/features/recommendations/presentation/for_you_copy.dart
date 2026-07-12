@@ -9,6 +9,19 @@ abstract final class ForYouCopy {
       "We've learned your collection taste.";
 }
 
+/// Deterministic display priority — lower index wins.
+///
+/// One card, one story. Personalized collection reasons beat freshness tags.
+const List<String> kForYouReasonDisplayPriority = [
+  RecommendationReasonType.trackedIp,
+  'owned_ip', // legacy alias
+  RecommendationReasonType.wishlistIp,
+  // Future: collector_type
+  // Future: trending
+  RecommendationReasonType.recentRelease,
+  RecommendationReasonType.newInCatalog,
+];
+
 String forYouReason(String reasonType, String? meta) =>
     forYouPrimaryReason(reasonType, meta);
 
@@ -24,30 +37,39 @@ String forYouPrimaryReason(String reasonType, String? meta) {
   };
 }
 
-String forYouSecondaryReason(String reasonType, String? meta) {
-  return switch (reasonType) {
-    RecommendationReasonType.recentRelease => '✨ New release',
-    _ => forYouPrimaryReason(reasonType, meta),
-  };
+/// Single card story — highest-priority reason among primary + secondary.
+///
+/// Suppresses stacked tags (e.g. Collecting Dimoo + New release) so artwork
+/// stays the visual focus.
+String? forYouCardReason(RecommendationItem item) {
+  final candidates = <({String type, String? meta})>[
+    (type: item.primaryReasonType, meta: item.primaryReasonMeta),
+    if (item.secondaryReasonType != null)
+      (type: item.secondaryReasonType!, meta: item.secondaryReasonMeta),
+  ];
+
+  ({String type, String? meta})? best;
+  var bestRank = 1 << 30;
+  for (final candidate in candidates) {
+    final rank = _reasonDisplayRank(candidate.type);
+    if (rank < bestRank) {
+      bestRank = rank;
+      best = candidate;
+    }
+  }
+  if (best == null) return null;
+  final copy = forYouPrimaryReason(best.type, best.meta);
+  return copy.isEmpty ? null : copy;
 }
 
+int _reasonDisplayRank(String reasonType) {
+  final index = kForYouReasonDisplayPriority.indexOf(reasonType);
+  return index < 0 ? kForYouReasonDisplayPriority.length + 100 : index;
+}
+
+/// @Deprecated Prefer [forYouCardReason]. Secondary is always null — one story.
 ({String? primary, String? secondary}) forYouReasonLines(
   RecommendationItem item,
 ) {
-  final primary = forYouPrimaryReason(
-    item.primaryReasonType,
-    item.primaryReasonMeta,
-  );
-  final secondaryType = item.secondaryReasonType;
-  if (secondaryType == null) {
-    return (primary: primary.isEmpty ? null : primary, secondary: null);
-  }
-  final secondary = forYouSecondaryReason(
-    secondaryType,
-    item.secondaryReasonMeta,
-  );
-  return (
-    primary: primary.isEmpty ? null : primary,
-    secondary: secondary.isEmpty ? null : secondary,
-  );
+  return (primary: forYouCardReason(item), secondary: null);
 }

@@ -3,19 +3,28 @@ import 'package:blindbox_app/features/collection/application/collection_notifier
 import 'package:blindbox_app/features/collection/application/shelf_emotional_providers.dart';
 import 'package:blindbox_app/features/collection/application/shelf_emotional_interpreter.dart';
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
+import 'package:blindbox_app/features/collection/insights/application/collector_type_ceremony.dart';
+import 'package:blindbox_app/features/collection/insights/application/collector_type_evolution_gate.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_resolver.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_reason_resolve.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_reveal_record.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_reveal_stage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 export 'package:blindbox_app/features/collection/insights/domain/collector_type_reveal_stage.dart';
 
 /// Orchestrates the manual reveal flow (stable identity until re-reveal).
+///
+/// Durable UI state is idle / analyzing / revealed (hero card). The ceremonial
+/// overlay is a separate one-shot event via [collectorTypeCeremonyProvider].
 final class CollectorTypeViewModel extends Notifier<CollectorTypeRevealStage> {
   @override
   CollectorTypeRevealStage build() {
     // Read-only: watching the bootstrap future would reset mid-reveal when it completes.
     ref.read(collectionMemoryBootstrapProvider);
-    final cached = CollectionMemoryStore.instance.cachedCollectorTypeIdentity;
+    final cached =
+        CollectionMemoryStore.instance.cachedCollectorTypeIdentity?.healed();
     if (cached != null) {
       return CollectorTypeRevealRevealed(cached);
     }
@@ -24,6 +33,9 @@ final class CollectorTypeViewModel extends Notifier<CollectorTypeRevealStage> {
 
   Future<void> requestReveal() async {
     if (state is CollectorTypeRevealAnalyzing) return;
+
+    final prior = CollectionMemoryStore.instance.cachedCollectorTypeIdentity;
+    final isFirstReveal = prior == null;
 
     state = const CollectorTypeRevealAnalyzing();
     final started = DateTime.now();
@@ -38,15 +50,59 @@ final class CollectorTypeViewModel extends Notifier<CollectorTypeRevealStage> {
     await CollectionMemoryStore.instance.ensureLoaded();
     if (state is! CollectorTypeRevealAnalyzing) return;
     final memory = CollectionMemoryStore.instance.cached;
+    final revealedAt = DateTime.now();
 
-    final identity = resolveCollectorType(
+    final challenger = resolveCollectorType(
       snapshot: snap,
       profile: profile,
       catalog: catalog,
       memory: memory,
+      revealedAt: revealedAt,
     );
 
-    await CollectionMemoryStore.instance.saveCollectorType(identity);
+    final evolved = prior == null ||
+        shouldEvolve(
+          previous: prior,
+          challenger: challenger,
+          snapshot: snap,
+          now: revealedAt,
+        );
+
+    final CollectorTypeIdentity identity;
+    if (prior == null || evolved) {
+      identity = CollectorTypeIdentity(
+        archetypeId: challenger.archetypeId,
+        revealedAt: revealedAt,
+        signatureHash: challenger.signatureHash,
+        stats: challenger.stats,
+        reasonKey: effectiveReasonKey(
+          archetypeId: challenger.archetypeId,
+          reasonKey: challenger.reasonKey,
+        ),
+      );
+    } else {
+      // Still: keep title; refresh stats/signature; always refresh Because from
+      // this pass’s reason for the kept archetype (never leave stale default).
+      final keptId = prior.archetypeId;
+      identity = CollectorTypeIdentity(
+        archetypeId: keptId,
+        revealedAt: revealedAt,
+        signatureHash: challenger.signatureHash,
+        stats: challenger.stats,
+        reasonKey: challenger.reasonKeyFor(keptId),
+      );
+    }
+
+    final typeChanged =
+        prior != null && prior.archetypeId != identity.archetypeId;
+    await CollectionMemoryStore.instance.saveCollectorType(
+      identity,
+      revealRecord: CollectorTypeRevealRecord.fromResolvePass(
+        identity: identity,
+        resolution: challenger,
+        isEvolution: typeChanged,
+      ),
+    );
     if (state is! CollectorTypeRevealAnalyzing) return;
 
     final elapsed = DateTime.now().difference(started);
@@ -57,7 +113,15 @@ final class CollectorTypeViewModel extends Notifier<CollectorTypeRevealStage> {
       if (state is! CollectorTypeRevealAnalyzing) return;
     }
 
+    // Persistent Insights state settles on the hero card immediately.
     state = CollectorTypeRevealRevealed(identity);
+
+    if (isFirstReveal || typeChanged) {
+      ref.read(collectorTypeCeremonyProvider.notifier).present(
+            identity: identity,
+            isFirstReveal: isFirstReveal,
+          );
+    }
   }
 
   void showCached() {

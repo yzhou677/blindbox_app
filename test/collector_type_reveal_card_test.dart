@@ -8,10 +8,12 @@ import 'package:blindbox_app/features/collection/insights/application/collector_
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_archetype.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_stats.dart';
+import 'package:blindbox_app/features/collection/insights/presentation/collection_insights_body.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_reveal_button.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_reveal_card.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_stale_insights_overlay.dart';
+import 'package:blindbox_app/features/collection/insights/widgets/insights_archived_scope.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -49,10 +51,13 @@ void main() {
         catalogBundleProvider.overrideWith((ref) async => emptyCatalog),
         ...overrides,
       ],
-      child: MaterialApp(
-        theme: AppTheme.light(),
-        home: Scaffold(
-          body: SingleChildScrollView(child: child),
+      child: MediaQuery(
+        data: const MediaQueryData(disableAnimations: true),
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: Scaffold(
+            body: SingleChildScrollView(child: child),
+          ),
         ),
       ),
     );
@@ -118,7 +123,7 @@ void main() {
     expect(find.text(CollectorTypeCopy.revealAgain), findsNothing);
   });
 
-  testWidgets('stale collection keeps dashboard visible with de-emphasis',
+  testWidgets('stale reveal snapshot archives; journey stays live',
       (tester) async {
     final revealedAt = DateTime.now().subtract(const Duration(days: 3));
     await CollectionMemoryStore.instance.saveCollectorType(
@@ -140,29 +145,46 @@ void main() {
       ),
     );
 
-    await tester.pumpWidget(wrap(const CollectorTypeRevealCard()));
+    await tester.pumpWidget(wrap(const CollectionInsightsBody()));
     await tester.pump();
 
     expect(find.byType(CollectorTypeStaleInsightsOverlay), findsOneWidget);
     expect(find.text(CollectorTypeCopy.revealAgain), findsOneWidget);
-    expect(find.byType(CollectorTypeRevealButton), findsOneWidget);
     expect(find.text('The Wanderer'), findsOneWidget);
     expect(find.text(CollectorTypeCopy.statsSectionTitle), findsOneWidget);
-    expect(find.text(CollectorTypeCopy.staleInsightsMessage), findsOneWidget);
+    expect(find.text(CollectorTypeCopy.journeyTitle), findsOneWidget);
+
+    final bannerY =
+        tester.getTopLeft(find.byType(CollectorTypeStaleInsightsOverlay)).dy;
     final typeY = tester.getTopLeft(find.text('The Wanderer')).dy;
-    final staleY = tester.getTopLeft(find.byType(CollectorTypeStaleInsightsOverlay)).dy;
-    final statsY = tester.getTopLeft(find.text(CollectorTypeCopy.statsSectionTitle)).dy;
-    expect(typeY < staleY, isTrue);
-    expect(staleY < statsY, isTrue);
+    final journeyY =
+        tester.getTopLeft(find.text(CollectorTypeCopy.journeyTitle)).dy;
+    expect(bannerY < typeY, isTrue);
+    expect(typeY < journeyY, isTrue);
+
+    expect(find.byKey(const Key('insights_archived_opacity')), findsOneWidget);
     expect(
       tester
-          .widget<Opacity>(find.byKey(const ValueKey('stale-stats-deemphasis')))
+          .widget<Opacity>(find.byKey(const Key('insights_archived_opacity')))
           .opacity,
       collectorTypeStaleInsightsOpacity,
     );
+    expect(
+      find.byKey(const Key('insights_archived_desaturate')),
+      findsOneWidget,
+    );
+
+    // Journey sits outside the archived reveal snapshot.
+    final archivedBox = tester.getRect(
+      find.byKey(const Key('insights_archived_opacity')),
+    );
+    final journeyBox = tester.getRect(
+      find.text(CollectorTypeCopy.journeyTitle),
+    );
+    expect(journeyBox.top >= archivedBox.bottom - 0.5, isTrue);
   });
 
-  testWidgets('reveal again clears stale card after analysis completes',
+  testWidgets('reveal again clears stale banner after analysis completes',
       (tester) async {
     await CollectionMemoryStore.instance.saveCollectorType(
       CollectorTypeIdentity(
@@ -183,7 +205,7 @@ void main() {
       ),
     );
 
-    await tester.pumpWidget(wrap(const CollectorTypeRevealCard()));
+    await tester.pumpWidget(wrap(const CollectionInsightsBody()));
     await tester.pump();
 
     expect(find.byType(CollectorTypeStaleInsightsOverlay), findsOneWidget);
@@ -197,6 +219,7 @@ void main() {
 
     expect(find.byType(CollectorTypeStaleInsightsOverlay), findsNothing);
     expect(find.text(CollectorTypeCopy.revealAgain), findsNothing);
+    expect(find.byKey(const Key('insights_archived_opacity')), findsNothing);
     expect(find.textContaining('Updated'), findsOneWidget);
   });
 }

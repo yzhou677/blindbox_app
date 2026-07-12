@@ -6,6 +6,7 @@ import 'package:blindbox_app/features/collection/debug/collection_shelf_pipeline
 import 'package:blindbox_app/features/collection/domain/shelf_emotional_profile.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_relationship_insight.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_series_management.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_brand_facets.dart';
@@ -22,11 +23,16 @@ import 'package:blindbox_app/core/search/search_placeholders.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_service.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_browse.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/insights/application/collector_type_providers.dart';
+import 'package:blindbox_app/features/collection/insights/application/collector_type_view_model.dart';
+import 'package:blindbox_app/features/collection/insights/presentation/collection_insights_body.dart';
+import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_empty_state.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_insights_dashboard_host.dart';
+import 'package:blindbox_app/features/collection/widgets/collection_page_segment_control.dart';
+import 'package:blindbox_app/features/collection/widgets/collection_shelf_series_rail.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_warm_start_banner.dart';
 import 'package:blindbox_app/features/collection/widgets/series_figures_sheet.dart';
-import 'package:blindbox_app/features/collection/presentation/shelf_series_feed.dart';
 import 'package:blindbox_app/shared/widgets/app_search_field.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
@@ -49,6 +55,9 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
 
   /// Presentation-only Collection shelf IP facet (scoped to brand-filtered series).
   String _ipFilterId = collectionAnyIpFilterId;
+
+  /// Presentation-only Shelf / Insights section switch.
+  CollectionPageSegment _pageSegment = CollectionPageSegment.shelf;
 
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -144,33 +153,12 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     );
   }
 
-  Future<void> _confirmRemoveSeries(
-    BuildContext context,
-    String id,
-    String name,
-  ) async {
-    final go = await showDialog<bool>(
+  Future<void> _manageSeries(BuildContext context, ShelfSeries series) {
+    return showCollectionSeriesManagementActions(
       context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          title: const Text('Remove series?'),
-          content: Text('“$name” will leave your shelf.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Remove'),
-            ),
-          ],
-        );
-      },
+      ref: ref,
+      series: series,
     );
-    if (go == true && context.mounted) {
-      ref.read(collectionNotifierProvider.notifier).removeSeries(id);
-    }
   }
 
   void _openAddCustom(BuildContext context) {
@@ -323,29 +311,6 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
         progress: progressLookup,
       );
     });
-    final collapsedIpKeys = shelfUiPrefs.collapsedIpSectionKeys;
-    late final List<ShelfFeedItem> inProgressFeed;
-    late final List<ShelfFeedItem> completedFeed;
-    trace.sectionVoid('Feed', () {
-      inProgressFeed = buildShelfFeedItems(
-        context: context,
-        series: inProgress,
-        figureStates: snap.figureStates,
-        profile: profile,
-        collapseBucketKey: shelfCollapseBucketInProgress,
-        collapsedSectionKeys: collapsedIpKeys,
-        progress: progressLookup,
-      );
-      completedFeed = buildShelfFeedItems(
-        context: context,
-        series: completed,
-        figureStates: snap.figureStates,
-        profile: profile,
-        collapseBucketKey: shelfCollapseBucketCompleted,
-        collapsedSectionKeys: collapsedIpKeys,
-        progress: progressLookup,
-      );
-    });
     final brandFilterExhausted = brandFiltered.isEmpty;
     final ipFilterExhausted = !brandFilterExhausted && visible.isEmpty;
     final searchExhausted =
@@ -377,16 +342,26 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               centerTitle: false,
               titleSpacing: 20,
               title: Text('My collection', style: textTheme.titleLarge),
+              actions: _insightsAppBarActions(ref),
             ),
             SliverToBoxAdapter(
               child: SizedBox(height: FeedRhythm.belowMainTabAppBar),
             ),
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: CollectionEmptyState(
-                onAddSeries: () => _openAddToCollection(context),
+            SliverToBoxAdapter(
+              child: CollectionPageSegmentControl(
+                selected: _pageSegment,
+                onChanged: _onPageSegmentChanged,
               ),
             ),
+            if (_pageSegment == CollectionPageSegment.insights)
+              const SliverToBoxAdapter(child: CollectionInsightsBody())
+            else
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: CollectionEmptyState(
+                  onAddSeries: () => _openAddToCollection(context),
+                ),
+              ),
           ],
         ),
       );
@@ -408,6 +383,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
             centerTitle: false,
             titleSpacing: 20,
             title: Text('My collection', style: textTheme.titleLarge),
+            actions: _insightsAppBarActions(ref),
           ),
           SliverToBoxAdapter(
             child: SizedBox(height: FeedRhythm.belowMainTabAppBar),
@@ -445,15 +421,22 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               child: SizedBox(height: FeedRhythm.collectionSearchToSummaryGap),
             ),
           SliverToBoxAdapter(
-            child: CollectionInsightsDashboardHost(
-              onInsightsTap: () => context.push('/collection/insights'),
+            child: CollectionInsightsDashboardHost(),
+          ),
+          SliverToBoxAdapter(
+            child: CollectionPageSegmentControl(
+              selected: _pageSegment,
+              onChanged: _onPageSegmentChanged,
             ),
           ),
+          if (_pageSegment == CollectionPageSegment.insights)
+            const SliverToBoxAdapter(child: CollectionInsightsBody())
+          else ...[
           SliverToBoxAdapter(
             child: CollectibleSectionHeader(
               title: 'My collection',
               subtitle: sectionSubtitle,
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+              padding: const EdgeInsets.fromLTRB(20, 2, 20, 10),
               trailing: _CollectionAddSeriesButton(
                 onPressed: () => _openAddToCollection(context),
               ),
@@ -551,25 +534,19 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                 ),
               ),
             if (showInProgressSection && shelfUiPrefs.inProgressSectionExpanded)
-              SliverPadding(
-                padding: EdgeInsets.fromLTRB(
-                  20,
-                  0,
-                  20,
-                  showCompletedSection ? 8 : FeedRhythm.tabScrollTailPadding,
-                ),
-                sliver: SliverList.builder(
-                  itemCount: inProgressFeed.length,
-                  itemBuilder: (context, i) => buildShelfFeedItemWidget(
-                    context: context,
-                    inProgressFeed[i],
-                    collapsedSectionKeys: collapsedIpKeys,
-                    onToggleIpSection: (key) => ref
-                        .read(collectionShelfUiPrefsProvider.notifier)
-                        .toggleIpSection(key),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    bottom: showCompletedSection
+                        ? 8
+                        : FeedRhythm.tabScrollTailPadding,
+                  ),
+                  child: CollectionShelfSeriesRail(
+                    series: inProgress,
+                    figureStates: snap.figureStates,
+                    progress: progressLookup,
                     onOpen: (s) => _openFiguresSheet(context, s.id),
-                    onRemove: (s) =>
-                        _confirmRemoveSeries(context, s.id, s.name),
+                    onManage: (s) => _manageSeries(context, s),
                   ),
                 ),
               ),
@@ -595,25 +572,17 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                 ),
               ),
             if (showCompletedSection && shelfUiPrefs.completedSectionExpanded)
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(
-                  20,
-                  0,
-                  20,
-                  FeedRhythm.tabScrollTailPadding,
-                ),
-                sliver: SliverList.builder(
-                  itemCount: completedFeed.length,
-                  itemBuilder: (context, i) => buildShelfFeedItemWidget(
-                    context: context,
-                    completedFeed[i],
-                    collapsedSectionKeys: collapsedIpKeys,
-                    onToggleIpSection: (key) => ref
-                        .read(collectionShelfUiPrefsProvider.notifier)
-                        .toggleIpSection(key),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(
+                    bottom: FeedRhythm.tabScrollTailPadding,
+                  ),
+                  child: CollectionShelfSeriesRail(
+                    series: completed,
+                    figureStates: snap.figureStates,
+                    progress: progressLookup,
                     onOpen: (s) => _openFiguresSheet(context, s.id),
-                    onRemove: (s) =>
-                        _confirmRemoveSeries(context, s.id, s.name),
+                    onManage: (s) => _manageSeries(context, s),
                   ),
                 ),
               ),
@@ -634,6 +603,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                 ),
               ),
           ],
+          ],
         ],
       ),
     );
@@ -644,6 +614,40 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       catalogFigures: catalog?.figures.length,
     );
     return scaffold;
+  }
+
+  void _onPageSegmentChanged(CollectionPageSegment next) {
+    if (next == _pageSegment) return;
+    setState(() => _pageSegment = next);
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(0);
+    }
+  }
+
+  List<Widget> _insightsAppBarActions(WidgetRef ref) {
+    if (_pageSegment != CollectionPageSegment.insights) {
+      return const [];
+    }
+    final needsReveal = ref.watch(collectorTypeNeedsRevealProvider);
+    final stage = ref.watch(collectorTypeViewModelProvider);
+    final showRevealAgainMenu =
+        stage is CollectorTypeRevealRevealed && !needsReveal;
+    if (!showRevealAgainMenu) return const [];
+    return [
+      PopupMenuButton<String>(
+        onSelected: (value) {
+          if (value == 'reveal') {
+            ref.read(collectorTypeViewModelProvider.notifier).requestReveal();
+          }
+        },
+        itemBuilder: (context) => [
+          const PopupMenuItem(
+            value: 'reveal',
+            child: Text(CollectorTypeCopy.revealAgain),
+          ),
+        ],
+      ),
+    ];
   }
 }
 
@@ -664,9 +668,9 @@ class _CollectionBrowseFilterLabel extends StatelessWidget {
         child: Text(
           text,
           style: textTheme.labelSmall?.copyWith(
-            fontWeight: FontWeight.w500,
-            letterSpacing: 0.28,
-            color: scheme.onSurfaceVariant.withValues(alpha: 0.58),
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.32,
+            color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
           ),
         ),
       ),
@@ -695,10 +699,10 @@ class _CollectionAddSeriesButton extends StatelessWidget {
       label: Text(
         'Add series',
         style: textTheme.labelMedium?.copyWith(
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600,
           letterSpacing: 0.02,
           height: 1.1,
-          color: scheme.primary.withValues(alpha: 0.78),
+          color: scheme.primary.withValues(alpha: 0.88),
         ),
       ),
       style: TextButton.styleFrom(
@@ -799,8 +803,8 @@ class _CollectionShelfSortMenu extends StatelessWidget {
           Text(
             selected.menuLabel,
             style: textTheme.labelMedium?.copyWith(
-              color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
-              fontWeight: FontWeight.w500,
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
+              fontWeight: FontWeight.w600,
             ),
           ),
           Icon(
@@ -843,8 +847,8 @@ class _ShelfBucketSectionHeader extends StatelessWidget {
               child: Text(
                 '$title ($count)',
                 style: textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: scheme.onSurface.withValues(alpha: 0.88),
+                  fontWeight: FontWeight.w700,
+                  color: scheme.onSurface.withValues(alpha: 0.92),
                 ),
               ),
             ),

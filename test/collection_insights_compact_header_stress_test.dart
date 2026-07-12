@@ -102,7 +102,7 @@ void main() {
             'rowH=${rowHeight.toStringAsFixed(1)}',
           );
 
-          expect(rowHeight, lessThanOrEqualTo(56));
+          expect(rowHeight, lessThanOrEqualTo(80));
 
           expect(
             tester.takeException(),
@@ -143,7 +143,7 @@ void main() {
       final rowHeight = tester.getSize(
         find.byKey(const Key('collection_insights_compact_glance')),
       ).height;
-      expect(rowHeight, lessThanOrEqualTo(56), reason: '@${width}dp');
+      expect(rowHeight, lessThanOrEqualTo(80), reason: '@${width}dp');
     }
     tester.view.reset();
   });
