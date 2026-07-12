@@ -87,13 +87,24 @@ See **Collector Type Architecture** below for the full Live vs Snapshot contract
 
 ### Journey History Is Historical
 
-Journey **taxonomy depth** represents what happened when actions occurred.
+Collector Journey metrics are **historical by design**. The Journey card is
+recomputed live from memory, but values represent the collector’s path — not
+current shelf composition.
 
-Editing metadata later does not rewrite historical events (e.g. `ipSeriesDepth`).
+| Metric | Meaning |
+| ------ | ------- |
+| **Started** | First series added (`firstSeriesAddedAt`) |
+| **Explored IP universes** | Unique IPs ever explored (`ipSeriesDepth.length`) — **append-only**; does **not** decrease when series are removed |
+| **Identity** (Collector Type) | Snapshot at last reveal — separate from Journey |
 
-Separately: the **Collector Journey UI** on Insights is intentionally **LIVE** — it
-reflects current exploration metrics and is **not** part of the Collector Type
-reveal snapshot. Do not freeze Journey into Identity or RevealRecord.
+Do **not** “fix” Explored to equal unique IPs currently on the shelf.
+
+Journey **taxonomy depth** (`ipSeriesDepth`) records what happened when series
+were added. Editing metadata later does not rewrite those events.
+
+Separately: the **Collector Journey UI** on Insights is intentionally **LIVE**
+(rebuilt from current memory + snapshot) and is **not** part of the Collector
+Type reveal snapshot. Do not freeze Journey into Identity or RevealRecord.
 
 See **Collector Type Architecture** below.
 
@@ -175,7 +186,7 @@ by re-running today’s Resolver over an old shelf.
 
 ### Product rules (intentional)
 
-1. **Journey is intentionally LIVE.** Insights body comments and this doc agree: Journey is collection history UI, not part of the reveal archive.
+1. **Journey is intentionally LIVE as a card, HISTORICAL as metrics.** Recomputed from memory each build, but Explored / Started describe the collector’s path over time (append-only IP depth) — not current shelf composition. Do not freeze Journey into the reveal archive, and do not shrink Explored on series remove.
 2. **Identity is intentionally SNAPSHOTTED.** Explicit reveal; Evolution Hints nudge re-reveal; `shouldEvolve` gates type changes (Still keeps title, refreshes stats/signature/reason).
 3. **UI never switches on archetype for causal copy.** Title/accent/flavor may read archetype catalog metadata; **Because** must not.
 4. **`reasonKey` is the only explanation source** for Because. Map via `CollectorTypeCopy` only (`becauseLineFor` / `becauseLineForRecord`).
@@ -191,11 +202,15 @@ Related: evolution constants in `collector_type_evolution_gate.dart`; scoring th
 
 tracks the IP associated with a series when it was first introduced into the collection.
 
+It is **append-only**: series removal does not decrement counts or drop IP keys.
+**Explored IP universes** = `ipSeriesDepth.length` (unique IPs ever explored).
+
 It is not currently migrated when a user edits taxonomy metadata.
 
 Reason:
 
-Depth measures exploration history rather than current categorization.
+Depth measures exploration history rather than current categorization / shelf
+composition.
 
 Future migration support may be added if user feedback indicates confusion.
 

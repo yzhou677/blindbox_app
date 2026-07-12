@@ -41,7 +41,13 @@ class CollectionMemoryData {
   final ShelfEra? priorEraForEvolution;
   final int? priorEraSetAtMs;
 
-  /// Taxonomy IP id → count of series added over time (depth, not social score).
+  /// Explored IP universes source of truth — intentionally historical.
+  ///
+  /// Map of taxonomy IP id → count of series **adds** over time.
+  /// Keys are append-only: removing a series does **not** remove an IP or
+  /// shrink [CollectorJourneySummary.ipUniversesExplored]
+  /// (`ipSeriesDepth.length`). Journey tells the collector’s story over time,
+  /// not current shelf composition.
   final Map<String, int> ipSeriesDepth;
 
   /// Persisted collector type (stable until user re-reveals).
@@ -226,6 +232,8 @@ final class CollectionMemoryStore {
     }
 
     final prevIds = previous.shelfSeries.map((s) => s.id).toSet();
+    // Append-only exploration history: newly added series deepen an IP key.
+    // Removals are intentionally ignored so Explored universes never shrink.
     var depth = Map<String, int>.from(data.ipSeriesDepth);
     for (final series in next.shelfSeries) {
       if (prevIds.contains(series.id)) continue;
