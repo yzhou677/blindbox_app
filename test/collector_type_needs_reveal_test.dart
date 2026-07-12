@@ -158,4 +158,72 @@ void main() {
 
     expect(container.read(collectorTypeNeedsRevealProvider), isFalse);
   });
+
+  test(
+    'true when a new brand series is added without ownership changes',
+    () async {
+      final popMart = testShelfSeries(
+        id: 's_pop',
+        catalogTemplateId: 'catalog_pop',
+        taxonomyBrandId: 'pop_mart',
+      );
+      final revealedSnap = CollectionSnapshot(
+        shelfSeries: [popMart],
+        figureStates: const {},
+      );
+      final signature = computeCollectorTypeSignatureHash(revealedSnap);
+      await CollectionMemoryStore.instance.saveCollectorType(
+        CollectorTypeIdentity(
+          archetypeId: CollectorTypeArchetypeId.loyalist,
+          revealedAt: DateTime(2026, 1, 1),
+          signatureHash: signature,
+          stats: const CollectorTypeStats(
+            totalOwned: 0,
+            totalWishlist: 0,
+            trackedSeries: 1,
+            completionPercent: 0,
+            secretOwned: 0,
+            secretSlots: 0,
+            brandBreakdown: {'POP MART': 1},
+            topSeries: [],
+            customSeriesRatio: 0,
+          ),
+        ),
+      );
+
+      final nommi = testShelfSeries(
+        id: 's_nommi',
+        name: 'NOMMI Series',
+        catalogTemplateId: 'catalog_nommi',
+        taxonomyBrandId: 'toptoy',
+        brand: 'TOPTOY',
+        taxonomyIpId: 'nommi',
+        ipName: 'NOMMI',
+        figures: const [
+          ShelfFigure(
+            id: 'fig_nommi_0',
+            seriesId: 's_nommi',
+            name: 'Nommi Fig',
+            rarity: 'Regular',
+            isSecret: false,
+          ),
+        ],
+      );
+      final liveSnap = CollectionSnapshot(
+        shelfSeries: [popMart, nommi],
+        figureStates: const {},
+      );
+
+      final container = ProviderContainer(
+        overrides: [
+          collectionNotifierProvider.overrideWith(
+            () => NeedsRevealTestNotifier(liveSnap),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      expect(container.read(collectorTypeNeedsRevealProvider), isTrue);
+    },
+  );
 }

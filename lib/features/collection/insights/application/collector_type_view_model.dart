@@ -3,6 +3,7 @@ import 'package:blindbox_app/features/collection/application/collection_notifier
 import 'package:blindbox_app/features/collection/application/shelf_emotional_providers.dart';
 import 'package:blindbox_app/features/collection/application/shelf_emotional_interpreter.dart';
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
+import 'package:blindbox_app/features/collection/insights/application/collector_type_ceremony.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_resolver.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_reveal_stage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +11,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 export 'package:blindbox_app/features/collection/insights/domain/collector_type_reveal_stage.dart';
 
 /// Orchestrates the manual reveal flow (stable identity until re-reveal).
+///
+/// Durable UI state is idle / analyzing / revealed (hero card). The ceremonial
+/// overlay is a separate one-shot event via [collectorTypeCeremonyProvider].
 final class CollectorTypeViewModel extends Notifier<CollectorTypeRevealStage> {
   @override
   CollectorTypeRevealStage build() {
@@ -24,6 +28,9 @@ final class CollectorTypeViewModel extends Notifier<CollectorTypeRevealStage> {
 
   Future<void> requestReveal() async {
     if (state is CollectorTypeRevealAnalyzing) return;
+
+    final prior = CollectionMemoryStore.instance.cachedCollectorTypeIdentity;
+    final isFirstReveal = prior == null;
 
     state = const CollectorTypeRevealAnalyzing();
     final started = DateTime.now();
@@ -57,7 +64,17 @@ final class CollectorTypeViewModel extends Notifier<CollectorTypeRevealStage> {
       if (state is! CollectorTypeRevealAnalyzing) return;
     }
 
+    // Persistent Insights state settles on the hero card immediately.
     state = CollectorTypeRevealRevealed(identity);
+
+    final typeChanged =
+        prior != null && prior.archetypeId != identity.archetypeId;
+    if (isFirstReveal || typeChanged) {
+      ref.read(collectorTypeCeremonyProvider.notifier).present(
+            identity: identity,
+            isFirstReveal: isFirstReveal,
+          );
+    }
   }
 
   void showCached() {

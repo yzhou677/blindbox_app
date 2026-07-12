@@ -8,6 +8,7 @@ import 'package:blindbox_app/features/collection/presentation/collection_shelf_b
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_ip_facets.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_brand_filter_row.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_ip_filter_row.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 import 'package:blindbox_app/features/collection/widgets/custom_series_form_sheet.dart';
 import 'package:blindbox_app/features/collection/widgets/series_figures_sheet.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
@@ -144,7 +145,7 @@ void main() {
     CollectionMemoryStore.instance.resetForTest();
   });
 
-  testWidgets('custom series figures sheet exposes Edit series action', (
+  testWidgets('figures sheet has no persistent Edit/Remove chrome', (
     tester,
   ) async {
     final series = _customSeries();
@@ -156,11 +157,14 @@ void main() {
       ),
     );
 
-    expect(find.text('Edit series'), findsOneWidget);
+    expect(find.text(CollectionVocabulary.editSeries), findsNothing);
+    expect(find.text(CollectionVocabulary.removeFromCollection), findsNothing);
+    expect(find.text('Edit series'), findsNothing);
+    expect(find.text('Remove'), findsNothing);
     expect(find.text('One'), findsOneWidget);
   });
 
-  testWidgets('catalog series figures sheet does not expose Edit series', (
+  testWidgets('catalog series figures sheet has no Edit series action', (
     tester,
   ) async {
     final series = testShelfSeries();
@@ -172,6 +176,7 @@ void main() {
       ),
     );
 
+    expect(find.text(CollectionVocabulary.editSeries), findsNothing);
     expect(find.text('Edit series'), findsNothing);
   });
 

@@ -8,7 +8,6 @@ import 'package:blindbox_app/features/collection/insights/widgets/collector_type
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_analyzing_panel.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_reveal_button.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_result_card.dart';
-import 'package:blindbox_app/features/collection/insights/widgets/collector_type_stale_insights_overlay.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_stats_strip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,8 +29,6 @@ class CollectorTypeRevealCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final stage = ref.watch(collectorTypeViewModelProvider);
-    final needsReveal = ref.watch(collectorTypeNeedsRevealProvider);
-    final showEvolutionHint = ref.watch(collectorTypeEvolutionHintProvider);
     final snapshot = ref.watch(collectionNotifierProvider);
     final journey = ref.watch(collectorJourneySummaryProvider);
     final brightness = Theme.of(context).brightness;
@@ -86,11 +83,6 @@ class CollectorTypeRevealCard extends ConsumerWidget {
             key: ValueKey('revealed-${identity.archetypeId.name}'),
             identity: identity,
             helperLine: helperLine,
-            isStale: needsReveal,
-            compactStaleMessage: showEvolutionHint,
-            onRevealAgain: () => ref
-                .read(collectorTypeViewModelProvider.notifier)
-                .requestReveal(),
           ),
         },
       ),
@@ -112,51 +104,27 @@ class _IdleStage extends StatelessWidget {
   }
 }
 
+/// Persistent Insights hero + dashboard — stale treatment lives in the body.
 class _RevealedStage extends StatelessWidget {
   const _RevealedStage({
     super.key,
     required this.identity,
     required this.helperLine,
-    required this.isStale,
-    required this.compactStaleMessage,
-    required this.onRevealAgain,
   });
 
   final CollectorTypeIdentity identity;
   final String? helperLine;
-  final bool isStale;
-  final bool compactStaleMessage;
-  final VoidCallback onRevealAgain;
 
   @override
   Widget build(BuildContext context) {
-    final resultCard = CollectorTypeResultCard(
-      identity: identity,
-      helperLine: helperLine,
-    );
-    final statsStrip = CollectorTypeStatsStrip(stats: identity.stats);
-
-    if (!isStale) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [resultCard, statsStrip],
-      );
-    }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        resultCard,
-        const SizedBox(height: 12),
-        CollectorTypeStaleInsightsOverlay(
-          onRevealAgain: onRevealAgain,
-          compactMessage: compactStaleMessage,
+        CollectorTypeResultCard(
+          identity: identity,
+          helperLine: helperLine,
         ),
-        Opacity(
-          key: const ValueKey('stale-stats-deemphasis'),
-          opacity: collectorTypeStaleInsightsOpacity,
-          child: statsStrip,
-        ),
+        CollectorTypeStatsStrip(stats: identity.stats),
       ],
     );
   }

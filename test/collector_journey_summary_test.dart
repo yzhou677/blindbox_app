@@ -78,31 +78,28 @@ void main() {
     );
   });
 
-  test(
-    'suppresses misleading recent journey age when history is substantial',
-    () {
-      final summary = buildCollectorJourneySummary(
-        memory: CollectionMemoryData(
-          firstSeriesAddedAtMs: DateTime(2026, 5, 29).millisecondsSinceEpoch,
-          ipSeriesDepth: const {
-            'smiski': 8,
-            'dora': 3,
-            'maymei': 3,
-            'crybaby': 1,
-            'baby_three': 1,
-            'nommi': 2,
-            'pucky': 1,
-            'the_monsters': 1,
-          },
-        ),
-        snapshot: CollectionSnapshot.emptyTest(),
-        now: DateTime(2026, 5, 29, 23, 59),
-      );
+  test('keeps recent journey age even with substantial exploration breadth', () {
+    final summary = buildCollectorJourneySummary(
+      memory: CollectionMemoryData(
+        firstSeriesAddedAtMs: DateTime(2026, 5, 29).millisecondsSinceEpoch,
+        ipSeriesDepth: const {
+          'smiski': 8,
+          'dora': 3,
+          'maymei': 3,
+          'crybaby': 1,
+          'baby_three': 1,
+          'nommi': 2,
+          'pucky': 1,
+          'the_monsters': 1,
+        },
+      ),
+      snapshot: CollectionSnapshot.emptyTest(),
+      now: DateTime(2026, 5, 29, 23, 59),
+    );
 
-      expect(summary.ipUniversesExplored, 8);
-      expect(summary.journeyAgeLabel, isNull);
-    },
-  );
+    expect(summary.ipUniversesExplored, 8);
+    expect(summary.journeyAgeLabel, '0 days ago');
+  });
 
   test('keeps recent journey age for low historical breadth', () {
     final summary = buildCollectorJourneySummary(

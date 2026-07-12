@@ -41,6 +41,18 @@ abstract final class CollectibleMotion {
   static const Duration masterCompleteAchievementOverlay =
       Duration(milliseconds: 950);
 
+  /// First-time Collector Type reveal ceremony.
+  /// blur → hero → ~750ms pause → Continue → dwell for reaction.
+  static const Duration collectorTypeRevealCeremonyFirst =
+      Duration(milliseconds: 4200);
+
+  /// Subsequent Collector Type change ceremony (same rhythm, tighter).
+  static const Duration collectorTypeRevealCeremonyChange =
+      Duration(milliseconds: 3200);
+
+  /// Soft settle for ceremonial mascot entrance (subtle spring, no bounce).
+  static const Curve collectorTypeRevealSpring = Cubic(0.22, 1.0, 0.36, 1.0);
+
   /// Builds a curved animation for route / sheet transitions.
   static Animation<double> curved(Animation<double> parent, {bool reverse = false}) {
     return CurvedAnimation(

@@ -15,12 +15,16 @@ class CollectionShelfSeriesRail extends StatelessWidget {
     required this.figureStates,
     required this.progress,
     required this.onOpen,
+    this.onManage,
   });
 
   final List<ShelfSeries> series;
   final Map<String, TrackedFigure> figureStates;
   final ShelfBrowseProgressLookup progress;
   final void Function(ShelfSeries series) onOpen;
+
+  /// Long-press management (edit/remove). Omit on read-only rails.
+  final Future<void> Function(ShelfSeries series)? onManage;
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +50,8 @@ class CollectionShelfSeriesRail extends StatelessWidget {
             progress: progress.forSeries(row),
             figureStates: figureStates,
             onTap: () => onOpen(row),
+            onLongPress:
+                onManage == null ? null : () => onManage!(row),
           );
         },
       ),

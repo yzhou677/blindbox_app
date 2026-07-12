@@ -57,10 +57,11 @@ void main() {
     expect(find.text('Reveal collector type'), findsOneWidget);
     expect(find.text('Collection insights'), findsWidgets);
     expect(find.text('Collector journey'), findsOneWidget);
-    expect(
-      find.text('Your journey starts the moment you add your first series.'),
-      findsOneWidget,
-    );
+    expect(find.text('Started'), findsOneWidget);
+    expect(find.text('Explored'), findsOneWidget);
+    expect(find.text('—'), findsOneWidget);
+    expect(find.text('0'), findsWidgets);
+    expect(find.text('IP universes'), findsOneWidget);
   });
 
   testWidgets('Collection insights shows populated journey highlights', (

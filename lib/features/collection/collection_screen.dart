@@ -6,6 +6,7 @@ import 'package:blindbox_app/features/collection/debug/collection_shelf_pipeline
 import 'package:blindbox_app/features/collection/domain/shelf_emotional_profile.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_relationship_insight.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_series_management.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_brand_facets.dart';
@@ -149,6 +150,14 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       context: context,
       heightFraction: FeedRhythm.sheetFiguresOpenScreenFraction,
       builder: (_, scroll) => SeriesFiguresSheet(seriesId: seriesId),
+    );
+  }
+
+  Future<void> _manageSeries(BuildContext context, ShelfSeries series) {
+    return showCollectionSeriesManagementActions(
+      context: context,
+      ref: ref,
+      series: series,
     );
   }
 
@@ -537,6 +546,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                     figureStates: snap.figureStates,
                     progress: progressLookup,
                     onOpen: (s) => _openFiguresSheet(context, s.id),
+                    onManage: (s) => _manageSeries(context, s),
                   ),
                 ),
               ),
@@ -572,6 +582,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                     figureStates: snap.figureStates,
                     progress: progressLookup,
                     onOpen: (s) => _openFiguresSheet(context, s.id),
+                    onManage: (s) => _manageSeries(context, s),
                   ),
                 ),
               ),

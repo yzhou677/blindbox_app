@@ -61,6 +61,12 @@ final collectorTypeViewModelProvider =
       CollectorTypeViewModel.new,
     );
 
+/// Live Collector Journey summary — watches the shelf + memory, not reveal stats.
+///
+/// Collector Journey is intentionally LIVE.
+/// Unlike Collector Type and other insight cards,
+/// Journey reflects the user's evolving collection history
+/// and is not part of the Reveal snapshot.
 final collectorJourneySummaryProvider = Provider<CollectorJourneySummary>((
   ref,
 ) {

@@ -14,7 +14,13 @@ import 'package:blindbox_app/features/collection/insights/domain/collector_type_
 /// Minimum analyzing hold duration (ms) —mirrored by view model.
 const int collectorTypeAnalyzingHoldMs = 1400;
 
-/// Computes a stable shelf signature for era-shift detection.
+/// Computes a stable shelf signature for era-shift / needs-reveal detection.
+///
+/// Must change when shelf **composition** changes (tracked series, brand mix,
+/// IP mix), not only when figure ownership flips. Brand Distribution and other
+/// reveal stats are frozen on [CollectorTypeIdentity] until re-reveal; if this
+/// hash misses series adds, Insights keeps showing stale breakdowns with no
+/// Reveal again affordance.
 String computeCollectorTypeSignatureHash(CollectionSnapshot snapshot) {
   final owned = <String>[];
   final wishlist = <String>[];
@@ -28,8 +34,13 @@ String computeCollectorTypeSignatureHash(CollectionSnapshot snapshot) {
   var customSeries = 0;
   final brandCounts = <String, int>{};
   final ipCounts = <String, int>{};
+  final seriesKeys = <String>[];
   for (final series in snapshot.shelfSeries) {
     if (series.isCustomLocal) customSeries++;
+    final templateId = series.catalogTemplateId?.trim();
+    seriesKeys.add(
+      (templateId != null && templateId.isNotEmpty) ? templateId : series.id,
+    );
     final brand = series.taxonomyBrandId?.trim();
     if (brand != null && brand.isNotEmpty) {
       final key = canonicalizeStatKey(brand);
@@ -41,9 +52,7 @@ String computeCollectorTypeSignatureHash(CollectionSnapshot snapshot) {
       if (key.isNotEmpty) ipCounts[key] = (ipCounts[key] ?? 0) + 1;
     }
   }
-
-  final dominantBrand = _dominantKey(brandCounts);
-  final dominantIp = _dominantKey(ipCounts);
+  seriesKeys.sort();
 
   // Build a deterministic lightweight signature without jsonEncode/base64.
   // This avoids expensive codec work on the UI isolate when providers re-evaluate.
@@ -54,11 +63,23 @@ String computeCollectorTypeSignatureHash(CollectionSnapshot snapshot) {
     ..write(wishlist.join(','))
     ..write('|c:')
     ..write(customSeries)
+    ..write('|s:')
+    ..write(seriesKeys.join(','))
     ..write('|b:')
-    ..write(dominantBrand ?? '')
+    ..write(_sortedCountPairs(brandCounts))
     ..write('|i:')
-    ..write(dominantIp ?? '');
+    ..write(_sortedCountPairs(ipCounts));
   return sb.toString();
+}
+
+String _sortedCountPairs(Map<String, int> counts) {
+  if (counts.isEmpty) return '';
+  final keys = counts.keys.toList()..sort();
+  final parts = <String>[];
+  for (final k in keys) {
+    parts.add('$k=${counts[k]}');
+  }
+  return parts.join(',');
 }
 
 // TODO(perf/scale): resolveCollectorType is called from the UI isolate (inside
@@ -390,19 +411,6 @@ bool _isRecentRelease(seed.CatalogSeries series, DateTime now) {
   } catch (_) {
     return false;
   }
-}
-
-String? _dominantKey(Map<String, int> counts) {
-  if (counts.isEmpty) return null;
-  String? best;
-  var bestCount = 0;
-  for (final e in counts.entries) {
-    if (e.value > bestCount) {
-      bestCount = e.value;
-      best = e.key;
-    }
-  }
-  return bestCount >= 2 ? best : null;
 }
 
 int _shelfIpSpread(CollectionSnapshot snapshot) {

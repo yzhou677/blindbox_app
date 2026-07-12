@@ -48,4 +48,34 @@ void main() {
     expect(find.text('Dora'), findsNothing);
     expect(find.textContaining('8 series'), findsNothing);
   });
+
+  testWidgets('keeps Started and Explored slots when history is empty', (
+    tester,
+  ) async {
+    const summary = CollectorJourneySummary(
+      ipUniversesExplored: 0,
+      seriesExploredOverTime: 0,
+      topIps: [],
+      journeyAgeLabel: null,
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          collectorJourneySummaryProvider.overrideWithValue(summary),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: const Scaffold(body: CollectorJourneyCard()),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text(CollectorTypeCopy.journeyStartedLabel), findsOneWidget);
+    expect(find.text(CollectorTypeCopy.journeyStartedPending), findsOneWidget);
+    expect(find.text(CollectorTypeCopy.journeyExploredLabel), findsOneWidget);
+    expect(find.text('0'), findsOneWidget);
+    expect(find.text('IP universes'), findsOneWidget);
+  });
 }

@@ -202,6 +202,56 @@ void main() {
     );
   });
 
+  test('signature hash changes when a second brand series is added', () {
+    final popMart = testShelfSeries(
+      id: 's_pop',
+      catalogTemplateId: 'catalog_pop',
+      taxonomyBrandId: 'pop_mart',
+      brand: 'POP MART',
+    );
+    final nommi = testShelfSeries(
+      id: 's_nommi',
+      name: 'NOMMI Series',
+      catalogTemplateId: 'catalog_nommi',
+      taxonomyBrandId: 'toptoy',
+      brand: 'TOPTOY',
+      taxonomyIpId: 'nommi',
+      ipName: 'NOMMI',
+      figures: const [
+        ShelfFigure(
+          id: 'fig_nommi_0',
+          seriesId: 's_nommi',
+          name: 'Nommi Fig',
+          rarity: 'Regular',
+          isSecret: false,
+        ),
+      ],
+    );
+    final before = CollectionSnapshot(
+      shelfSeries: [popMart],
+      figureStates: const {},
+    );
+    final after = CollectionSnapshot(
+      shelfSeries: [popMart, nommi],
+      figureStates: const {},
+    );
+    expect(
+      computeCollectorTypeSignatureHash(before),
+      isNot(computeCollectorTypeSignatureHash(after)),
+    );
+
+    final identity = resolveCollectorType(
+      snapshot: after,
+      profile: interpretShelf(after),
+      revealedAt: DateTime(2026, 1, 1),
+    );
+    expect(identity.stats.brandBreakdown.length, 2);
+    expect(
+      identity.stats.brandBreakdown.keys.map(canonicalizeStatKey).toSet(),
+      containsAll(['popmart', 'toptoy']),
+    );
+  });
+
   test('brand breakdown merges variant taxonomy keys', () {
     final s1 = testShelfSeries(
       id: 's1',

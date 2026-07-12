@@ -10,6 +10,16 @@ abstract final class CollectorTypeCopy {
   static const String revealAgain = 'Reveal again';
   static const String analyzingLine = 'Reading your shelf…';
 
+  /// Ceremonial first-reveal intro (event overlay — not hero copy).
+  static const String revealCeremonyFirstIntro =
+      'Your shelf tells a new story.';
+
+  /// Ceremonial intro when the collector type itself has changed.
+  static const String revealCeremonyEvolvedIntro =
+      'Your collecting style has evolved.';
+
+  static const String revealCeremonyContinue = 'Continue';
+
   static const String evolutionHint =
       'Your collection has shifted — reveal again when you are ready.';
 
@@ -27,8 +37,9 @@ abstract final class CollectorTypeCopy {
   static const String journeyTitle = 'Collector journey';
   static const String journeySubtitle =
       'How your shelf story has unfolded over time.';
-  static const String journeyEmpty =
-      'Your journey starts the moment you add your first series.';
   static const String journeyStartedLabel = 'Started';
   static const String journeyExploredLabel = 'Explored';
+
+  /// Stable empty value for [journeyStartedLabel] when memory has no start date.
+  static const String journeyStartedPending = '—';
 }

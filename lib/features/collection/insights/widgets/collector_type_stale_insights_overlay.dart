@@ -4,10 +4,10 @@ import 'package:blindbox_app/features/collection/insights/presentation/collector
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_reveal_button.dart';
 import 'package:flutter/material.dart';
 
-/// De-emphasis applied to the previous-analysis dashboard while stale.
-const double collectorTypeStaleInsightsOpacity = 0.72;
+export 'package:blindbox_app/features/collection/insights/widgets/insights_archived_scope.dart'
+    show collectorTypeStaleInsightsOpacity;
 
-/// Non-blocking stale-analysis card — explains prior insights and offers re-reveal.
+/// Active stale-analysis card — the only prominent action while Insights wait.
 class CollectorTypeStaleInsightsOverlay extends StatelessWidget {
   const CollectorTypeStaleInsightsOverlay({
     super.key,
@@ -29,9 +29,9 @@ class CollectorTypeStaleInsightsOverlay extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: CollectibleShape.matRadius,
-        color: scheme.surfaceContainerLow.withValues(alpha: 0.85),
+        color: scheme.surfaceContainerLow.withValues(alpha: 0.92),
         border: Border.all(
-          color: scheme.outlineVariant.withValues(alpha: 0.35),
+          color: scheme.primary.withValues(alpha: 0.22),
         ),
       ),
       child: Padding(
