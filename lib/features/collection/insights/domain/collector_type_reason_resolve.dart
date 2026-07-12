@@ -15,12 +15,10 @@ CollectorTypeReasonKey canonicalReasonKeyForArchetype(
     CollectorTypeArchetypeId.curator =>
       CollectorTypeReasonKey.intentionalSpread,
     CollectorTypeArchetypeId.trendChaser => CollectorTypeReasonKey.freshDrops,
-    CollectorTypeArchetypeId.archivist => CollectorTypeReasonKey.livingArchive,
+    CollectorTypeArchetypeId.worldbuilder =>
+      CollectorTypeReasonKey.inventedWorlds,
     CollectorTypeArchetypeId.minimalist => CollectorTypeReasonKey.compactShelf,
     CollectorTypeArchetypeId.wanderer => CollectorTypeReasonKey.stillUnfolding,
-    CollectorTypeArchetypeId.stylist => CollectorTypeReasonKey.composedShelf,
-    CollectorTypeArchetypeId.daydreamCollector =>
-      CollectorTypeReasonKey.wishlistDominates,
     CollectorTypeArchetypeId.luckyOne =>
       CollectorTypeReasonKey.fortunateSecrets,
   };

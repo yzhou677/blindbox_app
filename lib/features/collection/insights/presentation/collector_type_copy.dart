@@ -78,8 +78,6 @@ abstract final class CollectorTypeCopy {
         'Because your shelf keeps returning to the same universe.',
       CollectorTypeReasonKey.highWishlist =>
         'Because your Wishlist is where the story begins.',
-      CollectorTypeReasonKey.wishlistDominates =>
-        'Because more lives on your Wishlist than on the shelf.',
       CollectorTypeReasonKey.manySecrets =>
         'Because Secret Figures keep drawing your focus.',
       CollectorTypeReasonKey.fortunateSecrets =>
@@ -92,10 +90,8 @@ abstract final class CollectorTypeCopy {
         'Because you shape a gallery across many worlds.',
       CollectorTypeReasonKey.compactShelf =>
         'Because a small shelf, carefully chosen, is enough.',
-      CollectorTypeReasonKey.livingArchive =>
-        'Because notes and covers turn your shelf into an archive.',
-      CollectorTypeReasonKey.composedShelf =>
-        'Because presentation is part of how you collect.',
+      CollectorTypeReasonKey.inventedWorlds =>
+        'Because your shelf grows through imagination as much as collecting.',
       CollectorTypeReasonKey.freshDrops =>
         'Because fresh drops land on your shelf while they are still new.',
     };

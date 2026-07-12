@@ -10,7 +10,9 @@ import 'package:flutter/foundation.dart';
 /// Reveal, Hero, and future History/Analytics should consume this object —
 /// not re-branch on archetype in each surface.
 ///
-/// [confidence] is for [shouldEvolve] only. Do not show it in UI or analytics.
+/// [confidence] is retained for debugging / analytics / future UI.
+/// Evolution (`shouldEvolve`) does **not** consume it — compare candidate vs
+/// previous identity via scoreboard margin instead.
 @immutable
 class CollectorTypeResolution {
   const CollectorTypeResolution({

@@ -17,12 +17,9 @@ abstract final class CollectorTypeMascotAssets {
       CollectorTypeArchetypeId.loyalist => '$_dir/loyalist.png',
       CollectorTypeArchetypeId.curator => '$_dir/curator.png',
       CollectorTypeArchetypeId.trendChaser => '$_dir/trend_chaser.png',
-      CollectorTypeArchetypeId.archivist => '$_dir/archivist.png',
+      CollectorTypeArchetypeId.worldbuilder => '$_dir/worldbuilder.png',
       CollectorTypeArchetypeId.minimalist => '$_dir/minimalist.png',
       CollectorTypeArchetypeId.wanderer => '$_dir/wanderer.png',
-      CollectorTypeArchetypeId.stylist => '$_dir/stylist.png',
-      CollectorTypeArchetypeId.daydreamCollector =>
-        '$_dir/daydream_collector.png',
       CollectorTypeArchetypeId.luckyOne => '$_dir/lucky_one.png',
     };
   }

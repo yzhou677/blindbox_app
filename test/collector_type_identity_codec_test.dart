@@ -2,6 +2,7 @@ import 'package:blindbox_app/features/collection/insights/domain/collector_type_
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_reason_key.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_stats.dart';
+import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -92,5 +93,53 @@ void main() {
     );
     expect(stale.displayReasonKey, CollectorTypeReasonKey.dominantUniverse);
     expect(stale.healed().reasonKey, CollectorTypeReasonKey.dominantUniverse);
+  });
+
+  test('legacy daydreamCollector loads as dreamer', () {
+    final daydream = CollectorTypeIdentity.fromJson({
+      'archetypeId': 'daydreamCollector',
+      'revealedAtMs': DateTime(2026, 1, 1).millisecondsSinceEpoch,
+      'signatureHash': 'old',
+      'stats': {
+        'totalOwned': 1,
+        'totalWishlist': 5,
+        'trackedSeries': 1,
+        'completionPercent': 10,
+        'secretOwned': 0,
+        'secretSlots': 0,
+        'brandBreakdown': <String, dynamic>{},
+        'topSeries': <dynamic>[],
+        'customSeriesRatio': 0,
+      },
+      'reasonKey': 'wishlistDominates',
+    });
+    expect(daydream.archetypeId, CollectorTypeArchetypeId.dreamer);
+    expect(daydream.reasonKey, CollectorTypeReasonKey.highWishlist);
+  });
+
+  test('legacy archivist id and livingArchive reason migrate to Worldbuilder', () {
+    final restored = CollectorTypeIdentity.fromJson({
+      'archetypeId': 'archivist',
+      'revealedAtMs': DateTime(2026, 1, 1).millisecondsSinceEpoch,
+      'signatureHash': 'old',
+      'stats': {
+        'totalOwned': 1,
+        'totalWishlist': 0,
+        'trackedSeries': 1,
+        'completionPercent': 10,
+        'secretOwned': 0,
+        'secretSlots': 0,
+        'brandBreakdown': <String, dynamic>{},
+        'topSeries': <dynamic>[],
+        'customSeriesRatio': 0,
+      },
+      'reasonKey': 'livingArchive',
+    });
+    expect(restored.archetypeId, CollectorTypeArchetypeId.worldbuilder);
+    expect(restored.reasonKey, CollectorTypeReasonKey.inventedWorlds);
+    expect(
+      CollectorTypeCopy.becauseLineFor(restored),
+      'Because your shelf grows through imagination as much as collecting.',
+    );
   });
 }
