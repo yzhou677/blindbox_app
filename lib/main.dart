@@ -12,6 +12,8 @@ import 'package:blindbox_app/features/home/application/home_feed_provider.dart';
 import 'package:blindbox_app/features/market/data/market_catalog_identity_cache.dart';
 import 'package:blindbox_app/features/collection/widgets/master_complete_celebration_host.dart';
 import 'package:blindbox_app/features/market/data/market_listings_bootstrap.dart';
+import 'package:blindbox_app/features/collection/insights/application/collector_type_resolver.dart';
+import 'package:blindbox_app/features/collection/insights/debug/collector_type_reveal_trace.dart';
 import 'package:blindbox_app/features/recommendations/application/recommendation_sync_notifier.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -33,8 +35,30 @@ Future<void> main() async {
   }
   await bootstrapMarketBrowseListings();
   final restored = await CollectionSnapshotStorage.load();
-  CollectionAppBootstrap.prime(restored ?? CollectionSeedData.initialSnapshot());
+  final snapshot = restored ?? CollectionSeedData.initialSnapshot();
+  CollectionAppBootstrap.prime(snapshot);
   await CollectionMemoryStore.instance.ensureLoaded();
+
+  // TEMP DEBUG — expanded signature vs persisted identity at boot.
+  final bootParts = collectorTypeSignatureParts(snapshot);
+  final prior = CollectionMemoryStore.instance.cachedCollectorTypeIdentity;
+  // ignore: avoid_print
+  print('[CT_TRACE] stage=0_boot_snapshot '
+      'shelfSeriesCount=${snapshot.shelfSeries.length}\n'
+      '${bootParts.expandedDump}');
+  // ignore: avoid_print
+  print('[CT_TRACE] stage=0_boot_snapshot_series\n'
+      '${snapshot.shelfSeries.isEmpty ? '  (empty)' : snapshot.shelfSeries.map((s) => '  id=${s.id} name=${s.name} template=${s.catalogTemplateId} brandTax=${s.taxonomyBrandId} ipTax=${s.taxonomyIpId}').join('\n')}');
+  // ignore: avoid_print
+  print('[CT_TRACE] stage=0_boot_previous_identity '
+      'archetype=${prior?.archetypeId.name}\n'
+      '${formatPersistedSignatureExpanded(prior?.signatureHash)}');
+  CollectorTypeRevealTrace.activeTraceId = 'boot';
+  CollectorTypeRevealTrace.log(
+    '0_boot',
+    'compactEqual=${prior?.signatureHash == bootParts.compact} '
+    'liveCompact=${bootParts.compact}',
+  );
   runApp(
     ProviderScope(
       overrides: [
