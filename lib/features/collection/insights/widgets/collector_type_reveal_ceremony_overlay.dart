@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:ui' show ImageFilter;
 
 import 'package:blindbox_app/core/theme/app_spacing.dart';
-import 'package:blindbox_app/core/theme/app_typography.dart';
 import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
@@ -14,8 +13,10 @@ import 'package:flutter/services.dart';
 
 /// Full-screen Collector Type reveal ceremony — event only, not the hero card.
 ///
-/// Frosted blur, then one hero beat (mascot + title + flavor together), a short
+/// Frosted blur, then one hero beat (mascot + title + Because together), a short
 /// pause to absorb the identity, then Continue — held long enough to notice.
+///
+/// Because copy shares [CollectorTypeCopy.becauseLineFor] with the Hero card.
 class CollectorTypeRevealCeremonyOverlay extends StatefulWidget {
   const CollectorTypeRevealCeremonyOverlay({
     super.key,
@@ -212,7 +213,7 @@ class _CollectorTypeRevealCeremonyOverlayState
                               ),
                             ),
                             SizedBox(height: _first ? 28 : 22),
-                            // One hero: mascot + title + flavor share opacity.
+                            // One hero: mascot + title + Because share opacity.
                             Opacity(
                               opacity: heroOp,
                               child: Column(
@@ -245,19 +246,16 @@ class _CollectorTypeRevealCeremonyOverlayState
                                   ),
                                   const SizedBox(height: 12),
                                   Text(
-                                    archetype.flavorText,
+                                    CollectorTypeCopy.becauseLineFor(
+                                      widget.identity,
+                                    ),
                                     textAlign: TextAlign.center,
-                                    maxLines: 3,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: AppTypography.insightsFlavor(
-                                      textTheme,
-                                      scheme,
-                                    ).copyWith(
-                                      fontSize: 14,
-                                      height: 1.45,
-                                      color: scheme.onSurfaceVariant.withValues(
+                                    style: textTheme.bodyMedium?.copyWith(
+                                      color: scheme.onSurface.withValues(
                                         alpha: 0.72,
                                       ),
+                                      height: 1.4,
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
                                 ],

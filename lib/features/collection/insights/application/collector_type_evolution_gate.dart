@@ -19,6 +19,9 @@ const double kCollectorTypeEvolutionCooldownExtraMargin = 8;
 
 /// Single product gate for Collector Type evolution.
 ///
+/// Named policy constants below — bump
+/// [kCollectorTypeResolverVersion] when these change.
+///
 /// All future signals (margin, confidence, time, signature) live here so
 /// Reveal / Hero / Analytics never scatter `if` chains.
 ///

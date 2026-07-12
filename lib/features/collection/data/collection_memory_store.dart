@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:blindbox_app/features/collection/application/shelf_emotional_interpreter.dart';
@@ -134,17 +135,40 @@ final class CollectionMemoryStore {
         }
       }
     }
-    _cachedCollectorTypeIdentity = _cached.collectorTypeIdentity;
+    final loaded = _cached.collectorTypeIdentity?.healed();
+    _cachedCollectorTypeIdentity = loaded;
     _loaded = true;
+    // Rewrite prefs when legacy stillUnfolding was stored for a non-Wanderer.
+    if (loaded != null &&
+        _cached.collectorTypeReasonKey != loaded.reasonKey.name) {
+      _cached = _copy(
+        _cached,
+        collectorTypeReasonKey: loaded.reasonKey.name,
+      );
+      unawaited(_persist());
+    }
   }
 
-  Future<void> saveCollectorType(CollectorTypeIdentity identity) async {
+  /// Persists the live identity and appends a replayable [revealRecord].
+  ///
+  /// Prefer [CollectorTypeRevealRecord.fromResolvePass] so score/confidence
+  /// survive for Personality Memory without re-resolving.
+  Future<void> saveCollectorType(
+    CollectorTypeIdentity identity, {
+    CollectorTypeRevealRecord? revealRecord,
+  }) async {
     await ensureLoaded();
-    final record = CollectorTypeRevealRecord(
-      archetypeId: identity.archetypeId,
-      revealedAt: identity.revealedAt,
-      signatureHash: identity.signatureHash,
-    );
+    final healed = identity.healed();
+    final record = revealRecord ??
+        CollectorTypeRevealRecord(
+          archetypeId: healed.archetypeId,
+          revealedAt: healed.revealedAt,
+          signatureHash: healed.signatureHash,
+          reasonKey: healed.displayReasonKey,
+          score: 0,
+          confidence: 0,
+          resolverVersion: kCollectorTypeResolverVersion,
+        );
     final history = [
       ..._cached.collectorTypeRevealHistory,
       record,
@@ -155,15 +179,15 @@ final class CollectionMemoryStore {
         : history.sublist(history.length - 32);
     _cached = _copy(
       _cached,
-      collectorTypeArchetypeId: identity.archetypeId.name,
-      collectorTypeRevealedAtMs: identity.revealedAt.millisecondsSinceEpoch,
-      collectorTypeSignatureHash: identity.signatureHash,
-      collectorTypeStatsJson: jsonEncode(identity.stats.toJson()),
+      collectorTypeArchetypeId: healed.archetypeId.name,
+      collectorTypeRevealedAtMs: healed.revealedAt.millisecondsSinceEpoch,
+      collectorTypeSignatureHash: healed.signatureHash,
+      collectorTypeStatsJson: jsonEncode(healed.stats.toJson()),
       collectorTypeStatsVersion: 1,
-      collectorTypeReasonKey: identity.reasonKey.name,
+      collectorTypeReasonKey: healed.reasonKey.name,
       collectorTypeRevealHistory: capped,
     );
-    _cachedCollectorTypeIdentity = identity;
+    _cachedCollectorTypeIdentity = healed;
     await _persist();
   }
 

@@ -1,6 +1,16 @@
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_reason_key.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_reveal_record.dart';
 
 /// Display copy for Collection Insights and Collector Type reveal.
+///
+/// Because copy pipeline (do not fork):
+/// ```
+/// Resolver → CollectorTypeIdentity.reasonKey → becauseLineFor(…) → UI
+/// ```
+/// Hero, Reveal ceremony, Reveal history, and Personality Memory / Timeline
+/// must call [becauseLineFor] or [becauseLineForRecord] — never `switch` on
+/// archetype for causal copy.
 abstract final class CollectorTypeCopy {
   CollectorTypeCopy._();
 
@@ -45,7 +55,18 @@ abstract final class CollectorTypeCopy {
   /// Stable empty value for [journeyStartedLabel] when memory has no start date.
   static const String journeyStartedPending = '—';
 
-  /// Localized “Because…” line from a resolver [CollectorTypeReasonKey].
+  /// Sole UI entry for live identity “Because…” copy.
+  static String becauseLineFor(CollectorTypeIdentity identity) {
+    return becauseLine(identity.displayReasonKey);
+  }
+
+  /// Sole UI entry for historical reveal “Because…” (Timeline / Memory).
+  static String becauseLineForRecord(CollectorTypeRevealRecord record) {
+    return becauseLine(record.displayReasonKey);
+  }
+
+  /// Localized “Because…” from a stored [CollectorTypeReasonKey].
+  /// Prefer [becauseLineFor] / [becauseLineForRecord] at UI boundaries.
   /// Qualitative only — never interpolate live percentages here.
   static String becauseLine(CollectorTypeReasonKey key) {
     return switch (key) {

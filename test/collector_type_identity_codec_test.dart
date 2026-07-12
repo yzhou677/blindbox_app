@@ -71,4 +71,26 @@ void main() {
     });
     expect(restored.reasonKey, CollectorTypeReasonKey.stillUnfolding);
   });
+
+  test('healed() upgrades Loyalist stillUnfolding', () {
+    final stale = CollectorTypeIdentity(
+      archetypeId: CollectorTypeArchetypeId.loyalist,
+      revealedAt: DateTime(2026, 1, 1),
+      signatureHash: 'x',
+      stats: const CollectorTypeStats(
+        totalOwned: 1,
+        totalWishlist: 0,
+        trackedSeries: 1,
+        completionPercent: 10,
+        secretOwned: 0,
+        secretSlots: 0,
+        brandBreakdown: {},
+        topSeries: [],
+        customSeriesRatio: 0,
+      ),
+      reasonKey: CollectorTypeReasonKey.stillUnfolding,
+    );
+    expect(stale.displayReasonKey, CollectorTypeReasonKey.dominantUniverse);
+    expect(stale.healed().reasonKey, CollectorTypeReasonKey.dominantUniverse);
+  });
 }

@@ -1,6 +1,5 @@
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_archetype.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_archetypes.dart';
-import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_reason_key.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_reason_resolve.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_stats.dart';
@@ -68,20 +67,6 @@ class CollectorTypeResolution {
       scores: scores,
       reasons: reasons,
       isEvolution: isEvolution ?? this.isEvolution,
-    );
-  }
-
-  /// Durable snapshot persisted until the next reveal.
-  CollectorTypeIdentity toIdentity({required DateTime revealedAt}) {
-    return CollectorTypeIdentity(
-      archetypeId: archetypeId,
-      revealedAt: revealedAt,
-      signatureHash: signatureHash,
-      stats: stats,
-      reasonKey: effectiveReasonKey(
-        archetypeId: archetypeId,
-        reasonKey: reasonKey,
-      ),
     );
   }
 }

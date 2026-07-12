@@ -22,10 +22,34 @@ class CollectorTypeIdentity {
   final CollectorTypeStats stats;
 
   /// Causal reason from the resolve pass that produced this identity.
+  ///
+  /// Write path always [healed] so this matches [displayReasonKey] after load/save.
+  /// UI must not map archetype → copy; use [CollectorTypeCopy.becauseLineFor].
   final CollectorTypeReasonKey reasonKey;
 
   CollectorTypeArchetype get archetype =>
       CollectorTypeArchetypes.byId(archetypeId);
+
+  /// Canonical reason for Because copy (heals legacy `stillUnfolding` mismatch).
+  ///
+  /// Single read API for Hero, Reveal ceremony, Personality Memory, Timeline.
+  CollectorTypeReasonKey get displayReasonKey => effectiveReasonKey(
+        archetypeId: archetypeId,
+        reasonKey: reasonKey,
+      );
+
+  /// Returns this identity, or a copy with [displayReasonKey] if healing applied.
+  CollectorTypeIdentity healed() {
+    final key = displayReasonKey;
+    if (key == reasonKey) return this;
+    return CollectorTypeIdentity(
+      archetypeId: archetypeId,
+      revealedAt: revealedAt,
+      signatureHash: signatureHash,
+      stats: stats,
+      reasonKey: key,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         'v': 2,
@@ -60,12 +84,9 @@ class CollectorTypeIdentity {
       revealedAt: DateTime.fromMillisecondsSinceEpoch(revealedMs),
       signatureHash: json['signatureHash'] as String? ?? '',
       stats: stats,
-      reasonKey: effectiveReasonKey(
-        archetypeId: id,
-        reasonKey: CollectorTypeReasonKeyCodec.fromName(
-          json['reasonKey'] as String?,
-        ),
+      reasonKey: CollectorTypeReasonKeyCodec.fromName(
+        json['reasonKey'] as String?,
       ),
-    );
+    ).healed();
   }
 }

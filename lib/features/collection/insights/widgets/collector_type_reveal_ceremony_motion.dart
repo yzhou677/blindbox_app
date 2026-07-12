@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 /// Soft frosted-glass timing for Collector Type reveal ceremony.
 ///
 /// Rhythm (not independent widget flashes):
-/// blur → one hero beat (mascot + title + flavor) → pause → Continue → dwell.
+/// blur → one hero beat (mascot + title + Because) → pause → Continue → dwell.
 abstract final class CollectorTypeRevealCeremonyTiming {
   CollectorTypeRevealCeremonyTiming._();
 
@@ -39,7 +39,7 @@ abstract final class CollectorTypeRevealCeremonyTiming {
   static double intro(double t, {required bool first}) =>
       _span(t, first ? 0.08 : 0.06, first ? 0.18 : 0.15);
 
-  /// Single hero opacity for mascot + title + flavor (one identity beat).
+  /// Single hero opacity for mascot + title + Because (one identity beat).
   static double hero(double t, {required bool first}) =>
       _span(t, first ? 0.16 : 0.14, first ? 0.36 : 0.34);
 

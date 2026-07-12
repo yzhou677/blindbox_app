@@ -1,7 +1,9 @@
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_archetype.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_reason_key.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_reason_resolve.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_resolution.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_reveal_record.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_stats.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -17,9 +19,22 @@ void main() {
         CollectorTypeReasonKey.dominantUniverse,
       );
       expect(
-        CollectorTypeCopy.becauseLine(
-          effectiveReasonKey(
+        CollectorTypeCopy.becauseLineFor(
+          CollectorTypeIdentity(
             archetypeId: CollectorTypeArchetypeId.loyalist,
+            revealedAt: DateTime(2026, 1, 1),
+            signatureHash: 'x',
+            stats: const CollectorTypeStats(
+              totalOwned: 1,
+              totalWishlist: 0,
+              trackedSeries: 1,
+              completionPercent: 10,
+              secretOwned: 0,
+              secretSlots: 0,
+              brandBreakdown: {},
+              topSeries: [],
+              customSeriesRatio: 0,
+            ),
             reasonKey: CollectorTypeReasonKey.stillUnfolding,
           ),
         ),
@@ -98,6 +113,32 @@ void main() {
       expect(
         resolution.reasonKeyFor(CollectorTypeArchetypeId.loyalist),
         CollectorTypeReasonKey.dominantUniverse,
+      );
+    });
+
+    test('becauseLineForRecord matches becauseLineFor for same key', () {
+      final identity = CollectorTypeIdentity(
+        archetypeId: CollectorTypeArchetypeId.loyalist,
+        revealedAt: DateTime(2026, 1, 1),
+        signatureHash: 'x',
+        stats: stats,
+        reasonKey: CollectorTypeReasonKey.stillUnfolding,
+      );
+      final record = CollectorTypeRevealRecord(
+        archetypeId: identity.archetypeId,
+        revealedAt: identity.revealedAt,
+        signatureHash: identity.signatureHash,
+        reasonKey: identity.displayReasonKey,
+        score: 72,
+        confidence: 0.4,
+      );
+      expect(
+        CollectorTypeCopy.becauseLineFor(identity),
+        CollectorTypeCopy.becauseLineForRecord(record),
+      );
+      expect(
+        CollectorTypeCopy.becauseLineForRecord(record),
+        'Because your shelf keeps returning to the same universe.',
       );
     });
   });

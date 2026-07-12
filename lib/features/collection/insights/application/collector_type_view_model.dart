@@ -8,6 +8,7 @@ import 'package:blindbox_app/features/collection/insights/application/collector_
 import 'package:blindbox_app/features/collection/insights/application/collector_type_resolver.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_reason_resolve.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_reveal_record.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_reveal_stage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -22,7 +23,8 @@ final class CollectorTypeViewModel extends Notifier<CollectorTypeRevealStage> {
   CollectorTypeRevealStage build() {
     // Read-only: watching the bootstrap future would reset mid-reveal when it completes.
     ref.read(collectionMemoryBootstrapProvider);
-    final cached = CollectionMemoryStore.instance.cachedCollectorTypeIdentity;
+    final cached =
+        CollectionMemoryStore.instance.cachedCollectorTypeIdentity?.healed();
     if (cached != null) {
       return CollectorTypeRevealRevealed(cached);
     }
@@ -91,7 +93,16 @@ final class CollectorTypeViewModel extends Notifier<CollectorTypeRevealStage> {
       );
     }
 
-    await CollectionMemoryStore.instance.saveCollectorType(identity);
+    final typeChanged =
+        prior != null && prior.archetypeId != identity.archetypeId;
+    await CollectionMemoryStore.instance.saveCollectorType(
+      identity,
+      revealRecord: CollectorTypeRevealRecord.fromResolvePass(
+        identity: identity,
+        resolution: challenger,
+        isEvolution: typeChanged,
+      ),
+    );
     if (state is! CollectorTypeRevealAnalyzing) return;
 
     final elapsed = DateTime.now().difference(started);
@@ -105,8 +116,6 @@ final class CollectorTypeViewModel extends Notifier<CollectorTypeRevealStage> {
     // Persistent Insights state settles on the hero card immediately.
     state = CollectorTypeRevealRevealed(identity);
 
-    final typeChanged =
-        prior != null && prior.archetypeId != identity.archetypeId;
     if (isFirstReveal || typeChanged) {
       ref.read(collectorTypeCeremonyProvider.notifier).present(
             identity: identity,

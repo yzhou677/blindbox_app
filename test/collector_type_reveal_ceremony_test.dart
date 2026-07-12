@@ -2,6 +2,7 @@ import 'package:blindbox_app/core/theme/app_theme.dart';
 import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_archetype.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_reason_key.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_stats.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_reveal_ceremony_motion.dart';
@@ -9,7 +10,10 @@ import 'package:blindbox_app/features/collection/insights/widgets/collector_type
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-CollectorTypeIdentity _identity(CollectorTypeArchetypeId id) {
+CollectorTypeIdentity _identity(
+  CollectorTypeArchetypeId id, {
+  CollectorTypeReasonKey? reasonKey,
+}) {
   return CollectorTypeIdentity(
     archetypeId: id,
     revealedAt: DateTime(2026, 7, 1),
@@ -25,6 +29,10 @@ CollectorTypeIdentity _identity(CollectorTypeArchetypeId id) {
       topSeries: [],
       customSeriesRatio: 0,
     ),
+    reasonKey: reasonKey ??
+        (id == CollectorTypeArchetypeId.loyalist
+            ? CollectorTypeReasonKey.dominantUniverse
+            : CollectorTypeReasonKey.manySecrets),
   );
 }
 
@@ -48,6 +56,12 @@ void main() {
     );
 
     expect(find.text('The Hunter'), findsOneWidget);
+    expect(
+      find.text(CollectorTypeCopy.becauseLineFor(
+        _identity(CollectorTypeArchetypeId.hunter),
+      )),
+      findsOneWidget,
+    );
     expect(
       find.byKey(const Key('collector_type_reveal_ceremony_backdrop')),
       findsOneWidget,
@@ -114,6 +128,38 @@ void main() {
       CollectibleMotion.collectorTypeRevealCeremonyChange,
     );
     expect(finished, isTrue);
+  });
+
+  testWidgets('ceremony Because matches Hero via becauseLineFor', (
+    tester,
+  ) async {
+    final identity = _identity(
+      CollectorTypeArchetypeId.loyalist,
+      reasonKey: CollectorTypeReasonKey.stillUnfolding,
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: CollectorTypeRevealCeremonyOverlay(
+          identity: identity,
+          isFirstReveal: true,
+          onFinished: () {},
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(
+      CollectibleMotion.collectorTypeRevealCeremonyFirst * 0.28,
+    );
+
+    expect(
+      find.text('Because your shelf keeps returning to the same universe.'),
+      findsOneWidget,
+    );
+    expect(
+      CollectorTypeCopy.becauseLineFor(identity),
+      'Because your shelf keeps returning to the same universe.',
+    );
   });
 
   testWidgets('disableAnimations finishes ceremony immediately', (tester) async {

@@ -1,6 +1,6 @@
 # Collection Architecture Notes
 
-Last updated: 2026-06
+Last updated: 2026-07
 
 This document records intentional Collection architecture decisions, tradeoffs, and future scaling considerations.
 
@@ -81,13 +81,21 @@ The feature is intended to feel like a collectible personality reveal, not a con
 
 Evolution is surfaced separately through Evolution Hints.
 
+See **Collector Type Architecture** below for the full Live vs Snapshot contract.
+
 ---
 
 ### Journey History Is Historical
 
-Journey data represents what happened when actions occurred.
+Journey **taxonomy depth** represents what happened when actions occurred.
 
-Editing metadata later does not rewrite historical events.
+Editing metadata later does not rewrite historical events (e.g. `ipSeriesDepth`).
+
+Separately: the **Collector Journey UI** on Insights is intentionally **LIVE** — it
+reflects current exploration metrics and is **not** part of the Collector Type
+reveal snapshot. Do not freeze Journey into Identity or RevealRecord.
+
+See **Collector Type Architecture** below.
 
 Example:
 
@@ -103,13 +111,77 @@ Current shelf:
 
 * Shows THE MONSTERS
 
-Historical journey:
+Historical journey depth:
 
 * May still reference Baby Three exploration
 
 This is intentional.
 
-Journey reflects collection history, not current taxonomy state.
+Journey depth reflects collection history, not current taxonomy state.
+
+---
+
+## Collector Type Architecture
+
+Canonical code: `lib/features/collection/insights/`.
+
+This section exists so future maintainers do **not** “fix” Journey into a
+reveal snapshot or re-derive Because copy from archetype switches.
+
+### Live state vs reveal snapshot
+
+| Kind | Object | Behavior |
+| ---- | ------ | -------- |
+| **Live (Hero)** | `CollectorTypeIdentity` | Frozen until the user reveals again. Drives Hero, ceremony, At a Glance / Shelf Progress / Brand Distribution. |
+| **Live (Journey)** | Collector Journey summary | Always current. **Not** archived with reveal. Updates as the shelf evolves. |
+| **Historical replay** | `CollectorTypeRevealRecord` | Append-only resolve snapshot for Timeline / Personality Memory. No 1.0 UI yet. |
+
+**Do not:**
+
+* Make Journey a reveal-frozen field
+* Recompute Collector Type continuously on every shelf edit
+* Drive Because text from `switch (archetype)` in widgets
+
+### Resolve pipeline
+
+```
+Shelf Snapshot
+      ↓
+Resolver (`resolveCollectorType`)
+      ↓
+CollectorTypeResolution  (scoreboard + reasonKey + confidence)
+      ↓
+shouldEvolve (evolution gate)
+      ↓
+CollectorTypeIdentity    (what the Hero shows)
+      +
+CollectorTypeRevealRecord (what History can replay)
+      ↓
+CollectorTypeCopy.becauseLineFor / becauseLineForRecord
+      ↓
+Hero / Reveal ceremony / (future) Timeline / Personality Memory
+```
+
+### Historical replay
+
+```
+RevealRecord (archetype, reasonKey, score, confidence, signature, resolverVersion, …)
+      ↓
+Timeline / Personality Memory
+```
+
+Replay answers “why were you The Loyalist then?” from the stored record — **never**
+by re-running today’s Resolver over an old shelf.
+
+### Product rules (intentional)
+
+1. **Journey is intentionally LIVE.** Insights body comments and this doc agree: Journey is collection history UI, not part of the reveal archive.
+2. **Identity is intentionally SNAPSHOTTED.** Explicit reveal; Evolution Hints nudge re-reveal; `shouldEvolve` gates type changes (Still keeps title, refreshes stats/signature/reason).
+3. **UI never switches on archetype for causal copy.** Title/accent/flavor may read archetype catalog metadata; **Because** must not.
+4. **`reasonKey` is the only explanation source** for Because. Map via `CollectorTypeCopy` only (`becauseLineFor` / `becauseLineForRecord`).
+5. **`resolverVersion` protects historical semantics.** Stamped on every `CollectorTypeRevealRecord`. Policy and bump rules live on `kCollectorTypeResolverVersion` — schema/policy version, not app version. Bump only when the same shelf could resolve to a different identity or explanation.
+
+Related: evolution constants in `collector_type_evolution_gate.dart`; scoring thresholds in `collector_type_resolver.dart`; prefs key `collection_memory_v3`.
 
 ---
 

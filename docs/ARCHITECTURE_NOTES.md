@@ -523,8 +523,8 @@ See also [`COLLECTION_ARCHITECTURE_NOTES.md`](COLLECTION_ARCHITECTURE_NOTES.md) 
 | Add Figure | `addCustomFigure` from edit sheet (Phase 2.8) |
 | Edit Figure | Name, secret, rarity, local image |
 | Figure images | `localImageUri` on shelf only |
-| Insights | Shelf emotional profile, summary |
-| Journey | Historical exploration metrics |
+| Insights | Collector Type reveal (Identity snapshot) + live Journey; At a Glance / progress |
+| Journey | Live exploration metrics on Insights (not frozen with reveal) |
 | Brand / IP filters | Collection shelf chip facets |
 | Offline-first catalog | Persisted Firestore snapshot + bootstrap placeholder + background refresh |
 | Firestore authoritative catalog sync | See [Firestore Authoritative Catalog](#firestore-authoritative-catalog) |

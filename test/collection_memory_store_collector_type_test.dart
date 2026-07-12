@@ -47,6 +47,12 @@ void main() {
       store.cached.collectorTypeRevealHistory.single.archetypeId,
       CollectorTypeArchetypeId.curator,
     );
+    expect(
+      store.cached.collectorTypeRevealHistory.single.reasonKey,
+      CollectorTypeReasonKey.intentionalSpread,
+    );
+    expect(store.cached.collectorTypeRevealHistory.single.score, 0);
+    expect(store.cached.collectorTypeRevealHistory.single.confidence, 0);
 
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.containsKey('collection_memory_v3'), isTrue);
