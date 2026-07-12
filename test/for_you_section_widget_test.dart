@@ -421,7 +421,7 @@ void main() {
     expect(find.byIcon(Icons.auto_awesome_outlined), findsOneWidget);
   });
 
-  testWidgets('ForYouSection shows primary and secondary reason lines', (
+  testWidgets('ForYouSection shows a single highest-priority reason', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -459,7 +459,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('Collecting DIMOO'), findsOneWidget);
-    expect(find.text('✨ New release'), findsOneWidget);
+    expect(find.text('✨ New release'), findsNothing);
   });
 
   testWidgets('ForYou title icon stays visible after horizontal scroll', (

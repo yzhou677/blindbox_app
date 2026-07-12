@@ -7,6 +7,7 @@ import 'package:blindbox_app/features/collection/domain/series_completion_resolu
 import 'package:blindbox_app/features/collection/domain/shelf_era.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_mood.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_reveal_record.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -27,6 +28,8 @@ class CollectionMemoryData {
     this.collectorTypeSignatureHash,
     this.collectorTypeStatsJson,
     this.collectorTypeStatsVersion,
+    this.collectorTypeReasonKey,
+    this.collectorTypeRevealHistory = const [],
   });
 
   final int? firstSecretOwnedAtMs;
@@ -46,6 +49,10 @@ class CollectionMemoryData {
   final String? collectorTypeSignatureHash;
   final String? collectorTypeStatsJson;
   final int? collectorTypeStatsVersion;
+  final String? collectorTypeReasonKey;
+
+  /// Append-only Personality Memory interface (v2). No UI in Collector Type 1.0.
+  final List<CollectorTypeRevealRecord> collectorTypeRevealHistory;
 
   CollectorTypeIdentity? get collectorTypeIdentity {
     final idName = collectorTypeArchetypeId;
@@ -62,6 +69,7 @@ class CollectionMemoryData {
         'revealedAtMs': revealedMs,
         'signatureHash': collectorTypeSignatureHash ?? '',
         'stats': statsMap,
+        'reasonKey': collectorTypeReasonKey,
       });
     } catch (_) {
       return null;
@@ -132,6 +140,19 @@ final class CollectionMemoryStore {
 
   Future<void> saveCollectorType(CollectorTypeIdentity identity) async {
     await ensureLoaded();
+    final record = CollectorTypeRevealRecord(
+      archetypeId: identity.archetypeId,
+      revealedAt: identity.revealedAt,
+      signatureHash: identity.signatureHash,
+    );
+    final history = [
+      ..._cached.collectorTypeRevealHistory,
+      record,
+    ];
+    // Cap dormant log so prefs stay small until Personality Memory ships.
+    final capped = history.length <= 32
+        ? history
+        : history.sublist(history.length - 32);
     _cached = _copy(
       _cached,
       collectorTypeArchetypeId: identity.archetypeId.name,
@@ -139,6 +160,8 @@ final class CollectionMemoryStore {
       collectorTypeSignatureHash: identity.signatureHash,
       collectorTypeStatsJson: jsonEncode(identity.stats.toJson()),
       collectorTypeStatsVersion: 1,
+      collectorTypeReasonKey: identity.reasonKey.name,
+      collectorTypeRevealHistory: capped,
     );
     _cachedCollectorTypeIdentity = identity;
     await _persist();
@@ -153,6 +176,8 @@ final class CollectionMemoryStore {
       collectorTypeSignatureHash: '',
       collectorTypeStatsJson: '',
       collectorTypeStatsVersion: 0,
+      collectorTypeReasonKey: '',
+      collectorTypeRevealHistory: const [],
     );
     _cachedCollectorTypeIdentity = null;
     await _persist();
@@ -267,6 +292,13 @@ final class CollectionMemoryStore {
           'collectorTypeStatsJson': _cached.collectorTypeStatsJson,
         if (_cached.collectorTypeStatsVersion != null)
           'collectorTypeStatsVersion': _cached.collectorTypeStatsVersion,
+        if (_cached.collectorTypeReasonKey != null &&
+            _cached.collectorTypeReasonKey!.isNotEmpty)
+          'collectorTypeReasonKey': _cached.collectorTypeReasonKey,
+        if (_cached.collectorTypeRevealHistory.isNotEmpty)
+          'collectorTypeRevealHistory': [
+            for (final r in _cached.collectorTypeRevealHistory) r.toJson(),
+          ],
       }),
     );
   }
@@ -296,6 +328,10 @@ final class CollectionMemoryStore {
         collectorTypeSignatureHash: m['collectorTypeSignatureHash'] as String?,
         collectorTypeStatsJson: m['collectorTypeStatsJson'] as String?,
         collectorTypeStatsVersion: m['collectorTypeStatsVersion'] as int?,
+        collectorTypeReasonKey: m['collectorTypeReasonKey'] as String?,
+        collectorTypeRevealHistory: _decodeRevealHistory(
+          m['collectorTypeRevealHistory'],
+        ),
       );
     } catch (_) {
       return const CollectionMemoryData();
@@ -353,6 +389,8 @@ final class CollectionMemoryStore {
     String? collectorTypeSignatureHash,
     String? collectorTypeStatsJson,
     int? collectorTypeStatsVersion,
+    String? collectorTypeReasonKey,
+    List<CollectorTypeRevealRecord>? collectorTypeRevealHistory,
   }) {
     return CollectionMemoryData(
       firstSecretOwnedAtMs:
@@ -384,7 +422,31 @@ final class CollectionMemoryStore {
       collectorTypeStatsVersion: collectorTypeStatsVersion == 0
           ? null
           : (collectorTypeStatsVersion ?? data.collectorTypeStatsVersion),
+      collectorTypeReasonKey: collectorTypeReasonKey != null &&
+              collectorTypeReasonKey.isEmpty
+          ? null
+          : (collectorTypeReasonKey ?? data.collectorTypeReasonKey),
+      collectorTypeRevealHistory:
+          collectorTypeRevealHistory ?? data.collectorTypeRevealHistory,
     );
+  }
+
+  static List<CollectorTypeRevealRecord> _decodeRevealHistory(Object? raw) {
+    if (raw is! List) return const [];
+    final out = <CollectorTypeRevealRecord>[];
+    for (final item in raw) {
+      if (item is! Map) continue;
+      try {
+        out.add(
+          CollectorTypeRevealRecord.fromJson(
+            Map<String, dynamic>.from(item),
+          ),
+        );
+      } catch (_) {
+        // Skip corrupt dormant records.
+      }
+    }
+    return out;
   }
 
   static bool _hasOwnedSecret(CollectionSnapshot snap) {

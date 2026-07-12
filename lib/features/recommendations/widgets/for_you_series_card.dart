@@ -33,7 +33,7 @@ class ForYouSeriesCard extends StatelessWidget {
     final scheme = theme.colorScheme;
     final textTheme = theme.textTheme;
     final isDark = theme.brightness == Brightness.dark;
-    final reasons = forYouReasonLines(item);
+    final reason = forYouCardReason(item);
     final thumbExtent = AppCardTokens.browseRailThumbExtent();
 
     return SizedBox(
@@ -91,31 +91,18 @@ class ForYouSeriesCard extends StatelessWidget {
                       scheme,
                     ),
                   ),
-                  if (reasons.primary != null) ...[
+                  if (reason != null) ...[
                     const SizedBox(
                       height: AppCardTokens.browseRailTitleToMetaGap,
                     ),
                     Text(
-                      reasons.primary!,
+                      reason,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: textTheme.labelSmall!.copyWith(
                         fontWeight: FontWeight.w500,
                         letterSpacing: 0.06,
                         color: scheme.onSurfaceVariant.withValues(alpha: 0.84),
-                      ),
-                    ),
-                  ],
-                  if (reasons.secondary != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      reasons.secondary!,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: textTheme.labelSmall!.copyWith(
-                        fontWeight: FontWeight.w400,
-                        letterSpacing: 0.04,
-                        color: scheme.onSurfaceVariant.withValues(alpha: 0.42),
                       ),
                     ),
                   ],

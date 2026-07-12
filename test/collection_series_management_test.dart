@@ -82,11 +82,14 @@ void main() {
     );
 
     await tester.tap(find.text('manage'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.text(CollectionVocabulary.editSeries), findsOneWidget);
     expect(find.text(CollectionVocabulary.removeFromCollection), findsOneWidget);
     expect(find.text(CollectionVocabulary.cancel), findsOneWidget);
+    expect(find.text('Handmade Set'), findsOneWidget);
+    expect(find.text('Baby Three'), findsOneWidget);
   });
 
   testWidgets('catalog series action sheet omits Edit', (tester) async {
@@ -119,10 +122,13 @@ void main() {
     );
 
     await tester.tap(find.text('manage'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
 
+    expect(find.text('Catalog Set'), findsOneWidget);
     expect(find.text(CollectionVocabulary.editSeries), findsNothing);
     expect(find.text(CollectionVocabulary.removeFromCollection), findsOneWidget);
+    expect(find.text(CollectionVocabulary.cancel), findsOneWidget);
   });
 
   testWidgets('long-press on card invokes management callback', (tester) async {

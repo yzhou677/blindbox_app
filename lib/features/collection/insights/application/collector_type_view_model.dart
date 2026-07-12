@@ -4,7 +4,10 @@ import 'package:blindbox_app/features/collection/application/shelf_emotional_pro
 import 'package:blindbox_app/features/collection/application/shelf_emotional_interpreter.dart';
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_ceremony.dart';
+import 'package:blindbox_app/features/collection/insights/application/collector_type_evolution_gate.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_resolver.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_reason_resolve.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_reveal_stage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -45,13 +48,48 @@ final class CollectorTypeViewModel extends Notifier<CollectorTypeRevealStage> {
     await CollectionMemoryStore.instance.ensureLoaded();
     if (state is! CollectorTypeRevealAnalyzing) return;
     final memory = CollectionMemoryStore.instance.cached;
+    final revealedAt = DateTime.now();
 
-    final identity = resolveCollectorType(
+    final challenger = resolveCollectorType(
       snapshot: snap,
       profile: profile,
       catalog: catalog,
       memory: memory,
+      revealedAt: revealedAt,
     );
+
+    final evolved = prior == null ||
+        shouldEvolve(
+          previous: prior,
+          challenger: challenger,
+          snapshot: snap,
+          now: revealedAt,
+        );
+
+    final CollectorTypeIdentity identity;
+    if (prior == null || evolved) {
+      identity = CollectorTypeIdentity(
+        archetypeId: challenger.archetypeId,
+        revealedAt: revealedAt,
+        signatureHash: challenger.signatureHash,
+        stats: challenger.stats,
+        reasonKey: effectiveReasonKey(
+          archetypeId: challenger.archetypeId,
+          reasonKey: challenger.reasonKey,
+        ),
+      );
+    } else {
+      // Still: keep title; refresh stats/signature; always refresh Because from
+      // this pass’s reason for the kept archetype (never leave stale default).
+      final keptId = prior.archetypeId;
+      identity = CollectorTypeIdentity(
+        archetypeId: keptId,
+        revealedAt: revealedAt,
+        signatureHash: challenger.signatureHash,
+        stats: challenger.stats,
+        reasonKey: challenger.reasonKeyFor(keptId),
+      );
+    }
 
     await CollectionMemoryStore.instance.saveCollectorType(identity);
     if (state is! CollectorTypeRevealAnalyzing) return;

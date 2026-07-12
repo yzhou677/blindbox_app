@@ -4,6 +4,8 @@ import 'package:blindbox_app/features/collection/insights/application/collector_
 import 'package:blindbox_app/features/collection/insights/application/collector_type_providers.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_view_model.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_reason_resolve.dart';
+import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_ambient_glow.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_analyzing_panel.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_reveal_button.dart';
@@ -82,6 +84,12 @@ class CollectorTypeRevealCard extends ConsumerWidget {
           CollectorTypeRevealRevealed(:final identity) => _RevealedStage(
             key: ValueKey('revealed-${identity.archetypeId.name}'),
             identity: identity,
+            becauseLine: CollectorTypeCopy.becauseLine(
+              effectiveReasonKey(
+                archetypeId: identity.archetypeId,
+                reasonKey: identity.reasonKey,
+              ),
+            ),
             helperLine: helperLine,
           ),
         },
@@ -109,10 +117,12 @@ class _RevealedStage extends StatelessWidget {
   const _RevealedStage({
     super.key,
     required this.identity,
+    required this.becauseLine,
     required this.helperLine,
   });
 
   final CollectorTypeIdentity identity;
+  final String becauseLine;
   final String? helperLine;
 
   @override
@@ -122,6 +132,7 @@ class _RevealedStage extends StatelessWidget {
       children: [
         CollectorTypeResultCard(
           identity: identity,
+          becauseLine: becauseLine,
           helperLine: helperLine,
         ),
         CollectorTypeStatsStrip(stats: identity.stats),

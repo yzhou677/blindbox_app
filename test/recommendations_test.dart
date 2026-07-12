@@ -435,12 +435,12 @@ void main() {
         'Discover something new',
       );
       expect(
-        forYouSecondaryReason(RecommendationReasonType.recentRelease, null),
+        forYouPrimaryReason(RecommendationReasonType.recentRelease, null),
         '✨ New release',
       );
     });
 
-    test('tracked + recent preserves both reason layers', () {
+    test('tracked + recent shows only personalized reason', () {
       final signals = PreferenceSignals(
         trackedCatalogSeriesIds: {'dimoo_owned'},
         ownedCatalogSeriesIds: {'dimoo_owned'},
@@ -461,12 +461,10 @@ void main() {
 
       expect(item.primaryReasonType, RecommendationReasonType.trackedIp);
       expect(item.secondaryReasonType, RecommendationReasonType.recentRelease);
+      expect(forYouCardReason(item), 'Collecting DIMOO');
       expect(
         forYouReasonLines(item),
-        (
-          primary: 'Collecting DIMOO',
-          secondary: '✨ New release',
-        ),
+        (primary: 'Collecting DIMOO', secondary: null),
       );
     });
 
@@ -491,10 +489,11 @@ void main() {
 
       expect(item.primaryReasonType, RecommendationReasonType.trackedIp);
       expect(item.secondaryReasonType, isNull);
+      expect(forYouCardReason(item), 'Collecting DIMOO');
       expect(forYouReasonLines(item).secondary, isNull);
     });
 
-    test('gap fill + recent renders discover primary and release secondary', () {
+    test('gap fill + recent prefers New release over Discover', () {
       final signals = PreferenceSignals(
         trackedCatalogSeriesIds: const {},
         ownedCatalogSeriesIds: const {},
@@ -518,12 +517,10 @@ void main() {
             item.primaryReasonType == RecommendationReasonType.newInCatalog &&
             item.secondaryReasonType == RecommendationReasonType.recentRelease,
       );
+      expect(forYouCardReason(recentGap), '✨ New release');
       expect(
         forYouReasonLines(recentGap),
-        (
-          primary: 'Discover something new',
-          secondary: '✨ New release',
-        ),
+        (primary: '✨ New release', secondary: null),
       );
     });
 

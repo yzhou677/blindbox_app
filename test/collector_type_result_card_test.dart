@@ -41,11 +41,16 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('renders archetype name and flavor in light theme', (
+  testWidgets('renders archetype name; flavor behind Why this type', (
     tester,
   ) async {
     await pumpCard(tester, AppTheme.light());
     expect(find.text(archetype.displayName), findsOneWidget);
+    expect(find.text('Why this type'), findsOneWidget);
+    expect(find.textContaining('Secret Figures'), findsNothing);
+
+    await tester.tap(find.text('Why this type'));
+    await tester.pumpAndSettle();
     expect(find.textContaining('Secret Figures'), findsOneWidget);
     expect(
       find.byKey(const Key('collector_type_mascot_hunter')),
@@ -53,15 +58,36 @@ void main() {
     );
   });
 
-  testWidgets('renders archetype name and flavor in dark theme', (
-    tester,
-  ) async {
+  testWidgets('renders archetype name in dark theme', (tester) async {
     await pumpCard(tester, AppTheme.dark());
     expect(find.text(archetype.displayName), findsOneWidget);
-    expect(find.textContaining('Secret Figures'), findsOneWidget);
+    expect(find.text('Why this type'), findsOneWidget);
   });
 
-  testWidgets('renders helper line when provided', (tester) async {
+  testWidgets('renders Because line from reasonKey without truncation stack', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: CollectorTypeResultCard(
+            identity: _sampleIdentity(),
+            becauseLine:
+                'Because Secret Figures keep drawing your focus.',
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(
+      find.text('Because Secret Figures keep drawing your focus.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('helper line expands under Why this type', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(),
@@ -77,6 +103,14 @@ void main() {
     );
     await tester.pump();
 
+    expect(
+      find.textContaining(
+        'your collecting journey has explored many different worlds',
+      ),
+      findsNothing,
+    );
+    await tester.tap(find.text('Why this type'));
+    await tester.pumpAndSettle();
     expect(
       find.textContaining(
         'your collecting journey has explored many different worlds',

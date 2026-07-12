@@ -7,6 +7,7 @@ import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_resolver.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_stat_keys.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_archetype.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_reason_key.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -52,6 +53,7 @@ void main() {
       revealedAt: DateTime(2026, 1, 1),
     );
     expect(identity.archetypeId, CollectorTypeArchetypeId.wanderer);
+    expect(identity.reasonKey, CollectorTypeReasonKey.stillUnfolding);
   });
 
   test('hunter when multiple secrets owned', () {
@@ -91,6 +93,7 @@ void main() {
       revealedAt: DateTime(2026, 1, 1),
     );
     expect(identity.archetypeId, CollectorTypeArchetypeId.hunter);
+    expect(identity.reasonKey, CollectorTypeReasonKey.manySecrets);
   });
 
   test('completionist when series fully owned', () {

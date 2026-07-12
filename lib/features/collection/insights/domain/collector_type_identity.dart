@@ -1,5 +1,7 @@
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_archetype.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_archetypes.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_reason_key.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_reason_resolve.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_stats.dart';
 import 'package:flutter/foundation.dart';
 
@@ -11,6 +13,7 @@ class CollectorTypeIdentity {
     required this.revealedAt,
     required this.signatureHash,
     required this.stats,
+    this.reasonKey = CollectorTypeReasonKey.stillUnfolding,
   });
 
   final CollectorTypeArchetypeId archetypeId;
@@ -18,14 +21,19 @@ class CollectorTypeIdentity {
   final String signatureHash;
   final CollectorTypeStats stats;
 
-  CollectorTypeArchetype get archetype => CollectorTypeArchetypes.byId(archetypeId);
+  /// Causal reason from the resolve pass that produced this identity.
+  final CollectorTypeReasonKey reasonKey;
+
+  CollectorTypeArchetype get archetype =>
+      CollectorTypeArchetypes.byId(archetypeId);
 
   Map<String, dynamic> toJson() => {
-        'v': 1,
+        'v': 2,
         'archetypeId': archetypeId.name,
         'revealedAtMs': revealedAt.millisecondsSinceEpoch,
         'signatureHash': signatureHash,
         'stats': stats.toJson(),
+        'reasonKey': reasonKey.name,
       };
 
   factory CollectorTypeIdentity.fromJson(Map<String, dynamic> json) {
@@ -52,6 +60,12 @@ class CollectorTypeIdentity {
       revealedAt: DateTime.fromMillisecondsSinceEpoch(revealedMs),
       signatureHash: json['signatureHash'] as String? ?? '',
       stats: stats,
+      reasonKey: effectiveReasonKey(
+        archetypeId: id,
+        reasonKey: CollectorTypeReasonKeyCodec.fromName(
+          json['reasonKey'] as String?,
+        ),
+      ),
     );
   }
 }
