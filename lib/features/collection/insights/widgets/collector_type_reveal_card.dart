@@ -3,7 +3,9 @@ import 'package:blindbox_app/features/collection/application/collection_notifier
 import 'package:blindbox_app/features/collection/insights/application/collector_type_explainability.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_providers.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_view_model.dart';
+import 'package:blindbox_app/features/collection/insights/debug/collector_type_reveal_trace.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_reveal_record.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_ambient_glow.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_analyzing_panel.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_reveal_button.dart';
@@ -117,6 +119,14 @@ class _RevealedStage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (CollectorTypeRevealTrace.emitProviderHero) {
+      CollectorTypeRevealTrace.log(
+        '7_hero',
+        'identityShown=${identity.archetypeId.name} '
+        'signature=${identity.signatureHash} '
+        'resolverVersion=$kCollectorTypeResolverVersion',
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

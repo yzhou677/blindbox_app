@@ -30,6 +30,7 @@ class CollectionMemoryData {
     this.collectorTypeStatsJson,
     this.collectorTypeStatsVersion,
     this.collectorTypeReasonKey,
+    this.collectorTypeResolverVersion,
     this.collectorTypeRevealHistory = const [],
   });
 
@@ -58,8 +59,20 @@ class CollectionMemoryData {
   final int? collectorTypeStatsVersion;
   final String? collectorTypeReasonKey;
 
+  /// Resolver policy version stamped at last Reveal (for needsReveal invalidation).
+  final String? collectorTypeResolverVersion;
+
   /// Append-only Personality Memory interface (v2). No UI in Collector Type 1.0.
   final List<CollectorTypeRevealRecord> collectorTypeRevealHistory;
+
+  /// Version used when this reveal was produced; falls back to last history row.
+  String? get revealedResolverVersion {
+    final direct = collectorTypeResolverVersion?.trim();
+    if (direct != null && direct.isNotEmpty) return direct;
+    if (collectorTypeRevealHistory.isEmpty) return null;
+    final fromHistory = collectorTypeRevealHistory.last.resolverVersion.trim();
+    return fromHistory.isEmpty ? null : fromHistory;
+  }
 
   CollectorTypeIdentity? get collectorTypeIdentity {
     final idName = collectorTypeArchetypeId;
@@ -183,6 +196,9 @@ final class CollectionMemoryStore {
     final capped = history.length <= 32
         ? history
         : history.sublist(history.length - 32);
+    final version = record.resolverVersion.trim().isEmpty
+        ? kCollectorTypeResolverVersion
+        : record.resolverVersion;
     _cached = _copy(
       _cached,
       collectorTypeArchetypeId: healed.archetypeId.name,
@@ -191,6 +207,7 @@ final class CollectionMemoryStore {
       collectorTypeStatsJson: jsonEncode(healed.stats.toJson()),
       collectorTypeStatsVersion: 1,
       collectorTypeReasonKey: healed.reasonKey.name,
+      collectorTypeResolverVersion: version,
       collectorTypeRevealHistory: capped,
     );
     _cachedCollectorTypeIdentity = healed;
@@ -207,6 +224,7 @@ final class CollectionMemoryStore {
       collectorTypeStatsJson: '',
       collectorTypeStatsVersion: 0,
       collectorTypeReasonKey: '',
+      collectorTypeResolverVersion: '',
       collectorTypeRevealHistory: const [],
     );
     _cachedCollectorTypeIdentity = null;
@@ -327,6 +345,9 @@ final class CollectionMemoryStore {
         if (_cached.collectorTypeReasonKey != null &&
             _cached.collectorTypeReasonKey!.isNotEmpty)
           'collectorTypeReasonKey': _cached.collectorTypeReasonKey,
+        if (_cached.collectorTypeResolverVersion != null &&
+            _cached.collectorTypeResolverVersion!.isNotEmpty)
+          'collectorTypeResolverVersion': _cached.collectorTypeResolverVersion,
         if (_cached.collectorTypeRevealHistory.isNotEmpty)
           'collectorTypeRevealHistory': [
             for (final r in _cached.collectorTypeRevealHistory) r.toJson(),
@@ -361,6 +382,8 @@ final class CollectionMemoryStore {
         collectorTypeStatsJson: m['collectorTypeStatsJson'] as String?,
         collectorTypeStatsVersion: m['collectorTypeStatsVersion'] as int?,
         collectorTypeReasonKey: m['collectorTypeReasonKey'] as String?,
+        collectorTypeResolverVersion:
+            m['collectorTypeResolverVersion'] as String?,
         collectorTypeRevealHistory: _decodeRevealHistory(
           m['collectorTypeRevealHistory'],
         ),
@@ -422,6 +445,7 @@ final class CollectionMemoryStore {
     String? collectorTypeStatsJson,
     int? collectorTypeStatsVersion,
     String? collectorTypeReasonKey,
+    String? collectorTypeResolverVersion,
     List<CollectorTypeRevealRecord>? collectorTypeRevealHistory,
   }) {
     return CollectionMemoryData(
@@ -458,6 +482,10 @@ final class CollectionMemoryStore {
               collectorTypeReasonKey.isEmpty
           ? null
           : (collectorTypeReasonKey ?? data.collectorTypeReasonKey),
+      collectorTypeResolverVersion: collectorTypeResolverVersion != null &&
+              collectorTypeResolverVersion.isEmpty
+          ? null
+          : (collectorTypeResolverVersion ?? data.collectorTypeResolverVersion),
       collectorTypeRevealHistory:
           collectorTypeRevealHistory ?? data.collectorTypeRevealHistory,
     );
