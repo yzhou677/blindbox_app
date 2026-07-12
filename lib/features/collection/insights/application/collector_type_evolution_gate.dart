@@ -1,5 +1,4 @@
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
-import 'package:blindbox_app/features/collection/insights/debug/collector_type_reveal_trace.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_resolution.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_reveal_record.dart';
@@ -36,40 +35,7 @@ bool shouldEvolve({
   DateTime? now,
   String? previousResolverVersion,
   String currentResolverVersion = kCollectorTypeResolverVersion,
-  String? traceId,
 }) {
-  if (traceId != null) {
-    CollectorTypeRevealTrace.activeTraceId = traceId;
-  }
-
-  bool finish({
-    required bool decision,
-    required String reason,
-    required double margin,
-    required double previousScore,
-    required bool sameSignature,
-    required bool resolverChanged,
-    required bool previousAbsentFromBoard,
-    required bool inCooldown,
-  }) {
-    CollectorTypeRevealTrace.log(
-      '3_shouldEvolve',
-      'previousArchetype=${previous.archetypeId.name} '
-      'candidateArchetype=${challenger.archetypeId.name} '
-      'previousScore=$previousScore '
-      'candidateScore=${challenger.score} '
-      'margin=$margin '
-      'cooldown=$inCooldown '
-      'sameSignature=$sameSignature '
-      'resolverChanged=$resolverChanged '
-      'previousScoreOnBoard=$previousScore '
-      'previousAbsentFromBoard=$previousAbsentFromBoard '
-      'decision=$decision '
-      'reason=$reason',
-    );
-    return decision;
-  }
-
   final resolverChanged = previousResolverVersion == null ||
       previousResolverVersion.isEmpty ||
       previousResolverVersion != currentResolverVersion;
@@ -83,16 +49,7 @@ bool shouldEvolve({
 
   // Same title is a refresh, not an evolution.
   if (challenger.archetypeId == previous.archetypeId) {
-    return finish(
-      decision: false,
-      reason: 'sameType',
-      margin: 0,
-      previousScore: previousScore,
-      sameSignature: sameSignature,
-      resolverChanged: resolverChanged,
-      previousAbsentFromBoard: previousAbsentFromBoard,
-      inCooldown: inCooldown,
-    );
+    return false;
   }
 
   // No structural shelf change → do not change identity — unless:
@@ -100,98 +57,30 @@ bool shouldEvolve({
   // - the previous title no longer scores on the current board (stale Still
   //   after a policy reinterpretation that already stamped the new version).
   if (sameSignature && !resolverChanged && !previousAbsentFromBoard) {
-    return finish(
-      decision: false,
-      reason: 'sameSignature',
-      margin: challenger.score - previousScore,
-      previousScore: previousScore,
-      sameSignature: sameSignature,
-      resolverChanged: resolverChanged,
-      previousAbsentFromBoard: previousAbsentFromBoard,
-      inCooldown: inCooldown,
-    );
+    return false;
   }
 
   // Touch snapshot so the parameter stays part of the live contract.
   if (snapshot.shelfSeries.isEmpty && challenger.score <= 0) {
-    return finish(
-      decision: false,
-      reason: 'emptyShelf',
-      margin: challenger.score - previousScore,
-      previousScore: previousScore,
-      sameSignature: sameSignature,
-      resolverChanged: resolverChanged,
-      previousAbsentFromBoard: previousAbsentFromBoard,
-      inCooldown: inCooldown,
-    );
+    return false;
   }
 
   final margin = challenger.score - previousScore;
   if (margin < kCollectorTypeEvolutionScoreMargin) {
-    return finish(
-      decision: false,
-      reason: 'marginBelowBase',
-      margin: margin,
-      previousScore: previousScore,
-      sameSignature: sameSignature,
-      resolverChanged: resolverChanged,
-      previousAbsentFromBoard: previousAbsentFromBoard,
-      inCooldown: inCooldown,
-    );
+    return false;
   }
 
   // Policy reinterpretation: version bump, or previous title is absent from
   // today's scoreboard — challenger already cleared base margin.
   if (resolverChanged || previousAbsentFromBoard) {
-    return finish(
-      decision: true,
-      reason: resolverChanged
-          ? 'resolverVersionReinterpretation'
-          : 'previousAbsentFromBoard',
-      margin: margin,
-      previousScore: previousScore,
-      sameSignature: sameSignature,
-      resolverChanged: resolverChanged,
-      previousAbsentFromBoard: previousAbsentFromBoard,
-      inCooldown: inCooldown,
-    );
+    return true;
   }
 
   if (inCooldown) {
     final required = kCollectorTypeEvolutionScoreMargin +
         kCollectorTypeEvolutionCooldownExtraMargin;
-    if (margin < required) {
-      return finish(
-        decision: false,
-        reason: 'cooldownMargin',
-        margin: margin,
-        previousScore: previousScore,
-        sameSignature: sameSignature,
-        resolverChanged: resolverChanged,
-        previousAbsentFromBoard: previousAbsentFromBoard,
-        inCooldown: inCooldown,
-      );
-    }
-    return finish(
-      decision: true,
-      reason: 'marginClearedDuringCooldown',
-      margin: margin,
-      previousScore: previousScore,
-      sameSignature: sameSignature,
-      resolverChanged: resolverChanged,
-      previousAbsentFromBoard: previousAbsentFromBoard,
-      inCooldown: inCooldown,
-    );
+    return margin >= required;
   }
 
-  return finish(
-    decision: true,
-    reason: 'marginCleared',
-    margin: margin,
-    previousScore: previousScore,
-    sameSignature: sameSignature,
-    resolverChanged: resolverChanged,
-    previousAbsentFromBoard: previousAbsentFromBoard,
-    inCooldown: inCooldown,
-  );
+  return true;
 }

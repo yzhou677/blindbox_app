@@ -7,7 +7,6 @@ import 'package:blindbox_app/features/collection/insights/application/collector_
 import 'package:blindbox_app/features/collection/insights/application/collector_type_evolution_gate.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_needs_reveal.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_resolver.dart';
-import 'package:blindbox_app/features/collection/insights/debug/collector_type_reveal_trace.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_reason_resolve.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_reveal_record.dart';
@@ -18,7 +17,7 @@ export 'package:blindbox_app/features/collection/insights/domain/collector_type_
 
 /// Orchestrates the manual reveal flow (stable identity until re-reveal).
 ///
-/// **Lifecycle contract (5.2):**
+/// **Lifecycle contract (5.2+):**
 /// - [computeCollectorTypeNeedsReveal] / signature — **When** a reveal is needed
 /// - [resolveCollectorType] — **What** the current shelf is
 /// - [shouldEvolve] — **How** to present change on an *unchanged* shelf only
@@ -42,9 +41,6 @@ final class CollectorTypeViewModel extends Notifier<CollectorTypeRevealStage> {
   Future<void> requestReveal() async {
     if (state is CollectorTypeRevealAnalyzing) return;
 
-    final traceId = DateTime.now().microsecondsSinceEpoch.toString();
-    CollectorTypeRevealTrace.begin(traceId);
-
     final prior = CollectionMemoryStore.instance.cachedCollectorTypeIdentity;
     final priorVersion =
         CollectionMemoryStore.instance.cached.revealedResolverVersion;
@@ -63,22 +59,10 @@ final class CollectorTypeViewModel extends Notifier<CollectorTypeRevealStage> {
     final needsReveal = isFirstReveal ||
         computeCollectorTypeNeedsReveal(
           hasRevealed: true,
-          persistedSignatureHash: prior!.signatureHash,
+          persistedSignatureHash: prior.signatureHash,
           persistedResolverVersion: priorVersion,
           liveCandidate: liveForInvalidation,
         );
-
-    CollectorTypeRevealTrace.log(
-      '1_entry',
-      'previousPersistedIdentity=${prior?.archetypeId.name} '
-      'previousResolverVersion=$priorVersion '
-      'needsReveal=$needsReveal',
-    );
-    CollectorTypeRevealTrace.log(
-      '1_previous_signature_expanded',
-      'PREVIOUS compact=${prior?.signatureHash}\n'
-      '${formatPersistedSignatureExpanded(prior?.signatureHash)}',
-    );
 
     state = const CollectorTypeRevealAnalyzing();
     final started = DateTime.now();
@@ -96,7 +80,6 @@ final class CollectorTypeViewModel extends Notifier<CollectorTypeRevealStage> {
       profile: profile,
       catalog: catalog,
       revealedAt: revealedAt,
-      traceId: traceId,
     );
 
     // needsReveal / first reveal: resolver is sole authority over identity.
@@ -104,14 +87,6 @@ final class CollectorTypeViewModel extends Notifier<CollectorTypeRevealStage> {
     final bool takeCandidate;
     if (prior == null || needsReveal) {
       takeCandidate = true;
-      CollectorTypeRevealTrace.log(
-        '3_reinterpret',
-        'needsReveal=$needsReveal '
-        'takeCandidate=true '
-        'candidate=${challenger.archetypeId.name} '
-        'previous=${prior?.archetypeId.name} '
-        'reason=needsRevealOrFirst',
-      );
     } else {
       takeCandidate = shouldEvolve(
         previous: prior,
@@ -119,23 +94,11 @@ final class CollectorTypeViewModel extends Notifier<CollectorTypeRevealStage> {
         snapshot: snap,
         now: revealedAt,
         previousResolverVersion: priorVersion,
-        traceId: traceId,
       );
     }
 
     final candidateId = challenger.archetypeId;
     final keptId = takeCandidate ? null : prior!.archetypeId;
-    final archetypeToWrite = takeCandidate ? candidateId : keptId!;
-    final branch = takeCandidate ? 'Candidate' : 'Still';
-
-    CollectorTypeRevealTrace.log(
-      '4_identity_creation',
-      'branch=$branch '
-      'archetypeToWrite=${archetypeToWrite.name} '
-      'keptId=${keptId?.name} '
-      'candidateId=${candidateId.name} '
-      'needsReveal=$needsReveal',
-    );
 
     final CollectorTypeIdentity identity;
     if (takeCandidate) {
@@ -170,17 +133,6 @@ final class CollectorTypeViewModel extends Notifier<CollectorTypeRevealStage> {
         isEvolution: typeChanged,
       ),
     );
-
-    final saved = CollectionMemoryStore.instance.cachedCollectorTypeIdentity;
-    final savedVersion =
-        CollectionMemoryStore.instance.cached.revealedResolverVersion;
-    CollectorTypeRevealTrace.log(
-      '5_persistence',
-      'archetypeSaved=${saved?.archetypeId.name} '
-      'signatureHashSaved=${saved?.signatureHash} '
-      'resolverVersionSaved=$savedVersion',
-    );
-    CollectorTypeRevealTrace.emitProviderHero = true;
 
     if (state is! CollectorTypeRevealAnalyzing) return;
 

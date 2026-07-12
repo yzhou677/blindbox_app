@@ -13,9 +13,6 @@ import 'package:blindbox_app/features/collection/insights/domain/collector_type_
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_resolution.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_stat_keys.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_stats.dart';
-import 'package:blindbox_app/features/collection/insights/debug/collector_type_reveal_trace.dart';
-import 'package:blindbox_app/features/collection/insights/domain/collector_type_reveal_record.dart';
-import 'package:flutter/foundation.dart';
 
 /// Minimum analyzing hold duration (ms) —mirrored by view model.
 const int collectorTypeAnalyzingHoldMs = 1400;
@@ -130,86 +127,6 @@ const double kCollectorTypeConfidenceMin = 0.05;
 /// hash misses series adds, Insights keeps showing stale breakdowns with no
 /// Reveal again affordance.
 String computeCollectorTypeSignatureHash(CollectionSnapshot snapshot) {
-  return collectorTypeSignatureParts(snapshot).compact;
-}
-
-/// Expanded signature fields (TEMP DEBUG / audit). Same data as the compact hash.
-@immutable
-class CollectorTypeSignatureParts {
-  const CollectorTypeSignatureParts({
-    required this.owned,
-    required this.wishlist,
-    required this.customSeries,
-    required this.seriesKeys,
-    required this.brandCounts,
-    required this.ipCounts,
-  });
-
-  final List<String> owned;
-  final List<String> wishlist;
-  final int customSeries;
-  final List<String> seriesKeys;
-  final Map<String, int> brandCounts;
-  final Map<String, int> ipCounts;
-
-  String get compact {
-    final sb = StringBuffer()
-      ..write('o:')
-      ..write(owned.join(','))
-      ..write('|w:')
-      ..write(wishlist.join(','))
-      ..write('|c:')
-      ..write(customSeries)
-      ..write('|s:')
-      ..write(seriesKeys.join(','))
-      ..write('|b:')
-      ..write(_sortedCountPairs(brandCounts))
-      ..write('|i:')
-      ..write(_sortedCountPairs(ipCounts));
-    return sb.toString();
-  }
-
-  /// Multi-line dump for logcat (not the compact hash).
-  String get expandedDump {
-    final b = StringBuffer()
-      ..writeln('o: (${owned.length})')
-      ..writeln(owned.isEmpty ? '  (empty)' : owned.map((e) => '  $e').join('\n'))
-      ..writeln('w: (${wishlist.length})')
-      ..writeln(
-        wishlist.isEmpty ? '  (empty)' : wishlist.map((e) => '  $e').join('\n'),
-      )
-      ..writeln('c: $customSeries')
-      ..writeln('s: (${seriesKeys.length})')
-      ..writeln(
-        seriesKeys.isEmpty
-            ? '  (empty)'
-            : seriesKeys.map((e) => '  $e').join('\n'),
-      )
-      ..writeln('b:')
-      ..writeln(
-        brandCounts.isEmpty
-            ? '  (empty)'
-            : _sortedCountPairs(brandCounts)
-                .split(',')
-                .map((e) => '  $e')
-                .join('\n'),
-      )
-      ..writeln('i:')
-      ..writeln(
-        ipCounts.isEmpty
-            ? '  (empty)'
-            : _sortedCountPairs(ipCounts)
-                .split(',')
-                .map((e) => '  $e')
-                .join('\n'),
-      );
-    return b.toString().trimRight();
-  }
-}
-
-CollectorTypeSignatureParts collectorTypeSignatureParts(
-  CollectionSnapshot snapshot,
-) {
   final owned = <String>[];
   final wishlist = <String>[];
   for (final e in snapshot.figureStates.entries) {
@@ -242,39 +159,20 @@ CollectorTypeSignatureParts collectorTypeSignatureParts(
   }
   seriesKeys.sort();
 
-  return CollectorTypeSignatureParts(
-    owned: owned,
-    wishlist: wishlist,
-    customSeries: customSeries,
-    seriesKeys: seriesKeys,
-    brandCounts: brandCounts,
-    ipCounts: ipCounts,
-  );
-}
-
-/// Parse a previously persisted compact signature back into readable sections.
-String formatPersistedSignatureExpanded(String? compact) {
-  if (compact == null || compact.isEmpty) return '(none)';
-  final sections = <String, String>{};
-  for (final part in compact.split('|')) {
-    final idx = part.indexOf(':');
-    if (idx <= 0) continue;
-    sections[part.substring(0, idx)] = part.substring(idx + 1);
-  }
-  String dumpList(String label, String raw) {
-    if (raw.isEmpty) return '$label:\n  (empty)';
-    final items = raw.split(',').where((e) => e.isNotEmpty).toList();
-    return '$label: (${items.length})\n${items.map((e) => '  $e').join('\n')}';
-  }
-
-  return [
-    dumpList('o', sections['o'] ?? ''),
-    dumpList('w', sections['w'] ?? ''),
-    'c: ${sections['c'] ?? '?'}',
-    dumpList('s', sections['s'] ?? ''),
-    dumpList('b', sections['b'] ?? ''),
-    dumpList('i', sections['i'] ?? ''),
-  ].join('\n');
+  final sb = StringBuffer()
+    ..write('o:')
+    ..write(owned.join(','))
+    ..write('|w:')
+    ..write(wishlist.join(','))
+    ..write('|c:')
+    ..write(customSeries)
+    ..write('|s:')
+    ..write(seriesKeys.join(','))
+    ..write('|b:')
+    ..write(_sortedCountPairs(brandCounts))
+    ..write('|i:')
+    ..write(_sortedCountPairs(ipCounts));
+  return sb.toString();
 }
 
 String _sortedCountPairs(Map<String, int> counts) {
@@ -300,57 +198,20 @@ CollectorTypeResolution resolveCollectorType({
   required ShelfEmotionalProfile profile,
   CatalogSeedBundle? catalog,
   DateTime? revealedAt,
-  String? traceId,
 }) {
-  if (traceId != null) {
-    CollectorTypeRevealTrace.activeTraceId = traceId;
-  }
   final now = revealedAt ?? DateTime.now();
   final catalogSeriesById = catalog == null
       ? null
       : {for (final s in catalog.series) s.id: s};
   final stats = _buildStats(snapshot, profile, catalog);
-  final signatureParts = collectorTypeSignatureParts(snapshot);
-  final signatureHash = signatureParts.compact;
+  final signatureHash = computeCollectorTypeSignatureHash(snapshot);
   final emptyScores = {
     for (final id in CollectorTypeArchetypeId.values) id: 0.0,
   };
 
-  void logStage2({
-    required String winner,
-    required String runnerUp,
-    required Map<String, double> scores,
-  }) {
-    if (traceId == null) return;
-    CollectorTypeRevealTrace.log(
-      '2_resolver',
-      'winner=$winner '
-      'runnerUp=$runnerUp '
-      'scores=$scores '
-      'signatureHash=$signatureHash '
-      'resolverVersion=$kCollectorTypeResolverVersion',
-    );
-    CollectorTypeRevealTrace.log(
-      '2_signature_expanded',
-      'CURRENT shelfSeriesCount=${snapshot.shelfSeries.length}\n'
-      '${signatureParts.expandedDump}',
-    );
-    CollectorTypeRevealTrace.log(
-      '2_snapshot_series',
-      'CURRENT series rows:\n${snapshot.shelfSeries.isEmpty ? '  (empty)' : snapshot.shelfSeries.map((s) => '  id=${s.id} name=${s.name} template=${s.catalogTemplateId} brandTax=${s.taxonomyBrandId} ipTax=${s.taxonomyIpId}').join('\n')}',
-    );
-  }
-
   if (snapshot.shelfSeries.isEmpty ||
       (profile.interpretationConfidence == ShelfInterpretationConfidence.low &&
           snapshot.totalOwnedFigures == 0)) {
-    logStage2(
-      winner: 'wanderer',
-      runnerUp: 'none',
-      scores: {
-        for (final e in emptyScores.entries) e.key.name: e.value,
-      },
-    );
     return CollectorTypeResolution(
       archetypeId: CollectorTypeArchetypeId.wanderer,
       score: 0,
@@ -373,22 +234,6 @@ CollectorTypeResolution resolveCollectorType({
   );
 
   final picked = _pickWinner(scored.scores, scored.reasons);
-  CollectorTypeArchetypeId? runnerUpId;
-  var runnerUpScore = -1.0;
-  for (final e in scored.scores.entries) {
-    if (e.key == picked.id) continue;
-    if (e.value > runnerUpScore) {
-      runnerUpScore = e.value;
-      runnerUpId = e.key;
-    }
-  }
-  logStage2(
-    winner: picked.id.name,
-    runnerUp: runnerUpId?.name ?? 'none',
-    scores: {
-      for (final e in scored.scores.entries) e.key.name: e.value,
-    },
-  );
   return CollectorTypeResolution(
     archetypeId: picked.id,
     score: picked.score,

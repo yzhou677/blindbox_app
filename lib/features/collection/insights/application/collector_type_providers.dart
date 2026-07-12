@@ -6,7 +6,6 @@ import 'package:blindbox_app/features/collection/insights/application/collector_
 import 'package:blindbox_app/features/collection/insights/application/collector_type_needs_reveal.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_resolver.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_view_model.dart';
-import 'package:blindbox_app/features/collection/insights/debug/collector_type_reveal_trace.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_archetype.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_resolution.dart';
@@ -20,16 +19,7 @@ final collectorTypeIdentityProvider = Provider<CollectorTypeIdentity?>((ref) {
   ref.watch(collectionMemoryBootstrapProvider);
   // Rebuild when a reveal writes a new snapshot to the memory store.
   ref.watch(collectorTypeViewModelProvider);
-  final identity = CollectionMemoryStore.instance.cachedCollectorTypeIdentity;
-  if (CollectorTypeRevealTrace.emitProviderHero) {
-    CollectorTypeRevealTrace.log(
-      '6_provider',
-      'providerIdentity=${identity?.archetypeId.name} '
-      'providerSignature=${identity?.signatureHash} '
-      'providerResolverVersion=${CollectionMemoryStore.instance.cached.revealedResolverVersion}',
-    );
-  }
-  return identity;
+  return CollectionMemoryStore.instance.cachedCollectorTypeIdentity;
 });
 
 /// Live resolve of the current shelf — transient candidate, never persisted.

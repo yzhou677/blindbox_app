@@ -232,6 +232,12 @@ Each type is a collecting **verb** on the current shelf. Pipeline: Signals → B
 
 **Tie-break order (high → low):** Completionist → Hunter → Loyalist → Curator → Worldbuilder → Minimalist → Trend Chaser → Dreamer → Lucky One → Wanderer.
 
+**Tie-break role (5.3):** Insurance, not the primary identity mechanism. Behavior
+eligibility usually separates the scoreboard. Structural exclusions never both
+score: Hunter ⊥ Lucky One; Loyalist ⊥ Curator. Prefer keeping the table short
+and product-ordered (authorship / long-horizon verbs above shelf-shape verbs
+such as Minimalist).
+
 ---
 
 ### ipSeriesDepth Is Add-Time History
@@ -378,10 +384,10 @@ Until then:
 
 ---
 
-## Collector Type 5.2
+## Collector Type 5.3
 
-Status: Active reveal lifecycle contract (scoring still 5.0 behavior inference).
-Resolver policy version: **5.3** (tie-break only; see below).
+Status: Active policy version. Scoring remains 5.0 behavior inference;
+reveal lifecycle remains 5.2; tie-break order is 5.3.
 
 See **ADR: Snapshot invalidation is not identity inference** above.
 
@@ -391,7 +397,8 @@ reveal while `needsReveal` always persists the resolver candidate.
 reveals on an unchanged shelf.
 
 **Tie-break (5.3):** Worldbuilder ranks above Minimalist when scores tie —
-authorship over compact shelf size.
+authorship over compact shelf size. Tie-break is insurance; structural pairs
+Hunter/Lucky and Loyalist/Curator never both score.
 
 **Evolution (unchanged-shelf):** `shouldEvolve` compares candidate vs previous
 identity via scoreboard margin (and cooldown-scaled margin). Resolution.confidence
