@@ -230,7 +230,7 @@ Each type is a collecting **verb** on the current shelf. Pipeline: Signals → B
 
 **Legacy id migration (persist load):** `archivist` → Worldbuilder; `daydreamCollector` → Dreamer. Stylist removed (no successor mapping).
 
-**Tie-break order (high → low):** Completionist → Hunter → Loyalist → Curator → Minimalist → Worldbuilder → Trend Chaser → Dreamer → Lucky One → Wanderer.
+**Tie-break order (high → low):** Completionist → Hunter → Loyalist → Curator → Worldbuilder → Minimalist → Trend Chaser → Dreamer → Lucky One → Wanderer.
 
 ---
 
@@ -381,6 +381,7 @@ Until then:
 ## Collector Type 5.2
 
 Status: Active reveal lifecycle contract (scoring still 5.0 behavior inference).
+Resolver policy version: **5.3** (tie-break only; see below).
 
 See **ADR: Snapshot invalidation is not identity inference** above.
 
@@ -388,6 +389,9 @@ See **ADR: Snapshot invalidation is not identity inference** above.
 reveal while `needsReveal` always persists the resolver candidate.
 `shouldEvolve` (margin / cooldown / sameSignature) applies only to repeated
 reveals on an unchanged shelf.
+
+**Tie-break (5.3):** Worldbuilder ranks above Minimalist when scores tie —
+authorship over compact shelf size.
 
 **Evolution (unchanged-shelf):** `shouldEvolve` compares candidate vs previous
 identity via scoreboard margin (and cooldown-scaled margin). Resolution.confidence

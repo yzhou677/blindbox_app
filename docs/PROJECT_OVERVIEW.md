@@ -90,7 +90,7 @@ Users can:
 
 Collection intelligence (shipped):
 - **Summary** — Figures, Wishlist, Completed Series, Master Complete
-- **Insights** — at-a-glance progress, collector type reveal (**10** types, resolver 5.1), editorial tone
+- **Insights** — at-a-glance progress, collector type reveal (**10** types, resolver 5.3), editorial tone
 - **Completion tiers** — regular series complete vs all secrets owned (`Master Complete`)
 
 Local persistence (implemented):

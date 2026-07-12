@@ -4,6 +4,7 @@ import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_journey_summary.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_resolver.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_archetype.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_archetypes.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_reveal_record.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -52,8 +53,16 @@ TrackedFigure _owned(String id) =>
     TrackedFigure(figureId: id, state: FigureCollectionState.owned);
 
 void main() {
-  test('resolverVersion is 5.2 after reveal lifecycle contract', () {
-    expect(kCollectorTypeResolverVersion, '5.2');
+  test('resolverVersion is 5.3 after Worldbuilder/Minimalist tie-break', () {
+    expect(kCollectorTypeResolverVersion, '5.3');
+  });
+
+  test('tie-break ranks Worldbuilder above Minimalist', () {
+    final order = CollectorTypeArchetypes.tieBreakPriority;
+    expect(
+      order.indexOf(CollectorTypeArchetypeId.worldbuilder),
+      lessThan(order.indexOf(CollectorTypeArchetypeId.minimalist)),
+    );
   });
 
   test('Curator score ignores historical ipSeriesDepth', () {

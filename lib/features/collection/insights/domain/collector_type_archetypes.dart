@@ -19,13 +19,16 @@ abstract final class CollectorTypeArchetypes {
   ];
 
   /// Stable tie-break order when scores tie (earlier = higher priority).
+  ///
+  /// Worldbuilder ranks above Minimalist: authorship beats compact shelf size
+  /// when scores are equal within epsilon.
   static const List<CollectorTypeArchetypeId> tieBreakPriority = [
     CollectorTypeArchetypeId.completionist,
     CollectorTypeArchetypeId.hunter,
     CollectorTypeArchetypeId.loyalist,
     CollectorTypeArchetypeId.curator,
-    CollectorTypeArchetypeId.minimalist,
     CollectorTypeArchetypeId.worldbuilder,
+    CollectorTypeArchetypeId.minimalist,
     CollectorTypeArchetypeId.trendChaser,
     CollectorTypeArchetypeId.dreamer,
     CollectorTypeArchetypeId.luckyOne,

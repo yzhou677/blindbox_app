@@ -42,6 +42,9 @@ import 'package:flutter/foundation.dart';
 /// `sameSignature` must not Still-override that reinterpretation. `shouldEvolve`
 /// (incl. sameSignature) applies only on unchanged-shelf repeated reveals.
 ///
+/// **5.3** — Tie-break: Worldbuilder ranks above Minimalist (authorship over
+/// compact shelf size when scores tie within epsilon).
+///
 /// **Bump when** a change can alter Identity or Explainability for the same
 /// shelf:
 /// - scoring weights
@@ -64,7 +67,7 @@ import 'package:flutter/foundation.dart';
 /// Stamped onto every [CollectorTypeRevealRecord]. Do not branch on this in
 /// Collector Type UI or resolver logic — Timeline / Personality Memory
 /// replay past results without re-running a future resolver.
-const String kCollectorTypeResolverVersion = '5.2';
+const String kCollectorTypeResolverVersion = '5.3';
 
 /// Append-only resolve snapshot — Personality Memory / Timeline / replay.
 ///
