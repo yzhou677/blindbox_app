@@ -45,6 +45,14 @@ import 'package:flutter/foundation.dart';
 /// **5.3** — Tie-break: Worldbuilder ranks above Minimalist (authorship over
 /// compact shelf size when scores tie within epsilon).
 ///
+/// **6.0** — Final behavior contract: meaningful thresholds, IP-first Loyalist
+/// (not brand), Curator = multi-IP + investment, Wanderer = fallback only,
+/// Hunter ≥2 Secrets at ≥50% hit rate, Lucky One early path, Trend = 90 days
+/// and >50% recent, Completionist ≥60% complete/near, Worldbuilder custom
+/// majority, Dreamer wishlist majority, Minimalist small+refined (no owned cap).
+/// Signature includes currently-recent catalog series so Trend aging can
+/// invalidate without rewriting persisted identity.
+///
 /// **Bump when** a change can alter Identity or Explainability for the same
 /// shelf:
 /// - scoring weights
@@ -67,7 +75,7 @@ import 'package:flutter/foundation.dart';
 /// Stamped onto every [CollectorTypeRevealRecord]. Do not branch on this in
 /// Collector Type UI or resolver logic — Timeline / Personality Memory
 /// replay past results without re-running a future resolver.
-const String kCollectorTypeResolverVersion = '5.3';
+const String kCollectorTypeResolverVersion = '6.0';
 
 /// Append-only resolve snapshot — Personality Memory / Timeline / replay.
 ///

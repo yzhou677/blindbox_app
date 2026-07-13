@@ -106,7 +106,10 @@ final collectorTypeEvolutionHintProvider = Provider<bool>((ref) {
   final storedHash = cached.collectorTypeSignatureHash;
   if (storedHash == null || storedHash.isEmpty) return false;
 
-  final liveHash = computeCollectorTypeSignatureHash(snap);
+  final liveHash = computeCollectorTypeSignatureHash(
+    snap,
+    catalog: ref.watch(catalogBundleProvider).valueOrNull,
+  );
   if (liveHash == storedHash) return false;
 
   final prior = cached.priorEraForEvolution;
