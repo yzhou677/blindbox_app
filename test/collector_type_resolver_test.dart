@@ -413,46 +413,86 @@ void main() {
   });
 
   test('curator can win when current shelf has IP diversity', () {
-    final s1 = _seriesWithFigures(
-      id: 's1',
-      brandId: 'pop_mart',
-      ipId: 'the_monsters',
-      catalogTemplateId: 'series_1',
-      figures: const [
-        ShelfFigure(
-          id: 'a',
-          seriesId: 's1',
-          name: 'A',
-          rarity: 'Regular',
-          isSecret: false,
-        ),
-      ],
-    );
-    final s2 = _seriesWithFigures(
-      id: 's2',
-      brandId: 'toptoy',
-      ipId: 'hirono',
-      catalogTemplateId: 'series_2',
-      figures: const [
-        ShelfFigure(
-          id: 'b',
-          seriesId: 's2',
-          name: 'B',
-          rarity: 'Regular',
-          isSecret: false,
-        ),
-      ],
-    );
+    // ≥3 IPs + average Regular Completion ≥ 50% (6.0 investment gate).
+    final series = [
+      _seriesWithFigures(
+        id: 's1',
+        brandId: 'pop_mart',
+        ipId: 'the_monsters',
+        catalogTemplateId: 'series_1',
+        figures: const [
+          ShelfFigure(
+            id: 'a1',
+            seriesId: 's1',
+            name: 'A1',
+            rarity: 'Regular',
+            isSecret: false,
+          ),
+          ShelfFigure(
+            id: 'a2',
+            seriesId: 's1',
+            name: 'A2',
+            rarity: 'Regular',
+            isSecret: false,
+          ),
+        ],
+      ),
+      _seriesWithFigures(
+        id: 's2',
+        brandId: 'toptoy',
+        ipId: 'hirono',
+        catalogTemplateId: 'series_2',
+        figures: const [
+          ShelfFigure(
+            id: 'b1',
+            seriesId: 's2',
+            name: 'B1',
+            rarity: 'Regular',
+            isSecret: false,
+          ),
+          ShelfFigure(
+            id: 'b2',
+            seriesId: 's2',
+            name: 'B2',
+            rarity: 'Regular',
+            isSecret: false,
+          ),
+        ],
+      ),
+      _seriesWithFigures(
+        id: 's3',
+        brandId: 'sonny',
+        ipId: 'sonny_angel',
+        catalogTemplateId: 'series_3',
+        figures: const [
+          ShelfFigure(
+            id: 'c1',
+            seriesId: 's3',
+            name: 'C1',
+            rarity: 'Regular',
+            isSecret: false,
+          ),
+          ShelfFigure(
+            id: 'c2',
+            seriesId: 's3',
+            name: 'C2',
+            rarity: 'Regular',
+            isSecret: false,
+          ),
+        ],
+      ),
+    ];
     final snap = CollectionSnapshot(
-      shelfSeries: [s1, s2],
-      figureStates: const {},
+      shelfSeries: series,
+      figureStates: {
+        for (final s in series) s.figures.first.id: _owned(s.figures.first.id),
+      },
     );
     final identity = resolveCollectorType(
       snapshot: snap,
       profile: interpretShelf(snap),
       revealedAt: DateTime(2026, 5, 29),
     );
-    // Equal brand/IP share — gallery without Loyalist dominance.
     expect(identity.archetypeId, CollectorTypeArchetypeId.curator);
   });
 
@@ -553,12 +593,12 @@ void main() {
       catalog: catalog,
       revealedAt: DateTime(2026, 5, 1),
     );
-    // recentRatio = 2/10 = 0.2 < 0.4 — evidence of freshness, not chasing.
+    // recentRatio = 2/10 = 0.2 — not majority (6.0 requires > 0.50).
     expect(identity.scores[CollectorTypeArchetypeId.trendChaser], 0);
     expect(identity.archetypeId, isNot(CollectorTypeArchetypeId.trendChaser));
   });
 
-  test('hunter requires secret density, not merely two secrets present', () {
+  test('hunter requires secret hit rate, not merely two secrets present', () {
     final figures = <ShelfFigure>[
       for (var i = 0; i < 10; i++)
         ShelfFigure(
@@ -572,7 +612,7 @@ void main() {
     final series = _seriesWithFigures(id: 's1', figures: figures);
     final snap = CollectionSnapshot(
       shelfSeries: [series],
-      // 2 owned secrets / 10 slots = 0.2 < hunter density 0.35
+      // 2 owned secrets / 10 slots = 0.2 < hunter hit rate 0.50
       figureStates: {'sec0': _owned('sec0'), 'sec1': _owned('sec1')},
     );
     final identity = resolveCollectorType(
@@ -602,7 +642,7 @@ void main() {
           ],
         ),
     ];
-    // Two series fully complete; four barely started → finishRatio = 2/6 < 0.4
+    // Two series fully complete; four barely started → finishRatio = 2/6 < 0.60
     final states = <String, TrackedFigure>{
       for (final f in series[0].figures) f.id: _owned(f.id),
       for (final f in series[1].figures) f.id: _owned(f.id),
@@ -733,93 +773,93 @@ void main() {
   });
 
   test('curator score reflects shelfIpSpread not Journey depth', () {
-    final s1 = ShelfSeries(
-      id: 's1',
-      name: 'Series s1',
-      brand: 'POP MART',
-      ipName: 'IP',
-      figures: const [
-        ShelfFigure(
-          id: 'a',
-          seriesId: 's1',
-          name: 'A',
-          rarity: 'Regular',
-          isSecret: false,
+    final series = [
+      for (final e in [
+        ('s1', 'pop_mart', 'the_monsters'),
+        ('s2', 'toptoy', 'hirono'),
+        ('s3', 'sonny', 'sonny_angel'),
+      ])
+        ShelfSeries(
+          id: e.$1,
+          name: 'Series ${e.$1}',
+          brand: e.$2,
+          ipName: e.$3,
+          figures: [
+            ShelfFigure(
+              id: '${e.$1}_a',
+              seriesId: e.$1,
+              name: 'A',
+              rarity: 'Regular',
+              isSecret: false,
+            ),
+            ShelfFigure(
+              id: '${e.$1}_b',
+              seriesId: e.$1,
+              name: 'B',
+              rarity: 'Regular',
+              isSecret: false,
+            ),
+          ],
+          shelfAccent: const Color(0xFFE4F2EA),
+          taxonomyBrandId: e.$2,
+          taxonomyIpId: e.$3,
+          catalogTemplateId: 'series_${e.$1}',
         ),
-      ],
-      shelfAccent: const Color(0xFFE4F2EA),
-      taxonomyBrandId: 'pop_mart',
-      taxonomyIpId: 'the_monsters',
-      catalogTemplateId: 'series_1',
-    );
-    final s2 = ShelfSeries(
-      id: 's2',
-      name: 'Series s2',
-      brand: 'TOP TOY',
-      ipName: 'IP',
-      figures: const [
-        ShelfFigure(
-          id: 'b',
-          seriesId: 's2',
-          name: 'B',
-          rarity: 'Regular',
-          isSecret: false,
-        ),
-      ],
-      shelfAccent: const Color(0xFFE4F2EA),
-      taxonomyBrandId: 'toptoy',
-      taxonomyIpId: 'hirono',
-      catalogTemplateId: 'series_2',
-    );
+    ];
     final snap = CollectionSnapshot(
-      shelfSeries: [s1, s2],
-      figureStates: const {},
+      shelfSeries: series,
+      figureStates: {
+        for (final s in series) s.figures.first.id: _owned(s.figures.first.id),
+      },
     );
     final identity = resolveCollectorType(
       snapshot: snap,
       profile: interpretShelf(snap),
       revealedAt: DateTime(2026, 5, 29),
     );
-    // Equal split: not Loyalist-dominant. Soft-capped spread → 25 + 16 + 10
+    // 3 IPs, avg Regular 50% → 28 + 3*4 + 0.5*22 = 51
     expect(identity.scores[CollectorTypeArchetypeId.curator], 51);
   });
 
   test('worldbuilder is authorship — mostly custom without notes still scores',
       () {
-    final custom = ShelfSeries(
-      id: 'c1',
-      name: 'My World',
-      brand: 'Independent',
-      ipName: 'Mine',
-      figures: const [
-        ShelfFigure(
-          id: 'a',
-          seriesId: 'c1',
-          name: 'A',
-          rarity: 'Regular',
-          isSecret: false,
+    final customs = [
+      for (var i = 0; i < 2; i++)
+        _seriesWithFigures(
+          id: 'c$i',
+          customLocal: true,
+          ipId: 'custom_ip_$i',
+          brandId: 'indie_$i',
+          figures: [
+            ShelfFigure(
+              id: 'c${i}_a',
+              seriesId: 'c$i',
+              name: 'A',
+              rarity: 'Regular',
+              isSecret: false,
+            ),
+            ShelfFigure(
+              id: 'c${i}_b',
+              seriesId: 'c$i',
+              name: 'B',
+              rarity: 'Regular',
+              isSecret: false,
+            ),
+          ],
         ),
-        ShelfFigure(
-          id: 'b',
-          seriesId: 'c1',
-          name: 'B',
-          rarity: 'Regular',
-          isSecret: false,
-        ),
-      ],
-      shelfAccent: const Color(0xFFE4F2EA),
-    );
+    ];
     final snap = CollectionSnapshot(
-      shelfSeries: [custom],
-      figureStates: {'a': _owned('a'), 'b': _owned('b')},
+      shelfSeries: customs,
+      figureStates: const {},
     );
+    expect(customs.every((s) => s.isCustomLocal), isTrue);
     final identity = resolveCollectorType(
       snapshot: snap,
       profile: interpretShelf(snap),
       revealedAt: DateTime(2026, 7, 1),
     );
-    // ratio=1, series=1, figures=2 → 20 + 55 + 10 + 2.5
-    expect(identity.scores[CollectorTypeArchetypeId.worldbuilder], 87.5);
+    // ratio=1, series=2, figures=4 → 36 + 40 + 10 + 4 = 90
+    expect(identity.scores[CollectorTypeArchetypeId.worldbuilder], 90);
     expect(identity.archetypeId, CollectorTypeArchetypeId.worldbuilder);
   });
 

@@ -98,7 +98,7 @@ void main() {
         signatureHash: computeCollectorTypeSignatureHash(priorSnap),
       );
 
-      // Multi-IP incomplete shelf ??Loyalist/Wanderer shape (not wanderer-only empty).
+      // Multi-IP invested shelf → Curator (6.0: ≥3 IPs + avg Regular ≥50%).
       final nextSnap = CollectionSnapshot(
         shelfSeries: [
           testShelfSeries(
@@ -110,9 +110,16 @@ void main() {
             catalogTemplateId: 'c1',
             figures: const [
               ShelfFigure(
-                id: 'f1',
+                id: 'f1a',
                 seriesId: 's1',
                 name: 'A1',
+                rarity: 'Regular',
+                isSecret: false,
+              ),
+              ShelfFigure(
+                id: 'f1b',
+                seriesId: 's1',
+                name: 'A2',
                 rarity: 'Regular',
                 isSecret: false,
               ),
@@ -127,9 +134,16 @@ void main() {
             catalogTemplateId: 'c2',
             figures: const [
               ShelfFigure(
-                id: 'f2',
+                id: 'f2a',
                 seriesId: 's2',
                 name: 'B1',
+                rarity: 'Regular',
+                isSecret: false,
+              ),
+              ShelfFigure(
+                id: 'f2b',
+                seriesId: 's2',
+                name: 'B2',
                 rarity: 'Regular',
                 isSecret: false,
               ),
@@ -144,16 +158,36 @@ void main() {
             catalogTemplateId: 'c3',
             figures: const [
               ShelfFigure(
-                id: 'f3',
+                id: 'f3a',
                 seriesId: 's3',
                 name: 'C1',
+                rarity: 'Regular',
+                isSecret: false,
+              ),
+              ShelfFigure(
+                id: 'f3b',
+                seriesId: 's3',
+                name: 'C2',
                 rarity: 'Regular',
                 isSecret: false,
               ),
             ],
           ),
         ],
-        figureStates: const {},
+        figureStates: const {
+          'f1a': TrackedFigure(
+            figureId: 'f1a',
+            state: FigureCollectionState.owned,
+          ),
+          'f2a': TrackedFigure(
+            figureId: 'f2a',
+            state: FigureCollectionState.owned,
+          ),
+          'f3a': TrackedFigure(
+            figureId: 'f3a',
+            state: FigureCollectionState.owned,
+          ),
+        },
       );
       final live = resolveCollectorType(
         snapshot: nextSnap,
@@ -351,9 +385,16 @@ void main() {
             catalogTemplateId: 'c1',
             figures: const [
               ShelfFigure(
-                id: 'a',
+                id: 'a1',
                 seriesId: 's1',
-                name: 'A',
+                name: 'A1',
+                rarity: 'Regular',
+                isSecret: false,
+              ),
+              ShelfFigure(
+                id: 'a2',
+                seriesId: 's1',
+                name: 'A2',
                 rarity: 'Regular',
                 isSecret: false,
               ),
@@ -367,9 +408,16 @@ void main() {
             catalogTemplateId: 'c2',
             figures: const [
               ShelfFigure(
-                id: 'b',
+                id: 'b1',
                 seriesId: 's2',
-                name: 'B',
+                name: 'B1',
+                rarity: 'Regular',
+                isSecret: false,
+              ),
+              ShelfFigure(
+                id: 'b2',
+                seriesId: 's2',
+                name: 'B2',
                 rarity: 'Regular',
                 isSecret: false,
               ),
@@ -383,16 +431,36 @@ void main() {
             catalogTemplateId: 'c3',
             figures: const [
               ShelfFigure(
-                id: 'c',
+                id: 'c1',
                 seriesId: 's3',
-                name: 'C',
+                name: 'C1',
+                rarity: 'Regular',
+                isSecret: false,
+              ),
+              ShelfFigure(
+                id: 'c2',
+                seriesId: 's3',
+                name: 'C2',
                 rarity: 'Regular',
                 isSecret: false,
               ),
             ],
           ),
         ],
-        figureStates: const {},
+        figureStates: const {
+          'a1': TrackedFigure(
+            figureId: 'a1',
+            state: FigureCollectionState.owned,
+          ),
+          'b1': TrackedFigure(
+            figureId: 'b1',
+            state: FigureCollectionState.owned,
+          ),
+          'c1': TrackedFigure(
+            figureId: 'c1',
+            state: FigureCollectionState.owned,
+          ),
+        },
       );
       final live = resolveCollectorType(
         snapshot: snap,

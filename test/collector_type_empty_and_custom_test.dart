@@ -17,31 +17,35 @@ void main() {
   });
 
   test('custom-only shelf with notes resolves to worldbuilder', () {
-    final series = ShelfSeries(
-      id: 'custom_1',
-      name: 'My Custom',
-      brand: 'Independent',
-      ipName: 'Custom IP',
-      figures: const [
-        ShelfFigure(
-          id: 'f1',
-          seriesId: 'custom_1',
-          name: 'Figure',
-          rarity: 'Regular',
-          isSecret: false,
+    final series = [
+      for (var i = 0; i < 2; i++)
+        ShelfSeries(
+          id: 'custom_$i',
+          name: 'My Custom $i',
+          brand: 'Independent',
+          ipName: 'Custom IP $i',
+          figures: [
+            ShelfFigure(
+              id: 'f$i',
+              seriesId: 'custom_$i',
+              name: 'Figure',
+              rarity: 'Regular',
+              isSecret: false,
+            ),
+          ],
+          shelfAccent: const Color(0xFFE4F2EA),
+          notes: i == 0 ? 'Archive notes for this series' : null,
+          customCoverImageUri: i == 0 ? '/local/cover.jpg' : null,
         ),
-      ],
-      shelfAccent: const Color(0xFFE4F2EA),
-      notes: 'Archive notes for this series',
-      customCoverImageUri: '/local/cover.jpg',
-    );
+    ];
     final snap = CollectionSnapshot(
-      shelfSeries: [series],
-      figureStates: const {
-        'f1': TrackedFigure(
-          figureId: 'f1',
-          state: FigureCollectionState.owned,
-        ),
+      shelfSeries: series,
+      figureStates: {
+        for (final s in series)
+          s.figures.first.id: TrackedFigure(
+            figureId: s.figures.first.id,
+            state: FigureCollectionState.owned,
+          ),
       },
     );
     final identity = resolveCollectorType(

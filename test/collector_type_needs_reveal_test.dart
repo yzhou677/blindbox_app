@@ -1,3 +1,5 @@
+import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/application/shelf_emotional_interpreter.dart';
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
@@ -16,6 +18,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'helpers/collection_fixtures.dart';
 
+const _emptyCatalog = CatalogSeedBundle(
+  brands: [],
+  ips: [],
+  series: [],
+  figures: [],
+);
+
 final class NeedsRevealTestNotifier extends CollectionNotifier {
   NeedsRevealTestNotifier(this._snap);
   final CollectionSnapshot _snap;
@@ -23,6 +32,13 @@ final class NeedsRevealTestNotifier extends CollectionNotifier {
   @override
   CollectionSnapshot build() => _snap;
 }
+
+List<Override> _overridesFor(CollectionSnapshot snap) => [
+      collectionNotifierProvider.overrideWith(
+        () => NeedsRevealTestNotifier(snap),
+      ),
+      catalogBundleProvider.overrideWith((ref) async => _emptyCatalog),
+    ];
 
 Future<void> _saveRevealMatchingLive(CollectionSnapshot snap) async {
   final resolution = resolveCollectorType(
@@ -63,13 +79,7 @@ void main() {
       shelfSeries: [testShelfSeries()],
       figureStates: const {},
     );
-    final container = ProviderContainer(
-      overrides: [
-        collectionNotifierProvider.overrideWith(
-          () => NeedsRevealTestNotifier(snap),
-        ),
-      ],
-    );
+    final container = ProviderContainer(overrides: _overridesFor(snap));
     addTearDown(container.dispose);
 
     expect(container.read(collectorTypeNeedsRevealProvider), isFalse);
@@ -83,13 +93,7 @@ void main() {
     );
     await _saveRevealMatchingLive(snap);
 
-    final container = ProviderContainer(
-      overrides: [
-        collectionNotifierProvider.overrideWith(
-          () => NeedsRevealTestNotifier(snap),
-        ),
-      ],
-    );
+    final container = ProviderContainer(overrides: _overridesFor(snap));
     addTearDown(container.dispose);
 
     expect(container.read(collectorTypeNeedsRevealProvider), isFalse);
@@ -126,13 +130,7 @@ void main() {
       ),
     );
 
-    final container = ProviderContainer(
-      overrides: [
-        collectionNotifierProvider.overrideWith(
-          () => NeedsRevealTestNotifier(snap),
-        ),
-      ],
-    );
+    final container = ProviderContainer(overrides: _overridesFor(snap));
     addTearDown(container.dispose);
 
     expect(container.read(collectorTypeNeedsRevealProvider), isTrue);
@@ -168,13 +166,7 @@ void main() {
       ),
     );
 
-    final container = ProviderContainer(
-      overrides: [
-        collectionNotifierProvider.overrideWith(
-          () => NeedsRevealTestNotifier(snap),
-        ),
-      ],
-    );
+    final container = ProviderContainer(overrides: _overridesFor(snap));
     addTearDown(container.dispose);
 
     expect(container.read(collectorTypeNeedsRevealProvider), isTrue);
@@ -224,13 +216,7 @@ void main() {
       ),
     );
 
-    final container = ProviderContainer(
-      overrides: [
-        collectionNotifierProvider.overrideWith(
-          () => NeedsRevealTestNotifier(snap),
-        ),
-      ],
-    );
+    final container = ProviderContainer(overrides: _overridesFor(snap));
     addTearDown(container.dispose);
 
     expect(container.read(collectorTypeNeedsRevealProvider), isTrue);
@@ -279,13 +265,7 @@ void main() {
         figureStates: const {},
       );
 
-      final container = ProviderContainer(
-        overrides: [
-          collectionNotifierProvider.overrideWith(
-            () => NeedsRevealTestNotifier(liveSnap),
-          ),
-        ],
-      );
+      final container = ProviderContainer(overrides: _overridesFor(liveSnap));
       addTearDown(container.dispose);
 
       expect(container.read(collectorTypeNeedsRevealProvider), isTrue);

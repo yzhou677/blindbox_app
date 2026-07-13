@@ -53,8 +53,8 @@ TrackedFigure _owned(String id) =>
     TrackedFigure(figureId: id, state: FigureCollectionState.owned);
 
 void main() {
-  test('resolverVersion is 5.3 after Worldbuilder/Minimalist tie-break', () {
-    expect(kCollectorTypeResolverVersion, '5.3');
+  test('resolverVersion is 6.0 after final behavior contract', () {
+    expect(kCollectorTypeResolverVersion, '6.0');
   });
 
   test('tie-break ranks Worldbuilder above Minimalist', () {
@@ -66,15 +66,14 @@ void main() {
   });
 
   test('Curator score ignores historical ipSeriesDepth', () {
-    // Three brands / IPs equally — gallery without Loyalist dominance.
+    // Three IPs with ≥50% Regular Completion — gallery without Loyalist dominance.
     final series = [
-      _series(id: 'a1', ip: 'ip1', brand: 'POP MART', figs: 3),
-      _series(id: 'a2', ip: 'ip2', brand: 'Sonny Angel', figs: 3),
-      _series(id: 'a3', ip: 'ip3', brand: 'TOP TOY', figs: 3),
+      _series(id: 'a1', ip: 'ip1', brand: 'POP MART', figs: 2),
+      _series(id: 'a2', ip: 'ip2', brand: 'Sonny Angel', figs: 2),
+      _series(id: 'a3', ip: 'ip3', brand: 'TOP TOY', figs: 2),
     ];
     final states = <String, TrackedFigure>{
-      for (final s in series)
-        for (final f in s.figures.take(1)) f.id: _owned(f.id),
+      for (final s in series) s.figures.first.id: _owned(s.figures.first.id),
     };
     final snap = CollectionSnapshot(shelfSeries: series, figureStates: states);
     final profile = interpretShelf(snap);
@@ -85,8 +84,8 @@ void main() {
       revealedAt: DateTime(2026, 7, 1),
     );
 
-    // brandSpread=3, shelfIpSpread=3 → 25 + 24 + 15 = 64
-    expect(identity.scores[CollectorTypeArchetypeId.curator], 64);
+    // 3 IPs, avg 50% → 28 + 12 + 11 = 51
+    expect(identity.scores[CollectorTypeArchetypeId.curator], 51);
 
     // Journey still records deep exploration — Identity must not change.
     final journey = buildCollectorJourneySummary(
@@ -113,40 +112,44 @@ void main() {
   test('Worldbuilder ignores firstSeriesAddedAt tenure', () {
     final snap = CollectionSnapshot(
       shelfSeries: [
-        ShelfSeries(
-          id: 'n1',
-          name: 'My World',
-          brand: 'Independent',
-          ipName: 'Mine',
-          figures: const [
-            ShelfFigure(
-              id: 'n1_0',
-              seriesId: 'n1',
-              name: 'F0',
-              rarity: 'R',
-              isSecret: false,
-            ),
-            ShelfFigure(
-              id: 'n1_1',
-              seriesId: 'n1',
-              name: 'F1',
-              rarity: 'R',
-              isSecret: false,
-            ),
-          ],
-          shelfAccent: const Color(0xFFE4F2EA),
-          notes: 'kept',
-        ),
+        for (var i = 0; i < 2; i++)
+          ShelfSeries(
+            id: 'n$i',
+            name: 'My World $i',
+            brand: 'Independent',
+            ipName: 'Mine$i',
+            figures: [
+              ShelfFigure(
+                id: 'n${i}_0',
+                seriesId: 'n$i',
+                name: 'F0',
+                rarity: 'R',
+                isSecret: false,
+              ),
+              ShelfFigure(
+                id: 'n${i}_1',
+                seriesId: 'n$i',
+                name: 'F1',
+                rarity: 'R',
+                isSecret: false,
+              ),
+            ],
+            shelfAccent: const Color(0xFFE4F2EA),
+            notes: i == 0 ? 'kept' : null,
+          ),
       ],
-      figureStates: {'n1_0': _owned('n1_0')},
+      figureStates: {
+        'n0_0': _owned('n0_0'),
+        'n1_0': _owned('n1_0'),
+      },
     );
     final identity = resolveCollectorType(
       snapshot: snap,
       profile: interpretShelf(snap),
       revealedAt: DateTime(2026, 7, 1),
     );
-    // ratio=1, series=1, figures=2, notes=1 → 20+55+10+2.5+5
-    expect(identity.scores[CollectorTypeArchetypeId.worldbuilder], 92.5);
+    // ratio=1, series=2, figures=4, notes=1 → 36+40+10+4+4 = 94
+    expect(identity.scores[CollectorTypeArchetypeId.worldbuilder], 94);
 
     final journey = buildCollectorJourneySummary(
       memory: CollectionMemoryData(

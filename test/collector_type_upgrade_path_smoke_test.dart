@@ -420,10 +420,11 @@ void main() {
     test('S4 outdated stats + Reveal again settles without loop', () async {
       final snap = upgradeMixedShelf();
       final expected = aggregateShelfCompletion(snap);
-      final sig = computeCollectorTypeSignatureHash(snap);
+      final sig = computeCollectorTypeSignatureHash(snap, catalog: _emptyCatalog);
       final liveBefore = resolveCollectorType(
         snapshot: snap,
         profile: interpretShelf(snap),
+        catalog: _emptyCatalog,
       );
 
       await _seedLegacyPrefs(
