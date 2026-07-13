@@ -61,7 +61,7 @@ void main() {
     expect(record.reasonKey, CollectorTypeReasonKey.dominantUniverse);
     expect(
       CollectorTypeCopy.becauseLineForRecord(record),
-      'Because your shelf keeps returning to the same universe.',
+      'Because one universe clearly defines your shelf.',
     );
   });
 
