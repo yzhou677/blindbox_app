@@ -174,7 +174,7 @@ void main() {
     });
   });
 
-  group('Hunter / Lucky One 6.0', () {
+  group('Hunter / Lucky One 6.1', () {
     test('1 Secret on small shelf at 50% → Lucky One', () {
       final s = _series(
         id: 's1',
@@ -187,7 +187,7 @@ void main() {
       );
     });
 
-    test('2 Secrets at 50% hit rate → Hunter', () {
+    test('2 Secrets on ≤4 series at 50% → Lucky One (Hunter prequel)', () {
       final s = _series(
         id: 's1',
         ipId: 'ip_a',
@@ -201,19 +201,47 @@ void main() {
       );
       expect(
         _resolve(_snap([s], {'s1': _owned('s1'), 's2': _owned('s2')})),
+        CollectorTypeArchetypeId.luckyOne,
+      );
+    });
+
+    test('2 Secrets on >4 series at 50% → Hunter', () {
+      final series = <ShelfSeries>[
+        for (var i = 0; i < 5; i++)
+          _series(
+            id: 's$i',
+            ipId: 'ip_$i',
+            figures: [
+              _reg('r$i', 's$i'),
+              if (i < 4) _sec('sec$i', 's$i'),
+            ],
+          ),
+      ];
+      expect(
+        _resolve(
+          _snap(series, {'sec0': _owned('sec0'), 'sec1': _owned('sec1')}),
+        ),
         CollectorTypeArchetypeId.hunter,
       );
     });
 
     test('Hunter eligible → Lucky One score is zero', () {
-      final s = _series(
-        id: 's1',
-        ipId: 'ip_a',
-        figures: [_sec('a', 's1'), _sec('b', 's1')],
-      );
+      final series = <ShelfSeries>[
+        for (var i = 0; i < 5; i++)
+          _series(
+            id: 's$i',
+            ipId: 'ip_$i',
+            figures: [
+              _reg('r$i', 's$i'),
+              if (i < 4) _sec('sec$i', 's$i'),
+            ],
+          ),
+      ];
+      final states = {'sec0': _owned('sec0'), 'sec1': _owned('sec1')};
+      final snap = _snap(series, states);
       final r = resolveCollectorType(
-        snapshot: _snap([s], {'a': _owned('a'), 'b': _owned('b')}),
-        profile: interpretShelf(_snap([s], {'a': _owned('a'), 'b': _owned('b')})),
+        snapshot: snap,
+        profile: interpretShelf(snap),
         revealedAt: DateTime(2026, 6, 1),
       );
       expect(r.archetypeId, CollectorTypeArchetypeId.hunter);
@@ -221,37 +249,40 @@ void main() {
     });
 
     test('2 Secrets but hit rate below 50% → not Hunter', () {
-      final s = _series(
-        id: 's1',
-        ipId: 'ip_a',
-        figures: [
-          _sec('a', 's1'),
-          _sec('b', 's1'),
-          _sec('c', 's1'),
-          _sec('d', 's1'),
-          _sec('e', 's1'),
-        ],
-      );
+      final series = <ShelfSeries>[
+        for (var i = 0; i < 5; i++)
+          _series(
+            id: 's$i',
+            ipId: 'ip_$i',
+            figures: [_sec('a$i', 's$i')],
+          ),
+      ];
       // 2/5 = 40%
       expect(
-        _resolve(_snap([s], {'a': _owned('a'), 'b': _owned('b')})),
+        _resolve(
+          _snap(series, {'a0': _owned('a0'), 'a1': _owned('a1')}),
+        ),
         isNot(CollectorTypeArchetypeId.hunter),
       );
     });
 
     test('Secret hit rate uses Secret slots, not all figures', () {
-      final s = _series(
-        id: 's1',
-        ipId: 'ip_a',
+      final main = _series(
+        id: 's0',
+        ipId: 'ip_0',
         figures: [
-          for (var i = 0; i < 10; i++) _reg('r$i', 's1'),
-          _sec('a', 's1'),
-          _sec('b', 's1'),
+          for (var i = 0; i < 10; i++) _reg('r$i', 's0'),
+          _sec('a', 's0'),
+          _sec('b', 's0'),
         ],
       );
-      // 2/2 secrets = 100% even with many regulars
+      final fillers = <ShelfSeries>[
+        for (var i = 1; i < 5; i++)
+          _series(id: 's$i', ipId: 'ip_$i', figures: [_reg('f$i', 's$i')]),
+      ];
+      // 2/2 secrets = 100% even with many regulars; >4 series → Hunter
       expect(
-        _resolve(_snap([s], {'a': _owned('a'), 'b': _owned('b')})),
+        _resolve(_snap([main, ...fillers], {'a': _owned('a'), 'b': _owned('b')})),
         CollectorTypeArchetypeId.hunter,
       );
     });
@@ -956,14 +987,22 @@ void main() {
       );
       reached.add(_resolve(_snap([lucky], {'ls': _owned('ls')})));
 
-      // Hunter
-      final hunt = _series(
-        id: 'h',
-        ipId: 'ip',
-        figures: [_sec('ha', 'h'), _sec('hb', 'h')],
-      );
+      // Hunter (>4 series + ≥2 Secrets at ≥50%)
+      final hunt = [
+        for (var i = 0; i < 5; i++)
+          _series(
+            id: 'h$i',
+            ipId: 'ip_$i',
+            figures: [
+              _reg('hr$i', 'h$i'),
+              if (i < 4) _sec('hs$i', 'h$i'),
+            ],
+          ),
+      ];
       reached.add(
-        _resolve(_snap([hunt], {'ha': _owned('ha'), 'hb': _owned('hb')})),
+        _resolve(
+          _snap(hunt, {'hs0': _owned('hs0'), 'hs1': _owned('hs1')}),
+        ),
       );
 
       // Loyalist

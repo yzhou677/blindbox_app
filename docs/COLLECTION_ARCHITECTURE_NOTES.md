@@ -279,7 +279,7 @@ by re-running today’s Resolver over an old shelf.
 
 Related: evolution constants in `collector_type_evolution_gate.dart`; scoring thresholds in `collector_type_resolver.dart`; prefs key `collection_memory_v3`. Canonical registry: `CollectorTypeArchetypes` (**10 types**).
 
-### Collector Types (resolver 6.0) — 10 archetypes
+### Collector Types (resolver 6.1) — 10 archetypes
 
 Each type answers: **what clearly defines this collector’s shelf today?**  
 Pipeline: **Signals → Eligibility → Strength → Soft-capped scale → Winner.**  
@@ -320,8 +320,8 @@ Use canonical Regular-weighted completion (`resolveSeriesCompletion` / `aggregat
 | Type | Product sentence | Eligibility |
 | ---- | ---------------- | ----------- |
 | **Completionist** | Completion defines your shelf | ≥2 completed **and** `completedRatio ≥ 0.60`; else ≥2 near-complete **and** `nearCompleteRatio ≥ 0.60` |
-| **Hunter** | You actively hunt Secrets—and you catch them | ≥2 Secrets, Secret slots > 0, `secretHitRate ≥ 0.50` |
-| **Lucky One** | Luck found you before hunting did | `!Hunter`, ≤4 series, ≥1 Secret, `secretHitRate ≥ 0.50` |
+| **Hunter** | You actively hunt Secrets—and you catch them | **>4** series, ≥2 Secrets, Secret slots > 0, `secretHitRate ≥ 0.50` |
+| **Lucky One** | Luck found you before hunting did | `!Hunter`, **≤4** series, ≥1 Secret, `secretHitRate ≥ 0.50` (Hunter’s prequel) |
 | **Loyalist** | One universe clearly defines your shelf | `dominantIpShare ≥ 0.60` **and** ≥2 series in that IP (brand fallback only if most rows lack IP — never multi-IP POP MART as Loyalist) |
 | **Curator** | You thoughtfully build across multiple universes, giving each one room to grow | `!Loyalist`, ≥3 distinct taxonomy IPs, `averageRegularCompletion ≥ 0.50` |
 | **Wanderer** | You’re still discovering what defines your shelf | **Fallback only** — soft board floor (score 5) for Still/evolution; never beats specialized bases (≥28). Empty / early / one-series / mixed undefined shelves |
@@ -335,8 +335,8 @@ Use canonical Regular-weighted completion (`resolveSeriesCompletion` / `aggregat
 | Type | Why these numbers |
 | ---- | ----------------- |
 | **Completionist** | Two completes prove repeated finishing; 60% means finishing defines the shelf. Near path uses the same share with 85% “final push.” No separate avg≥70% gate once 60% of the shelf is fully complete. |
-| **Hunter** | Two Secrets prove repeated rare acquisition; 50% hit rate over Secret slots means they catch what they hunt. Shelf size must not disqualify. |
-| **Lucky One** | Early fortune on a still-small shelf; progresses to Hunter when pursuit is repeated. |
+| **Hunter** | Two Secrets + ≥50% hit rate on a shelf past early stage (`>4` series). Lucky One’s sequel. |
+| **Lucky One** | Early fortune on ≤4 series; progresses to Hunter when the shelf grows past 4 with repeated Secret catches. |
 | **Loyalist** | 60% IP share is clear universe dominance; ≥2 series in that IP is returning, not a one-off. Brand must not classify multi-IP POP MART shelves. |
 | **Curator** | Three IPs establish real breadth; 50% avg Regular shows investment, not sampling. |
 | **Wanderer** | Honest fallback when no specialized identity clearly qualifies — not a “failed” collector. |
@@ -347,7 +347,7 @@ Use canonical Regular-weighted completion (`resolveSeriesCompletion` / `aggregat
 
 #### Relationships
 
-- **Hunter ⊥ Lucky One** — Hunter eligible → Lucky One score is zero  
+- **Hunter ⊥ Lucky One** — progression by shelf stage: ≤4 → Lucky One; >4 + ≥2 Secrets → Hunter. Hunter eligible → Lucky One score is zero.  
 - **Loyalist ⊥ Curator** — Loyalist eligible → Curator score is zero  
 - **Wanderer** does not compete as a dominance archetype  
 
@@ -568,14 +568,16 @@ Until then:
 
 ---
 
-## Collector Type 6.0
+## Collector Type 6.1
 
-Status: **Active** policy version (`kCollectorTypeResolverVersion = 6.0`).
+Status: **Active** policy version (`kCollectorTypeResolverVersion = 6.1`).
 
-Final behavior contract: meaningful thresholds, IP-first Loyalist, Curator as
-multi-IP investment, Wanderer as fallback only, Secret hit rate over Secret
-slots, Trend = 90 days with signature `|r:` aging. Full eligibility table,
-metrics, and removed obsolete gates: **§ Collector Types (resolver 6.0)** above.
+Final behavior contract (6.0 base + **6.1** Lucky One → Hunter progression):
+Lucky One is ≤4 series; Hunter requires **>4** series with ≥2 Secrets at ≥50% hit.
+IP-first Loyalist, Curator as multi-IP investment, Wanderer as fallback only,
+Secret hit rate over Secret slots, Trend = 90 days with signature `|r:` aging.
+Full eligibility table, metrics, and removed obsolete gates: **§ Collector Types**
+above.
 
 Reveal lifecycle remains **5.2**; tie-break order unchanged from **5.3**
 (Worldbuilder above Minimalist). Do not silently rewrite persisted identity on

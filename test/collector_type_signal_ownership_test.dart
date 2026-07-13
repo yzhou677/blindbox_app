@@ -53,8 +53,8 @@ TrackedFigure _owned(String id) =>
     TrackedFigure(figureId: id, state: FigureCollectionState.owned);
 
 void main() {
-  test('resolverVersion is 6.0 after final behavior contract', () {
-    expect(kCollectorTypeResolverVersion, '6.0');
+  test('resolverVersion is 6.1 after Lucky One → Hunter progression', () {
+    expect(kCollectorTypeResolverVersion, '6.1');
   });
 
   test('tie-break ranks Worldbuilder above Minimalist', () {

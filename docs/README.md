@@ -14,7 +14,7 @@ Human-oriented notes for the Blindbox app. **Agent rules and architecture live u
 - [`KNOWN_RUNTIME_NOTES.md`](KNOWN_RUNTIME_NOTES.md) — logcat / debug noise vs actionable failures (Firebase, images, Android)
 - [`TESTING.md`](TESTING.md) — emulator smoke scripts, ADB `input text` (`%s` for spaces)
 - [`TECH_DEBT.md`](TECH_DEBT.md) — non-blocking debt items (analyzer warnings, cleanup when convenient)
-- [`COLLECTION_ARCHITECTURE_NOTES.md`](COLLECTION_ARCHITECTURE_NOTES.md) — intentional Collection decisions, tradeoffs, scaling triggers, and **Collector Type resolver 6.0** eligibility contract
+- [`COLLECTION_ARCHITECTURE_NOTES.md`](COLLECTION_ARCHITECTURE_NOTES.md) — intentional Collection decisions, tradeoffs, scaling triggers, and **Collector Type resolver 6.1** eligibility contract
 - [`FIREBASE_LOCAL_SETUP.md`](FIREBASE_LOCAL_SETUP.md) — Firebase local setup, services scope, and **release checklist**
 - [`PRIVACY_POLICY.md`](PRIVACY_POLICY.md) — consumer privacy policy (Play Store / GitHub Pages)
 - [`privacy-policy.html`](privacy-policy.html) — HTML version for GitHub Pages

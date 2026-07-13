@@ -25,7 +25,7 @@ flutter test test/collection_modal_overlays_test.dart
 flutter test test/widget_test.dart
 ```
 
-**Collector Type (resolver 6.0)** — eligibility / scoring / reveal lifecycle:
+**Collector Type (resolver 6.1)** — eligibility / scoring / reveal lifecycle:
 
 ```bash
 flutter test test/collector_type_behavior_contract_test.dart
@@ -34,7 +34,7 @@ flutter test test/collector_type_needs_reveal_test.dart
 flutter test test/collector_type_reveal_lifecycle_contract_test.dart
 ```
 
-Contract reference: [`COLLECTION_ARCHITECTURE_NOTES.md`](COLLECTION_ARCHITECTURE_NOTES.md) § Collector Types (resolver 6.0).
+Contract reference: [`COLLECTION_ARCHITECTURE_NOTES.md`](COLLECTION_ARCHITECTURE_NOTES.md) § Collector Types (resolver 6.1).
 
 ---
 

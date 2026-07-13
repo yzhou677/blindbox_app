@@ -56,6 +56,8 @@ const double kCollectorTypeSecretHitRate = 0.5;
 const int kCollectorTypeHunterSecretCap = 8;
 
 /// Max tracked series for Lucky One (early-stage shelf).
+///
+/// Hunter requires strictly more than this — Lucky One is the prequel.
 const int kCollectorTypeCompactSeriesCap = 4;
 
 /// Soft cap on IP spread counted toward Curator scale bonus.
@@ -83,7 +85,7 @@ const int kCollectorTypeMinimalistSeriesCap = 3;
 const double kCollectorTypeScoreTieEpsilon = 0.01;
 
 // ---------------------------------------------------------------------------
-// Collector Type 6.0 — final behavior contract
+// Collector Type 6.1 — Lucky One → Hunter progression on 6.0 contract
 //
 // Pipeline: Signals → Behavior eligibility → Strength → Soft-capped scale.
 // Presence alone never assigns personality. Journey / Reveal History stay out.
@@ -92,8 +94,8 @@ const double kCollectorTypeScoreTieEpsilon = 0.01;
 // | Archetype     | Defining behavior              | Eligibility                          |
 // |---------------|--------------------------------|--------------------------------------|
 // | Completionist | Completion defines the shelf   | ≥2 complete/near + ratio ≥ 0.60      |
-// | Hunter        | Sustained Secret pursuit       | ≥2 Secrets + hitRate ≥ 0.50          |
-// | Lucky One     | Early luck on a small shelf    | !Hunter + ≤4 series + ≥1 + hit≥0.50  |
+// | Hunter        | Sustained Secret pursuit       | >4 series + ≥2 Secrets + hit≥0.50    |
+// | Lucky One     | Early luck (Hunter prequel)    | !Hunter + ≤4 series + ≥1 + hit≥0.50  |
 // | Loyalist      | One IP/universe dominates      | dominantIpShare ≥ 0.60               |
 // | Curator       | Multi-universe investment      | !Loyalist + ≥3 IPs + avg ≥ 0.50      |
 // | Wanderer      | Identity still forming         | Fallback floor (score 5); never beats specialized |
@@ -425,8 +427,10 @@ CollectorTypeStats buildCollectorTypeStats(
         CollectorTypeReasonKey.nearCompletion;
   }
 
-  // Hunter — sustained Secret pursuit (hit rate over Secret slots).
-  final hunterEligible = stats.secretOwned >= 2 &&
+  // Hunter — sustained Secret pursuit past the early shelf stage.
+  // Progression: Lucky One (≤4 series) → Hunter (>4 series).
+  final hunterEligible = seriesCount > kCollectorTypeCompactSeriesCap &&
+      stats.secretOwned >= 2 &&
       stats.secretSlots > 0 &&
       secretHitRate >= kCollectorTypeSecretHitRate;
   if (hunterEligible) {
@@ -438,7 +442,7 @@ CollectorTypeStats buildCollectorTypeStats(
         CollectorTypeReasonKey.manySecrets;
   }
 
-  // Lucky One — early fortune; mutually exclusive with Hunter.
+  // Lucky One — early fortune; Hunter's prequel on a still-small shelf.
   if (!hunterEligible &&
       seriesCount <= kCollectorTypeCompactSeriesCap &&
       stats.secretOwned >= 1 &&

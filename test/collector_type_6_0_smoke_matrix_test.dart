@@ -12,7 +12,7 @@ import 'package:blindbox_app/features/collection/insights/presentation/collector
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Collector Type 6.0 full smoke matrix — explicit fixtures, no random reliance.
+/// Collector Type 6.1 full smoke matrix — explicit fixtures, no random reliance.
 ///
 /// Scenario IDs match the product contract smoke checklist (C1…, H1…, R1…).
 
@@ -232,14 +232,20 @@ void main() {
       );
     });
 
-    test('H2 two Secrets exact 50% → Hunter', () {
-      final s = _series(
-        id: 'h',
-        ipId: 'ip',
-        figures: [_sec('a', 'h'), _sec('b', 'h'), _sec('c', 'h'), _sec('d', 'h')],
-      );
+    test('H2 two Secrets exact 50% on >4 series → Hunter', () {
+      final series = [
+        for (var i = 0; i < 5; i++)
+          _series(
+            id: 'h$i',
+            ipId: 'ip_$i',
+            figures: [
+              _reg('r$i', 'h$i'),
+              if (i < 4) _sec('s$i', 'h$i'),
+            ],
+          ),
+      ];
       final r = _resolve(
-        _snap([s], {'a': _owned('a'), 'b': _owned('b')}),
+        _snap(series, {'s0': _owned('s0'), 's1': _owned('s1')}),
         full: true,
       );
       expect(r.scores[CollectorTypeArchetypeId.hunter], greaterThan(0));
@@ -247,16 +253,17 @@ void main() {
     });
 
     test('H3 two Secrets below 50% → not Hunter', () {
-      final s = _series(
-        id: 'h',
-        ipId: 'ip',
-        figures: [
-          for (var i = 0; i < 5; i++) _sec('s$i', 'h'),
-        ],
-      );
+      final series = [
+        for (var i = 0; i < 5; i++)
+          _series(
+            id: 'h$i',
+            ipId: 'ip_$i',
+            figures: [_sec('s$i', 'h$i')],
+          ),
+      ];
       expect(
         _resolve(
-          _snap([s], {'s0': _owned('s0'), 's1': _owned('s1')}),
+          _snap(series, {'s0': _owned('s0'), 's1': _owned('s1')}),
           full: true,
         ).scores[CollectorTypeArchetypeId.hunter],
         0,
@@ -284,15 +291,19 @@ void main() {
 
     test('H5 denominator is Secret slots not all figures', () {
       final figs = <ShelfFigure>[
-        for (var i = 0; i < 16; i++) _reg('r$i', 'h'),
-        for (var i = 0; i < 4; i++) _sec('s$i', 'h'),
+        for (var i = 0; i < 16; i++) _reg('r$i', 'h0'),
+        for (var i = 0; i < 4; i++) _sec('s$i', 'h0'),
       ];
-      final s = _series(id: 'h', ipId: 'ip', figures: figs);
+      final main = _series(id: 'h0', ipId: 'ip_0', figures: figs);
+      final fillers = [
+        for (var i = 1; i < 5; i++)
+          _series(id: 'h$i', ipId: 'ip_$i', figures: [_reg('f$i', 'h$i')]),
+      ];
       final r = _resolve(
-        _snap([s], {'s0': _owned('s0'), 's1': _owned('s1')}),
+        _snap([main, ...fillers], {'s0': _owned('s0'), 's1': _owned('s1')}),
         full: true,
       );
-      // 2/4 = 50% → Hunter; 2/20 would fail
+      // 2/4 = 50% on >4 series → Hunter; 2/20 figures would fail
       expect(r.stats.secretSlots, 4);
       expect(r.stats.secretOwned, 2);
       expect(r.scores[CollectorTypeArchetypeId.hunter], greaterThan(0));
@@ -356,7 +367,7 @@ void main() {
       );
     });
 
-    test('L4 Hunter eligible → Lucky One score 0', () {
+    test('L4 early 2 Secrets stay Lucky One (prequel)', () {
       final s = _series(
         id: 'h',
         ipId: 'ip',
@@ -364,6 +375,26 @@ void main() {
       );
       final r = _resolve(
         _snap([s], {'a': _owned('a'), 'b': _owned('b')}),
+        full: true,
+      );
+      expect(r.archetypeId, CollectorTypeArchetypeId.luckyOne);
+      expect(r.scores[CollectorTypeArchetypeId.hunter], 0);
+    });
+
+    test('L5 Hunter eligible → Lucky One score 0', () {
+      final series = [
+        for (var i = 0; i < 5; i++)
+          _series(
+            id: 'h$i',
+            ipId: 'ip_$i',
+            figures: [
+              _reg('r$i', 'h$i'),
+              if (i < 4) _sec('s$i', 'h$i'),
+            ],
+          ),
+      ];
+      final r = _resolve(
+        _snap(series, {'s0': _owned('s0'), 's1': _owned('s1')}),
         full: true,
       );
       expect(r.scores[CollectorTypeArchetypeId.hunter], greaterThan(0));
@@ -1346,7 +1377,7 @@ void main() {
   });
 
   group('R — Resolver lifecycle', () {
-    test('R1 5.3 → 6.0 upgrade needsReveal, no silent rewrite', () {
+    test('R1 5.3 → 6.1 upgrade needsReveal, no silent rewrite', () {
       final series = [
         for (var i = 0; i < 3; i++)
           _series(id: 'd$i', ipId: 'dimoo', figures: [_reg('x$i', 'd$i')]),
@@ -1363,10 +1394,10 @@ void main() {
       );
       // Live candidate may differ from a frozen 5.3 identity — Hero stays
       // frozen until explicit Reveal (no silent rewrite in this pure check).
-      expect(kCollectorTypeResolverVersion, '6.0');
+      expect(kCollectorTypeResolverVersion, '6.1');
     });
 
-    test('R2/R3 after matching 6.0 persist → needsReveal false', () {
+    test('R2/R3 after matching 6.1 persist → needsReveal false', () {
       final series = [
         for (var i = 0; i < 3; i++)
           _series(id: 'd$i', ipId: 'dimoo', figures: [_reg('x$i', 'd$i')]),

@@ -62,7 +62,7 @@ void main() {
     expect(identity.reasonKey, CollectorTypeReasonKey.stillUnfolding);
   });
 
-  test('hunter when multiple secrets owned', () {
+  test('lucky one when early shelf has multiple secrets', () {
     final series = _seriesWithFigures(
       id: 's1',
       figures: [
@@ -92,6 +92,48 @@ void main() {
     final snap = CollectionSnapshot(
       shelfSeries: [series],
       figureStates: {'a': _owned('a'), 'b': _owned('b')},
+    );
+    final identity = resolveCollectorType(
+      snapshot: snap,
+      profile: interpretShelf(snap),
+      revealedAt: DateTime(2026, 1, 1),
+    );
+    expect(identity.archetypeId, CollectorTypeArchetypeId.luckyOne);
+    expect(identity.reasonKey, CollectorTypeReasonKey.fortunateSecrets);
+  });
+
+  test('hunter when shelf grows past early stage with multiple secrets', () {
+    final shelf = <ShelfSeries>[
+      for (var i = 0; i < 5; i++)
+        _seriesWithFigures(
+          id: 's$i',
+          ipId: 'ip_$i',
+          figures: [
+            ShelfFigure(
+              id: 'r$i',
+              seriesId: 's$i',
+              name: 'Regular $i',
+              rarity: 'Regular',
+              isSecret: false,
+            ),
+            if (i < 4)
+              ShelfFigure(
+                id: 'sec$i',
+                seriesId: 's$i',
+                name: 'Secret $i',
+                rarity: 'Secret',
+                isSecret: true,
+              ),
+          ],
+        ),
+    ];
+    final snap = CollectionSnapshot(
+      shelfSeries: shelf,
+      // 2/4 secret slots = 50% on >4 series → Hunter
+      figureStates: {
+        'sec0': _owned('sec0'),
+        'sec1': _owned('sec1'),
+      },
     );
     final identity = resolveCollectorType(
       snapshot: snap,

@@ -147,7 +147,7 @@ abstract final class CollectorTypeArchetypes {
     id: CollectorTypeArchetypeId.luckyOne,
     displayName: 'The Lucky One',
     flavorText:
-        'Luck found you before hunting did. Early fortune on a still-small shelf.',
+        'Luck found you before hunting did. The early chapter before The Hunter.',
     accentColorLight: Color(0xFFE8C878),
     accentColorDark: Color(0xFFF0D488),
     icon: Icons.auto_awesome_outlined,

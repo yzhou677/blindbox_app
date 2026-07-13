@@ -53,6 +53,10 @@ import 'package:flutter/foundation.dart';
 /// Signature includes currently-recent catalog series so Trend aging can
 /// invalidate without rewriting persisted identity.
 ///
+/// **6.1** — Lucky One → Hunter progression: Lucky One is ≤4 series (≥1 Secret,
+/// hit ≥50%); Hunter requires **>4** series (≥2 Secrets, hit ≥50%). Same-shelf
+/// early Secret luck stays Lucky One until the shelf grows past early stage.
+///
 /// **Bump when** a change can alter Identity or Explainability for the same
 /// shelf:
 /// - scoring weights
@@ -75,7 +79,7 @@ import 'package:flutter/foundation.dart';
 /// Stamped onto every [CollectorTypeRevealRecord]. Do not branch on this in
 /// Collector Type UI or resolver logic — Timeline / Personality Memory
 /// replay past results without re-running a future resolver.
-const String kCollectorTypeResolverVersion = '6.0';
+const String kCollectorTypeResolverVersion = '6.1';
 
 /// Append-only resolve snapshot — Personality Memory / Timeline / replay.
 ///
