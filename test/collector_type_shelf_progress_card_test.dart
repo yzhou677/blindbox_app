@@ -9,6 +9,7 @@ CollectorTypeStats _stats({
   int completionPercent = 23,
   int trackedSeries = 5,
   int masterCompleteSeriesCount = 0,
+  int masterEligibleSeriesCount = 0,
   int completedSeriesCount = 0,
 }) {
   return CollectorTypeStats(
@@ -17,6 +18,7 @@ CollectorTypeStats _stats({
     trackedSeries: trackedSeries,
     completedSeriesCount: completedSeriesCount,
     masterCompleteSeriesCount: masterCompleteSeriesCount,
+    masterEligibleSeriesCount: masterEligibleSeriesCount,
     completionPercent: completionPercent,
     secretOwned: 1,
     secretSlots: 2,
@@ -31,34 +33,52 @@ void main() {
     test('hides Master Completion until first master series', () {
       expect(
         ShelfProgressPresentation.showMasterCompletion(
-          _stats(masterCompleteSeriesCount: 0),
+          _stats(masterCompleteSeriesCount: 0, masterEligibleSeriesCount: 2),
         ),
         isFalse,
       );
       expect(
         ShelfProgressPresentation.showMasterCompletion(
-          _stats(masterCompleteSeriesCount: 1),
+          _stats(masterCompleteSeriesCount: 1, masterEligibleSeriesCount: 2),
         ),
         isTrue,
       );
     });
 
-    test('master ratio uses existing series counts only', () {
+    test('master ratio uses Secret-bearing eligible denom only', () {
       expect(
         ShelfProgressPresentation.masterCompletionRatio(
-          _stats(trackedSeries: 5, masterCompleteSeriesCount: 2),
+          _stats(
+            trackedSeries: 5,
+            masterCompleteSeriesCount: 2,
+            masterEligibleSeriesCount: 2,
+          ),
         ),
-        0.4,
+        1.0,
       );
       expect(
         ShelfProgressPresentation.masterCompletionPercent(
-          _stats(trackedSeries: 5, masterCompleteSeriesCount: 2),
+          _stats(
+            trackedSeries: 5,
+            masterCompleteSeriesCount: 2,
+            masterEligibleSeriesCount: 2,
+          ),
         ),
-        40,
+        100,
+      );
+      expect(
+        ShelfProgressPresentation.masterCompletionPercent(
+          _stats(
+            trackedSeries: 5,
+            masterCompleteSeriesCount: 1,
+            masterEligibleSeriesCount: 2,
+          ),
+        ),
+        50,
       );
       expect(
         ShelfProgressPresentation.masterCompletionRatio(
-          _stats(trackedSeries: 0, masterCompleteSeriesCount: 0),
+          _stats(trackedSeries: 5, masterEligibleSeriesCount: 0),
         ),
         0,
       );
@@ -90,7 +110,9 @@ void main() {
     );
   });
 
-  testWidgets('stage 2 reveals subordinate Master Completion', (tester) async {
+  testWidgets('stage 2 reveals Master Completion over eligible denom', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -100,6 +122,7 @@ void main() {
               trackedSeries: 5,
               completedSeriesCount: 4,
               masterCompleteSeriesCount: 2,
+              masterEligibleSeriesCount: 2,
             ),
           ),
         ),
@@ -109,7 +132,7 @@ void main() {
     expect(find.text(CollectionVocabulary.regularCompletion), findsOneWidget);
     expect(find.text('80%'), findsOneWidget);
     expect(find.text(CollectionVocabulary.masterCompletion), findsOneWidget);
-    expect(find.text('40%'), findsOneWidget);
+    expect(find.text('100%'), findsOneWidget);
     expect(
       find.text(CollectionInsightsCompactSummaryFormat.masterCompleteGlyph),
       findsOneWidget,

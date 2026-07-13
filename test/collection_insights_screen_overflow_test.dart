@@ -43,6 +43,7 @@ void main() {
           trackedSeries: 1,
           completedSeriesCount: 0,
           masterCompleteSeriesCount: 0,
+          masterEligibleSeriesCount: 0,
           completionPercent: 0,
           secretOwned: 0,
           secretSlots: 0,

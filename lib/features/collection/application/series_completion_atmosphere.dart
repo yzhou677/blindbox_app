@@ -12,9 +12,6 @@ SeriesCompletionAtmosphere atmosphereForSeries(
   if (total <= 0) return const SeriesCompletionAtmosphere();
 
   final resolution = resolveSeriesCompletion(series, figureStates);
-  final seriesProgress =
-      progress?.forSeries(series) ?? progressForSeries(series, figureStates);
-  final ratio = seriesProgress.owned / total;
 
   final secrets = series.figures.where((f) => f.isSecret).toList();
   final secretRatio = secrets.isEmpty ? 0.0 : secrets.length / total;
@@ -23,7 +20,7 @@ SeriesCompletionAtmosphere atmosphereForSeries(
       (total == 1 && secrets.isNotEmpty);
 
   return SeriesCompletionAtmosphere(
-    nearComplete: !resolution.isCompleted && ratio >= 0.85,
+    nearComplete: resolution.isNearComplete,
     missingSecret: resolution.isCompleted &&
         resolution.secretSlotCount > 0 &&
         !resolution.isMasterComplete,

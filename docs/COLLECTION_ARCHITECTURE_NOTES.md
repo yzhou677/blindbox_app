@@ -195,16 +195,33 @@ Type Evolution) but must stay curated — never a six-row stats dump.
 
 ### Shelf Progress progressive disclosure
 
-Shelf Progress answers **collection progression** (Complete → Master Complete).
+Shelf Progress answers **collection progression** (Regular Complete → Master Complete).
 
 | Stage | Condition | Rows |
 | ----- | --------- | ---- |
-| 1 | Always | **Regular Completion** (primary) — existing `completionPercent` |
-| 2 | `masterCompleteSeriesCount > 0` | Add **👑 Master Completion** (secondary) — share of tracked series that are Master Complete |
+| 1 | Always | **Regular Completion** — mean of canonical `progressRatio` across **all** shelf series |
+| 2 | `masterCompleteSeriesCount > 0` | **👑 Master Completion** — Master Complete / **Secret-bearing** series only |
 
-Do **not** show Master Completion at `0%` / `0 / N` before the first Master
-Complete — it is noise until that tier is relevant. Presentation only; no new
-completion calculations.
+**Formulas (canonical):**
+
+```text
+Regular Completion:
+  mean over all shelf series of resolveSeriesCompletion(...).progressRatio
+  (Secrets do not reduce a Regular-complete series below 100%)
+
+Master Completion:
+  masterCompleteSeriesCount / masterEligibleSeriesCount
+  where masterEligibleSeriesCount = series with secretSlotCount > 0
+  (no-Secret series are excluded from the denominator)
+
+Near Complete:
+  !isCompleted && progressRatio >= 0.85
+  (same definition for Completion sort, atmosphere, and interpretShelf)
+```
+
+If `masterEligibleSeriesCount == 0`, do not show the Master Completion row.
+Do **not** show Master Completion at `0%` before the first Master Complete —
+progressive disclosure until `masterCompleteSeriesCount > 0`.
 
 **Do not:**
 
@@ -383,7 +400,7 @@ Sort modes do **not** group by IP. IP filters remain available as a filter facet
 | Recently Added | Preserve shelf / bucket encounter order | N/A |
 | Alphabetical (A–Z) | Series name (case-insensitive) | shelf `id` |
 | Figure Count | `figureCount` (desc) | series name → shelf `id` |
-| Completion | **Tier first:** Master Complete → Complete → Near Complete (≥ 0.85) → In Progress; then progress ratio (desc) | series name → shelf `id` |
+| Completion | **Tier first:** Master Complete → Complete → Near Complete (`!isCompleted && progressRatio ≥ 0.85`) → In Progress; then progress ratio (desc) | series name → shelf `id` |
 
 **Product rule:** Collection sorting is flat. New sort modes should define a **series-level** comparator — not reintroduce hidden IP aggregates.
 

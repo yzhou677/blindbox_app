@@ -21,7 +21,9 @@ const int collectorTypeAnalyzingHoldMs = 1400;
 // --- Scoring policy thresholds (bump [kCollectorTypeResolverVersion] when these change) ---
 
 /// Series owned/slots ratio treated as “near complete” for Completionist.
-const double kCollectorTypeNearCompleteRatio = 0.85;
+/// Near-complete series ratio for Completionist eligibility (canonical
+/// [SeriesCompletionResolution.isNearComplete] / [kSeriesNearCompleteRatio]).
+const double kCollectorTypeNearCompleteRatio = kSeriesNearCompleteRatio;
 
 /// Minimum share of shelf series that are finished for Completionist deep path.
 ///
@@ -289,16 +291,16 @@ CollectorTypeStats _buildStats(
 
   final brandBreakdown = aggregateBrandBreakdownByCanonicalKey(brandEntries);
 
-  final (completedSeriesCount, masterCompleteSeriesCount) =
-      countShelfCompletionTiers(snapshot);
+  final aggregate = aggregateShelfCompletion(snapshot);
 
   return CollectorTypeStats(
     totalOwned: snapshot.totalOwnedFigures,
     totalWishlist: snapshot.totalWishlistFigures,
     trackedSeries: snapshot.trackedSeriesCount,
-    completedSeriesCount: completedSeriesCount,
-    masterCompleteSeriesCount: masterCompleteSeriesCount,
-    completionPercent: snapshot.averageCompletionPercent,
+    completedSeriesCount: aggregate.completedSeriesCount,
+    masterCompleteSeriesCount: aggregate.masterCompleteSeriesCount,
+    masterEligibleSeriesCount: aggregate.masterEligibleSeriesCount,
+    completionPercent: aggregate.regularCompletionPercent,
     secretOwned: profile.secretOwnedCount,
     secretSlots: profile.secretSlotCount,
     brandBreakdown: brandBreakdown,
@@ -339,11 +341,9 @@ CollectorTypeStats _buildStats(
   var customPhotoSeries = 0;
 
   for (final series in snapshot.shelfSeries) {
-    final progress = progressForSeries(series, snapshot.figureStates);
-    final total = series.figureCount;
-    if (total > 0 &&
-        progress.owned < total &&
-        progress.owned / total >= kCollectorTypeNearCompleteRatio) {
+    final resolution =
+        resolveSeriesCompletion(series, snapshot.figureStates);
+    if (resolution.isNearComplete) {
       nearComplete++;
     }
     if (catalog != null && series.catalogTemplateId != null) {

@@ -14,11 +14,11 @@ abstract final class ShelfProgressPresentation {
   static bool showMasterCompletion(CollectorTypeStats stats) =>
       stats.masterCompleteSeriesCount > 0;
 
-  /// Share of tracked series that are Master Complete (display only).
+  /// Share of Master-eligible (Secret-bearing) series that are Master Complete.
   static double masterCompletionRatio(CollectorTypeStats stats) {
-    final total = stats.trackedSeries;
-    if (total <= 0) return 0;
-    return (stats.masterCompleteSeriesCount / total).clamp(0.0, 1.0);
+    final eligible = stats.masterEligibleSeriesCount;
+    if (eligible <= 0) return 0;
+    return (stats.masterCompleteSeriesCount / eligible).clamp(0.0, 1.0);
   }
 
   static int masterCompletionPercent(CollectorTypeStats stats) =>

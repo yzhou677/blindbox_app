@@ -9,6 +9,7 @@ class CollectorTypeStats {
     required this.trackedSeries,
     required this.completedSeriesCount,
     required this.masterCompleteSeriesCount,
+    required this.masterEligibleSeriesCount,
     required this.completionPercent,
     required this.secretOwned,
     required this.secretSlots,
@@ -22,6 +23,11 @@ class CollectorTypeStats {
   final int trackedSeries;
   final int completedSeriesCount;
   final int masterCompleteSeriesCount;
+
+  /// Secret-bearing series count — Master Completion percentage denominator.
+  final int masterEligibleSeriesCount;
+
+  /// Shelf Regular Completion % (mean of canonical per-series progressRatio).
   final int completionPercent;
   final int secretOwned;
   final int secretSlots;
@@ -35,6 +41,7 @@ class CollectorTypeStats {
         'trackedSeries': trackedSeries,
         'completedSeriesCount': completedSeriesCount,
         'masterCompleteSeriesCount': masterCompleteSeriesCount,
+        'masterEligibleSeriesCount': masterEligibleSeriesCount,
         'completionPercent': completionPercent,
         'secretOwned': secretOwned,
         'secretSlots': secretSlots,
@@ -65,6 +72,8 @@ class CollectorTypeStats {
       completedSeriesCount: (json['completedSeriesCount'] as int?) ?? 0,
       masterCompleteSeriesCount:
           (json['masterCompleteSeriesCount'] as int?) ?? 0,
+      masterEligibleSeriesCount:
+          (json['masterEligibleSeriesCount'] as int?) ?? 0,
       completionPercent: (json['completionPercent'] as int?) ?? 0,
       secretOwned: (json['secretOwned'] as int?) ?? 0,
       secretSlots: (json['secretSlots'] as int?) ?? 0,

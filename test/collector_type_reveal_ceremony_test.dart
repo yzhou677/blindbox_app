@@ -24,6 +24,7 @@ CollectorTypeIdentity _identity(
       trackedSeries: 1,
       completedSeriesCount: 0,
       masterCompleteSeriesCount: 0,
+      masterEligibleSeriesCount: 0,
       completionPercent: 40,
       secretOwned: 0,
       secretSlots: 0,

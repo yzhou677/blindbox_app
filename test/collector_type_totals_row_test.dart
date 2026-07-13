@@ -15,6 +15,7 @@ void main() {
       trackedSeries: 5,
       completedSeriesCount: 5,
       masterCompleteSeriesCount: 2,
+      masterEligibleSeriesCount: 0,
       completionPercent: 72,
       secretOwned: 5,
       secretSlots: 8,

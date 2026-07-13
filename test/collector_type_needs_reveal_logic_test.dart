@@ -21,6 +21,7 @@ CollectorTypeResolution _candidate({
       trackedSeries: 1,
       completedSeriesCount: 0,
       masterCompleteSeriesCount: 0,
+      masterEligibleSeriesCount: 0,
       completionPercent: 10,
       secretOwned: 0,
       secretSlots: 0,

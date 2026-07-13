@@ -13,6 +13,7 @@ void main() {
       trackedSeries: 2,
       completedSeriesCount: 0,
       masterCompleteSeriesCount: 0,
+      masterEligibleSeriesCount: 0,
       completionPercent: 80,
       secretOwned: 1,
       secretSlots: 3,
@@ -41,6 +42,7 @@ void main() {
       trackedSeries: 3,
       completedSeriesCount: 2,
       masterCompleteSeriesCount: 1,
+      masterEligibleSeriesCount: 1,
       completionPercent: 90,
       secretOwned: 4,
       secretSlots: 6,
@@ -57,6 +59,7 @@ void main() {
     final restoredTiers = CollectorTypeIdentity.fromJson(withTiers.toJson());
     expect(restoredTiers.stats.completedSeriesCount, 2);
     expect(restoredTiers.stats.masterCompleteSeriesCount, 1);
+    expect(restoredTiers.stats.masterEligibleSeriesCount, 1);
     expect(restoredTiers.stats.secretOwned, 4);
   });
 
@@ -111,6 +114,7 @@ void main() {
         trackedSeries: 1,
         completedSeriesCount: 0,
         masterCompleteSeriesCount: 0,
+        masterEligibleSeriesCount: 0,
         completionPercent: 10,
         secretOwned: 0,
         secretSlots: 0,
