@@ -78,9 +78,17 @@ def assert_shelfy_screen(ui: str, label: str) -> None:
             raise RuntimeError(f"{label}: figure gallery not open.")
         return
     if label == "02_insights":
-        if "collector journey" not in lowered:
-            raise RuntimeError(f"{label}: full insights screen not open.")
-        return
+        if any(
+            m in lowered
+            for m in (
+                "collector journey",
+                "at a glance",
+                "shelf progress",
+                "reveal collector type",
+            )
+        ):
+            return
+        raise RuntimeError(f"{label}: full insights screen not open.")
     markers = ("my collection", "discover", "market", "collection insights", "chasers", "latest drops")
     if not any(m in lowered for m in markers):
         raise RuntimeError(f"{label}: Shelfy not in foreground (got unrelated screen).")
@@ -160,7 +168,18 @@ def clear_shelf() -> None:
 
 
 def launch(wait_seconds: float = 18.0) -> None:
-    adb("shell", "monkey", "-p", PKG, "-c", "android.intent.category.LAUNCHER", "1")
+    adb(
+        "shell",
+        "am",
+        "start",
+        "-W",
+        "-n",
+        f"{PKG}/.MainActivity",
+        "-a",
+        "android.intent.action.MAIN",
+        "-c",
+        "android.intent.category.LAUNCHER",
+    )
     time.sleep(wait_seconds)
 
 
@@ -169,7 +188,9 @@ def open_add_series_sheet() -> None:
     ui = dump()
     if not (tap_text(ui, "Add series", 2.5) or tap_desc(ui, "Add series", 2.5)):
         tap(W // 2, H // 2 - 80)
-    wait_for("Latest releases", 45)
+    # Sheet copy is "Add a series"; rows expose "Add to collection".
+    wait_for("Add a series", 45)
+    wait_for("Add to collection", 45)
 
 
 def tap_nth_desc(ui: str, needle: str, index: int, wait: float = 2.5) -> bool:
@@ -237,32 +258,56 @@ def add_from_latest_releases(count: int = 4) -> None:
     """Tap the first remaining Add chip on each row — one new series per pass."""
     open_add_series_sheet()
     added = 0
-    for attempt in range(count * 3):
+    for attempt in range(count * 4):
         if added >= count:
             break
         ui = dump()
         before = count_add_buttons(ui)
-        if before == 0 and added > 0:
-            break
-        if tap_nth_desc(ui, "Add to collection", 0) or tap_nth_desc(ui, "Add to my collection", 0):
-            time.sleep(4.0)
-            ui2 = dump()
-            if count_add_buttons(ui2) < before or "already in your collection" in ui2.lower():
-                added += 1
-                print(f"    + series {added}/{count}")
+        if before == 0:
+            # Sheet may need a nudge / reopen after adds.
+            if added > 0:
+                break
+            open_add_series_sheet()
             continue
-        # Fallback: tap trailing Add on recommendation row by index.
-        tap(2380, 680 + added * 132)
+        if not (
+            tap_nth_desc(ui, "Add to collection", 0)
+            or tap_nth_desc(ui, "Add to my collection", 0)
+        ):
+            print("    warn: no Add to collection control found")
+            open_add_series_sheet()
+            continue
         time.sleep(4.0)
-        added += 1
-        print(f"    + series {added}/{count} (coords)")
-    print(f"  Seeded {added} series from Latest releases.")
+        ui2 = dump()
+        after = count_add_buttons(ui2)
+        if after < before or "already in your collection" in ui2.lower():
+            added += 1
+            print(f"    + series {added}/{count}")
+        else:
+            print(f"    warn: add did not stick (buttons {before}->{after})")
+            # Re-open sheet if it closed without adding.
+            if "add a series" not in ui2.lower():
+                open_add_series_sheet()
+    print(f"  Seeded {added} series from Add sheet.")
     dismiss_overlays()
     pop_to_collection_main()
 
 
 def seed_shelf() -> None:
-    launch(wait_seconds=22)
+    # Prefer explicit activity start — monkey can land on the launcher.
+    adb(
+        "shell",
+        "am",
+        "start",
+        "-W",
+        "-n",
+        f"{PKG}/.MainActivity",
+        "-a",
+        "android.intent.action.MAIN",
+        "-c",
+        "android.intent.category.LAUNCHER",
+    )
+    time.sleep(18)
+    ensure_shelfy_foreground()
     add_from_latest_releases(4)
     ui = dump()
     if "empty shelf" in ui.lower():
@@ -304,7 +349,9 @@ def nav_insights_shot() -> None:
         swipe(W // 2, 460, W // 2, 1080, 300)
         time.sleep(0.45)
     ui = dump()
-    tap_desc(ui, "Collection Insights", 2.0) or tap_text(ui, "Collection Insights", 2.0)
+    tap_desc(ui, "Insights", 2.0) or tap_desc(ui, "Collection Insights", 2.0) or tap_text(
+        ui, "Collection Insights", 2.0
+    )
     time.sleep(2)
     ui = dump()
     if not (
@@ -312,13 +359,18 @@ def nav_insights_shot() -> None:
         or tap_desc(ui, "Reveal collector type", 3.5)
         or tap_text(ui, "Your collector type", 3.5)
     ):
-        tap(W // 2, 590)
-        time.sleep(3)
-    ui = wait_for("Collector journey", 15)
-    if "collector journey" not in ui.lower():
-        tap(W // 2, 700)
-        time.sleep(3)
-    time.sleep(2)
+        # Already revealed — stay on insights panel.
+        if "at a glance" not in ui.lower() and "collector journey" not in ui.lower():
+            tap(W // 2, 590)
+            time.sleep(3)
+    # Ceremony settles on identity; nudge so At a glance / Shelf Progress show.
+    for _ in range(2):
+        swipe(W // 2, 1200, W // 2, 620, 380)
+        time.sleep(0.8)
+    ui = wait_for("At a glance", 12)
+    if "at a glance" not in ui.lower():
+        wait_for("Collector journey", 8)
+    time.sleep(1.5)
 
 
 def nav_discover_shot() -> None:
@@ -362,12 +414,26 @@ def tap_desc_all(ui: str, needle: str, wait: float = 2.0) -> bool:
 
 
 def tap_first_series_card(ui: str) -> bool:
+    # Prefer full shelf row semantics ("… Series … 0 / N"), not Brand/IP chips.
+    pat = re.compile(
+        r'content-desc="([^"]*Series[^"]*\d+\s*/\s*\d+[^"]*)"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"',
+        re.I,
+    )
+    matches = list(pat.finditer(ui))
+    if matches:
+        x, y = _bounds_center(matches[0])
+        tap(x, y)
+        time.sleep(3.0)
+        return True
     for needle in (
         "Power Chords",
         "Palico Series",
         "Carry the Music",
         "Vinyl Plush",
         "Love Across Galaxies",
+        "PIXAR",
+        "Wheel of Time",
+        "Yuna Nocturne",
     ):
         if tap_desc_all(ui, needle, 3.0):
             return True
@@ -375,6 +441,17 @@ def tap_first_series_card(ui: str) -> bool:
 
 
 def open_figure_gallery_from_sheet(ui: str) -> None:
+    # Figure thumbs expose semantics like: "tap DIMOO as Woody Regular".
+    pat_tap = re.compile(
+        r'content-desc="(tap [^"]+)"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"',
+        re.I,
+    )
+    m = pat_tap.search(ui)
+    if m:
+        x, y = _bounds_center(m)
+        tap(x, y)
+        time.sleep(3.5)
+        return
     pat = re.compile(
         r'class="android\.widget\.ImageView"[^>]*clickable="true"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"',
     )
@@ -398,9 +475,11 @@ def nav_figure_detail_shot() -> None:
     time.sleep(1.5)
     ui = dump()
     if not tap_first_series_card(ui):
-        tap_desc(ui, "Series", 3.0) or tap(W // 2, 1250)
-    time.sleep(3.5)
-    ui = wait_for("Figures", 15)
+        tap(W // 2, 1050)
+        time.sleep(3.0)
+    ui = wait_for("Regular Figures", 15)
+    if "regular figures" not in ui.lower() and "figures" not in ui.lower():
+        ui = wait_for("tap ", 10)
     open_figure_gallery_from_sheet(ui)
     wait_for("Close", 12)
 
