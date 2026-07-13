@@ -170,7 +170,12 @@ what is counted — never bare “Figures”, “Series”, or “Wishlist”.
 
 Same completion tiers (`countShelfCompletionTiers` / `resolveSeriesCompletion`);
 At a glance omits wishlist and uses secrets collected instead. Values in At a
-glance come from `CollectorTypeStats` frozen at reveal.
+glance come from `CollectorTypeStats` frozen at reveal **when**
+`collectorTypeStatsVersion == kCollectorTypeStatsVersion` (currently **2**) and
+required fields are present. Otherwise Insights **live-derives** display stats
+from the current shelf without rewriting prefs — identity (archetype / reason /
+signature / reveal time / history) stays frozen. Outdated stats schema also
+sets `needsReveal` so the user can formally refresh the snapshot.
 
 ### Collector Journey as a diary
 

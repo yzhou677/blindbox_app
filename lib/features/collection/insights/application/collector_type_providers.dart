@@ -3,6 +3,7 @@ import 'package:blindbox_app/features/collection/application/collection_notifier
 import 'package:blindbox_app/features/collection/application/shelf_emotional_providers.dart';
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_journey_summary.dart';
+import 'package:blindbox_app/features/collection/insights/application/collector_type_display_stats.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_needs_reveal.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_resolver.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_view_model.dart';
@@ -10,16 +11,40 @@ import 'package:blindbox_app/features/collection/insights/domain/collector_type_
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_resolution.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_reveal_record.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_stats.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Last **revealed** Collector Type — persisted snapshot for Hero / dashboard.
 ///
 /// Never the live candidate. Updates after Reveal persists (watches ViewModel).
+/// Identity fields are frozen; use [collectorTypeDisplayStatsProvider] for
+/// At a Glance / Shelf Progress numbers (may live-derive when stats schema is old).
 final collectorTypeIdentityProvider = Provider<CollectorTypeIdentity?>((ref) {
   ref.watch(collectionMemoryBootstrapProvider);
   // Rebuild when a reveal writes a new snapshot to the memory store.
   ref.watch(collectorTypeViewModelProvider);
   return CollectionMemoryStore.instance.cachedCollectorTypeIdentity;
+});
+
+/// Stats for Insights numbers — frozen when schema current, else live-derived.
+///
+/// Does **not** rewrite prefs. Identity (type / reason / signature) stays frozen.
+final collectorTypeDisplayStatsProvider = Provider<CollectorTypeStats?>((ref) {
+  final identity = ref.watch(collectorTypeIdentityProvider);
+  if (identity == null) return null;
+  final snap = ref.watch(collectionNotifierProvider);
+  final profile = ref.watch(shelfEmotionalProfileProvider);
+  final catalog = ref.watch(catalogBundleProvider).valueOrNull;
+  ref.watch(collectionMemoryBootstrapProvider);
+  ref.watch(collectorTypeViewModelProvider);
+  final memory = CollectionMemoryStore.instance.cached;
+  return resolveCollectorTypeDisplayStats(
+    storedIdentity: identity,
+    memory: memory,
+    snapshot: snap,
+    profile: profile,
+    catalog: catalog,
+  );
 });
 
 /// Live resolve of the current shelf — transient candidate, never persisted.
@@ -46,8 +71,8 @@ final collectorTypeCandidateArchetypeProvider =
 
 /// Whether Insights should encourage another Reveal.
 ///
-/// True when shelf **signature** or **resolverVersion** drifted vs last reveal
-/// (**When** only — does not decide the reveal result).
+/// True when shelf **signature**, **resolverVersion**, or **stats schema**
+/// drifted vs last reveal (**When** only — does not decide the reveal result).
 final collectorTypeNeedsRevealProvider = Provider<bool>((ref) {
   ref.watch(collectionMemoryBootstrapProvider);
   // Recompute after reveal persists.
@@ -64,6 +89,7 @@ final collectorTypeNeedsRevealProvider = Provider<bool>((ref) {
     persistedResolverVersion: cached.revealedResolverVersion,
     liveCandidate: live,
     currentResolverVersion: kCollectorTypeResolverVersion,
+    persistedStatsAreCurrent: memoryCollectorTypeStatsAreCurrent(cached),
   );
 });
 

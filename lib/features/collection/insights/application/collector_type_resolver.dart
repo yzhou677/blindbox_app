@@ -206,7 +206,7 @@ CollectorTypeResolution resolveCollectorType({
   final catalogSeriesById = catalog == null
       ? null
       : {for (final s in catalog.series) s.id: s};
-  final stats = _buildStats(snapshot, profile, catalog);
+  final stats = buildCollectorTypeStats(snapshot, profile, catalog);
   final signatureHash = computeCollectorTypeSignatureHash(snapshot);
   final emptyScores = {
     for (final id in CollectorTypeArchetypeId.values) id: 0.0,
@@ -256,7 +256,7 @@ double _confidence({required double winner, required double runnerUp}) {
   return (gap / winner).clamp(kCollectorTypeConfidenceMin, 1.0);
 }
 
-CollectorTypeStats _buildStats(
+CollectorTypeStats buildCollectorTypeStats(
   CollectionSnapshot snapshot,
   ShelfEmotionalProfile profile,
   CatalogSeedBundle? catalog,
