@@ -27,7 +27,7 @@ abstract final class ShelfProgressPresentation {
 
 /// Dedicated shelf completion surface — presentation of existing reveal stats.
 ///
-/// Progressive disclosure: Regular Completion always; Master Completion only
+/// Progressive disclosure: Regular Progress always; Master Completion only
 /// once [CollectorTypeStats.masterCompleteSeriesCount] is at least one.
 class CollectorTypeShelfProgressCard extends StatelessWidget {
   const CollectorTypeShelfProgressCard({super.key, required this.stats});
@@ -51,7 +51,7 @@ class CollectorTypeShelfProgressCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.lg + 2),
           _ProgressRow(
-            label: CollectionVocabulary.regularCompletion,
+            label: CollectionVocabulary.regularProgress,
             valueText: '${stats.completionPercent}%',
             ratio: regularRatio,
             primary: true,

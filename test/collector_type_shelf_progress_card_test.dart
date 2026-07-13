@@ -85,7 +85,7 @@ void main() {
     });
   });
 
-  testWidgets('stage 1 shows Regular Completion only', (tester) async {
+  testWidgets('stage 1 shows Regular Progress only', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -97,7 +97,7 @@ void main() {
     );
 
     expect(find.text('Shelf Progress'), findsOneWidget);
-    expect(find.text(CollectionVocabulary.regularCompletion), findsOneWidget);
+    expect(find.text(CollectionVocabulary.regularProgress), findsOneWidget);
     expect(find.text('23%'), findsOneWidget);
     expect(find.text(CollectionVocabulary.masterCompletion), findsNothing);
     expect(
@@ -129,7 +129,7 @@ void main() {
       ),
     );
 
-    expect(find.text(CollectionVocabulary.regularCompletion), findsOneWidget);
+    expect(find.text(CollectionVocabulary.regularProgress), findsOneWidget);
     expect(find.text('80%'), findsOneWidget);
     expect(find.text(CollectionVocabulary.masterCompletion), findsOneWidget);
     expect(find.text('100%'), findsOneWidget);

@@ -21,7 +21,7 @@ abstract final class CollectionVocabulary {
   static const masterComplete = 'Master Complete';
 
   /// Shelf Progress — primary progression row (always shown).
-  static const regularCompletion = 'Regular Completion';
+  static const regularProgress = 'Regular Progress';
 
   /// Shelf Progress — secondary row; only after first Master Complete series.
   static const masterCompletion = 'Master Completion';

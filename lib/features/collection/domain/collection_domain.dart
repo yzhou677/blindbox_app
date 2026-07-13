@@ -439,7 +439,7 @@ class CollectionSnapshot {
     return n;
   }
 
-  /// Shelf Regular Completion % — mean of canonical [SeriesCompletionResolution.progressRatio].
+  /// Shelf Regular Progress % — mean of canonical [SeriesCompletionResolution.progressRatio].
   ///
   /// Secrets do not reduce a Regular-complete series below 100% contribution.
   int get averageCompletionPercent =>

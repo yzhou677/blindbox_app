@@ -204,13 +204,13 @@ Shelf Progress answers **collection progression** (Regular Complete → Master C
 
 | Stage | Condition | Rows |
 | ----- | --------- | ---- |
-| 1 | Always | **Regular Completion** — mean of canonical `progressRatio` across **all** shelf series |
+| 1 | Always | **Regular Progress** — mean of canonical `progressRatio` across **all** shelf series |
 | 2 | `masterCompleteSeriesCount > 0` | **👑 Master Completion** — Master Complete / **Secret-bearing** series only |
 
 **Formulas (canonical):**
 
 ```text
-Regular Completion:
+Regular Progress:
   mean over all shelf series of resolveSeriesCompletion(...).progressRatio
   (Secrets do not reduce a Regular-complete series below 100%)
 

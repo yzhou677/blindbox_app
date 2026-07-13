@@ -66,7 +66,7 @@ const int kCollectorTypeCuratorIpCap = 8;
 /// Minimum distinct taxonomy IPs for Curator.
 const int kCollectorTypeCuratorMinIps = 3;
 
-/// Minimum average Regular Completion for Curator (meaningful investment).
+/// Minimum average Regular Progress for Curator (meaningful investment).
 const double kCollectorTypeCuratorMinAvgCompletion = 0.5;
 
 /// Custom-series share for Worldbuilder (`>` in code — tie is not dominance).
@@ -75,7 +75,7 @@ const double kCollectorTypeWorldbuilderCustomRatio = 0.5;
 /// Soft cap on custom figures counted toward Worldbuilder scale bonus.
 const int kCollectorTypeWorldbuilderFigureCap = 24;
 
-/// Minimum average Regular Completion for Minimalist (refined, not merely new).
+/// Minimum average Regular Progress for Minimalist (refined, not merely new).
 const double kCollectorTypeMinimalistCompletion = 0.70;
 
 /// Max series count for Minimalist path.

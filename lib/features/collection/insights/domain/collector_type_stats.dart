@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 /// Bump when display math or required fields change so Insights can
 /// **derive live stats for display** without rewriting old prefs.
 ///
-/// **2** — Regular Completion = mean `progressRatio`; Master Completion
+/// **2** — Regular Progress = mean `progressRatio`; Master Completion
 /// denominator = Secret-bearing series (`masterEligibleSeriesCount`);
 /// completed/master tier counts required in JSON.
 const int kCollectorTypeStatsVersion = 2;
@@ -58,7 +58,7 @@ class CollectorTypeStats {
   /// Secret-bearing series count — Master Completion percentage denominator.
   final int masterEligibleSeriesCount;
 
-  /// Shelf Regular Completion % (mean of canonical per-series progressRatio).
+  /// Shelf Regular Progress % (mean of canonical per-series progressRatio).
   final int completionPercent;
   final int secretOwned;
   final int secretSlots;

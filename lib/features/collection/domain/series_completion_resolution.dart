@@ -43,7 +43,7 @@ class SeriesCompletionResolution {
 
   /// `1.0` when [isCompleted]; otherwise regular-weighted progress.
   ///
-  /// This is the canonical **Regular Completion** progress for one series:
+  /// This is the canonical **Regular Progress** ratio for one series:
   /// Secrets do not reduce the ratio once Regulars are complete (`isCompleted`
   /// ⇒ `1.0` even when Secrets are still missing).
   double get progressRatio {
@@ -121,7 +121,7 @@ class ShelfCompletionAggregate {
 
   /// Mean of per-series [SeriesCompletionResolution.progressRatio] × 100.
   ///
-  /// Regular Completion: Secrets do not pull a Regular-complete series below
+  /// Regular Progress aggregate: Secrets do not pull a Regular-complete series below
   /// 100% on this aggregate.
   final int regularCompletionPercent;
 
