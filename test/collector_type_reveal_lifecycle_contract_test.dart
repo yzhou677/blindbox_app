@@ -20,7 +20,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'helpers/collection_fixtures.dart';
 
-/// 5.2 reveal lifecycle contract: invalidation ≠ identity result.
+/// 5.2 reveal lifecycle contract: invalidation ??identity result.
 final class _SnapNotifier extends CollectionNotifier {
   _SnapNotifier(this._snap);
   final CollectionSnapshot _snap;
@@ -40,6 +40,8 @@ CollectorTypeStats get _emptyStats => const CollectorTypeStats(
       totalOwned: 0,
       totalWishlist: 0,
       trackedSeries: 0,
+      completedSeriesCount: 0,
+      masterCompleteSeriesCount: 0,
       completionPercent: 0,
       secretOwned: 0,
       secretSlots: 0,
@@ -84,7 +86,7 @@ void main() {
   });
 
   test(
-    '1. needsReveal (signature drift) → Reveal persists resolver interpretation',
+    '1. needsReveal (signature drift) ??Reveal persists resolver interpretation',
     () async {
       final priorSnap = CollectionSnapshot(
         shelfSeries: [testShelfSeries(id: 'old', catalogTemplateId: 'old_t')],
@@ -95,7 +97,7 @@ void main() {
         signatureHash: computeCollectorTypeSignatureHash(priorSnap),
       );
 
-      // Multi-IP incomplete shelf → Loyalist/Wanderer shape (not wanderer-only empty).
+      // Multi-IP incomplete shelf ??Loyalist/Wanderer shape (not wanderer-only empty).
       final nextSnap = CollectionSnapshot(
         shelfSeries: [
           testShelfSeries(
@@ -197,7 +199,7 @@ void main() {
   );
 
   test(
-    '2. needsReveal + resolver still previous archetype → identity stays',
+    '2. needsReveal + resolver still previous archetype ??identity stays',
     () async {
       final snap = CollectionSnapshot(
         shelfSeries: [testShelfSeries()],
@@ -298,7 +300,7 @@ void main() {
       );
       expect(live.archetypeId, CollectorTypeArchetypeId.loyalist);
 
-      // Same signature as live, but old resolver version → needsReveal.
+      // Same signature as live, but old resolver version ??needsReveal.
       await _persistIdentity(
         archetypeId: CollectorTypeArchetypeId.wanderer,
         signatureHash: live.signatureHash,

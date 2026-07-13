@@ -89,6 +89,8 @@ void main() {
           totalOwned: 1,
           totalWishlist: 0,
           trackedSeries: 1,
+          completedSeriesCount: 0,
+          masterCompleteSeriesCount: 0,
           completionPercent: 50,
           secretOwned: 0,
           secretSlots: 0,

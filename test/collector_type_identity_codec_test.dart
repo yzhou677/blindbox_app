@@ -11,6 +11,8 @@ void main() {
       totalOwned: 5,
       totalWishlist: 2,
       trackedSeries: 2,
+      completedSeriesCount: 0,
+      masterCompleteSeriesCount: 0,
       completionPercent: 80,
       secretOwned: 1,
       secretSlots: 3,
@@ -29,8 +31,33 @@ void main() {
     expect(restored.archetypeId, CollectorTypeArchetypeId.hunter);
     expect(restored.signatureHash, 'abc123');
     expect(restored.stats.totalOwned, 5);
+    expect(restored.stats.completedSeriesCount, 0);
     expect(restored.stats.brandBreakdown['pop_mart'], 2);
     expect(restored.reasonKey, CollectorTypeReasonKey.manySecrets);
+
+    const statsWithTiers = CollectorTypeStats(
+      totalOwned: 10,
+      totalWishlist: 0,
+      trackedSeries: 3,
+      completedSeriesCount: 2,
+      masterCompleteSeriesCount: 1,
+      completionPercent: 90,
+      secretOwned: 4,
+      secretSlots: 6,
+      brandBreakdown: {},
+      topSeries: [],
+      customSeriesRatio: 0,
+    );
+    final withTiers = CollectorTypeIdentity(
+      archetypeId: CollectorTypeArchetypeId.completionist,
+      revealedAt: DateTime(2026, 6, 1),
+      signatureHash: 'tier',
+      stats: statsWithTiers,
+    );
+    final restoredTiers = CollectorTypeIdentity.fromJson(withTiers.toJson());
+    expect(restoredTiers.stats.completedSeriesCount, 2);
+    expect(restoredTiers.stats.masterCompleteSeriesCount, 1);
+    expect(restoredTiers.stats.secretOwned, 4);
   });
 
   test('legacy json without reasonKey heals Loyalist to dominantUniverse', () {
@@ -82,6 +109,8 @@ void main() {
         totalOwned: 1,
         totalWishlist: 0,
         trackedSeries: 1,
+        completedSeriesCount: 0,
+        masterCompleteSeriesCount: 0,
         completionPercent: 10,
         secretOwned: 0,
         secretSlots: 0,

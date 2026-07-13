@@ -22,6 +22,8 @@ CollectorTypeIdentity _identity(
       totalOwned: 2,
       totalWishlist: 0,
       trackedSeries: 1,
+      completedSeriesCount: 0,
+      masterCompleteSeriesCount: 0,
       completionPercent: 40,
       secretOwned: 0,
       secretSlots: 0,
@@ -50,7 +52,7 @@ void main() {
     );
 
     await tester.pump();
-    // Mid-hero entrance — title should already be visible with the mascot.
+    // Mid-hero entrance ??title should already be visible with the mascot.
     await tester.pump(
       CollectibleMotion.collectorTypeRevealCeremonyFirst * 0.28,
     );
@@ -99,7 +101,7 @@ void main() {
       findsOneWidget,
     );
 
-    // Hero settled, still in absorb pause — no meaningful Continue yet.
+    // Hero settled, still in absorb pause ??no meaningful Continue yet.
     final midPause = CollectibleMotion.collectorTypeRevealCeremonyChange * 0.45;
     await tester.pump(midPause);
     expect(
@@ -119,7 +121,7 @@ void main() {
     expect(find.text(CollectorTypeCopy.revealCeremonyContinue), findsOneWidget);
     expect(finished, isFalse);
 
-    // Dwell remains — still not auto-dismissed immediately after Continue.
+    // Dwell remains ??still not auto-dismissed immediately after Continue.
     await tester.pump(const Duration(milliseconds: 400));
     expect(finished, isFalse);
 

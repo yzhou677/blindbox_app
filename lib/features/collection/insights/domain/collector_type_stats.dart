@@ -7,6 +7,8 @@ class CollectorTypeStats {
     required this.totalOwned,
     required this.totalWishlist,
     required this.trackedSeries,
+    required this.completedSeriesCount,
+    required this.masterCompleteSeriesCount,
     required this.completionPercent,
     required this.secretOwned,
     required this.secretSlots,
@@ -18,6 +20,8 @@ class CollectorTypeStats {
   final int totalOwned;
   final int totalWishlist;
   final int trackedSeries;
+  final int completedSeriesCount;
+  final int masterCompleteSeriesCount;
   final int completionPercent;
   final int secretOwned;
   final int secretSlots;
@@ -29,6 +33,8 @@ class CollectorTypeStats {
         'totalOwned': totalOwned,
         'totalWishlist': totalWishlist,
         'trackedSeries': trackedSeries,
+        'completedSeriesCount': completedSeriesCount,
+        'masterCompleteSeriesCount': masterCompleteSeriesCount,
         'completionPercent': completionPercent,
         'secretOwned': secretOwned,
         'secretSlots': secretSlots,
@@ -56,6 +62,9 @@ class CollectorTypeStats {
       totalOwned: (json['totalOwned'] as int?) ?? 0,
       totalWishlist: (json['totalWishlist'] as int?) ?? 0,
       trackedSeries: (json['trackedSeries'] as int?) ?? 0,
+      completedSeriesCount: (json['completedSeriesCount'] as int?) ?? 0,
+      masterCompleteSeriesCount:
+          (json['masterCompleteSeriesCount'] as int?) ?? 0,
       completionPercent: (json['completionPercent'] as int?) ?? 0,
       secretOwned: (json['secretOwned'] as int?) ?? 0,
       secretSlots: (json['secretSlots'] as int?) ?? 0,

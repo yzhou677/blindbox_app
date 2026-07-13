@@ -11,6 +11,8 @@ const _stats = CollectorTypeStats(
   totalOwned: 4,
   totalWishlist: 0,
   trackedSeries: 2,
+  completedSeriesCount: 0,
+  masterCompleteSeriesCount: 0,
   completionPercent: 40,
   secretOwned: 0,
   secretSlots: 0,

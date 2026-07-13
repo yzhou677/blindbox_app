@@ -17,6 +17,8 @@ CollectorTypeIdentity _identity(CollectorTypeArchetypeId id) {
       totalOwned: 0,
       totalWishlist: 0,
       trackedSeries: 3,
+      completedSeriesCount: 0,
+      masterCompleteSeriesCount: 0,
       completionPercent: 0,
       secretOwned: 0,
       secretSlots: 0,

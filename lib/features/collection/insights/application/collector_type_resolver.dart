@@ -4,6 +4,7 @@ import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_series.dart'
     as seed;
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/domain/series_completion_resolution.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_emotional_profile.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_interpretation_confidence.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_archetype.dart';
@@ -288,10 +289,15 @@ CollectorTypeStats _buildStats(
 
   final brandBreakdown = aggregateBrandBreakdownByCanonicalKey(brandEntries);
 
+  final (completedSeriesCount, masterCompleteSeriesCount) =
+      countShelfCompletionTiers(snapshot);
+
   return CollectorTypeStats(
     totalOwned: snapshot.totalOwnedFigures,
     totalWishlist: snapshot.totalWishlistFigures,
     trackedSeries: snapshot.trackedSeriesCount,
+    completedSeriesCount: completedSeriesCount,
+    masterCompleteSeriesCount: masterCompleteSeriesCount,
     completionPercent: snapshot.averageCompletionPercent,
     secretOwned: profile.secretOwnedCount,
     secretSlots: profile.secretSlotCount,

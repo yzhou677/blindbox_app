@@ -21,6 +21,8 @@ CollectorTypeIdentity _identity({
       totalOwned: 4,
       totalWishlist: 0,
       trackedSeries: 2,
+      completedSeriesCount: 0,
+      masterCompleteSeriesCount: 0,
       completionPercent: 50,
       secretOwned: 0,
       secretSlots: 0,
@@ -55,6 +57,8 @@ CollectorTypeResolution _challenger({
       totalOwned: 8,
       totalWishlist: 0,
       trackedSeries: 4,
+      completedSeriesCount: 0,
+      masterCompleteSeriesCount: 0,
       completionPercent: 40,
       secretOwned: 0,
       secretSlots: 0,
@@ -94,7 +98,7 @@ void main() {
     );
   });
 
-  test('tiny margin does not evolve (Loyalist 81 → Curator 82)', () {
+  test('tiny margin does not evolve (Loyalist 81 ??Curator 82)', () {
     final previous = _identity(
       id: CollectorTypeArchetypeId.loyalist,
       signature: 'sig-a',
@@ -146,7 +150,7 @@ void main() {
 
   test('low confidence does not block evolution when margin clears', () {
     // 5.1: confidence stays on Resolution but is not an evolution gate.
-    // Real 5.0 shape: winner 110, previous=runner-up 64 → conf≈0.42, margin=46.
+    // Real 5.0 shape: winner 110, previous=runner-up 64 ??conf??.42, margin=46.
     final previous = _identity(
       id: CollectorTypeArchetypeId.curator,
       signature: 'sig-a',
@@ -235,7 +239,7 @@ void main() {
     final challenger = _challenger(
       id: CollectorTypeArchetypeId.curator,
       score: 93,
-      previousTypeScore: 80, // margin 13 — clears base 12, not cooldown 20
+      previousTypeScore: 80, // margin 13 ??clears base 12, not cooldown 20
       confidence: 0.9,
       signature: 'sig-b',
     );
@@ -289,6 +293,8 @@ void main() {
         totalOwned: 3,
         totalWishlist: 0,
         trackedSeries: 3,
+        completedSeriesCount: 0,
+        masterCompleteSeriesCount: 0,
         completionPercent: 33,
         secretOwned: 0,
         secretSlots: 0,
