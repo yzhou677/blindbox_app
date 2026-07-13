@@ -13,9 +13,12 @@ void main() {
     );
   });
 
-  test('canonical labels stay stable', () {
+  test('aggregate labels are self-explanatory', () {
+    expect(CollectionVocabulary.ownedFigures, 'Owned Figures');
+    expect(CollectionVocabulary.wishlistedFigures, 'Wishlisted Figures');
     expect(CollectionVocabulary.completedSeries, 'Completed Series');
     expect(CollectionVocabulary.masterComplete, 'Master Complete');
+    expect(CollectionVocabulary.secretsCollected, 'Secrets Collected');
     expect(CollectionVocabulary.secretFigure, 'Secret Figure');
     expect(CollectionVocabulary.seriesCompleteBadge, '✓ Complete');
   });

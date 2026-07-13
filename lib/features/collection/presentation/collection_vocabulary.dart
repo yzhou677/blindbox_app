@@ -5,10 +5,30 @@
 abstract final class CollectionVocabulary {
   CollectionVocabulary._();
 
+  /// Owned figure count — prefer in aggregate / summary surfaces.
+  static const ownedFigures = 'Owned Figures';
+
+  /// Wishlisted figure count — Collection Summary only (forward-looking).
+  static const wishlistedFigures = 'Wishlisted Figures';
+
+  /// Short inline chip label (e.g. progress voice).
   static const figures = 'Figures';
+
+  /// Short inline chip label (e.g. progress voice).
   static const wishlist = 'Wishlist';
+
   static const completedSeries = 'Completed Series';
   static const masterComplete = 'Master Complete';
+
+  /// Shelf Progress — primary progression row (always shown).
+  static const regularCompletion = 'Regular Completion';
+
+  /// Shelf Progress — secondary row; only after first Master Complete series.
+  static const masterCompletion = 'Master Completion';
+
+  /// Secret figures the collector owns — Insights at-a-glance.
+  static const secretsCollected = 'Secrets Collected';
+
   static const secretFigure = 'Secret Figure';
   static const secretFigures = 'Secret Figures';
   static const regularFigures = 'Regular Figures';
