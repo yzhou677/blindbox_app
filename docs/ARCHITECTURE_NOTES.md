@@ -7,7 +7,7 @@ Operational decisions and future assumptions captured so we do not re-investigat
 - [`CATALOG_ARCHITECTURE.md`](CATALOG_ARCHITECTURE.md) — **catalog architecture spec** (data flow, state machine, provider graph, Search V2, alias policy)
 - [`.cursor/ARCHITECTURE.md`](../.cursor/ARCHITECTURE.md) — full agent/contributor architecture reference (three universes, folder layout, data flow)
 - [`KNOWN_RUNTIME_NOTES.md`](KNOWN_RUNTIME_NOTES.md) — logcat / debug console noise vs actionable failures
-- [`COLLECTION_ARCHITECTURE_NOTES.md`](COLLECTION_ARCHITECTURE_NOTES.md) — Collection maintenance-mode tradeoffs (snapshot persistence, journey history, collector identity)
+- [`COLLECTION_ARCHITECTURE_NOTES.md`](COLLECTION_ARCHITECTURE_NOTES.md) — Collection maintenance-mode tradeoffs (snapshot persistence, journey history, **Collector Type resolver 6.0**)
 - [`EBAY_GATEWAY.md`](EBAY_GATEWAY.md) — live gateway configuration; notes identity skip on default path
 - [`FIREBASE_LOCAL_SETUP.md`](FIREBASE_LOCAL_SETUP.md) — Firebase local setup, services scope, and release checklist
 
@@ -523,7 +523,7 @@ See also [`COLLECTION_ARCHITECTURE_NOTES.md`](COLLECTION_ARCHITECTURE_NOTES.md) 
 | Add Figure | `addCustomFigure` from edit sheet (Phase 2.8) |
 | Edit Figure | Name, secret, rarity, local image (**custom figures**) |
 | Figure images | `localImageUri` on custom shelf figures only |
-| Insights | Collector Type reveal (**10** Identity archetypes, resolver 5.1) + live Journey; At a Glance / progress |
+| Insights | Collector Type reveal (**10** Identity archetypes, resolver **6.0**) + live Journey; At a Glance / progress |
 | Journey | Live exploration metrics on Insights (not frozen with reveal) |
 | Brand / IP filters | Collection shelf chip facets |
 | Offline-first catalog | Persisted Firestore snapshot + bootstrap placeholder + background refresh |
@@ -540,4 +540,4 @@ Future work: bug fixes, UX polish, catalog content expansion, performance profil
 
 ---
 
-*Last updated: 2026-06 — reflects runtime bootstrap catalog removal, catalog persistence sync, provider propagation, Performance Characteristics audit, and Collection Insights Dashboard profile baseline.*
+*Last updated: 2026-07 — Collector Type resolver **6.0** (see [`COLLECTION_ARCHITECTURE_NOTES.md`](COLLECTION_ARCHITECTURE_NOTES.md)); also reflects runtime bootstrap catalog removal, catalog persistence sync, provider propagation, Performance Characteristics audit, and Collection Insights Dashboard profile baseline.*

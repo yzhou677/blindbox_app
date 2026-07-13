@@ -22,7 +22,7 @@ It focuses on an image-first, calm browsing experience with local-first collecti
 
 ## What The App Includes
 
-- `Collection` tab: local-first shelf, custom series, wishlist/owned states, completion tiers (`Completed Series`, `Master Complete`), collapsible **Collection Insights** dashboard (compact glance + expandable summary), and Insights screen
+- `Collection` tab: local-first shelf, custom series, wishlist/owned states, completion tiers (`Completed Series`, `Master Complete`), collapsible **Collection Insights** dashboard, and Insights screen (Collector Type reveal — **10** types, resolver **6.0**; see `docs/COLLECTION_ARCHITECTURE_NOTES.md`)
 - `Discover` tab: Firestore-backed catalog browse, release rails, and shared token-based search (Search V2)
 - `Market` tab: live eBay browse/search via Firebase gateway (separate from catalog content)
 

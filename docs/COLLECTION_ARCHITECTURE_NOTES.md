@@ -273,28 +273,124 @@ by re-running today’s Resolver over an old shelf.
 4. **`reasonKey` is the only explanation source** for Because. Map via `CollectorTypeCopy` only (`becauseLineFor` / `becauseLineForRecord`).
 5. **`resolverVersion` protects historical semantics.** Stamped on every `CollectorTypeRevealRecord`. Policy and bump rules live on `kCollectorTypeResolverVersion` — schema/policy version, not app version. Bump only when the same shelf could resolve to a different identity or explanation.
 6. **Identity scores the current shelf only (2.0+).** Resolver must not read Journey memory (`ipSeriesDepth`, `firstSeriesAddedAt`, …) or Reveal History. Prior Identity is allowed only inside `shouldEvolve`. Catalog metadata may join shelf items (Trend Chaser freshness). Scoring signal table lives as a comment on `collector_type_resolver.dart` and below.
-7. **Identity requires defining behavior (5.0).** Signals are evidence, not identity. Eligibility uses ratio / share / density / composition before strength and soft-capped scale. Presence alone does not assign personality.
-8. **Reveal lifecycle (5.2):** Hero shows **last revealed** identity (persisted). Live shelf continuously resolves a **candidate** (`collectorTypeLiveResolutionProvider`) that is never auto-persisted. `needsReveal` is true when **signature** drifts or **resolverVersion** changed — signature answers **When** only. A reveal while `needsReveal` always persists the resolver candidate (no `sameSignature` Still override). `shouldEvolve` (margin / cooldown / sameSignature) applies only to repeated reveals on an unchanged shelf. Persist only on explicit Reveal.
+7. **Identity requires defining behavior (6.0).** Signals are evidence, not identity. Eligibility uses majority / clear dominance / repeated evidence before strength and soft-capped scale. Absolute counts alone never assign personality. Every threshold must be explainable in user language (see § Collector Types below).
+8. **Reveal lifecycle (5.2):** Hero shows **last revealed** identity (persisted). Live shelf continuously resolves a **candidate** (`collectorTypeLiveResolutionProvider`) that is never auto-persisted. `needsReveal` is true when **signature** drifts, **resolverVersion** changed, or **stats schema** is outdated — signature answers **When** only. Signature always includes currently-recent catalog template ids (`|r:`) so Trend aging can invalidate without rewriting identity on launch. A reveal while `needsReveal` always persists the resolver candidate (no `sameSignature` Still override). `shouldEvolve` (margin / cooldown / sameSignature) applies only to repeated reveals on an unchanged shelf. Persist only on explicit Reveal.
 9. **Evolution:** On unchanged-shelf reveals, `shouldEvolve` answers whether the challenger earned the title. Confidence remains on `CollectorTypeResolution` for analytics only. Ceremony reflects whether the persisted archetype changed.
 
 Related: evolution constants in `collector_type_evolution_gate.dart`; scoring thresholds in `collector_type_resolver.dart`; prefs key `collection_memory_v3`. Canonical registry: `CollectorTypeArchetypes` (**10 types**).
 
-### Collector Types (resolver 5.0) — 10 archetypes
+### Collector Types (resolver 6.0) — 10 archetypes
 
-Each type is a collecting **verb** on the current shelf. Pipeline: Signals → Behavior eligibility → Strength → Soft-capped scale. Winner = highest scoreboard score (ties use `tieBreakPriority`).
+Each type answers: **what clearly defines this collector’s shelf today?**  
+Pipeline: **Signals → Eligibility → Strength → Soft-capped scale → Winner.**  
+Absolute counts alone never assign identity. Journey / Reveal History stay out of scoring.
 
-| Type | Verb | Defining behavior | Eligibility then strength |
-| ---- | ---- | ----------------- | ------------------------- |
-| **Completionist** | Finish | Finishing defines the shelf | `finishRatio` / `nearRatio` ≥ 0.4 + avg / near gates; soft-capped complete count |
-| **Hunter** | Chase | Hunting rarity defines shelf | Secret density ≥ 0.35 (+ ≥2 secrets or secrets theme); soft-capped secret count |
-| **Lucky One** | Fortune | Compact high hit-rate fortune | Secret ratio + small shelf; **not** when Hunter eligible |
-| **Loyalist** | Commit | One universe dominates | Dominant brand/IP share ≥ 0.6 |
-| **Curator** | Curate | Multi-world gallery | Spread ≥ 2 brands/IPs **and** not Loyalist-dominant; soft-capped spreads |
-| **Wanderer** | Explore | Curious unfinished spread / empty fallback | Brand spread + low completion; empty shelf fallback |
-| **Minimalist** | Refine | Small carefully finished shelf | Few series + few owned + high completion |
-| **Worldbuilder** | Create | Authorship of custom worlds | ≥1 custom **and** `customRatio ≥ 0.3`; notes/covers/photos deepen custom rows only |
-| **Dreamer** | Imagine | Wishlist-forward collecting | `wishlistRatio ≥ 0.45` + wishlist count |
-| **Trend Chaser** | Chase now | Chasing fresh drops defines shelf | `recentRatio ≥ 0.4` and ≥2 recent catalog series; soft-capped recent count |
+#### Canonical metrics
+
+Use canonical Regular-weighted completion (`resolveSeriesCompletion` / `aggregateShelfCompletion`). Avoid division by zero. Unknown/untracked figure states are **not** owned or wishlist.
+
+| Metric | Definition |
+| ------ | ---------- |
+| `completedRatio` | `completedSeriesCount / trackedSeriesCount` |
+| `nearCompleteRatio` | `nearCompleteSeriesCount / trackedSeriesCount` |
+| `secretHitRate` | `secretOwnedCount / totalSecretSlotCount` (**Secret slots**, not all figures) |
+| `dominantIpShare` | largest series count in one taxonomy IP / total shelf series |
+| `customRatio` | `customSeriesCount / total shelf series` |
+| `wishlistRatio` | `wishlistFigureCount / (ownedFigureCount + wishlistFigureCount)` — tracked intent only |
+| `recentRatio` | `recentCatalogSeriesCount / total shelf series` (releaseDate within **90** days) |
+| `averageRegularCompletion` | mean Regular `progressRatio` across shelf series |
+
+`isNearComplete` = `!isCompleted && progressRatio >= 0.85`.
+
+#### Threshold philosophy (user language)
+
+| Number | Meaning |
+| ------ | ------- |
+| `2` | One occurrence may be incidental; two demonstrates repeated behavior |
+| `>50%` | The behavior genuinely defines the shelf (tie is not dominance) |
+| `60%` | Clear dominance — at least three of every five |
+| `70%` | Most of a small shelf is meaningfully completed (refined, not merely new) |
+| `85%` | Close enough to feel like the final push toward completion |
+| `90 days` | Current three-month release cycle |
+| `3 IPs` | Real multi-universe breadth (two may be a simple pair) |
+| `≤4 series` | Early-stage shelf where luck can still define identity |
+
+#### Eligibility (product contract)
+
+| Type | Product sentence | Eligibility |
+| ---- | ---------------- | ----------- |
+| **Completionist** | Completion defines your shelf | ≥2 completed **and** `completedRatio ≥ 0.60`; else ≥2 near-complete **and** `nearCompleteRatio ≥ 0.60` |
+| **Hunter** | You actively hunt Secrets—and you catch them | ≥2 Secrets, Secret slots > 0, `secretHitRate ≥ 0.50` |
+| **Lucky One** | Luck found you before hunting did | `!Hunter`, ≤4 series, ≥1 Secret, `secretHitRate ≥ 0.50` |
+| **Loyalist** | One universe clearly defines your shelf | `dominantIpShare ≥ 0.60` **and** ≥2 series in that IP (brand fallback only if most rows lack IP — never multi-IP POP MART as Loyalist) |
+| **Curator** | You thoughtfully build across multiple universes, giving each one room to grow | `!Loyalist`, ≥3 distinct taxonomy IPs, `averageRegularCompletion ≥ 0.50` |
+| **Wanderer** | You’re still discovering what defines your shelf | **Fallback only** — soft board floor (score 5) for Still/evolution; never beats specialized bases (≥28). Empty / early / one-series / mixed undefined shelves |
+| **Minimalist** | You keep a small, focused shelf and care deeply for what makes the cut | ≤3 series **and** `averageRegularCompletion ≥ 0.70` (**no** owned-figure cap) |
+| **Worldbuilder** | Your own creations define your shelf | ≥2 custom series **and** `customRatio > 0.50`; notes/covers/photos deepen **after** eligibility (custom rows only) |
+| **Dreamer** | You dream about what comes next more than what you already own | ≥2 wishlist figures **and** `wishlistRatio > 0.50` |
+| **Trend Chaser** | Recent releases define your shelf | ≥2 recent catalog series (≤90 days) **and** `recentRatio > 0.50` |
+
+#### Why each gate (plain language)
+
+| Type | Why these numbers |
+| ---- | ----------------- |
+| **Completionist** | Two completes prove repeated finishing; 60% means finishing defines the shelf. Near path uses the same share with 85% “final push.” No separate avg≥70% gate once 60% of the shelf is fully complete. |
+| **Hunter** | Two Secrets prove repeated rare acquisition; 50% hit rate over Secret slots means they catch what they hunt. Shelf size must not disqualify. |
+| **Lucky One** | Early fortune on a still-small shelf; progresses to Hunter when pursuit is repeated. |
+| **Loyalist** | 60% IP share is clear universe dominance; ≥2 series in that IP is returning, not a one-off. Brand must not classify multi-IP POP MART shelves. |
+| **Curator** | Three IPs establish real breadth; 50% avg Regular shows investment, not sampling. |
+| **Wanderer** | Honest fallback when no specialized identity clearly qualifies — not a “failed” collector. |
+| **Minimalist** | Small **and** refined; figure count varies by roster size and must not gate. |
+| **Worldbuilder** | Two customs prove authorship; >50% means self-created worlds dominate (exactly 50% is a tie). |
+| **Dreamer** | Two wishlist marks prove intention; >50% means wanting more than owning defines tracked intent. |
+| **Trend Chaser** | Two recent series + majority recent; 90 days = current cycle. Aging out of the window changes signature → `needsReveal`. |
+
+#### Relationships
+
+- **Hunter ⊥ Lucky One** — Hunter eligible → Lucky One score is zero  
+- **Loyalist ⊥ Curator** — Loyalist eligible → Curator score is zero  
+- **Wanderer** does not compete as a dominance archetype  
+
+Other types may qualify simultaneously; winner uses eligible strength + deterministic tie-break.
+
+#### Score shape (eligible only)
+
+1. Base score indicates valid eligibility  
+2. Primary strength from the same behavior that established eligibility  
+3. Absolute counts only as small soft-capped scale bonuses  
+4. No uncapped count term may dominate all other identities  
+5. Eligible archetypes compete in a comparable score band  
+
+Examples: Completionist ← completed/near ratio (+ capped count); Hunter ← hit rate (+ capped Secret count); Loyalist ← IP share; Curator ← IP breadth + avg Regular (capped); Minimalist ← completion within small-shelf gate; Worldbuilder ← custom ratio + capped authorship; Dreamer ← wishlist ratio; Trend ← recent ratio (+ capped recent count).
+
+#### Collector-facing Because copy (via `reasonKey` only)
+
+| Type | Because line (representative) |
+| ---- | ----------------------------- |
+| Completionist | Because completion defines your shelf. / Because most of your shelf is at the edge of complete. |
+| Hunter | Because you actively hunt Secrets—and you catch them. |
+| Lucky One | Because luck found you before hunting did. |
+| Loyalist | Because one universe clearly defines your shelf. |
+| Curator | Because your shelf is a gallery of worlds you genuinely invest in. |
+| Wanderer | Because your shelf is still discovering what defines it. |
+| Minimalist | Because you keep a small, focused shelf and care deeply for what makes the cut. |
+| Worldbuilder | Because your own creations define your shelf. |
+| Dreamer | Because you dream about what comes next more than what you already own. |
+| Trend Chaser | Because recent releases define your shelf. |
+
+UI must call `CollectorTypeCopy.becauseLineFor` / `becauseLineForRecord` — never `switch` on archetype for causal copy.
+
+#### Removed / obsolete (do not reintroduce)
+
+- Completionist ~40% finish gates or extra avg≥70% after majority-complete  
+- Hunter ~35% “density” over all figures / vague secrets-theme bypass for one Secret  
+- Brand-first Loyalist (POP MART multi-IP → Loyalist)  
+- Curator at only 2 brands/IPs without investment  
+- Wanderer requiring ≥2 brands/IPs/series or low completion  
+- Minimalist `ownedFigureCount ≤ 12`  
+- Worldbuilder ~30% custom gate  
+- Dreamer ~45% wishlist gate  
+- Trend **180**-day window or weak one-recent / ~40% recent paths  
 
 **Not Identity signals:** Journey `ipSeriesDepth` / `firstSeriesAddedAt`; Reveal History / prior Identity (except `shouldEvolve`).
 
@@ -302,11 +398,7 @@ Each type is a collecting **verb** on the current shelf. Pipeline: Signals → B
 
 **Tie-break order (high → low):** Completionist → Hunter → Loyalist → Curator → Worldbuilder → Minimalist → Trend Chaser → Dreamer → Lucky One → Wanderer.
 
-**Tie-break role (5.3):** Insurance, not the primary identity mechanism. Behavior
-eligibility usually separates the scoreboard. Structural exclusions never both
-score: Hunter ⊥ Lucky One; Loyalist ⊥ Curator. Prefer keeping the table short
-and product-ordered (authorship / long-horizon verbs above shelf-shape verbs
-such as Minimalist).
+**Tie-break role:** Insurance when scores tie within epsilon. Structural exclusions never both score. Worldbuilder ranks above Minimalist on authorship.
 
 ---
 
@@ -476,10 +568,18 @@ Until then:
 
 ---
 
-## Collector Type 5.3
+## Collector Type 6.0
 
-Status: Active policy version. Scoring remains 5.0 behavior inference;
-reveal lifecycle remains 5.2; tie-break order is 5.3.
+Status: **Active** policy version (`kCollectorTypeResolverVersion = 6.0`).
+
+Final behavior contract: meaningful thresholds, IP-first Loyalist, Curator as
+multi-IP investment, Wanderer as fallback only, Secret hit rate over Secret
+slots, Trend = 90 days with signature `|r:` aging. Full eligibility table,
+metrics, and removed obsolete gates: **§ Collector Types (resolver 6.0)** above.
+
+Reveal lifecycle remains **5.2**; tie-break order unchanged from **5.3**
+(Worldbuilder above Minimalist). Do not silently rewrite persisted identity on
+launch — old reveals trigger `needsReveal` via resolver-version invalidation.
 
 See **ADR: Snapshot invalidation is not identity inference** above.
 
@@ -489,19 +589,21 @@ reveal while `needsReveal` always persists the resolver candidate.
 reveals on an unchanged shelf.
 
 **Tie-break (5.3):** Worldbuilder ranks above Minimalist when scores tie —
-authorship over compact shelf size. Tie-break is insurance; structural pairs
-Hunter/Lucky and Loyalist/Curator never both score.
+authorship over compact shelf size. Structural pairs Hunter/Lucky and
+Loyalist/Curator never both score.
 
 **Evolution (unchanged-shelf):** `shouldEvolve` compares candidate vs previous
-identity via scoreboard margin (and cooldown-scaled margin). Resolution.confidence
-is analytics-only.
+identity via scoreboard margin (and cooldown-scaled margin). Wanderer’s soft
+floor keeps Still from treating fallback identity as “absent from board.”
+Resolution.confidence is analytics-only.
 
-**Behavior inference (5.0):** Identity answers “does this behavior define how I
-collect today?” Eligibility (ratio / share / density / composition) precedes
-strength and soft-capped scale.
+**Behavior inference (6.0):** Identity answers “what clearly defines this
+collector’s shelf today?” Eligibility (majority / clear dominance / repeated
+evidence) precedes strength and soft-capped scale. Absolute counts alone never
+assign identity. Every threshold must be explainable in user language.
 
-**Worldbuilder (4.0):** authorship-first — custom series ratio is the gate and
-primary signal. Notes/covers/photos deepen score only on custom series.
+**Worldbuilder:** authorship-first — `≥2 custom` and `customRatio > 0.50`.
+Notes/covers/photos deepen score only on custom series.
 
 Do not adjust scoring without product evidence from real collectors. Prefer
 eligibility / composition fixes over arbitrary weight nerfs.
