@@ -158,6 +158,54 @@ unchanged shelf only.
 | **Live (Journey)** | Collector Journey summary | Always current. **Not** archived with reveal. Updates as the shelf evolves. |
 | **Historical replay** | `CollectorTypeRevealRecord` | Append-only resolve snapshot for Timeline / Personality Memory. No 1.0 UI yet. |
 
+### Collection Summary vs Insights “At a glance”
+
+Both surfaces show counts, but they answer different questions. Labels must name
+what is counted — never bare “Figures”, “Series”, or “Wishlist”.
+
+| Surface | Intent | Metrics |
+| ------- | ------ | ------- |
+| **Collection Summary** (Collection tab) | Shelf activity — what you own and what you are aiming for | Owned Figures · Wishlisted Figures · Completed Series · Master Complete |
+| **Insights — At a glance** | Achievement snapshot at last reveal — collector identity | Owned Figures · Completed Series · Master Complete · Secrets Collected |
+
+Same completion tiers (`countShelfCompletionTiers` / `resolveSeriesCompletion`);
+At a glance omits wishlist and uses secrets collected instead. Values in At a
+glance come from `CollectorTypeStats` frozen at reveal.
+
+### Collector Journey as a diary
+
+Journey highlights memorable collector moments — not another stats panel.
+**Open today’s collection diary** — not a dashboard of every signal.
+
+| Beat | Source | Notes |
+| ---- | ------ | ----- |
+| Started | `firstSeriesAddedAt` | Stable slot |
+| Explored | `ipSeriesDepth` | Stable slot |
+| Latest Memory | Existing memory only | Omit when none |
+
+**Latest Memory priority** (no new persistence):
+
+1. Master Complete — latest completed series is still Master Complete on shelf
+2. Completed Series — `lastCompletedSeriesId` + `lastCompletedAtMs`
+3. First Secret — `firstSecretOwnedAtMs`
+
+**Diary principle (permanent):** surface at most **one or two** memorable
+moments at a time. Journey can grow (First Master Complete, First New Universe,
+Type Evolution) but must stay curated — never a six-row stats dump.
+
+### Shelf Progress progressive disclosure
+
+Shelf Progress answers **collection progression** (Complete → Master Complete).
+
+| Stage | Condition | Rows |
+| ----- | --------- | ---- |
+| 1 | Always | **Regular Completion** (primary) — existing `completionPercent` |
+| 2 | `masterCompleteSeriesCount > 0` | Add **👑 Master Completion** (secondary) — share of tracked series that are Master Complete |
+
+Do **not** show Master Completion at `0%` / `0 / N` before the first Master
+Complete — it is noise until that tier is relevant. Presentation only; no new
+completion calculations.
+
 **Do not:**
 
 * Make Journey a reveal-frozen field
