@@ -114,4 +114,124 @@ void main() {
     expect(summary.ipUniversesExplored, 2);
     expect(summary.journeyAgeLabel, '0 days ago');
   });
+
+  group('pickLatestJourneyMemory', () {
+    final now = DateTime(2026, 5, 29);
+
+    test('prefers Master Complete when latest completion is still master', () {
+      final series = testShelfSeries(
+        id: 'petals',
+        name: 'SKULLPANDA Petals',
+        figures: const [
+          ShelfFigure(
+            id: 'r0',
+            seriesId: 'petals',
+            name: 'R',
+            rarity: 'Regular',
+            isSecret: false,
+          ),
+          ShelfFigure(
+            id: 'sec',
+            seriesId: 'petals',
+            name: 'Chase',
+            rarity: 'Secret',
+            isSecret: true,
+          ),
+        ],
+      );
+      final states = {
+        for (final f in series.figures)
+          f.id: TrackedFigure(
+            figureId: f.id,
+            state: FigureCollectionState.owned,
+          ),
+      };
+      final memory = pickLatestJourneyMemory(
+        memory: CollectionMemoryData(
+          lastCompletedSeriesId: 'petals',
+          lastCompletedAtMs: DateTime(2026, 5, 24).millisecondsSinceEpoch,
+          firstSecretOwnedAtMs: DateTime(2026, 4, 1).millisecondsSinceEpoch,
+        ),
+        snapshot: CollectionSnapshot(
+          shelfSeries: [series],
+          figureStates: states,
+        ),
+        now: now,
+      );
+
+      expect(memory?.kind, JourneyMemoryKind.masterComplete);
+      expect(memory?.seriesName, 'SKULLPANDA Petals');
+      expect(memory?.ageLabel, '5 days ago');
+    });
+
+    test('falls back to Completed Series when not master', () {
+      final series = testShelfSeries(
+        id: 'fairy',
+        name: 'NOMMI Fairy Tale',
+        figures: const [
+          ShelfFigure(
+            id: 'r0',
+            seriesId: 'fairy',
+            name: 'R',
+            rarity: 'Regular',
+            isSecret: false,
+          ),
+          ShelfFigure(
+            id: 'sec',
+            seriesId: 'fairy',
+            name: 'Chase',
+            rarity: 'Secret',
+            isSecret: true,
+          ),
+        ],
+      );
+      final states = {
+        'r0': TrackedFigure(
+          figureId: 'r0',
+          state: FigureCollectionState.owned,
+        ),
+      };
+      final memory = pickLatestJourneyMemory(
+        memory: CollectionMemoryData(
+          lastCompletedSeriesId: 'fairy',
+          lastCompletedAtMs: DateTime(2026, 5, 15).millisecondsSinceEpoch,
+          firstSecretOwnedAtMs: DateTime(2026, 4, 1).millisecondsSinceEpoch,
+        ),
+        snapshot: CollectionSnapshot(
+          shelfSeries: [series],
+          figureStates: states,
+        ),
+        now: now,
+      );
+
+      expect(memory?.kind, JourneyMemoryKind.completedSeries);
+      expect(memory?.seriesName, 'NOMMI Fairy Tale');
+      expect(memory?.ageLabel, '14 days ago');
+    });
+
+    test('falls back to First Secret when no completion memory', () {
+      final memory = pickLatestJourneyMemory(
+        memory: CollectionMemoryData(
+          firstSecretOwnedAtMs: DateTime(2026, 5, 11).millisecondsSinceEpoch,
+        ),
+        snapshot: CollectionSnapshot.emptyTest(),
+        now: now,
+      );
+
+      expect(memory?.kind, JourneyMemoryKind.firstSecret);
+      expect(memory?.seriesName, isNull);
+      expect(memory?.ageLabel, '18 days ago');
+    });
+
+    test('returns null when no memories exist', () {
+      expect(
+        pickLatestJourneyMemory(
+          memory: const CollectionMemoryData(),
+          snapshot: CollectionSnapshot.emptyTest(),
+          now: now,
+        ),
+        isNull,
+      );
+    });
+  });
 }

@@ -1,5 +1,7 @@
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/domain/series_completion_resolution.dart';
+import 'package:flutter/foundation.dart';
 
 class CollectorJourneyTopIp {
   const CollectorJourneyTopIp({
@@ -13,6 +15,29 @@ class CollectorJourneyTopIp {
   final int seriesCount;
 }
 
+/// One memorable moment for Journey — not a stats counter.
+enum JourneyMemoryKind {
+  masterComplete,
+  completedSeries,
+  firstSecret,
+}
+
+/// Latest memorable moment from existing [CollectionMemoryData] only.
+@immutable
+class JourneyLatestMemory {
+  const JourneyLatestMemory({
+    required this.kind,
+    required this.observedAt,
+    required this.ageLabel,
+    this.seriesName,
+  });
+
+  final JourneyMemoryKind kind;
+  final DateTime observedAt;
+  final String ageLabel;
+  final String? seriesName;
+}
+
 /// Live collection-history summary — never frozen into a Collector Type reveal.
 ///
 /// Collector Journey is intentionally LIVE (recomputed from memory + shelf),
@@ -21,6 +46,7 @@ class CollectorJourneyTopIp {
 /// - **Started** → first series added (`firstSeriesAddedAt`)
 /// - **Explored IP universes** → unique IPs ever explored (`ipSeriesDepth.length`);
 ///   append-only; does **not** decrease when series are removed
+/// - **Latest Memory** → most meaningful existing moment (omit if none)
 /// - **Identity** (elsewhere) → snapshot at last reveal
 ///
 /// Journey tells the collector’s path over time. Do not “fix” Explored to
@@ -29,14 +55,20 @@ class CollectorJourneyTopIp {
 /// Unlike Collector Type and other insight cards,
 /// Journey is not part of the Reveal snapshot.
 ///
-/// Presentation keeps **stable field slots** (Started, Explored, …); null/zero
-/// values still occupy their place — do not suppress slots for “truthiness.”
+/// Presentation keeps **stable field slots** for Started / Explored; null/zero
+/// values still occupy their place. Latest Memory is the diary exception —
+/// omit the row entirely when no moment exists.
+///
+/// **Diary principle:** surface at most one or two memorable moments — never
+/// grow into a stats dashboard (Started + Latest Memory today; more beats later,
+/// but always curated).
 class CollectorJourneySummary {
   const CollectorJourneySummary({
     required this.ipUniversesExplored,
     required this.seriesExploredOverTime,
     required this.topIps,
     required this.journeyAgeLabel,
+    this.latestMemory,
   });
 
   /// Unique IPs ever recorded in [CollectionMemoryData.ipSeriesDepth] — historical,
@@ -46,10 +78,14 @@ class CollectorJourneySummary {
   final List<CollectorJourneyTopIp> topIps;
   final String? journeyAgeLabel;
 
+  /// Most meaningful existing moment, or null when none apply.
+  final JourneyLatestMemory? latestMemory;
+
   bool get hasHistory =>
       ipUniversesExplored > 0 ||
       seriesExploredOverTime > 0 ||
-      journeyAgeLabel != null;
+      journeyAgeLabel != null ||
+      latestMemory != null;
 }
 
 CollectorJourneySummary buildCollectorJourneySummary({
@@ -90,7 +126,68 @@ CollectorJourneySummary buildCollectorJourneySummary({
       startedAt: memory.firstSeriesAddedAt,
       now: current,
     ),
+    latestMemory: pickLatestJourneyMemory(
+      memory: memory,
+      snapshot: snapshot,
+      now: current,
+    ),
   );
+}
+
+/// Priority: Master Complete (if latest completion is still master) →
+/// Completed Series → First Secret. No new persistence.
+JourneyLatestMemory? pickLatestJourneyMemory({
+  required CollectionMemoryData memory,
+  required CollectionSnapshot snapshot,
+  DateTime? now,
+}) {
+  final current = now ?? DateTime.now();
+  final completedId = memory.lastCompletedSeriesId?.trim();
+  final completedAt = memory.lastCompletedAt;
+  if (completedId != null &&
+      completedId.isNotEmpty &&
+      completedAt != null) {
+    ShelfSeries? series;
+    for (final s in snapshot.shelfSeries) {
+      if (s.id == completedId) {
+        series = s;
+        break;
+      }
+    }
+    final name = series?.name.trim();
+    final seriesName = (name != null && name.isNotEmpty) ? name : null;
+    final isMaster = series != null &&
+        resolveSeriesCompletion(series, snapshot.figureStates).isMasterComplete;
+    final ageLabel = formatJourneyAgeLabel(
+      startedAt: completedAt,
+      now: current,
+    );
+    if (ageLabel == null) return null;
+    return JourneyLatestMemory(
+      kind: isMaster
+          ? JourneyMemoryKind.masterComplete
+          : JourneyMemoryKind.completedSeries,
+      observedAt: completedAt,
+      ageLabel: ageLabel,
+      seriesName: seriesName,
+    );
+  }
+
+  final firstSecretAt = memory.firstSecretOwnedAt;
+  if (firstSecretAt != null) {
+    final ageLabel = formatJourneyAgeLabel(
+      startedAt: firstSecretAt,
+      now: current,
+    );
+    if (ageLabel == null) return null;
+    return JourneyLatestMemory(
+      kind: JourneyMemoryKind.firstSecret,
+      observedAt: firstSecretAt,
+      ageLabel: ageLabel,
+    );
+  }
+
+  return null;
 }
 
 String? formatJourneyAgeLabel({
