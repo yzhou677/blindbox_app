@@ -88,29 +88,29 @@ abstract final class CollectorTypeCopy {
   static String becauseLine(CollectorTypeReasonKey key) {
     return switch (key) {
       CollectorTypeReasonKey.stillUnfolding =>
-        'Because your shelf is still finding its shape.',
+        'Because your shelf is still discovering what defines it.',
       CollectorTypeReasonKey.curiousSpread =>
-        'Because curiosity keeps leading you into new corners.',
+        'Because your shelf is still discovering what defines it.',
       CollectorTypeReasonKey.dominantUniverse =>
-        'Because your shelf keeps returning to the same universe.',
+        'Because one universe clearly defines your shelf.',
       CollectorTypeReasonKey.highWishlist =>
-        'Because your Wishlist is where the story begins.',
+        'Because you dream about what comes next more than what you already own.',
       CollectorTypeReasonKey.manySecrets =>
-        'Because Secret Figures keep drawing your focus.',
+        'Because you actively hunt Secrets—and you catch them.',
       CollectorTypeReasonKey.fortunateSecrets =>
-        'Because fortune seems to find your Secret pulls.',
+        'Because luck found you before hunting did.',
       CollectorTypeReasonKey.deepCompletion =>
-        'Because finishing series is where you find calm.',
+        'Because completion defines your shelf.',
       CollectorTypeReasonKey.nearCompletion =>
-        'Because you keep bringing series to the edge of complete.',
+        'Because most of your shelf is at the edge of complete.',
       CollectorTypeReasonKey.intentionalSpread =>
-        'Because you shape a gallery across many worlds.',
+        'Because your shelf is a gallery of worlds you genuinely invest in.',
       CollectorTypeReasonKey.compactShelf =>
-        'Because a small shelf, carefully chosen, is enough.',
+        'Because you keep a small, focused shelf and care deeply for what makes the cut.',
       CollectorTypeReasonKey.inventedWorlds =>
-        'Because your shelf grows through imagination as much as collecting.',
+        'Because your own creations define your shelf.',
       CollectorTypeReasonKey.freshDrops =>
-        'Because fresh drops land on your shelf while they are still new.',
+        'Because recent releases define your shelf.',
     };
   }
 }
