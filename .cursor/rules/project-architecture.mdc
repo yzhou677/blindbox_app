@@ -5,6 +5,7 @@ alwaysApply: true
 
 # Project architecture
 
+Shared agent contract (Codex + contributors): root [`AGENTS.md`](../../AGENTS.md).
 Read [`.cursor/ARCHITECTURE.md`](../ARCHITECTURE.md) for full detail. Enforce these boundaries:
 
 ## Three universes (do not mix)

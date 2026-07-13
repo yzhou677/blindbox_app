@@ -1,6 +1,11 @@
 # Documentation index
 
-Human-oriented notes for the Blindbox app. **Agent rules and architecture live under `.cursor/`, not here.**
+Human-oriented notes for the Blindbox / Shelfy app.
+
+**Agent entry points:** Codex (and AGENTS.md-aware tools) start at root
+[`AGENTS.md`](../AGENTS.md). Cursor also loads [`.cursor/rules/`](../.cursor/rules/).
+Deep architecture remains under `.cursor/` and the specs below — do not duplicate
+long contracts into instruction files.
 
 **GitHub Pages:** [Site home](https://yzhou677.github.io/blindbox_app/) · [Privacy Policy (HTML)](privacy-policy.html)
 
@@ -22,8 +27,10 @@ Human-oriented notes for the Blindbox app. **Agent rules and architecture live u
 - [`PLAY_STORE_ASSETS.md`](PLAY_STORE_ASSETS.md) — Play listing icons, feature graphic, screenshot plan
 - [`CURSOR_RULES.md`](CURSOR_RULES.md) — pointer to where Cursor rules and architecture actually live
 
-## For Cursor agents and contributors
+## For agents and contributors
 
+- **Codex / shared contract:** [`AGENTS.md`](../AGENTS.md) · Insights: [`lib/features/collection/insights/AGENTS.md`](../lib/features/collection/insights/AGENTS.md)
 - **Architecture:** [`.cursor/ARCHITECTURE.md`](../.cursor/ARCHITECTURE.md)
-- **Rules:** [`.cursor/rules/`](../.cursor/rules/)
+- **Cursor rules:** [`.cursor/rules/`](../.cursor/rules/)
 - **Checklist:** [`.cursor/CONFORMITY_AUDIT.md`](../.cursor/CONFORMITY_AUDIT.md)
+- **Index of agent docs:** [`CURSOR_RULES.md`](CURSOR_RULES.md)

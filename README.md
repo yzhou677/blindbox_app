@@ -44,6 +44,7 @@ Do not mix these data paths unless a task explicitly requires it.
 
 For full details, read:
 
+- [Agent instructions (Codex / shared)](./AGENTS.md)
 - [Architecture reference](./.cursor/ARCHITECTURE.md)
 
 ## Tech Stack

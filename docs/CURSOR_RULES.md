@@ -1,16 +1,27 @@
 # Cursor rules and architecture — where things live
 
-**Do not add long agent rule blocks here.** This file is an index for humans browsing `docs/`. Cursor agents load rules from `.cursor/` automatically.
+**Do not add long agent rule blocks here.** This file is an index for humans browsing `docs/`.
+
+## Dual agent entry points
+
+| Audience | Entry |
+|----------|--------|
+| **Codex** (and any AGENTS.md-aware tool) | Root [`AGENTS.md`](../AGENTS.md); Insights scope [`lib/features/collection/insights/AGENTS.md`](../lib/features/collection/insights/AGENTS.md) |
+| **Cursor** | [`.cursor/rules/`](../.cursor/rules/) + [`.cursor/ARCHITECTURE.md`](../.cursor/ARCHITECTURE.md) |
+
+Keep durable meaning aligned across both. Prefer architecture docs for deep
+product history; keep agent instruction files short.
 
 ## Canonical sources (for agents and implementation)
 
 | What | Path |
 |------|------|
+| **Shared agent contract** | [`AGENTS.md`](../AGENTS.md) |
 | **Architecture** (three universes, data flow, Firebase, naming) | [`.cursor/ARCHITECTURE.md`](../.cursor/ARCHITECTURE.md) |
 | **Catalog spec** (runtime cache, providers, Search V2, availability) | [`CATALOG_ARCHITECTURE.md`](CATALOG_ARCHITECTURE.md) |
 | **Search spec** (normalization, token AND, haystack) | [`SEARCH_ARCHITECTURE.md`](SEARCH_ARCHITECTURE.md) |
 | **Testing / RC workflow** | [`TESTING.md`](TESTING.md) |
-| **Agent rules** (always-on and scoped snippets) | [`.cursor/rules/`](../.cursor/rules/) |
+| **Cursor agent rules** (always-on and scoped snippets) | [`.cursor/rules/`](../.cursor/rules/) |
 | **Conformity checklist** | [`.cursor/CONFORMITY_AUDIT.md`](../.cursor/CONFORMITY_AUDIT.md) |
 
 ### Rule files in `.cursor/rules/`
