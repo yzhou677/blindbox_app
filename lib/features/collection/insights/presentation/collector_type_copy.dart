@@ -1,6 +1,7 @@
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_reason_key.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_reveal_record.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 
 /// Display copy for Collection Insights and Collector Type reveal.
 ///
@@ -43,6 +44,16 @@ abstract final class CollectorTypeCopy {
       'Insights below reflect your shelf at the last reveal.';
 
   static const String statsSectionTitle = 'At a glance';
+
+  /// Achievement-focused snapshot at last reveal — not the Collection Summary
+  /// wishlist row. Each label names what is counted (figures vs series vs secrets).
+  static const String atAGlanceOwnedFigures = CollectionVocabulary.ownedFigures;
+  static const String atAGlanceCompletedSeries =
+      CollectionVocabulary.completedSeries;
+  static const String atAGlanceMasterComplete =
+      CollectionVocabulary.masterComplete;
+  static const String atAGlanceSecretsCollected =
+      CollectionVocabulary.secretsCollected;
   static const String entryCta = 'Reveal collector type';
   static const String entryRevealedPrefix = 'Your collector type';
 
@@ -51,6 +62,12 @@ abstract final class CollectorTypeCopy {
       'How your shelf story has unfolded over time.';
   static const String journeyStartedLabel = 'Started';
   static const String journeyExploredLabel = 'Explored';
+  static const String journeyLatestMemoryLabel = 'Latest Memory';
+
+  /// Moment titles — diary beats, not stats labels.
+  static const String journeyMemoryMasterComplete = '👑 Master Complete';
+  static const String journeyMemoryCompleted = 'Completed';
+  static const String journeyMemoryFirstSecret = '✨ First Secret';
 
   /// Stable empty value for [journeyStartedLabel] when memory has no start date.
   static const String journeyStartedPending = '—';

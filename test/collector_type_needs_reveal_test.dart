@@ -113,6 +113,9 @@ void main() {
           totalOwned: 0,
           totalWishlist: 0,
           trackedSeries: 1,
+          completedSeriesCount: 0,
+          masterCompleteSeriesCount: 0,
+          masterEligibleSeriesCount: 0,
           completionPercent: 0,
           secretOwned: 0,
           secretSlots: 0,
@@ -175,7 +178,7 @@ void main() {
     addTearDown(container.dispose);
 
     expect(container.read(collectorTypeNeedsRevealProvider), isTrue);
-    // Hero still shows last revealed — not live candidate overwrite.
+    // Hero still shows last revealed ??not live candidate overwrite.
     expect(
       container.read(collectorTypeIdentityProvider)?.archetypeId,
       identity.archetypeId,
@@ -185,7 +188,7 @@ void main() {
         .read(collectorTypeViewModelProvider.notifier)
         .requestReveal();
 
-    // Version stamped to current; signature unchanged → loop must end.
+    // Version stamped to current; signature unchanged ??loop must end.
     expect(container.read(collectorTypeNeedsRevealProvider), isFalse);
     expect(
       CollectionMemoryStore.instance.cached.revealedResolverVersion,
@@ -207,6 +210,9 @@ void main() {
           totalOwned: 0,
           totalWishlist: 0,
           trackedSeries: 1,
+          completedSeriesCount: 0,
+          masterCompleteSeriesCount: 0,
+          masterEligibleSeriesCount: 0,
           completionPercent: 0,
           secretOwned: 0,
           secretSlots: 0,

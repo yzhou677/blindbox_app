@@ -105,7 +105,7 @@ class _IdleStage extends StatelessWidget {
 }
 
 /// Persistent Insights hero + dashboard — stale treatment lives in the body.
-class _RevealedStage extends StatelessWidget {
+class _RevealedStage extends ConsumerWidget {
   const _RevealedStage({
     super.key,
     required this.identity,
@@ -116,7 +116,9 @@ class _RevealedStage extends StatelessWidget {
   final String? helperLine;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final displayStats =
+        ref.watch(collectorTypeDisplayStatsProvider) ?? identity.stats;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -124,7 +126,7 @@ class _RevealedStage extends StatelessWidget {
           identity: identity,
           helperLine: helperLine,
         ),
-        CollectorTypeStatsStrip(stats: identity.stats),
+        CollectorTypeStatsStrip(stats: displayStats),
       ],
     );
   }

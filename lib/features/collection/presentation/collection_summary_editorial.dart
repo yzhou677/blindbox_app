@@ -68,10 +68,13 @@ enum _CollectorStage {
   masterComplete,
 }
 
-/// Summary metric labels — figure row vs series-progress row.
+/// Collection Summary metric labels — shelf activity (owned + wishlist intent).
+///
+/// Differs from Insights [InsightsAtAGlanceLabels]: Summary includes wishlist;
+/// At a glance shows achievement tiers and secrets collected instead.
 abstract final class CollectionSummaryLabels {
-  static const figures = CollectionVocabulary.figures;
-  static const wishlist = CollectionVocabulary.wishlist;
+  static const figures = CollectionVocabulary.ownedFigures;
+  static const wishlist = CollectionVocabulary.wishlistedFigures;
   static const seriesComplete = CollectionVocabulary.completedSeries;
   static const masterComplete = CollectionVocabulary.masterComplete;
 }

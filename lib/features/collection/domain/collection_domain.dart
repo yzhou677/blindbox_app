@@ -1,3 +1,4 @@
+import 'package:blindbox_app/features/collection/domain/series_completion_resolution.dart';
 import 'package:flutter/material.dart';
 
 /// Browse grouping for the read-only catalog tree (not the user shelf).
@@ -438,15 +439,11 @@ class CollectionSnapshot {
     return n;
   }
 
-  int get averageCompletionPercent {
-    if (shelfSeries.isEmpty) return 0;
-    var sum = 0.0;
-    for (final s in shelfSeries) {
-      final p = progressForSeries(s, figureStates);
-      sum += p.completion(s.figureCount);
-    }
-    return ((sum / shelfSeries.length) * 100).round().clamp(0, 100);
-  }
+  /// Shelf Regular Completion % — mean of canonical [SeriesCompletionResolution.progressRatio].
+  ///
+  /// Secrets do not reduce a Regular-complete series below 100% contribution.
+  int get averageCompletionPercent =>
+      aggregateShelfCompletion(this).regularCompletionPercent;
 
   bool get isWarmStart => totalOwnedFigures == 0 && totalWishlistFigures == 0;
 

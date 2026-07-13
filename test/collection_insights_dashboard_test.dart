@@ -24,7 +24,7 @@ void main() {
       );
       expect(
         CollectionInsightsCompactSummaryFormat.semanticsLabel(stats),
-        '48 Figures, 7 Completed Series, 5 Master Complete',
+        '48 Owned Figures, 7 Completed Series, 5 Master Complete',
       );
       expect(
         CollectionInsightsCompactSummaryFormat.semanticsLabel(
@@ -35,7 +35,7 @@ void main() {
             masterCompleteSeriesCount: 5,
           ),
         ),
-        isNot(contains('Wishlist')),
+        isNot(contains('Wishlisted')),
       );
     });
   });

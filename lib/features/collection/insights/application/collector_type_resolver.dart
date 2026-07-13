@@ -4,6 +4,7 @@ import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_series.dart'
     as seed;
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/domain/series_completion_resolution.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_emotional_profile.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_interpretation_confidence.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_archetype.dart';
@@ -20,7 +21,9 @@ const int collectorTypeAnalyzingHoldMs = 1400;
 // --- Scoring policy thresholds (bump [kCollectorTypeResolverVersion] when these change) ---
 
 /// Series owned/slots ratio treated as “near complete” for Completionist.
-const double kCollectorTypeNearCompleteRatio = 0.85;
+/// Near-complete series ratio for Completionist eligibility (canonical
+/// [SeriesCompletionResolution.isNearComplete] / [kSeriesNearCompleteRatio]).
+const double kCollectorTypeNearCompleteRatio = kSeriesNearCompleteRatio;
 
 /// Minimum share of shelf series that are finished for Completionist deep path.
 ///
@@ -203,7 +206,7 @@ CollectorTypeResolution resolveCollectorType({
   final catalogSeriesById = catalog == null
       ? null
       : {for (final s in catalog.series) s.id: s};
-  final stats = _buildStats(snapshot, profile, catalog);
+  final stats = buildCollectorTypeStats(snapshot, profile, catalog);
   final signatureHash = computeCollectorTypeSignatureHash(snapshot);
   final emptyScores = {
     for (final id in CollectorTypeArchetypeId.values) id: 0.0,
@@ -253,7 +256,7 @@ double _confidence({required double winner, required double runnerUp}) {
   return (gap / winner).clamp(kCollectorTypeConfidenceMin, 1.0);
 }
 
-CollectorTypeStats _buildStats(
+CollectorTypeStats buildCollectorTypeStats(
   CollectionSnapshot snapshot,
   ShelfEmotionalProfile profile,
   CatalogSeedBundle? catalog,
@@ -288,11 +291,16 @@ CollectorTypeStats _buildStats(
 
   final brandBreakdown = aggregateBrandBreakdownByCanonicalKey(brandEntries);
 
+  final aggregate = aggregateShelfCompletion(snapshot);
+
   return CollectorTypeStats(
     totalOwned: snapshot.totalOwnedFigures,
     totalWishlist: snapshot.totalWishlistFigures,
     trackedSeries: snapshot.trackedSeriesCount,
-    completionPercent: snapshot.averageCompletionPercent,
+    completedSeriesCount: aggregate.completedSeriesCount,
+    masterCompleteSeriesCount: aggregate.masterCompleteSeriesCount,
+    masterEligibleSeriesCount: aggregate.masterEligibleSeriesCount,
+    completionPercent: aggregate.regularCompletionPercent,
     secretOwned: profile.secretOwnedCount,
     secretSlots: profile.secretSlotCount,
     brandBreakdown: brandBreakdown,
@@ -333,11 +341,9 @@ CollectorTypeStats _buildStats(
   var customPhotoSeries = 0;
 
   for (final series in snapshot.shelfSeries) {
-    final progress = progressForSeries(series, snapshot.figureStates);
-    final total = series.figureCount;
-    if (total > 0 &&
-        progress.owned < total &&
-        progress.owned / total >= kCollectorTypeNearCompleteRatio) {
+    final resolution =
+        resolveSeriesCompletion(series, snapshot.figureStates);
+    if (resolution.isNearComplete) {
       nearComplete++;
     }
     if (catalog != null && series.catalogTemplateId != null) {

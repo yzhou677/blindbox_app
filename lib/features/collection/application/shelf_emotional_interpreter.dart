@@ -56,16 +56,12 @@ ShelfEmotionalProfile interpretShelf(CollectionSnapshot snap) {
       }
     }
 
-    final progress = progressForSeries(series, snap.figureStates);
-    final total = series.figureCount;
-    if (resolveSeriesCompletion(series, snap.figureStates).isCompleted) {
+    final resolution = resolveSeriesCompletion(series, snap.figureStates);
+    if (resolution.isCompleted) {
       seriesComplete++;
     }
 
-    if (total > 0) {
-      final ratio = progress.owned / total;
-      if (progress.owned < total && ratio >= 0.85) nearCompleteSeries++;
-    }
+    if (resolution.isNearComplete) nearCompleteSeries++;
 
     for (final fig in series.figures) {
       if (!fig.isSecret) continue;

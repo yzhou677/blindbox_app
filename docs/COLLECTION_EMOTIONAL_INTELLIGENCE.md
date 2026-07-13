@@ -15,7 +15,7 @@ Shelf interpretation is **not** a collector profile, recommendation engine, or g
 ## Signals
 
 - **Taxonomy coverage** — `taxonomyBrandId` / `taxonomyIpId` on series rows
-- **Completion** — `progressForSeries`, `averageCompletionPercent`
+- **Completion** — `resolveSeriesCompletion` / `aggregateShelfCompletion` (Regular-weighted `progressRatio`; Near Complete = `isNearComplete`)
 - **Secrets** — `ShelfFigure.isSecret` × `FigureCollectionState.owned`
 - **Relationships** — co-occurring IPs on shelf (max 2 insights)
 

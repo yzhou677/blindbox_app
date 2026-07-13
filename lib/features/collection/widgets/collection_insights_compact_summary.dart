@@ -61,7 +61,7 @@ abstract final class CollectionInsightsCompactSummaryFormat {
   static const masterCompleteGlyph = '👑';
 
   static String semanticsLabel(CollectionAggregateStats stats) {
-    return '${stats.inCollection} ${CollectionVocabulary.figures}, '
+    return '${stats.inCollection} ${CollectionVocabulary.ownedFigures}, '
         '${stats.completedSeriesCount} ${CollectionVocabulary.completedSeries}, '
         '${stats.masterCompleteSeriesCount} ${CollectionVocabulary.masterComplete}';
   }

@@ -9,6 +9,8 @@ import 'package:blindbox_app/features/collection/insights/domain/collector_type_
 /// True when a reveal exists and any of:
 /// - [persistedResolverVersion] is missing or ≠ [currentResolverVersion]
 /// - live signature ≠ persisted signature (shelf composition drifted)
+/// - persisted stats schema is outdated / missing required fields
+///   ([persistedStatsAreCurrent] == false)
 ///
 /// Signature / this flag answer **When** a reveal is required only.
 /// They never decide the reveal **result** — once the user reveals while this
@@ -21,8 +23,11 @@ bool computeCollectorTypeNeedsReveal({
   required String? persistedResolverVersion,
   required CollectorTypeResolution liveCandidate,
   String currentResolverVersion = kCollectorTypeResolverVersion,
+  bool persistedStatsAreCurrent = true,
 }) {
   if (!hasRevealed) return false;
+
+  if (!persistedStatsAreCurrent) return true;
 
   if (persistedResolverVersion == null ||
       persistedResolverVersion.isEmpty ||

@@ -9,6 +9,7 @@ import 'package:blindbox_app/features/collection/domain/shelf_era.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_mood.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_reveal_record.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_stats.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -205,7 +206,7 @@ final class CollectionMemoryStore {
       collectorTypeRevealedAtMs: healed.revealedAt.millisecondsSinceEpoch,
       collectorTypeSignatureHash: healed.signatureHash,
       collectorTypeStatsJson: jsonEncode(healed.stats.toJson()),
-      collectorTypeStatsVersion: 1,
+      collectorTypeStatsVersion: kCollectorTypeStatsVersion,
       collectorTypeReasonKey: healed.reasonKey.name,
       collectorTypeResolverVersion: version,
       collectorTypeRevealHistory: capped,
@@ -536,5 +537,13 @@ final class CollectionMemoryStore {
     _cached = const CollectionMemoryData();
     _cachedCollectorTypeIdentity = null;
     _loaded = true;
+  }
+
+  /// Test-only: re-read SharedPreferences (e.g. legacy upgrade fixtures).
+  Future<void> reloadFromPrefsForTest() async {
+    _cached = const CollectionMemoryData();
+    _cachedCollectorTypeIdentity = null;
+    _loaded = false;
+    await ensureLoaded();
   }
 }

@@ -89,12 +89,33 @@ void main() {
     expect(atm.missingSecret, isFalse);
   });
 
-  test('complete when all owned', () {
-    final series = testShelfSeries();
-    final fid = series.figures.first.id;
-    final atm = atmosphereForSeries(series, <String, TrackedFigure>{
-      fid: TrackedFigure(figureId: fid, state: FigureCollectionState.owned),
-    });
-    expect(atm.complete, isTrue);
+  test('nearComplete with Secrets uses progressRatio not all-figure fill', () {
+    final figures = <ShelfFigure>[
+      for (var i = 0; i < 7; i++)
+        ShelfFigure(
+          id: 'r$i',
+          seriesId: 'series_test',
+          name: 'R$i',
+          rarity: 'Regular',
+          isSecret: false,
+        ),
+      const ShelfFigure(
+        id: 'sec',
+        seriesId: 'series_test',
+        name: 'Secret',
+        rarity: 'Secret',
+        isSecret: true,
+      ),
+    ];
+    final series = testShelfSeries(figures: figures);
+    final states = <String, TrackedFigure>{
+      for (var i = 0; i < 6; i++)
+        'r$i': TrackedFigure(figureId: 'r$i', state: FigureCollectionState.owned),
+    };
+
+    final atm = atmosphereForSeries(series, states);
+    // 6/7 Regular ⇒ Near; 6/8 all-figure would not be Near.
+    expect(atm.nearComplete, isTrue);
+    expect(atm.complete, isFalse);
   });
 }

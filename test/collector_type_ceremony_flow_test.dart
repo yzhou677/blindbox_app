@@ -117,6 +117,9 @@ void main() {
           totalOwned: 0,
           totalWishlist: 0,
           trackedSeries: 1,
+          completedSeriesCount: 0,
+          masterCompleteSeriesCount: 0,
+          masterEligibleSeriesCount: 0,
           completionPercent: 0,
           secretOwned: 0,
           secretSlots: 0,
@@ -141,7 +144,7 @@ void main() {
     final event = container.read(collectorTypeCeremonyProvider);
     final revealed = container.read(collectorTypeViewModelProvider)
         as CollectorTypeRevealRevealed;
-    // needsReveal (stale signature) → always persist resolver candidate.
+    // needsReveal (stale signature) ??always persist resolver candidate.
     expect(revealed.identity.archetypeId, isNot(CollectorTypeArchetypeId.worldbuilder));
     expect(event, isNotNull);
     expect(event!.isFirstReveal, isFalse);

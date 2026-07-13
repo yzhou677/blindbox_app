@@ -1,7 +1,7 @@
 import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/app_typography.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_stats.dart';
-import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
+import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
 import 'package:flutter/material.dart';
 
 /// Quick statistics summary for Insights — counts only, no progress chrome.
@@ -19,14 +19,14 @@ class CollectorTypeTotalsRow extends StatelessWidget {
             Expanded(
               child: _MetricTile(
                 value: '${stats.totalOwned}',
-                label: CollectionVocabulary.figures,
+                label: CollectorTypeCopy.atAGlanceOwnedFigures,
               ),
             ),
             const SizedBox(width: AppSpacing.lg),
             Expanded(
               child: _MetricTile(
-                value: '${stats.totalWishlist}',
-                label: CollectionVocabulary.wishlist,
+                value: '${stats.completedSeriesCount}',
+                label: CollectorTypeCopy.atAGlanceCompletedSeries,
               ),
             ),
           ],
@@ -36,15 +36,15 @@ class CollectorTypeTotalsRow extends StatelessWidget {
           children: [
             Expanded(
               child: _MetricTile(
-                value: '${stats.trackedSeries}',
-                label: CollectionVocabulary.series,
+                value: '${stats.masterCompleteSeriesCount}',
+                label: CollectorTypeCopy.atAGlanceMasterComplete,
               ),
             ),
             const SizedBox(width: AppSpacing.lg),
             Expanded(
               child: _MetricTile(
                 value: '${stats.secretOwned}',
-                label: CollectionVocabulary.secretFigure,
+                label: CollectorTypeCopy.atAGlanceSecretsCollected,
               ),
             ),
           ],
@@ -94,7 +94,7 @@ class _MetricTile extends StatelessWidget {
             Text(
               label,
               textAlign: TextAlign.center,
-              maxLines: 1,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: AppTypography.insightsCaption(textTheme, scheme).copyWith(
                 fontSize: 11.5,

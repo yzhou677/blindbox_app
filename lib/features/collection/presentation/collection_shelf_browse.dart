@@ -156,7 +156,7 @@ int _compareShelfSeriesByNameThenId(ShelfSeries a, ShelfSeries b) {
 /// Completion-sort tier — higher sorts first.
 ///
 /// Matches product achievement order: Master Complete → Complete →
-/// Near Complete (≥ 0.85 progress, not yet complete) → In Progress.
+/// Near Complete ([SeriesCompletionResolution.isNearComplete]) → In Progress.
 /// Threshold matches [atmosphereForSeries] / shelf “almost complete” voice.
 int _completionSortTier(
   ShelfSeries series,
@@ -165,7 +165,7 @@ int _completionSortTier(
   final resolution = resolveSeriesCompletion(series, states);
   if (resolution.isMasterComplete) return 3;
   if (resolution.isCompleted) return 2;
-  if (resolution.progressRatio >= 0.85) return 1;
+  if (resolution.isNearComplete) return 1;
   return 0;
 }
 

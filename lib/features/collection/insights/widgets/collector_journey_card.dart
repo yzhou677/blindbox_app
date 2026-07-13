@@ -1,6 +1,7 @@
 import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/app_typography.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
+import 'package:blindbox_app/features/collection/insights/application/collector_journey_summary.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_providers.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/insights_dashboard_panel.dart';
@@ -14,11 +15,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// Journey reflects the user's evolving collection history
 /// and is not part of the Reveal snapshot.
 ///
-/// ## Stable fields
+/// ## Diary growth
 ///
-/// Journey **slots stay fixed**; only values change. Do not hide Started /
-/// Explored (or future beats) behind conditional layout — users should always
-/// know where to look.
+/// Keep Journey lightweight. Started + Explored stay as stable slots.
+/// Latest Memory is optional — omit when memory has no moment yet.
+/// Prefer memorable moments over additional counters; never grow into a dashboard.
 class CollectorJourneyCard extends ConsumerWidget {
   const CollectorJourneyCard({super.key});
 
@@ -30,6 +31,7 @@ class CollectorJourneyCard extends ConsumerWidget {
     final startedValue =
         summary.journeyAgeLabel ?? CollectorTypeCopy.journeyStartedPending;
     final exploredCount = summary.ipUniversesExplored;
+    final memory = summary.latestMemory;
 
     return InsightsDashboardPanel(
       padding: const EdgeInsets.fromLTRB(
@@ -110,6 +112,72 @@ class CollectorJourneyCard extends ConsumerWidget {
                 ),
               ),
             ],
+          ),
+          if (memory != null) ...[
+            const SizedBox(height: AppSpacing.lg + 2),
+            _LatestMemoryBeat(memory: memory),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _LatestMemoryBeat extends StatelessWidget {
+  const _LatestMemoryBeat({required this.memory});
+
+  final JourneyLatestMemory memory;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final title = switch (memory.kind) {
+      JourneyMemoryKind.masterComplete =>
+        CollectorTypeCopy.journeyMemoryMasterComplete,
+      JourneyMemoryKind.completedSeries =>
+        CollectorTypeCopy.journeyMemoryCompleted,
+      JourneyMemoryKind.firstSecret =>
+        CollectorTypeCopy.journeyMemoryFirstSecret,
+    };
+    final seriesName = memory.seriesName?.trim();
+
+    return _StoryBeat(
+      label: CollectorTypeCopy.journeyLatestMemoryLabel,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: CollectibleTypography.shelfSeriesTitle(
+              textTheme,
+              scheme,
+            ).copyWith(
+              fontSize: 17,
+              letterSpacing: -0.2,
+              height: 1.2,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          if (seriesName != null && seriesName.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              seriesName,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.insightsFlavor(textTheme, scheme).copyWith(
+                fontSize: 14,
+                height: 1.3,
+                color: scheme.onSurface.withValues(alpha: 0.78),
+              ),
+            ),
+          ],
+          const SizedBox(height: 4),
+          Text(
+            memory.ageLabel,
+            style: AppTypography.insightsCaption(textTheme, scheme).copyWith(
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.62),
+            ),
           ),
         ],
       ),

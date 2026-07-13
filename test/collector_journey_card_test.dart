@@ -47,6 +47,46 @@ void main() {
     expect(find.text('Smiski'), findsNothing);
     expect(find.text('Dora'), findsNothing);
     expect(find.textContaining('8 series'), findsNothing);
+    expect(find.text(CollectorTypeCopy.journeyLatestMemoryLabel), findsNothing);
+  });
+
+  testWidgets('shows Latest Memory when summary has one', (tester) async {
+    final summary = CollectorJourneySummary(
+      ipUniversesExplored: 2,
+      seriesExploredOverTime: 4,
+      topIps: const [],
+      journeyAgeLabel: '1 month ago',
+      latestMemory: JourneyLatestMemory(
+        kind: JourneyMemoryKind.masterComplete,
+        observedAt: DateTime(2026, 5, 24),
+        ageLabel: '5 days ago',
+        seriesName: 'SKULLPANDA Petals',
+      ),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          collectorJourneySummaryProvider.overrideWithValue(summary),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: const Scaffold(body: CollectorJourneyCard()),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(
+      find.text(CollectorTypeCopy.journeyLatestMemoryLabel),
+      findsOneWidget,
+    );
+    expect(
+      find.text(CollectorTypeCopy.journeyMemoryMasterComplete),
+      findsOneWidget,
+    );
+    expect(find.text('SKULLPANDA Petals'), findsOneWidget);
+    expect(find.text('5 days ago'), findsOneWidget);
   });
 
   testWidgets('keeps Started and Explored slots when history is empty', (

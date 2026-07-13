@@ -158,6 +158,76 @@ unchanged shelf only.
 | **Live (Journey)** | Collector Journey summary | Always current. **Not** archived with reveal. Updates as the shelf evolves. |
 | **Historical replay** | `CollectorTypeRevealRecord` | Append-only resolve snapshot for Timeline / Personality Memory. No 1.0 UI yet. |
 
+### Collection Summary vs Insights “At a glance”
+
+Both surfaces show counts, but they answer different questions. Labels must name
+what is counted — never bare “Figures”, “Series”, or “Wishlist”.
+
+| Surface | Intent | Metrics |
+| ------- | ------ | ------- |
+| **Collection Summary** (Collection tab) | Shelf activity — what you own and what you are aiming for | Owned Figures · Wishlisted Figures · Completed Series · Master Complete |
+| **Insights — At a glance** | Achievement snapshot at last reveal — collector identity | Owned Figures · Completed Series · Master Complete · Secrets Collected |
+
+Same completion tiers (`countShelfCompletionTiers` / `resolveSeriesCompletion`);
+At a glance omits wishlist and uses secrets collected instead. Values in At a
+glance come from `CollectorTypeStats` frozen at reveal **when**
+`collectorTypeStatsVersion == kCollectorTypeStatsVersion` (currently **2**) and
+required fields are present. Otherwise Insights **live-derives** display stats
+from the current shelf without rewriting prefs — identity (archetype / reason /
+signature / reveal time / history) stays frozen. Outdated stats schema also
+sets `needsReveal` so the user can formally refresh the snapshot.
+
+### Collector Journey as a diary
+
+Journey highlights memorable collector moments — not another stats panel.
+**Open today’s collection diary** — not a dashboard of every signal.
+
+| Beat | Source | Notes |
+| ---- | ------ | ----- |
+| Started | `firstSeriesAddedAt` | Stable slot |
+| Explored | `ipSeriesDepth` | Stable slot |
+| Latest Memory | Existing memory only | Omit when none |
+
+**Latest Memory priority** (no new persistence):
+
+1. Master Complete — latest completed series is still Master Complete on shelf
+2. Completed Series — `lastCompletedSeriesId` + `lastCompletedAtMs`
+3. First Secret — `firstSecretOwnedAtMs`
+
+**Diary principle (permanent):** surface at most **one or two** memorable
+moments at a time. Journey can grow (First Master Complete, First New Universe,
+Type Evolution) but must stay curated — never a six-row stats dump.
+
+### Shelf Progress progressive disclosure
+
+Shelf Progress answers **collection progression** (Regular Complete → Master Complete).
+
+| Stage | Condition | Rows |
+| ----- | --------- | ---- |
+| 1 | Always | **Regular Completion** — mean of canonical `progressRatio` across **all** shelf series |
+| 2 | `masterCompleteSeriesCount > 0` | **👑 Master Completion** — Master Complete / **Secret-bearing** series only |
+
+**Formulas (canonical):**
+
+```text
+Regular Completion:
+  mean over all shelf series of resolveSeriesCompletion(...).progressRatio
+  (Secrets do not reduce a Regular-complete series below 100%)
+
+Master Completion:
+  masterCompleteSeriesCount / masterEligibleSeriesCount
+  where masterEligibleSeriesCount = series with secretSlotCount > 0
+  (no-Secret series are excluded from the denominator)
+
+Near Complete:
+  !isCompleted && progressRatio >= 0.85
+  (same definition for Completion sort, atmosphere, and interpretShelf)
+```
+
+If `masterEligibleSeriesCount == 0`, do not show the Master Completion row.
+Do **not** show Master Completion at `0%` before the first Master Complete —
+progressive disclosure until `masterCompleteSeriesCount > 0`.
+
 **Do not:**
 
 * Make Journey a reveal-frozen field
@@ -335,7 +405,7 @@ Sort modes do **not** group by IP. IP filters remain available as a filter facet
 | Recently Added | Preserve shelf / bucket encounter order | N/A |
 | Alphabetical (A–Z) | Series name (case-insensitive) | shelf `id` |
 | Figure Count | `figureCount` (desc) | series name → shelf `id` |
-| Completion | **Tier first:** Master Complete → Complete → Near Complete (≥ 0.85) → In Progress; then progress ratio (desc) | series name → shelf `id` |
+| Completion | **Tier first:** Master Complete → Complete → Near Complete (`!isCompleted && progressRatio ≥ 0.85`) → In Progress; then progress ratio (desc) | series name → shelf `id` |
 
 **Product rule:** Collection sorting is flat. New sort modes should define a **series-level** comparator — not reintroduce hidden IP aggregates.
 

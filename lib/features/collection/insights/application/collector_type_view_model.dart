@@ -4,6 +4,7 @@ import 'package:blindbox_app/features/collection/application/shelf_emotional_pro
 import 'package:blindbox_app/features/collection/application/shelf_emotional_interpreter.dart';
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_ceremony.dart';
+import 'package:blindbox_app/features/collection/insights/application/collector_type_display_stats.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_evolution_gate.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_needs_reveal.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_resolver.dart';
@@ -62,6 +63,11 @@ final class CollectorTypeViewModel extends Notifier<CollectorTypeRevealStage> {
           persistedSignatureHash: prior.signatureHash,
           persistedResolverVersion: priorVersion,
           liveCandidate: liveForInvalidation,
+          // Must match [collectorTypeNeedsRevealProvider]: outdated stats
+          // schema is a formal Reveal gate, not an evolution Still.
+          persistedStatsAreCurrent: memoryCollectorTypeStatsAreCurrent(
+            CollectionMemoryStore.instance.cached,
+          ),
         );
 
     state = const CollectorTypeRevealAnalyzing();
