@@ -5,6 +5,7 @@ import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalo
 import 'package:blindbox_app/features/collectible_relationship/application/collectible_relationship_providers.dart';
 import 'package:blindbox_app/features/collectible_relationship/widgets/collectible_relationship_line.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
+import 'package:blindbox_app/features/collection/application/share_payload_builders/master_complete_share_payload_builder.dart';
 import 'package:blindbox_app/features/collection/application/shelf_emotional_providers.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/domain/series_completion_resolution.dart';
@@ -13,6 +14,8 @@ import 'package:blindbox_app/features/collection/presentation/shelf_editorial_vo
 import 'package:blindbox_app/features/collection/widgets/collection_progress_voice.dart';
 import 'package:blindbox_app/features/collection/widgets/figure_capsule_card.dart';
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/features/sharing/presentation/share_card_preview.dart';
+import 'package:blindbox_app/features/sharing/presentation/widgets/shelfy_collector_cards.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
 import 'package:flutter/material.dart';
@@ -48,12 +51,19 @@ class SeriesFiguresSheet extends ConsumerWidget {
     final memoryReflection = ref.watch(
       collectionMemoryReflectionForSeriesProvider(seriesId),
     );
-    final trailingMeta =
-        CollectionProgressVoice.seriesFiguresSheetProgressMeta(resolution);
+    final trailingMeta = CollectionProgressVoice.seriesFiguresSheetProgressMeta(
+      resolution,
+    );
     final contextualLine =
         (relationshipLine != null && relationshipLine.isNotEmpty)
-            ? relationshipLine
-            : memoryReflection;
+        ? relationshipLine
+        : memoryReflection;
+    final masterSharePayload = chasesHome
+        ? buildMasterCompleteSharePayload(
+            series: series,
+            figureStates: snap.figureStates,
+          )
+        : null;
 
     return CollectibleSheetInsets(
       child: CollectibleSheetScrollView(
@@ -78,6 +88,17 @@ class SeriesFiguresSheet extends ConsumerWidget {
                 padding: const EdgeInsets.only(top: 14),
                 child: _SeriesCompleteBanner(
                   chasesHome: chasesHome,
+                  onShare: masterSharePayload == null
+                      ? null
+                      : () => showShareCardPreview(
+                          context: context,
+                          card: MasterCompleteShareCard(
+                            payload: masterSharePayload,
+                          ),
+                          basename: 'shelfy-chase-card',
+                          loadingLabel: 'Finishing the Chase Card...',
+                          previewTitle: 'Chase Card',
+                        ),
                 ),
               ),
             ),
@@ -116,10 +137,12 @@ class _SeriesFigureGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final regularFigures =
-        series.figures.where((f) => !f.isSecret).toList(growable: false);
-    final secretFigures =
-        series.figures.where((f) => f.isSecret).toList(growable: false);
+    final regularFigures = series.figures
+        .where((f) => !f.isSecret)
+        .toList(growable: false);
+    final secretFigures = series.figures
+        .where((f) => f.isSecret)
+        .toList(growable: false);
 
     if (secretFigures.isEmpty) {
       return _FigureCapsuleWrap(
@@ -219,7 +242,11 @@ class _FigureSheetSectionHeader extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           if (showCrown) ...[
-            Text('👑', style: style.copyWith(fontSize: 13)),
+            Icon(
+              Icons.emoji_events_rounded,
+              size: 14,
+              color: scheme.primary.withValues(alpha: 0.78),
+            ),
             const SizedBox(width: 5),
           ],
           Text(_displayLabel, style: style),
@@ -276,9 +303,10 @@ class _FigureCapsuleWrap extends StatelessWidget {
 }
 
 class _SeriesCompleteBanner extends StatelessWidget {
-  const _SeriesCompleteBanner({required this.chasesHome});
+  const _SeriesCompleteBanner({required this.chasesHome, this.onShare});
 
   final bool chasesHome;
+  final VoidCallback? onShare;
 
   @override
   Widget build(BuildContext context) {
@@ -318,10 +346,15 @@ class _SeriesCompleteBanner extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Row(
           children: [
-            Icon(
-              Icons.check_circle_outline_rounded,
-              size: 22,
-              color: scheme.primary.withValues(alpha: 0.85),
+            Padding(
+              padding: const EdgeInsets.only(top: 1),
+              child: Icon(
+                chasesHome
+                    ? Icons.emoji_events_rounded
+                    : Icons.check_circle_outline_rounded,
+                size: 22,
+                color: scheme.primary.withValues(alpha: 0.85),
+              ),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -347,11 +380,55 @@ class _SeriesCompleteBanner extends StatelessWidget {
                       height: 1.3,
                     ),
                   ),
+                  if (onShare != null) ...[
+                    const SizedBox(height: 10),
+                    _InlineShareAction(
+                      label: 'Share Chase Card',
+                      onPressed: onShare!,
+                    ),
+                  ],
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _InlineShareAction extends StatelessWidget {
+  const _InlineShareAction({required this.label, required this.onPressed});
+
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return OutlinedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(
+        Icons.ios_share_rounded,
+        size: 16,
+        color: scheme.primary.withValues(alpha: 0.72),
+      ),
+      label: Text(
+        label,
+        style: textTheme.labelMedium?.copyWith(
+          fontWeight: FontWeight.w600,
+          color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
+        ),
+      ),
+      style: OutlinedButton.styleFrom(
+        side: BorderSide(color: scheme.primary.withValues(alpha: 0.24)),
+        backgroundColor: scheme.surface.withValues(alpha: 0.18),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        minimumSize: const Size(0, 34),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
     );
   }

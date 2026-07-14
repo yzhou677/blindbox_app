@@ -22,6 +22,7 @@ class CollectorTypeResultCard extends StatelessWidget {
     this.helperLine,
     this.showRevealAgain = false,
     this.onRevealAgain,
+    this.onShare,
     this.updatedAtNow,
   });
 
@@ -29,6 +30,7 @@ class CollectorTypeResultCard extends StatelessWidget {
   final String? helperLine;
   final bool showRevealAgain;
   final VoidCallback? onRevealAgain;
+  final VoidCallback? onShare;
   final DateTime? updatedAtNow;
 
   @override
@@ -48,11 +50,7 @@ class CollectorTypeResultCard extends StatelessWidget {
           boxShadow: CollectibleElevation.softCard(context),
         ),
         child: Material(
-          color: Color.lerp(
-            scheme.surface,
-            accent,
-            isDark ? 0.12 : 0.08,
-          ),
+          color: Color.lerp(scheme.surface, accent, isDark ? 0.12 : 0.08),
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: AppRadii.cardRadius,
@@ -78,16 +76,17 @@ class CollectorTypeResultCard extends StatelessWidget {
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: CollectibleTypography.seriesHeroTitle(
-                    textTheme,
-                    scheme,
-                  ).copyWith(
-                    fontSize: 30,
-                    letterSpacing: -0.55,
-                    height: 1.1,
-                    fontWeight: FontWeight.w700,
-                    color: scheme.onSurface.withValues(alpha: 0.96),
-                  ),
+                  style:
+                      CollectibleTypography.seriesHeroTitle(
+                        textTheme,
+                        scheme,
+                      ).copyWith(
+                        fontSize: 30,
+                        letterSpacing: -0.55,
+                        height: 1.1,
+                        fontWeight: FontWeight.w700,
+                        color: scheme.onSurface.withValues(alpha: 0.96),
+                      ),
                 ),
                 const SizedBox(height: 12),
                 Text(
@@ -104,13 +103,25 @@ class CollectorTypeResultCard extends StatelessWidget {
                   flavorText: archetype.flavorText,
                   helperLine: hasHelper ? helperLine : null,
                 ),
-                const SizedBox(height: 12),
-                CollectorTypeRevealDashboardFooter(
-                  revealedAt: identity.revealedAt,
-                  showRevealAgain: showRevealAgain,
-                  onRevealAgain: onRevealAgain ?? () {},
-                  now: updatedAtNow,
-                ),
+                if (onShare != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Center(
+                      child: _ShareCollectorCardButton(
+                        accent: accent,
+                        onPressed: onShare!,
+                      ),
+                    ),
+                  ),
+                if (showRevealAgain) ...[
+                  const SizedBox(height: 10),
+                  CollectorTypeRevealDashboardFooter(
+                    revealedAt: identity.revealedAt,
+                    showRevealAgain: showRevealAgain,
+                    onRevealAgain: onRevealAgain ?? () {},
+                    now: updatedAtNow,
+                  ),
+                ],
               ],
             ),
           ),
@@ -120,12 +131,47 @@ class CollectorTypeResultCard extends StatelessWidget {
   }
 }
 
+class _ShareCollectorCardButton extends StatelessWidget {
+  const _ShareCollectorCardButton({
+    required this.accent,
+    required this.onPressed,
+  });
+
+  final Color accent;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return OutlinedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(Icons.ios_share_rounded, size: 14, color: accent),
+      label: Text(
+        'Share Collector Card',
+        style: textTheme.labelMedium?.copyWith(
+          fontWeight: FontWeight.w600,
+          fontSize: 12,
+          color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
+        ),
+      ),
+      style: OutlinedButton.styleFrom(
+        side: BorderSide(color: accent.withValues(alpha: 0.18)),
+        foregroundColor: scheme.onSurfaceVariant.withValues(alpha: 0.78),
+        backgroundColor: scheme.surface.withValues(alpha: 0.18),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        minimumSize: const Size(0, 30),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+}
+
 /// Quiet expand for atmosphere copy — keeps the collapsed hero short.
 class _WhyThisTypeSection extends StatefulWidget {
-  const _WhyThisTypeSection({
-    required this.flavorText,
-    this.helperLine,
-  });
+  const _WhyThisTypeSection({required this.flavorText, this.helperLine});
 
   final String flavorText;
   final String? helperLine;
@@ -181,25 +227,23 @@ class _WhyThisTypeSectionState extends State<_WhyThisTypeSection> {
           child: !_expanded
               ? const SizedBox(width: double.infinity)
               : Padding(
-                  padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
+                  padding: const EdgeInsets.fromLTRB(4, 2, 4, 0),
                   child: Column(
                     children: [
                       Text(
                         widget.flavorText,
                         textAlign: TextAlign.center,
-                        style: AppTypography.insightsFlavor(
-                          textTheme,
-                          scheme,
-                        ).copyWith(
-                          fontSize: 13.5,
-                          height: 1.45,
-                          color: scheme.onSurfaceVariant.withValues(
-                            alpha: 0.62,
-                          ),
-                        ),
+                        style: AppTypography.insightsFlavor(textTheme, scheme)
+                            .copyWith(
+                              fontSize: 13.5,
+                              height: 1.45,
+                              color: scheme.onSurfaceVariant.withValues(
+                                alpha: 0.62,
+                              ),
+                            ),
                       ),
                       if (widget.helperLine != null) ...[
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 8),
                         Text(
                           widget.helperLine!,
                           textAlign: TextAlign.center,
