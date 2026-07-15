@@ -86,7 +86,7 @@ void main() {
       );
       expect(
         CollectionSummaryEditorial.shelfMoodLine(snap),
-        anyOf(contains('taking shape'), contains('character')),
+        anyOf(contains('in-progress'), contains('recorded')),
       );
     });
 
@@ -135,7 +135,7 @@ void main() {
         ),
         snap: snap,
       );
-      expect(line, 'Macaron is your latest completed series');
+      expect(line, 'Macaron is your latest Complete series');
     });
 
     test('master complete uses master wording', () {

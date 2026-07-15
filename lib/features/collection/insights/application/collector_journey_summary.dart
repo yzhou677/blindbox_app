@@ -16,11 +16,7 @@ class CollectorJourneyTopIp {
 }
 
 /// One memorable moment for Journey — not a stats counter.
-enum JourneyMemoryKind {
-  masterComplete,
-  completedSeries,
-  firstSecret,
-}
+enum JourneyMemoryKind { masterComplete, completedSeries, firstSecret }
 
 /// Latest memorable moment from existing [CollectionMemoryData] only.
 @immutable
@@ -144,9 +140,7 @@ JourneyLatestMemory? pickLatestJourneyMemory({
   final current = now ?? DateTime.now();
   final completedId = memory.lastCompletedSeriesId?.trim();
   final completedAt = memory.lastCompletedAt;
-  if (completedId != null &&
-      completedId.isNotEmpty &&
-      completedAt != null) {
+  if (completedId != null && completedId.isNotEmpty && completedAt != null) {
     ShelfSeries? series;
     for (final s in snapshot.shelfSeries) {
       if (s.id == completedId) {
@@ -156,7 +150,8 @@ JourneyLatestMemory? pickLatestJourneyMemory({
     }
     final name = series?.name.trim();
     final seriesName = (name != null && name.isNotEmpty) ? name : null;
-    final isMaster = series != null &&
+    final isMaster =
+        series != null &&
         resolveSeriesCompletion(series, snapshot.figureStates).isMasterComplete;
     final ageLabel = formatJourneyAgeLabel(
       startedAt: completedAt,
@@ -197,9 +192,10 @@ String? formatJourneyAgeLabel({
   if (startedAt == null) return null;
   final days = now.difference(startedAt).inDays;
   if (days < 0) return null;
+  if (days == 0) return 'Today';
+  if (days == 1) return 'Yesterday';
   if (days < 30) {
-    final unit = days == 1 ? 'day' : 'days';
-    return '$days $unit ago';
+    return '$days days ago';
   }
   final months = days ~/ 30;
   if (months < 12) {

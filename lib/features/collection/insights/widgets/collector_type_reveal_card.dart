@@ -1,5 +1,6 @@
 import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
+import 'package:blindbox_app/features/collection/application/share_payload_builders/collector_type_share_payload_builder.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_explainability.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_providers.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_view_model.dart';
@@ -9,6 +10,8 @@ import 'package:blindbox_app/features/collection/insights/widgets/collector_type
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_reveal_button.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_result_card.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_stats_strip.dart';
+import 'package:blindbox_app/features/sharing/presentation/share_card_preview.dart';
+import 'package:blindbox_app/features/sharing/presentation/widgets/shelfy_collector_cards.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -91,10 +94,7 @@ class CollectorTypeRevealCard extends ConsumerWidget {
 }
 
 class _IdleStage extends StatelessWidget {
-  const _IdleStage({
-    super.key,
-    required this.onReveal,
-  });
+  const _IdleStage({super.key, required this.onReveal});
 
   final VoidCallback onReveal;
 
@@ -119,12 +119,25 @@ class _RevealedStage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final displayStats =
         ref.watch(collectorTypeDisplayStatsProvider) ?? identity.stats;
+    final payload = buildCollectorTypeSharePayload(
+      identity,
+      brightness: Theme.of(context).brightness,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         CollectorTypeResultCard(
           identity: identity,
           helperLine: helperLine,
+          onShare: payload == null
+              ? null
+              : () => showShareCardPreview(
+                  context: context,
+                  card: CollectorTypeShareCard(payload: payload),
+                  basename: 'shelfy-identity-card',
+                  loadingLabel: 'Preparing your Collector Card...',
+                  previewTitle: 'Collector Card',
+                ),
         ),
         CollectorTypeStatsStrip(stats: displayStats),
       ],

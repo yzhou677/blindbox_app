@@ -17,50 +17,35 @@ abstract final class CollectionMemoryEditorial {
         'Your first Secret Figure still lives on this shelf',
       CollectionMemoryMomentKind.recentlyCompletedLineup =>
         _recentCompletionWhisper(moment, snap),
-      CollectionMemoryMomentKind.dominantUniverse when
-            moment.universeLabel != null =>
-        '${moment.universeLabel} keeps drawing you back',
+      CollectionMemoryMomentKind.dominantUniverse
+          when moment.universeLabel != null =>
+        '${moment.universeLabel} has the strongest universe presence',
       CollectionMemoryMomentKind.dominantUniverse =>
-        'One universe keeps drawing you back',
+        'One universe has the strongest presence',
       CollectionMemoryMomentKind.shelfMilestone =>
-        'Every series on your shelf feels complete',
-      CollectionMemoryMomentKind.longLovedUniverse when
-            moment.universeLabel != null =>
-        '${moment.universeLabel} has stayed with you the longest',
+        'Your shelf has no in-progress series right now',
+      CollectionMemoryMomentKind.longLovedUniverse
+          when moment.universeLabel != null =>
+        '${moment.universeLabel} is the earliest recorded universe',
       CollectionMemoryMomentKind.longLovedUniverse =>
-        'A universe has stayed with you the longest',
-      CollectionMemoryMomentKind.shelfEvolution =>
-        null,
+        'One universe has the earliest recorded shelf date',
+      CollectionMemoryMomentKind.shelfEvolution => null,
       CollectionMemoryMomentKind.shelfGrowing =>
-        'Your shelf has been quietly growing for a while',
+        'Your shelf has recorded growth over time',
     };
   }
 
   static String? whisperForEvolution(CollectionEvolution evolution) {
     return switch (evolution.kind) {
       CollectionEvolutionKind.moodSoftened =>
-        'Your shelf has gradually become softer and dreamier',
+        'Softer series signals increased in the latest comparison',
       CollectionEvolutionKind.moodBrightened =>
-        'Playful lineups have been appearing more often lately',
+        'Playful series signals increased in the latest comparison',
       CollectionEvolutionKind.secretsEmerging =>
-        'Secret Figures have slowly become part of your collection',
+        'Secret Figure ownership increased in the latest comparison',
       CollectionEvolutionKind.universeShift =>
-        'A new universe has been finding its place on your shelf',
+        'A new universe appeared in the latest comparison',
     };
-  }
-
-  static String? seriesReflection({
-    required bool recentlyCompleted,
-    required bool isComplete,
-    required String seriesName,
-  }) {
-    if (recentlyCompleted && isComplete) {
-      return '$seriesName was recently completed after a long search';
-    }
-    if (isComplete) {
-      return 'This completed series has found its place on your shelf';
-    }
-    return null;
   }
 
   static String? _recentCompletionWhisper(
@@ -68,19 +53,25 @@ abstract final class CollectionMemoryEditorial {
     CollectionSnapshot? snap,
   ) {
     final name = moment.seriesName?.trim();
-    if (name != null && name.isNotEmpty && snap != null && moment.seriesId != null) {
+    if (name != null &&
+        name.isNotEmpty &&
+        snap != null &&
+        moment.seriesId != null) {
       for (final series in snap.shelfSeries) {
         if (series.id != moment.seriesId) continue;
-        if (resolveSeriesCompletion(series, snap.figureStates).isMasterComplete) {
+        if (resolveSeriesCompletion(
+          series,
+          snap.figureStates,
+        ).isMasterComplete) {
           return '$name is your latest Master Complete series';
         }
         break;
       }
-      return '$name is your latest completed series';
+      return '$name is your latest Complete series';
     }
     if (name != null && name.isNotEmpty) {
-      return '$name is your latest completed series';
+      return '$name is your latest Complete series';
     }
-    return 'A series was recently completed';
+    return 'A series recently reached Complete';
   }
 }

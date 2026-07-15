@@ -1,4 +1,5 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/features/collection/presentation/completion_metric_tooltips.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_summary_editorial.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_summary_section.dart';
@@ -72,7 +73,7 @@ class CollectionInsightsCompactSummary extends StatelessWidget {
   const CollectionInsightsCompactSummary({
     super.key,
     required this.stats,
-    required this.onTap,
+    this.onTap,
     required this.compactT,
     required this.valueStyle,
     required this.labelStyle,
@@ -80,7 +81,7 @@ class CollectionInsightsCompactSummary extends StatelessWidget {
   });
 
   final CollectionAggregateStats stats;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   /// `0` = labeled glance, `1` = compact glyphs.
   final double compactT;
@@ -109,7 +110,7 @@ class CollectionInsightsCompactSummary extends StatelessWidget {
     );
 
     return Semantics(
-      button: true,
+      button: onTap != null,
       label: CollectionInsightsCompactSummaryFormat.semanticsLabel(stats),
       child: Material(
         color: Colors.transparent,
@@ -148,8 +149,7 @@ class _MorphMetricColumn extends StatelessWidget {
     return switch (metric.kind) {
       CollectionInsightsCompactMetricKind.figures => false,
       CollectionInsightsCompactMetricKind.completedSeries ||
-      CollectionInsightsCompactMetricKind.masterComplete =>
-        metric.count == 0,
+      CollectionInsightsCompactMetricKind.masterComplete => metric.count == 0,
     };
   }
 
@@ -159,7 +159,9 @@ class _MorphMetricColumn extends StatelessWidget {
 
   TextStyle _effectiveValueStyle(BuildContext context) {
     if (!_muted) return valueStyle;
-    return valueStyle.copyWith(color: _mutedCountColor(Theme.of(context).colorScheme));
+    return valueStyle.copyWith(
+      color: _mutedCountColor(Theme.of(context).colorScheme),
+    );
   }
 
   Widget? _compactGlyph(double t, ColorScheme scheme) {
@@ -167,17 +169,17 @@ class _MorphMetricColumn extends StatelessWidget {
     final color = _muted ? _mutedCountColor(scheme) : glyphColor;
     return switch (metric.kind) {
       CollectionInsightsCompactMetricKind.completedSeries => Icon(
-          Icons.check_rounded,
-          size: size,
-          color: color,
-        ),
+        Icons.check_rounded,
+        size: size,
+        color: color,
+      ),
       CollectionInsightsCompactMetricKind.masterComplete => Opacity(
-          opacity: _muted ? 0.36 : 1,
-          child: Text(
-            CollectionInsightsCompactSummaryFormat.masterCompleteGlyph,
-            style: TextStyle(fontSize: size, height: 1.0),
-          ),
+        opacity: _muted ? 0.36 : 1,
+        child: Text(
+          CollectionInsightsCompactSummaryFormat.masterCompleteGlyph,
+          style: TextStyle(fontSize: size, height: 1.0),
         ),
+      ),
       CollectionInsightsCompactMetricKind.figures => null,
     };
   }
@@ -222,11 +224,8 @@ class _MorphMetricColumn extends StatelessWidget {
                       height: FeedRhythm.collectionSummaryLabelHeight,
                       child: Align(
                         alignment: Alignment.topCenter,
-                        child: Text(
-                          metric.label,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
+                        child: _MetricLabelText(
+                          metric: metric,
                           style: labelStyle,
                         ),
                       ),
@@ -237,6 +236,31 @@ class _MorphMetricColumn extends StatelessWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+class _MetricLabelText extends StatelessWidget {
+  const _MetricLabelText({required this.metric, required this.style});
+
+  final CollectionInsightsCompactMetric metric;
+  final TextStyle style;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Text(
+      metric.label,
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      textAlign: TextAlign.center,
+      style: style,
+    );
+    if (metric.kind != CollectionInsightsCompactMetricKind.completedSeries) {
+      return text;
+    }
+    return Tooltip(
+      message: CompletionMetricTooltips.completedSeries,
+      child: text,
     );
   }
 }

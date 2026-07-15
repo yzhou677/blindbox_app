@@ -1,9 +1,7 @@
-import 'package:blindbox_app/features/collection/insights/application/collector_type_reveal_age.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
 import 'package:flutter/material.dart';
 
-/// Dashboard metadata under the collector type hero — last updated + optional
-/// lightweight re-reveal affordance.
+/// Optional lightweight re-reveal affordance under the collector type hero.
 class CollectorTypeRevealDashboardFooter extends StatelessWidget {
   const CollectorTypeRevealDashboardFooter({
     super.key,
@@ -20,70 +18,40 @@ class CollectorTypeRevealDashboardFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!showRevealAgain) return const SizedBox.shrink();
+
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final updatedLabel = formatCollectorTypeUpdatedLabel(
-      revealedAt: revealedAt,
-      now: now,
-    );
-    if (updatedLabel == null && !showRevealAgain) {
-      return const SizedBox.shrink();
-    }
 
-    // Quiet meta — parent owns the gap above this footer.
-    final captionStyle = textTheme.labelSmall?.copyWith(
-      color: scheme.onSurfaceVariant.withValues(alpha: 0.52),
-      letterSpacing: 0.12,
-      fontWeight: FontWeight.w500,
-    );
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        if (updatedLabel != null)
-          Text(
-            updatedLabel,
-            textAlign: TextAlign.center,
-            style: captionStyle,
-          ),
-        if (showRevealAgain) ...[
-          SizedBox(height: updatedLabel != null ? 8 : 0),
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: onRevealAgain,
-              borderRadius: BorderRadius.circular(8),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 4,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.refresh_rounded,
-                      size: 15,
-                      color: scheme.primary.withValues(alpha: 0.82),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      CollectorTypeCopy.revealAgain,
-                      style: textTheme.labelLarge?.copyWith(
-                        color: scheme.primary.withValues(alpha: 0.88),
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.06,
-                      ),
-                    ),
-                  ],
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onRevealAgain,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.refresh_rounded,
+                size: 15,
+                color: scheme.primary.withValues(alpha: 0.82),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                CollectorTypeCopy.revealAgain,
+                style: textTheme.labelLarge?.copyWith(
+                  color: scheme.primary.withValues(alpha: 0.88),
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.06,
                 ),
               ),
-            ),
+            ],
           ),
-        ],
-      ],
+        ),
+      ),
     );
   }
 }

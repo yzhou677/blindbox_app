@@ -5,5 +5,5 @@ abstract final class CollectionInputLimits {
   static const int ipMaxLength = 64;
   static const int figureNameMaxLength = 64;
   static const int rarityLabelMaxLength = 16;
-  static const int notesMaxLength = 500;
+  static const int notesMaxLength = 200;
 }

@@ -41,7 +41,7 @@ void main() {
             reasonKey: CollectorTypeReasonKey.stillUnfolding,
           ),
         ),
-        'Because your shelf keeps returning to the same universe.',
+        'Because one universe has the strongest presence in this reveal.',
       );
     });
 
@@ -144,7 +144,7 @@ void main() {
       );
       expect(
         CollectorTypeCopy.becauseLineForRecord(record),
-        'Because your shelf keeps returning to the same universe.',
+        'Because one universe has the strongest presence in this reveal.',
       );
     });
   });

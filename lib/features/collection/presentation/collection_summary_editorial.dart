@@ -15,18 +15,22 @@ abstract final class CollectionSummaryEditorial {
     final alt = snap.shelfSeries.length % 2;
     return switch (stage) {
       _CollectorStage.masterComplete => _masterCompleteShelfMoodLine(master),
-      _CollectorStage.severalComplete => alt == 0
-          ? 'Several completed series are finding their rhythm on your shelf.'
-          : 'Completed series are becoming a steady part of your collection.',
-      _CollectorStage.firstComplete => alt == 0
-          ? 'Your first completed series is a gentle milestone.'
-          : 'One completed series — room for more when you\'re ready.',
-      _CollectorStage.growing => alt == 0
-          ? 'Your collection is quietly taking shape.'
-          : 'Each figure adds a little more character to the shelf.',
-      _CollectorStage.beginning => alt == 0
-          ? 'A shelf ready for its first lineup.'
-          : 'Your collection is just getting started.',
+      _CollectorStage.severalComplete =>
+        alt == 0
+            ? 'Several series have reached Complete.'
+            : 'Completed Series includes Regular Complete and Master Complete.',
+      _CollectorStage.firstComplete =>
+        alt == 0
+            ? 'One series has reached Complete.'
+            : 'Completed Series includes Regular Complete and Master Complete.',
+      _CollectorStage.growing =>
+        alt == 0
+            ? 'Your collection has in-progress series.'
+            : 'Tracked figures are recorded on your shelf.',
+      _CollectorStage.beginning =>
+        alt == 0
+            ? 'A shelf ready for its first lineup.'
+            : 'Your collection is just getting started.',
     };
   }
 

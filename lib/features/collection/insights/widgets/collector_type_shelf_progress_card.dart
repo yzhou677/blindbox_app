@@ -2,8 +2,10 @@ import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_stats.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/insights_dashboard_panel.dart';
+import 'package:blindbox_app/features/collection/presentation/completion_metric_tooltips.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_insights_compact_summary.dart';
+import 'package:blindbox_app/features/collection/widgets/info_tooltip_icon.dart';
 import 'package:flutter/material.dart';
 
 /// Presentation helpers for Shelf Progress — no new completion math.
@@ -52,6 +54,7 @@ class CollectorTypeShelfProgressCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.lg + 2),
           _ProgressRow(
             label: CollectionVocabulary.regularProgress,
+            tooltip: CompletionMetricTooltips.regularProgress,
             valueText: '${stats.completionPercent}%',
             ratio: regularRatio,
             primary: true,
@@ -62,8 +65,9 @@ class CollectorTypeShelfProgressCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.lg),
             _ProgressRow(
               label: CollectionVocabulary.masterCompletion,
-              leadingGlyph: CollectionInsightsCompactSummaryFormat
-                  .masterCompleteGlyph,
+              tooltip: CompletionMetricTooltips.masterCompletion,
+              leadingGlyph:
+                  CollectionInsightsCompactSummaryFormat.masterCompleteGlyph,
               valueText:
                   '${ShelfProgressPresentation.masterCompletionPercent(stats)}%',
               ratio: ShelfProgressPresentation.masterCompletionRatio(stats),
@@ -87,6 +91,7 @@ class _ProgressRow extends StatelessWidget {
     required this.scheme,
     required this.textTheme,
     this.leadingGlyph,
+    this.tooltip,
   });
 
   final String label;
@@ -96,6 +101,7 @@ class _ProgressRow extends StatelessWidget {
   final ColorScheme scheme;
   final TextTheme textTheme;
   final String? leadingGlyph;
+  final String? tooltip;
 
   @override
   Widget build(BuildContext context) {
@@ -104,8 +110,10 @@ class _ProgressRow extends StatelessWidget {
             fontWeight: FontWeight.w600,
             color: scheme.onSurface.withValues(alpha: 0.82),
           )
-        : CollectibleTypography.shelfMasterCompleteStatLine(textTheme, scheme)
-            .copyWith(
+        : CollectibleTypography.shelfMasterCompleteStatLine(
+            textTheme,
+            scheme,
+          ).copyWith(
             fontWeight: FontWeight.w500,
             fontSize: (textTheme.bodyMedium?.fontSize ?? 14) - 0.5,
             color: Color.lerp(
@@ -147,19 +155,15 @@ class _ProgressRow extends StatelessWidget {
             if (leadingGlyph != null) ...[
               Text(
                 leadingGlyph!,
-                style: TextStyle(
-                  fontSize: primary ? 14 : 12,
-                  height: 1,
-                ),
+                style: TextStyle(fontSize: primary ? 14 : 12, height: 1),
               ),
               const SizedBox(width: 6),
             ],
             Expanded(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              child: _MetricLabelWithTooltip(
+                label: label,
                 style: labelStyle,
+                tooltip: tooltip,
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
@@ -175,6 +179,42 @@ class _ProgressRow extends StatelessWidget {
             backgroundColor: trackColor,
             color: barColor,
           ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MetricLabelWithTooltip extends StatelessWidget {
+  const _MetricLabelWithTooltip({
+    required this.label,
+    required this.style,
+    this.tooltip,
+  });
+
+  final String label;
+  final TextStyle style;
+  final String? tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Text(
+      label,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: style,
+    );
+    if (tooltip == null) return text;
+
+    final scheme = Theme.of(context).colorScheme;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(child: text),
+        const SizedBox(width: 4),
+        InfoTooltipIcon(
+          message: tooltip!,
+          color: scheme.onSurfaceVariant.withValues(alpha: 0.58),
         ),
       ],
     );

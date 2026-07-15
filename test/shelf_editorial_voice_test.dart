@@ -18,7 +18,7 @@ void main() {
 
     expect(
       ShelfEditorialVoice.shelfInterpretationLine(profile),
-      contains('dreamy'),
+      contains('Soft-toned'),
     );
   });
 
@@ -32,4 +32,26 @@ void main() {
       isNotEmpty,
     );
   });
+
+  test(
+    'series completion banner preserves Complete and Master Complete tiers',
+    () {
+      expect(
+        ShelfEditorialVoice.seriesCompleteBannerTitle(chasesHome: false),
+        contains('Complete'),
+      );
+      expect(
+        ShelfEditorialVoice.seriesCompleteBannerTitle(chasesHome: false),
+        isNot(contains('Master Complete')),
+      );
+      expect(
+        ShelfEditorialVoice.seriesCompleteBannerTitle(chasesHome: true),
+        contains('Master Complete'),
+      );
+      expect(
+        ShelfEditorialVoice.seriesCompleteBannerSubtitle(chasesHome: true),
+        contains('Regular and Secret'),
+      );
+    },
+  );
 }

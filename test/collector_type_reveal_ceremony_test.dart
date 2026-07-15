@@ -32,7 +32,8 @@ CollectorTypeIdentity _identity(
       topSeries: [],
       customSeriesRatio: 0,
     ),
-    reasonKey: reasonKey ??
+    reasonKey:
+        reasonKey ??
         (id == CollectorTypeArchetypeId.loyalist
             ? CollectorTypeReasonKey.dominantUniverse
             : CollectorTypeReasonKey.manySecrets),
@@ -60,9 +61,11 @@ void main() {
 
     expect(find.text('The Hunter'), findsOneWidget);
     expect(
-      find.text(CollectorTypeCopy.becauseLineFor(
-        _identity(CollectorTypeArchetypeId.hunter),
-      )),
+      find.text(
+        CollectorTypeCopy.becauseLineFor(
+          _identity(CollectorTypeArchetypeId.hunter),
+        ),
+      ),
       findsOneWidget,
     );
     expect(
@@ -156,16 +159,20 @@ void main() {
     );
 
     expect(
-      find.text('Because your shelf keeps returning to the same universe.'),
+      find.text(
+        'Because one universe has the strongest presence in this reveal.',
+      ),
       findsOneWidget,
     );
     expect(
       CollectorTypeCopy.becauseLineFor(identity),
-      'Because your shelf keeps returning to the same universe.',
+      'Because one universe has the strongest presence in this reveal.',
     );
   });
 
-  testWidgets('disableAnimations finishes ceremony immediately', (tester) async {
+  testWidgets('disableAnimations finishes ceremony immediately', (
+    tester,
+  ) async {
     var finished = false;
     await tester.pumpWidget(
       MediaQuery(

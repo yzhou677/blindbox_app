@@ -11,6 +11,7 @@ ShelfSeries testShelfSeries({
   String? imageKey,
   String? taxonomyBrandId = 'pop_mart',
   String? taxonomyIpId = 'the_monsters',
+  String? notes,
   List<ShelfFigure>? figures,
 }) {
   return ShelfSeries(
@@ -18,7 +19,8 @@ ShelfSeries testShelfSeries({
     name: name,
     brand: brand,
     ipName: ipName,
-    figures: figures ??
+    figures:
+        figures ??
         [
           const ShelfFigure(
             id: 'fig_test_0',
@@ -34,6 +36,7 @@ ShelfSeries testShelfSeries({
     imageKey: imageKey,
     taxonomyBrandId: taxonomyBrandId,
     taxonomyIpId: taxonomyIpId,
+    notes: notes,
   );
 }
 
@@ -51,7 +54,8 @@ CatalogSeries testCatalogTemplate({
     shelfAccent: const Color(0xFFE4F2EA),
     taxonomyBrandId: 'pop_mart',
     taxonomyIpId: taxonomyIpId,
-    figures: figures ??
+    figures:
+        figures ??
         [
           CatalogFigure(
             templateFigureId: 'fig_catalog_0',

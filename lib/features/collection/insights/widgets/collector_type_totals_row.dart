@@ -2,6 +2,8 @@ import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/app_typography.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_stats.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
+import 'package:blindbox_app/features/collection/presentation/completion_metric_tooltips.dart';
+import 'package:blindbox_app/features/collection/widgets/info_tooltip_icon.dart';
 import 'package:flutter/material.dart';
 
 /// Quick statistics summary for Insights — counts only, no progress chrome.
@@ -27,6 +29,7 @@ class CollectorTypeTotalsRow extends StatelessWidget {
               child: _MetricTile(
                 value: '${stats.completedSeriesCount}',
                 label: CollectorTypeCopy.atAGlanceCompletedSeries,
+                tooltip: CompletionMetricTooltips.completedSeries,
               ),
             ),
           ],
@@ -38,6 +41,7 @@ class CollectorTypeTotalsRow extends StatelessWidget {
               child: _MetricTile(
                 value: '${stats.masterCompleteSeriesCount}',
                 label: CollectorTypeCopy.atAGlanceMasterComplete,
+                tooltip: CompletionMetricTooltips.masterComplete,
               ),
             ),
             const SizedBox(width: AppSpacing.lg),
@@ -45,6 +49,7 @@ class CollectorTypeTotalsRow extends StatelessWidget {
               child: _MetricTile(
                 value: '${stats.secretOwned}',
                 label: CollectorTypeCopy.atAGlanceSecretsCollected,
+                tooltip: CompletionMetricTooltips.secretsCollected,
               ),
             ),
           ],
@@ -55,10 +60,11 @@ class CollectorTypeTotalsRow extends StatelessWidget {
 }
 
 class _MetricTile extends StatelessWidget {
-  const _MetricTile({required this.value, required this.label});
+  const _MetricTile({required this.value, required this.label, this.tooltip});
 
   final String value;
   final String label;
+  final String? tooltip;
 
   @override
   Widget build(BuildContext context) {
@@ -91,11 +97,9 @@ class _MetricTile extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 6),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+            _MetricLabel(
+              label: label,
+              tooltip: tooltip,
               style: AppTypography.insightsCaption(textTheme, scheme).copyWith(
                 fontSize: 11.5,
                 letterSpacing: 0.15,
@@ -105,6 +109,41 @@ class _MetricTile extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _MetricLabel extends StatelessWidget {
+  const _MetricLabel({required this.label, required this.style, this.tooltip});
+
+  final String label;
+  final TextStyle style;
+  final String? tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Text(
+      label,
+      textAlign: TextAlign.center,
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      style: style,
+    );
+    if (tooltip == null) return text;
+
+    final scheme = Theme.of(context).colorScheme;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(child: text),
+        const SizedBox(width: 4),
+        InfoTooltipIcon(
+          message: tooltip!,
+          size: 13,
+          color: scheme.onSurfaceVariant.withValues(alpha: 0.54),
+        ),
+      ],
     );
   }
 }

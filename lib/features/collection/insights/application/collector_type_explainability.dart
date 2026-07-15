@@ -18,7 +18,7 @@ String? resolveCollectorTypeHelperLine({
   final currentSpread = _currentShelfIpSpread(snapshot);
   if (historyBreadth < currentSpread + loyalistJourneyBreadthDelta) return null;
 
-  return 'While your current shelf is focused around a few favorites, your collecting journey has explored many different worlds.';
+  return 'Current shelf universe count is lower than the historical universe count recorded in Journey.';
 }
 
 int _currentShelfIpSpread(CollectionSnapshot snapshot) {

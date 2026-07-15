@@ -63,11 +63,17 @@ void main() {
     await pumpCard(tester, AppTheme.light());
     expect(find.text(archetype.displayName), findsOneWidget);
     expect(find.text('Why this type'), findsOneWidget);
-    expect(find.textContaining('quiet focus'), findsNothing);
+    expect(
+      find.text('Secret Figures are a strong signal in this reveal.'),
+      findsNothing,
+    );
 
     await tester.tap(find.byKey(const Key('collector_type_why_this_type')));
     await tester.pumpAndSettle();
-    expect(find.textContaining('quiet focus'), findsOneWidget);
+    expect(
+      find.text('Secret Figures are a strong signal in this reveal.'),
+      findsOneWidget,
+    );
     expect(
       find.byKey(const Key('collector_type_mascot_hunter')),
       findsOneWidget,
@@ -83,7 +89,7 @@ void main() {
   testWidgets('derives Because from identity reasonKey', (tester) async {
     await pumpCard(tester, AppTheme.light());
     expect(
-      find.text('Because Secret Figures keep drawing your focus.'),
+      find.text('Because Secret Figures are a strong signal in this reveal.'),
       findsOneWidget,
     );
   });
@@ -101,11 +107,15 @@ void main() {
     );
     expect(find.text('The Loyalist'), findsOneWidget);
     expect(
-      find.text('Because your shelf keeps returning to the same universe.'),
+      find.text(
+        'Because one universe has the strongest presence in this reveal.',
+      ),
       findsOneWidget,
     );
     expect(
-      find.text('Because your shelf is still finding its shape.'),
+      find.text(
+        'Because no specialized shelf pattern qualified at this reveal.',
+      ),
       findsNothing,
     );
   });
@@ -118,7 +128,7 @@ void main() {
           body: CollectorTypeResultCard(
             identity: _sampleIdentity(),
             helperLine:
-                'While your current shelf is focused around a few favorites, your collecting journey has explored many different worlds.',
+                'Current shelf universe count is lower than the historical universe count recorded in Journey.',
             updatedAtNow: DateTime(2026, 6, 4),
           ),
         ),
@@ -127,20 +137,15 @@ void main() {
     await tester.pump();
 
     expect(
-      find.textContaining(
-        'your collecting journey has explored many different worlds',
-      ),
+      find.textContaining('historical universe count recorded in Journey'),
       findsNothing,
     );
     await tester.tap(find.byKey(const Key('collector_type_why_this_type')));
     await tester.pumpAndSettle();
     expect(
-      find.textContaining(
-        'your collecting journey has explored many different worlds',
-      ),
+      find.textContaining('historical universe count recorded in Journey'),
       findsOneWidget,
     );
-    expect(find.text('Updated 3 days ago'), findsOneWidget);
   });
 
   testWidgets('shows reveal again in dashboard footer when requested', (
@@ -162,8 +167,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('Updated 3 days ago'), findsOneWidget);
-    await tester.tap(find.text('Reveal again'));
+    await tester.tap(find.text('Refresh Collector Type'));
     await tester.pump();
     expect(tapped, isTrue);
   });

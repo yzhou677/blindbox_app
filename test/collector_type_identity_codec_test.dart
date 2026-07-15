@@ -150,29 +150,32 @@ void main() {
     expect(daydream.reasonKey, CollectorTypeReasonKey.highWishlist);
   });
 
-  test('legacy archivist id and livingArchive reason migrate to Worldbuilder', () {
-    final restored = CollectorTypeIdentity.fromJson({
-      'archetypeId': 'archivist',
-      'revealedAtMs': DateTime(2026, 1, 1).millisecondsSinceEpoch,
-      'signatureHash': 'old',
-      'stats': {
-        'totalOwned': 1,
-        'totalWishlist': 0,
-        'trackedSeries': 1,
-        'completionPercent': 10,
-        'secretOwned': 0,
-        'secretSlots': 0,
-        'brandBreakdown': <String, dynamic>{},
-        'topSeries': <dynamic>[],
-        'customSeriesRatio': 0,
-      },
-      'reasonKey': 'livingArchive',
-    });
-    expect(restored.archetypeId, CollectorTypeArchetypeId.worldbuilder);
-    expect(restored.reasonKey, CollectorTypeReasonKey.inventedWorlds);
-    expect(
-      CollectorTypeCopy.becauseLineFor(restored),
-      'Because your shelf grows through imagination as much as collecting.',
-    );
-  });
+  test(
+    'legacy archivist id and livingArchive reason migrate to Worldbuilder',
+    () {
+      final restored = CollectorTypeIdentity.fromJson({
+        'archetypeId': 'archivist',
+        'revealedAtMs': DateTime(2026, 1, 1).millisecondsSinceEpoch,
+        'signatureHash': 'old',
+        'stats': {
+          'totalOwned': 1,
+          'totalWishlist': 0,
+          'trackedSeries': 1,
+          'completionPercent': 10,
+          'secretOwned': 0,
+          'secretSlots': 0,
+          'brandBreakdown': <String, dynamic>{},
+          'topSeries': <dynamic>[],
+          'customSeriesRatio': 0,
+        },
+        'reasonKey': 'livingArchive',
+      });
+      expect(restored.archetypeId, CollectorTypeArchetypeId.worldbuilder);
+      expect(restored.reasonKey, CollectorTypeReasonKey.inventedWorlds);
+      expect(
+        CollectorTypeCopy.becauseLineFor(restored),
+        'Because custom series are a strong signal in this reveal.',
+      );
+    },
+  );
 }

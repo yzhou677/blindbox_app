@@ -21,9 +21,9 @@ import 'helpers/collection_fixtures.dart';
 final class OverflowTestNotifier extends CollectionNotifier {
   @override
   CollectionSnapshot build() => CollectionSnapshot(
-        shelfSeries: [testShelfSeries()],
-        figureStates: const {},
-      );
+    shelfSeries: [testShelfSeries()],
+    figureStates: const {},
+  );
 }
 
 void main() {
@@ -79,17 +79,16 @@ void main() {
 
     expect(find.byType(CollectorTypeRevealCard), findsOneWidget);
 
-    await tester.tap(
-      find.descendant(
-        of: find.byType(CollectorTypeRevealCard),
-        matching: find.text(CollectorTypeCopy.revealAgain),
-      ),
-    );
+    await tester.ensureVisible(find.text(CollectorTypeCopy.revealAgain));
+    await tester.pump();
+    await tester.tap(find.text(CollectorTypeCopy.revealAgain));
     await tester.pump();
 
     expect(find.text(CollectorTypeCopy.analyzingLine), findsOneWidget);
 
-    await tester.pump(const Duration(milliseconds: collectorTypeAnalyzingHoldMs));
+    await tester.pump(
+      const Duration(milliseconds: collectorTypeAnalyzingHoldMs),
+    );
     await tester.pump(const Duration(milliseconds: 400));
   });
 }
