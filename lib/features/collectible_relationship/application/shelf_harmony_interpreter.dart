@@ -18,20 +18,20 @@ String? interpretShelfHarmonyLine({
   if (insights.any((i) => i.kind == ShelfRelationshipKind.complementaryMood)) {
     return switch (profile.shelfMood) {
       ShelfMood.dreamy => 'Your collection blends dreamy and playful worlds',
-      ShelfMood.playful => 'Playful lineups often sit beside softer worlds here',
-      ShelfMood.settled => 'Your shelf mixes calm universes with room to wander',
+      ShelfMood.playful => 'Playful and soft-toned lineups are both present',
+      ShelfMood.settled => 'Multiple calm-universe signals are present',
       ShelfMood.chaseHunter => 'Rare pulls share the shelf with softer lineups',
-      ShelfMood.growing => 'A few worlds are starting to echo each other',
+      ShelfMood.growing => 'Multiple related worlds are present',
     };
   }
 
   if (insights.any((i) => i.kind == ShelfRelationshipKind.sharedUniverse)) {
-    return 'A universe keeps returning across your shelf';
+    return 'Multiple series share a universe';
   }
 
   if (profile.shelfMood == ShelfMood.dreamy &&
       profile.themeIncludes(ShelfEditorialTheme.multiUniverse)) {
-    return 'Dreamy pastel lineups appear often together here';
+    return 'Multiple soft-toned lineups are present';
   }
 
   return null;

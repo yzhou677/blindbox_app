@@ -9,16 +9,26 @@ abstract final class CollectibleRelationshipCopy {
     required CollectibleRelationshipIndex index,
   }) {
     return switch (hint.kind) {
-      CollectibleRelationshipKind.shelfCompanion => _shelfCompanion(hint, index),
-      CollectibleRelationshipKind.sharedUniverse => _sharedUniverse(hint, index),
+      CollectibleRelationshipKind.shelfCompanion => _shelfCompanion(
+        hint,
+        index,
+      ),
+      CollectibleRelationshipKind.sharedUniverse => _sharedUniverse(
+        hint,
+        index,
+      ),
       CollectibleRelationshipKind.adjacentUniverse =>
-        'Often grouped with nearby collectible worlds',
-      CollectibleRelationshipKind.lineupNeighbor =>
-        _lineupNeighbor(hint, index),
-      CollectibleRelationshipKind.catalogUniverseNeighbor =>
-        _catalogNeighbor(hint, index),
+        'Adjacent catalog relationship detected',
+      CollectibleRelationshipKind.lineupNeighbor => _lineupNeighbor(
+        hint,
+        index,
+      ),
+      CollectibleRelationshipKind.catalogUniverseNeighbor => _catalogNeighbor(
+        hint,
+        index,
+      ),
       CollectibleRelationshipKind.moodCompanion =>
-        'Collectors often pair this with other worlds from the same maker',
+        'Same-maker relationship detected',
     };
   }
 
@@ -30,9 +40,9 @@ abstract final class CollectibleRelationshipCopy {
         ? index.shelfSeriesName(hint.relatedSeriesId!)
         : null;
     if (name == null || name.isEmpty) {
-      return 'Often sits beside another series on your shelf';
+      return 'Shelf relationship detected';
     }
-    return 'Often sits beside $name on your shelf';
+    return 'Shelf relationship with $name';
   }
 
   static String? _sharedUniverse(
@@ -41,7 +51,7 @@ abstract final class CollectibleRelationshipCopy {
   ) {
     final ipName = index.ipDisplayName(hint.taxonomyIpId);
     if (ipName != null && ipName.isNotEmpty) {
-      return 'Shares the $ipName world with other series you collect';
+      return 'Shares the $ipName world with another recorded series';
     }
     final name = hint.relatedSeriesId != null
         ? index.shelfSeriesName(hint.relatedSeriesId!)
@@ -49,7 +59,7 @@ abstract final class CollectibleRelationshipCopy {
     if (name != null && name.isNotEmpty) {
       return 'Shares a world with $name on your shelf';
     }
-    return 'Part of a universe that keeps returning to your shelf';
+    return 'Shared-universe relationship detected';
   }
 
   static String? _catalogNeighbor(
@@ -58,15 +68,15 @@ abstract final class CollectibleRelationshipCopy {
   ) {
     final ipName = index.ipDisplayName(hint.taxonomyIpId);
     if (ipName != null && ipName.isNotEmpty) {
-      return 'Nearby in the quiet $ipName world of collectibles';
+      return 'Part of the $ipName catalog universe';
     }
     final peer = hint.relatedSeriesId != null
         ? index.catalogSeriesName(hint.relatedSeriesId!)
         : null;
     if (peer != null && peer.isNotEmpty) {
-      return 'Wanders near $peer in the catalog';
+      return 'Related catalog series: $peer';
     }
-    return 'Nearby in a connected collectible world';
+    return null;
   }
 
   static String? _lineupNeighbor(

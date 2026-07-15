@@ -58,8 +58,7 @@ abstract final class CollectorTypeArchetypes {
   static const dreamer = CollectorTypeArchetype(
     id: CollectorTypeArchetypeId.dreamer,
     displayName: 'The Dreamer',
-    flavorText:
-        'You dream about what comes next more than what you already own.',
+    flavorText: 'Wishlist figures are the strongest signal in this reveal.',
     accentColorLight: Color(0xFFB8A8D8),
     accentColorDark: Color(0xFFC4B4E0),
     icon: Icons.nights_stay_outlined,
@@ -68,7 +67,7 @@ abstract final class CollectorTypeArchetypes {
   static const hunter = CollectorTypeArchetype(
     id: CollectorTypeArchetypeId.hunter,
     displayName: 'The Hunter',
-    flavorText: 'You actively hunt Secrets—and you catch them.',
+    flavorText: 'Secret Figures are a strong signal in this reveal.',
     accentColorLight: Color(0xFFC9A06A),
     accentColorDark: Color(0xFFD4B078),
     icon: Icons.track_changes_outlined,
@@ -78,7 +77,7 @@ abstract final class CollectorTypeArchetypes {
     id: CollectorTypeArchetypeId.completionist,
     displayName: 'The Completionist',
     flavorText:
-        'Completion defines your shelf. Most of what you track is finished—or nearly there.',
+        'Complete and near-Complete series are the strongest signals in this reveal.',
     accentColorLight: Color(0xFF7BA88A),
     accentColorDark: Color(0xFF8FBC9C),
     icon: Icons.all_inclusive_outlined,
@@ -87,8 +86,7 @@ abstract final class CollectorTypeArchetypes {
   static const loyalist = CollectorTypeArchetype(
     id: CollectorTypeArchetypeId.loyalist,
     displayName: 'The Loyalist',
-    flavorText:
-        'One universe clearly defines your shelf. You keep returning to the same world.',
+    flavorText: 'One universe has the strongest presence in this reveal.',
     accentColorLight: Color(0xFF8A9BC4),
     accentColorDark: Color(0xFF9AACD0),
     icon: Icons.favorite_outline,
@@ -98,7 +96,7 @@ abstract final class CollectorTypeArchetypes {
     id: CollectorTypeArchetypeId.curator,
     displayName: 'The Curator',
     flavorText:
-        'You thoughtfully build across multiple universes, giving each one room to grow.',
+        'Multiple universes have meaningful representation in this reveal.',
     accentColorLight: Color(0xFF9A8AB8),
     accentColorDark: Color(0xFFAC9CC8),
     icon: Icons.grid_view_rounded,
@@ -107,7 +105,7 @@ abstract final class CollectorTypeArchetypes {
   static const trendChaser = CollectorTypeArchetype(
     id: CollectorTypeArchetypeId.trendChaser,
     displayName: 'The Trend Chaser',
-    flavorText: 'Recent releases define your shelf. You chase what is new.',
+    flavorText: 'Recent-release series are a strong signal in this reveal.',
     accentColorLight: Color(0xFFE08A8A),
     accentColorDark: Color(0xFFE89A9A),
     icon: Icons.bolt_outlined,
@@ -116,8 +114,7 @@ abstract final class CollectorTypeArchetypes {
   static const worldbuilder = CollectorTypeArchetype(
     id: CollectorTypeArchetypeId.worldbuilder,
     displayName: 'The Worldbuilder',
-    flavorText:
-        'Your own creations define your shelf. You expand the catalog with worlds of your own.',
+    flavorText: 'Custom series are a strong signal in this reveal.',
     accentColorLight: Color(0xFFB8A0C8),
     accentColorDark: Color(0xFFC8B0D8),
     icon: Icons.public_outlined,
@@ -126,8 +123,7 @@ abstract final class CollectorTypeArchetypes {
   static const minimalist = CollectorTypeArchetype(
     id: CollectorTypeArchetypeId.minimalist,
     displayName: 'The Minimalist',
-    flavorText:
-        'You keep a small, focused shelf and care deeply for what makes the cut.',
+    flavorText: 'This reveal is based on a small shelf.',
     accentColorLight: Color(0xFF8A9098),
     accentColorDark: Color(0xFF9CA2AA),
     icon: Icons.crop_square_outlined,
@@ -136,8 +132,7 @@ abstract final class CollectorTypeArchetypes {
   static const wanderer = CollectorTypeArchetype(
     id: CollectorTypeArchetypeId.wanderer,
     displayName: 'The Wanderer',
-    flavorText:
-        'You’re still discovering what defines your shelf. Curiosity leads while identity forms.',
+    flavorText: 'No specialized shelf pattern qualified at this reveal.',
     accentColorLight: Color(0xFFA8B0C0),
     accentColorDark: Color(0xFFB8C0D0),
     icon: Icons.explore_outlined,
@@ -146,8 +141,7 @@ abstract final class CollectorTypeArchetypes {
   static const luckyOne = CollectorTypeArchetype(
     id: CollectorTypeArchetypeId.luckyOne,
     displayName: 'The Lucky One',
-    flavorText:
-        'Luck found you before hunting did. The early chapter before The Hunter.',
+    flavorText: 'Secret ownership is high for an early shelf.',
     accentColorLight: Color(0xFFE8C878),
     accentColorDark: Color(0xFFF0D488),
     icon: Icons.auto_awesome_outlined,

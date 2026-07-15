@@ -43,4 +43,48 @@ void main() {
     expect(line, contains('Soft Night'));
     expect(line, isNot(contains('recommend')));
   });
+
+  test('catalog neighbor copy uses factual taxonomy wording', () {
+    const index = CollectibleRelationshipIndex(
+      shelfSeriesIds: {},
+      shelfSeriesById: {},
+      shelfSeriesIdsByIp: {},
+      shelfIpsByBrand: {},
+      catalogSeriesIdsByIp: {},
+      catalogSeriesNameById: {},
+      lineupFiguresByCatalogSeriesId: {},
+      catalogIpNameById: {'dimoo': 'DIMOO'},
+    );
+    final line = CollectibleRelationshipCopy.lineForHint(
+      hint: const CollectibleRelationshipHint(
+        kind: CollectibleRelationshipKind.catalogUniverseNeighbor,
+        taxonomyIpId: 'dimoo',
+      ),
+      index: index,
+    );
+
+    expect(line, 'Part of the DIMOO catalog universe');
+    expect(line, isNot(contains('Nearby in the quiet')));
+  });
+
+  test('catalog neighbor copy stays empty without catalog facts', () {
+    const index = CollectibleRelationshipIndex(
+      shelfSeriesIds: {},
+      shelfSeriesById: {},
+      shelfSeriesIdsByIp: {},
+      shelfIpsByBrand: {},
+      catalogSeriesIdsByIp: {},
+      catalogSeriesNameById: {},
+      lineupFiguresByCatalogSeriesId: {},
+      catalogIpNameById: {},
+    );
+    final line = CollectibleRelationshipCopy.lineForHint(
+      hint: const CollectibleRelationshipHint(
+        kind: CollectibleRelationshipKind.catalogUniverseNeighbor,
+      ),
+      index: index,
+    );
+
+    expect(line, isNull);
+  });
 }

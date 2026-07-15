@@ -70,7 +70,7 @@ void main() {
       wrap(
         const MasterCompleteShareCard(
           payload: MasterCompleteSharePayload(
-            label: 'SHELFY CHASE CARD · MASTER',
+            label: 'SHELFY MASTER CARD · MASTER',
             seriesName: 'EXCITING MACARON',
             image: _assetImage,
             metadata: 'REGULAR 12/12 · SECRET 1/1',
@@ -86,6 +86,22 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('THE CHASE'), findsOneWidget);
+    expect(find.text('IS COMPLETE'), findsOneWidget);
+    expect(find.text('Every Regular.     Every Secret.'), findsOneWidget);
+    for (final speculative in [
+      'finally',
+      'after a long search',
+      'after years',
+      'at last',
+      'hard-earned',
+      'lucky enough',
+      'never gave up',
+    ]) {
+      expect(
+        find.textContaining(speculative, findRichText: true),
+        findsNothing,
+      );
+    }
   });
 
   testWidgets('Shelf card lays out without exceptions', (tester) async {

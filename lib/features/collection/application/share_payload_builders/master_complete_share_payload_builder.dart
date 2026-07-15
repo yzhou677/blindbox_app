@@ -15,7 +15,7 @@ MasterCompleteSharePayload? buildMasterCompleteSharePayload({
   if (image == null) return null;
 
   return MasterCompleteSharePayload(
-    label: 'SHELFY CHASE CARD · MASTER',
+    label: 'SHELFY MASTER CARD · MASTER',
     seriesName: shareCardSeriesLabel(series.name, uppercase: true),
     image: image,
     metadata:

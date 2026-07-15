@@ -79,9 +79,9 @@ void main() {
     ];
 
     for (final rawName in cases) {
-      testWidgets('lays out Chase Card with "$rawName"', (tester) async {
+      testWidgets('lays out Master Card with "$rawName"', (tester) async {
         final payload = MasterCompleteSharePayload(
-          label: 'SHELFY CHASE CARD · MASTER',
+          label: 'SHELFY MASTER CARD · MASTER',
           seriesName: shareCardSeriesLabel(rawName, uppercase: true),
           image: _assetImage,
           metadata: 'REGULAR 12/12 · SECRET 1/1',
@@ -222,7 +222,7 @@ void main() {
   });
 
   group('Master Complete payload image/title matrix', () {
-    test('requires true Master Complete before building a Chase payload', () {
+    test('requires true Master Complete before building a Master payload', () {
       final series = _series(id: 'macaron', name: 'Exciting Macaron');
 
       expect(
@@ -366,9 +366,9 @@ const _collectorMatrix = [
     displayName: 'The Completionist',
     label: 'SHELFY IDENTITY CARD · 03/10',
     statementTop: 'COMPLETED?',
-    statementBottom: 'NOT ENOUGH.',
-    becauseLine: 'Because completion defines your shelf.',
-    motto: 'Every last piece.',
+    statementBottom: 'STRONG SIGNAL.',
+    becauseLine: 'Because completion is the strongest signal in this reveal.',
+    motto: 'Complete series counted.',
     asset: 'assets/insights/collector_types/completionist.png',
   ),
   _CollectorSmokeRow(
@@ -376,10 +376,10 @@ const _collectorMatrix = [
     id: CollectorTypeArchetypeId.hunter,
     displayName: 'The Hunter',
     label: 'SHELFY IDENTITY CARD · 02/10',
-    statementTop: 'SOME GET LUCKY.',
-    statementBottom: 'YOU GO LOOKING.',
-    becauseLine: 'Because you actively hunt Secrets\u2014and you catch them.',
-    motto: 'Secret by secret.',
+    statementTop: 'SECRET FIGURES',
+    statementBottom: 'STAND OUT.',
+    becauseLine: 'Because Secret Figures are a strong signal in this reveal.',
+    motto: 'Secret ownership counted.',
     asset: 'assets/insights/collector_types/hunter.png',
   ),
   _CollectorSmokeRow(
@@ -387,10 +387,10 @@ const _collectorMatrix = [
     id: CollectorTypeArchetypeId.luckyOne,
     displayName: 'The Lucky One',
     label: 'SHELFY IDENTITY CARD · 10/10',
-    statementTop: 'WAS IT LUCK?',
-    statementBottom: 'ABSOLUTELY.',
-    becauseLine: 'Because luck found you before hunting did.',
-    motto: 'Some shelves sparkle early.',
+    statementTop: 'EARLY SHELF.',
+    statementBottom: 'SECRET SIGNAL.',
+    becauseLine: 'Because Secret ownership is high for an early shelf.',
+    motto: 'Early Secret ownership counted.',
     asset: 'assets/insights/collector_types/lucky_one.png',
   ),
   _CollectorSmokeRow(
@@ -399,9 +399,10 @@ const _collectorMatrix = [
     displayName: 'The Loyalist',
     label: 'SHELFY IDENTITY CARD · 04/10',
     statementTop: 'ONE WORLD.',
-    statementBottom: 'NO REGRETS.',
-    becauseLine: 'Because one universe clearly defines your shelf.',
-    motto: 'Home shelf, chosen universe.',
+    statementBottom: 'STRONGEST SIGNAL.',
+    becauseLine:
+        'Because one universe has the strongest presence in this reveal.',
+    motto: 'Universe depth counted.',
     asset: 'assets/insights/collector_types/loyalist.png',
   ),
   _CollectorSmokeRow(
@@ -409,11 +410,11 @@ const _collectorMatrix = [
     id: CollectorTypeArchetypeId.curator,
     displayName: 'The Curator',
     label: 'SHELFY IDENTITY CARD · 05/10',
-    statementTop: 'NOT RANDOM.',
-    statementBottom: 'CURATED.',
+    statementTop: 'MULTIPLE WORLDS.',
+    statementBottom: 'MEASURED DEPTH.',
     becauseLine:
-        'Because your shelf is a gallery of worlds you genuinely invest in.',
-    motto: 'Every world gets its frame.',
+        'Because multiple universes have meaningful representation in this reveal.',
+    motto: 'Universe spread counted.',
     asset: 'assets/insights/collector_types/curator.png',
   ),
   _CollectorSmokeRow(
@@ -421,10 +422,11 @@ const _collectorMatrix = [
     id: CollectorTypeArchetypeId.wanderer,
     displayName: 'The Wanderer',
     label: 'SHELFY IDENTITY CARD · 09/10',
-    statementTop: 'NO FIXED PATH.',
-    statementBottom: 'GOOD FINDS.',
-    becauseLine: 'Because your shelf is still discovering what defines it.',
-    motto: 'Curiosity leads.',
+    statementTop: 'NO SPECIALIZED',
+    statementBottom: 'PATTERN YET.',
+    becauseLine:
+        'Because no specialized shelf pattern qualified at this reveal.',
+    motto: 'Fallback type recorded.',
     asset: 'assets/insights/collector_types/wanderer.png',
   ),
   _CollectorSmokeRow(
@@ -432,11 +434,10 @@ const _collectorMatrix = [
     id: CollectorTypeArchetypeId.minimalist,
     displayName: 'The Minimalist',
     label: 'SHELFY IDENTITY CARD · 08/10',
-    statementTop: 'LESS SHELF.',
-    statementBottom: 'MORE TASTE.',
-    becauseLine:
-        'Because you keep a small, focused shelf and care deeply for what makes the cut.',
-    motto: 'Only what earns the space.',
+    statementTop: 'SMALL SHELF.',
+    statementBottom: 'CLEAR SIGNAL.',
+    becauseLine: 'Because this reveal is based on a small shelf.',
+    motto: 'Series count measured.',
     asset: 'assets/insights/collector_types/minimalist.png',
   ),
   _CollectorSmokeRow(
@@ -444,10 +445,10 @@ const _collectorMatrix = [
     id: CollectorTypeArchetypeId.worldbuilder,
     displayName: 'The Worldbuilder',
     label: 'SHELFY IDENTITY CARD · 07/10',
-    statementTop: 'DOESN\'T EXIST?',
-    statementBottom: 'MAKE IT.',
-    becauseLine: 'Because your own creations define your shelf.',
-    motto: 'Your shelf has authorship.',
+    statementTop: 'CUSTOM SERIES.',
+    statementBottom: 'STRONG SIGNAL.',
+    becauseLine: 'Because custom series are a strong signal in this reveal.',
+    motto: 'Custom entries counted.',
     asset: 'assets/insights/collector_types/worldbuilder.png',
   ),
   _CollectorSmokeRow(
@@ -455,11 +456,10 @@ const _collectorMatrix = [
     id: CollectorTypeArchetypeId.dreamer,
     displayName: 'The Dreamer',
     label: 'SHELFY IDENTITY CARD · 01/10',
-    statementTop: 'WISHLIST FIRST.',
-    statementBottom: 'WALLET LATER.',
-    becauseLine:
-        'Because you dream about what comes next more than what you already own.',
-    motto: 'The shelf starts in your head.',
+    statementTop: 'WISHLIST',
+    statementBottom: 'STANDS OUT.',
+    becauseLine: 'Because wishlist figures are a strong signal in this reveal.',
+    motto: 'Wishlist figures counted.',
     asset: 'assets/insights/collector_types/dreamer.png',
   ),
   _CollectorSmokeRow(
@@ -467,10 +467,11 @@ const _collectorMatrix = [
     id: CollectorTypeArchetypeId.trendChaser,
     displayName: 'The Trend Chaser',
     label: 'SHELFY IDENTITY CARD · 06/10',
-    statementTop: 'NEW DROP?',
-    statementBottom: 'ALREADY WATCHING.',
-    becauseLine: 'Because recent releases define your shelf.',
-    motto: 'Fresh finds first.',
+    statementTop: 'RECENT RELEASES.',
+    statementBottom: 'STRONG SIGNAL.',
+    becauseLine:
+        'Because recent-release series are a strong signal in this reveal.',
+    motto: 'Release dates counted.',
     asset: 'assets/insights/collector_types/trend_chaser.png',
   ),
 ];

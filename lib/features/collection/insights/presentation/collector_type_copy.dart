@@ -17,31 +17,31 @@ abstract final class CollectorTypeCopy {
 
   static const String screenTitle = 'Collection insights';
   static const String screenSubtitle =
-      'A quiet read on how you collect — reveal when it feels right.';
+      'Collector Type summarizes patterns in your recorded collection.';
 
   static const String revealButton = 'Reveal collector type';
-  static const String revealAgain = 'Reveal again';
+  static const String revealAgain = 'Refresh Collector Type';
   static const String analyzingLine = 'Reading your shelf…';
 
   /// Ceremonial first-reveal intro (event overlay — not hero copy).
   static const String revealCeremonyFirstIntro =
-      'Your shelf tells a new story.';
+      'A new collector type snapshot is ready.';
 
   /// Ceremonial intro when the collector type itself has changed.
   static const String revealCeremonyEvolvedIntro =
-      'Your collecting style has evolved.';
+      'Your collector type snapshot has changed.';
 
   static const String revealCeremonyContinue = 'Continue';
 
   static const String evolutionHint =
-      'Your collection has shifted — reveal again when you are ready.';
+      'Your collection has changed since the last Collector Type reveal.';
 
   static const String staleInsightsMessage =
-      'These insights are from your last reveal. Your collection has '
-      'changed — reveal again for an updated read.';
+      'These insights reflect your previous reveal. Your collection has '
+      'changed; refresh Collector Type to update them.';
 
   static const String staleInsightsMessageCompact =
-      'Insights below reflect your shelf at the last reveal.';
+      'These insights reflect your previous reveal.';
 
   static const String statsSectionTitle = 'At a glance';
 
@@ -59,7 +59,7 @@ abstract final class CollectorTypeCopy {
 
   static const String journeyTitle = 'Collector journey';
   static const String journeySubtitle =
-      'How your shelf story has unfolded over time.';
+      'Stored collection milestones over time.';
   static const String journeyStartedLabel = 'Started';
   static const String journeyExploredLabel = 'Explored';
   static const String journeyLatestMemoryLabel = 'Latest Memory';
@@ -88,29 +88,29 @@ abstract final class CollectorTypeCopy {
   static String becauseLine(CollectorTypeReasonKey key) {
     return switch (key) {
       CollectorTypeReasonKey.stillUnfolding =>
-        'Because your shelf is still discovering what defines it.',
+        'Because no specialized shelf pattern qualified at this reveal.',
       CollectorTypeReasonKey.curiousSpread =>
-        'Because your shelf is still discovering what defines it.',
+        'Because no specialized shelf pattern qualified at this reveal.',
       CollectorTypeReasonKey.dominantUniverse =>
-        'Because one universe clearly defines your shelf.',
+        'Because one universe has the strongest presence in this reveal.',
       CollectorTypeReasonKey.highWishlist =>
-        'Because you dream about what comes next more than what you already own.',
+        'Because wishlist figures are a strong signal in this reveal.',
       CollectorTypeReasonKey.manySecrets =>
-        'Because you actively hunt Secrets—and you catch them.',
+        'Because Secret Figures are a strong signal in this reveal.',
       CollectorTypeReasonKey.fortunateSecrets =>
-        'Because luck found you before hunting did.',
+        'Because Secret ownership is high for an early shelf.',
       CollectorTypeReasonKey.deepCompletion =>
-        'Because completion defines your shelf.',
+        'Because completion is the strongest signal in this reveal.',
       CollectorTypeReasonKey.nearCompletion =>
-        'Because most of your shelf is at the edge of complete.',
+        'Because many tracked series are close to Complete.',
       CollectorTypeReasonKey.intentionalSpread =>
-        'Because your shelf is a gallery of worlds you genuinely invest in.',
+        'Because multiple universes have meaningful representation in this reveal.',
       CollectorTypeReasonKey.compactShelf =>
-        'Because you keep a small, focused shelf and care deeply for what makes the cut.',
+        'Because this reveal is based on a small shelf.',
       CollectorTypeReasonKey.inventedWorlds =>
-        'Because your own creations define your shelf.',
+        'Because custom series are a strong signal in this reveal.',
       CollectorTypeReasonKey.freshDrops =>
-        'Because recent releases define your shelf.',
+        'Because recent-release series are a strong signal in this reveal.',
     };
   }
 }
