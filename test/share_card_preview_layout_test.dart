@@ -49,6 +49,24 @@ void main() {
       expect(metrics.cardSize.height, lessThan(500));
     });
   });
+
+  group('Share preview sheet chrome', () {
+    test('removes close button for all share previews', () {
+      expect(shareCardPreviewShowsCloseButton(), isFalse);
+    });
+
+    test('uses reduced header height for all share previews', () {
+      expect(shareCardPreviewTopChromeHeight(), 30);
+    });
+
+    test('reduces prior header height by accepted polish range', () {
+      const previousHeaderHeight = 48;
+      final reduction =
+          previousHeaderHeight - shareCardPreviewTopChromeHeight();
+
+      expect(reduction, inInclusiveRange(12, 20));
+    });
+  });
 }
 
 final _cardAspectRatio =

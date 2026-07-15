@@ -174,6 +174,13 @@ class _ShareCardPreviewSheet extends StatefulWidget {
   State<_ShareCardPreviewSheet> createState() => _ShareCardPreviewSheetState();
 }
 
+@visibleForTesting
+double shareCardPreviewTopChromeHeight() =>
+    _ShareCardPreviewLayout.topChromeHeight;
+
+@visibleForTesting
+bool shareCardPreviewShowsCloseButton() => false;
+
 class _ShareCardPreviewSheetState extends State<_ShareCardPreviewSheet> {
   Offset _pointer = Offset.zero;
   bool _sharing = false;
@@ -208,6 +215,8 @@ class _ShareCardPreviewSheetState extends State<_ShareCardPreviewSheet> {
     );
     final dx = (_pointer.dx - 0.5) * 3;
     final dy = (_pointer.dy - 0.5) * 3;
+    final topChromeHeight = shareCardPreviewTopChromeHeight();
+    const handleTop = 6.0;
 
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
@@ -273,12 +282,12 @@ class _ShareCardPreviewSheetState extends State<_ShareCardPreviewSheet> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       SizedBox(
-                        height: _ShareCardPreviewLayout.topChromeHeight,
+                        height: topChromeHeight,
                         child: Stack(
                           alignment: Alignment.topCenter,
                           children: [
                             Positioned(
-                              top: 10,
+                              top: handleTop,
                               child: Container(
                                 width: 34,
                                 height: 4,
@@ -288,20 +297,6 @@ class _ShareCardPreviewSheetState extends State<_ShareCardPreviewSheet> {
                                   ),
                                   borderRadius: BorderRadius.circular(999),
                                 ),
-                              ),
-                            ),
-                            PositionedDirectional(
-                              top: 2,
-                              end: 8,
-                              child: IconButton(
-                                tooltip: 'Close',
-                                onPressed: () => Navigator.of(context).pop(),
-                                visualDensity: VisualDensity.compact,
-                                iconSize: 20,
-                                color: scheme.onSurfaceVariant.withValues(
-                                  alpha: 0.58,
-                                ),
-                                icon: const Icon(Icons.close_rounded),
                               ),
                             ),
                           ],
@@ -435,7 +430,7 @@ class _ShareCardPreviewLayout {
   static const double innerTopPadding = 6;
   static const double innerBottomPadding = 8;
   static const double minBottomSpacing = 18;
-  static const double topChromeHeight = 48;
+  static const double topChromeHeight = 30;
   static const double cardButtonGap = 14;
   static const double shareButtonHeight = 46;
 }
