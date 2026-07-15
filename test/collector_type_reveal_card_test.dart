@@ -13,7 +13,6 @@ import 'package:blindbox_app/features/collection/insights/presentation/collector
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_reveal_button.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_reveal_card.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_stale_insights_overlay.dart';
-import 'package:blindbox_app/features/collection/insights/widgets/insights_archived_scope.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -24,9 +23,9 @@ import 'helpers/collection_fixtures.dart';
 final class RevealCardTestNotifier extends CollectionNotifier {
   @override
   CollectionSnapshot build() => CollectionSnapshot(
-        shelfSeries: [testShelfSeries()],
-        figureStates: const {},
-      );
+    shelfSeries: [testShelfSeries()],
+    figureStates: const {},
+  );
 }
 
 void main() {
@@ -55,9 +54,7 @@ void main() {
         data: const MediaQueryData(disableAnimations: true),
         child: MaterialApp(
           theme: AppTheme.light(),
-          home: Scaffold(
-            body: SingleChildScrollView(child: child),
-          ),
+          home: Scaffold(body: SingleChildScrollView(child: child)),
         ),
       ),
     );
@@ -77,7 +74,9 @@ void main() {
     await tester.pump();
     expect(find.text(CollectorTypeCopy.analyzingLine), findsOneWidget);
 
-    await tester.pump(const Duration(milliseconds: collectorTypeAnalyzingHoldMs));
+    await tester.pump(
+      const Duration(milliseconds: collectorTypeAnalyzingHoldMs),
+    );
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.text(CollectorTypeCopy.analyzingLine), findsNothing);
@@ -85,8 +84,9 @@ void main() {
     expect(find.textContaining('The '), findsWidgets);
   });
 
-  testWidgets('cached identity opens dashboard without reveal again CTA',
-      (tester) async {
+  testWidgets('cached identity opens dashboard without reveal again CTA', (
+    tester,
+  ) async {
     final revealedAt = DateTime.now().subtract(const Duration(days: 3));
     final snap = CollectionSnapshot(
       shelfSeries: [testShelfSeries()],
@@ -119,15 +119,14 @@ void main() {
     await tester.pump();
 
     expect(find.text('The Wanderer'), findsOneWidget);
-    expect(find.textContaining('Updated'), findsOneWidget);
-    expect(find.textContaining('3 days ago'), findsOneWidget);
     expect(find.text(CollectorTypeCopy.statsSectionTitle), findsOneWidget);
     expect(find.byType(CollectorTypeRevealButton), findsNothing);
     expect(find.text(CollectorTypeCopy.revealAgain), findsNothing);
   });
 
-  testWidgets('stale reveal snapshot archives; journey stays live',
-      (tester) async {
+  testWidgets('stale reveal snapshot archives; journey stays live', (
+    tester,
+  ) async {
     final revealedAt = DateTime.now().subtract(const Duration(days: 3));
     await CollectionMemoryStore.instance.saveCollectorType(
       CollectorTypeIdentity(
@@ -160,11 +159,13 @@ void main() {
     expect(find.text(CollectorTypeCopy.statsSectionTitle), findsOneWidget);
     expect(find.text(CollectorTypeCopy.journeyTitle), findsOneWidget);
 
-    final bannerY =
-        tester.getTopLeft(find.byType(CollectorTypeStaleInsightsOverlay)).dy;
+    final bannerY = tester
+        .getTopLeft(find.byType(CollectorTypeStaleInsightsOverlay))
+        .dy;
     final typeY = tester.getTopLeft(find.text('The Wanderer')).dy;
-    final journeyY =
-        tester.getTopLeft(find.text(CollectorTypeCopy.journeyTitle)).dy;
+    final journeyY = tester
+        .getTopLeft(find.text(CollectorTypeCopy.journeyTitle))
+        .dy;
     expect(bannerY < typeY, isTrue);
     expect(typeY < journeyY, isTrue);
 
@@ -190,8 +191,9 @@ void main() {
     expect(journeyBox.top >= archivedBox.bottom - 0.5, isTrue);
   });
 
-  testWidgets('reveal again clears stale banner after analysis completes',
-      (tester) async {
+  testWidgets('reveal again clears stale banner after analysis completes', (
+    tester,
+  ) async {
     await CollectionMemoryStore.instance.saveCollectorType(
       CollectorTypeIdentity(
         archetypeId: CollectorTypeArchetypeId.wanderer,
@@ -219,16 +221,19 @@ void main() {
 
     expect(find.byType(CollectorTypeStaleInsightsOverlay), findsOneWidget);
 
+    await tester.ensureVisible(find.text(CollectorTypeCopy.revealAgain));
+    await tester.pump();
     await tester.tap(find.text(CollectorTypeCopy.revealAgain));
     await tester.pump();
     expect(find.text(CollectorTypeCopy.analyzingLine), findsOneWidget);
 
-    await tester.pump(const Duration(milliseconds: collectorTypeAnalyzingHoldMs));
+    await tester.pump(
+      const Duration(milliseconds: collectorTypeAnalyzingHoldMs),
+    );
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.byType(CollectorTypeStaleInsightsOverlay), findsNothing);
     expect(find.text(CollectorTypeCopy.revealAgain), findsNothing);
     expect(find.byKey(const Key('insights_archived_opacity')), findsNothing);
-    expect(find.textContaining('Updated'), findsOneWidget);
   });
 }

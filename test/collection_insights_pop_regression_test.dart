@@ -5,6 +5,7 @@ import 'package:blindbox_app/features/collection/application/collection_notifier
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_resolver.dart';
+import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collection_insights_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,9 +17,9 @@ import 'helpers/collection_fixtures.dart';
 final class PopRegressionCollectionNotifier extends CollectionNotifier {
   @override
   CollectionSnapshot build() => CollectionSnapshot(
-        shelfSeries: [testShelfSeries()],
-        figureStates: const {},
-      );
+    shelfSeries: [testShelfSeries()],
+    figureStates: const {},
+  );
 }
 
 void main() {
@@ -29,11 +30,15 @@ void main() {
     CollectionMemoryStore.instance.resetForTest();
   });
 
-  testWidgets('pop during analyzing does not leave pending timer', (tester) async {
+  testWidgets('pop during analyzing does not leave pending timer', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          collectionNotifierProvider.overrideWith(PopRegressionCollectionNotifier.new),
+          collectionNotifierProvider.overrideWith(
+            PopRegressionCollectionNotifier.new,
+          ),
           catalogBundleProvider.overrideWith(
             (ref) async => const CatalogSeedBundle(
               brands: [],
@@ -72,7 +77,7 @@ void main() {
     expect(find.byType(CollectionInsightsScreen), findsOneWidget);
 
     final revealCta = find.text('Reveal collector type');
-    final revealAgain = find.text('Reveal again');
+    final revealAgain = find.text(CollectorTypeCopy.revealAgain);
     expect(
       revealCta.evaluate().isNotEmpty || revealAgain.evaluate().isNotEmpty,
       isTrue,
@@ -87,7 +92,9 @@ void main() {
 
     Navigator.of(tester.element(find.byType(CollectionInsightsScreen))).pop();
     await tester.pump(const Duration(milliseconds: 400));
-    await tester.pump(const Duration(milliseconds: collectorTypeAnalyzingHoldMs + 450));
+    await tester.pump(
+      const Duration(milliseconds: collectorTypeAnalyzingHoldMs + 450),
+    );
 
     expect(find.text('open insights'), findsOneWidget);
   });

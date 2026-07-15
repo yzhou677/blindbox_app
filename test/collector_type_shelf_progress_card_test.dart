@@ -1,5 +1,6 @@
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_stats.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_shelf_progress_card.dart';
+import 'package:blindbox_app/features/collection/presentation/completion_metric_tooltips.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_insights_compact_summary.dart';
 import 'package:flutter/material.dart';
@@ -98,16 +99,17 @@ void main() {
 
     expect(find.text('Shelf Progress'), findsOneWidget);
     expect(find.text(CollectionVocabulary.regularProgress), findsOneWidget);
+    expect(
+      find.byTooltip(CompletionMetricTooltips.regularProgress),
+      findsOneWidget,
+    );
     expect(find.text('23%'), findsOneWidget);
     expect(find.text(CollectionVocabulary.masterCompletion), findsNothing);
     expect(
       find.text(CollectionInsightsCompactSummaryFormat.masterCompleteGlyph),
       findsNothing,
     );
-    expect(
-      find.text('5 ${CollectionVocabulary.series}'),
-      findsNothing,
-    );
+    expect(find.text('5 ${CollectionVocabulary.series}'), findsNothing);
   });
 
   testWidgets('stage 2 reveals Master Completion over eligible denom', (
@@ -132,9 +134,46 @@ void main() {
     expect(find.text(CollectionVocabulary.regularProgress), findsOneWidget);
     expect(find.text('80%'), findsOneWidget);
     expect(find.text(CollectionVocabulary.masterCompletion), findsOneWidget);
+    expect(
+      find.byTooltip(CompletionMetricTooltips.masterCompletion),
+      findsOneWidget,
+    );
     expect(find.text('100%'), findsOneWidget);
     expect(
       find.text(CollectionInsightsCompactSummaryFormat.masterCompleteGlyph),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('metric tooltips open and dismiss', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: CollectorTypeShelfProgressCard(
+            stats: _stats(
+              completionPercent: 80,
+              trackedSeries: 5,
+              completedSeriesCount: 4,
+              masterCompleteSeriesCount: 2,
+              masterEligibleSeriesCount: 2,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byTooltip(CompletionMetricTooltips.regularProgress));
+    await tester.pump();
+    expect(find.text(CompletionMetricTooltips.regularProgress), findsOneWidget);
+
+    await tester.tapAt(const Offset(1, 1));
+    await tester.pumpAndSettle();
+    expect(find.text(CompletionMetricTooltips.regularProgress), findsNothing);
+
+    await tester.tap(find.byTooltip(CompletionMetricTooltips.masterCompletion));
+    await tester.pump();
+    expect(
+      find.text(CompletionMetricTooltips.masterCompletion),
       findsOneWidget,
     );
   });

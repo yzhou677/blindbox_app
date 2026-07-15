@@ -19,9 +19,9 @@ import 'package:go_router/go_router.dart';
 /// Shared Collection Insights content (no scaffold / app bar).
 ///
 /// Two information kinds share this page:
-/// - **Reveal snapshot** — Collector Type hero + At a Glance / Shelf Progress /
+/// - **Reveal snapshot** ??Collector Type hero + At a Glance / Shelf Progress /
 ///   Brand Distribution (frozen until the next reveal; muted while stale).
-/// - **Live collection history** — [CollectorJourneyCard] (always current;
+/// - **Live collection history** ??[CollectorJourneyCard] (always current;
 ///   never part of the reveal snapshot).
 class CollectionInsightsBody extends ConsumerWidget {
   const CollectionInsightsBody({super.key});
@@ -61,10 +61,6 @@ class CollectionInsightsBody extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (showEvolutionHint) ...[
-                  const CollectorTypeEvolutionHintBanner(),
-                  const SizedBox(height: _panelGap),
-                ],
                 if (showStaleBanner) ...[
                   CollectorTypeStaleInsightsOverlay(
                     onRevealAgain: () => ref
@@ -74,7 +70,11 @@ class CollectionInsightsBody extends ConsumerWidget {
                   ),
                   const SizedBox(height: AppSpacing.lg),
                 ],
-                // Reveal snapshot only — muted while awaiting Reveal again.
+                if (showEvolutionHint) ...[
+                  const CollectorTypeEvolutionHintBanner(),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
+                // Reveal snapshot only ??muted while awaiting Reveal again.
                 InsightsArchivedScope(
                   archived: showStaleBanner,
                   child: const CollectorTypeRevealCard(),
