@@ -2,11 +2,8 @@ import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_adapters.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_sheet.dart';
-import 'package:blindbox_app/features/collectible_relationship/application/collectible_relationship_providers.dart';
-import 'package:blindbox_app/features/collectible_relationship/widgets/collectible_relationship_line.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/application/share_payload_builders/master_complete_share_payload_builder.dart';
-import 'package:blindbox_app/features/collection/application/shelf_emotional_providers.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/domain/series_completion_resolution.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
@@ -45,19 +42,10 @@ class SeriesFiguresSheet extends ConsumerWidget {
     final isComplete = resolution.isCompleted;
     final chasesHome = resolution.isMasterComplete;
     final scroll = CollectibleSheetScope.scrollControllerOf(context);
-    final relationshipLine = ref.watch(
-      relationshipHintForShelfSeriesProvider(seriesId),
-    );
-    final memoryReflection = ref.watch(
-      collectionMemoryReflectionForSeriesProvider(seriesId),
-    );
     final trailingMeta = CollectionProgressVoice.seriesFiguresSheetProgressMeta(
       resolution,
     );
-    final contextualLine =
-        (relationshipLine != null && relationshipLine.isNotEmpty)
-        ? relationshipLine
-        : memoryReflection;
+    final seriesNote = series.isCustomLocal ? series.notes?.trim() : null;
     final masterSharePayload = chasesHome
         ? buildMasterCompleteSharePayload(
             series: series,
@@ -75,12 +63,9 @@ class SeriesFiguresSheet extends ConsumerWidget {
           trailingMeta: trailingMeta,
         ),
         slivers: [
-          if (contextualLine != null && contextualLine.isNotEmpty)
+          if (seriesNote != null && seriesNote.isNotEmpty)
             SliverToBoxAdapter(
-              child: CollectibleRelationshipLine(
-                text: contextualLine,
-                padding: const EdgeInsets.only(top: 10),
-              ),
+              child: _SeriesNoteText(note: seriesNote, topPadding: 16),
             ),
           if (isComplete)
             SliverToBoxAdapter(
@@ -95,9 +80,9 @@ class SeriesFiguresSheet extends ConsumerWidget {
                           card: MasterCompleteShareCard(
                             payload: masterSharePayload,
                           ),
-                          basename: 'shelfy-chase-card',
-                          loadingLabel: 'Finishing the Chase Card...',
-                          previewTitle: 'Chase Card',
+                          basename: 'shelfy-master-card',
+                          loadingLabel: 'Finishing the Master Card...',
+                          previewTitle: 'Master Card',
                         ),
                 ),
               ),
@@ -117,6 +102,31 @@ class SeriesFiguresSheet extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SeriesNoteText extends StatelessWidget {
+  const _SeriesNoteText({required this.note, required this.topPadding});
+
+  final String note;
+  final double topPadding;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: EdgeInsets.only(top: topPadding),
+      child: Text(
+        note,
+        style: textTheme.bodyMedium?.copyWith(
+          color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
+          fontStyle: FontStyle.italic,
+          height: 1.45,
+        ),
       ),
     );
   }
@@ -383,7 +393,7 @@ class _SeriesCompleteBanner extends StatelessWidget {
                   if (onShare != null) ...[
                     const SizedBox(height: 10),
                     _InlineShareAction(
-                      label: 'Share Chase Card',
+                      label: 'Share Master Card',
                       onPressed: onShare!,
                     ),
                   ],

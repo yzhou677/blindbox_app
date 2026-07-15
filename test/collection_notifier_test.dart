@@ -294,7 +294,7 @@ void main() {
     expect(added.name.length, 80);
     expect(added.brand.length, lessThanOrEqualTo(48));
     expect(added.ipName.length, lessThanOrEqualTo(64));
-    expect(added.notes!.length, 500);
+    expect(added.notes!.length, 200);
     final fig = added.figures.single;
     expect(fig.name.length, 64);
     expect(fig.rarityLabel!.length, 16);
@@ -489,7 +489,7 @@ void main() {
     expect(updated.name.length, 80);
     expect(updated.brand.length, lessThanOrEqualTo(48));
     expect(updated.ipName.length, lessThanOrEqualTo(64));
-    expect(updated.notes!.length, 500);
+    expect(updated.notes!.length, 200);
     expect(updated.figures.length, 2);
     expect(
       container.read(collectionNotifierProvider).trackedOrDefault('custom_edit_1-f-0').state,

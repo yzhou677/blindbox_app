@@ -51,10 +51,8 @@ class _SeriesShelfCardState extends State<SeriesShelfCard>
     _wasComplete = _isSeriesComplete;
   }
 
-  bool get _isSeriesComplete => resolveSeriesCompletion(
-        widget.series,
-        widget.figureStates,
-      ).isCompleted;
+  bool get _isSeriesComplete =>
+      resolveSeriesCompletion(widget.series, widget.figureStates).isCompleted;
 
   @override
   void didUpdateWidget(SeriesShelfCard oldWidget) {
@@ -76,8 +74,6 @@ class _SeriesShelfCardState extends State<SeriesShelfCard>
 
   @override
   Widget build(BuildContext context) {
-    final extra = widget.series.notes;
-
     return AnimatedBuilder(
       animation: _completeGlow,
       builder: (context, child) {
@@ -131,7 +127,6 @@ class _SeriesShelfCardState extends State<SeriesShelfCard>
         child: _SeriesMatContent(
           title: widget.series.name,
           subtitle: shelfSeriesIpLabel(widget.series),
-          extraLine: extra,
           totalFigures: widget.series.figureCount,
           progress: widget.progress,
           figureStates: widget.figureStates,
@@ -191,10 +186,7 @@ class _SeriesMatShell extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: FeedRhythm.collectionShelfCardGap),
       child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: radius,
-          boxShadow: shadows,
-        ),
+        decoration: BoxDecoration(borderRadius: radius, boxShadow: shadows),
         child: Material(
           color: scheme.surface,
           shape: RoundedRectangleBorder(
@@ -243,12 +235,10 @@ class _SeriesMatContent extends StatelessWidget {
     required this.figureStates,
     required this.series,
     this.atmosphere,
-    this.extraLine,
   });
 
   final String title;
   final String subtitle;
-  final String? extraLine;
   final int totalFigures;
   final SeriesProgressCounts progress;
   final Map<String, TrackedFigure> figureStates;
@@ -300,18 +290,6 @@ class _SeriesMatContent extends StatelessWidget {
           subtitle,
           style: CollectibleTypography.seriesIpLine(textTheme, scheme),
         ),
-        if (extraLine != null) ...[
-          const SizedBox(height: 4),
-          Text(
-            extraLine!,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: textTheme.bodySmall?.copyWith(
-              color: scheme.onSurfaceVariant.withValues(alpha: 0.65),
-              height: 1.25,
-            ),
-          ),
-        ],
         const SizedBox(height: 13),
         ClipRRect(
           borderRadius: BorderRadius.circular(999),
@@ -328,8 +306,8 @@ class _SeriesMatContent extends StatelessWidget {
                     isMasterComplete ? 0.72 : 0.38,
                   )!.withValues(alpha: isMasterComplete ? 0.92 : 0.78)
                 : missingSecret
-                    ? scheme.tertiary.withValues(alpha: 0.55)
-                    : scheme.primary.withValues(alpha: 0.48),
+                ? scheme.tertiary.withValues(alpha: 0.55)
+                : scheme.primary.withValues(alpha: 0.48),
           ),
         ),
         const SizedBox(height: 11),
