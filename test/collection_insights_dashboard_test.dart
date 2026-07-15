@@ -18,10 +18,11 @@ void main() {
 
   group('CollectionInsightsCompactSummaryFormat', () {
     test('compact counts omit labels and wishlist', () {
-      expect(
-        CollectionInsightsCompactSummaryFormat.compactCounts(stats),
-        ['48', '7', '5'],
-      );
+      expect(CollectionInsightsCompactSummaryFormat.compactCounts(stats), [
+        '48',
+        '7',
+        '5',
+      ]);
       expect(
         CollectionInsightsCompactSummaryFormat.semanticsLabel(stats),
         '48 Owned Figures, 7 Completed Series, 5 Master Complete',
@@ -72,15 +73,15 @@ void main() {
     }
   });
 
-  testWidgets('collapsed dashboard shows compact glyphs at rest', (tester) async {
+  testWidgets('collapsed dashboard shows compact glyphs at rest', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: ThemeData(
           extensions: [CollectibleTokens.forBrightness(Brightness.light)],
         ),
-        home: Scaffold(
-          body: CollectionInsightsDashboard(stats: stats),
-        ),
+        home: Scaffold(body: CollectionInsightsDashboard(stats: stats)),
       ),
     );
     await tester.pumpAndSettle();
@@ -113,16 +114,16 @@ void main() {
         theme: ThemeData(
           extensions: [CollectibleTokens.forBrightness(Brightness.light)],
         ),
-        home: Scaffold(
-          body: CollectionInsightsDashboard(stats: stats),
-        ),
+        home: Scaffold(body: CollectionInsightsDashboard(stats: stats)),
       ),
     );
     await tester.pumpAndSettle();
 
     expect(find.text(CollectionSummaryLabels.wishlist), findsNothing);
 
-    await tester.tap(find.byKey(const Key('collection_insights_dashboard_toggle')));
+    await tester.tap(
+      find.byKey(const Key('collection_insights_dashboard_toggle')),
+    );
     await tester.pump();
     await tester.pump(CollectibleMotion.insightsDashboardTransition);
     await tester.pump(const Duration(milliseconds: 50));
@@ -133,25 +134,146 @@ void main() {
     expect(find.text(CollectionSummaryLabels.masterComplete), findsOneWidget);
   });
 
+  testWidgets('summary header expands and collapses dashboard', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(
+          extensions: [CollectibleTokens.forBrightness(Brightness.light)],
+        ),
+        home: Scaffold(body: CollectionInsightsDashboard(stats: stats)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text(CollectionSummaryLabels.wishlist), findsNothing);
+
+    await tester.tap(find.text(CollectionInsightsDashboardCopy.summaryHeader));
+    await tester.pump();
+    await tester.pump(CollectibleMotion.insightsDashboardTransition);
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.text(CollectionSummaryLabels.wishlist), findsOneWidget);
+
+    await tester.tap(find.text(CollectionInsightsDashboardCopy.summaryHeader));
+    await tester.pump();
+    await tester.pump(CollectibleMotion.insightsDashboardTransition);
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.text(CollectionSummaryLabels.wishlist), findsNothing);
+  });
+
+  testWidgets('summary chevron toggles the same dashboard state', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(
+          extensions: [CollectibleTokens.forBrightness(Brightness.light)],
+        ),
+        home: Scaffold(body: CollectionInsightsDashboard(stats: stats)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.expand_more_rounded));
+    await tester.pump();
+    await tester.pump(CollectibleMotion.insightsDashboardTransition);
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.text(CollectionSummaryLabels.wishlist), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.expand_more_rounded));
+    await tester.pump();
+    await tester.pump(CollectibleMotion.insightsDashboardTransition);
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.text(CollectionSummaryLabels.wishlist), findsNothing);
+  });
+
   testWidgets('tapping compact glance row expands dashboard', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: ThemeData(
           extensions: [CollectibleTokens.forBrightness(Brightness.light)],
         ),
-        home: Scaffold(
-          body: CollectionInsightsDashboard(stats: stats),
-        ),
+        home: Scaffold(body: CollectionInsightsDashboard(stats: stats)),
       ),
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('collection_insights_compact_glance')));
+    await tester.tap(
+      find.byKey(const Key('collection_insights_compact_glance')),
+    );
     await tester.pump();
     await tester.pump(CollectibleMotion.insightsDashboardTransition);
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(find.text(CollectionSummaryLabels.wishlist), findsOneWidget);
+  });
+
+  testWidgets('expanded summary statistics card collapses dashboard', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(
+          extensions: [CollectibleTokens.forBrightness(Brightness.light)],
+        ),
+        home: Scaffold(body: CollectionInsightsDashboard(stats: stats)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(const Key('collection_insights_compact_glance')),
+    );
+    await tester.pump();
+    await tester.pump(CollectibleMotion.insightsDashboardTransition);
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.text(CollectionSummaryLabels.wishlist), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('collection_summary_stats_card')));
+    await tester.pump();
+    await tester.pump(CollectibleMotion.insightsDashboardTransition);
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.text(CollectionSummaryLabels.wishlist), findsNothing);
+  });
+
+  testWidgets('rapid repeated summary taps do not desynchronize state', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(
+          extensions: [CollectibleTokens.forBrightness(Brightness.light)],
+        ),
+        home: Scaffold(body: CollectionInsightsDashboard(stats: stats)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final header = find.byKey(
+      const Key('collection_insights_dashboard_toggle'),
+    );
+    await tester.tap(header);
+    await tester.pump(const Duration(milliseconds: 16));
+    await tester.tap(header);
+    await tester.pump(const Duration(milliseconds: 16));
+    await tester.tap(header);
+    await tester.pump();
+    await tester.pump(CollectibleMotion.insightsDashboardTransition);
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text(CollectionSummaryLabels.wishlist), findsOneWidget);
+
+    await tester.tap(header);
+    await tester.pump(const Duration(milliseconds: 16));
+    await tester.tap(header);
+    await tester.pump(const Duration(milliseconds: 16));
+    await tester.tap(header);
+    await tester.pump();
+    await tester.pump(CollectibleMotion.insightsDashboardTransition);
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text(CollectionSummaryLabels.wishlist), findsNothing);
   });
 
   testWidgets('expand and collapse transitions do not overflow layout', (
@@ -189,11 +311,15 @@ void main() {
       expect(tester.takeException(), isNull);
     }
 
-    await tester.tap(find.byKey(const Key('collection_insights_dashboard_toggle')));
+    await tester.tap(
+      find.byKey(const Key('collection_insights_dashboard_toggle')),
+    );
     await tester.pump();
     await pumpTransitionFrames();
 
-    await tester.tap(find.byKey(const Key('collection_insights_dashboard_toggle')));
+    await tester.tap(
+      find.byKey(const Key('collection_insights_dashboard_toggle')),
+    );
     await tester.pump();
     await pumpTransitionFrames();
   });
@@ -228,10 +354,7 @@ void main() {
                     onInsightsTap: () {},
                   ),
                 ),
-                const Text(
-                  'My collection',
-                  key: Key('my_collection_header'),
-                ),
+                const Text('My collection', key: Key('my_collection_header')),
               ],
             ),
           ),
@@ -268,9 +391,7 @@ void main() {
       expect(find.text(moodLine), findsOneWidget);
       expect(find.text(whisper), findsOneWidget);
       expect(
-        find.text(
-          '${CollectorTypeCopy.entryRevealedPrefix}: $collectorType',
-        ),
+        find.text('${CollectorTypeCopy.entryRevealedPrefix}: $collectorType'),
         findsOneWidget,
       );
 

@@ -37,7 +37,8 @@ class CollectionInsightsDashboard extends StatefulWidget {
       _CollectionInsightsDashboardState();
 }
 
-class _CollectionInsightsDashboardState extends State<CollectionInsightsDashboard>
+class _CollectionInsightsDashboardState
+    extends State<CollectionInsightsDashboard>
     with SingleTickerProviderStateMixin {
   final _collapsedMeasureKey = GlobalKey();
   final _expandedMeasureKey = GlobalKey();
@@ -105,8 +106,7 @@ class _CollectionInsightsDashboardState extends State<CollectionInsightsDashboar
         oldWidget.shelfMoodLine != widget.shelfMoodLine ||
         oldWidget.memoryWhisper != widget.memoryWhisper ||
         oldWidget.collectorTypeName != widget.collectorTypeName ||
-        (oldWidget.onInsightsTap == null) !=
-            (widget.onInsightsTap == null);
+        (oldWidget.onInsightsTap == null) != (widget.onInsightsTap == null);
   }
 
   void _toggle() {
@@ -249,10 +249,7 @@ class _CollectionInsightsDashboardState extends State<CollectionInsightsDashboar
   }
 
   /// Clips a layer to [height] without [RenderFlex] overflow during lerp.
-  Widget _clipAnimatedLayer({
-    required double height,
-    required Widget child,
-  }) {
+  Widget _clipAnimatedLayer({required double height, required Widget child}) {
     return SizedBox(
       height: height,
       width: double.infinity,
@@ -327,30 +324,26 @@ class _CollectionInsightsDashboardState extends State<CollectionInsightsDashboar
       ),
       child: Material(
         color: Colors.transparent,
-        child: InkWell(
-          onTap: _toggle,
-          borderRadius: BorderRadius.circular(16),
-          child: Ink(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              color: scheme.surfaceContainerLow.withValues(
-                alpha: isDark ? 0.62 : 0.88,
-              ),
-              border: Border.all(
-                width: 0.8,
-                color: scheme.outlineVariant.withValues(
-                  alpha: isDark ? 0.24 : 0.34,
-                ),
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            color: scheme.surfaceContainerLow.withValues(
+              alpha: isDark ? 0.62 : 0.88,
+            ),
+            border: Border.all(
+              width: 0.8,
+              color: scheme.outlineVariant.withValues(
+                alpha: isDark ? 0.24 : 0.34,
               ),
             ),
-            child: CollectionInsightsCompactSummary(
-              stats: widget.stats,
-              onTap: _toggle,
-              compactT: compactMorphT,
-              valueStyle: valueStyle,
-              labelStyle: labelStyle,
-              glyphColor: glyphColor,
-            ),
+          ),
+          child: CollectionInsightsCompactSummary(
+            stats: widget.stats,
+            onTap: _toggle,
+            compactT: compactMorphT,
+            valueStyle: valueStyle,
+            labelStyle: labelStyle,
+            glyphColor: glyphColor,
           ),
         ),
       ),
@@ -364,6 +357,7 @@ class _CollectionInsightsDashboardState extends State<CollectionInsightsDashboar
         shelfMoodLine: widget.shelfMoodLine,
         memoryWhisper: widget.memoryWhisper,
         onInsightsTap: widget.onInsightsTap,
+        onSummaryCardTap: _toggle,
         collectorTypeName: widget.collectorTypeName,
       ),
     );
@@ -372,10 +366,7 @@ class _CollectionInsightsDashboardState extends State<CollectionInsightsDashboar
 
 /// Persistent expand/collapse affordance above the summary card.
 class _SummaryHeaderRow extends StatelessWidget {
-  const _SummaryHeaderRow({
-    required this.chevronTurns,
-    required this.onTap,
-  });
+  const _SummaryHeaderRow({required this.chevronTurns, required this.onTap});
 
   final double chevronTurns;
   final VoidCallback onTap;
@@ -392,7 +383,7 @@ class _SummaryHeaderRow extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(10),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [

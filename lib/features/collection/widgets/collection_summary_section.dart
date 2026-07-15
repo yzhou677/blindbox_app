@@ -5,7 +5,9 @@ import 'package:blindbox_app/core/theme/collectible_shape.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/domain/series_completion_resolution.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
+import 'package:blindbox_app/features/collection/presentation/completion_metric_tooltips.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_summary_editorial.dart';
+import 'package:blindbox_app/features/collection/widgets/info_tooltip_icon.dart';
 import 'package:flutter/material.dart';
 
 /// Soft glance at the shelf — not a stats dashboard.
@@ -41,6 +43,7 @@ class CollectionSummarySection extends StatelessWidget {
     this.shelfMoodLine,
     this.memoryWhisper,
     this.onInsightsTap,
+    this.onSummaryCardTap,
     this.collectorTypeName,
     this.padding = const EdgeInsets.fromLTRB(
       AppSpacing.pageHorizontal,
@@ -54,6 +57,7 @@ class CollectionSummarySection extends StatelessWidget {
   final String? shelfMoodLine;
   final String? memoryWhisper;
   final VoidCallback? onInsightsTap;
+  final VoidCallback? onSummaryCardTap;
   final String? collectorTypeName;
   final EdgeInsetsGeometry padding;
 
@@ -68,18 +72,10 @@ class CollectionSummarySection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: CollectibleShape.shellRadius,
-              color: scheme.surfaceContainerLow,
-              border: Border.all(
-                color: Color.lerp(
-                  scheme.outlineVariant,
-                  scheme.primary,
-                  isDark ? 0.12 : 0.18,
-                )!,
-              ),
-            ),
+          _SummaryStatsCard(
+            scheme: scheme,
+            isDark: isDark,
+            onTap: onSummaryCardTap,
             child: Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 18,
@@ -118,6 +114,7 @@ class CollectionSummarySection extends StatelessWidget {
                         label: CollectionSummaryLabels.seriesComplete,
                         scheme: scheme,
                         textTheme: textTheme,
+                        tooltip: CompletionMetricTooltips.completedSeries,
                         muted: stats.completedSeriesCount == 0,
                       ),
                       _ShelfGlanceStatCell(
@@ -167,6 +164,52 @@ class CollectionSummarySection extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _SummaryStatsCard extends StatelessWidget {
+  const _SummaryStatsCard({
+    required this.scheme,
+    required this.isDark,
+    required this.child,
+    this.onTap,
+  });
+
+  final ColorScheme scheme;
+  final bool isDark;
+  final Widget child;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final decoration = BoxDecoration(
+      borderRadius: CollectibleShape.shellRadius,
+      color: scheme.surfaceContainerLow,
+      border: Border.all(
+        color: Color.lerp(
+          scheme.outlineVariant,
+          scheme.primary,
+          isDark ? 0.12 : 0.18,
+        )!,
+      ),
+    );
+
+    if (onTap == null) {
+      return DecoratedBox(decoration: decoration, child: child);
+    }
+
+    return Semantics(
+      button: true,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          key: const Key('collection_summary_stats_card'),
+          onTap: onTap,
+          borderRadius: CollectibleShape.shellRadius,
+          child: Ink(decoration: decoration, child: child),
+        ),
       ),
     );
   }
@@ -293,6 +336,7 @@ class _ShelfGlanceStatCell extends StatelessWidget {
     required this.textTheme,
     this.muted = false,
     this.emphasizeLabel = false,
+    this.tooltip,
   });
 
   final int count;
@@ -301,6 +345,7 @@ class _ShelfGlanceStatCell extends StatelessWidget {
   final TextTheme textTheme;
   final bool muted;
   final bool emphasizeLabel;
+  final String? tooltip;
 
   @override
   Widget build(BuildContext context) {
@@ -345,14 +390,47 @@ class _ShelfGlanceStatCell extends StatelessWidget {
           height: FeedRhythm.collectionSummaryLabelHeight,
           child: Align(
             alignment: Alignment.topCenter,
-            child: Text(
-              label,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+            child: _MetricLabel(
+              label: label,
               style: labelStyle,
+              tooltip: tooltip,
             ),
           ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MetricLabel extends StatelessWidget {
+  const _MetricLabel({required this.label, required this.style, this.tooltip});
+
+  final String label;
+  final TextStyle style;
+  final String? tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Text(
+      label,
+      textAlign: TextAlign.center,
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      style: style,
+    );
+    if (tooltip == null) return text;
+
+    final scheme = Theme.of(context).colorScheme;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Flexible(child: text),
+        const SizedBox(width: 4),
+        InfoTooltipIcon(
+          message: tooltip!,
+          size: 13,
+          color: scheme.onSurfaceVariant.withValues(alpha: 0.54),
         ),
       ],
     );
