@@ -144,7 +144,7 @@ class ShelfShareCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const _CardLabel('SHELFY SHELF CARD · CURRENT'),
-            const SizedBox(height: 14),
+            const SizedBox(height: 8),
             Text(
               'MY SHELF\nRIGHT NOW',
               textAlign: TextAlign.left,
@@ -155,7 +155,7 @@ class ShelfShareCard extends StatelessWidget {
                 color: _ShareCardColors.ink,
               ),
             ),
-            const SizedBox(height: 5),
+            const SizedBox(height: 2),
             Text(
               collectorLine,
               style: _ShareCardType.body(context).copyWith(
@@ -164,13 +164,13 @@ class ShelfShareCard extends StatelessWidget {
                 color: _ShareCardColors.lilac,
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             Expanded(
               child: hero == null
                   ? const _EmptyShelfCardArt()
                   : _ShelfPortrait(hero: hero, supporting: supporting),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 4),
             Row(
               children: [
                 Expanded(
@@ -184,6 +184,7 @@ class ShelfShareCard extends StatelessWidget {
                 const _WaxSeal(icon: Icons.collections_bookmark_rounded),
               ],
             ),
+            const SizedBox(height: 10),
           ],
         ),
       ),
@@ -397,7 +398,7 @@ class _ShelfPortrait extends StatelessWidget {
               left: 4,
               top: 0,
               width: width - 8,
-              height: height * 0.62,
+              height: height * 0.59,
               child: Transform.rotate(
                 angle: -0.015,
                 child: _Polaroid(
@@ -430,11 +431,11 @@ class _ShelfPortrait extends StatelessWidget {
     required double height,
   }) {
     final specs = <({double x, double y, double w, double a})>[
-      (x: -2, y: height * 0.52, w: width * 0.31, a: -0.1),
-      (x: width * 0.32, y: height * 0.61, w: width * 0.34, a: 0.055),
-      (x: width * 0.68, y: height * 0.53, w: width * 0.31, a: 0.09),
-      (x: width * 0.08, y: height * 0.76, w: width * 0.31, a: 0.065),
-      (x: width * 0.58, y: height * 0.75, w: width * 0.33, a: -0.065),
+      (x: -2, y: height * 0.46, w: width * 0.31, a: -0.1),
+      (x: width * 0.32, y: height * 0.55, w: width * 0.34, a: 0.055),
+      (x: width * 0.68, y: height * 0.47, w: width * 0.31, a: 0.09),
+      (x: width * 0.08, y: height * 0.70, w: width * 0.31, a: 0.065),
+      (x: width * 0.58, y: height * 0.69, w: width * 0.33, a: -0.065),
     ];
     final spec = specs[index % specs.length];
     return Positioned(
