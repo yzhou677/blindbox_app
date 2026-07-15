@@ -6,6 +6,9 @@ import 'package:blindbox_app/features/collection/presentation/collection_vocabul
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+Finder _tooltipIcon(String message) =>
+    find.byKey(ValueKey<String>('info-tooltip-$message'));
+
 void main() {
   testWidgets('at-a-glance shows achievement-focused collector snapshot', (
     tester,
@@ -48,15 +51,15 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.byTooltip(CompletionMetricTooltips.completedSeries),
+      _tooltipIcon(CompletionMetricTooltips.completedSeries),
       findsOneWidget,
     );
     expect(
-      find.byTooltip(CompletionMetricTooltips.masterComplete),
+      _tooltipIcon(CompletionMetricTooltips.masterComplete),
       findsOneWidget,
     );
     expect(
-      find.byTooltip(CompletionMetricTooltips.secretsCollected),
+      _tooltipIcon(CompletionMetricTooltips.secretsCollected),
       findsOneWidget,
     );
 
@@ -91,15 +94,25 @@ void main() {
       ),
     );
 
-    await tester.tap(find.byTooltip(CompletionMetricTooltips.completedSeries));
+    await tester.tap(_tooltipIcon(CompletionMetricTooltips.completedSeries));
     await tester.pump();
     expect(find.text(CompletionMetricTooltips.completedSeries), findsOneWidget);
 
+    await tester.tap(_tooltipIcon(CompletionMetricTooltips.masterComplete));
+    await tester.pump();
+    expect(find.text(CompletionMetricTooltips.completedSeries), findsNothing);
+    expect(find.text(CompletionMetricTooltips.masterComplete), findsOneWidget);
+
+    await tester.tap(_tooltipIcon(CompletionMetricTooltips.secretsCollected));
+    await tester.pump();
+    expect(find.text(CompletionMetricTooltips.masterComplete), findsNothing);
+    expect(
+      find.text(CompletionMetricTooltips.secretsCollected),
+      findsOneWidget,
+    );
+
     await tester.tapAt(const Offset(1, 1));
     await tester.pumpAndSettle();
-
-    await tester.tap(find.byTooltip(CompletionMetricTooltips.masterComplete));
-    await tester.pump();
-    expect(find.text(CompletionMetricTooltips.masterComplete), findsOneWidget);
+    expect(find.text(CompletionMetricTooltips.secretsCollected), findsNothing);
   });
 }

@@ -5,6 +5,9 @@ import 'package:blindbox_app/features/collection/widgets/collection_summary_sect
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+Finder _tooltipIcon(String message) =>
+    find.byKey(ValueKey<String>('info-tooltip-$message'));
+
 void main() {
   testWidgets('summary shows figure and series metric labels', (tester) async {
     tester.view.physicalSize = const Size(390, 500);
@@ -38,7 +41,7 @@ void main() {
     expect(find.text(CollectionSummaryLabels.seriesComplete), findsOneWidget);
     expect(find.text(CollectionSummaryLabels.masterComplete), findsOneWidget);
     expect(
-      find.byTooltip(CompletionMetricTooltips.completedSeries),
+      _tooltipIcon(CompletionMetricTooltips.completedSeries),
       findsOneWidget,
     );
     expect(find.text('In collection'), findsNothing);
@@ -104,7 +107,7 @@ void main() {
     );
     await tester.pump();
 
-    await tester.tap(find.byTooltip(CompletionMetricTooltips.completedSeries));
+    await tester.tap(_tooltipIcon(CompletionMetricTooltips.completedSeries));
     await tester.pump();
 
     expect(taps, 0);

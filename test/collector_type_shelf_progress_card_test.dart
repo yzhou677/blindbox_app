@@ -29,6 +29,9 @@ CollectorTypeStats _stats({
   );
 }
 
+Finder _tooltipIcon(String message) =>
+    find.byKey(ValueKey<String>('info-tooltip-$message'));
+
 void main() {
   group('ShelfProgressPresentation', () {
     test('hides Master Completion until first master series', () {
@@ -100,7 +103,7 @@ void main() {
     expect(find.text('Shelf Progress'), findsOneWidget);
     expect(find.text(CollectionVocabulary.regularProgress), findsOneWidget);
     expect(
-      find.byTooltip(CompletionMetricTooltips.regularProgress),
+      _tooltipIcon(CompletionMetricTooltips.regularProgress),
       findsOneWidget,
     );
     expect(find.text('23%'), findsOneWidget);
@@ -135,7 +138,7 @@ void main() {
     expect(find.text('80%'), findsOneWidget);
     expect(find.text(CollectionVocabulary.masterCompletion), findsOneWidget);
     expect(
-      find.byTooltip(CompletionMetricTooltips.masterCompletion),
+      _tooltipIcon(CompletionMetricTooltips.masterCompletion),
       findsOneWidget,
     );
     expect(find.text('100%'), findsOneWidget);
@@ -162,7 +165,7 @@ void main() {
       ),
     );
 
-    await tester.tap(find.byTooltip(CompletionMetricTooltips.regularProgress));
+    await tester.tap(_tooltipIcon(CompletionMetricTooltips.regularProgress));
     await tester.pump();
     expect(find.text(CompletionMetricTooltips.regularProgress), findsOneWidget);
 
@@ -170,11 +173,52 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text(CompletionMetricTooltips.regularProgress), findsNothing);
 
-    await tester.tap(find.byTooltip(CompletionMetricTooltips.masterCompletion));
+    await tester.tap(_tooltipIcon(CompletionMetricTooltips.masterCompletion));
     await tester.pump();
     expect(
       find.text(CompletionMetricTooltips.masterCompletion),
       findsOneWidget,
     );
+  });
+
+  testWidgets('metric tooltip fits compact dark viewport with large text', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData.dark(),
+        home: MediaQuery(
+          data: const MediaQueryData(
+            size: Size(360, 640),
+            textScaler: TextScaler.linear(1.35),
+          ),
+          child: Scaffold(
+            body: CollectorTypeShelfProgressCard(
+              stats: _stats(
+                completionPercent: 80,
+                trackedSeries: 5,
+                completedSeriesCount: 4,
+                masterCompleteSeriesCount: 2,
+                masterEligibleSeriesCount: 2,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(_tooltipIcon(CompletionMetricTooltips.masterCompletion));
+    await tester.pump();
+
+    final tooltipRect = tester.getRect(
+      find.text(CompletionMetricTooltips.masterCompletion),
+    );
+    expect(tooltipRect.left >= 16, isTrue);
+    expect(tooltipRect.right <= 344, isTrue);
+    expect(tester.takeException(), isNull);
   });
 }
