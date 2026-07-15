@@ -41,6 +41,7 @@ class SeriesFiguresSheet extends ConsumerWidget {
     final resolution = resolveSeriesCompletion(series, snap.figureStates);
     final isComplete = resolution.isCompleted;
     final chasesHome = resolution.isMasterComplete;
+    final completionBannerState = _completionBannerState(resolution);
     final scroll = CollectibleSheetScope.scrollControllerOf(context);
     final trailingMeta = CollectionProgressVoice.seriesFiguresSheetProgressMeta(
       resolution,
@@ -72,7 +73,7 @@ class SeriesFiguresSheet extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.only(top: 14),
                 child: _SeriesCompleteBanner(
-                  chasesHome: chasesHome,
+                  state: completionBannerState,
                   onShare: masterSharePayload == null
                       ? null
                       : () => showShareCardPreview(
@@ -105,6 +106,18 @@ class SeriesFiguresSheet extends ConsumerWidget {
       ),
     );
   }
+}
+
+SeriesCompletionBannerState _completionBannerState(
+  SeriesCompletionResolution resolution,
+) {
+  if (resolution.isMasterComplete) {
+    return SeriesCompletionBannerState.masterComplete;
+  }
+  if (resolution.secretSlotCount > 0) {
+    return SeriesCompletionBannerState.completeWithSecretsRemaining;
+  }
+  return SeriesCompletionBannerState.completeNoSecrets;
 }
 
 class _SeriesNoteText extends StatelessWidget {
@@ -313,9 +326,9 @@ class _FigureCapsuleWrap extends StatelessWidget {
 }
 
 class _SeriesCompleteBanner extends StatelessWidget {
-  const _SeriesCompleteBanner({required this.chasesHome, this.onShare});
+  const _SeriesCompleteBanner({required this.state, this.onShare});
 
-  final bool chasesHome;
+  final SeriesCompletionBannerState state;
   final VoidCallback? onShare;
 
   @override
@@ -359,7 +372,7 @@ class _SeriesCompleteBanner extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 1),
               child: Icon(
-                chasesHome
+                state == SeriesCompletionBannerState.masterComplete
                     ? Icons.emoji_events_rounded
                     : Icons.check_circle_outline_rounded,
                 size: 22,
@@ -372,9 +385,7 @@ class _SeriesCompleteBanner extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    ShelfEditorialVoice.seriesCompleteBannerTitle(
-                      chasesHome: chasesHome,
-                    ),
+                    ShelfEditorialVoice.seriesCompleteBannerTitle(state),
                     style: textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                       letterSpacing: -0.1,
@@ -382,9 +393,7 @@ class _SeriesCompleteBanner extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    ShelfEditorialVoice.seriesCompleteBannerSubtitle(
-                      chasesHome: chasesHome,
-                    ),
+                    ShelfEditorialVoice.seriesCompleteBannerSubtitle(state),
                     style: textTheme.bodySmall?.copyWith(
                       color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
                       height: 1.3,

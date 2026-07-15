@@ -438,4 +438,65 @@ void main() {
     );
     expect(find.text('Only'), findsOneWidget);
   });
+
+  testWidgets('completed no-secret series does not mention Secret figures', (
+    tester,
+  ) async {
+    final series = testShelfSeries(
+      id: 'no_secret_complete',
+      name: 'Plain Complete',
+      figures: const [
+        ShelfFigure(
+          id: 'no_secret_complete_f0',
+          seriesId: 'no_secret_complete',
+          name: 'Only',
+          rarity: 'Regular',
+          isSecret: false,
+        ),
+      ],
+    );
+    final snap = CollectionSnapshot(
+      shelfSeries: [series],
+      figureStates: const {
+        'no_secret_complete_f0': TrackedFigure(
+          figureId: 'no_secret_complete_f0',
+          state: FigureCollectionState.owned,
+        ),
+      },
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          collectionNotifierProvider.overrideWith(
+            () => _SheetTestNotifier(snap),
+          ),
+          catalogBundleProvider.overrideWith(
+            (ref) async => const CatalogSeedBundle(
+              brands: [],
+              ips: [],
+              series: [],
+              figures: [],
+            ),
+          ),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: Scaffold(
+            body: CollectibleSheetScope(
+              scrollController: ScrollController(),
+              child: SeriesFiguresSheet(seriesId: series.id),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Collection Complete'), findsOneWidget);
+    expect(find.text('Every figure has found its place.'), findsOneWidget);
+    expect(find.text('Secret Figures can still be found later.'), findsNothing);
+    expect(find.textContaining('Regular and Secret'), findsNothing);
+    expect(find.textContaining('Master Complete'), findsNothing);
+  });
 }

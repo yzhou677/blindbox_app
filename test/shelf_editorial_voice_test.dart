@@ -33,25 +33,36 @@ void main() {
     );
   });
 
-  test(
-    'series completion banner preserves Complete and Master Complete tiers',
-    () {
-      expect(
-        ShelfEditorialVoice.seriesCompleteBannerTitle(chasesHome: false),
-        contains('Complete'),
-      );
-      expect(
-        ShelfEditorialVoice.seriesCompleteBannerTitle(chasesHome: false),
-        isNot(contains('Master Complete')),
-      );
-      expect(
-        ShelfEditorialVoice.seriesCompleteBannerTitle(chasesHome: true),
-        contains('Master Complete'),
-      );
-      expect(
-        ShelfEditorialVoice.seriesCompleteBannerSubtitle(chasesHome: true),
-        contains('Regular and Secret'),
-      );
-    },
-  );
+  test('series completion banner preserves all completion tiers', () {
+    expect(
+      ShelfEditorialVoice.seriesCompleteBannerTitle(
+        SeriesCompletionBannerState.completeNoSecrets,
+      ),
+      'Collection Complete',
+    );
+    expect(
+      ShelfEditorialVoice.seriesCompleteBannerSubtitle(
+        SeriesCompletionBannerState.completeNoSecrets,
+      ),
+      isNot(contains('Secret')),
+    );
+    expect(
+      ShelfEditorialVoice.seriesCompleteBannerSubtitle(
+        SeriesCompletionBannerState.completeWithSecretsRemaining,
+      ),
+      contains('Secret Figures can still be found later'),
+    );
+    expect(
+      ShelfEditorialVoice.seriesCompleteBannerTitle(
+        SeriesCompletionBannerState.masterComplete,
+      ),
+      contains('Master Complete'),
+    );
+    expect(
+      ShelfEditorialVoice.seriesCompleteBannerSubtitle(
+        SeriesCompletionBannerState.masterComplete,
+      ),
+      contains('Regular and Secret'),
+    );
+  });
 }

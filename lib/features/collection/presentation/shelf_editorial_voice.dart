@@ -1,11 +1,11 @@
 import 'package:blindbox_app/features/collection/application/shelf_emotional_interpreter.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/domain/collection_memory_moment.dart';
-import 'package:blindbox_app/features/collection/presentation/collection_memory_editorial.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_emotional_profile.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_interpretation_confidence.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_mood.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_relationship_insight.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_memory_editorial.dart';
 import 'package:blindbox_app/features/collection/presentation/shelf_mood_legacy.dart';
 
 /// Calm editorial copy for shelf emotional intelligence.
@@ -64,15 +64,32 @@ abstract final class ShelfEditorialVoice {
     CollectionSnapshot? snap,
   }) => CollectionMemoryEditorial.whisperForMoment(moment, snap: snap);
 
-  static String seriesCompleteBannerTitle({required bool chasesHome}) {
-    return chasesHome
-        ? 'Master Complete — every figure home'
-        : 'Complete -- every Regular home';
+  static String seriesCompleteBannerTitle(SeriesCompletionBannerState state) {
+    return switch (state) {
+      SeriesCompletionBannerState.completeNoSecrets => 'Collection Complete',
+      SeriesCompletionBannerState.completeWithSecretsRemaining =>
+        'Complete -- every Regular home',
+      SeriesCompletionBannerState.masterComplete =>
+        'Master Complete -- every figure home',
+    };
   }
 
-  static String seriesCompleteBannerSubtitle({required bool chasesHome}) {
-    return chasesHome
-        ? 'Every Regular and Secret figure has found its place.'
-        : 'Secret Figures can still be found later.';
+  static String seriesCompleteBannerSubtitle(
+    SeriesCompletionBannerState state,
+  ) {
+    return switch (state) {
+      SeriesCompletionBannerState.completeNoSecrets =>
+        'Every figure has found its place.',
+      SeriesCompletionBannerState.completeWithSecretsRemaining =>
+        'Secret Figures can still be found later.',
+      SeriesCompletionBannerState.masterComplete =>
+        'Every Regular and Secret figure has found its place.',
+    };
   }
+}
+
+enum SeriesCompletionBannerState {
+  completeNoSecrets,
+  completeWithSecretsRemaining,
+  masterComplete,
 }
