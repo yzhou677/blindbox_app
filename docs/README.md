@@ -1,36 +1,84 @@
-# Documentation index
+# Documentation Index
 
-Human-oriented notes for the Blindbox / Shelfy app.
+Human-oriented notes for the Shelfy app.
 
-**Agent entry points:** Codex (and AGENTS.md-aware tools) start at root
-[`AGENTS.md`](../AGENTS.md). Cursor also loads [`.cursor/rules/`](../.cursor/rules/).
-Deep architecture remains under `.cursor/` and the specs below — do not duplicate
-long contracts into instruction files.
+Repository documentation should fit one of four roles:
 
-**GitHub Pages:** [Site home](https://yzhou677.github.io/blindbox_app/) · [Privacy Policy (HTML)](privacy-policy.html)
+1. **README** - project introduction and orientation
+2. **Decision** - durable "why" in ADRs and PDRs
+3. **Architecture** - current implementation, ownership, data flow, operations
+4. **Archive** - historical reports, completed phases, release-specific notes
 
-## In this folder
+Avoid creating documents that mix past, current implementation, and durable
+product philosophy without naming which role they serve.
 
-- [`CATALOG_ARCHITECTURE.md`](CATALOG_ARCHITECTURE.md) — **canonical** catalog spec (Firestore → cache → providers, Search V2, availability UX)
-- [`RECOMMENDATION_SEMANTICS.md`](RECOMMENDATION_SEMANTICS.md) — **Accepted ADR** for For You (read before any recommendation change; tracked-only taste, stability, closed wishlist/owned rules)
-- [`SEARCH_ARCHITECTURE.md`](SEARCH_ARCHITECTURE.md) — **canonical** search spec (normalization, token AND, haystack, ranking)
-- [`PROJECT_OVERVIEW.md`](PROJECT_OVERVIEW.md) — product goals and feature outline
-- [`ARCHITECTURE_NOTES.md`](ARCHITECTURE_NOTES.md) — recent architecture decisions (catalog sync, market identity, figure IDs, brand/IP rules, collection scope, **dashboard performance baseline**)
-- [`KNOWN_RUNTIME_NOTES.md`](KNOWN_RUNTIME_NOTES.md) — logcat / debug noise vs actionable failures (Firebase, images, Android)
-- [`TESTING.md`](TESTING.md) — emulator smoke scripts, ADB `input text` (`%s` for spaces)
-- [`TECH_DEBT.md`](TECH_DEBT.md) — non-blocking debt items (analyzer warnings, cleanup when convenient)
-- [`COLLECTION_ARCHITECTURE_NOTES.md`](COLLECTION_ARCHITECTURE_NOTES.md) — intentional Collection decisions, tradeoffs, scaling triggers, and **Collector Type resolver 6.1** eligibility contract
-- [`FIREBASE_LOCAL_SETUP.md`](FIREBASE_LOCAL_SETUP.md) — Firebase local setup, services scope, and **release checklist**
-- [`PRIVACY_POLICY.md`](PRIVACY_POLICY.md) — consumer privacy policy (Play Store / GitHub Pages)
-- [`privacy-policy.html`](privacy-policy.html) — HTML version for GitHub Pages
-- [`PRIVACY_POLICY_DATA_SAFETY.md`](PRIVACY_POLICY_DATA_SAFETY.md) — Google Play Data safety alignment notes
-- [`PLAY_STORE_ASSETS.md`](PLAY_STORE_ASSETS.md) — Play listing icons, feature graphic, screenshot plan
-- [`CURSOR_RULES.md`](CURSOR_RULES.md) — pointer to where Cursor rules and architecture actually live
+## Entry Points
 
-## For agents and contributors
+- Project introduction: [`../README.md`](../README.md)
+- AI agent entry point: [`../AGENTS.md`](../AGENTS.md)
+- Durable decisions: [`decisions/`](decisions/)
+- Current architecture: [`.cursor/ARCHITECTURE.md`](../.cursor/ARCHITECTURE.md)
+- Historical archive: [`archive/`](archive/)
 
-- **Codex / shared contract:** [`AGENTS.md`](../AGENTS.md) · Insights: [`lib/features/collection/insights/AGENTS.md`](../lib/features/collection/insights/AGENTS.md)
-- **Architecture:** [`.cursor/ARCHITECTURE.md`](../.cursor/ARCHITECTURE.md)
-- **Cursor rules:** [`.cursor/rules/`](../.cursor/rules/)
-- **Checklist:** [`.cursor/CONFORMITY_AUDIT.md`](../.cursor/CONFORMITY_AUDIT.md)
-- **Index of agent docs:** [`CURSOR_RULES.md`](CURSOR_RULES.md)
+**GitHub Pages:** [Site home](https://yzhou677.github.io/blindbox_app/) -
+[Privacy Policy (HTML)](privacy-policy.html)
+
+## Decisions
+
+- [`decisions/`](decisions/) - ADRs and PDRs
+- [`ADR-001: Recommendation Semantics`](decisions/architecture/ADR-001-recommendation-semantics.md)
+- [`PDR-001: Collector Type Semantics`](decisions/product/PDR-001-collector-type-semantics.md)
+- [`PDR-002: Completion Semantics`](decisions/product/PDR-002-completion-semantics.md)
+
+## Current Architecture And Implementation
+
+- [`CATALOG_ARCHITECTURE.md`](CATALOG_ARCHITECTURE.md) - catalog runtime, cache,
+  providers, Search V2, availability UX
+- [`SEARCH_ARCHITECTURE.md`](SEARCH_ARCHITECTURE.md) - search normalization,
+  token AND, haystack, ranking
+- [`COLLECTION_ARCHITECTURE_NOTES.md`](COLLECTION_ARCHITECTURE_NOTES.md) -
+  Collection implementation notes, resolver policy, thresholds, compatibility
+- [`ARCHITECTURE_NOTES.md`](ARCHITECTURE_NOTES.md) - operational architecture
+  notes, performance baselines, market identity notes
+- [`PROJECT_OVERVIEW.md`](PROJECT_OVERVIEW.md) - product outline and current scope
+- [`TESTING.md`](TESTING.md) - current automated and smoke verification guidance
+- [`KNOWN_RUNTIME_NOTES.md`](KNOWN_RUNTIME_NOTES.md) - debug/logcat triage
+- [`TECH_DEBT.md`](TECH_DEBT.md) - non-blocking debt and future triggers
+- [`FIREBASE_LOCAL_SETUP.md`](FIREBASE_LOCAL_SETUP.md) - Firebase local setup and
+  release checklist
+- [`EBAY_GATEWAY.md`](EBAY_GATEWAY.md)
+- [`MERCARI_GATEWAY_FUNCTIONS.md`](MERCARI_GATEWAY_FUNCTIONS.md)
+- [`MERCARI_SANDBOX.md`](MERCARI_SANDBOX.md)
+
+Feature implementation notes that describe current shipped surfaces:
+
+- [`COLLECTION_EMOTIONAL_INTELLIGENCE.md`](COLLECTION_EMOTIONAL_INTELLIGENCE.md)
+- [`COLLECTION_PERSONAL_MEMORY.md`](COLLECTION_PERSONAL_MEMORY.md)
+- [`COLLECTIBLE_RELATIONSHIP_SURFACES.md`](COLLECTIBLE_RELATIONSHIP_SURFACES.md)
+- [`COLLECTIBLE_IMMERSIVE_PRESENTATION.md`](COLLECTIBLE_IMMERSIVE_PRESENTATION.md)
+- [`COLLECTIBLE_MARKET_INTELLIGENCE.md`](COLLECTIBLE_MARKET_INTELLIGENCE.md)
+
+Release/store references:
+
+- [`PRIVACY_POLICY.md`](PRIVACY_POLICY.md)
+- [`privacy-policy.html`](privacy-policy.html)
+- [`PRIVACY_POLICY_DATA_SAFETY.md`](PRIVACY_POLICY_DATA_SAFETY.md)
+- [`PLAY_STORE_ASSETS.md`](PLAY_STORE_ASSETS.md)
+
+Legacy pointer retained for old links:
+
+- [`RECOMMENDATION_SEMANTICS.md`](RECOMMENDATION_SEMANTICS.md) - points to
+  ADR-001
+
+## Archive
+
+- [`archive/`](archive/) - historical reports, release-specific plans, completed
+  phase notes, and generated report snapshots
+
+## Agent Navigation
+
+- [`../AGENTS.md`](../AGENTS.md)
+- [`../lib/features/collection/insights/AGENTS.md`](../lib/features/collection/insights/AGENTS.md)
+- [`CURSOR_RULES.md`](CURSOR_RULES.md)
+- [`.cursor/rules/`](../.cursor/rules/)
+

@@ -45,6 +45,7 @@ Do not mix these data paths unless a task explicitly requires it.
 For full details, read:
 
 - [Agent instructions (Codex / shared)](./AGENTS.md)
+- [Durable decisions](./docs/decisions/)
 - [Architecture reference](./.cursor/ARCHITECTURE.md)
 
 ## Tech Stack
@@ -156,10 +157,10 @@ dart run flutter_native_splash:create
 
 **Product & release**
 
-- [Release candidate test plan](./docs/release_candidate_test_plan.md)
-- [Collectible immersive presentation](./docs/COLLECTIBLE_IMMERSIVE_PRESENTATION.md)
-- [Collectible market intelligence](./docs/COLLECTIBLE_MARKET_INTELLIGENCE.md)
-- [Collection emotional intelligence](./docs/COLLECTION_EMOTIONAL_INTELLIGENCE.md)
+- [Durable decisions](./docs/decisions/)
+- [Project overview](./docs/PROJECT_OVERVIEW.md)
+- [Privacy policy](./docs/PRIVACY_POLICY.md)
+- [Documentation archive](./docs/archive/)
 
 ## Notes For Contributors
 

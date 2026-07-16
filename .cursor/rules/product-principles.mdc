@@ -22,7 +22,7 @@ Avoid: screen-local one-offs, ad hoc models, backend-driven UI, blocking UX, das
 
 - Never fabricate the collector's journey. Celebrate verified achievements, not imagined stories.
 - Only state facts the app can support from recorded data: counts, completion state, owned/wishlist state, timestamps that actually exist, and revealed snapshots.
-- Preserve collector achievement tiers exactly: "Complete" means all Regular figures are collected; "Master Complete" means all Regular and Secret figures are collected. Never describe a Master Complete state as only "complete."
+- Preserve collector achievement tiers exactly; the authoritative product meaning lives in [`PDR-002: Completion Semantics`](../../docs/decisions/product/PDR-002-completion-semantics.md). Never describe a Master Complete state as only "complete."
 - Keep section ownership clear: titles identify the series, note/catalog context areas describe user-written memories or verified facts, completion banners own completion state, and figure cards own the collection itself. Do not repeat completion copy in description or memory areas.
 - Avoid speculative language such as "finally", "after a long search", "after years", "at last", "hard-earned", "lucky enough", "never gave up", or "you've always loved..." unless the exact fact is backed by explicit recorded data.
 - Prefer factual, collector-native language: "Complete -- every Regular home", "Master Complete -- every figure home", "Every Regular. Every Secret.", "Collected 126 figures", "Completed 8 series".

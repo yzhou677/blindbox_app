@@ -53,7 +53,9 @@ npm run audit:ecosystem         # full ecosystem + listing quality report
 Outputs:
 - `tools/browse-coverage-audit.json` — counts per combination
 - `tools/ecosystem-calibration-audit.json` — titles, noise, recommendations
-- `tools/ecosystem-calibration-report.md` — human-readable summary
+- `tools/ecosystem-calibration-report.md` — human-readable summary generated
+  when the audit runs. A historical snapshot is archived at
+  `../../docs/archive/2026-05/ecosystem-calibration-report.md`.
 
 When adding Flutter IPs, **sync** `MARKET_TAXONOMY_IPS` in `composeBrowseQuery.ts`.
 

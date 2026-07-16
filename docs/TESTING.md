@@ -2,7 +2,7 @@
 
 Operational guidance for manual and scripted verification — complements unit/widget tests.
 
-**Primary RC workflow:** run the automated gate below, then manual smoke as needed. Detailed manual checklists live in [`release_candidate_test_plan.md`](release_candidate_test_plan.md) (historical supplement). Catalog runtime behavior: [`CATALOG_ARCHITECTURE.md`](CATALOG_ARCHITECTURE.md). Search behavior: [`SEARCH_ARCHITECTURE.md`](SEARCH_ARCHITECTURE.md).
+**Primary RC workflow:** run the automated gate below, then manual smoke as needed. Historical manual checklists are archived at [`archive/2026-07/release_candidate_test_plan.md`](archive/2026-07/release_candidate_test_plan.md). Catalog runtime behavior: [`CATALOG_ARCHITECTURE.md`](CATALOG_ARCHITECTURE.md). Search behavior: [`SEARCH_ARCHITECTURE.md`](SEARCH_ARCHITECTURE.md).
 
 ---
 

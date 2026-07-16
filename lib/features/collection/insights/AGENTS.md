@@ -4,6 +4,9 @@ Applies when editing `lib/features/collection/insights/` or Collector Type /
 Shelf Progress / reveal behavior that depends on it.
 
 Parent: repository root [`AGENTS.md`](../../../../AGENTS.md).
+Product semantics:
+[`PDR-001 Collector Type`](../../../../docs/decisions/product/PDR-001-collector-type-semantics.md),
+[`PDR-002 Completion`](../../../../docs/decisions/product/PDR-002-completion-semantics.md).
 Contract detail: [`docs/COLLECTION_ARCHITECTURE_NOTES.md`](../../../../docs/COLLECTION_ARCHITECTURE_NOTES.md).
 
 ---

@@ -1,150 +1,128 @@
-# Shelfy — agent instructions
+# Shelfy Agent Guide
 
 Shelfy is a Flutter app for designer-toy collectors. Product behavior and
-collector trust take priority over implementation convenience. Prefer product
-outcomes and explicit contracts over accidental historical behavior.
+collector trust take priority over implementation convenience.
 
-This file is the shared, Codex-readable repository contract. Cursor continues
-to load `.cursor/rules/`; keep both aligned — do not invent contradictory rules.
+This file is the repository entry point for Codex and other AGENTS-aware tools.
+It should introduce where decisions live; it should not become a second
+architecture or product documentation system.
 
-`AGENTS.md` tells the agent **how to work**. Architecture docs explain **how
-Shelfy works** — read them; do not paste them here.
+Cursor continues to load `.cursor/rules/`. Keep those rules aligned with this
+guide and the decision records.
 
 ---
 
-## Required reading before changing sensitive areas
+## Repository Philosophy
 
-| Area | Read first |
-| ---- | ---------- |
-| Collection / Insights / Collector Type | [`docs/COLLECTION_ARCHITECTURE_NOTES.md`](docs/COLLECTION_ARCHITECTURE_NOTES.md) |
-| App-wide decisions, performance baselines | [`docs/ARCHITECTURE_NOTES.md`](docs/ARCHITECTURE_NOTES.md) |
-| Product outline | [`docs/PROJECT_OVERVIEW.md`](docs/PROJECT_OVERVIEW.md) |
-| Three universes, Firebase, folder layout | [`.cursor/ARCHITECTURE.md`](.cursor/ARCHITECTURE.md) |
+- Prefer product outcomes and explicit contracts over accidental historical
+  behavior.
+- Keep diffs small, feature-local, and easy to review.
+- Do not change production behavior during audit-only or documentation-only
+  tasks.
+- Do not invent thresholds, formulas, or product semantics.
+- Preserve backward compatibility for persisted user data unless a migration is
+  explicitly requested.
+- A feature can be removed; a durable decision should still stand. Put those
+  durable decisions in ADRs or PDRs, not in chat context.
+
+---
+
+## Architecture
+
+Architecture Decision Records live in
+[`docs/decisions/architecture/`](docs/decisions/architecture/).
+
+Read these first when touching the relevant area:
+
+| Area | Authoritative source |
+| ---- | -------------------- |
+| Recommendations / For You | [`ADR-001: Recommendation Semantics`](docs/decisions/architecture/ADR-001-recommendation-semantics.md) |
 | Catalog runtime / Search V2 | [`docs/CATALOG_ARCHITECTURE.md`](docs/CATALOG_ARCHITECTURE.md), [`docs/SEARCH_ARCHITECTURE.md`](docs/SEARCH_ARCHITECTURE.md) |
-| Recommendations (“For You”) | [`docs/RECOMMENDATION_SEMANTICS.md`](docs/RECOMMENDATION_SEMANTICS.md) |
-| Test / RC commands | [`docs/TESTING.md`](docs/TESTING.md) |
+| App-wide architecture notes | [`docs/ARCHITECTURE_NOTES.md`](docs/ARCHITECTURE_NOTES.md) |
+| Three universes, Firebase, folder layout | [`.cursor/ARCHITECTURE.md`](.cursor/ARCHITECTURE.md) |
 
-When working under `lib/features/collection/insights/`, also follow the nested
+Current high-level boundaries:
+
+- **Catalog** (`lib/features/catalog/`): read-only reference data, catalog
+  identity, Firestore/Storage catalog paths.
+- **Collection** (`lib/features/collection/`): local-first private shelf,
+  `CollectionSnapshot`, `CollectionNotifier`, persisted user state.
+- **Market / Home**: discovery and marketplace listings through `MarketSource`
+  and related feature-owned data paths.
+
+Do not mix these boundaries unless the task explicitly asks for an architecture
+change and the relevant ADR is updated or created.
+
+---
+
+## Product
+
+Product Decision Records live in
+[`docs/decisions/product/`](docs/decisions/product/).
+
+Read these before changing collector-facing semantics:
+
+| Area | Authoritative source |
+| ---- | -------------------- |
+| Collector Type product meaning | [`PDR-001: Collector Type Semantics`](docs/decisions/product/PDR-001-collector-type-semantics.md) |
+| Complete / Master Complete meaning | [`PDR-002: Completion Semantics`](docs/decisions/product/PDR-002-completion-semantics.md) |
+| Collection / Insights implementation contract | [`docs/COLLECTION_ARCHITECTURE_NOTES.md`](docs/COLLECTION_ARCHITECTURE_NOTES.md) |
+| Product outline | [`docs/PROJECT_OVERVIEW.md`](docs/PROJECT_OVERVIEW.md) |
+
+When working under `lib/features/collection/insights/`, also follow
 [`lib/features/collection/insights/AGENTS.md`](lib/features/collection/insights/AGENTS.md).
 
 ---
 
-## Architecture boundaries (do not mix)
+## Development Workflow
 
-1. **Catalog** (`lib/features/catalog/`) — read-only reference; Firestore + Storage;
-   `imageKey` + `CatalogImageResolver`. No shelf state.
-2. **Collection** (`lib/features/collection/`) — local-first private shelf;
-   `CollectionSnapshot` + `CollectionNotifier`. No cloud sync unless tasked.
-3. **Market / Home** — marketplace listings via `MarketSource`; not catalog
-   bundle / `imageKey` for listing content. Save to shelf only through
-   collection notifier APIs.
+1. Identify whether the request is audit-only, documentation-only, or an
+   implementation change.
+2. Read the relevant ADR, PDR, architecture note, and scoped `AGENTS.md`.
+3. Respect existing feature ownership and Riverpod/provider patterns.
+4. Keep behavior changes intentional and covered by focused tests.
+5. Avoid drive-by refactors, mass migrations, and unrelated cleanup.
+6. Update ADRs/PDRs only when the durable decision changes; update
+   implementation docs when only the implementation changes.
 
-Details, legacy freezes (`lib/models/` locked; no new `lib/services/`), Riverpod,
-and media rules live in `.cursor/ARCHITECTURE.md` and `.cursor/rules/`.
-
----
-
-## Change discipline
-
-- Distinguish **audit-only** from **implementation**. Audits must not change
-  product behavior.
-- Do not invent thresholds, formulas, or product semantics.
-- Every Collector Type threshold needs a plain-language product explanation
-  (see Collection architecture notes).
-- Prefer minimal, targeted diffs. No drive-by refactors or mass migrations.
-- Preserve backward compatibility for persisted user data unless migration is
-  explicit in the task.
-- Do not silently rewrite Collector Type reveal identity or history.
-- Do not duplicate canonical completion mathematics — use
-  `resolveSeriesCompletion` / `aggregateShelfCompletion`.
-- Remove temporary traces, debug instrumentation, and audit artifacts before
-  merge.
-- Never claim a fix without reporting verification evidence.
-- Behavior changes: add or update tests in the same change.
-- UI: collectible lifestyle feel — image-first, calm, reuse shared sheets /
-  `FeedRhythm`; see `.cursor/rules/product-principles.mdc` and
-  `flutter-ui-ux.mdc`.
-- Offline-first / optimistic collection mutations / `imageKey`-only catalog UI —
-  see `.cursor/rules/offline-async-media.mdc`.
+Do not commit, push, auto-merge, or update `git config` unless explicitly
+requested.
 
 ---
 
-## Key Collection / Insights invariants
+## Verification Expectations
 
-- Collector Type answers: **what clearly defines the current shelf?**
-- Pipeline: **Signals → Eligibility → Strength → soft-capped scale → Winner**.
-- Signal presence is not identity.
-- **Wanderer** is the intentional fallback when no specialized type qualifies.
-- Journey and Reveal History do **not** score Collector Type.
-- Identity is **reveal-based**, not a live scoreboard.
-- Snapshot invalidation (`needsReveal`) decides **when** to reveal; the
-  Resolver decides **what** the identity is.
-- **Complete** and **Master Complete** are distinct tiers.
-- **Regular Progress** is Regular-weighted series progress (Secrets do not
-  reduce a Regular-complete series below 100%).
-- **Master Completion** denominator is Secret-bearing series only.
-- My Collection is a **flat Series browser** per progress bucket; hidden IP
-  grouping must not affect sorting. IP may remain a domain signal without being
-  a presentation grouping.
-
-Full eligibility contract, reveal lifecycle, and scoring notes:
-[`docs/COLLECTION_ARCHITECTURE_NOTES.md`](docs/COLLECTION_ARCHITECTURE_NOTES.md).
-
----
-
-## Verification
-
-For relevant changes:
+For relevant code changes, run:
 
 ```text
 flutter analyze
 flutter test <targeted tests>
 ```
 
-Feature suites already documented in [`docs/TESTING.md`](docs/TESTING.md).
-Examples:
-
-```text
-flutter test test/widget_test.dart
-flutter test test/catalog_search_service_test.dart
-flutter test test/collector_type_behavior_contract_test.dart
-flutter test test/collector_type_resolver_test.dart
-flutter test test/collector_type_needs_reveal_test.dart
-flutter test test/collector_type_reveal_lifecycle_contract_test.dart
-```
-
-Release / broad confidence (when appropriate):
-
-```text
-flutter analyze
-flutter test
-```
+Use [`docs/TESTING.md`](docs/TESTING.md) for current test guidance and release
+candidate workflow.
 
 Before handing off, report:
 
 - commands run
-- pass/fail totals
+- pass/fail totals when tests are run
 - files changed
 - remaining risks
 - anything not verified
 
+Documentation-only changes do not require Flutter tests unless they alter code,
+configuration, generated artifacts, or examples that are executed.
+
 ---
 
-## Git and PR conventions
+## Documentation Rules
 
-Commit style (existing repo):
+- Durable architecture decisions belong in ADRs.
+- Durable product semantics belong in PDRs.
+- Implementation details belong in focused architecture or feature docs.
+- Agent files should link to decisions and specs rather than copying them.
+- Historical audits and temporary reports should not be presented as current
+  authority.
+- When moving a decision into ADR/PDR form, replace old duplicated sections with
+  summaries and links instead of abruptly deleting useful context.
 
-```text
-feat(collection): ...
-fix(insights): ...
-test(collection): ...
-chore: ...
-docs: ...
-```
-
-PR descriptions must follow [`.github/PULL_REQUEST_TEMPLATE.md`](.github/PULL_REQUEST_TEMPLATE.md)
-and lead with **product outcome**, not implementation laundry lists.
-
-Do **not** auto-merge unless explicitly requested.
-Do **not** commit or push unless the user asks.
-Do **not** update `git config`.
