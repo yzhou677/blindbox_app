@@ -1,55 +1,38 @@
-# Cursor rules and architecture — where things live
+# Cursor Rules And Architecture
 
-**Do not add long agent rule blocks here.** This file is an index for humans browsing `docs/`.
+This file is an index for humans browsing `docs/`. Do not add long agent rule
+blocks here.
 
-## Dual agent entry points
+## Entry Points
 
 | Audience | Entry |
-|----------|--------|
-| **Codex** (and any AGENTS.md-aware tool) | Root [`AGENTS.md`](../AGENTS.md); Insights scope [`lib/features/collection/insights/AGENTS.md`](../lib/features/collection/insights/AGENTS.md) |
-| **Cursor** | [`.cursor/rules/`](../.cursor/rules/) + [`.cursor/ARCHITECTURE.md`](../.cursor/ARCHITECTURE.md) |
+| --- | --- |
+| Codex and AGENTS-aware tools | [`AGENTS.md`](../AGENTS.md) |
+| Cursor | [`.cursor/rules/`](../.cursor/rules/) and [`.cursor/ARCHITECTURE.md`](../.cursor/ARCHITECTURE.md) |
+| Durable decisions | [`decisions/`](decisions/) |
 
-Keep durable meaning aligned across both. Prefer architecture docs for deep
-product history; keep agent instruction files short.
+Keep durable meaning aligned across Codex and Cursor. Prefer ADRs/PDRs for
+long-lived decisions, architecture docs for implementation detail, and agent
+files for short operational instructions.
 
-## Canonical sources (for agents and implementation)
+## Canonical Sources
 
 | What | Path |
-|------|------|
-| **Shared agent contract** | [`AGENTS.md`](../AGENTS.md) |
-| **Architecture** (three universes, data flow, Firebase, naming) | [`.cursor/ARCHITECTURE.md`](../.cursor/ARCHITECTURE.md) |
-| **Catalog spec** (runtime cache, providers, Search V2, availability) | [`CATALOG_ARCHITECTURE.md`](CATALOG_ARCHITECTURE.md) |
-| **Search spec** (normalization, token AND, haystack) | [`SEARCH_ARCHITECTURE.md`](SEARCH_ARCHITECTURE.md) |
-| **Testing / RC workflow** | [`TESTING.md`](TESTING.md) |
-| **Cursor agent rules** (always-on and scoped snippets) | [`.cursor/rules/`](../.cursor/rules/) |
-| **Conformity checklist** | [`.cursor/CONFORMITY_AUDIT.md`](../.cursor/CONFORMITY_AUDIT.md) |
+| --- | --- |
+| Shared agent contract | [`AGENTS.md`](../AGENTS.md) |
+| Durable ADRs/PDRs | [`decisions/`](decisions/) |
+| Architecture reference | [`.cursor/ARCHITECTURE.md`](../.cursor/ARCHITECTURE.md) |
+| Catalog spec | [`CATALOG_ARCHITECTURE.md`](CATALOG_ARCHITECTURE.md) |
+| Search spec | [`SEARCH_ARCHITECTURE.md`](SEARCH_ARCHITECTURE.md) |
+| Testing | [`TESTING.md`](TESTING.md) |
+| Cursor agent rules | [`.cursor/rules/`](../.cursor/rules/) |
+| Historical conformity audit | [`archive/2026-07/CONFORMITY_AUDIT.md`](archive/2026-07/CONFORMITY_AUDIT.md) |
 
-### Rule files in `.cursor/rules/`
+## Rule Files
 
-- `product-principles.mdc` — collectible lifestyle direction, calm UX, maintainability (always apply)
-- `offline-async-media.mdc` — offline-first, optimistic UI, imageKey, shared mutations/modals (always apply)
-- `project-architecture.mdc` — catalog / shelf / market boundaries (always apply)
-- `catalog-collection-boundary.mdc` — when editing catalog or collection
-- `firebase-catalog.mdc` — Firestore + Storage catalog paths
-- `flutter-ui-ux.mdc` — collectible UI tone and spacing
-
-## Human docs in `docs/`
-
-| Doc | Purpose |
-|-----|---------|
-| [`CATALOG_ARCHITECTURE.md`](CATALOG_ARCHITECTURE.md) | Catalog runtime: Firestore, persisted cache, provider graph, availability |
-| [`SEARCH_ARCHITECTURE.md`](SEARCH_ARCHITECTURE.md) | Search V2: normalizer, tokenizer, matcher, haystack |
-| [`TESTING.md`](TESTING.md) | RC automated gate, emulator ADB notes |
-| [`PROJECT_OVERVIEW.md`](PROJECT_OVERVIEW.md) | Product vision and feature goals |
-| [`FIREBASE_LOCAL_SETUP.md`](FIREBASE_LOCAL_SETUP.md) | Local Firebase / emulator setup |
-
-See also [`README.md`](README.md) in this folder.
-
-## Quick habits (summary only)
-
-- Follow existing feature boundaries; extend before inventing new layers
-- Riverpod + `collectionNotifier` for shelf writes; no HTTP in widgets
-- Cozy, imagery-first UI; use `FeedRhythm` spacing
-- MVP: focused diffs; no mass refactors unless asked
-
-For full detail, use [`.cursor/ARCHITECTURE.md`](../.cursor/ARCHITECTURE.md).
+- `product-principles.mdc` - collectible lifestyle direction and truthful copy
+- `offline-async-media.mdc` - offline-first, optimistic UI, media boundaries
+- `project-architecture.mdc` - catalog / shelf / market boundaries
+- `catalog-collection-boundary.mdc` - scoped catalog and collection reminders
+- `firebase-catalog.mdc` - Firestore and Storage catalog paths
+- `flutter-ui-ux.mdc` - collector UI tone and spacing

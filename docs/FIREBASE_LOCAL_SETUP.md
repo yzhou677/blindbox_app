@@ -178,4 +178,4 @@ Optional: run `tools/android/sync_firebase_android_sha.ps1` to reduce `DEVELOPER
 
 **Future:** If Shelfy later adopts Firebase Authentication, Google Sign-In, App Check, or Google APIs restricted by Android certificate fingerprints, configure Release SHA and Play App Signing SHA in Firebase Console at that time.
 
-Manual verification: [`release_candidate_test_plan.md`](release_candidate_test_plan.md) §6.
+Manual verification history: [`archive/2026-07/release_candidate_test_plan.md`](archive/2026-07/release_candidate_test_plan.md) §6.

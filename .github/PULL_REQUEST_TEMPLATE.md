@@ -42,6 +42,10 @@ Example:
 
 Document important product principles or trade-offs.
 
+If this PR changes a durable product semantic, update or add a PDR under
+`docs/decisions/product/`. If it changes a durable architecture decision, update
+or add an ADR under `docs/decisions/architecture/`.
+
 Examples:
 
 ### Collection sorting is flat per bucket (no hidden IP ordering).

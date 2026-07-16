@@ -93,6 +93,8 @@ Collection intelligence (shipped):
 - **Insights** — at-a-glance progress, collector type reveal (**10** types, resolver **6.1** — see [`COLLECTION_ARCHITECTURE_NOTES.md`](COLLECTION_ARCHITECTURE_NOTES.md) § Collector Types), editorial tone
 - **Completion tiers** — regular series complete vs all secrets owned (`Master Complete`)
 
+Durable product semantics: [`PDR-001 Collector Type`](decisions/product/PDR-001-collector-type-semantics.md) and [`PDR-002 Completion`](decisions/product/PDR-002-completion-semantics.md).
+
 Local persistence (implemented):
 - **SharedPreferences** — `CollectionSnapshot` encoded via `collection_snapshot_codec` (schema v2)
 - Local-first; no cloud sync in MVP

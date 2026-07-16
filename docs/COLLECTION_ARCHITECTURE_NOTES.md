@@ -6,6 +6,14 @@ This document records intentional Collection architecture decisions, tradeoffs, 
 
 The purpose is to preserve design intent and prevent future contributors from accidentally "fixing" behavior that is currently working as designed.
 
+Durable product semantics now live in:
+
+- [`PDR-001: Collector Type Semantics`](decisions/product/PDR-001-collector-type-semantics.md)
+- [`PDR-002: Completion Semantics`](decisions/product/PDR-002-completion-semantics.md)
+
+This file remains the implementation contract for resolver policy, thresholds,
+snapshot compatibility, and collection-specific architecture.
+
 ---
 
 ## Current Status
