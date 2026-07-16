@@ -121,4 +121,46 @@ void main() {
 
     expect(taps, 1);
   });
+
+  testWidgets('custom summary card insets preserve card height', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 500);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    const stats = CollectionAggregateStats(
+      inCollection: 2,
+      wantListCount: 5,
+      completedSeriesCount: 0,
+      masterCompleteSeriesCount: 0,
+    );
+
+    Future<double> pumpAndMeasure({double? top, double? bottom}) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(
+            extensions: [CollectibleTokens.forBrightness(Brightness.light)],
+          ),
+          home: Scaffold(
+            body: CollectionSummarySection(
+              stats: stats,
+              metricLabels: CollectionSummaryMetricLabels.wishlist,
+              cardTopPadding: top,
+              cardBottomPadding: bottom,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      return tester
+          .getSize(find.byKey(const Key('collection_summary_stats_card')))
+          .height;
+    }
+
+    final defaultHeight = await pumpAndMeasure();
+    final adjustedHeight = await pumpAndMeasure(top: 20, bottom: 12);
+
+    expect(adjustedHeight, defaultHeight);
+  });
 }

@@ -156,4 +156,50 @@ void main() {
     expect(find.text('1 / 4'), findsOneWidget);
     expect(find.byIcon(Icons.delete_outline_rounded), findsNothing);
   });
+
+  testWidgets('overlay builder can add card chrome without changing card tap', (
+    tester,
+  ) async {
+    final series = testShelfSeries(
+      id: 's4',
+      name: 'Overlay Series',
+      ipName: 'Molly',
+      figures: const [],
+    );
+    var cardTaps = 0;
+    var overlayTaps = 0;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: CollectionSeriesCard(
+            series: series,
+            progress: progressForSeries(series, const {}),
+            figureStates: const {},
+            onTap: () => cardTaps++,
+            overlayBuilder: (context) => Positioned(
+              top: 0,
+              right: 0,
+              child: SizedBox.square(
+                dimension: 44,
+                child: IconButton(
+                  tooltip: 'Overlay action',
+                  onPressed: () => overlayTaps++,
+                  icon: const Icon(Icons.close_rounded),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('Overlay action'));
+    await tester.pump();
+
+    expect(overlayTaps, 1);
+    expect(cardTaps, 0);
+  });
 }

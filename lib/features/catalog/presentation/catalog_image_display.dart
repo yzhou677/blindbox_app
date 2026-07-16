@@ -37,6 +37,7 @@ enum CatalogImageDisplayMode {
   figureThumb,
   figureLineupCell,
   figureCapsule,
+  figureWishlistCard,
   figureGallery,
   marketCatalogThumb,
 }
@@ -87,6 +88,7 @@ class CatalogImageDisplaySpec {
       CatalogImageDisplayMode.figureThumb ||
       CatalogImageDisplayMode.figureLineupCell ||
       CatalogImageDisplayMode.figureCapsule ||
+      CatalogImageDisplayMode.figureWishlistCard ||
       CatalogImageDisplayMode.figureGallery => CatalogImageMode.figure,
     };
   }
@@ -231,6 +233,7 @@ class CatalogImageDisplaySpec {
     if (transparent) {
       return switch (surface) {
         CatalogImageDisplayMode.figureGallery => const EdgeInsets.all(8),
+        CatalogImageDisplayMode.figureWishlistCard => EdgeInsets.zero,
         CatalogImageDisplayMode.figureCapsule => const EdgeInsets.symmetric(
           horizontal: 4,
           vertical: 3,
@@ -241,6 +244,7 @@ class CatalogImageDisplaySpec {
     }
     return switch (surface) {
       CatalogImageDisplayMode.figureGallery => const EdgeInsets.all(6),
+      CatalogImageDisplayMode.figureWishlistCard => EdgeInsets.zero,
       CatalogImageDisplayMode.figureCapsule => const EdgeInsets.symmetric(
         horizontal: 3,
         vertical: 2,
@@ -258,6 +262,7 @@ class CatalogImageDisplaySpec {
       return switch (surface) {
         CatalogImageDisplayMode.figureGallery => 1.04,
         CatalogImageDisplayMode.figureLineupCell => 1.08,
+        CatalogImageDisplayMode.figureWishlistCard => 1.08,
         CatalogImageDisplayMode.figureCapsule => 1.07,
         _ => 1.08,
       };
@@ -265,6 +270,7 @@ class CatalogImageDisplaySpec {
     return switch (surface) {
       CatalogImageDisplayMode.figureGallery => 1.04,
       CatalogImageDisplayMode.figureLineupCell => 1.08,
+      CatalogImageDisplayMode.figureWishlistCard => 1.08,
       CatalogImageDisplayMode.figureCapsule => 1.06,
       _ => 1.07,
     };
@@ -273,6 +279,7 @@ class CatalogImageDisplaySpec {
   static double? _figureDecodeHintFor(CatalogImageDisplayMode? surface) {
     return switch (surface) {
       CatalogImageDisplayMode.figureGallery => 720.0,
+      CatalogImageDisplayMode.figureWishlistCard => 320.0,
       CatalogImageDisplayMode.figureCapsule => 280.0,
       CatalogImageDisplayMode.figureLineupCell => 240.0,
       _ => 200.0,
@@ -285,6 +292,7 @@ class CatalogImageDisplaySpec {
       CatalogImageDisplayMode.seriesCoverThumb ||
       CatalogImageDisplayMode.marketCatalogThumb => BorderRadius.circular(12),
       CatalogImageDisplayMode.figureCapsule => AppRadii.insetRadius,
+      CatalogImageDisplayMode.figureWishlistCard => BorderRadius.circular(12),
       CatalogImageDisplayMode.figureGallery => AppRadii.figureGalleryRadius,
       CatalogImageDisplayMode.figureLineupCell => AppRadii.figureLineupRadius,
       CatalogImageDisplayMode.figureThumb => AppRadii.figureThumbRadius,

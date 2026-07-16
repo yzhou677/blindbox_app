@@ -24,6 +24,12 @@ class CollectionInsightsDashboard extends StatefulWidget {
     this.memoryWhisper,
     this.onInsightsTap,
     this.collectorTypeName,
+    this.metricLabels = CollectionSummaryMetricLabels.collection,
+    this.expandable = true,
+    this.summaryCardVerticalPadding =
+        FeedRhythm.collectionSummaryCardVerticalPadding,
+    this.summaryCardTopPadding,
+    this.summaryCardBottomPadding,
   });
 
   final CollectionAggregateStats stats;
@@ -31,6 +37,11 @@ class CollectionInsightsDashboard extends StatefulWidget {
   final String? memoryWhisper;
   final VoidCallback? onInsightsTap;
   final String? collectorTypeName;
+  final CollectionSummaryMetricLabels metricLabels;
+  final bool expandable;
+  final double summaryCardVerticalPadding;
+  final double? summaryCardTopPadding;
+  final double? summaryCardBottomPadding;
 
   @override
   State<CollectionInsightsDashboard> createState() =>
@@ -158,8 +169,6 @@ class _CollectionInsightsDashboardState
 
   @override
   Widget build(BuildContext context) {
-    _scheduleMeasure();
-
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textTheme = Theme.of(context).textTheme;
@@ -179,6 +188,25 @@ class _CollectionInsightsDashboardState
     );
     final glyphColor = scheme.primary.withValues(alpha: 0.88);
 
+    if (!widget.expandable) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppSpacing.pageHorizontal,
+            ),
+            child: _StaticSummaryHeaderRow(),
+          ),
+          const SizedBox(height: FeedRhythm.collectionSummaryHeaderToCard),
+          _buildExpandedCard(expandable: false),
+        ],
+      );
+    }
+
+    _scheduleMeasure();
+
     return AnimatedBuilder(
       animation: _expand,
       builder: (context, child) {
@@ -192,7 +220,7 @@ class _CollectionInsightsDashboardState
           labelStyle: labelStyle,
           glyphColor: glyphColor,
         );
-        final expandedShell = _buildExpandedCard();
+        final expandedShell = _buildExpandedCard(expandable: true);
 
         return Column(
           mainAxisSize: MainAxisSize.min,
@@ -344,21 +372,57 @@ class _CollectionInsightsDashboardState
             valueStyle: valueStyle,
             labelStyle: labelStyle,
             glyphColor: glyphColor,
+            metricLabels: widget.metricLabels,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildExpandedCard() {
+  Widget _buildExpandedCard({required bool expandable}) {
     return RepaintBoundary(
       child: CollectionSummarySection(
         stats: widget.stats,
         shelfMoodLine: widget.shelfMoodLine,
         memoryWhisper: widget.memoryWhisper,
         onInsightsTap: widget.onInsightsTap,
-        onSummaryCardTap: _toggle,
+        onSummaryCardTap: expandable ? _toggle : null,
         collectorTypeName: widget.collectorTypeName,
+        metricLabels: widget.metricLabels,
+        cardVerticalPadding: widget.summaryCardVerticalPadding,
+        cardTopPadding: widget.summaryCardTopPadding,
+        cardBottomPadding: widget.summaryCardBottomPadding,
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.pageHorizontal,
+          0,
+          AppSpacing.pageHorizontal,
+          0,
+        ),
+      ),
+    );
+  }
+}
+
+class _StaticSummaryHeaderRow extends StatelessWidget {
+  const _StaticSummaryHeaderRow();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+      child: Text(
+        CollectionInsightsDashboardCopy.summaryHeader,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: textTheme.titleSmall?.copyWith(
+          fontWeight: FontWeight.w600,
+          height: 1.0,
+          color: scheme.onSurface.withValues(alpha: 0.88),
+          letterSpacing: 0.05,
+        ),
       ),
     );
   }
@@ -369,7 +433,7 @@ class _SummaryHeaderRow extends StatelessWidget {
   const _SummaryHeaderRow({required this.chevronTurns, required this.onTap});
 
   final double chevronTurns;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -400,15 +464,16 @@ class _SummaryHeaderRow extends StatelessWidget {
                   ),
                 ),
               ),
-              Transform.rotate(
-                angle: chevronTurns * 3.141592653589793,
-                alignment: Alignment.center,
-                child: Icon(
-                  Icons.expand_more_rounded,
-                  size: 20,
-                  color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
+              if (onTap != null)
+                Transform.rotate(
+                  angle: chevronTurns * 3.141592653589793,
+                  alignment: Alignment.center,
+                  child: Icon(
+                    Icons.expand_more_rounded,
+                    size: 20,
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
+                  ),
                 ),
-              ),
             ],
           ),
         ),

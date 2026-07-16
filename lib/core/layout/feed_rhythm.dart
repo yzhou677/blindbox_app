@@ -81,6 +81,12 @@ abstract final class FeedRhythm {
   /// Air between the summary block and the Shelf / Insights segment.
   static const double collectionSummaryToSegmentGap = 16;
 
+  /// Internal Wishlist summary card padding: same total as the default
+  /// symmetric 16 + 16 card inset, but weighted lower to visually center two
+  /// lightweight metrics.
+  static const double collectionWishlistSummaryCardTopPadding = 20;
+  static const double collectionWishlistSummaryCardBottomPadding = 12;
+
   /// Air below the segment before the shelf section header ("My collection").
   static const double collectionSegmentToShelfHeader = 16;
 

@@ -36,6 +36,41 @@ class CollectionAggregateStats {
   }
 }
 
+@immutable
+class CollectionSummaryMetricLabels {
+  const CollectionSummaryMetricLabels({
+    required this.primary,
+    required this.secondary,
+    required this.tertiary,
+    required this.quaternary,
+    this.tertiaryTooltip = CompletionMetricTooltips.completedSeries,
+    this.showSecondRow = true,
+  });
+
+  final String primary;
+  final String secondary;
+  final String tertiary;
+  final String quaternary;
+  final String? tertiaryTooltip;
+  final bool showSecondRow;
+
+  static const collection = CollectionSummaryMetricLabels(
+    primary: CollectionSummaryLabels.figures,
+    secondary: CollectionSummaryLabels.wishlist,
+    tertiary: CollectionSummaryLabels.seriesComplete,
+    quaternary: CollectionSummaryLabels.masterComplete,
+  );
+
+  static const wishlist = CollectionSummaryMetricLabels(
+    primary: 'Wishlisted Series',
+    secondary: 'Wishlisted Figures',
+    tertiary: '',
+    quaternary: '',
+    tertiaryTooltip: null,
+    showSecondRow: false,
+  );
+}
+
 class CollectionSummarySection extends StatelessWidget {
   const CollectionSummarySection({
     super.key,
@@ -45,6 +80,10 @@ class CollectionSummarySection extends StatelessWidget {
     this.onInsightsTap,
     this.onSummaryCardTap,
     this.collectorTypeName,
+    this.metricLabels = CollectionSummaryMetricLabels.collection,
+    this.cardVerticalPadding = FeedRhythm.collectionSummaryCardVerticalPadding,
+    this.cardTopPadding,
+    this.cardBottomPadding,
     this.padding = const EdgeInsets.fromLTRB(
       AppSpacing.pageHorizontal,
       0,
@@ -59,6 +98,10 @@ class CollectionSummarySection extends StatelessWidget {
   final VoidCallback? onInsightsTap;
   final VoidCallback? onSummaryCardTap;
   final String? collectorTypeName;
+  final CollectionSummaryMetricLabels metricLabels;
+  final double cardVerticalPadding;
+  final double? cardTopPadding;
+  final double? cardBottomPadding;
   final EdgeInsetsGeometry padding;
 
   @override
@@ -77,9 +120,11 @@ class CollectionSummarySection extends StatelessWidget {
             isDark: isDark,
             onTap: onSummaryCardTap,
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 18,
-                vertical: FeedRhythm.collectionSummaryCardVerticalPadding,
+              padding: EdgeInsets.fromLTRB(
+                18,
+                cardTopPadding ?? cardVerticalPadding,
+                18,
+                cardBottomPadding ?? cardVerticalPadding,
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -90,43 +135,45 @@ class CollectionSummarySection extends StatelessWidget {
                     children: [
                       _ShelfGlanceStatCell(
                         count: stats.inCollection,
-                        label: CollectionSummaryLabels.figures,
+                        label: metricLabels.primary,
                         scheme: scheme,
                         textTheme: textTheme,
                       ),
                       _ShelfGlanceStatCell(
                         count: stats.wantListCount,
-                        label: CollectionSummaryLabels.wishlist,
+                        label: metricLabels.secondary,
                         scheme: scheme,
                         textTheme: textTheme,
                       ),
                     ],
                   ),
-                  const SizedBox(
-                    height: FeedRhythm.collectionSummaryMetricRowGap,
-                  ),
-                  _MetricRow(
-                    scheme: scheme,
-                    textTheme: textTheme,
-                    children: [
-                      _ShelfGlanceStatCell(
-                        count: stats.completedSeriesCount,
-                        label: CollectionSummaryLabels.seriesComplete,
-                        scheme: scheme,
-                        textTheme: textTheme,
-                        tooltip: CompletionMetricTooltips.completedSeries,
-                        muted: stats.completedSeriesCount == 0,
-                      ),
-                      _ShelfGlanceStatCell(
-                        count: stats.masterCompleteSeriesCount,
-                        label: CollectionSummaryLabels.masterComplete,
-                        scheme: scheme,
-                        textTheme: textTheme,
-                        muted: stats.masterCompleteSeriesCount == 0,
-                        emphasizeLabel: stats.masterCompleteSeriesCount > 0,
-                      ),
-                    ],
-                  ),
+                  if (metricLabels.showSecondRow) ...[
+                    const SizedBox(
+                      height: FeedRhythm.collectionSummaryMetricRowGap,
+                    ),
+                    _MetricRow(
+                      scheme: scheme,
+                      textTheme: textTheme,
+                      children: [
+                        _ShelfGlanceStatCell(
+                          count: stats.completedSeriesCount,
+                          label: metricLabels.tertiary,
+                          scheme: scheme,
+                          textTheme: textTheme,
+                          tooltip: metricLabels.tertiaryTooltip,
+                          muted: stats.completedSeriesCount == 0,
+                        ),
+                        _ShelfGlanceStatCell(
+                          count: stats.masterCompleteSeriesCount,
+                          label: metricLabels.quaternary,
+                          scheme: scheme,
+                          textTheme: textTheme,
+                          muted: stats.masterCompleteSeriesCount == 0,
+                          emphasizeLabel: stats.masterCompleteSeriesCount > 0,
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -197,7 +244,11 @@ class _SummaryStatsCard extends StatelessWidget {
     );
 
     if (onTap == null) {
-      return DecoratedBox(decoration: decoration, child: child);
+      return DecoratedBox(
+        key: const Key('collection_summary_stats_card'),
+        decoration: decoration,
+        child: child,
+      );
     }
 
     return Semantics(

@@ -1,4 +1,4 @@
-﻿import 'package:blindbox_app/features/catalog/application/catalog_availability.dart';
+import 'package:blindbox_app/features/catalog/application/catalog_availability.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
@@ -103,6 +103,11 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
         final template = ref.read(catalogSeriesTemplateProvider(seriesId));
         if (template == null) return;
         commitCatalogSeriesToShelf(notifier, template);
+      },
+      onWishlistPressed: (ctx, {required seriesId, searchQuery}) {
+        final template = ref.read(catalogSeriesTemplateProvider(seriesId));
+        if (template == null) return;
+        notifier.toggleSeriesWishlist(template);
       },
     );
   }
@@ -278,10 +283,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (ctx, i) {
         final s = recs[i];
-        final coverKey = _seriesCoverImageKey(
-          catalogBundle,
-          s.templateId,
-        );
+        final coverKey = _seriesCoverImageKey(catalogBundle, s.templateId);
         final shelfCta = CollectionSeriesShelfCtaPresentation.resolve(
           snapshot: snap,
           layout: CollectionSeriesShelfCtaLayout.compactTrailing,
@@ -296,6 +298,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
           series: s,
           coverImageKey: coverKey,
           shelfCta: shelfCta,
+          isWishlisted: snap.hasCatalogSeriesWishlisted(s.templateId),
           onOpenPreview: () {
             _openCatalogSeriesPreview(
               ctx,
@@ -305,6 +308,7 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
             );
           },
           onAdd: () => commitCatalogSeriesToShelf(notifier, s),
+          onWishlistPressed: () => notifier.toggleSeriesWishlist(s),
         );
       },
     );
@@ -317,15 +321,19 @@ class _SuggestionCard extends StatelessWidget {
     required this.series,
     required this.coverImageKey,
     required this.shelfCta,
+    required this.isWishlisted,
     required this.onOpenPreview,
     required this.onAdd,
+    required this.onWishlistPressed,
   });
 
   final CatalogSeries series;
   final String coverImageKey;
   final CollectionSeriesShelfCtaPresentation shelfCta;
+  final bool isWishlisted;
   final VoidCallback onOpenPreview;
   final VoidCallback onAdd;
+  final VoidCallback onWishlistPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -352,8 +360,7 @@ class _SuggestionCard extends StatelessWidget {
             child: coverImageKey.isNotEmpty
                 ? CatalogImageFromKey(
                     key: catalogImageWidgetKey(
-                      displayMode:
-                          CatalogImageDisplayMode.seriesCoverThumb,
+                      displayMode: CatalogImageDisplayMode.seriesCoverThumb,
                       imageKey: coverImageKey,
                       identity: series.templateId,
                     ),
@@ -370,9 +377,7 @@ class _SuggestionCard extends StatelessWidget {
                     ),
                     child: Icon(
                       Icons.photo_outlined,
-                      color: scheme.onSurfaceVariant.withValues(
-                        alpha: 0.45,
-                      ),
+                      color: scheme.onSurfaceVariant.withValues(alpha: 0.45),
                     ),
                   ),
           ),
@@ -399,6 +404,22 @@ class _SuggestionCard extends StatelessWidget {
               ],
             ),
           ),
+          if (shelfCta.isAddable) ...[
+            IconButton(
+              tooltip: isWishlisted
+                  ? 'Remove series from wishlist'
+                  : 'Add series to wishlist',
+              onPressed: onWishlistPressed,
+              icon: Icon(
+                isWishlisted
+                    ? Icons.favorite_rounded
+                    : Icons.favorite_border_rounded,
+                color: isWishlisted ? scheme.primary : scheme.onSurfaceVariant,
+                size: 21,
+              ),
+            ),
+            const SizedBox(width: 2),
+          ],
           CollectionSeriesShelfCtaTrailing(
             presentation: shelfCta,
             onPressed: shelfCta.isAddable ? onAdd : null,

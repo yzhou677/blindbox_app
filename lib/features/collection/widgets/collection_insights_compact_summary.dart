@@ -1,6 +1,5 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/features/collection/presentation/completion_metric_tooltips.dart';
-import 'package:blindbox_app/features/collection/presentation/collection_summary_editorial.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_summary_section.dart';
 import 'package:flutter/material.dart';
@@ -32,21 +31,36 @@ abstract final class CollectionInsightsCompactSummaryFormat {
 
   static List<CollectionInsightsCompactMetric> metrics(
     CollectionAggregateStats stats,
+    CollectionSummaryMetricLabels labels,
   ) {
+    if (!labels.showSecondRow) {
+      return [
+        CollectionInsightsCompactMetric(
+          count: stats.inCollection,
+          label: labels.primary,
+          kind: CollectionInsightsCompactMetricKind.figures,
+        ),
+        CollectionInsightsCompactMetric(
+          count: stats.wantListCount,
+          label: labels.secondary,
+          kind: CollectionInsightsCompactMetricKind.figures,
+        ),
+      ];
+    }
     return [
       CollectionInsightsCompactMetric(
         count: stats.inCollection,
-        label: CollectionSummaryLabels.figures,
+        label: labels.primary,
         kind: CollectionInsightsCompactMetricKind.figures,
       ),
       CollectionInsightsCompactMetric(
         count: stats.completedSeriesCount,
-        label: CollectionSummaryLabels.seriesComplete,
+        label: labels.tertiary,
         kind: CollectionInsightsCompactMetricKind.completedSeries,
       ),
       CollectionInsightsCompactMetric(
         count: stats.masterCompleteSeriesCount,
-        label: CollectionSummaryLabels.masterComplete,
+        label: labels.quaternary,
         kind: CollectionInsightsCompactMetricKind.masterComplete,
       ),
     ];
@@ -54,7 +68,7 @@ abstract final class CollectionInsightsCompactSummaryFormat {
 
   /// Compact numeric counts for layout tests (glyphs are separate icons).
   static List<String> compactCounts(CollectionAggregateStats stats) {
-    final m = metrics(stats);
+    final m = metrics(stats, CollectionSummaryMetricLabels.collection);
     return m.map((e) => '${e.count}').toList();
   }
 
@@ -78,6 +92,7 @@ class CollectionInsightsCompactSummary extends StatelessWidget {
     required this.valueStyle,
     required this.labelStyle,
     required this.glyphColor,
+    this.metricLabels = CollectionSummaryMetricLabels.collection,
   });
 
   final CollectionAggregateStats stats;
@@ -88,10 +103,14 @@ class CollectionInsightsCompactSummary extends StatelessWidget {
   final TextStyle valueStyle;
   final TextStyle labelStyle;
   final Color glyphColor;
+  final CollectionSummaryMetricLabels metricLabels;
 
   @override
   Widget build(BuildContext context) {
-    final metrics = CollectionInsightsCompactSummaryFormat.metrics(stats);
+    final metrics = CollectionInsightsCompactSummaryFormat.metrics(
+      stats,
+      metricLabels,
+    );
     final row = Row(
       children: [
         for (var i = 0; i < metrics.length; i++) ...[
