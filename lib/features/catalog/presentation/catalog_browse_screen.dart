@@ -1,4 +1,4 @@
-﻿import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_browse_launch.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_search_experience.dart';
@@ -64,6 +64,13 @@ class CatalogBrowseScreen extends ConsumerWidget {
       ctaLayout: CollectionSeriesShelfCtaLayout.catalogBrowse,
       onOpenPreview: openPreview,
       onShelfCtaPressed: openPreview,
+      onWishlistPressed: (context, {required seriesId, searchQuery}) {
+        final template = ref.read(catalogSeriesTemplateProvider(seriesId));
+        if (template == null) return;
+        ref
+            .read(collectionNotifierProvider.notifier)
+            .toggleSeriesWishlist(template);
+      },
     );
   }
 }

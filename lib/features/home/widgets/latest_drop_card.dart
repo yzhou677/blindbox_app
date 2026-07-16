@@ -31,7 +31,10 @@ class LatestDropCard extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: AppRadii.shellRadius,
-          boxShadow: CollectibleShelfShadow.productShell(context, accent: accent),
+          boxShadow: CollectibleShelfShadow.productShell(
+            context,
+            accent: accent,
+          ),
         ),
         child: Material(
           color: scheme.surface,
@@ -58,8 +61,11 @@ class LatestDropCard extends StatelessWidget {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            Color.lerp(scheme.surface, accent, 0.32)!
-                                .withValues(alpha: isDark ? 0.28 : 0.5),
+                            Color.lerp(
+                              scheme.surface,
+                              accent,
+                              0.32,
+                            )!.withValues(alpha: isDark ? 0.28 : 0.5),
                             accent.withValues(alpha: isDark ? 0.26 : 0.34),
                             scheme.surface.withValues(alpha: 0.08),
                           ],
@@ -105,7 +111,14 @@ class LatestDropCard extends StatelessWidget {
                       const SizedBox(height: 12),
                       Align(
                         alignment: Alignment.centerRight,
-                        child: SaveSeriesReleaseButton(release: release),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SeriesReleaseWishlistButton(release: release),
+                            const SizedBox(width: 4),
+                            SaveSeriesReleaseButton(release: release),
+                          ],
+                        ),
                       ),
                     ],
                   ),

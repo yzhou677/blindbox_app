@@ -7,6 +7,7 @@ class CatalogSearchHostActions {
     required this.ctaLayout,
     required this.onOpenPreview,
     required this.onShelfCtaPressed,
+    this.onWishlistPressed,
   });
 
   final CollectionSeriesShelfCtaLayout ctaLayout;
@@ -15,13 +16,22 @@ class CatalogSearchHostActions {
     BuildContext context, {
     required String seriesId,
     String? searchQuery,
-  }) onOpenPreview;
+  })
+  onOpenPreview;
 
   final void Function(
     BuildContext context, {
     required String seriesId,
     String? searchQuery,
-  }) onShelfCtaPressed;
+  })
+  onShelfCtaPressed;
+
+  final void Function(
+    BuildContext context, {
+    required String seriesId,
+    String? searchQuery,
+  })?
+  onWishlistPressed;
 }
 
 /// What to show below the field when the trimmed query is empty.

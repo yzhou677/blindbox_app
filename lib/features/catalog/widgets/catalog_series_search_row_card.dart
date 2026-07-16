@@ -16,12 +16,16 @@ class CatalogSeriesSearchRowCard extends StatelessWidget {
     required this.onOpenPreview,
     required this.shelfCta,
     this.onShelfCtaPressed,
+    this.isWishlisted = false,
+    this.onWishlistPressed,
   });
 
   final CatalogSeriesSearchRow row;
   final VoidCallback onOpenPreview;
   final CollectionSeriesShelfCtaPresentation shelfCta;
   final VoidCallback? onShelfCtaPressed;
+  final bool isWishlisted;
+  final VoidCallback? onWishlistPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -34,9 +38,7 @@ class CatalogSeriesSearchRowCard extends StatelessWidget {
 
     return CollectibleBrowseCard(
       onTap: onOpenPreview,
-      borderColor: row.hasAnySecret
-          ? secretTint.withValues(alpha: 0.38)
-          : null,
+      borderColor: row.hasAnySecret ? secretTint.withValues(alpha: 0.38) : null,
       fillColor: row.hasAnySecret
           ? Color.lerp(scheme.surfaceContainerLow, secretTint, 0.07)
           : null,
@@ -111,6 +113,22 @@ class CatalogSeriesSearchRowCard extends StatelessWidget {
               ],
             ),
           ),
+          if (onWishlistPressed != null && shelfCta.isAddable) ...[
+            IconButton(
+              tooltip: isWishlisted
+                  ? 'Remove series from wishlist'
+                  : 'Add series to wishlist',
+              onPressed: onWishlistPressed,
+              icon: Icon(
+                isWishlisted
+                    ? Icons.favorite_rounded
+                    : Icons.favorite_border_rounded,
+                size: 21,
+                color: isWishlisted ? scheme.primary : scheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(width: 2),
+          ],
           CollectionSeriesShelfCtaTrailing(
             presentation: shelfCta,
             onPressed: onTrailing,

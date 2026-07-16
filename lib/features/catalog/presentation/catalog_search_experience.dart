@@ -81,8 +81,7 @@ class _CatalogSearchExperienceState
 
   bool get _hasSearchText => _trimmedQuery.isNotEmpty;
 
-  String get _hintText =>
-      widget.hintText ?? SearchPlaceholders.discoverCatalog;
+  String get _hintText => widget.hintText ?? SearchPlaceholders.discoverCatalog;
 
   bool get _autofocus =>
       widget.autofocus ??
@@ -185,6 +184,7 @@ class _CatalogSearchExperienceState
       key: ValueKey<String>('catalog-search:${row.seriesId}'),
       row: row,
       shelfCta: shelfCta,
+      isWishlisted: snap.hasCatalogSeriesWishlisted(row.seriesId),
       onOpenPreview: () {
         _scheduleDeferredSearchRecord(_trimmedQuery);
         widget.actions.onOpenPreview(
@@ -201,6 +201,16 @@ class _CatalogSearchExperienceState
           searchQuery: _trimmedQuery,
         );
       },
+      onWishlistPressed: widget.actions.onWishlistPressed == null
+          ? null
+          : () {
+              _scheduleDeferredSearchRecord(_trimmedQuery);
+              widget.actions.onWishlistPressed!(
+                context,
+                seriesId: row.seriesId,
+                searchQuery: _trimmedQuery,
+              );
+            },
     );
   }
 
@@ -245,8 +255,7 @@ class _CatalogSearchExperienceState
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
       itemCount: matches.length,
       separatorBuilder: (context, index) => const SizedBox(height: 12),
-      itemBuilder: (ctx, i) =>
-          _buildSearchRowCard(ctx, matches[i], snap),
+      itemBuilder: (ctx, i) => _buildSearchRowCard(ctx, matches[i], snap),
     );
   }
 

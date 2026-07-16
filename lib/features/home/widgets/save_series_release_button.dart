@@ -27,10 +27,60 @@ class SaveSeriesReleaseButton extends ConsumerStatefulWidget {
   final SeriesReleaseShelfCtaVariant variant;
 
   @override
-  ConsumerState<SaveSeriesReleaseButton> createState() => _SaveSeriesReleaseButtonState();
+  ConsumerState<SaveSeriesReleaseButton> createState() =>
+      _SaveSeriesReleaseButtonState();
 }
 
-class _SaveSeriesReleaseButtonState extends ConsumerState<SaveSeriesReleaseButton>
+class SeriesReleaseWishlistButton extends ConsumerWidget {
+  const SeriesReleaseWishlistButton({super.key, required this.release});
+
+  final SeriesRelease release;
+
+  String get _catalogKey => 'drop-${release.dropId}';
+
+  CollectionSeriesOwnershipMatch _ownership(CollectionSnapshot snap) {
+    return resolveCollectionSeriesOwnership(
+      snapshot: snap,
+      catalogTemplateId: _catalogKey,
+      alternateCatalogTemplateIds: [release.dropId],
+      seriesName: release.seriesName,
+      brandName: release.brand,
+      taxonomyBrandId: release.taxonomyBrandId,
+      taxonomyIpId: release.taxonomyIpId,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final snap = ref.watch(collectionNotifierProvider);
+    final match = _ownership(snap);
+    if (match.owned) return const SizedBox.shrink();
+    final wishlisted = snap.hasCatalogSeriesWishlisted(release.dropId);
+    final scheme = Theme.of(context).colorScheme;
+
+    return IconButton(
+      tooltip: wishlisted
+          ? 'Remove series from wishlist'
+          : 'Add series to wishlist',
+      visualDensity: VisualDensity.compact,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+      onPressed: () => ref
+          .read(collectionNotifierProvider.notifier)
+          .toggleSeriesReleaseWishlist(release),
+      icon: Icon(
+        wishlisted ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+        size: 22,
+        color: wishlisted
+            ? scheme.primary.withValues(alpha: 0.92)
+            : scheme.onSurfaceVariant.withValues(alpha: 0.72),
+      ),
+    );
+  }
+}
+
+class _SaveSeriesReleaseButtonState
+    extends ConsumerState<SaveSeriesReleaseButton>
     with SingleTickerProviderStateMixin {
   late final AnimationController _pulse;
 
@@ -104,9 +154,7 @@ class _SaveSeriesReleaseButtonState extends ConsumerState<SaveSeriesReleaseButto
     );
     if (confirmed != true || !mounted) return;
     final match = ref.read(
-      collectionNotifierProvider.select(
-        (s) => _ownership(s),
-      ),
+      collectionNotifierProvider.select((s) => _ownership(s)),
     );
     final removableKey = match.matchedCatalogTemplateId ?? _catalogKey;
     ref
@@ -141,18 +189,17 @@ class _SaveSeriesReleaseButtonState extends ConsumerState<SaveSeriesReleaseButto
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final match = ref.watch(
-      collectionNotifierProvider.select(
-        (s) => _ownership(s),
-      ),
+      collectionNotifierProvider.select((s) => _ownership(s)),
     );
     final cta = CollectionSeriesShelfCtaPresentation.fromOwnership(
       match,
       layout: _layout,
     );
 
-    final scale = Tween<double>(begin: 1.0, end: 1.14).evaluate(
-      CurvedAnimation(parent: _pulse, curve: Curves.easeOutCubic),
-    );
+    final scale = Tween<double>(
+      begin: 1.0,
+      end: 1.14,
+    ).evaluate(CurvedAnimation(parent: _pulse, curve: Curves.easeOutCubic));
 
     if (widget.variant == SeriesReleaseShelfCtaVariant.filled) {
       final filledStyle = FilledButton.styleFrom(
@@ -162,9 +209,9 @@ class _SaveSeriesReleaseButtonState extends ConsumerState<SaveSeriesReleaseButto
         shadowColor: scheme.shadow.withValues(alpha: 0.14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         textStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-              letterSpacing: -0.15,
-            ),
+          fontWeight: FontWeight.w600,
+          letterSpacing: -0.15,
+        ),
       );
 
       return Transform.scale(
@@ -205,11 +252,7 @@ class _SaveSeriesReleaseButtonState extends ConsumerState<SaveSeriesReleaseButto
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
           onPressed: cta.enabled ? () => _handleTap(match) : null,
-          icon: Icon(
-            cta.icon,
-            size: 22,
-            color: iconColor,
-          ),
+          icon: Icon(cta.icon, size: 22, color: iconColor),
         ),
       ),
     );
