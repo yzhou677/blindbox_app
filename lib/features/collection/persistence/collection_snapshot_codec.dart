@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:flutter/material.dart';
 
-const _schemaVersion = 2;
+const _schemaVersion = 3;
 
 /// JSON payload for [CollectionSnapshot] — catalog-aligned keys on wire where practical.
 abstract final class CollectionSnapshotCodec {
@@ -12,8 +12,12 @@ abstract final class CollectionSnapshotCodec {
       'v': _schemaVersion,
       'shelfSeries': [for (final s in snap.shelfSeries) _seriesToJson(s)],
       'figureStates': {
-        for (final e in snap.figureStates.entries) e.key: e.value.state.name,
+        for (final e in snap.figureStates.entries)
+          e.key: _trackedToJson(e.value),
       },
+      'seriesWishlist': [
+        for (final s in snap.seriesWishlist) _wishlistedSeriesToJson(s),
+      ],
     });
   }
 
@@ -44,13 +48,76 @@ abstract final class CollectionSnapshotCodec {
         if (tf.state == FigureCollectionState.none) continue;
         figureStates[id] = tf;
       }
+      final wishlist = <WishlistedCatalogSeries>[];
+      final wishlistRaw = map['seriesWishlist'];
+      if (wishlistRaw is List) {
+        for (final item in wishlistRaw) {
+          final entry = _wishlistedSeriesFromJson(item);
+          if (entry != null) wishlist.add(entry);
+        }
+      }
       return CollectionSnapshot(
         shelfSeries: shelfSeries,
         figureStates: figureStates,
+        seriesWishlist: wishlist
+            .where(
+              (w) => !shelfSeries.any(
+                (s) =>
+                    s.catalogTemplateId == w.catalogSeriesId ||
+                    s.id == w.catalogSeriesId,
+              ),
+            )
+            .toList(growable: false),
       );
     } catch (_) {
       return null;
     }
+  }
+
+  static Map<String, dynamic> _wishlistedSeriesToJson(
+    WishlistedCatalogSeries s,
+  ) {
+    return {
+      'catalogSeriesId': s.catalogSeriesId,
+      'name': s.name,
+      'brand': s.brand,
+      'ipName': s.ipName,
+      'imageKey': s.imageKey,
+      'addedAtMicros': s.addedAtMicros,
+      'taxonomyBrandId': s.taxonomyBrandId,
+      'taxonomyIpId': s.taxonomyIpId,
+    };
+  }
+
+  static WishlistedCatalogSeries? _wishlistedSeriesFromJson(dynamic raw) {
+    if (raw is! Map) return null;
+    final m = Map<String, dynamic>.from(raw);
+    final id = m['catalogSeriesId'] as String?;
+    final name = m['name'] as String?;
+    final brand = m['brand'] as String?;
+    final ipName = m['ipName'] as String?;
+    final imageKey = m['imageKey'] as String?;
+    final addedAtMicros = m['addedAtMicros'];
+    if (id == null ||
+        id.trim().isEmpty ||
+        name == null ||
+        brand == null ||
+        ipName == null ||
+        imageKey == null) {
+      return null;
+    }
+    return WishlistedCatalogSeries(
+      catalogSeriesId: id,
+      name: name,
+      brand: brand,
+      ipName: ipName,
+      imageKey: imageKey,
+      addedAtMicros: addedAtMicros is int
+          ? addedAtMicros
+          : DateTime.now().microsecondsSinceEpoch,
+      taxonomyBrandId: m['taxonomyBrandId'] as String?,
+      taxonomyIpId: m['taxonomyIpId'] as String?,
+    );
   }
 
   static Map<String, dynamic> _seriesToJson(ShelfSeries s) {
@@ -188,6 +255,13 @@ abstract final class CollectionSnapshotCodec {
     return isSecret ? 'Secret' : 'Regular';
   }
 
+  static Map<String, dynamic> _trackedToJson(TrackedFigure t) {
+    return {
+      'state': t.state.name,
+      if (t.updatedAtMicros != null) 'updatedAtMicros': t.updatedAtMicros,
+    };
+  }
+
   /// Supports enum name string (v1) or legacy `{ "owned": bool, "wishlist": bool }`.
   static TrackedFigure? _trackedFromJson(String figureId, dynamic raw) {
     if (raw is String) {
@@ -199,6 +273,20 @@ abstract final class CollectionSnapshotCodec {
       }
     }
     if (raw is Map) {
+      final stateName = raw['state'];
+      final updatedAtMicros = raw['updatedAtMicros'];
+      if (stateName is String) {
+        try {
+          final st = FigureCollectionState.values.byName(stateName);
+          return TrackedFigure(
+            figureId: figureId,
+            state: st,
+            updatedAtMicros: updatedAtMicros is int ? updatedAtMicros : null,
+          );
+        } catch (_) {
+          return null;
+        }
+      }
       final o = raw['owned'] == true;
       final w = raw['wishlist'] == true;
       if (o && w) {
