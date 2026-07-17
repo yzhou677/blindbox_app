@@ -11,6 +11,10 @@ Derived shelf interpretation over `CollectionSnapshot` — calm, editorial, offl
 | `CollectionProgressVoice` | Per-series headline/subline (unchanged) |
 
 Shelf interpretation is **not** a collector profile, recommendation engine, or gamification system.
+Per [`PDR-001`](decisions/product/PDR-001-collector-type-semantics.md) and
+[`PDR-003`](decisions/product/PDR-003-dreamer-semantics.md), future collecting
+intent may inform Dreamer, but shelf editorial interprets only the current
+owned collection.
 
 ## Signals
 
@@ -18,6 +22,8 @@ Shelf interpretation is **not** a collector profile, recommendation engine, or g
 - **Completion** — `resolveSeriesCompletion` / `aggregateShelfCompletion` (Regular-weighted `progressRatio`; Near Complete = `isNearComplete`)
 - **Secrets** — `ShelfFigure.isSecret` × `FigureCollectionState.owned`
 - **Relationships** — co-occurring IPs on shelf (max 2 insights)
+
+Wishlist state is intentionally not a shelf editorial signal.
 
 ## Memory foundation (`collection_memory_v1`)
 

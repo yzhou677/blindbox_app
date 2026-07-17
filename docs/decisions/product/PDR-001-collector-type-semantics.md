@@ -14,6 +14,16 @@ Collector Type is a reveal of shelf identity, not a live score, rank, dashboard,
 or behavioral judgment. It should help a collector recognize the character of
 their collection without turning the shelf into a contest.
 
+Shelfy separates three collector-facing layers:
+
+- **Collector Type**: who you are as a collector.
+- **Summary Editorial**: how your current collection is interpreted.
+- **At a Glance**: what you objectively own.
+
+Collector identity may incorporate future collecting intent when a specific
+archetype requires it. Shelf editorial describes only the current owned
+collection. At a Glance reports objective owned-collection facts.
+
 ## Why
 
 Shelfy is a collector app built around trust, identity, and personal attachment.
@@ -27,6 +37,12 @@ moment of interpretation, not a constantly flickering label.
 Journey context can explain how the collection has grown, but journey history is
 not the identity itself. Collector Type should describe the current shelf's
 clearest defining pattern, not invent a life story or reward old behavior.
+
+Most Collector Types should be grounded in the current owned collection. Dreamer
+is the intentional exception: it can use future collecting intent because that
+is what the archetype means. This exception should not leak into Summary
+Editorial, At a Glance, completion, recommendations, or other owned-collection
+interpretation surfaces.
 
 Wanderer is an intentional fallback. It is not a failure state. It protects the
 collector from being over-classified when no specialized identity honestly fits.
@@ -60,6 +76,7 @@ and tests.
 ## Related Decisions
 
 - [`PDR-002: Completion Semantics`](PDR-002-completion-semantics.md)
+- [`PDR-003: Dreamer Semantics`](PDR-003-dreamer-semantics.md)
 - [`docs/COLLECTION_ARCHITECTURE_NOTES.md`](../../COLLECTION_ARCHITECTURE_NOTES.md)
 - [`lib/features/collection/insights/AGENTS.md`](../../../lib/features/collection/insights/AGENTS.md)
 

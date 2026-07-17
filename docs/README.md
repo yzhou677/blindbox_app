@@ -29,6 +29,7 @@ product philosophy without naming which role they serve.
 - [`ADR-001: Recommendation Semantics`](decisions/architecture/ADR-001-recommendation-semantics.md)
 - [`PDR-001: Collector Type Semantics`](decisions/product/PDR-001-collector-type-semantics.md)
 - [`PDR-002: Completion Semantics`](decisions/product/PDR-002-completion-semantics.md)
+- [`PDR-003: Dreamer Semantics`](decisions/product/PDR-003-dreamer-semantics.md)
 
 ## Current Architecture And Implementation
 
