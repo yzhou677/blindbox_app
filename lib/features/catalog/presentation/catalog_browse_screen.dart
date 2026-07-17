@@ -6,6 +6,7 @@ import 'package:blindbox_app/features/catalog/presentation/catalog_search_host_a
 import 'package:blindbox_app/features/collection/application/catalog_series_shelf_commit.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_series_shelf_cta_presentation.dart';
+import 'package:blindbox_app/features/collection/presentation/wishlist_undo_snackbar.dart';
 import 'package:blindbox_app/features/collection/widgets/catalog_series_preview_sheet.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:flutter/material.dart';
@@ -67,9 +68,33 @@ class CatalogBrowseScreen extends ConsumerWidget {
       onWishlistPressed: (context, {required seriesId, searchQuery}) {
         final template = ref.read(catalogSeriesTemplateProvider(seriesId));
         if (template == null) return;
-        ref
-            .read(collectionNotifierProvider.notifier)
-            .toggleSeriesWishlist(template);
+        final snap = ref.read(collectionNotifierProvider);
+        final notifier = ref.read(collectionNotifierProvider.notifier);
+        final previousIndex = snap.seriesWishlist.indexWhere(
+          (s) => s.catalogSeriesId == seriesId,
+        );
+        final previousEntry = previousIndex < 0
+            ? null
+            : snap.seriesWishlist[previousIndex];
+
+        if (previousEntry == null) {
+          notifier.addSeriesToWishlist(template);
+          showWishlistUndoSnackBar(
+            context,
+            message: 'Added to Wishlist',
+            onUndo: () => notifier.removeSeriesFromWishlist(seriesId),
+          );
+        } else {
+          notifier.removeSeriesFromWishlist(seriesId);
+          showWishlistUndoSnackBar(
+            context,
+            message: 'Removed from Wishlist',
+            onUndo: () => notifier.restoreSeriesWishlist(
+              previousEntry,
+              atIndex: previousIndex,
+            ),
+          );
+        }
       },
     );
   }

@@ -10,6 +10,7 @@ import 'package:blindbox_app/features/collection/widgets/collection_brand_filter
 import 'package:blindbox_app/features/collection/widgets/collection_browse_card.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_ip_filter_row.dart';
 import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
+import 'package:blindbox_app/shared/widgets/catalog_quick_action_button.dart';
 import 'package:flutter/material.dart';
 
 class CollectionWishlistPage extends StatefulWidget {
@@ -410,8 +411,8 @@ class _WishlistCard extends StatelessWidget {
           alpha: isDark ? 0.32 : 0.38,
         ),
         overlayBuilder: (context) => Positioned(
-          top: 0,
-          right: 0,
+          top: 10,
+          right: 10,
           child: _WishlistRemoveAction(
             targetKey: removeTargetKey,
             semanticsLabel: removeSemanticsLabel,
@@ -436,30 +437,13 @@ class _WishlistRemoveAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Semantics(
+    return CatalogQuickActionButton(
       key: targetKey,
-      button: true,
-      label: semanticsLabel,
-      child: SizedBox.square(
-        dimension: 44,
-        child: Center(
-          child: IconButton.filledTonal(
-            tooltip: semanticsLabel,
-            onPressed: onRemove,
-            icon: const Icon(Icons.close_rounded, size: 18),
-            style: IconButton.styleFrom(
-              minimumSize: const Size(32, 32),
-              fixedSize: const Size(32, 32),
-              padding: EdgeInsets.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              visualDensity: VisualDensity.compact,
-              backgroundColor: scheme.surface.withValues(alpha: 0.86),
-              foregroundColor: scheme.primary,
-            ),
-          ),
-        ),
-      ),
+      tooltip: semanticsLabel,
+      semanticsLabel: semanticsLabel,
+      icon: Icons.close_rounded,
+      active: true,
+      onPressed: onRemove,
     );
   }
 }

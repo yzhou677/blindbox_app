@@ -1,6 +1,7 @@
 import 'package:blindbox_app/features/catalog/presentation/catalog_series_search_rows.dart';
 import 'package:blindbox_app/features/catalog/widgets/catalog_series_search_row_card.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_series_shelf_cta_presentation.dart';
+import 'package:blindbox_app/shared/widgets/catalog_quick_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -25,6 +26,11 @@ void main() {
       );
 
       expect(find.byIcon(Icons.favorite_border_rounded), findsOneWidget);
+      expect(find.byType(CatalogQuickActionButton), findsOneWidget);
+      expect(
+        tester.getSize(find.byType(CatalogQuickActionButton)),
+        const Size(40, 40),
+      );
       await tester.tap(find.byIcon(Icons.favorite_border_rounded));
       expect(toggles, 1);
 

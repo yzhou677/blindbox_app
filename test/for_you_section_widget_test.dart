@@ -419,6 +419,13 @@ void main() {
     expect(find.text('Collecting DIMOO'), findsOneWidget);
     expect(find.text('Dimoo New'), findsOneWidget);
     expect(find.byIcon(Icons.auto_awesome_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.favorite_border_rounded), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.favorite_border_rounded));
+    await tester.pump();
+
+    expect(find.text('Added to Wishlist'), findsOneWidget);
+    expect(find.byIcon(Icons.favorite_rounded), findsOneWidget);
   });
 
   testWidgets('ForYouSection shows a single highest-priority reason', (

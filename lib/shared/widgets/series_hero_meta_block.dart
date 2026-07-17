@@ -64,7 +64,9 @@ class SeriesHeroMetaBlock extends StatelessWidget {
     final metaStyle = density == SeriesHeroMetaDensity.hero
         ? CollectibleTypography.figureMeta(textTheme, scheme)
         : textTheme.bodySmall?.copyWith(
-            color: scheme.onSurfaceVariant.withValues(alpha: 0.68),
+            color: scheme.onSurfaceVariant.withValues(
+              alpha: density == SeriesHeroMetaDensity.compact ? 0.54 : 0.68,
+            ),
             height: sheetMetaHeight,
           );
 

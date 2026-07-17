@@ -2,7 +2,9 @@ import 'package:blindbox_app/features/collection/application/collection_notifier
 import 'package:blindbox_app/features/collection/application/collection_series_identity.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_series_shelf_cta_presentation.dart';
+import 'package:blindbox_app/features/collection/presentation/wishlist_undo_snackbar.dart';
 import 'package:blindbox_app/features/home/domain/series_release.dart';
+import 'package:blindbox_app/shared/widgets/catalog_quick_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -56,25 +58,46 @@ class SeriesReleaseWishlistButton extends ConsumerWidget {
     final match = _ownership(snap);
     if (match.owned) return const SizedBox.shrink();
     final wishlisted = snap.hasCatalogSeriesWishlisted(release.dropId);
-    final scheme = Theme.of(context).colorScheme;
 
-    return IconButton(
+    return CatalogQuickActionButton(
       tooltip: wishlisted
           ? 'Remove series from wishlist'
           : 'Add series to wishlist',
-      visualDensity: VisualDensity.compact,
-      padding: EdgeInsets.zero,
-      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-      onPressed: () => ref
-          .read(collectionNotifierProvider.notifier)
-          .toggleSeriesReleaseWishlist(release),
-      icon: Icon(
-        wishlisted ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-        size: 22,
-        color: wishlisted
-            ? scheme.primary.withValues(alpha: 0.92)
-            : scheme.onSurfaceVariant.withValues(alpha: 0.72),
-      ),
+      semanticsLabel: wishlisted
+          ? 'Remove series from wishlist'
+          : 'Add series to wishlist',
+      icon: wishlisted ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+      active: wishlisted,
+      onPressed: () {
+        final notifier = ref.read(collectionNotifierProvider.notifier);
+        final previousIndex = snap.seriesWishlist.indexWhere(
+          (s) =>
+              s.catalogSeriesId == release.dropId ||
+              s.catalogSeriesId == 'drop-${release.dropId}',
+        );
+        final previousEntry = previousIndex < 0
+            ? null
+            : snap.seriesWishlist[previousIndex];
+
+        if (previousEntry == null) {
+          notifier.addSeriesReleaseToWishlist(release);
+          showWishlistUndoSnackBar(
+            context,
+            message: 'Added to Wishlist',
+            onUndo: () => notifier.removeSeriesFromWishlist(release.dropId),
+          );
+        } else {
+          notifier.removeSeriesFromWishlist(previousEntry.catalogSeriesId);
+          showWishlistUndoSnackBar(
+            context,
+            message: 'Removed from Wishlist',
+            onUndo: () => notifier.restoreSeriesWishlist(
+              previousEntry,
+              atIndex: previousIndex,
+            ),
+          );
+        }
+      },
     );
   }
 }

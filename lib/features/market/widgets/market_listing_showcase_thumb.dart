@@ -43,7 +43,7 @@ class MarketListingShowcaseThumb extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(8),
           child: ClipRRect(
-            borderRadius: AppRadii.insetRadius,
+            borderRadius: AppRadii.matRadius,
             child: ColoredBox(
               color: scheme.surface.withValues(alpha: 0.35),
               child: MarketListingImage(

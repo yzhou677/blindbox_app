@@ -14,6 +14,7 @@ import 'package:blindbox_app/features/collection/application/share_payload_build
 import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_brand_facets.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_ip_facets.dart';
+import 'package:blindbox_app/features/collection/presentation/wishlist_undo_snackbar.dart';
 import 'package:blindbox_app/features/collection/widgets/custom_series_form_sheet.dart';
 import 'package:blindbox_app/features/collection/widgets/add_to_collection_sheet.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_brand_filter_row.dart';
@@ -257,7 +258,10 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     );
   }
 
-  void _openWishlistFigurePreview(BuildContext context, WishlistedFigureRow row) {
+  void _openWishlistFigurePreview(
+    BuildContext context,
+    WishlistedFigureRow row,
+  ) {
     showCollectionModalBottomSheet<void>(
       context: context,
       heightFraction: FeedRhythm.sheetPreviewOpenScreenFraction,
@@ -277,20 +281,15 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     ref
         .read(collectionNotifierProvider.notifier)
         .removeSeriesFromWishlist(item.catalogSeriesId);
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.clearSnackBars();
-    messenger.showSnackBar(
-      _wishlistUndoSnackBar(
-        action: SnackBarAction(
-          label: 'UNDO',
-          onPressed: () => ref
-              .read(collectionNotifierProvider.notifier)
-              .restoreSeriesWishlist(
-                item,
-                atIndex: previousIndex < 0 ? null : previousIndex,
-              ),
-        ),
-      ),
+    showWishlistUndoSnackBar(
+      context,
+      message: 'Removed from Wishlist',
+      onUndo: () => ref
+          .read(collectionNotifierProvider.notifier)
+          .restoreSeriesWishlist(
+            item,
+            atIndex: previousIndex < 0 ? null : previousIndex,
+          ),
     );
   }
 
@@ -298,28 +297,12 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     ref
         .read(collectionNotifierProvider.notifier)
         .setFigureWishlisted(row.figure.id, false);
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.clearSnackBars();
-    messenger.showSnackBar(
-      _wishlistUndoSnackBar(
-        action: SnackBarAction(
-          label: 'UNDO',
-          onPressed: () => ref
-              .read(collectionNotifierProvider.notifier)
-              .restoreFigureWishlist(row.tracked),
-        ),
-      ),
-    );
-  }
-
-  SnackBar _wishlistUndoSnackBar({required SnackBarAction action}) {
-    return SnackBar(
-      content: const Text('Removed from Wishlist'),
-      duration: const Duration(seconds: 3),
-      behavior: SnackBarBehavior.floating,
-      margin: const EdgeInsets.fromLTRB(20, 0, 20, 18),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      action: action,
+    showWishlistUndoSnackBar(
+      context,
+      message: 'Removed from Wishlist',
+      onUndo: () => ref
+          .read(collectionNotifierProvider.notifier)
+          .restoreFigureWishlist(row.tracked),
     );
   }
 
@@ -499,8 +482,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                   searchQuery: _debouncedSearchQuery,
                   onRemoveSeries: (series) =>
                       _removeWishlistSeries(context, series),
-                  onRemoveFigure: (row) =>
-                      _removeWishlistFigure(context, row),
+                  onRemoveFigure: (row) => _removeWishlistFigure(context, row),
                   onOpenSeries: (series) =>
                       _openWishlistSeriesPreview(context, series),
                   onOpenFigure: (row) =>
@@ -552,14 +534,14 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
           SliverToBoxAdapter(
             child: _pageSegment == CollectionPageSegment.wishlist
                 ? CollectionInsightsDashboardHost(
-                  statsOverride: wishlistSummaryStats,
-                  metricLabels: CollectionSummaryMetricLabels.wishlist,
-                  expandable: false,
-                  summaryCardTopPadding:
-                      FeedRhythm.collectionWishlistSummaryCardTopPadding,
-                  summaryCardBottomPadding:
-                      FeedRhythm.collectionWishlistSummaryCardBottomPadding,
-                )
+                    statsOverride: wishlistSummaryStats,
+                    metricLabels: CollectionSummaryMetricLabels.wishlist,
+                    expandable: false,
+                    summaryCardTopPadding:
+                        FeedRhythm.collectionWishlistSummaryCardTopPadding,
+                    summaryCardBottomPadding:
+                        FeedRhythm.collectionWishlistSummaryCardBottomPadding,
+                  )
                 : const CollectionInsightsDashboardHost(),
           ),
           SliverToBoxAdapter(
@@ -580,8 +562,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                 onRemoveFigure: (row) => _removeWishlistFigure(context, row),
                 onOpenSeries: (series) =>
                     _openWishlistSeriesPreview(context, series),
-                onOpenFigure: (row) =>
-                    _openWishlistFigurePreview(context, row),
+                onOpenFigure: (row) => _openWishlistFigurePreview(context, row),
               ),
             )
           else ...[
@@ -785,6 +766,9 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
 
   void _onPageSegmentChanged(CollectionPageSegment next) {
     if (next == _pageSegment) return;
+    if (next == CollectionPageSegment.insights) {
+      FocusScope.of(context).unfocus();
+    }
     setState(() => _pageSegment = next);
     if (_scrollController.hasClients) {
       _scrollController.jumpTo(0);
@@ -792,31 +776,43 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
   }
 
   SliverToBoxAdapter _buildSearchSliver() {
+    final searchDisabled = _pageSegment == CollectionPageSegment.insights;
     final hintText = _pageSegment == CollectionPageSegment.wishlist
-        ? 'Search in my wishlist...'
+        ? 'Search your wishlist...'
         : SearchPlaceholders.collection;
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.only(top: FeedRhythm.headerToSearchField),
-        child: AppSearchField(
-          controller: _searchController,
-          hintText: hintText,
-          onChanged: _onSearchChanged,
-          suffixIcon: ValueListenableBuilder<TextEditingValue>(
-            valueListenable: _searchController,
-            builder: (context, value, _) {
-              if (value.text.isEmpty) return const SizedBox.shrink();
-              return IconButton(
-                icon: const Icon(Icons.close_rounded, size: 20),
-                onPressed: () {
-                  _searchDebounceTimer?.cancel();
-                  _searchController.clear();
-                  if (_debouncedSearchQuery.isNotEmpty) {
-                    setState(() => _debouncedSearchQuery = '');
-                  }
-                },
-              );
-            },
+        child: IgnorePointer(
+          ignoring: searchDisabled,
+          child: Opacity(
+            opacity: searchDisabled ? 0.86 : 1,
+            child: AppSearchField(
+              controller: _searchController,
+              hintText: hintText,
+              readOnly: searchDisabled,
+              onChanged: searchDisabled ? null : _onSearchChanged,
+              suffixIcon: searchDisabled
+                  ? null
+                  : ValueListenableBuilder<TextEditingValue>(
+                      valueListenable: _searchController,
+                      builder: (context, value, _) {
+                        if (value.text.isEmpty) {
+                          return const SizedBox.shrink();
+                        }
+                        return IconButton(
+                          icon: const Icon(Icons.close_rounded, size: 20),
+                          onPressed: () {
+                            _searchDebounceTimer?.cancel();
+                            _searchController.clear();
+                            if (_debouncedSearchQuery.isNotEmpty) {
+                              setState(() => _debouncedSearchQuery = '');
+                            }
+                          },
+                        );
+                      },
+                    ),
+            ),
           ),
         ),
       ),
@@ -904,10 +900,10 @@ class _WishlistFigurePreviewSheet extends StatelessWidget {
         padding: const EdgeInsets.only(top: 12),
         child: Center(
           child: Container(
-            width: 42,
-            height: 4,
+            width: 50,
+            height: 5,
             decoration: BoxDecoration(
-              color: scheme.onSurfaceVariant.withValues(alpha: 0.24),
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.32),
               borderRadius: BorderRadius.circular(999),
             ),
           ),
@@ -942,7 +938,7 @@ class _WishlistFigurePreviewSheet extends StatelessWidget {
                     color: scheme.onSurface,
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 Text(
                   seriesName,
                   textAlign: TextAlign.center,
@@ -955,7 +951,7 @@ class _WishlistFigurePreviewSheet extends StatelessWidget {
                   ),
                 ),
                 if (figureType != null) ...[
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 19),
                   _WishlistFigurePreviewMetadata(
                     label: 'Type',
                     value: figureType,
@@ -963,10 +959,7 @@ class _WishlistFigurePreviewSheet extends StatelessWidget {
                 ],
                 if (brand.isNotEmpty) ...[
                   const SizedBox(height: 12),
-                  _WishlistFigurePreviewMetadata(
-                    label: 'Brand',
-                    value: brand,
-                  ),
+                  _WishlistFigurePreviewMetadata(label: 'Brand', value: brand),
                 ],
               ],
             ),
@@ -989,7 +982,8 @@ class _WishlistFigurePreviewSheet extends StatelessWidget {
     if (normalized == 'chase') return 'Chase';
     if (normalized == 'limited edition') return 'Limited Edition';
     if (raw.endsWith('Figure') || raw.endsWith('Edition')) return raw;
-    if (figure.isSecret && normalized.contains('secret')) return 'Secret Figure';
+    if (figure.isSecret && normalized.contains('secret'))
+      return 'Secret Figure';
     return raw;
   }
 }

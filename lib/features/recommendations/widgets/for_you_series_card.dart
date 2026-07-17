@@ -6,6 +6,7 @@ import 'package:blindbox_app/features/catalog/presentation/catalog_image_display
 import 'package:blindbox_app/features/recommendations/domain/recommendation_item.dart';
 import 'package:blindbox_app/features/recommendations/presentation/for_you_copy.dart';
 import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
+import 'package:blindbox_app/shared/widgets/catalog_quick_action_button.dart';
 import 'package:flutter/material.dart';
 
 /// Compact image-first card — same footprint as Market Chasers mini cards.
@@ -19,10 +20,14 @@ class ForYouSeriesCard extends StatelessWidget {
     super.key,
     required this.item,
     required this.onTap,
+    this.isWishlisted = false,
+    this.onWishlistPressed,
   });
 
   final RecommendationItem item;
   final VoidCallback onTap;
+  final bool isWishlisted;
+  final VoidCallback? onWishlistPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -55,60 +60,87 @@ class ForYouSeriesCard extends StatelessWidget {
             ),
           ),
           clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: onTap,
-            child: Padding(
-              padding: AppCardTokens.browseRailPadding,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: Center(
-                      child: SizedBox(
-                        width: thumbExtent,
-                        height: thumbExtent,
-                        child: ClipRRect(
-                          borderRadius: AppRadii.matRadius,
-                          child: CatalogImageFromKey(
-                            imageKey: series.imageKey,
-                            name: series.displayName,
-                            seedKey: series.id,
-                            displayMode: CatalogImageDisplayMode.seriesCoverThumb,
-                            compact: true,
-                            borderRadius: BorderRadius.zero,
+          child: Stack(
+            children: [
+              InkWell(
+                onTap: onTap,
+                child: Padding(
+                  padding: AppCardTokens.browseRailPadding,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: Center(
+                          child: SizedBox(
+                            width: thumbExtent,
+                            height: thumbExtent,
+                            child: ClipRRect(
+                              borderRadius: AppRadii.matRadius,
+                              child: CatalogImageFromKey(
+                                imageKey: series.imageKey,
+                                name: series.displayName,
+                                seedKey: series.id,
+                                displayMode:
+                                    CatalogImageDisplayMode.seriesCoverThumb,
+                                compact: true,
+                                borderRadius: BorderRadius.zero,
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: AppCardTokens.browseRailImageToTitleGap),
-                  Text(
-                    series.displayName,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: CollectibleTypography.catalogSeriesRowTitle(
-                      textTheme,
-                      scheme,
-                    ),
-                  ),
-                  if (reason != null) ...[
-                    const SizedBox(
-                      height: AppCardTokens.browseRailTitleToMetaGap,
-                    ),
-                    Text(
-                      reason,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: textTheme.labelSmall!.copyWith(
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 0.06,
-                        color: scheme.onSurfaceVariant.withValues(alpha: 0.84),
+                      const SizedBox(
+                        height: AppCardTokens.browseRailImageToTitleGap,
                       ),
-                    ),
-                  ],
-                ],
+                      Text(
+                        series.displayName,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: CollectibleTypography.catalogSeriesRowTitle(
+                          textTheme,
+                          scheme,
+                        ),
+                      ),
+                      if (reason != null) ...[
+                        const SizedBox(
+                          height: AppCardTokens.browseRailTitleToMetaGap,
+                        ),
+                        Text(
+                          reason,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: textTheme.labelSmall!.copyWith(
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 0.06,
+                            color: scheme.onSurfaceVariant.withValues(
+                              alpha: 0.84,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
               ),
-            ),
+              if (onWishlistPressed != null)
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: CatalogQuickActionButton(
+                    tooltip: isWishlisted
+                        ? 'Remove series from wishlist'
+                        : 'Add series to wishlist',
+                    semanticsLabel: isWishlisted
+                        ? 'Remove series from wishlist'
+                        : 'Add series to wishlist',
+                    icon: isWishlisted
+                        ? Icons.favorite_rounded
+                        : Icons.favorite_border_rounded,
+                    active: isWishlisted,
+                    onPressed: onWishlistPressed!,
+                  ),
+                ),
+            ],
           ),
         ),
       ),

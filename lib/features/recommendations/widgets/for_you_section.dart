@@ -5,6 +5,7 @@ import 'package:blindbox_app/features/catalog/application/catalog_bundle_provide
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/application/catalog_series_shelf_commit.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_series_shelf_cta_presentation.dart';
+import 'package:blindbox_app/features/collection/presentation/wishlist_undo_snackbar.dart';
 import 'package:blindbox_app/features/collection/widgets/catalog_series_preview_sheet.dart';
 import 'package:blindbox_app/features/recommendations/application/recommendation_readiness_provider.dart';
 import 'package:blindbox_app/features/recommendations/application/recommendations_provider.dart';
@@ -116,10 +117,13 @@ class _ForYouSectionState extends ConsumerState<ForYouSection> {
     required RecommendationResult? displayResult,
   }) {
     if (displayResult != null && displayResult.items.isNotEmpty) {
+      final snap = ref.watch(collectionNotifierProvider);
       return _ForYouLoadedRail(
         items: displayResult.items,
         showFirstUnlockBadge: ref.watch(forYouFirstUnlockBadgeProvider),
+        isWishlisted: (seriesId) => snap.hasCatalogSeriesWishlisted(seriesId),
         onOpenSeries: _openSeriesPreview,
+        onWishlistPressed: _toggleWishlist,
         onDismissFirstUnlock: () => dismissForYouFirstUnlockBadge(ref),
       );
     }
@@ -160,6 +164,39 @@ class _ForYouSectionState extends ConsumerState<ForYouSection> {
         );
       },
     );
+  }
+
+  void _toggleWishlist(BuildContext context, String seriesId) {
+    final template = ref.read(catalogSeriesTemplateProvider(seriesId));
+    if (template == null) return;
+
+    final snap = ref.read(collectionNotifierProvider);
+    final notifier = ref.read(collectionNotifierProvider.notifier);
+    final previousIndex = snap.seriesWishlist.indexWhere(
+      (s) => s.catalogSeriesId == seriesId,
+    );
+    final previousEntry = previousIndex < 0
+        ? null
+        : snap.seriesWishlist[previousIndex];
+
+    if (previousEntry == null) {
+      notifier.addSeriesToWishlist(template);
+      showWishlistUndoSnackBar(
+        context,
+        message: 'Added to Wishlist',
+        onUndo: () => notifier.removeSeriesFromWishlist(seriesId),
+      );
+    } else {
+      notifier.removeSeriesFromWishlist(seriesId);
+      showWishlistUndoSnackBar(
+        context,
+        message: 'Removed from Wishlist',
+        onUndo: () => notifier.restoreSeriesWishlist(
+          previousEntry,
+          atIndex: previousIndex,
+        ),
+      );
+    }
   }
 }
 
@@ -243,13 +280,17 @@ class _ForYouLoadedRail extends StatelessWidget {
   const _ForYouLoadedRail({
     required this.items,
     required this.showFirstUnlockBadge,
+    required this.isWishlisted,
     required this.onOpenSeries,
+    required this.onWishlistPressed,
     required this.onDismissFirstUnlock,
   });
 
   final List<RecommendationItem> items;
   final bool showFirstUnlockBadge;
+  final bool Function(String seriesId) isWishlisted;
   final Future<void> Function(BuildContext context, String seriesId) onOpenSeries;
+  final void Function(BuildContext context, String seriesId) onWishlistPressed;
   final VoidCallback onDismissFirstUnlock;
 
   @override
@@ -288,7 +329,10 @@ class _ForYouLoadedRail extends StatelessWidget {
                 final item = items[index];
                 return ForYouSeriesCard(
                   item: item,
+                  isWishlisted: isWishlisted(item.seriesId),
                   onTap: () => onOpenSeries(context, item.seriesId),
+                  onWishlistPressed: () =>
+                      onWishlistPressed(context, item.seriesId),
                 );
               },
             ),

@@ -5,6 +5,7 @@ import 'package:blindbox_app/features/catalog/presentation/catalog_series_search
 import 'package:blindbox_app/features/collection/presentation/collection_series_shelf_cta_presentation.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_series_shelf_cta_trailing.dart';
 import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
+import 'package:blindbox_app/shared/widgets/catalog_quick_action_button.dart';
 import 'package:blindbox_app/shared/widgets/collectible_browse_card.dart';
 import 'package:flutter/material.dart';
 
@@ -32,6 +33,7 @@ class CatalogSeriesSearchRowCard extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final secretTint = scheme.tertiary;
+    final wishlistPressed = onWishlistPressed;
     final onTrailing = shelfCta.enabled
         ? (onShelfCtaPressed ?? onOpenPreview)
         : null;
@@ -47,7 +49,7 @@ class CatalogSeriesSearchRowCard extends StatelessWidget {
         children: [
           CatalogImageSlot(
             displayMode: CatalogImageDisplayMode.seriesCoverThumb,
-            borderRadius: AppRadii.insetRadius,
+            borderRadius: AppRadii.matRadius,
             child: row.coverImageKey.isNotEmpty
                 ? CatalogImageFromKey(
                     key: catalogImageWidgetKey(
@@ -113,19 +115,19 @@ class CatalogSeriesSearchRowCard extends StatelessWidget {
               ],
             ),
           ),
-          if (onWishlistPressed != null && shelfCta.isAddable) ...[
-            IconButton(
+          if (wishlistPressed != null && shelfCta.isAddable) ...[
+            CatalogQuickActionButton(
               tooltip: isWishlisted
                   ? 'Remove series from wishlist'
                   : 'Add series to wishlist',
-              onPressed: onWishlistPressed,
-              icon: Icon(
-                isWishlisted
-                    ? Icons.favorite_rounded
-                    : Icons.favorite_border_rounded,
-                size: 21,
-                color: isWishlisted ? scheme.primary : scheme.onSurfaceVariant,
-              ),
+              semanticsLabel: isWishlisted
+                  ? 'Remove series from wishlist'
+                  : 'Add series to wishlist',
+              icon: isWishlisted
+                  ? Icons.favorite_rounded
+                  : Icons.favorite_border_rounded,
+              active: isWishlisted,
+              onPressed: wishlistPressed,
             ),
             const SizedBox(width: 2),
           ],

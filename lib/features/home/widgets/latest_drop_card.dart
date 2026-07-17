@@ -45,86 +45,94 @@ class LatestDropCard extends StatelessWidget {
             ),
           ),
           clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: () => context.push('/home/detail/${release.dropId}'),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                AspectRatio(
-                  aspectRatio: _imageAspect,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        borderRadius: AppRadii.matRadius,
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Color.lerp(
-                              scheme.surface,
-                              accent,
-                              0.32,
-                            )!.withValues(alpha: isDark ? 0.28 : 0.5),
-                            accent.withValues(alpha: isDark ? 0.26 : 0.34),
-                            scheme.surface.withValues(alpha: 0.08),
-                          ],
-                          stops: const [0.0, 0.45, 1.0],
-                        ),
-                        border: Border.all(
-                          color: accent.withValues(alpha: isDark ? 0.1 : 0.18),
-                        ),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: AppRadii.insetRadius,
-                        child: SeriesReleaseCoverImage(
-                          release: release,
-                          heroTag: SeriesReleaseCoverImage.heroTagFor(release),
-                          borderRadius: AppRadii.insetRadius,
+          child: Stack(
+            children: [
+              InkWell(
+                onTap: () => context.push('/home/detail/${release.dropId}'),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    AspectRatio(
+                      aspectRatio: _imageAspect,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            borderRadius: AppRadii.matRadius,
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Color.lerp(
+                                  scheme.surface,
+                                  accent,
+                                  0.32,
+                                )!.withValues(alpha: isDark ? 0.28 : 0.5),
+                                accent.withValues(
+                                  alpha: isDark ? 0.26 : 0.34,
+                                ),
+                                scheme.surface.withValues(alpha: 0.08),
+                              ],
+                              stops: const [0.0, 0.45, 1.0],
+                            ),
+                            border: Border.all(
+                              color: accent.withValues(
+                                alpha: isDark ? 0.1 : 0.18,
+                              ),
+                            ),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: AppRadii.matRadius,
+                            child: SeriesReleaseCoverImage(
+                              release: release,
+                              heroTag: SeriesReleaseCoverImage.heroTagFor(
+                                release,
+                              ),
+                              borderRadius: AppRadii.matRadius,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 2, 12, 14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            release.seriesName,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: CollectibleTypography.seriesHeroTitle(
+                              textTheme,
+                              scheme,
+                            ).copyWith(fontSize: 19),
+                          ),
+                          SeriesHeroMetaBlock(
+                            brand: release.brand,
+                            ipLine: release.ipLine ?? release.brand,
+                            trailingMeta: release.lineup.length == 1
+                                ? '1 figure'
+                                : '${release.lineup.length} figures',
+                            density: SeriesHeroMetaDensity.compact,
+                          ),
+                          const SizedBox(height: 12),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: SaveSeriesReleaseButton(release: release),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 2, 12, 14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        release.seriesName,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: CollectibleTypography.seriesHeroTitle(
-                          textTheme,
-                          scheme,
-                        ).copyWith(fontSize: 19),
-                      ),
-                      SeriesHeroMetaBlock(
-                        brand: release.brand,
-                        ipLine: release.ipLine ?? release.brand,
-                        trailingMeta: release.lineup.length == 1
-                            ? '1 figure'
-                            : '${release.lineup.length} figures',
-                        density: SeriesHeroMetaDensity.compact,
-                      ),
-                      const SizedBox(height: 12),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            SeriesReleaseWishlistButton(release: release),
-                            const SizedBox(width: 4),
-                            SaveSeriesReleaseButton(release: release),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+              ),
+              Positioned(
+                top: 10,
+                right: 10,
+                child: SeriesReleaseWishlistButton(release: release),
+              ),
+            ],
           ),
         ),
       ),
