@@ -15,6 +15,7 @@ import 'package:blindbox_app/features/collection/data/custom_series_conventions.
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_brand_facets.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_ip_facets.dart';
 import 'package:blindbox_app/features/collection/presentation/wishlist_undo_snackbar.dart';
+import 'package:blindbox_app/features/collection/presentation/wishlist_figure_details_metadata.dart';
 import 'package:blindbox_app/features/collection/widgets/custom_series_form_sheet.dart';
 import 'package:blindbox_app/features/collection/widgets/add_to_collection_sheet.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_brand_filter_row.dart';
@@ -884,7 +885,8 @@ class _WishlistFigurePreviewSheet extends StatelessWidget {
     final figure = row.figure;
     final series = row.series;
     final brand = series.brand.trim();
-    final figureType = _wishlistFigureTypeLabel(figure);
+    final figureType = WishlistFigureDetailsMetadata.typeLabel(figure);
+    final figureOdds = WishlistFigureDetailsMetadata.oddsLabel(figure);
     final seriesName = series.name.trim().isNotEmpty
         ? series.name.trim()
         : shelfSeriesIpLabel(series).trim();
@@ -945,11 +947,16 @@ class _WishlistFigurePreviewSheet extends StatelessWidget {
                     height: 1.25,
                   ),
                 ),
-                if (figureType != null) ...[
-                  const SizedBox(height: 19),
+                const SizedBox(height: 19),
+                _WishlistFigurePreviewMetadata(
+                  label: 'Type',
+                  value: figureType,
+                ),
+                if (figureOdds != null) ...[
+                  const SizedBox(height: 12),
                   _WishlistFigurePreviewMetadata(
-                    label: 'Type',
-                    value: figureType,
+                    label: 'Odds',
+                    value: figureOdds,
                   ),
                 ],
                 if (brand.isNotEmpty) ...[
@@ -962,25 +969,6 @@ class _WishlistFigurePreviewSheet extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  String? _wishlistFigureTypeLabel(ShelfFigure figure) {
-    final raw = figure.rarity.trim();
-    if (raw.isEmpty) {
-      return figure.isSecret ? 'Secret Figure' : null;
-    }
-
-    final normalized = raw.toLowerCase();
-    if (normalized == 'regular') return 'Regular Figure';
-    if (normalized == 'secret') return 'Secret Figure';
-    if (normalized == 'hidden') return 'Hidden Figure';
-    if (normalized == 'chase') return 'Chase';
-    if (normalized == 'limited edition') return 'Limited Edition';
-    if (raw.endsWith('Figure') || raw.endsWith('Edition')) return raw;
-    if (figure.isSecret && normalized.contains('secret')) {
-      return 'Secret Figure';
-    }
-    return raw;
   }
 }
 

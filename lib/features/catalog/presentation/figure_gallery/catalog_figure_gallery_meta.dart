@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart';
 final RegExp _galleryOddsTokenPattern = RegExp(r'\d+\s*:\s*\d+');
 
 /// Normalizes pull odds to `1:72` form; null when [raw] is not a ratio label.
-@visibleForTesting
 String? catalogFigureGalleryNormalizeOdds(String? raw) {
   final label = raw?.trim();
   if (label == null || label.isEmpty) return null;
@@ -31,7 +30,6 @@ bool catalogFigureGalleryLabelDenotesSecret(String label) {
 }
 
 /// Splits a combined rarity string into descriptive rarity and odds.
-@visibleForTesting
 ({String? rarity, String? odds}) catalogFigureGallerySplitRarityOdds(
   String? raw,
 ) {
@@ -41,8 +39,7 @@ bool catalogFigureGalleryLabelDenotesSecret(String label) {
   }
 
   final oddsOnly = catalogFigureGalleryNormalizeOdds(label);
-  if (oddsOnly != null &&
-      RegExp(r'^\d+\s*:\s*\d+\s*$').hasMatch(label)) {
+  if (oddsOnly != null && RegExp(r'^\d+\s*:\s*\d+\s*$').hasMatch(label)) {
     return (rarity: null, odds: oddsOnly);
   }
 
@@ -52,7 +49,8 @@ bool catalogFigureGalleryLabelDenotesSecret(String label) {
   }
 
   final odds = catalogFigureGalleryNormalizeOdds(oddsMatch.group(0)!);
-  var rarity = '${label.substring(0, oddsMatch.start)}'
+  var rarity =
+      '${label.substring(0, oddsMatch.start)}'
       '${label.substring(oddsMatch.end)}';
   rarity = rarity.replaceAll('·', ' ').replaceAll(RegExp(r'\s+'), ' ').trim();
   return (rarity: rarity.isEmpty ? null : rarity, odds: odds);
