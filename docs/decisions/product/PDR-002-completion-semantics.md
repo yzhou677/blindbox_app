@@ -54,6 +54,7 @@ Complete and Master Complete.
 ## Related Decisions
 
 - [`PDR-001: Collector Type Semantics`](PDR-001-collector-type-semantics.md)
+- [`PDR-003: Dreamer Semantics`](PDR-003-dreamer-semantics.md)
 - [`docs/COLLECTION_ARCHITECTURE_NOTES.md`](../../COLLECTION_ARCHITECTURE_NOTES.md)
 - [`lib/features/collection/domain/series_completion_resolution.dart`](../../../lib/features/collection/domain/series_completion_resolution.dart)
 

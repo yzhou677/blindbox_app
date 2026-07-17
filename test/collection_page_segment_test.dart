@@ -142,4 +142,56 @@ void main() {
     expect(summaryY, lessThan(segmentY));
     expect(segmentY, lessThan(addSeriesY));
   });
+
+  testWidgets('summary to segment spacing is consistent across tabs', (
+    tester,
+  ) async {
+    final series = testShelfSeries(id: 's1', name: 'Dimoo One');
+    await pumpScreen(
+      tester,
+      CollectionSnapshot(
+        shelfSeries: [series],
+        figureStates: const {},
+        seriesWishlist: const [
+          WishlistedCatalogSeries(
+            catalogSeriesId: 'saved-series',
+            name: 'Saved Series',
+            brand: 'POP MART',
+            ipName: 'Molly',
+            imageKey: 'saved-series',
+            addedAtMicros: 10,
+          ),
+        ],
+      ),
+    );
+
+    double currentSummaryToSegmentGap() {
+      final expandedSummary = find.byKey(
+        const Key('collection_summary_stats_card'),
+      );
+      final compactSummary = find.byKey(
+        const Key('collection_insights_compact_glance'),
+      );
+      final summaryFinder = expandedSummary.evaluate().isNotEmpty
+          ? expandedSummary
+          : compactSummary;
+      final summaryBottom = tester.getBottomLeft(summaryFinder).dy;
+      final segmentTop =
+          tester.getTopLeft(find.byType(CollectionPageSegmentControl)).dy;
+      return segmentTop - summaryBottom;
+    }
+
+    final shelfGap = currentSummaryToSegmentGap();
+
+    await tester.tap(find.text('Insights'));
+    await tester.pumpAndSettle();
+    final insightsGap = currentSummaryToSegmentGap();
+
+    await tester.tap(find.text('Wishlist'));
+    await tester.pumpAndSettle();
+    final wishlistGap = currentSummaryToSegmentGap();
+
+    expect(insightsGap, shelfGap);
+    expect(wishlistGap, shelfGap);
+  });
 }

@@ -1,5 +1,6 @@
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/presentation/wishlist_undo_snackbar.dart';
 import 'package:blindbox_app/features/home/domain/series_release.dart';
 import 'package:blindbox_app/features/home/widgets/save_series_release_button.dart';
 import 'package:blindbox_app/models/collectible.dart';
@@ -245,5 +246,43 @@ void main() {
     expect(find.text('Add to my collection'), findsNothing);
 
     container.dispose();
+  });
+
+  testWidgets('release wishlist heart adds with snackbar undo', (tester) async {
+    final release = _release(
+      dropId: 'wish_drop',
+      seriesName: 'Wish Drop',
+      brand: 'POP MART',
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          collectionNotifierProvider.overrideWith(
+            () => _SeededCollectionNotifier(CollectionSnapshot.emptyTest()),
+          ),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: Center(child: SeriesReleaseWishlistButton(release: release)),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.favorite_border_rounded));
+    await tester.pump();
+
+    expect(find.text('Added to Wishlist'), findsOneWidget);
+    expect(find.text('UNDO'), findsOneWidget);
+    expect(find.byIcon(Icons.favorite_rounded), findsOneWidget);
+
+    await tester.tap(find.byType(SnackBarAction), warnIfMissed: false);
+    await tester.pump();
+
+    expect(find.byIcon(Icons.favorite_border_rounded), findsOneWidget);
+    await tester.pump(wishlistUndoSnackBarDuration);
+    await tester.pump(const Duration(milliseconds: 350));
   });
 }

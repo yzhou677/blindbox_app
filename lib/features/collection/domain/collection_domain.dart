@@ -84,6 +84,75 @@ class CatalogFigure {
   final String? taxonomyIpId;
 }
 
+/// Catalog Series saved as future collecting intent.
+///
+/// This is intentionally separate from [ShelfSeries]. A catalog series can be
+/// untracked, wishlisted, or in Collection, but never more than one at a time.
+@immutable
+class WishlistedCatalogSeries {
+  const WishlistedCatalogSeries({
+    required this.catalogSeriesId,
+    required this.name,
+    required this.brand,
+    required this.ipName,
+    required this.imageKey,
+    required this.addedAtMicros,
+    this.taxonomyBrandId,
+    this.taxonomyIpId,
+  });
+
+  final String catalogSeriesId;
+  final String name;
+  final String brand;
+  final String ipName;
+  final String imageKey;
+  final int addedAtMicros;
+  final String? taxonomyBrandId;
+  final String? taxonomyIpId;
+
+  DateTime get addedAt => DateTime.fromMicrosecondsSinceEpoch(addedAtMicros);
+
+  WishlistedCatalogSeries copyWith({
+    String? name,
+    String? brand,
+    String? ipName,
+    String? imageKey,
+    int? addedAtMicros,
+    String? taxonomyBrandId,
+    String? taxonomyIpId,
+  }) {
+    return WishlistedCatalogSeries(
+      catalogSeriesId: catalogSeriesId,
+      name: name ?? this.name,
+      brand: brand ?? this.brand,
+      ipName: ipName ?? this.ipName,
+      imageKey: imageKey ?? this.imageKey,
+      addedAtMicros: addedAtMicros ?? this.addedAtMicros,
+      taxonomyBrandId: taxonomyBrandId ?? this.taxonomyBrandId,
+      taxonomyIpId: taxonomyIpId ?? this.taxonomyIpId,
+    );
+  }
+
+  static WishlistedCatalogSeries fromCatalogTemplate(
+    CatalogSeries template, {
+    int? addedAtMicros,
+  }) {
+    final cover = template.catalogCoverImageKey?.trim();
+    return WishlistedCatalogSeries(
+      catalogSeriesId: template.templateId,
+      name: template.name,
+      brand: template.brand,
+      ipName: template.ipName,
+      imageKey: (cover != null && cover.isNotEmpty)
+          ? cover
+          : template.templateId,
+      addedAtMicros: addedAtMicros ?? DateTime.now().microsecondsSinceEpoch,
+      taxonomyBrandId: template.taxonomyBrandId,
+      taxonomyIpId: template.taxonomyIpId,
+    );
+  }
+}
+
 /// User-owned shelf row: catalog clone, marketplace drop import, or fully custom.
 @immutable
 class ShelfSeries {
@@ -155,14 +224,14 @@ String? recommendationCatalogSeriesId(ShelfSeries series) {
 
 /// IP line for shelf UI — plain [ShelfSeries.ipName] or legacy `brand · ip` from Home imports.
 String shelfSeriesIpLabel(ShelfSeries series) {
-  return shelfIpLabelFromBrandLine(
-    brand: series.brand,
-    line: series.ipName,
-  );
+  return shelfIpLabelFromBrandLine(brand: series.brand, line: series.ipName);
 }
 
 /// Normalizes catalog IP text or legacy `brand · ip` copy onto the shelf.
-String shelfIpLabelFromBrandLine({required String brand, required String line}) {
+String shelfIpLabelFromBrandLine({
+  required String brand,
+  required String line,
+}) {
   final ip = line.trim();
   if (ip.isEmpty) return ip;
   const sep = ' · ';
@@ -247,16 +316,25 @@ enum FigureCollectionState { none, wishlist, owned }
 /// Runtime ownership for one shelf figure id ([ShelfFigure.id] instance key).
 @immutable
 class TrackedFigure {
-  const TrackedFigure({required this.figureId, required this.state});
+  const TrackedFigure({
+    required this.figureId,
+    required this.state,
+    this.updatedAtMicros,
+  });
 
   final String figureId;
   final FigureCollectionState state;
+  final int? updatedAtMicros;
 
   bool get owned => state == FigureCollectionState.owned;
   bool get wishlist => state == FigureCollectionState.wishlist;
 
-  TrackedFigure copyWith({FigureCollectionState? state}) {
-    return TrackedFigure(figureId: figureId, state: state ?? this.state);
+  TrackedFigure copyWith({FigureCollectionState? state, int? updatedAtMicros}) {
+    return TrackedFigure(
+      figureId: figureId,
+      state: state ?? this.state,
+      updatedAtMicros: updatedAtMicros ?? this.updatedAtMicros,
+    );
   }
 }
 
@@ -297,6 +375,16 @@ SeriesProgressCounts progressForSeries(
   return SeriesProgressCounts(owned: o, wishlist: w, missing: m);
 }
 
+/// A series is Started only after at least one figure is owned.
+///
+/// This is a Collector Type product concept: a shelf row with zero owned
+/// figures is tracked, but not yet started.
+bool isStartedSeries(
+  ShelfSeries series,
+  Map<String, TrackedFigure> states,
+) =>
+    progressForSeries(series, states).owned > 0;
+
 /// Per-pass progress cache for shelf browse (partition → sort → feed).
 ///
 /// Lives only for one [CollectionScreen.build] — not persisted across rebuilds.
@@ -306,10 +394,8 @@ final class ShelfBrowseProgressLookup {
   final Map<String, TrackedFigure> _states;
   final Map<String, SeriesProgressCounts> _cache = {};
 
-  SeriesProgressCounts forSeries(ShelfSeries series) => _cache.putIfAbsent(
-        series.id,
-        () => progressForSeries(series, _states),
-      );
+  SeriesProgressCounts forSeries(ShelfSeries series) =>
+      _cache.putIfAbsent(series.id, () => progressForSeries(series, _states));
 }
 
 /// Deep copy a [CatalogSeries] template onto the shelf with fresh instance ids.
@@ -405,15 +491,44 @@ class CollectionSnapshot {
   const CollectionSnapshot({
     required this.shelfSeries,
     required this.figureStates,
+    this.seriesWishlist = const [],
   });
 
   final List<ShelfSeries> shelfSeries;
   final Map<String, TrackedFigure> figureStates;
+  final List<WishlistedCatalogSeries> seriesWishlist;
 
-  static CollectionSnapshot emptyTest() =>
-      const CollectionSnapshot(shelfSeries: [], figureStates: {});
+  static CollectionSnapshot emptyTest() => const CollectionSnapshot(
+    shelfSeries: [],
+    figureStates: {},
+    seriesWishlist: [],
+  );
+
+  CollectionSnapshot copyWith({
+    List<ShelfSeries>? shelfSeries,
+    Map<String, TrackedFigure>? figureStates,
+    List<WishlistedCatalogSeries>? seriesWishlist,
+  }) {
+    return CollectionSnapshot(
+      shelfSeries: shelfSeries ?? this.shelfSeries,
+      figureStates: figureStates ?? this.figureStates,
+      seriesWishlist: seriesWishlist ?? this.seriesWishlist,
+    );
+  }
 
   int get trackedSeriesCount => shelfSeries.length;
+
+  int get startedSeriesCount {
+    var c = 0;
+    for (final series in shelfSeries) {
+      if (isStartedSeries(series, figureStates)) c++;
+    }
+    return c;
+  }
+
+  int get unstartedSeriesCount => trackedSeriesCount - startedSeriesCount;
+
+  int get totalWishlistedSeries => seriesWishlist.length;
 
   int get totalOwnedFigures {
     var c = 0;
@@ -464,5 +579,11 @@ class CollectionSnapshot {
       }
     }
     return false;
+  }
+
+  bool hasCatalogSeriesWishlisted(String catalogSeriesId) {
+    final id = catalogSeriesId.trim();
+    if (id.isEmpty) return false;
+    return seriesWishlist.any((s) => s.catalogSeriesId == id);
   }
 }

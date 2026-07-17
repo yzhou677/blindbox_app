@@ -1,6 +1,5 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/features/collection/presentation/completion_metric_tooltips.dart';
-import 'package:blindbox_app/features/collection/presentation/collection_summary_editorial.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_summary_section.dart';
 import 'package:flutter/material.dart';
@@ -25,28 +24,43 @@ class CollectionInsightsCompactMetric {
   final CollectionInsightsCompactMetricKind kind;
 }
 
-/// Formatting for the collapsed morphing summary — swap variants here without
+/// Formatting for the collapsed morphing summary ??swap variants here without
 /// touching [CollectionInsightsDashboard].
 abstract final class CollectionInsightsCompactSummaryFormat {
   CollectionInsightsCompactSummaryFormat._();
 
   static List<CollectionInsightsCompactMetric> metrics(
     CollectionAggregateStats stats,
+    CollectionSummaryMetricLabels labels,
   ) {
+    if (!labels.showSecondRow) {
+      return [
+        CollectionInsightsCompactMetric(
+          count: stats.inCollection,
+          label: labels.primary,
+          kind: CollectionInsightsCompactMetricKind.figures,
+        ),
+        CollectionInsightsCompactMetric(
+          count: stats.wantListCount,
+          label: labels.secondary,
+          kind: CollectionInsightsCompactMetricKind.figures,
+        ),
+      ];
+    }
     return [
       CollectionInsightsCompactMetric(
         count: stats.inCollection,
-        label: CollectionSummaryLabels.figures,
+        label: labels.primary,
         kind: CollectionInsightsCompactMetricKind.figures,
       ),
       CollectionInsightsCompactMetric(
         count: stats.completedSeriesCount,
-        label: CollectionSummaryLabels.seriesComplete,
+        label: labels.tertiary,
         kind: CollectionInsightsCompactMetricKind.completedSeries,
       ),
       CollectionInsightsCompactMetric(
         count: stats.masterCompleteSeriesCount,
-        label: CollectionSummaryLabels.masterComplete,
+        label: labels.quaternary,
         kind: CollectionInsightsCompactMetricKind.masterComplete,
       ),
     ];
@@ -54,12 +68,13 @@ abstract final class CollectionInsightsCompactSummaryFormat {
 
   /// Compact numeric counts for layout tests (glyphs are separate icons).
   static List<String> compactCounts(CollectionAggregateStats stats) {
-    final m = metrics(stats);
+    final m = metrics(stats, CollectionSummaryMetricLabels.collection);
     return m.map((e) => '${e.count}').toList();
   }
 
-  /// Compact crown glyph — emoji reads better than icon font at this size.
-  static const masterCompleteGlyph = '👑';
+  /// Compact achievement glyphs - emoji reads better than icon font here.
+  static const completedSeriesGlyph = '\u2705';
+  static const masterCompleteGlyph = '\u{1F451}';
 
   static String semanticsLabel(CollectionAggregateStats stats) {
     return '${stats.inCollection} ${CollectionVocabulary.ownedFigures}, '
@@ -68,7 +83,7 @@ abstract final class CollectionInsightsCompactSummaryFormat {
   }
 }
 
-/// Collapsed achievement summary — morph progress driven by parent animation.
+/// Collapsed achievement summary ??morph progress driven by parent animation.
 class CollectionInsightsCompactSummary extends StatelessWidget {
   const CollectionInsightsCompactSummary({
     super.key,
@@ -78,6 +93,7 @@ class CollectionInsightsCompactSummary extends StatelessWidget {
     required this.valueStyle,
     required this.labelStyle,
     required this.glyphColor,
+    this.metricLabels = CollectionSummaryMetricLabels.collection,
   });
 
   final CollectionAggregateStats stats;
@@ -88,10 +104,14 @@ class CollectionInsightsCompactSummary extends StatelessWidget {
   final TextStyle valueStyle;
   final TextStyle labelStyle;
   final Color glyphColor;
+  final CollectionSummaryMetricLabels metricLabels;
 
   @override
   Widget build(BuildContext context) {
-    final metrics = CollectionInsightsCompactSummaryFormat.metrics(stats);
+    final metrics = CollectionInsightsCompactSummaryFormat.metrics(
+      stats,
+      metricLabels,
+    );
     final row = Row(
       children: [
         for (var i = 0; i < metrics.length; i++) ...[
@@ -168,10 +188,12 @@ class _MorphMetricColumn extends StatelessWidget {
     final size = _glyphSize * t.clamp(0.01, 1.0);
     final color = _muted ? _mutedCountColor(scheme) : glyphColor;
     return switch (metric.kind) {
-      CollectionInsightsCompactMetricKind.completedSeries => Icon(
-        Icons.check_rounded,
-        size: size,
-        color: color,
+      CollectionInsightsCompactMetricKind.completedSeries => Opacity(
+        opacity: _muted ? 0.36 : 1,
+        child: Text(
+          CollectionInsightsCompactSummaryFormat.completedSeriesGlyph,
+          style: TextStyle(fontSize: size, height: 1.0, color: color),
+        ),
       ),
       CollectionInsightsCompactMetricKind.masterComplete => Opacity(
         opacity: _muted ? 0.36 : 1,

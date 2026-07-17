@@ -53,9 +53,9 @@ CollectorTypeSharePayload? buildCollectorTypeSharePayload(
       motto: 'Early Secret ownership counted.',
     ),
     CollectorTypeArchetypeId.dreamer => (
-      top: 'WISHLIST',
-      bottom: 'STANDS OUT.',
-      motto: 'Wishlist figures counted.',
+      top: 'FUTURE PLANS',
+      bottom: 'STAND OUT.',
+      motto: 'Future collecting plans counted.',
     ),
     CollectorTypeArchetypeId.loyalist => (
       top: 'ONE WORLD.',

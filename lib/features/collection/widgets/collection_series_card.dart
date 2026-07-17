@@ -1,13 +1,12 @@
 import 'dart:async';
 
-import 'package:blindbox_app/core/theme/app_radii.dart';
-import 'package:blindbox_app/core/theme/collectible_elevation.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/domain/series_completion_resolution.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_card_tokens.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_series_thumbnail.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
+import 'package:blindbox_app/features/collection/widgets/collection_browse_card.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_progress_voice.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -47,6 +46,7 @@ class CollectionSeriesCard extends StatefulWidget {
     required this.onTap,
     this.onLongPress,
     this.density = CollectionSeriesCardDensity.standard,
+    this.overlayBuilder,
   });
 
   final ShelfSeries series;
@@ -57,6 +57,7 @@ class CollectionSeriesCard extends StatefulWidget {
   /// Opens contextual management (edit/remove). Omit on read-only surfaces.
   final Future<void> Function()? onLongPress;
   final CollectionSeriesCardDensity density;
+  final WidgetBuilder? overlayBuilder;
 
   /// Cross-axis extent for horizontal rails — sized by the card tokens.
   static double get railExtent =>
@@ -131,8 +132,9 @@ class _CollectionSeriesCardState extends State<CollectionSeriesCard> {
     final height = _compact
         ? CollectionCardTokens.compactMinRailHeight
         : CollectionCardTokens.minRailHeight;
-    final padding =
-        _compact ? CollectionCardTokens.compactPadding : CollectionCardTokens.padding;
+    final padding = _compact
+        ? CollectionCardTokens.compactPadding
+        : CollectionCardTokens.padding;
     final coverExtent = _compact
         ? CollectionCardTokens.compactCoverExtent
         : CollectionCardTokens.coverExtent;
@@ -168,109 +170,58 @@ class _CollectionSeriesCardState extends State<CollectionSeriesCard> {
       scale: _managing ? _pressScale : 1,
       duration: _pressHold,
       curve: Curves.easeOutCubic,
-      child: SizedBox(
+      child: CollectionBrowseCard(
         key: const Key('collection_series_card'),
+        title: series.name,
+        subtitle: meta,
+        titleMaxLines: _compact ? 1 : 2,
+        titleStyle: CollectibleTypography.catalogSeriesRowTitle(
+          textTheme,
+          scheme,
+        ).copyWith(
+          fontSize: _compact ? 13 : null,
+          height: _compact ? 1.2 : null,
+        ),
+        subtitleStyle: CollectibleTypography.seriesIpLine(
+          textTheme,
+          scheme,
+        ).copyWith(
+          fontSize: _compact ? 11 : null,
+        ),
+        image: CollectionSeriesThumbnail(
+          series: series,
+          extent: coverExtent,
+        ),
+        footer: isComplete
+            ? _CompletedFooter(
+                isMasterComplete: isMasterComplete,
+                textTheme: textTheme,
+                scheme: scheme,
+                barColor: barColor,
+                isDark: isDark,
+                compact: _compact,
+              )
+            : _InProgressFooter(
+                ratio: ratio,
+                label: progressLabel,
+                textTheme: textTheme,
+                scheme: scheme,
+                barColor: barColor,
+                isDark: isDark,
+                compact: _compact,
+              ),
+        onTap: widget.onTap,
+        onLongPress: widget.onLongPress == null ? null : _handleLongPress,
+        overlayBuilder: widget.overlayBuilder,
         width: width,
         height: height,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: AppRadii.cardRadius,
-            boxShadow: CollectibleElevation.softCard(context),
-          ),
-          child: Material(
-            color: scheme.surface,
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: AppRadii.cardRadius,
-              side: BorderSide(color: borderColor),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                InkWell(
-                  onTap: widget.onTap,
-                  onLongPress:
-                      widget.onLongPress == null ? null : _handleLongPress,
-                  child: Padding(
-                    padding: padding,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Center(
-                          child: ClipRRect(
-                            borderRadius: AppRadii.matRadius,
-                            child: CollectionSeriesThumbnail(
-                              series: series,
-                              extent: coverExtent,
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: imageToTitleGap),
-                        Text(
-                          series.name,
-                          maxLines: _compact ? 1 : 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: CollectibleTypography.catalogSeriesRowTitle(
-                            textTheme,
-                            scheme,
-                          ).copyWith(
-                            fontSize: _compact ? 13 : null,
-                            height: _compact ? 1.2 : null,
-                          ),
-                        ),
-                        if (meta.isNotEmpty) ...[
-                          SizedBox(height: titleToMetaGap),
-                          Text(
-                            meta,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: CollectibleTypography.seriesIpLine(
-                              textTheme,
-                              scheme,
-                            ).copyWith(
-                              fontSize: _compact ? 11 : null,
-                            ),
-                          ),
-                        ],
-                        const Spacer(),
-                        SizedBox(height: metaToProgressGap),
-                        if (isComplete)
-                          _CompletedFooter(
-                            isMasterComplete: isMasterComplete,
-                            textTheme: textTheme,
-                            scheme: scheme,
-                            barColor: barColor,
-                            isDark: isDark,
-                            compact: _compact,
-                          )
-                        else
-                          _InProgressFooter(
-                            ratio: ratio,
-                            label: progressLabel,
-                            textTheme: textTheme,
-                            scheme: scheme,
-                            barColor: barColor,
-                            isDark: isDark,
-                            compact: _compact,
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-                IgnorePointer(
-                  child: AnimatedOpacity(
-                    opacity: _managing ? 1 : 0,
-                    duration: _pressHold,
-                    child: ColoredBox(
-                      color: Colors.black.withValues(alpha: 0.08),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+        padding: padding,
+        imageExtent: coverExtent,
+        imageToTitleGap: imageToTitleGap,
+        titleToMetaGap: titleToMetaGap,
+        metaToFooterGap: metaToProgressGap,
+        borderColor: borderColor,
+        showPressedOverlay: _managing,
       ),
     );
   }

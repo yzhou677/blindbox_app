@@ -1,4 +1,4 @@
-import 'package:blindbox_app/core/theme/collectible_motion.dart';
+﻿import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/core/theme/collectible_tokens.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_summary_editorial.dart';
@@ -89,8 +89,14 @@ void main() {
     expect(find.text('48'), findsOneWidget);
     expect(find.text('7'), findsOneWidget);
     expect(find.text('5'), findsOneWidget);
-    expect(find.byIcon(Icons.check_rounded), findsOneWidget);
-    expect(find.text('👑'), findsOneWidget);
+    expect(
+      find.text(CollectionInsightsCompactSummaryFormat.completedSeriesGlyph),
+      findsOneWidget,
+    );
+    expect(
+      find.text(CollectionInsightsCompactSummaryFormat.masterCompleteGlyph),
+      findsOneWidget,
+    );
     expect(find.text(CollectionSummaryLabels.figures), findsNothing);
     expect(find.text(CollectionSummaryLabels.wishlist), findsNothing);
     // Persistent Summary header communicates expand/collapse.
@@ -99,7 +105,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.byIcon(Icons.expand_more_rounded), findsOneWidget);
-    // Insights navigation lives in the Shelf | Insights segment — not here.
+    // Insights navigation lives in the Shelf | Insights segment ??not here.
     expect(
       find.text(CollectionInsightsDashboardCopy.sectionTitle),
       findsNothing,

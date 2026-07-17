@@ -121,11 +121,138 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
     if (nextState == FigureCollectionState.none) {
       m.remove(figureId);
     } else {
-      m[figureId] = TrackedFigure(figureId: figureId, state: nextState);
+      m[figureId] = TrackedFigure(
+        figureId: figureId,
+        state: nextState,
+        updatedAtMicros: DateTime.now().microsecondsSinceEpoch,
+      );
     }
-    _commit(
-      CollectionSnapshot(shelfSeries: state.shelfSeries, figureStates: m),
+    _commit(state.copyWith(figureStates: m));
+  }
+
+  void setFigureWishlisted(String figureId, bool wishlisted) {
+    if (!_figureOnShelf(figureId)) return;
+    final current = state.trackedOrDefault(figureId);
+    final next = Map<String, TrackedFigure>.from(state.figureStates);
+    if (wishlisted) {
+      if (current.wishlist) return;
+      next[figureId] = TrackedFigure(
+        figureId: figureId,
+        state: FigureCollectionState.wishlist,
+        updatedAtMicros: DateTime.now().microsecondsSinceEpoch,
+      );
+    } else {
+      if (!current.wishlist) return;
+      next.remove(figureId);
+    }
+    _commit(state.copyWith(figureStates: next));
+  }
+
+  void restoreFigureWishlist(TrackedFigure previous) {
+    if (previous.state != FigureCollectionState.wishlist) return;
+    final figureId = previous.figureId.trim();
+    if (figureId.isEmpty || !_figureOnShelf(figureId)) return;
+    final current = state.trackedOrDefault(figureId);
+    if (current.owned || current.wishlist) return;
+    final next = Map<String, TrackedFigure>.from(state.figureStates);
+    next[figureId] = previous;
+    _commit(state.copyWith(figureStates: next));
+  }
+
+  void setFigureOwned(String figureId, bool owned) {
+    if (!_figureOnShelf(figureId)) return;
+    final current = state.trackedOrDefault(figureId);
+    final next = Map<String, TrackedFigure>.from(state.figureStates);
+    if (owned) {
+      if (current.owned) return;
+      next[figureId] = TrackedFigure(
+        figureId: figureId,
+        state: FigureCollectionState.owned,
+        updatedAtMicros: DateTime.now().microsecondsSinceEpoch,
+      );
+    } else {
+      if (!current.owned) return;
+      next.remove(figureId);
+    }
+    _commit(state.copyWith(figureStates: next));
+  }
+
+  void addSeriesToWishlist(CatalogSeries template, {int? addedAtMicros}) {
+    final catalogId = template.templateId.trim();
+    if (catalogId.isEmpty) return;
+    if (state.hasTemplateOnShelf(catalogId)) return;
+    if (state.hasCatalogSeriesWishlisted(catalogId)) return;
+    final entry = WishlistedCatalogSeries.fromCatalogTemplate(
+      template,
+      addedAtMicros: addedAtMicros,
     );
+    _commit(state.copyWith(seriesWishlist: [entry, ...state.seriesWishlist]));
+  }
+
+  void removeSeriesFromWishlist(String catalogSeriesId) {
+    final catalogId = catalogSeriesId.trim();
+    if (catalogId.isEmpty) return;
+    final next = state.seriesWishlist
+        .where((s) => s.catalogSeriesId != catalogId)
+        .toList(growable: false);
+    if (next.length == state.seriesWishlist.length) return;
+    _commit(state.copyWith(seriesWishlist: next));
+  }
+
+  void restoreSeriesWishlist(WishlistedCatalogSeries entry, {int? atIndex}) {
+    final catalogId = entry.catalogSeriesId.trim();
+    if (catalogId.isEmpty) return;
+    if (state.hasTemplateOnShelf(catalogId) ||
+        state.hasTemplateOnShelf('drop-$catalogId')) {
+      return;
+    }
+    if (state.hasCatalogSeriesWishlisted(catalogId)) return;
+    final next = [...state.seriesWishlist];
+    final index = atIndex?.clamp(0, next.length) ?? 0;
+    next.insert(index, entry);
+    _commit(state.copyWith(seriesWishlist: next));
+  }
+
+  void toggleSeriesWishlist(CatalogSeries template) {
+    if (state.hasCatalogSeriesWishlisted(template.templateId)) {
+      removeSeriesFromWishlist(template.templateId);
+    } else {
+      addSeriesToWishlist(template);
+    }
+  }
+
+  void addSeriesReleaseToWishlist(SeriesRelease release, {int? addedAtMicros}) {
+    final catalogId = release.dropId.trim();
+    if (catalogId.isEmpty) return;
+    final catalogKey = 'drop-$catalogId';
+    if (state.hasTemplateOnShelf(catalogKey) ||
+        state.hasTemplateOnShelf(catalogId)) {
+      return;
+    }
+    if (state.hasCatalogSeriesWishlisted(catalogId)) return;
+    final cover = release.seriesImageKey.trim();
+    final ipLine = release.ipLine?.trim();
+    final entry = WishlistedCatalogSeries(
+      catalogSeriesId: catalogId,
+      name: release.seriesName,
+      brand: release.brand,
+      ipName: (ipLine != null && ipLine.isNotEmpty)
+          ? shelfIpLabelFromBrandLine(brand: release.brand, line: ipLine)
+          : release.seriesName,
+      imageKey: cover.isNotEmpty ? cover : catalogId,
+      addedAtMicros: addedAtMicros ?? DateTime.now().microsecondsSinceEpoch,
+      taxonomyBrandId: release.taxonomyBrandId,
+      taxonomyIpId: release.taxonomyIpId,
+    );
+    _commit(state.copyWith(seriesWishlist: [entry, ...state.seriesWishlist]));
+  }
+
+  void toggleSeriesReleaseWishlist(SeriesRelease release) {
+    if (state.hasCatalogSeriesWishlisted(release.dropId)) {
+      removeSeriesFromWishlist(release.dropId);
+    } else {
+      addSeriesReleaseToWishlist(release);
+    }
   }
 
   bool _figureOnShelf(String figureId) {
@@ -142,6 +269,19 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       if (s.id == seriesId) return s;
     }
     return null;
+  }
+
+  List<WishlistedCatalogSeries> _seriesWishlistWithout(
+    Iterable<String> catalogSeriesIds,
+  ) {
+    final ids = catalogSeriesIds
+        .map((id) => id.trim())
+        .where((id) => id.isNotEmpty)
+        .toSet();
+    if (ids.isEmpty) return state.seriesWishlist;
+    return state.seriesWishlist
+        .where((s) => !ids.contains(s.catalogSeriesId))
+        .toList(growable: false);
   }
 
   /// Adds a cloned row from a catalog template (suggestions / browse). No-op if that template is already on shelf.
@@ -174,7 +314,9 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       brand: c.brand,
       ipName: shelfIpLabelFromBrandLine(
         brand: c.brand,
-        line: (c.ipLine?.trim().isNotEmpty ?? false) ? c.ipLine!.trim() : c.series,
+        line: (c.ipLine?.trim().isNotEmpty ?? false)
+            ? c.ipLine!.trim()
+            : c.series,
       ),
       figures: [figure],
       shelfAccent: c.shelfAccent ?? const Color(0xFFE8DEF5),
@@ -183,9 +325,9 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       imageKey: catalogKey,
     );
     _commit(
-      CollectionSnapshot(
+      state.copyWith(
         shelfSeries: [series, ...state.shelfSeries],
-        figureStates: state.figureStates,
+        seriesWishlist: _seriesWishlistWithout([catalogKey, c.id]),
       ),
     );
   }
@@ -237,9 +379,9 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       taxonomyIpId: release.taxonomyIpId,
     );
     _commit(
-      CollectionSnapshot(
+      state.copyWith(
         shelfSeries: [series, ...state.shelfSeries],
-        figureStates: state.figureStates,
+        seriesWishlist: _seriesWishlistWithout([catalogKey, release.dropId]),
       ),
     );
   }
@@ -255,9 +397,9 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       catalogTemplateKey: catalogKey,
     );
     _commit(
-      CollectionSnapshot(
+      state.copyWith(
         shelfSeries: [cloned, ...state.shelfSeries],
-        figureStates: state.figureStates,
+        seriesWishlist: _seriesWishlistWithout([catalogKey]),
       ),
     );
   }
@@ -348,12 +490,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
           ? trimmedCover
           : null,
     );
-    _commit(
-      CollectionSnapshot(
-        shelfSeries: [series, ...state.shelfSeries],
-        figureStates: state.figureStates,
-      ),
-    );
+    _commit(state.copyWith(shelfSeries: [series, ...state.shelfSeries]));
   }
 
   void updateCustomSeries({
@@ -420,12 +557,11 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
     );
 
     _commit(
-      CollectionSnapshot(
+      state.copyWith(
         shelfSeries: [
           for (final s in state.shelfSeries)
             if (s.id == seriesId) updated else s,
         ],
-        figureStates: state.figureStates,
       ),
     );
   }
@@ -449,8 +585,9 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
         ? CollectionInputSanitizer.rarityLabel(rarityLabel)
         : null;
     final trimmedUri = localImageUri?.trim();
-    final resolvedUri =
-        (trimmedUri != null && trimmedUri.isNotEmpty) ? trimmedUri : null;
+    final resolvedUri = (trimmedUri != null && trimmedUri.isNotEmpty)
+        ? trimmedUri
+        : null;
 
     final newFigure = ShelfFigure(
       id: figId,
@@ -487,12 +624,11 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
     );
 
     _commit(
-      CollectionSnapshot(
+      state.copyWith(
         shelfSeries: [
           for (final s in state.shelfSeries)
             if (s.id == seriesId) updatedSeries else s,
         ],
-        figureStates: state.figureStates,
       ),
     );
   }
@@ -519,8 +655,9 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
         ? CollectionInputSanitizer.rarityLabel(rarityLabel)
         : null;
     final trimmedUri = localImageUri?.trim();
-    final resolvedUri =
-        (trimmedUri != null && trimmedUri.isNotEmpty) ? trimmedUri : null;
+    final resolvedUri = (trimmedUri != null && trimmedUri.isNotEmpty)
+        ? trimmedUri
+        : null;
 
     final updatedFigure = ShelfFigure(
       id: old.id,
@@ -561,22 +698,17 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
     );
 
     _commit(
-      CollectionSnapshot(
+      state.copyWith(
         shelfSeries: [
           for (final s in state.shelfSeries)
             if (s.id == seriesId) updatedSeries else s,
         ],
-        figureStates: state.figureStates,
       ),
     );
   }
 
-  ({
-    String displayName,
-    String? brand,
-    String? ipDisplayName,
-    String? notes,
-  }) _sanitizeCustomSeriesMetadata({
+  ({String displayName, String? brand, String? ipDisplayName, String? notes})
+  _sanitizeCustomSeriesMetadata({
     required String seriesName,
     String? brand,
     String? ipDisplayName,
@@ -596,9 +728,8 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
     String? trimmedBrand,
     String? ipDisplayName,
   }) {
-    final brandCanon = CollectionTaxonomyCanonicalizer.resolveBrandFromUserInput(
-      trimmedBrand,
-    );
+    final brandCanon =
+        CollectionTaxonomyCanonicalizer.resolveBrandFromUserInput(trimmedBrand);
     final ipLine = (ipDisplayName?.trim().isEmpty ?? true)
         ? displayName
         : ipDisplayName!.trim();
@@ -621,7 +752,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       m.remove(f.id);
     }
     _commit(
-      CollectionSnapshot(
+      state.copyWith(
         shelfSeries: state.shelfSeries
             .where((s) => s.id != seriesId)
             .toList(growable: false),

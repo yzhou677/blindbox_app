@@ -10,6 +10,7 @@ Durable product semantics now live in:
 
 - [`PDR-001: Collector Type Semantics`](decisions/product/PDR-001-collector-type-semantics.md)
 - [`PDR-002: Completion Semantics`](decisions/product/PDR-002-completion-semantics.md)
+- [`PDR-003: Dreamer Semantics`](decisions/product/PDR-003-dreamer-semantics.md)
 
 This file remains the implementation contract for resolver policy, thresholds,
 snapshot compatibility, and collection-specific architecture.
@@ -302,9 +303,11 @@ Use canonical Regular-weighted completion (`resolveSeriesCompletion` / `aggregat
 | `completedRatio` | `completedSeriesCount / trackedSeriesCount` |
 | `nearCompleteRatio` | `nearCompleteSeriesCount / trackedSeriesCount` |
 | `secretHitRate` | `secretOwnedCount / totalSecretSlotCount` (**Secret slots**, not all figures) |
-| `dominantIpShare` | largest series count in one taxonomy IP / total shelf series |
+| `dominantIpShare` | largest Started Series count in one taxonomy IP / total Started Series count |
 | `customRatio` | `customSeriesCount / total shelf series` |
-| `wishlistRatio` | `wishlistFigureCount / (ownedFigureCount + wishlistFigureCount)` — tracked intent only |
+| `wishlistRatio` | `futureIntentCount / (startedSeriesCount + futureIntentCount)` — Dreamer intent only |
+| `startedSeriesCount` | Series with at least one owned Figure; Collection rows with zero owned Figures are not Started |
+| `futureIntentCount` | Wishlisted Series + Wishlisted Figures + unstarted Collection Series for Dreamer |
 | `recentRatio` | `recentCatalogSeriesCount / total shelf series` (releaseDate within **90** days) |
 | `averageRegularCompletion` | mean Regular `progressRatio` across shelf series |
 
@@ -327,30 +330,30 @@ Use canonical Regular-weighted completion (`resolveSeriesCompletion` / `aggregat
 
 | Type | Product sentence | Eligibility |
 | ---- | ---------------- | ----------- |
-| **Completionist** | Completion defines your shelf | ≥2 completed **and** `completedRatio ≥ 0.60`; else ≥2 near-complete **and** `nearCompleteRatio ≥ 0.60` |
+| **Completionist** | Completion defines your shelf | >3 series, then ≥2 completed **and** `completedRatio ≥ 0.60`; else ≥2 near-complete **and** `nearCompleteRatio ≥ 0.60` |
 | **Hunter** | You actively hunt Secrets—and you catch them | **>4** series, ≥2 Secrets, Secret slots > 0, `secretHitRate ≥ 0.50` |
 | **Lucky One** | Luck found you before hunting did | `!Hunter`, **≤4** series, ≥1 Secret, `secretHitRate ≥ 0.50` (Hunter’s prequel) |
-| **Loyalist** | One universe clearly defines your shelf | `dominantIpShare ≥ 0.60` **and** ≥2 series in that IP (brand fallback only if most rows lack IP — never multi-IP POP MART as Loyalist) |
-| **Curator** | You thoughtfully build across multiple universes, giving each one room to grow | `!Loyalist`, ≥3 distinct taxonomy IPs, `averageRegularCompletion ≥ 0.50` |
+| **Loyalist** | One universe clearly defines your shelf | Started Series `dominantIpShare ≥ 0.60` **and** ≥2 Started Series in that IP (brand fallback only if most started rows lack IP — never multi-IP POP MART as Loyalist) |
+| **Curator** | You thoughtfully build across multiple universes, giving each one room to grow | `!Loyalist`, ≥3 distinct Started taxonomy IPs, `averageRegularCompletion ≥ 0.50` |
 | **Wanderer** | You’re still discovering what defines your shelf | **Fallback only** — soft board floor (score 5) for Still/evolution; never beats specialized bases (≥28). Empty / early / one-series / mixed undefined shelves |
 | **Minimalist** | You keep a small, focused shelf and care deeply for what makes the cut | ≤3 series **and** `averageRegularCompletion ≥ 0.70` (**no** owned-figure cap) |
 | **Worldbuilder** | Your own creations define your shelf | ≥2 custom series **and** `customRatio > 0.50`; notes/covers/photos deepen **after** eligibility (custom rows only) |
-| **Dreamer** | You dream about what comes next more than what you already own | ≥2 wishlist figures **and** `wishlistRatio > 0.50` |
+| **Dreamer** | You dream about what comes next more than what you have started | ≥2 future-intent signals **and** `wishlistRatio > 0.50` |
 | **Trend Chaser** | Recent releases define your shelf | ≥2 recent catalog series (≤90 days) **and** `recentRatio > 0.50` |
 
 #### Why each gate (plain language)
 
 | Type | Why these numbers |
 | ---- | ----------------- |
-| **Completionist** | Two completes prove repeated finishing; 60% means finishing defines the shelf. Near path uses the same share with 85% “final push.” No separate avg≥70% gate once 60% of the shelf is fully complete. |
+| **Completionist** | Past the small-shelf stage, two completes prove repeated finishing; 60% means finishing defines the shelf. Near path uses the same share with 85% “final push.” No separate avg≥70% gate once 60% of the shelf is fully complete. |
 | **Hunter** | Two Secrets + ≥50% hit rate on a shelf past early stage (`>4` series). Lucky One’s sequel. |
 | **Lucky One** | Early fortune on ≤4 series; progresses to Hunter when the shelf grows past 4 with repeated Secret catches. |
-| **Loyalist** | 60% IP share is clear universe dominance; ≥2 series in that IP is returning, not a one-off. Brand must not classify multi-IP POP MART shelves. |
-| **Curator** | Three IPs establish real breadth; 50% avg Regular shows investment, not sampling. |
+| **Loyalist** | 60% Started IP share is clear universe dominance; ≥2 Started Series in that IP is returning, not a one-off. Brand must not classify multi-IP POP MART shelves. |
+| **Curator** | Three Started IPs establish real breadth; 50% avg Regular shows investment, not sampling. |
 | **Wanderer** | Honest fallback when no specialized identity clearly qualifies — not a “failed” collector. |
-| **Minimalist** | Small **and** refined; figure count varies by roster size and must not gate. |
+| **Minimalist** | Small **and** refined; at ≤3 series this is the early form before Completionist scale. Figure count varies by roster size and must not gate. |
 | **Worldbuilder** | Two customs prove authorship; >50% means self-created worlds dominate (exactly 50% is a tie). |
-| **Dreamer** | Two wishlist marks prove intention; >50% means wanting more than owning defines tracked intent. |
+| **Dreamer** | Two future-intent signals prove intention; >50% means future collecting intent outweighs Started Series. |
 | **Trend Chaser** | Two recent series + majority recent; 90 days = current cycle. Aging out of the window changes signature → `needsReveal`. |
 
 #### Relationships
@@ -369,7 +372,7 @@ Other types may qualify simultaneously; winner uses eligible strength + determin
 4. No uncapped count term may dominate all other identities  
 5. Eligible archetypes compete in a comparable score band  
 
-Examples: Completionist ← completed/near ratio (+ capped count); Hunter ← hit rate (+ capped Secret count); Loyalist ← IP share; Curator ← IP breadth + avg Regular (capped); Minimalist ← completion within small-shelf gate; Worldbuilder ← custom ratio + capped authorship; Dreamer ← wishlist ratio; Trend ← recent ratio (+ capped recent count).
+Examples: Completionist ← >3 series + completed/near ratio (+ capped count); Hunter ← hit rate (+ capped Secret count); Loyalist ← Started IP share; Curator ← Started IP breadth + avg Regular (capped); Minimalist ← completion within small-shelf gate; Worldbuilder ← custom ratio + capped authorship; Dreamer ← future-intent ratio against Started Series; Trend ← recent ratio (+ capped recent count).
 
 #### Collector-facing Because copy (via `reasonKey` only)
 
@@ -397,7 +400,7 @@ UI must call `CollectorTypeCopy.becauseLineFor` / `becauseLineForRecord` — nev
 - Wanderer requiring ≥2 brands/IPs/series or low completion  
 - Minimalist `ownedFigureCount ≤ 12`  
 - Worldbuilder ~30% custom gate  
-- Dreamer ~45% wishlist gate  
+- Dreamer ~45% future-intent gate
 - Trend **180**-day window or weak one-recent / ~40% recent paths  
 
 **Not Identity signals:** Journey `ipSeriesDepth` / `firstSeriesAddedAt`; Reveal History / prior Identity (except `shouldEvolve`).

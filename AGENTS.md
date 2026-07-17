@@ -66,6 +66,7 @@ Read these before changing collector-facing semantics:
 | ---- | -------------------- |
 | Collector Type product meaning | [`PDR-001: Collector Type Semantics`](docs/decisions/product/PDR-001-collector-type-semantics.md) |
 | Complete / Master Complete meaning | [`PDR-002: Completion Semantics`](docs/decisions/product/PDR-002-completion-semantics.md) |
+| Dreamer product meaning | [`PDR-003: Dreamer Semantics`](docs/decisions/product/PDR-003-dreamer-semantics.md) |
 | Collection / Insights implementation contract | [`docs/COLLECTION_ARCHITECTURE_NOTES.md`](docs/COLLECTION_ARCHITECTURE_NOTES.md) |
 | Product outline | [`docs/PROJECT_OVERVIEW.md`](docs/PROJECT_OVERVIEW.md) |
 

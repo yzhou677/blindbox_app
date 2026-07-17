@@ -8,6 +8,8 @@ import 'package:flutter_test/flutter_test.dart';
 Finder _tooltipIcon(String message) =>
     find.byKey(ValueKey<String>('info-tooltip-$message'));
 
+double _textAlpha(Text text) => text.style!.color!.a;
+
 void main() {
   testWidgets('summary shows figure and series metric labels', (tester) async {
     tester.view.physicalSize = const Size(390, 500);
@@ -120,5 +122,124 @@ void main() {
     await tester.pump();
 
     expect(taps, 1);
+  });
+
+  testWidgets('custom summary card insets preserve card height', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 500);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    const stats = CollectionAggregateStats(
+      inCollection: 2,
+      wantListCount: 5,
+      completedSeriesCount: 0,
+      masterCompleteSeriesCount: 0,
+    );
+
+    Future<double> pumpAndMeasure({double? top, double? bottom}) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(
+            extensions: [CollectibleTokens.forBrightness(Brightness.light)],
+          ),
+          home: Scaffold(
+            body: CollectionSummarySection(
+              stats: stats,
+              metricLabels: CollectionSummaryMetricLabels.wishlist,
+              cardTopPadding: top,
+              cardBottomPadding: bottom,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      return tester
+          .getSize(find.byKey(const Key('collection_summary_stats_card')))
+          .height;
+    }
+
+    final defaultHeight = await pumpAndMeasure();
+    final adjustedHeight = await pumpAndMeasure(top: 20, bottom: 12);
+
+    expect(adjustedHeight, defaultHeight);
+  });
+
+  testWidgets('empty wishlist summary reuses muted summary styling', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 500);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    Future<void> pumpWishlistSummary(CollectionAggregateStats stats) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(
+            extensions: [CollectibleTokens.forBrightness(Brightness.light)],
+          ),
+          home: Scaffold(
+            body: CollectionSummarySection(
+              stats: stats,
+              metricLabels: CollectionSummaryMetricLabels.wishlist,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+    }
+
+    const emptyStats = CollectionAggregateStats(
+      inCollection: 0,
+      wantListCount: 0,
+      completedSeriesCount: 0,
+      masterCompleteSeriesCount: 0,
+    );
+
+    await pumpWishlistSummary(emptyStats);
+
+    final emptyCountAlphas = tester
+        .widgetList<Text>(find.text('0'))
+        .map(_textAlpha)
+        .toList();
+    expect(emptyCountAlphas, hasLength(2));
+    for (final alpha in emptyCountAlphas) {
+      expect(alpha, closeTo(0.36, 0.01));
+    }
+    expect(
+      _textAlpha(tester.widget<Text>(find.text('Wishlisted Series'))),
+      closeTo(0.38, 0.01),
+    );
+    expect(
+      _textAlpha(tester.widget<Text>(find.text('Wishlisted Figures'))),
+      closeTo(0.38, 0.01),
+    );
+
+    const activeStats = CollectionAggregateStats(
+      inCollection: 1,
+      wantListCount: 0,
+      completedSeriesCount: 0,
+      masterCompleteSeriesCount: 0,
+    );
+
+    await pumpWishlistSummary(activeStats);
+
+    expect(
+      _textAlpha(tester.widget<Text>(find.text('1'))),
+      closeTo(0.92, 0.01),
+    );
+    expect(
+      _textAlpha(tester.widget<Text>(find.text('0'))),
+      closeTo(0.92, 0.01),
+    );
+    expect(
+      _textAlpha(tester.widget<Text>(find.text('Wishlisted Series'))),
+      closeTo(0.72, 0.01),
+    );
+    expect(
+      _textAlpha(tester.widget<Text>(find.text('Wishlisted Figures'))),
+      closeTo(0.72, 0.01),
+    );
   });
 }

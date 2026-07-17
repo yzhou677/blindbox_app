@@ -85,10 +85,6 @@ ShelfEmotionalProfile interpretShelf(CollectionSnapshot snap) {
       ipCounts.values.any((count) => count >= 2)) {
     themes.add(ShelfEditorialTheme.multiUniverse);
   }
-  if (snap.totalWishlistFigures > snap.totalOwnedFigures &&
-      snap.totalWishlistFigures >= 2) {
-    themes.add(ShelfEditorialTheme.wishlistHeavy);
-  }
   if (seriesComplete == seriesCount && seriesCount > 0) {
     themes.add(ShelfEditorialTheme.harmony);
   }
@@ -102,7 +98,6 @@ ShelfEmotionalProfile interpretShelf(CollectionSnapshot snap) {
     allComplete: seriesComplete == seriesCount && seriesCount > 0,
     secretOwned: secretOwned,
     secretSlots: secretSlots,
-    wishlistHeavy: themes.contains(ShelfEditorialTheme.wishlistHeavy),
     multiUniverse: themes.contains(ShelfEditorialTheme.multiUniverse),
   );
 
@@ -136,14 +131,12 @@ ShelfMood _resolveShelfMood({
   required bool allComplete,
   required int secretOwned,
   required int secretSlots,
-  required bool wishlistHeavy,
   required bool multiUniverse,
 }) {
   if (secretSlots > 0 && secretOwned >= 2 && !allComplete) {
     return ShelfMood.chaseHunter;
   }
   if (allComplete) return ShelfMood.settled;
-  if (wishlistHeavy && avgCompletion < 50) return ShelfMood.playful;
   if (multiUniverse && avgCompletion < 70) return ShelfMood.dreamy;
   if (avgCompletion >= 70) return ShelfMood.settled;
   return ShelfMood.growing;

@@ -133,7 +133,9 @@ class _CatalogSeriesPreviewSheetState
                   label: shelfCta.semanticsLabel,
                   child: shelfCta.isAddable
                       ? FilledButton.icon(
-                          key: const ValueKey<String>('catalog-preview-add-cta'),
+                          key: const ValueKey<String>(
+                            'catalog-preview-add-cta',
+                          ),
                           onPressed: () {
                             onAdd();
                             Navigator.of(context).pop();
@@ -310,7 +312,9 @@ class _PreviewFigureRow extends StatelessWidget {
                   Icon(
                     Icons.star_rounded,
                     size: 20,
-                    color: (secretLook?.accent ?? accent).withValues(alpha: 0.88),
+                    color: (secretLook?.accent ?? accent).withValues(
+                      alpha: 0.88,
+                    ),
                   ),
                 Icon(
                   Icons.chevron_right_rounded,

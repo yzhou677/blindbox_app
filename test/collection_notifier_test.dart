@@ -65,19 +65,28 @@ void main() {
 
     n.cycleFigure('fig_cycle');
     expect(
-      container.read(collectionNotifierProvider).trackedOrDefault('fig_cycle').state,
+      container
+          .read(collectionNotifierProvider)
+          .trackedOrDefault('fig_cycle')
+          .state,
       FigureCollectionState.wishlist,
     );
 
     n.cycleFigure('fig_cycle');
     expect(
-      container.read(collectionNotifierProvider).trackedOrDefault('fig_cycle').state,
+      container
+          .read(collectionNotifierProvider)
+          .trackedOrDefault('fig_cycle')
+          .state,
       FigureCollectionState.owned,
     );
 
     n.cycleFigure('fig_cycle');
     expect(
-      container.read(collectionNotifierProvider).figureStates.containsKey('fig_cycle'),
+      container
+          .read(collectionNotifierProvider)
+          .figureStates
+          .containsKey('fig_cycle'),
       isFalse,
     );
   });
@@ -87,6 +96,305 @@ void main() {
     final n = container.read(collectionNotifierProvider.notifier);
     n.cycleFigure('not_on_shelf');
     expect(container.read(collectionNotifierProvider).figureStates, isEmpty);
+  });
+
+  test(
+    'series wishlist add/remove and auto-remove when added to collection',
+    () {
+      CollectionAppBootstrap.prime(CollectionSnapshot.emptyTest());
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final n = container.read(collectionNotifierProvider.notifier);
+
+      final template = CatalogSeries(
+        templateId: 'cat-series-1',
+        name: 'Dream Garden',
+        brand: 'POP MART',
+        ipName: 'Molly',
+        figures: const [
+          CatalogFigure(
+            templateFigureId: 'cat-fig-1',
+            catalogSeriesTemplateId: 'cat-series-1',
+            name: 'Rose',
+            rarity: 'Regular',
+            isSecret: false,
+          ),
+        ],
+        shelfAccent: const Color(0xFFE8DEF5),
+      );
+
+      n.addSeriesToWishlist(template, addedAtMicros: 10);
+      expect(
+        container.read(collectionNotifierProvider).seriesWishlist,
+        hasLength(1),
+      );
+      expect(
+        container
+            .read(collectionNotifierProvider)
+            .seriesWishlist
+            .single
+            .catalogSeriesId,
+        'cat-series-1',
+      );
+
+      n.removeSeriesFromWishlist('cat-series-1');
+      expect(
+        container.read(collectionNotifierProvider).seriesWishlist,
+        isEmpty,
+      );
+
+      n.addSeriesToWishlist(template, addedAtMicros: 10);
+      n.addSeriesFromTemplate(template);
+      final snap = container.read(collectionNotifierProvider);
+      expect(snap.shelfSeries, hasLength(1));
+      expect(snap.seriesWishlist, isEmpty);
+    },
+  );
+
+  test(
+    'figure wishlist remove and owned transition are mutually exclusive',
+    () {
+      final container = newContainer();
+      final n = container.read(collectionNotifierProvider.notifier);
+
+      n.setFigureWishlisted('fig_cycle', true);
+      expect(
+        container
+            .read(collectionNotifierProvider)
+            .trackedOrDefault('fig_cycle')
+            .state,
+        FigureCollectionState.wishlist,
+      );
+
+      n.setFigureOwned('fig_cycle', true);
+      expect(
+        container
+            .read(collectionNotifierProvider)
+            .trackedOrDefault('fig_cycle')
+            .state,
+        FigureCollectionState.owned,
+      );
+
+      n.setFigureWishlisted('fig_cycle', false);
+      expect(
+        container
+            .read(collectionNotifierProvider)
+            .trackedOrDefault('fig_cycle')
+            .state,
+        FigureCollectionState.owned,
+      );
+
+      n.setFigureOwned('fig_cycle', false);
+      expect(
+        container
+            .read(collectionNotifierProvider)
+            .figureStates
+            .containsKey('fig_cycle'),
+        isFalse,
+      );
+    },
+  );
+
+  test('remove Series undo restores exact wishlist entry', () {
+    CollectionAppBootstrap.prime(CollectionSnapshot.emptyTest());
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final n = container.read(collectionNotifierProvider.notifier);
+    const entry = WishlistedCatalogSeries(
+      catalogSeriesId: 'cat-series-undo',
+      name: 'Undo Series',
+      brand: 'POP MART',
+      ipName: 'Molly',
+      imageKey: 'cat-series-undo',
+      addedAtMicros: 42,
+    );
+
+    n.restoreSeriesWishlist(entry);
+    n.removeSeriesFromWishlist(entry.catalogSeriesId);
+    expect(container.read(collectionNotifierProvider).seriesWishlist, isEmpty);
+
+    n.restoreSeriesWishlist(entry);
+    final restored = container.read(collectionNotifierProvider).seriesWishlist;
+    expect(restored, hasLength(1));
+    expect(restored.single.catalogSeriesId, entry.catalogSeriesId);
+    expect(restored.single.addedAtMicros, entry.addedAtMicros);
+  });
+
+  test('remove Series undo restores previous wishlist position', () {
+    CollectionAppBootstrap.prime(
+      const CollectionSnapshot(
+        shelfSeries: [],
+        figureStates: {},
+        seriesWishlist: [
+          WishlistedCatalogSeries(
+            catalogSeriesId: 'first',
+            name: 'First',
+            brand: 'POP MART',
+            ipName: 'Molly',
+            imageKey: 'first',
+            addedAtMicros: 3,
+          ),
+          WishlistedCatalogSeries(
+            catalogSeriesId: 'middle',
+            name: 'Middle',
+            brand: 'POP MART',
+            ipName: 'Molly',
+            imageKey: 'middle',
+            addedAtMicros: 2,
+          ),
+          WishlistedCatalogSeries(
+            catalogSeriesId: 'last',
+            name: 'Last',
+            brand: 'POP MART',
+            ipName: 'Molly',
+            imageKey: 'last',
+            addedAtMicros: 1,
+          ),
+        ],
+      ),
+    );
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final n = container.read(collectionNotifierProvider.notifier);
+    final removed =
+        container.read(collectionNotifierProvider).seriesWishlist[1];
+
+    n.removeSeriesFromWishlist(removed.catalogSeriesId);
+    n.restoreSeriesWishlist(removed, atIndex: 1);
+
+    expect(
+      container
+          .read(collectionNotifierProvider)
+          .seriesWishlist
+          .map((s) => s.catalogSeriesId),
+      ['first', 'middle', 'last'],
+    );
+  });
+
+  test('remove Series undo does not restore after Series enters Collection', () {
+    CollectionAppBootstrap.prime(CollectionSnapshot.emptyTest());
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final n = container.read(collectionNotifierProvider.notifier);
+    final template = CatalogSeries(
+      templateId: 'cat-series-undo-owned',
+      name: 'Undo Owned Series',
+      brand: 'POP MART',
+      ipName: 'Molly',
+      figures: const [
+        CatalogFigure(
+          templateFigureId: 'cat-fig-undo-owned',
+          catalogSeriesTemplateId: 'cat-series-undo-owned',
+          name: 'Rose',
+          rarity: 'Regular',
+          isSecret: false,
+        ),
+      ],
+      shelfAccent: const Color(0xFFE8DEF5),
+    );
+    final entry = WishlistedCatalogSeries.fromCatalogTemplate(
+      template,
+      addedAtMicros: 42,
+    );
+
+    n.restoreSeriesWishlist(entry);
+    n.removeSeriesFromWishlist(entry.catalogSeriesId);
+    n.addSeriesFromTemplate(template);
+    n.restoreSeriesWishlist(entry);
+
+    final snap = container.read(collectionNotifierProvider);
+    expect(snap.shelfSeries, hasLength(1));
+    expect(snap.seriesWishlist, isEmpty);
+  });
+
+  test('remove Figure undo restores exact previous wishlist state', () {
+    final container = newContainer();
+    final n = container.read(collectionNotifierProvider.notifier);
+    const previous = TrackedFigure(
+      figureId: 'fig_cycle',
+      state: FigureCollectionState.wishlist,
+      updatedAtMicros: 99,
+    );
+
+    n.restoreFigureWishlist(previous);
+    n.setFigureWishlisted('fig_cycle', false);
+    expect(
+      container.read(collectionNotifierProvider).figureStates,
+      isNot(contains('fig_cycle')),
+    );
+
+    n.restoreFigureWishlist(previous);
+    final restored = container.read(collectionNotifierProvider).figureStates;
+    expect(restored['fig_cycle']?.state, FigureCollectionState.wishlist);
+    expect(restored['fig_cycle']?.updatedAtMicros, 99);
+  });
+
+  test('remove Figure undo does not restore after Figure becomes Owned', () {
+    final container = newContainer();
+    final n = container.read(collectionNotifierProvider.notifier);
+    const previous = TrackedFigure(
+      figureId: 'fig_cycle',
+      state: FigureCollectionState.wishlist,
+      updatedAtMicros: 99,
+    );
+
+    n.restoreFigureWishlist(previous);
+    n.setFigureWishlisted('fig_cycle', false);
+    n.setFigureOwned('fig_cycle', true);
+    n.restoreFigureWishlist(previous);
+
+    expect(
+      container
+          .read(collectionNotifierProvider)
+          .trackedOrDefault('fig_cycle')
+          .state,
+      FigureCollectionState.owned,
+    );
+  });
+
+  test('release wishlist auto-removes when release is added to collection', () {
+    CollectionAppBootstrap.prime(CollectionSnapshot.emptyTest());
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final n = container.read(collectionNotifierProvider.notifier);
+
+    final release = SeriesRelease(
+      dropId: 'release-series-1',
+      seriesName: 'Release Series',
+      brand: 'POP MART',
+      ipLine: 'POP MART 繚 Molly',
+      releaseDate: DateTime(2026, 1, 1),
+      seriesImageKey: 'release-series-1',
+      heroCollectible: Collectible(
+        id: 'release-series-1',
+        name: 'Hero',
+        series: 'Release Series',
+        brand: 'POP MART',
+        releaseDate: DateTime(2026, 1, 1),
+        imageUrl: '',
+      ),
+      lineup: const [
+        ReleaseLineupSlot(
+          slotId: 'release-fig-1',
+          name: 'Hero',
+          imageKey: 'release-fig-1',
+          isSecret: false,
+        ),
+      ],
+      taxonomyBrandId: 'pop_mart',
+      taxonomyIpId: 'molly',
+    );
+
+    n.addSeriesReleaseToWishlist(release, addedAtMicros: 10);
+    expect(
+      container.read(collectionNotifierProvider).seriesWishlist,
+      hasLength(1),
+    );
+
+    n.addSeriesFromRelease(release);
+    final snap = container.read(collectionNotifierProvider);
+    expect(snap.seriesWishlist, isEmpty);
+    expect(snap.shelfSeries.single.catalogTemplateId, 'drop-release-series-1');
   });
 
   test('addSeriesFromRelease stores imageKey without imageUrl', () {
@@ -172,41 +480,49 @@ void main() {
     );
   });
 
-  test('addSeriesFromRelease leaves imageUrl null when imageKey is empty', () async {
-    CollectionAppBootstrap.prime(CollectionSnapshot.emptyTest());
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
-    final n = container.read(collectionNotifierProvider.notifier);
+  test(
+    'addSeriesFromRelease leaves imageUrl null when imageKey is empty',
+    () async {
+      CollectionAppBootstrap.prime(CollectionSnapshot.emptyTest());
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final n = container.read(collectionNotifierProvider.notifier);
 
-    final release = SeriesRelease(
-      dropId: 'no_key_drop',
-      seriesName: 'No Key',
-      brand: 'POP MART',
-      releaseDate: DateTime(2026, 3, 1),
-      seriesImageKey: 'no_key_drop',
-      heroCollectible: Collectible(
-        id: 'no_key_drop',
-        name: 'Hero',
-        series: 'No Key',
+      final release = SeriesRelease(
+        dropId: 'no_key_drop',
+        seriesName: 'No Key',
         brand: 'POP MART',
         releaseDate: DateTime(2026, 3, 1),
-        imageUrl: '',
-      ),
-      lineup: const [
-        ReleaseLineupSlot(
-          slotId: 'slot_x',
-          name: 'X',
-          imageKey: '',
-          isSecret: false,
+        seriesImageKey: 'no_key_drop',
+        heroCollectible: Collectible(
+          id: 'no_key_drop',
+          name: 'Hero',
+          series: 'No Key',
+          brand: 'POP MART',
+          releaseDate: DateTime(2026, 3, 1),
+          imageUrl: '',
         ),
-      ],
-    );
+        lineup: const [
+          ReleaseLineupSlot(
+            slotId: 'slot_x',
+            name: 'X',
+            imageKey: '',
+            isSecret: false,
+          ),
+        ],
+      );
 
-    n.addSeriesFromRelease(release);
-    final fig = container.read(collectionNotifierProvider).shelfSeries.single.figures.single;
-    expect(fig.imageKey, isNull);
-    expect(fig.imageUrl, isNull);
-  });
+      n.addSeriesFromRelease(release);
+      final fig = container
+          .read(collectionNotifierProvider)
+          .shelfSeries
+          .single
+          .figures
+          .single;
+      expect(fig.imageKey, isNull);
+      expect(fig.imageUrl, isNull);
+    },
+  );
 
   test('addSeriesFromTemplate prepends clone and dedupes by templateId', () {
     final container = newContainer();
@@ -217,7 +533,10 @@ void main() {
     n.addSeriesFromTemplate(template);
 
     final snap = container.read(collectionNotifierProvider);
-    expect(snap.shelfSeries.where((s) => s.catalogTemplateId == 'new_series_tpl'), hasLength(1));
+    expect(
+      snap.shelfSeries.where((s) => s.catalogTemplateId == 'new_series_tpl'),
+      hasLength(1),
+    );
     expect(snap.shelfSeries.first.catalogTemplateId, 'new_series_tpl');
     expect(snap.shelfSeries.first.figures.first.rarity, '1:144');
   });
@@ -238,7 +557,9 @@ void main() {
     addTearDown(container.dispose);
     container.read(collectionNotifierProvider);
 
-    container.read(collectionNotifierProvider.notifier).removeSeries('series_test');
+    container
+        .read(collectionNotifierProvider.notifier)
+        .removeSeries('series_test');
     final snap = container.read(collectionNotifierProvider);
     expect(snap.shelfSeries, isEmpty);
     expect(snap.figureStates, isEmpty);
@@ -247,9 +568,7 @@ void main() {
   test('removeSeriesByCatalogTemplate removes shelf row and figure states', () {
     CollectionAppBootstrap.prime(
       CollectionSnapshot(
-        shelfSeries: [
-          testShelfSeries(catalogTemplateId: 'drop-release-1'),
-        ],
+        shelfSeries: [testShelfSeries(catalogTemplateId: 'drop-release-1')],
         figureStates: {
           'fig_test_0': const TrackedFigure(
             figureId: 'fig_test_0',
@@ -379,9 +698,7 @@ void main() {
 
     n.addCustomSeries(
       seriesName: 'My Set',
-      figures: const [
-        CustomFigureDraft(displayName: '  '),
-      ],
+      figures: const [CustomFigureDraft(displayName: '  ')],
     );
     expect(container.read(collectionNotifierProvider).shelfSeries, isEmpty);
 
@@ -485,14 +802,20 @@ void main() {
       notes: 'E' * 700,
     );
 
-    final updated = container.read(collectionNotifierProvider).shelfSeries.single;
+    final updated = container
+        .read(collectionNotifierProvider)
+        .shelfSeries
+        .single;
     expect(updated.name.length, 80);
     expect(updated.brand.length, lessThanOrEqualTo(48));
     expect(updated.ipName.length, lessThanOrEqualTo(64));
     expect(updated.notes!.length, 200);
     expect(updated.figures.length, 2);
     expect(
-      container.read(collectionNotifierProvider).trackedOrDefault('custom_edit_1-f-0').state,
+      container
+          .read(collectionNotifierProvider)
+          .trackedOrDefault('custom_edit_1-f-0')
+          .state,
       FigureCollectionState.owned,
     );
   });
@@ -508,7 +831,10 @@ void main() {
       ipDisplayName: 'Baby Three',
     );
 
-    final updated = container.read(collectionNotifierProvider).shelfSeries.single;
+    final updated = container
+        .read(collectionNotifierProvider)
+        .shelfSeries
+        .single;
     expect(updated.id, 'custom_edit_1');
     expect(updated.brand, 'POP MART');
     expect(updated.taxonomyBrandId, 'pop_mart');
@@ -532,7 +858,10 @@ void main() {
       ipDisplayName: 'the monsters',
     );
 
-    final updated = container.read(collectionNotifierProvider).shelfSeries.single;
+    final updated = container
+        .read(collectionNotifierProvider)
+        .shelfSeries
+        .single;
     expect(updated.brand, 'Cureplaneta');
     expect(updated.taxonomyBrandId, 'dpl');
     expect(updated.ipName, 'THE MONSTERS');
@@ -555,7 +884,10 @@ void main() {
       ipDisplayName: 'babythree',
     );
 
-    final updated = container.read(collectionNotifierProvider).shelfSeries.single;
+    final updated = container
+        .read(collectionNotifierProvider)
+        .shelfSeries
+        .single;
     expect(updated.name, 'Renamed Set');
     expect(updated.brand, 'Cureplaneta');
     expect(updated.taxonomyBrandId, 'dpl');
@@ -574,7 +906,10 @@ void main() {
       ipDisplayName: 'Custom Labubu Fan Art',
     );
 
-    final updated = container.read(collectionNotifierProvider).shelfSeries.single;
+    final updated = container
+        .read(collectionNotifierProvider)
+        .shelfSeries
+        .single;
     expect(updated.brand, 'POP');
     expect(updated.taxonomyBrandId, 'pop');
     expect(updated.ipName, 'Custom Labubu Fan Art');
@@ -595,7 +930,10 @@ void main() {
 
     final snap = container.read(collectionNotifierProvider);
     final updated = snap.shelfSeries.single;
-    expect(updated.figures.map((f) => f.id), ['custom_edit_1-f-0', 'custom_edit_1-f-1']);
+    expect(updated.figures.map((f) => f.id), [
+      'custom_edit_1-f-0',
+      'custom_edit_1-f-1',
+    ]);
     expect(updated.figures[0].name, 'Fig A');
     expect(updated.figures[1].name, 'Fig B');
     expect(updated.figures[1].isSecret, isTrue);
@@ -632,7 +970,10 @@ void main() {
       ipDisplayName: 'Baby Three',
     );
 
-    final unchanged = container.read(collectionNotifierProvider).shelfSeries.single;
+    final unchanged = container
+        .read(collectionNotifierProvider)
+        .shelfSeries
+        .single;
     expect(unchanged.name, 'Test Series');
     expect(unchanged.brand, 'POP MART');
   });
@@ -652,7 +993,11 @@ void main() {
       isSecret: false,
     );
 
-    final fig = container.read(collectionNotifierProvider).shelfSeries.single.figures[0];
+    final fig = container
+        .read(collectionNotifierProvider)
+        .shelfSeries
+        .single
+        .figures[0];
     expect(fig.id, 'custom_edit_1-f-0');
     expect(fig.name, 'Renamed Fig A');
   });
@@ -669,7 +1014,11 @@ void main() {
       rarityLabel: '1:96',
     );
 
-    final fig = container.read(collectionNotifierProvider).shelfSeries.single.figures[1];
+    final fig = container
+        .read(collectionNotifierProvider)
+        .shelfSeries
+        .single
+        .figures[1];
     expect(fig.id, 'custom_edit_1-f-1');
     expect(fig.isSecret, isTrue);
     expect(fig.rarityLabel, '1:96');
@@ -688,7 +1037,11 @@ void main() {
       localImageUri: '/tmp/fig_a.jpg',
     );
 
-    final fig = container.read(collectionNotifierProvider).shelfSeries.single.figures[0];
+    final fig = container
+        .read(collectionNotifierProvider)
+        .shelfSeries
+        .single
+        .figures[0];
     expect(fig.id, 'custom_edit_1-f-0');
     expect(fig.localImageUri, '/tmp/fig_a.jpg');
   });
@@ -741,7 +1094,11 @@ void main() {
       isSecret: false,
     );
 
-    final fig = container.read(collectionNotifierProvider).shelfSeries.single.figures[0];
+    final fig = container
+        .read(collectionNotifierProvider)
+        .shelfSeries
+        .single
+        .figures[0];
     expect(fig.taxonomyBrandId, 'dpl');
     expect(fig.taxonomyIpId, 'baby_three');
     expect(fig.imageKey, 'custom_edit_1-f-0');
@@ -750,7 +1107,11 @@ void main() {
   test('updateCustomFigure does not change sibling figures', () {
     final container = newEditableCustomContainer();
     final n = container.read(collectionNotifierProvider.notifier);
-    final before = container.read(collectionNotifierProvider).shelfSeries.single.figures[1];
+    final before = container
+        .read(collectionNotifierProvider)
+        .shelfSeries
+        .single
+        .figures[1];
 
     n.updateCustomFigure(
       seriesId: 'custom_edit_1',
@@ -759,7 +1120,11 @@ void main() {
       isSecret: false,
     );
 
-    final after = container.read(collectionNotifierProvider).shelfSeries.single.figures[1];
+    final after = container
+        .read(collectionNotifierProvider)
+        .shelfSeries
+        .single
+        .figures[1];
     expect(after.id, before.id);
     expect(after.name, before.name);
     expect(after.isSecret, before.isSecret);
@@ -776,7 +1141,12 @@ void main() {
     final container = ProviderContainer();
     addTearDown(container.dispose);
     final n = container.read(collectionNotifierProvider.notifier);
-    final before = container.read(collectionNotifierProvider).shelfSeries.single.figures.first;
+    final before = container
+        .read(collectionNotifierProvider)
+        .shelfSeries
+        .single
+        .figures
+        .first;
 
     n.updateCustomFigure(
       seriesId: 'series_test',
@@ -785,7 +1155,12 @@ void main() {
       isSecret: false,
     );
 
-    final after = container.read(collectionNotifierProvider).shelfSeries.single.figures.first;
+    final after = container
+        .read(collectionNotifierProvider)
+        .shelfSeries
+        .single
+        .figures
+        .first;
     expect(after.name, before.name);
   });
 
@@ -793,8 +1168,12 @@ void main() {
     CollectionMemoryStore.instance.resetForTest();
     final container = newEditableCustomContainer();
     final beforeSnap = container.read(collectionNotifierProvider);
-    final brandBefore = buildCollectionShelfBrandFilterOptions(beforeSnap.shelfSeries);
-    final ipBefore = buildCollectionShelfIpFilterOptions(beforeSnap.shelfSeries);
+    final brandBefore = buildCollectionShelfBrandFilterOptions(
+      beforeSnap.shelfSeries,
+    );
+    final ipBefore = buildCollectionShelfIpFilterOptions(
+      beforeSnap.shelfSeries,
+    );
     final profileBefore = interpretShelf(beforeSnap);
     final journeyBefore = buildCollectorJourneySummary(
       memory: CollectionMemoryStore.instance.cached,
@@ -802,7 +1181,9 @@ void main() {
     );
     final summaryBefore = CollectionAggregateStats.fromSnapshot(beforeSnap);
 
-    container.read(collectionNotifierProvider.notifier).updateCustomFigure(
+    container
+        .read(collectionNotifierProvider.notifier)
+        .updateCustomFigure(
           seriesId: 'custom_edit_1',
           figureId: 'custom_edit_1-f-0',
           name: 'Metadata Only',
@@ -886,7 +1267,10 @@ void main() {
       isSecret: false,
     );
 
-    final series = container.read(collectionNotifierProvider).shelfSeries.single;
+    final series = container
+        .read(collectionNotifierProvider)
+        .shelfSeries
+        .single;
     expect(series.figures.length, 3);
     expect(series.figures[2].id, 'custom_edit_1-f-2');
     expect(series.figures[2].name, 'Fig C');
@@ -904,7 +1288,10 @@ void main() {
       isSecret: false,
     );
 
-    final series = container.read(collectionNotifierProvider).shelfSeries.single;
+    final series = container
+        .read(collectionNotifierProvider)
+        .shelfSeries
+        .single;
     expect(series.figures.length, 1);
     expect(series.figures.single.id, 'custom_empty_1-f-0');
     expect(series.figures.single.name, 'Only One');
@@ -921,7 +1308,12 @@ void main() {
       rarityLabel: '1:144',
     );
 
-    final fig = container.read(collectionNotifierProvider).shelfSeries.single.figures.last;
+    final fig = container
+        .read(collectionNotifierProvider)
+        .shelfSeries
+        .single
+        .figures
+        .last;
     expect(fig.isSecret, isTrue);
     expect(fig.rarityLabel, '1:144');
     expect(fig.rarity, '1:144');
@@ -938,14 +1330,23 @@ void main() {
       localImageUri: '/tmp/photo_fig.jpg',
     );
 
-    final fig = container.read(collectionNotifierProvider).shelfSeries.single.figures.last;
+    final fig = container
+        .read(collectionNotifierProvider)
+        .shelfSeries
+        .single
+        .figures
+        .last;
     expect(fig.localImageUri, '/tmp/photo_fig.jpg');
   });
 
   test('addCustomFigure copies series taxonomy and preserves siblings', () {
     final container = newEditableCustomContainer();
     final n = container.read(collectionNotifierProvider.notifier);
-    final before = container.read(collectionNotifierProvider).shelfSeries.single.figures;
+    final before = container
+        .read(collectionNotifierProvider)
+        .shelfSeries
+        .single
+        .figures;
 
     n.addCustomFigure(
       seriesId: 'custom_edit_1',
@@ -953,7 +1354,10 @@ void main() {
       isSecret: false,
     );
 
-    final series = container.read(collectionNotifierProvider).shelfSeries.single;
+    final series = container
+        .read(collectionNotifierProvider)
+        .shelfSeries
+        .single;
     expect(series.brand, 'DPL');
     expect(series.taxonomyBrandId, 'dpl');
     expect(series.taxonomyIpId, 'baby_three');
@@ -994,9 +1398,14 @@ void main() {
     );
     final container = ProviderContainer();
     addTearDown(container.dispose);
-    final before = container.read(collectionNotifierProvider).shelfSeries.single;
+    final before = container
+        .read(collectionNotifierProvider)
+        .shelfSeries
+        .single;
 
-    container.read(collectionNotifierProvider.notifier).addCustomFigure(
+    container
+        .read(collectionNotifierProvider.notifier)
+        .addCustomFigure(
           seriesId: 'series_test',
           name: 'Injected',
           isSecret: false,
@@ -1010,14 +1419,15 @@ void main() {
     final container = newEditableCustomContainer();
     final n = container.read(collectionNotifierProvider.notifier);
 
-    n.addCustomFigure(
-      seriesId: 'custom_edit_1',
-      name: '   ',
-      isSecret: false,
-    );
+    n.addCustomFigure(seriesId: 'custom_edit_1', name: '   ', isSecret: false);
 
     expect(
-      container.read(collectionNotifierProvider).shelfSeries.single.figures.length,
+      container
+          .read(collectionNotifierProvider)
+          .shelfSeries
+          .single
+          .figures
+          .length,
       2,
     );
   });
@@ -1054,11 +1464,17 @@ void main() {
     CollectionMemoryStore.instance.resetForTest();
     final container = newEditableCustomContainer();
     final beforeSnap = container.read(collectionNotifierProvider);
-    final brandBefore = buildCollectionShelfBrandFilterOptions(beforeSnap.shelfSeries);
-    final ipBefore = buildCollectionShelfIpFilterOptions(beforeSnap.shelfSeries);
+    final brandBefore = buildCollectionShelfBrandFilterOptions(
+      beforeSnap.shelfSeries,
+    );
+    final ipBefore = buildCollectionShelfIpFilterOptions(
+      beforeSnap.shelfSeries,
+    );
     final profileBefore = interpretShelf(beforeSnap);
 
-    container.read(collectionNotifierProvider.notifier).addCustomFigure(
+    container
+        .read(collectionNotifierProvider.notifier)
+        .addCustomFigure(
           seriesId: 'custom_edit_1',
           name: 'Extra Fig',
           isSecret: false,
@@ -1095,8 +1511,12 @@ void main() {
 
       // UI state should reflect all taps immediately (no debounce on state).
       final snap = container.read(collectionNotifierProvider);
-      expect(snap.figureStates.containsKey('fig_cycle'), isFalse,
-          reason: 'three cycles (none→wishlist→owned→none) should clear the state');
+      expect(
+        snap.figureStates.containsKey('fig_cycle'),
+        isFalse,
+        reason:
+            'three cycles (none→wishlist→owned→none) should clear the state',
+      );
     },
   );
 
@@ -1121,47 +1541,47 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getString('collection_snapshot_v1');
       // The snapshot should have been persisted (not null).
-      expect(raw, isNotNull,
-          reason: 'dispose should flush pending persistence');
+      expect(
+        raw,
+        isNotNull,
+        reason: 'dispose should flush pending persistence',
+      );
     },
   );
 
-  test(
-    'fakeAsync: persistence timer fires after debounce window',
-    () {
-      fakeAsync((async) {
-        SharedPreferences.setMockInitialValues({});
-        final container = newContainer();
-        final n = container.read(collectionNotifierProvider.notifier);
+  test('fakeAsync: persistence timer fires after debounce window', () {
+    fakeAsync((async) {
+      SharedPreferences.setMockInitialValues({});
+      final container = newContainer();
+      final n = container.read(collectionNotifierProvider.notifier);
 
-        n.cycleFigure('fig_cycle'); // wishlist
-        n.cycleFigure('fig_cycle'); // owned
+      n.cycleFigure('fig_cycle'); // wishlist
+      n.cycleFigure('fig_cycle'); // owned
 
-        // UI state is already correct before the timer fires.
-        expect(
-          container
-              .read(collectionNotifierProvider)
-              .trackedOrDefault('fig_cycle')
-              .state,
-          FigureCollectionState.owned,
-        );
+      // UI state is already correct before the timer fires.
+      expect(
+        container
+            .read(collectionNotifierProvider)
+            .trackedOrDefault('fig_cycle')
+            .state,
+        FigureCollectionState.owned,
+      );
 
-        // Advance past the debounce window without triggering async I/O.
-        async.elapse(const Duration(milliseconds: 500));
+      // Advance past the debounce window without triggering async I/O.
+      async.elapse(const Duration(milliseconds: 500));
 
-        // State should remain unchanged after the timer fires.
-        expect(
-          container
-              .read(collectionNotifierProvider)
-              .trackedOrDefault('fig_cycle')
-              .state,
-          FigureCollectionState.owned,
-        );
+      // State should remain unchanged after the timer fires.
+      expect(
+        container
+            .read(collectionNotifierProvider)
+            .trackedOrDefault('fig_cycle')
+            .state,
+        FigureCollectionState.owned,
+      );
 
-        container.dispose();
-      });
-    },
-  );
+      container.dispose();
+    });
+  });
 
   // ---------------------------------------------------------------------------
   // Memory flush on dispose (journey / collector type milestones)
@@ -1250,8 +1670,7 @@ void main() {
 
           container.dispose();
           async.flushMicrotasks();
-          final depth =
-              CollectionMemoryStore.instance.cached.ipSeriesDepth;
+          final depth = CollectionMemoryStore.instance.cached.ipSeriesDepth;
           expect(
             depth.values.fold<int>(0, (sum, c) => sum + c),
             2,

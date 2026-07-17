@@ -40,6 +40,15 @@ List<Override> _overridesFor(CollectionSnapshot snap) => [
       catalogBundleProvider.overrideWith((ref) async => _emptyCatalog),
     ];
 
+WishlistedCatalogSeries _wishlistedSeries(String id) => WishlistedCatalogSeries(
+      catalogSeriesId: id,
+      name: 'Wishlist $id',
+      brand: 'POP MART',
+      ipName: 'IP',
+      imageKey: id,
+      addedAtMicros: 1,
+    );
+
 Future<void> _saveRevealMatchingLive(CollectionSnapshot snap) async {
   final resolution = resolveCollectorType(
     snapshot: snap,
@@ -131,6 +140,67 @@ void main() {
     );
 
     final container = ProviderContainer(overrides: _overridesFor(snap));
+    addTearDown(container.dispose);
+
+    expect(container.read(collectorTypeNeedsRevealProvider), isTrue);
+  });
+
+  test('true when only figure wishlist changes signature for Dreamer', () async {
+    final series = testShelfSeries(
+      figures: const [
+        ShelfFigure(
+          id: 'w1',
+          seriesId: 'series_test',
+          name: 'Wishlist A',
+          rarity: 'Regular',
+          isSecret: false,
+        ),
+        ShelfFigure(
+          id: 'w2',
+          seriesId: 'series_test',
+          name: 'Wishlist B',
+          rarity: 'Regular',
+          isSecret: false,
+        ),
+      ],
+    );
+    final revealedSnap = CollectionSnapshot(
+      shelfSeries: [series],
+      figureStates: const {},
+    );
+    await _saveRevealMatchingLive(revealedSnap);
+
+    final liveSnap = CollectionSnapshot(
+      shelfSeries: [series],
+      figureStates: const {
+        'w1': TrackedFigure(
+          figureId: 'w1',
+          state: FigureCollectionState.wishlist,
+        ),
+        'w2': TrackedFigure(
+          figureId: 'w2',
+          state: FigureCollectionState.wishlist,
+        ),
+      },
+    );
+    final container = ProviderContainer(overrides: _overridesFor(liveSnap));
+    addTearDown(container.dispose);
+
+    expect(container.read(collectorTypeNeedsRevealProvider), isTrue);
+  });
+
+  test('true when only series wishlist changes signature for Dreamer', () async {
+    await _saveRevealMatchingLive(CollectionSnapshot.emptyTest());
+
+    final liveSnap = CollectionSnapshot(
+      shelfSeries: const [],
+      figureStates: const {},
+      seriesWishlist: [
+        _wishlistedSeries('wish_series_a'),
+        _wishlistedSeries('wish_series_b'),
+      ],
+    );
+    final container = ProviderContainer(overrides: _overridesFor(liveSnap));
     addTearDown(container.dispose);
 
     expect(container.read(collectorTypeNeedsRevealProvider), isTrue);

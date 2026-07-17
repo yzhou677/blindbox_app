@@ -36,6 +36,47 @@ class CollectionAggregateStats {
   }
 }
 
+@immutable
+class CollectionSummaryMetricLabels {
+  const CollectionSummaryMetricLabels({
+    required this.primary,
+    required this.secondary,
+    required this.tertiary,
+    required this.quaternary,
+    this.primaryEmoji,
+    this.secondaryEmoji,
+    this.tertiaryTooltip = CompletionMetricTooltips.completedSeries,
+    this.showSecondRow = true,
+  });
+
+  final String primary;
+  final String secondary;
+  final String tertiary;
+  final String quaternary;
+  final String? primaryEmoji;
+  final String? secondaryEmoji;
+  final String? tertiaryTooltip;
+  final bool showSecondRow;
+
+  static const collection = CollectionSummaryMetricLabels(
+    primary: CollectionSummaryLabels.figures,
+    secondary: CollectionSummaryLabels.wishlist,
+    tertiary: CollectionSummaryLabels.seriesComplete,
+    quaternary: CollectionSummaryLabels.masterComplete,
+  );
+
+  static const wishlist = CollectionSummaryMetricLabels(
+    primary: 'Wishlisted Series',
+    secondary: 'Wishlisted Figures',
+    tertiary: '',
+    quaternary: '',
+    primaryEmoji: '📚',
+    secondaryEmoji: '💜',
+    tertiaryTooltip: null,
+    showSecondRow: false,
+  );
+}
+
 class CollectionSummarySection extends StatelessWidget {
   const CollectionSummarySection({
     super.key,
@@ -45,6 +86,10 @@ class CollectionSummarySection extends StatelessWidget {
     this.onInsightsTap,
     this.onSummaryCardTap,
     this.collectorTypeName,
+    this.metricLabels = CollectionSummaryMetricLabels.collection,
+    this.cardVerticalPadding = FeedRhythm.collectionSummaryCardVerticalPadding,
+    this.cardTopPadding,
+    this.cardBottomPadding,
     this.padding = const EdgeInsets.fromLTRB(
       AppSpacing.pageHorizontal,
       0,
@@ -59,6 +104,10 @@ class CollectionSummarySection extends StatelessWidget {
   final VoidCallback? onInsightsTap;
   final VoidCallback? onSummaryCardTap;
   final String? collectorTypeName;
+  final CollectionSummaryMetricLabels metricLabels;
+  final double cardVerticalPadding;
+  final double? cardTopPadding;
+  final double? cardBottomPadding;
   final EdgeInsetsGeometry padding;
 
   @override
@@ -66,6 +115,10 @@ class CollectionSummarySection extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textTheme = Theme.of(context).textTheme;
+    final isWishlistSummaryEmpty =
+        !metricLabels.showSecondRow &&
+        stats.inCollection == 0 &&
+        stats.wantListCount == 0;
 
     return Padding(
       padding: padding,
@@ -77,9 +130,11 @@ class CollectionSummarySection extends StatelessWidget {
             isDark: isDark,
             onTap: onSummaryCardTap,
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 18,
-                vertical: FeedRhythm.collectionSummaryCardVerticalPadding,
+              padding: EdgeInsets.fromLTRB(
+                18,
+                cardTopPadding ?? cardVerticalPadding,
+                18,
+                cardBottomPadding ?? cardVerticalPadding,
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -87,46 +142,56 @@ class CollectionSummarySection extends StatelessWidget {
                   _MetricRow(
                     scheme: scheme,
                     textTheme: textTheme,
+                    muted: isWishlistSummaryEmpty,
                     children: [
                       _ShelfGlanceStatCell(
                         count: stats.inCollection,
-                        label: CollectionSummaryLabels.figures,
+                        label: metricLabels.primary,
+                        emoji: metricLabels.primaryEmoji,
                         scheme: scheme,
                         textTheme: textTheme,
+                        muted: isWishlistSummaryEmpty,
                       ),
                       _ShelfGlanceStatCell(
                         count: stats.wantListCount,
-                        label: CollectionSummaryLabels.wishlist,
+                        label: metricLabels.secondary,
+                        emoji: metricLabels.secondaryEmoji,
                         scheme: scheme,
                         textTheme: textTheme,
+                        muted: isWishlistSummaryEmpty,
                       ),
                     ],
                   ),
-                  const SizedBox(
-                    height: FeedRhythm.collectionSummaryMetricRowGap,
-                  ),
-                  _MetricRow(
-                    scheme: scheme,
-                    textTheme: textTheme,
-                    children: [
-                      _ShelfGlanceStatCell(
-                        count: stats.completedSeriesCount,
-                        label: CollectionSummaryLabels.seriesComplete,
-                        scheme: scheme,
-                        textTheme: textTheme,
-                        tooltip: CompletionMetricTooltips.completedSeries,
-                        muted: stats.completedSeriesCount == 0,
-                      ),
-                      _ShelfGlanceStatCell(
-                        count: stats.masterCompleteSeriesCount,
-                        label: CollectionSummaryLabels.masterComplete,
-                        scheme: scheme,
-                        textTheme: textTheme,
-                        muted: stats.masterCompleteSeriesCount == 0,
-                        emphasizeLabel: stats.masterCompleteSeriesCount > 0,
-                      ),
-                    ],
-                  ),
+                  if (metricLabels.showSecondRow) ...[
+                    const SizedBox(
+                      height: FeedRhythm.collectionSummaryMetricRowGap,
+                    ),
+                    _MetricRow(
+                      scheme: scheme,
+                      textTheme: textTheme,
+                      muted:
+                          stats.completedSeriesCount == 0 &&
+                          stats.masterCompleteSeriesCount == 0,
+                      children: [
+                        _ShelfGlanceStatCell(
+                          count: stats.completedSeriesCount,
+                          label: metricLabels.tertiary,
+                          scheme: scheme,
+                          textTheme: textTheme,
+                          tooltip: metricLabels.tertiaryTooltip,
+                          muted: stats.completedSeriesCount == 0,
+                        ),
+                        _ShelfGlanceStatCell(
+                          count: stats.masterCompleteSeriesCount,
+                          label: metricLabels.quaternary,
+                          scheme: scheme,
+                          textTheme: textTheme,
+                          muted: stats.masterCompleteSeriesCount == 0,
+                          emphasizeLabel: stats.masterCompleteSeriesCount > 0,
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -197,7 +262,11 @@ class _SummaryStatsCard extends StatelessWidget {
     );
 
     if (onTap == null) {
-      return DecoratedBox(decoration: decoration, child: child);
+      return DecoratedBox(
+        key: const Key('collection_summary_stats_card'),
+        decoration: decoration,
+        child: child,
+      );
     }
 
     return Semantics(
@@ -220,11 +289,13 @@ class _MetricRow extends StatelessWidget {
     required this.scheme,
     required this.textTheme,
     required this.children,
+    this.muted = false,
   });
 
   final ColorScheme scheme;
   final TextTheme textTheme;
   final List<_ShelfGlanceStatCell> children;
+  final bool muted;
 
   @override
   Widget build(BuildContext context) {
@@ -234,7 +305,7 @@ class _MetricRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(child: children[0]),
-          Center(child: _Dot(scheme: scheme)),
+          Center(child: _Dot(scheme: scheme, muted: muted)),
           Expanded(child: children[1]),
         ],
       ),
@@ -308,9 +379,10 @@ class _InsightsEntryRow extends StatelessWidget {
 }
 
 class _Dot extends StatelessWidget {
-  const _Dot({required this.scheme});
+  const _Dot({required this.scheme, this.muted = false});
 
   final ColorScheme scheme;
+  final bool muted;
 
   @override
   Widget build(BuildContext context) {
@@ -321,7 +393,7 @@ class _Dot extends StatelessWidget {
         height: 4,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: scheme.primary.withValues(alpha: 0.2),
+          color: scheme.primary.withValues(alpha: muted ? 0.08 : 0.2),
         ),
       ),
     );
@@ -337,6 +409,7 @@ class _ShelfGlanceStatCell extends StatelessWidget {
     this.muted = false,
     this.emphasizeLabel = false,
     this.tooltip,
+    this.emoji,
   });
 
   final int count;
@@ -346,6 +419,7 @@ class _ShelfGlanceStatCell extends StatelessWidget {
   final bool muted;
   final bool emphasizeLabel;
   final String? tooltip;
+  final String? emoji;
 
   @override
   Widget build(BuildContext context) {
@@ -378,11 +452,7 @@ class _ShelfGlanceStatCell extends StatelessWidget {
           height: FeedRhythm.collectionSummaryCountHeight,
           child: Align(
             alignment: Alignment.bottomCenter,
-            child: Text(
-              '$count',
-              textAlign: TextAlign.center,
-              style: countStyle,
-            ),
+            child: _MetricCount(count: count, style: countStyle, emoji: emoji),
           ),
         ),
         const SizedBox(height: 4),
@@ -397,6 +467,36 @@ class _ShelfGlanceStatCell extends StatelessWidget {
             ),
           ),
         ),
+      ],
+    );
+  }
+}
+
+class _MetricCount extends StatelessWidget {
+  const _MetricCount({required this.count, required this.style, this.emoji});
+
+  final int count;
+  final TextStyle style;
+  final String? emoji;
+
+  @override
+  Widget build(BuildContext context) {
+    if (emoji == null) {
+      return Text('$count', textAlign: TextAlign.center, style: style);
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        Text(
+          emoji!,
+          textAlign: TextAlign.center,
+          style: style.copyWith(fontSize: 18, height: 1.0),
+        ),
+        const SizedBox(width: 5),
+        Text('$count', textAlign: TextAlign.center, style: style),
       ],
     );
   }
