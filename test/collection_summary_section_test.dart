@@ -166,7 +166,7 @@ void main() {
     expect(adjustedHeight, defaultHeight);
   });
 
-  testWidgets('empty wishlist summary reuses muted summary styling', (
+  testWidgets('wishlist summary mutes each metric independently', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(390, 500);
@@ -231,11 +231,37 @@ void main() {
     );
     expect(
       _textAlpha(tester.widget<Text>(find.text('0'))),
-      closeTo(0.92, 0.01),
+      closeTo(0.36, 0.01),
     );
     expect(
       _textAlpha(tester.widget<Text>(find.text('Wishlisted Series'))),
       closeTo(0.72, 0.01),
+    );
+    expect(
+      _textAlpha(tester.widget<Text>(find.text('Wishlisted Figures'))),
+      closeTo(0.38, 0.01),
+    );
+
+    const figuresOnlyStats = CollectionAggregateStats(
+      inCollection: 0,
+      wantListCount: 2,
+      completedSeriesCount: 0,
+      masterCompleteSeriesCount: 0,
+    );
+
+    await pumpWishlistSummary(figuresOnlyStats);
+
+    expect(
+      _textAlpha(tester.widget<Text>(find.text('0'))),
+      closeTo(0.36, 0.01),
+    );
+    expect(
+      _textAlpha(tester.widget<Text>(find.text('2'))),
+      closeTo(0.92, 0.01),
+    );
+    expect(
+      _textAlpha(tester.widget<Text>(find.text('Wishlisted Series'))),
+      closeTo(0.38, 0.01),
     );
     expect(
       _textAlpha(tester.widget<Text>(find.text('Wishlisted Figures'))),

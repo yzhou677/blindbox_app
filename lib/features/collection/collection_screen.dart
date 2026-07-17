@@ -783,37 +783,32 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.only(top: FeedRhythm.headerToSearchField),
-        child: IgnorePointer(
-          ignoring: searchDisabled,
-          child: Opacity(
-            opacity: searchDisabled ? 0.86 : 1,
-            child: AppSearchField(
-              controller: _searchController,
-              hintText: hintText,
-              readOnly: searchDisabled,
-              onChanged: searchDisabled ? null : _onSearchChanged,
-              suffixIcon: searchDisabled
-                  ? null
-                  : ValueListenableBuilder<TextEditingValue>(
-                      valueListenable: _searchController,
-                      builder: (context, value, _) {
-                        if (value.text.isEmpty) {
-                          return const SizedBox.shrink();
+        child: AppSearchField(
+          controller: _searchController,
+          hintText: hintText,
+          readOnly: searchDisabled,
+          enabled: !searchDisabled,
+          onChanged: searchDisabled ? null : _onSearchChanged,
+          suffixIcon: searchDisabled
+              ? null
+              : ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: _searchController,
+                  builder: (context, value, _) {
+                    if (value.text.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+                    return IconButton(
+                      icon: const Icon(Icons.close_rounded, size: 20),
+                      onPressed: () {
+                        _searchDebounceTimer?.cancel();
+                        _searchController.clear();
+                        if (_debouncedSearchQuery.isNotEmpty) {
+                          setState(() => _debouncedSearchQuery = '');
                         }
-                        return IconButton(
-                          icon: const Icon(Icons.close_rounded, size: 20),
-                          onPressed: () {
-                            _searchDebounceTimer?.cancel();
-                            _searchController.clear();
-                            if (_debouncedSearchQuery.isNotEmpty) {
-                              setState(() => _debouncedSearchQuery = '');
-                            }
-                          },
-                        );
                       },
-                    ),
-            ),
-          ),
+                    );
+                  },
+                ),
         ),
       ),
     );
@@ -982,8 +977,9 @@ class _WishlistFigurePreviewSheet extends StatelessWidget {
     if (normalized == 'chase') return 'Chase';
     if (normalized == 'limited edition') return 'Limited Edition';
     if (raw.endsWith('Figure') || raw.endsWith('Edition')) return raw;
-    if (figure.isSecret && normalized.contains('secret'))
+    if (figure.isSecret && normalized.contains('secret')) {
       return 'Secret Figure';
+    }
     return raw;
   }
 }

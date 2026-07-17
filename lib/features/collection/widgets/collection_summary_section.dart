@@ -115,10 +115,7 @@ class CollectionSummarySection extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textTheme = Theme.of(context).textTheme;
-    final isWishlistSummaryEmpty =
-        !metricLabels.showSecondRow &&
-        stats.inCollection == 0 &&
-        stats.wantListCount == 0;
+    final useIndependentMetricEmptyState = !metricLabels.showSecondRow;
 
     return Padding(
       padding: padding,
@@ -142,7 +139,6 @@ class CollectionSummarySection extends StatelessWidget {
                   _MetricRow(
                     scheme: scheme,
                     textTheme: textTheme,
-                    muted: isWishlistSummaryEmpty,
                     children: [
                       _ShelfGlanceStatCell(
                         count: stats.inCollection,
@@ -150,7 +146,9 @@ class CollectionSummarySection extends StatelessWidget {
                         emoji: metricLabels.primaryEmoji,
                         scheme: scheme,
                         textTheme: textTheme,
-                        muted: isWishlistSummaryEmpty,
+                        muted:
+                            useIndependentMetricEmptyState &&
+                            stats.inCollection == 0,
                       ),
                       _ShelfGlanceStatCell(
                         count: stats.wantListCount,
@@ -158,7 +156,9 @@ class CollectionSummarySection extends StatelessWidget {
                         emoji: metricLabels.secondaryEmoji,
                         scheme: scheme,
                         textTheme: textTheme,
-                        muted: isWishlistSummaryEmpty,
+                        muted:
+                            useIndependentMetricEmptyState &&
+                            stats.wantListCount == 0,
                       ),
                     ],
                   ),

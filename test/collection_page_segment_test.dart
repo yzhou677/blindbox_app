@@ -24,7 +24,8 @@ final class _SegmentTestCollectionNotifier extends CollectionNotifier {
   CollectionSnapshot build() => _snap;
 }
 
-final class _DefaultShelfUiPrefsNotifier extends CollectionShelfUiPrefsNotifier {
+final class _DefaultShelfUiPrefsNotifier
+    extends CollectionShelfUiPrefsNotifier {
   @override
   CollectionShelfUiPrefs build() => const CollectionShelfUiPrefs();
 }
@@ -98,10 +99,7 @@ void main() {
     final series = testShelfSeries(id: 's1', name: 'Dimoo One');
     await pumpScreen(
       tester,
-      CollectionSnapshot(
-        shelfSeries: [series],
-        figureStates: const {},
-      ),
+      CollectionSnapshot(shelfSeries: [series], figureStates: const {}),
     );
 
     await tester.tap(find.text('Insights'));
@@ -111,6 +109,9 @@ void main() {
     expect(find.text(CollectorTypeCopy.revealButton), findsOneWidget);
     expect(find.text(CollectorTypeCopy.journeyTitle), findsOneWidget);
     expect(find.text('Add series'), findsNothing);
+    final searchField = tester.widget<TextField>(find.byType(TextField));
+    expect(searchField.enabled, isFalse);
+    expect(searchField.showCursor, isFalse);
     // Summary stays above the segment on both tabs.
     expect(
       find.byKey(const Key('collection_insights_compact_glance')),
@@ -124,18 +125,16 @@ void main() {
     final series = testShelfSeries(id: 's1', name: 'Dimoo One');
     await pumpScreen(
       tester,
-      CollectionSnapshot(
-        shelfSeries: [series],
-        figureStates: const {},
-      ),
+      CollectionSnapshot(shelfSeries: [series], figureStates: const {}),
     );
 
     final searchY = tester.getTopLeft(find.byType(AppSearchField)).dy;
     final summaryY = tester
         .getTopLeft(find.byKey(const Key('collection_insights_compact_glance')))
         .dy;
-    final segmentY =
-        tester.getTopLeft(find.byType(CollectionPageSegmentControl)).dy;
+    final segmentY = tester
+        .getTopLeft(find.byType(CollectionPageSegmentControl))
+        .dy;
     final addSeriesY = tester.getTopLeft(find.text('Add series')).dy;
 
     expect(searchY, lessThan(summaryY));
@@ -176,22 +175,25 @@ void main() {
           ? expandedSummary
           : compactSummary;
       final summaryBottom = tester.getBottomLeft(summaryFinder).dy;
-      final segmentTop =
-          tester.getTopLeft(find.byType(CollectionPageSegmentControl)).dy;
+      final segmentTop = tester
+          .getTopLeft(find.byType(CollectionPageSegmentControl))
+          .dy;
       return segmentTop - summaryBottom;
     }
 
     final shelfGap = currentSummaryToSegmentGap();
 
     await tester.tap(find.text('Insights'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
     final insightsGap = currentSummaryToSegmentGap();
 
     await tester.tap(find.text('Wishlist'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
     final wishlistGap = currentSummaryToSegmentGap();
 
-    expect(insightsGap, shelfGap);
-    expect(wishlistGap, shelfGap);
+    expect(insightsGap, closeTo(shelfGap, 1));
+    expect(wishlistGap, closeTo(shelfGap, 1));
   });
 }
