@@ -456,10 +456,11 @@ const _collectorMatrix = [
     id: CollectorTypeArchetypeId.dreamer,
     displayName: 'The Dreamer',
     label: 'SHELFY IDENTITY CARD · 01/10',
-    statementTop: 'WISHLIST',
-    statementBottom: 'STANDS OUT.',
-    becauseLine: 'Because wishlist figures are a strong signal in this reveal.',
-    motto: 'Wishlist figures counted.',
+    statementTop: 'FUTURE PLANS',
+    statementBottom: 'STAND OUT.',
+    becauseLine:
+        'Because your future collecting plans are the strongest signal in this reveal.',
+    motto: 'Future collecting plans counted.',
     asset: 'assets/insights/collector_types/dreamer.png',
   ),
   _CollectorSmokeRow(

@@ -58,7 +58,8 @@ abstract final class CollectorTypeArchetypes {
   static const dreamer = CollectorTypeArchetype(
     id: CollectorTypeArchetypeId.dreamer,
     displayName: 'The Dreamer',
-    flavorText: 'Wishlist figures are the strongest signal in this reveal.',
+    flavorText:
+        'Your future collecting plans are the strongest signal in this reveal.',
     accentColorLight: Color(0xFFB8A8D8),
     accentColorDark: Color(0xFFC4B4E0),
     icon: Icons.nights_stay_outlined,

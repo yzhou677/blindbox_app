@@ -94,7 +94,7 @@ abstract final class CollectorTypeCopy {
       CollectorTypeReasonKey.dominantUniverse =>
         'Because one universe has the strongest presence in this reveal.',
       CollectorTypeReasonKey.highWishlist =>
-        'Because wishlist figures are a strong signal in this reveal.',
+        'Because your future collecting plans are the strongest signal in this reveal.',
       CollectorTypeReasonKey.manySecrets =>
         'Because Secret Figures are a strong signal in this reveal.',
       CollectorTypeReasonKey.fortunateSecrets =>
