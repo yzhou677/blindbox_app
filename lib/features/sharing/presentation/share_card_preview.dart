@@ -7,6 +7,7 @@ import 'package:blindbox_app/features/sharing/application/share_card_file_store.
 import 'package:blindbox_app/features/sharing/application/share_card_native_share.dart';
 import 'package:blindbox_app/features/sharing/application/share_card_renderer.dart';
 import 'package:blindbox_app/features/sharing/presentation/widgets/shelfy_collector_cards.dart';
+import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
 import 'package:flutter/material.dart';
 
 Future<void> showShareCardPreview({
@@ -288,16 +289,7 @@ class _ShareCardPreviewSheetState extends State<_ShareCardPreviewSheet> {
                           children: [
                             Positioned(
                               top: handleTop,
-                              child: Container(
-                                width: 34,
-                                height: 4,
-                                decoration: BoxDecoration(
-                                  color: scheme.outlineVariant.withValues(
-                                    alpha: 0.34,
-                                  ),
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                              ),
+                              child: const CollectibleSheetDragHandle(),
                             ),
                           ],
                         ),

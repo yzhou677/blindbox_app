@@ -4,9 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('WishlistFigureDetailsMetadata', () {
-    test('separates regular figure type from known odds', () {
+    test('labels regular figures by type only', () {
       const figure = ShelfFigure(
-        id: 'regular_with_odds',
+        id: 'regular',
         seriesId: 'series',
         name: 'Regular Pull',
         rarity: '1:72',
@@ -14,12 +14,11 @@ void main() {
       );
 
       expect(WishlistFigureDetailsMetadata.typeLabel(figure), 'Regular Figure');
-      expect(WishlistFigureDetailsMetadata.oddsLabel(figure), '1:72');
     });
 
-    test('separates secret figure type from known odds', () {
+    test('labels secret figures by type only', () {
       const figure = ShelfFigure(
-        id: 'secret_with_odds',
+        id: 'secret',
         seriesId: 'series',
         name: 'Secret Pull',
         rarity: 'Secret',
@@ -28,33 +27,6 @@ void main() {
       );
 
       expect(WishlistFigureDetailsMetadata.typeLabel(figure), 'Secret Figure');
-      expect(WishlistFigureDetailsMetadata.oddsLabel(figure), '1:144');
-    });
-
-    test('omits odds when unavailable', () {
-      const figure = ShelfFigure(
-        id: 'secret_unknown_odds',
-        seriesId: 'series',
-        name: 'Secret Pull',
-        rarity: 'Secret',
-        isSecret: true,
-      );
-
-      expect(WishlistFigureDetailsMetadata.typeLabel(figure), 'Secret Figure');
-      expect(WishlistFigureDetailsMetadata.oddsLabel(figure), isNull);
-    });
-
-    test('extracts odds from combined legacy rarity text', () {
-      const figure = ShelfFigure(
-        id: 'legacy_combined',
-        seriesId: 'series',
-        name: 'Legacy Pull',
-        rarity: 'Super Rare Secret · 1:1152',
-        isSecret: true,
-      );
-
-      expect(WishlistFigureDetailsMetadata.typeLabel(figure), 'Secret Figure');
-      expect(WishlistFigureDetailsMetadata.oddsLabel(figure), '1:1152');
     });
   });
 }

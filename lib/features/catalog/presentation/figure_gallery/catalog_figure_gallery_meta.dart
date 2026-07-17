@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 final RegExp _galleryOddsTokenPattern = RegExp(r'\d+\s*:\s*\d+');
 
 /// Normalizes pull odds to `1:72` form; null when [raw] is not a ratio label.
+@visibleForTesting
 String? catalogFigureGalleryNormalizeOdds(String? raw) {
   final label = raw?.trim();
   if (label == null || label.isEmpty) return null;
@@ -30,6 +31,7 @@ bool catalogFigureGalleryLabelDenotesSecret(String label) {
 }
 
 /// Splits a combined rarity string into descriptive rarity and odds.
+@visibleForTesting
 ({String? rarity, String? odds}) catalogFigureGallerySplitRarityOdds(
   String? raw,
 ) {

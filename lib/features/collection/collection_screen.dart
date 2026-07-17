@@ -48,6 +48,7 @@ import 'package:blindbox_app/features/sharing/presentation/widgets/shelfy_collec
 import 'package:blindbox_app/shared/widgets/app_search_field.dart';
 import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
+import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
 import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -886,7 +887,6 @@ class _WishlistFigurePreviewSheet extends StatelessWidget {
     final series = row.series;
     final brand = series.brand.trim();
     final figureType = WishlistFigureDetailsMetadata.typeLabel(figure);
-    final figureOdds = WishlistFigureDetailsMetadata.oddsLabel(figure);
     final seriesName = series.name.trim().isNotEmpty
         ? series.name.trim()
         : shelfSeriesIpLabel(series).trim();
@@ -894,17 +894,8 @@ class _WishlistFigurePreviewSheet extends StatelessWidget {
     return CollectibleSheetScrollView(
       controller: scrollController,
       header: Padding(
-        padding: const EdgeInsets.only(top: 12),
-        child: Center(
-          child: Container(
-            width: 50,
-            height: 5,
-            decoration: BoxDecoration(
-              color: scheme.onSurfaceVariant.withValues(alpha: 0.32),
-              borderRadius: BorderRadius.circular(999),
-            ),
-          ),
-        ),
+        padding: const EdgeInsets.only(top: FeedRhythm.sheetChromeTop),
+        child: const Center(child: CollectibleSheetDragHandle()),
       ),
       slivers: [
         SliverPadding(
@@ -952,13 +943,6 @@ class _WishlistFigurePreviewSheet extends StatelessWidget {
                   label: 'Type',
                   value: figureType,
                 ),
-                if (figureOdds != null) ...[
-                  const SizedBox(height: 12),
-                  _WishlistFigurePreviewMetadata(
-                    label: 'Odds',
-                    value: figureOdds,
-                  ),
-                ],
                 if (brand.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   _WishlistFigurePreviewMetadata(label: 'Brand', value: brand),

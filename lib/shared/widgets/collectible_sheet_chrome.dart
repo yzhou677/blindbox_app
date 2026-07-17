@@ -65,7 +65,8 @@ class CollectibleSheetChrome extends StatelessWidget {
                 trailingMeta: trailingMeta,
                 density: SeriesHeroMetaDensity.sheet,
               )
-            else if (trailingMeta != null && trailingMeta!.trim().isNotEmpty) ...[
+            else if (trailingMeta != null &&
+                trailingMeta!.trim().isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
                 trailingMeta!.trim(),
@@ -83,17 +84,23 @@ class CollectibleSheetChrome extends StatelessWidget {
 class CollectibleSheetDragHandle extends StatelessWidget {
   const CollectibleSheetDragHandle({super.key, this.color});
 
+  static const double width = 40;
+  static const double height = 4;
+  static const BorderRadiusGeometry radius = BorderRadius.all(
+    Radius.circular(999),
+  );
+
   final Color? color;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Container(
-      width: 40,
-      height: 4,
+      width: width,
+      height: height,
       decoration: BoxDecoration(
-        color: color ?? scheme.outlineVariant.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(999),
+        color: color ?? scheme.onSurfaceVariant.withValues(alpha: 0.28),
+        borderRadius: radius,
       ),
     );
   }

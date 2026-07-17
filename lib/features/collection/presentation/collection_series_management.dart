@@ -11,6 +11,7 @@ import 'package:blindbox_app/features/collection/presentation/collection_vocabul
 import 'package:blindbox_app/features/collection/presentation/shelf_figure_media.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_series_thumbnail.dart';
 import 'package:blindbox_app/features/collection/widgets/custom_series_form_sheet.dart';
+import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -106,16 +107,7 @@ class _CollectionSeriesManagementSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: scheme.onSurfaceVariant.withValues(alpha: 0.28),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              ),
-            ),
+            const Center(child: CollectibleSheetDragHandle()),
             SizedBox(height: showCover ? AppSpacing.xl : AppSpacing.lg + 4),
             if (showCover) ...[
               Center(
@@ -134,11 +126,7 @@ class _CollectionSeriesManagementSheet extends StatelessWidget {
               style: CollectibleTypography.seriesHeroTitle(
                 textTheme,
                 scheme,
-              ).copyWith(
-                fontSize: 22,
-                letterSpacing: -0.3,
-                height: 1.2,
-              ),
+              ).copyWith(fontSize: 22, letterSpacing: -0.3, height: 1.2),
             ),
             if (subtitle != null) ...[
               const SizedBox(height: 8),
@@ -187,7 +175,9 @@ class _CollectionSeriesManagementSheet extends StatelessWidget {
             TextButton(
               onPressed: onCancel,
               style: TextButton.styleFrom(
-                foregroundColor: scheme.onSurfaceVariant.withValues(alpha: 0.72),
+                foregroundColor: scheme.onSurfaceVariant.withValues(
+                  alpha: 0.72,
+                ),
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 minimumSize: const Size.fromHeight(48),
               ),
@@ -235,11 +225,11 @@ class _ManagementActionButton extends StatelessWidget {
             label,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: foreground,
-                  fontWeight: fontWeight,
-                  letterSpacing: 0.05,
-                  height: 1.25,
-                ),
+              color: foreground,
+              fontWeight: fontWeight,
+              letterSpacing: 0.05,
+              height: 1.25,
+            ),
           ),
         ),
       ),
@@ -267,7 +257,9 @@ void openEditCustomSeriesSheet(
             String? customCoverImageUri,
             String? notes,
           }) {
-            ref.read(collectionNotifierProvider.notifier).updateCustomSeries(
+            ref
+                .read(collectionNotifierProvider.notifier)
+                .updateCustomSeries(
                   seriesId: series.id,
                   seriesName: seriesName,
                   brand: brand,
@@ -284,7 +276,9 @@ void openEditCustomSeriesSheet(
             String? rarityLabel,
             String? localImageUri,
           }) {
-            ref.read(collectionNotifierProvider.notifier).updateCustomFigure(
+            ref
+                .read(collectionNotifierProvider.notifier)
+                .updateCustomFigure(
                   seriesId: series.id,
                   figureId: figureId,
                   name: name,
@@ -300,7 +294,9 @@ void openEditCustomSeriesSheet(
             String? rarityLabel,
             String? localImageUri,
           }) {
-            ref.read(collectionNotifierProvider.notifier).addCustomFigure(
+            ref
+                .read(collectionNotifierProvider.notifier)
+                .addCustomFigure(
                   seriesId: series.id,
                   name: name,
                   isSecret: isSecret,
