@@ -43,6 +43,8 @@ class CollectionSummaryMetricLabels {
     required this.secondary,
     required this.tertiary,
     required this.quaternary,
+    this.primaryEmoji,
+    this.secondaryEmoji,
     this.tertiaryTooltip = CompletionMetricTooltips.completedSeries,
     this.showSecondRow = true,
   });
@@ -51,6 +53,8 @@ class CollectionSummaryMetricLabels {
   final String secondary;
   final String tertiary;
   final String quaternary;
+  final String? primaryEmoji;
+  final String? secondaryEmoji;
   final String? tertiaryTooltip;
   final bool showSecondRow;
 
@@ -66,6 +70,8 @@ class CollectionSummaryMetricLabels {
     secondary: 'Wishlisted Figures',
     tertiary: '',
     quaternary: '',
+    primaryEmoji: '📚',
+    secondaryEmoji: '💜',
     tertiaryTooltip: null,
     showSecondRow: false,
   );
@@ -136,12 +142,14 @@ class CollectionSummarySection extends StatelessWidget {
                       _ShelfGlanceStatCell(
                         count: stats.inCollection,
                         label: metricLabels.primary,
+                        emoji: metricLabels.primaryEmoji,
                         scheme: scheme,
                         textTheme: textTheme,
                       ),
                       _ShelfGlanceStatCell(
                         count: stats.wantListCount,
                         label: metricLabels.secondary,
+                        emoji: metricLabels.secondaryEmoji,
                         scheme: scheme,
                         textTheme: textTheme,
                       ),
@@ -388,6 +396,7 @@ class _ShelfGlanceStatCell extends StatelessWidget {
     this.muted = false,
     this.emphasizeLabel = false,
     this.tooltip,
+    this.emoji,
   });
 
   final int count;
@@ -397,6 +406,7 @@ class _ShelfGlanceStatCell extends StatelessWidget {
   final bool muted;
   final bool emphasizeLabel;
   final String? tooltip;
+  final String? emoji;
 
   @override
   Widget build(BuildContext context) {
@@ -429,11 +439,7 @@ class _ShelfGlanceStatCell extends StatelessWidget {
           height: FeedRhythm.collectionSummaryCountHeight,
           child: Align(
             alignment: Alignment.bottomCenter,
-            child: Text(
-              '$count',
-              textAlign: TextAlign.center,
-              style: countStyle,
-            ),
+            child: _MetricCount(count: count, style: countStyle, emoji: emoji),
           ),
         ),
         const SizedBox(height: 4),
@@ -448,6 +454,36 @@ class _ShelfGlanceStatCell extends StatelessWidget {
             ),
           ),
         ),
+      ],
+    );
+  }
+}
+
+class _MetricCount extends StatelessWidget {
+  const _MetricCount({required this.count, required this.style, this.emoji});
+
+  final int count;
+  final TextStyle style;
+  final String? emoji;
+
+  @override
+  Widget build(BuildContext context) {
+    if (emoji == null) {
+      return Text('$count', textAlign: TextAlign.center, style: style);
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        Text(
+          emoji!,
+          textAlign: TextAlign.center,
+          style: style.copyWith(fontSize: 18, height: 1.0),
+        ),
+        const SizedBox(width: 5),
+        Text('$count', textAlign: TextAlign.center, style: style),
       ],
     );
   }
