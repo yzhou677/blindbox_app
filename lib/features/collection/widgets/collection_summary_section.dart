@@ -115,6 +115,10 @@ class CollectionSummarySection extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textTheme = Theme.of(context).textTheme;
+    final isWishlistSummaryEmpty =
+        !metricLabels.showSecondRow &&
+        stats.inCollection == 0 &&
+        stats.wantListCount == 0;
 
     return Padding(
       padding: padding,
@@ -138,6 +142,7 @@ class CollectionSummarySection extends StatelessWidget {
                   _MetricRow(
                     scheme: scheme,
                     textTheme: textTheme,
+                    muted: isWishlistSummaryEmpty,
                     children: [
                       _ShelfGlanceStatCell(
                         count: stats.inCollection,
@@ -145,6 +150,7 @@ class CollectionSummarySection extends StatelessWidget {
                         emoji: metricLabels.primaryEmoji,
                         scheme: scheme,
                         textTheme: textTheme,
+                        muted: isWishlistSummaryEmpty,
                       ),
                       _ShelfGlanceStatCell(
                         count: stats.wantListCount,
@@ -152,6 +158,7 @@ class CollectionSummarySection extends StatelessWidget {
                         emoji: metricLabels.secondaryEmoji,
                         scheme: scheme,
                         textTheme: textTheme,
+                        muted: isWishlistSummaryEmpty,
                       ),
                     ],
                   ),
@@ -162,6 +169,9 @@ class CollectionSummarySection extends StatelessWidget {
                     _MetricRow(
                       scheme: scheme,
                       textTheme: textTheme,
+                      muted:
+                          stats.completedSeriesCount == 0 &&
+                          stats.masterCompleteSeriesCount == 0,
                       children: [
                         _ShelfGlanceStatCell(
                           count: stats.completedSeriesCount,
@@ -279,11 +289,13 @@ class _MetricRow extends StatelessWidget {
     required this.scheme,
     required this.textTheme,
     required this.children,
+    this.muted = false,
   });
 
   final ColorScheme scheme;
   final TextTheme textTheme;
   final List<_ShelfGlanceStatCell> children;
+  final bool muted;
 
   @override
   Widget build(BuildContext context) {
@@ -293,7 +305,7 @@ class _MetricRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(child: children[0]),
-          Center(child: _Dot(scheme: scheme)),
+          Center(child: _Dot(scheme: scheme, muted: muted)),
           Expanded(child: children[1]),
         ],
       ),
@@ -367,9 +379,10 @@ class _InsightsEntryRow extends StatelessWidget {
 }
 
 class _Dot extends StatelessWidget {
-  const _Dot({required this.scheme});
+  const _Dot({required this.scheme, this.muted = false});
 
   final ColorScheme scheme;
+  final bool muted;
 
   @override
   Widget build(BuildContext context) {
@@ -380,7 +393,7 @@ class _Dot extends StatelessWidget {
         height: 4,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: scheme.primary.withValues(alpha: 0.2),
+          color: scheme.primary.withValues(alpha: muted ? 0.08 : 0.2),
         ),
       ),
     );

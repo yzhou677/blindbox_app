@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-const Duration wishlistUndoSnackBarDuration = Duration(seconds: 4);
+const Duration wishlistUndoSnackBarDuration = Duration(milliseconds: 2500);
 
 SnackBar wishlistUndoSnackBar({
   required BuildContext context,
