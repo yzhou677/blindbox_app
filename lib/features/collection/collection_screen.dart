@@ -425,8 +425,12 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     final showInProgressSection = inProgress.isNotEmpty;
     final showCompletedSection = completed.isNotEmpty;
     final wishlistSummaryStats = _wishlistSummaryStats(snap);
+    final hasShelfContent = snap.trackedSeriesCount > 0;
+    final hasWishlistContent =
+        snap.totalWishlistedSeries > 0 || snap.totalWishlistFigures > 0;
+    final showCollectionChrome = hasShelfContent || hasWishlistContent;
 
-    if (snap.trackedSeriesCount == 0) {
+    if (!hasShelfContent) {
       trace.finish(
         shelfSeries: 0,
         visibleSeries: 0,
@@ -455,19 +459,20 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
             SliverToBoxAdapter(
               child: SizedBox(height: FeedRhythm.belowMainTabAppBar),
             ),
-            if (_pageSegment == CollectionPageSegment.wishlist)
-              _buildSearchSliver(),
-            if (_pageSegment == CollectionPageSegment.wishlist)
+            if (showCollectionChrome) _buildSearchSliver(),
+            if (showCollectionChrome)
               SliverToBoxAdapter(
-                child: CollectionInsightsDashboardHost(
-                  statsOverride: wishlistSummaryStats,
-                  metricLabels: CollectionSummaryMetricLabels.wishlist,
-                  expandable: false,
-                  summaryCardTopPadding:
-                      FeedRhythm.collectionWishlistSummaryCardTopPadding,
-                  summaryCardBottomPadding:
-                      FeedRhythm.collectionWishlistSummaryCardBottomPadding,
-                ),
+                child: _pageSegment == CollectionPageSegment.wishlist
+                    ? CollectionInsightsDashboardHost(
+                        statsOverride: wishlistSummaryStats,
+                        metricLabels: CollectionSummaryMetricLabels.wishlist,
+                        expandable: false,
+                        summaryCardTopPadding:
+                            FeedRhythm.collectionWishlistSummaryCardTopPadding,
+                        summaryCardBottomPadding: FeedRhythm
+                            .collectionWishlistSummaryCardBottomPadding,
+                      )
+                    : const CollectionInsightsDashboardHost(),
               ),
             SliverToBoxAdapter(
               child: CollectionPageSegmentControl(

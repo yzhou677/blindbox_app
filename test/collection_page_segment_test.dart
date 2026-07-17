@@ -119,6 +119,79 @@ void main() {
     );
   });
 
+  testWidgets('first-use empty state hides search and summary', (tester) async {
+    await pumpScreen(
+      tester,
+      const CollectionSnapshot(shelfSeries: [], figureStates: {}),
+    );
+
+    expect(find.byType(AppSearchField), findsNothing);
+    expect(
+      find.byKey(const Key('collection_summary_stats_card')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const Key('collection_insights_compact_glance')),
+      findsNothing,
+    );
+    expect(find.byType(CollectionPageSegmentControl), findsOneWidget);
+  });
+
+  testWidgets(
+    'wishlist content keeps search and summary visible when shelf is empty',
+    (tester) async {
+      await pumpScreen(
+        tester,
+        CollectionSnapshot(
+          shelfSeries: const [],
+          figureStates: const {},
+          seriesWishlist: const [
+            WishlistedCatalogSeries(
+              catalogSeriesId: 'saved-series',
+              name: 'Saved Series',
+              brand: 'POP MART',
+              ipName: 'Molly',
+              imageKey: 'saved-series',
+              addedAtMicros: 10,
+            ),
+          ],
+        ),
+      );
+
+      expect(find.byType(AppSearchField), findsOneWidget);
+      expect(
+        find.byKey(const Key('collection_insights_compact_glance')),
+        findsOneWidget,
+      );
+      expect(find.byType(CollectionPageSegmentControl), findsOneWidget);
+
+      await tester.tap(find.text('Insights'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 250));
+
+      expect(find.byType(AppSearchField), findsOneWidget);
+      final insightsSearchField = tester.widget<TextField>(
+        find.byType(TextField),
+      );
+      expect(insightsSearchField.enabled, isFalse);
+      expect(
+        find.byKey(const Key('collection_insights_compact_glance')),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text('Wishlist'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 250));
+
+      expect(find.byType(AppSearchField), findsOneWidget);
+      expect(
+        find.byKey(const Key('collection_summary_stats_card')),
+        findsOneWidget,
+      );
+      expect(find.text('Your wishlist is empty.'), findsNothing);
+    },
+  );
+
   testWidgets('header order keeps summary above Shelf Insights segment', (
     tester,
   ) async {
