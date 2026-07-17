@@ -1,4 +1,4 @@
-﻿import 'dart:math' as math;
+import 'dart:math' as math;
 
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_series.dart'
@@ -46,7 +46,7 @@ const double kCollectorTypeTrendRecentRatio = 0.5;
 /// Soft cap on recent series counted toward Trend Chaser scale bonus.
 const int kCollectorTypeTrendRecentCap = 6;
 
-/// Wishlist share of (owned + wishlist) for Dreamer (`>` in code).
+/// Future-intent share of (Started Series + future intent) for Dreamer.
 const double kCollectorTypeDreamerWishlistRatio = 0.5;
 
 /// Secret owned / Secret slots hit rate for Hunter and Lucky One.
@@ -96,8 +96,8 @@ const double kCollectorTypeScoreTieEpsilon = 0.01;
 // | Completionist | Completion defines the shelf   | ≥2 complete/near + ratio ≥ 0.60      |
 // | Hunter        | Sustained Secret pursuit       | >4 series + ≥2 Secrets + hit≥0.50    |
 // | Lucky One     | Early luck (Hunter prequel)    | !Hunter + ≤4 series + ≥1 + hit≥0.50  |
-// | Loyalist      | One IP/universe dominates      | dominantIpShare ≥ 0.60               |
-// | Curator       | Multi-universe investment      | !Loyalist + ≥3 IPs + avg ≥ 0.50      |
+// | Loyalist      | One started IP dominates       | dominantIpShare ≥ 0.60               |
+// | Curator       | Multi-universe investment      | !Loyalist + ≥3 started IPs + avg ≥0.50 |
 // | Wanderer      | Identity still forming         | Fallback floor (score 5); never beats specialized |
 // | Minimalist    | Small, refined shelf           | ≤3 series + avg ≥ 0.70               |
 // | Worldbuilder  | Self-created worlds dominate   | ≥2 custom + customRatio > 0.50       |
@@ -132,12 +132,18 @@ String computeCollectorTypeSignatureHash(
 }) {
   final owned = <String>[];
   final wishlist = <String>[];
+  final wishlistSeries = <String>[];
   for (final e in snapshot.figureStates.entries) {
     if (e.value.owned) owned.add(e.key);
     if (e.value.wishlist) wishlist.add(e.key);
   }
+  for (final entry in snapshot.seriesWishlist) {
+    final id = entry.catalogSeriesId.trim();
+    if (id.isNotEmpty) wishlistSeries.add(id);
+  }
   owned.sort();
   wishlist.sort();
+  wishlistSeries.sort();
 
   var customSeries = 0;
   final brandCounts = <String, int>{};
@@ -167,6 +173,8 @@ String computeCollectorTypeSignatureHash(
     ..write(owned.join(','))
     ..write('|w:')
     ..write(wishlist.join(','))
+    ..write('|sw:')
+    ..write(wishlistSeries.join(','))
     ..write('|c:')
     ..write(customSeries)
     ..write('|s:')
@@ -231,13 +239,19 @@ CollectorTypeResolution resolveCollectorType({
     catalog: catalog,
     now: now,
   );
+  final futureIntentCount =
+      snapshot.totalWishlistFigures +
+      snapshot.totalWishlistedSeries +
+      snapshot.unstartedSeriesCount;
   final emptyScores = {
     for (final id in CollectorTypeArchetypeId.values) id: 0.0,
   };
 
-  if (snapshot.shelfSeries.isEmpty ||
-      (profile.interpretationConfidence == ShelfInterpretationConfidence.low &&
-          snapshot.totalOwnedFigures == 0)) {
+  if (futureIntentCount < 2 &&
+      (snapshot.shelfSeries.isEmpty ||
+          (profile.interpretationConfidence ==
+                  ShelfInterpretationConfidence.low &&
+              snapshot.totalOwnedFigures == 0))) {
     return CollectorTypeResolution(
       archetypeId: CollectorTypeArchetypeId.wanderer,
       score: 0,
@@ -289,8 +303,9 @@ CollectorTypeStats buildCollectorTypeStats(
   for (final series in snapshot.shelfSeries) {
     final rawKey = series.taxonomyBrandId?.trim() ?? series.brand.trim();
     if (rawKey.isNotEmpty) {
-      final display =
-          series.brand.trim().isNotEmpty ? series.brand.trim() : rawKey;
+      final display = series.brand.trim().isNotEmpty
+          ? series.brand.trim()
+          : rawKey;
       brandEntries.add((displayLabel: display, rawKey: rawKey));
     }
     final progress = progressForSeries(series, snapshot.figureStates);
@@ -334,7 +349,8 @@ CollectorTypeStats buildCollectorTypeStats(
 ({
   Map<CollectorTypeArchetypeId, double> scores,
   Map<CollectorTypeArchetypeId, CollectorTypeReasonKey> reasons,
-}) _scoreArchetypes({
+})
+_scoreArchetypes({
   required CollectionSnapshot snapshot,
   required CollectorTypeStats stats,
   CatalogSeedBundle? catalog,
@@ -345,14 +361,22 @@ CollectorTypeStats buildCollectorTypeStats(
   final reasons = <CollectorTypeArchetypeId, CollectorTypeReasonKey>{};
 
   final seriesCount = snapshot.shelfSeries.length;
-  if (seriesCount == 0) return (scores: scores, reasons: reasons);
+  final futureIntentCount =
+      snapshot.totalWishlistFigures +
+      snapshot.totalWishlistedSeries +
+      snapshot.unstartedSeriesCount;
+  if (seriesCount == 0 && futureIntentCount == 0) {
+    return (scores: scores, reasons: reasons);
+  }
 
-  final owned = stats.totalOwned;
-  final wishlist = stats.totalWishlist;
-  final totalTracked = owned + wishlist;
-  final wishlistRatio = totalTracked == 0 ? 0.0 : wishlist / totalTracked;
-  final secretHitRate =
-      stats.secretSlots == 0 ? 0.0 : stats.secretOwned / stats.secretSlots;
+  final startedSeries = snapshot.startedSeriesCount;
+  final dreamerProgressBase = startedSeries + futureIntentCount;
+  final wishlistRatio = dreamerProgressBase == 0
+      ? 0.0
+      : futureIntentCount / dreamerProgressBase;
+  final secretHitRate = stats.secretSlots == 0
+      ? 0.0
+      : stats.secretOwned / stats.secretSlots;
   final avgCompletion = stats.completionPercent / 100.0;
 
   var nearComplete = 0;
@@ -364,8 +388,7 @@ CollectorTypeStats buildCollectorTypeStats(
   var customPhotoSeries = 0;
 
   for (final series in snapshot.shelfSeries) {
-    final resolution =
-        resolveSeriesCompletion(series, snapshot.figureStates);
+    final resolution = resolveSeriesCompletion(series, snapshot.figureStates);
     if (resolution.isNearComplete) {
       nearComplete++;
     }
@@ -385,7 +408,8 @@ CollectorTypeStats buildCollectorTypeStats(
     if (series.notes != null && series.notes!.trim().isNotEmpty) {
       customNotesCount++;
     }
-    final hasCover = series.customCoverImageUri != null &&
+    final hasCover =
+        series.customCoverImageUri != null &&
         series.customCoverImageUri!.trim().isNotEmpty;
     if (hasCover) customCoverCount++;
     var hasFigurePhoto = false;
@@ -399,28 +423,38 @@ CollectorTypeStats buildCollectorTypeStats(
   }
 
   final completeCount = stats.completedSeriesCount;
-  final completedRatio = completeCount / seriesCount;
-  final nearRatio = nearComplete / seriesCount;
-  final recentRatio = recentCatalogSeries / seriesCount;
+  final completedRatio = seriesCount == 0 ? 0.0 : completeCount / seriesCount;
+  final nearRatio = seriesCount == 0 ? 0.0 : nearComplete / seriesCount;
+  final recentRatio = seriesCount == 0
+      ? 0.0
+      : recentCatalogSeries / seriesCount;
   final customRatio = stats.customSeriesRatio;
-  final distinctIps = _distinctTaxonomyIpCount(snapshot);
-  final dominant = _dominantIpShareDetail(snapshot);
-  final loyalistEligible = dominant.share >= kCollectorTypeLoyalistDominanceThreshold &&
+  final distinctIps = _distinctStartedTaxonomyIpCount(snapshot);
+  final dominant = _dominantStartedIpShareDetail(snapshot);
+  final loyalistEligible =
+      dominant.share >= kCollectorTypeLoyalistDominanceThreshold &&
       dominant.dominantSeriesCount >= 2;
+  final pastMinimalistStage = seriesCount > kCollectorTypeMinimalistSeriesCap;
 
   // Completionist — completion defines the shelf.
-  if (completeCount >= 2 &&
+  if (pastMinimalistStage &&
+      completeCount >= 2 &&
       completedRatio >= kCollectorTypeCompletionistShelfRatio) {
-    final cappedComplete =
-        math.min(completeCount, kCollectorTypeCompletionistCompleteCap);
+    final cappedComplete = math.min(
+      completeCount,
+      kCollectorTypeCompletionistCompleteCap,
+    );
     scores[CollectorTypeArchetypeId.completionist] =
         42 + completedRatio * 45 + cappedComplete * 3;
     reasons[CollectorTypeArchetypeId.completionist] =
         CollectorTypeReasonKey.deepCompletion;
-  } else if (nearComplete >= 2 &&
+  } else if (pastMinimalistStage &&
+      nearComplete >= 2 &&
       nearRatio >= kCollectorTypeCompletionistShelfRatio) {
-    final cappedNear =
-        math.min(nearComplete, kCollectorTypeCompletionistNearCap);
+    final cappedNear = math.min(
+      nearComplete,
+      kCollectorTypeCompletionistNearCap,
+    );
     scores[CollectorTypeArchetypeId.completionist] =
         38 + nearRatio * 40 + cappedNear * 3;
     reasons[CollectorTypeArchetypeId.completionist] =
@@ -429,13 +463,16 @@ CollectorTypeStats buildCollectorTypeStats(
 
   // Hunter — sustained Secret pursuit past the early shelf stage.
   // Progression: Lucky One (≤4 series) → Hunter (>4 series).
-  final hunterEligible = seriesCount > kCollectorTypeCompactSeriesCap &&
+  final hunterEligible =
+      seriesCount > kCollectorTypeCompactSeriesCap &&
       stats.secretOwned >= 2 &&
       stats.secretSlots > 0 &&
       secretHitRate >= kCollectorTypeSecretHitRate;
   if (hunterEligible) {
-    final cappedSecrets =
-        math.min(stats.secretOwned, kCollectorTypeHunterSecretCap);
+    final cappedSecrets = math.min(
+      stats.secretOwned,
+      kCollectorTypeHunterSecretCap,
+    );
     scores[CollectorTypeArchetypeId.hunter] =
         40 + secretHitRate * 40 + cappedSecrets * 3;
     reasons[CollectorTypeArchetypeId.hunter] =
@@ -483,9 +520,12 @@ CollectorTypeStats buildCollectorTypeStats(
   // Worldbuilder — self-created worlds dominate the shelf.
   if (customSeriesCount >= 2 &&
       customRatio > kCollectorTypeWorldbuilderCustomRatio) {
-    final cappedFigures =
-        math.min(customFigureCount, kCollectorTypeWorldbuilderFigureCap);
-    scores[CollectorTypeArchetypeId.worldbuilder] = 36 +
+    final cappedFigures = math.min(
+      customFigureCount,
+      kCollectorTypeWorldbuilderFigureCap,
+    );
+    scores[CollectorTypeArchetypeId.worldbuilder] =
+        36 +
         customRatio * 40 +
         customSeriesCount * 5 +
         cappedFigures * 1.0 +
@@ -497,7 +537,8 @@ CollectorTypeStats buildCollectorTypeStats(
   }
 
   // Dreamer — wishlist intent defines the tracked collection.
-  if (wishlist >= 2 && wishlistRatio > kCollectorTypeDreamerWishlistRatio) {
+  if (futureIntentCount >= 2 &&
+      wishlistRatio > kCollectorTypeDreamerWishlistRatio) {
     scores[CollectorTypeArchetypeId.dreamer] = 38 + wishlistRatio * 40;
     reasons[CollectorTypeArchetypeId.dreamer] =
         CollectorTypeReasonKey.highWishlist;
@@ -506,8 +547,10 @@ CollectorTypeStats buildCollectorTypeStats(
   // Trend Chaser — recent releases define the shelf (90-day window).
   if (recentCatalogSeries >= 2 &&
       recentRatio > kCollectorTypeTrendRecentRatio) {
-    final cappedRecent =
-        math.min(recentCatalogSeries, kCollectorTypeTrendRecentCap);
+    final cappedRecent = math.min(
+      recentCatalogSeries,
+      kCollectorTypeTrendRecentCap,
+    );
     scores[CollectorTypeArchetypeId.trendChaser] =
         38 + recentRatio * 40 + cappedRecent * 4;
     reasons[CollectorTypeArchetypeId.trendChaser] =
@@ -527,7 +570,8 @@ CollectorTypeStats buildCollectorTypeStats(
   double score,
   double runnerUp,
   CollectorTypeReasonKey reasonKey,
-}) _pickWinner(
+})
+_pickWinner(
   Map<CollectorTypeArchetypeId, double> scores,
   Map<CollectorTypeArchetypeId, CollectorTypeReasonKey> reasons,
 ) {
@@ -572,29 +616,31 @@ CollectorTypeStats buildCollectorTypeStats(
     id: winner,
     score: scores[winner] ?? bestScore,
     runnerUp: runnerUp,
-    reasonKey: reasons[winner] ??
-        canonicalReasonKeyForArchetype(winner),
+    reasonKey: reasons[winner] ?? canonicalReasonKeyForArchetype(winner),
   );
 }
 
-/// Dominant IP share of the shelf (universe loyalty).
+/// Dominant IP share of Started Series (universe loyalty).
 ///
 /// Brand is used only for rows that lack a trustworthy taxonomy IP — never to
 /// classify a multi-IP POP MART shelf as Loyalist.
 ///
 /// [dominantSeriesCount] is how many series belong to the winning IP (or brand
 /// fallback). Loyalist requires this ≥ 2 so “returning” is repeated behavior.
-({double share, int dominantSeriesCount}) _dominantIpShareDetail(
+({double share, int dominantSeriesCount}) _dominantStartedIpShareDetail(
   CollectionSnapshot snapshot,
 ) {
-  if (snapshot.shelfSeries.isEmpty) {
+  final startedSeries = snapshot.shelfSeries
+      .where((series) => isStartedSeries(series, snapshot.figureStates))
+      .toList(growable: false);
+  if (startedSeries.isEmpty) {
     return (share: 0.0, dominantSeriesCount: 0);
   }
   final ipCounts = <String, int>{};
   final brandFallbackCounts = <String, int>{};
   var seriesWithIp = 0;
 
-  for (final s in snapshot.shelfSeries) {
+  for (final s in startedSeries) {
     final ip = s.taxonomyIpId?.trim();
     if (ip != null && ip.isNotEmpty) {
       final key = canonicalizeStatKey(ip);
@@ -612,7 +658,7 @@ CollectorTypeStats buildCollectorTypeStats(
     }
   }
 
-  final n = snapshot.shelfSeries.length;
+  final n = startedSeries.length;
   var maxIp = 0;
   for (final c in ipCounts.values) {
     if (c > maxIp) maxIp = c;
@@ -662,10 +708,11 @@ bool _isRecentRelease(seed.CatalogSeries series, DateTime now) {
   }
 }
 
-/// Distinct trustworthy taxonomy IP identities on the current shelf.
-int _distinctTaxonomyIpCount(CollectionSnapshot snapshot) {
+/// Distinct trustworthy taxonomy IP identities across Started Series.
+int _distinctStartedTaxonomyIpCount(CollectionSnapshot snapshot) {
   final keys = <String>{};
   for (final series in snapshot.shelfSeries) {
+    if (!isStartedSeries(series, snapshot.figureStates)) continue;
     final taxonomyIp = series.taxonomyIpId?.trim();
     if (taxonomyIp != null && taxonomyIp.isNotEmpty) {
       keys.add(canonicalizeStatKey(taxonomyIp));

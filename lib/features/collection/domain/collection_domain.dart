@@ -375,6 +375,16 @@ SeriesProgressCounts progressForSeries(
   return SeriesProgressCounts(owned: o, wishlist: w, missing: m);
 }
 
+/// A series is Started only after at least one figure is owned.
+///
+/// This is a Collector Type product concept: a shelf row with zero owned
+/// figures is tracked, but not yet started.
+bool isStartedSeries(
+  ShelfSeries series,
+  Map<String, TrackedFigure> states,
+) =>
+    progressForSeries(series, states).owned > 0;
+
 /// Per-pass progress cache for shelf browse (partition → sort → feed).
 ///
 /// Lives only for one [CollectionScreen.build] — not persisted across rebuilds.
@@ -507,6 +517,16 @@ class CollectionSnapshot {
   }
 
   int get trackedSeriesCount => shelfSeries.length;
+
+  int get startedSeriesCount {
+    var c = 0;
+    for (final series in shelfSeries) {
+      if (isStartedSeries(series, figureStates)) c++;
+    }
+    return c;
+  }
+
+  int get unstartedSeriesCount => trackedSeriesCount - startedSeriesCount;
 
   int get totalWishlistedSeries => seriesWishlist.length;
 

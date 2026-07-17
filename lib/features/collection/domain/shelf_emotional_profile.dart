@@ -36,6 +36,5 @@ abstract final class ShelfEditorialTheme {
   static const secrets = 'secrets';
   static const nearComplete = 'nearComplete';
   static const multiUniverse = 'multiUniverse';
-  static const wishlistHeavy = 'wishlistHeavy';
   static const harmony = 'harmony';
 }

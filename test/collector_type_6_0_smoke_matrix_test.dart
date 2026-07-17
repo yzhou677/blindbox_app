@@ -145,14 +145,14 @@ void main() {
       );
     });
 
-    test('C2 2 of 3 complete → qualifies', () {
+    test('C2 2 of 3 complete stays below Completionist scale gate', () {
       final series = [
         for (var i = 0; i < 3; i++) _completeSeries('s$i', 'ip_$i'),
       ];
       final states = {..._ownAll(series[0]), ..._ownAll(series[1])};
       expect(
         _resolve(_snap(series, states)),
-        CollectorTypeArchetypeId.completionist,
+        isNot(CollectorTypeArchetypeId.completionist),
       );
     });
 
@@ -310,7 +310,7 @@ void main() {
       ];
       // 1 owned of 2 secret slots
       expect(
-        _resolve(_snap(series, {'as': _owned('as')})),
+        _resolve(_snap(series, {'as': _owned('as'), 'br': _owned('br')})),
         CollectorTypeArchetypeId.luckyOne,
       );
     });
@@ -325,7 +325,12 @@ void main() {
           ),
       ];
       expect(
-        _resolve(_snap(series, {'sec0': _owned('sec0')})),
+        _resolve(
+          _snap(series, {
+            'sec0': _owned('sec0'),
+            for (var i = 2; i < 4; i++) 'r$i': _owned('r$i'),
+          }),
+        ),
         CollectorTypeArchetypeId.luckyOne,
       );
     });
@@ -384,11 +389,29 @@ void main() {
     test('LO1 3 of 5 one IP → Loyalist', () {
       final series = [
         for (var i = 0; i < 3; i++)
-          _series(id: 'd$i', ipId: 'dimoo', figures: [_reg('x$i', 'd$i')]),
-        _series(id: 'o0', ipId: 'other0', figures: [_reg('o0', 'o0')]),
-        _series(id: 'o1', ipId: 'other1', figures: [_reg('o1', 'o1')]),
+          _series(
+            id: 'd$i',
+            ipId: 'dimoo',
+            figures: [_reg('x${i}a', 'd$i'), _reg('x${i}b', 'd$i')],
+          ),
+        _series(
+          id: 'o0',
+          ipId: 'other0',
+          figures: [_reg('o0a', 'o0'), _reg('o0b', 'o0')],
+        ),
+        _series(
+          id: 'o1',
+          ipId: 'other1',
+          figures: [_reg('o1a', 'o1'), _reg('o1b', 'o1')],
+        ),
       ];
-      expect(_resolve(_snap(series, {})), CollectorTypeArchetypeId.loyalist);
+      final states = {
+        for (final s in series) s.figures.first.id: _owned(s.figures.first.id),
+      };
+      expect(
+        _resolve(_snap(series, states)),
+        CollectorTypeArchetypeId.loyalist,
+      );
     });
 
     test('LO2 2 of 5 → not Loyalist', () {
@@ -577,9 +600,13 @@ void main() {
 
     test('W5 Wanderer soft floor visible but non-competitive', () {
       final series = [
-        for (var i = 0; i < 3; i++) _completeSeries('p$i', 'ip_$i'),
+        for (var i = 0; i < 5; i++) _completeSeries('p$i', 'ip_$i'),
       ];
-      final states = {..._ownAll(series[0]), ..._ownAll(series[1])};
+      final states = {
+        ..._ownAll(series[0]),
+        ..._ownAll(series[1]),
+        ..._ownAll(series[2]),
+      };
       final r = _resolve(_snap(series, states), full: true);
       expect(r.scores[CollectorTypeArchetypeId.wanderer], 5);
       expect(r.archetypeId, isNot(CollectorTypeArchetypeId.wanderer));
@@ -636,7 +663,7 @@ void main() {
       );
     });
 
-    test('M5 Minimalist vs Completionist collision report', () {
+    test('M5 small complete shelf stays Minimalist, not Completionist', () {
       // 2 series fully complete → both eligible.
       final series = [
         for (var i = 0; i < 2; i++) _completeSeries('m$i', 'ip_$i'),
@@ -645,15 +672,9 @@ void main() {
       final r = _resolve(_snap(series, states), full: true);
       final mini = r.scores[CollectorTypeArchetypeId.minimalist]!;
       final comp = r.scores[CollectorTypeArchetypeId.completionist]!;
-      // Tie-break: Completionist ranks above Minimalist.
-      expect(comp, greaterThan(0));
+      expect(comp, 0);
       expect(mini, greaterThan(0));
-      expect(r.archetypeId, CollectorTypeArchetypeId.completionist);
-      final order = CollectorTypeArchetypes.tieBreakPriority;
-      expect(
-        order.indexOf(CollectorTypeArchetypeId.completionist),
-        lessThan(order.indexOf(CollectorTypeArchetypeId.minimalist)),
-      );
+      expect(r.archetypeId, CollectorTypeArchetypeId.minimalist);
     });
   });
 
@@ -681,12 +702,15 @@ void main() {
             id: 'c$i',
             ipId: 'c$i',
             custom: true,
-            figures: [_reg('r$i', 'c$i')],
+            figures: [_reg('r${i}a', 'c$i'), _reg('r${i}b', 'c$i')],
           ),
       ];
       final cat = _series(id: 'k', ipId: 'labubu', figures: [_reg('kr', 'k')]);
+      final states = {
+        for (final s in customs) s.figures.first.id: _owned(s.figures.first.id),
+      };
       expect(
-        _resolve(_snap([...customs, cat], {})),
+        _resolve(_snap([...customs, cat], states)),
         CollectorTypeArchetypeId.worldbuilder,
       );
     });
@@ -698,7 +722,7 @@ void main() {
             id: 'c$i',
             ipId: 'c$i',
             custom: true,
-            figures: [_reg('r$i', 'c$i')],
+            figures: [_reg('r${i}a', 'c$i'), _reg('r${i}b', 'c$i')],
           ),
       ];
       final cats = [
@@ -721,7 +745,7 @@ void main() {
             id: 'c$i',
             ipId: 'c$i',
             custom: true,
-            figures: [_reg('r$i', 'c$i')],
+            figures: [_reg('r${i}a', 'c$i'), _reg('r${i}b', 'c$i')],
           ),
       ];
       final rich = [
@@ -756,7 +780,7 @@ void main() {
             id: 'c$i',
             ipId: 'c$i',
             custom: true,
-            figures: [_reg('r$i', 'c$i')],
+            figures: [_reg('r${i}a', 'c$i'), _reg('r${i}b', 'c$i')],
           ),
       ];
       final withCatalogNotesAttempt = [
@@ -764,7 +788,13 @@ void main() {
         // Catalog row cannot carry notes via helper (custom:false strips them).
         _series(id: 'k', ipId: 'labubu', figures: [_reg('kr', 'k')]),
       ];
-      final r = _resolve(_snap(withCatalogNotesAttempt, {}), full: true);
+      final r = _resolve(
+        _snap(withCatalogNotesAttempt, {
+          for (final s in customs)
+            s.figures.first.id: _owned(s.figures.first.id),
+        }),
+        full: true,
+      );
       // Still Worldbuilder from 2/3 custom > 50%; catalog assets add nothing.
       expect(r.archetypeId, CollectorTypeArchetypeId.worldbuilder);
     });
@@ -786,23 +816,23 @@ void main() {
     });
 
     test('D2 exact 50% → not', () {
-      final s = _series(
-        id: 'd',
+      final startedA = _series(
+        id: 'sa',
         ipId: 'ip',
-        figures: [
-          _reg('o1', 'd'),
-          _reg('o2', 'd'),
-          _reg('w1', 'd'),
-          _reg('w2', 'd'),
-        ],
+        figures: [_reg('sa_o', 'sa'), _reg('w1', 'sa')],
+      );
+      final startedB = _series(
+        id: 'sb',
+        ipId: 'ip',
+        figures: [_reg('sb_o', 'sb'), _reg('w2', 'sb')],
       );
       expect(
         _resolve(
           _snap(
-            [s],
+            [startedA, startedB],
             {
-              'o1': _owned('o1'),
-              'o2': _owned('o2'),
+              'sa_o': _owned('sa_o'),
+              'sb_o': _owned('sb_o'),
               'w1': _wish('w1'),
               'w2': _wish('w2'),
             },
@@ -821,7 +851,7 @@ void main() {
       );
       expect(
         _resolve(
-          _snap([s], {'w': _wish('w')}),
+          _snap([s], {'o': _owned('o'), 'w': _wish('w')}),
           full: true,
         ).scores[CollectorTypeArchetypeId.dreamer],
         0,
@@ -870,7 +900,7 @@ void main() {
             id: 't$i',
             ipId: 'ip_$i',
             catalogTemplateId: 'cat_$i',
-            figures: [_reg('r$i', 't$i')],
+            figures: [_reg('r$i', 't$i'), _reg('u$i', 't$i')],
           ),
       ];
       final catalog = _catalog({
@@ -878,8 +908,11 @@ void main() {
         'cat_1': '2026-04-15',
         'cat_2': '2025-01-01',
       });
+      final states = {
+        for (final s in series) s.figures.first.id: _owned(s.figures.first.id),
+      };
       expect(
-        _resolve(_snap(series, {}), catalog: catalog, now: now),
+        _resolve(_snap(series, states), catalog: catalog, now: now),
         CollectorTypeArchetypeId.trendChaser,
       );
     });
@@ -891,7 +924,7 @@ void main() {
             id: 't$i',
             ipId: 'ip_$i',
             catalogTemplateId: 'cat_$i',
-            figures: [_reg('r$i', 't$i')],
+            figures: [_reg('r$i', 't$i'), _reg('u$i', 't$i')],
           ),
       ];
       final catalog = _catalog({
@@ -918,7 +951,7 @@ void main() {
             id: 't$i',
             ipId: 'ip_$i',
             catalogTemplateId: 'cat_$i',
-            figures: [_reg('r$i', 't$i')],
+            figures: [_reg('r$i', 't$i'), _reg('u$i', 't$i')],
           ),
       ];
       // now=2026-06-01 → clearly outside 90 days (old 180-day window would still count)
@@ -946,7 +979,7 @@ void main() {
             id: 't$i',
             ipId: 'ip_$i',
             catalogTemplateId: 'cat_$i',
-            figures: [_reg('r$i', 't$i')],
+            figures: [_reg('r$i', 't$i'), _reg('u$i', 't$i')],
           ),
       ];
       final catalog = _catalog({
@@ -973,7 +1006,7 @@ void main() {
             id: 't$i',
             ipId: 'ip_$i',
             catalogTemplateId: 'cat_$i',
-            figures: [_reg('r$i', 't$i')],
+            figures: [_reg('r$i', 't$i'), _reg('u$i', 't$i')],
           ),
       ];
       // 2026-06-01 minus 90 days = 2026-03-03
@@ -982,8 +1015,11 @@ void main() {
         'cat_1': '2026-03-03',
         'cat_2': '2025-01-01',
       });
+      final states = {
+        for (final s in series) s.figures.first.id: _owned(s.figures.first.id),
+      };
       expect(
-        _resolve(_snap(series, {}), catalog: catalog, now: now),
+        _resolve(_snap(series, states), catalog: catalog, now: now),
         CollectorTypeArchetypeId.trendChaser,
       );
     });
@@ -1134,20 +1170,28 @@ void main() {
       );
     });
 
-    test('45% wishlist does not qualify Dreamer', () {
-      final s = _series(
-        id: 'd',
-        ipId: 'ip',
-        figures: [for (var i = 0; i < 11; i++) _reg('f$i', 'd')],
-      );
-      // 5 wishlist / (6 owned + 5 wishlist) ≈ 45%
+    test('45% future intent does not qualify Dreamer', () {
+      final started = [
+        for (var i = 0; i < 6; i++)
+          _series(
+            id: 's$i',
+            ipId: 'ip_$i',
+            figures: [
+              _reg('o$i', 's$i'),
+              _reg('u$i', 's$i'),
+              if (i == 0)
+                for (var j = 0; j < 5; j++) _reg('w$j', 's$i'),
+            ],
+          ),
+      ];
+      // Started Series denominator: 5 / (6 + 5) stays below the Dreamer gate.
       final states = <String, TrackedFigure>{
-        for (var i = 0; i < 6; i++) 'f$i': _owned('f$i'),
-        for (var i = 6; i < 11; i++) 'f$i': _wish('f$i'),
+        for (var i = 0; i < 6; i++) 'o$i': _owned('o$i'),
+        for (var i = 0; i < 5; i++) 'w$i': _wish('w$i'),
       };
       expect(
         _resolve(
-          _snap([s], states),
+          _snap(started, states),
           full: true,
         ).scores[CollectorTypeArchetypeId.dreamer],
         0,
@@ -1205,10 +1249,14 @@ void main() {
 
       // Completionist
       final comp = [
-        for (var i = 0; i < 3; i++) _completeSeries('p$i', 'ip_$i'),
+        for (var i = 0; i < 5; i++) _completeSeries('p$i', 'ip_$i'),
       ];
       final compR = _resolve(
-        _snap(comp, {..._ownAll(comp[0]), ..._ownAll(comp[1])}),
+        _snap(comp, {
+          ..._ownAll(comp[0]),
+          ..._ownAll(comp[1]),
+          ..._ownAll(comp[2]),
+        }),
         full: true,
       );
       dump('Completionist', compR);
@@ -1243,9 +1291,18 @@ void main() {
       // Loyalist
       final loyal = [
         for (var i = 0; i < 3; i++)
-          _series(id: 'd$i', ipId: 'dimoo', figures: [_reg('x$i', 'd$i')]),
+          _series(
+            id: 'd$i',
+            ipId: 'dimoo',
+            figures: [_reg('x${i}a', 'd$i'), _reg('x${i}b', 'd$i')],
+          ),
       ];
-      final loyalR = _resolve(_snap(loyal, {}), full: true);
+      final loyalR = _resolve(
+        _snap(loyal, {
+          for (final s in loyal) s.figures.first.id: _owned(s.figures.first.id),
+        }),
+        full: true,
+      );
       dump('Loyalist', loyalR);
       cases['Loyalist'] = loyalR.archetypeId;
 

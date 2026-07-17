@@ -5,6 +5,7 @@ import 'package:blindbox_app/features/collection/application/shelf_emotional_int
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_resolver.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_archetype.dart';
+import 'package:blindbox_app/features/collection/insights/domain/collector_type_archetypes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -15,20 +16,20 @@ TrackedFigure _wish(String id) =>
     TrackedFigure(figureId: id, state: FigureCollectionState.wishlist);
 
 ShelfFigure _reg(String id, String seriesId) => ShelfFigure(
-      id: id,
-      seriesId: seriesId,
-      name: id,
-      rarity: 'Regular',
-      isSecret: false,
-    );
+  id: id,
+  seriesId: seriesId,
+  name: id,
+  rarity: 'Regular',
+  isSecret: false,
+);
 
 ShelfFigure _sec(String id, String seriesId) => ShelfFigure(
-      id: id,
-      seriesId: seriesId,
-      name: id,
-      rarity: 'Secret',
-      isSecret: true,
-    );
+  id: id,
+  seriesId: seriesId,
+  name: id,
+  rarity: 'Secret',
+  isSecret: true,
+);
 
 ShelfSeries _series({
   required String id,
@@ -71,8 +72,7 @@ CollectorTypeArchetypeId _resolve(
 CollectionSnapshot _snap(
   List<ShelfSeries> series,
   Map<String, TrackedFigure> states,
-) =>
-    CollectionSnapshot(shelfSeries: series, figureStates: states);
+) => CollectionSnapshot(shelfSeries: series, figureStates: states);
 
 /// Regular-complete series: 2 regulars both owned.
 ShelfSeries _completeSeries(String id, String ip) {
@@ -81,20 +81,18 @@ ShelfSeries _completeSeries(String id, String ip) {
 }
 
 Map<String, TrackedFigure> _ownAll(ShelfSeries s) => {
-      for (final f in s.figures) f.id: _owned(f.id),
-    };
+  for (final f in s.figures) f.id: _owned(f.id),
+};
 
 /// Near-complete: 2 of 2 progress would be complete; use 6/7 regulars ≈ 85.7%.
 ShelfSeries _nearSeries(String id, String ip) {
-  final figs = [
-    for (var i = 0; i < 7; i++) _reg('${id}_r$i', id),
-  ];
+  final figs = [for (var i = 0; i < 7; i++) _reg('${id}_r$i', id)];
   return _series(id: id, ipId: ip, figures: figs);
 }
 
 Map<String, TrackedFigure> _ownNear(ShelfSeries s) => {
-      for (var i = 0; i < 6; i++) s.figures[i].id: _owned(s.figures[i].id),
-    };
+  for (var i = 0; i < 6; i++) s.figures[i].id: _owned(s.figures[i].id),
+};
 
 void main() {
   group('Completionist 6.0', () {
@@ -106,14 +104,14 @@ void main() {
       );
     });
 
-    test('2 of 3 completed → qualifies', () {
+    test('2 of 3 completed stays below Completionist scale gate', () {
       final a = _completeSeries('a', 'ip_a');
       final b = _completeSeries('b', 'ip_b');
       final c = _completeSeries('c', 'ip_c');
       final states = {..._ownAll(a), ..._ownAll(b)};
       expect(
         _resolve(_snap([a, b, c], states)),
-        CollectorTypeArchetypeId.completionist,
+        isNot(CollectorTypeArchetypeId.completionist),
       );
     });
 
@@ -121,10 +119,7 @@ void main() {
       final series = [
         for (var i = 0; i < 4; i++) _completeSeries('s$i', 'ip_$i'),
       ];
-      final states = {
-        ..._ownAll(series[0]),
-        ..._ownAll(series[1]),
-      };
+      final states = {..._ownAll(series[0]), ..._ownAll(series[1])};
       final id = _resolve(_snap(series, states));
       expect(id, isNot(CollectorTypeArchetypeId.completionist));
     });
@@ -145,9 +140,7 @@ void main() {
     });
 
     test('near path: 3 of 5 near-complete → qualifies', () {
-      final series = [
-        for (var i = 0; i < 5; i++) _nearSeries('n$i', 'ip_$i'),
-      ];
+      final series = [for (var i = 0; i < 5; i++) _nearSeries('n$i', 'ip_$i')];
       final states = {
         ..._ownNear(series[0]),
         ..._ownNear(series[1]),
@@ -160,13 +153,8 @@ void main() {
     });
 
     test('near path below 60% → does not qualify', () {
-      final series = [
-        for (var i = 0; i < 5; i++) _nearSeries('n$i', 'ip_$i'),
-      ];
-      final states = {
-        ..._ownNear(series[0]),
-        ..._ownNear(series[1]),
-      };
+      final series = [for (var i = 0; i < 5; i++) _nearSeries('n$i', 'ip_$i')];
+      final states = {..._ownNear(series[0]), ..._ownNear(series[1])};
       expect(
         _resolve(_snap(series, states)),
         isNot(CollectorTypeArchetypeId.completionist),
@@ -211,10 +199,7 @@ void main() {
           _series(
             id: 's$i',
             ipId: 'ip_$i',
-            figures: [
-              _reg('r$i', 's$i'),
-              if (i < 4) _sec('sec$i', 's$i'),
-            ],
+            figures: [_reg('r$i', 's$i'), if (i < 4) _sec('sec$i', 's$i')],
           ),
       ];
       expect(
@@ -231,10 +216,7 @@ void main() {
           _series(
             id: 's$i',
             ipId: 'ip_$i',
-            figures: [
-              _reg('r$i', 's$i'),
-              if (i < 4) _sec('sec$i', 's$i'),
-            ],
+            figures: [_reg('r$i', 's$i'), if (i < 4) _sec('sec$i', 's$i')],
           ),
       ];
       final states = {'sec0': _owned('sec0'), 'sec1': _owned('sec1')};
@@ -251,17 +233,11 @@ void main() {
     test('2 Secrets but hit rate below 50% → not Hunter', () {
       final series = <ShelfSeries>[
         for (var i = 0; i < 5; i++)
-          _series(
-            id: 's$i',
-            ipId: 'ip_$i',
-            figures: [_sec('a$i', 's$i')],
-          ),
+          _series(id: 's$i', ipId: 'ip_$i', figures: [_sec('a$i', 's$i')]),
       ];
       // 2/5 = 40%
       expect(
-        _resolve(
-          _snap(series, {'a0': _owned('a0'), 'a1': _owned('a1')}),
-        ),
+        _resolve(_snap(series, {'a0': _owned('a0'), 'a1': _owned('a1')})),
         isNot(CollectorTypeArchetypeId.hunter),
       );
     });
@@ -282,7 +258,9 @@ void main() {
       ];
       // 2/2 secrets = 100% even with many regulars; >4 series → Hunter
       expect(
-        _resolve(_snap([main, ...fillers], {'a': _owned('a'), 'b': _owned('b')})),
+        _resolve(
+          _snap([main, ...fillers], {'a': _owned('a'), 'b': _owned('b')}),
+        ),
         CollectorTypeArchetypeId.hunter,
       );
     });
@@ -321,6 +299,26 @@ void main() {
         isNot(CollectorTypeArchetypeId.luckyOne),
       );
     });
+
+    test('compact shelf below Secret hit rate does not qualify Lucky One', () {
+      final series = [
+        for (var i = 0; i < 3; i++)
+          _series(
+            id: 'l$i',
+            ipId: 'ip_$i',
+            figures: [_sec('secret_$i', 'l$i')],
+          ),
+      ];
+      final snap = _snap(series, {'secret_0': _owned('secret_0')});
+      final r = resolveCollectorType(
+        snapshot: snap,
+        profile: interpretShelf(snap),
+        revealedAt: DateTime(2026, 6, 1),
+      );
+
+      expect(r.scores[CollectorTypeArchetypeId.luckyOne], 0);
+      expect(r.archetypeId, isNot(CollectorTypeArchetypeId.luckyOne));
+    });
   });
 
   group('Loyalist / Curator 6.0', () {
@@ -346,12 +344,27 @@ void main() {
     test('3 of 5 series in one IP → Loyalist', () {
       final series = [
         for (var i = 0; i < 3; i++)
-          _series(id: 'd$i', ipId: 'dimoo', figures: [_reg('d${i}a', 'd$i')]),
-        _series(id: 'm0', ipId: 'molly', figures: [_reg('m0a', 'm0')]),
-        _series(id: 'h0', ipId: 'hirono', figures: [_reg('h0a', 'h0')]),
+          _series(
+            id: 'd$i',
+            ipId: 'dimoo',
+            figures: [_reg('d${i}a', 'd$i'), _reg('d${i}b', 'd$i')],
+          ),
+        _series(
+          id: 'm0',
+          ipId: 'molly',
+          figures: [_reg('m0a', 'm0'), _reg('m0b', 'm0')],
+        ),
+        _series(
+          id: 'h0',
+          ipId: 'hirono',
+          figures: [_reg('h0a', 'h0'), _reg('h0b', 'h0')],
+        ),
       ];
+      final states = {
+        for (final s in series) s.figures.first.id: _owned(s.figures.first.id),
+      };
       expect(
-        _resolve(_snap(series, {})),
+        _resolve(_snap(series, states)),
         CollectorTypeArchetypeId.loyalist,
       );
     });
@@ -369,6 +382,35 @@ void main() {
         _resolve(_snap(series, {})),
         isNot(CollectorTypeArchetypeId.loyalist),
       );
+    });
+
+    test('started dominant IP below 60% has zero Loyalist score', () {
+      final series = [
+        for (var i = 0; i < 2; i++)
+          _series(
+            id: 'labubu_$i',
+            ipId: 'labubu',
+            figures: [_reg('labubu_${i}_a', 'labubu_$i')],
+          ),
+        for (var i = 0; i < 3; i++)
+          _series(
+            id: 'other_$i',
+            ipId: 'other_$i',
+            figures: [_reg('other_${i}_a', 'other_$i')],
+          ),
+      ];
+      final states = {
+        for (final s in series) s.figures.first.id: _owned(s.figures.first.id),
+      };
+      final snap = _snap(series, states);
+      final r = resolveCollectorType(
+        snapshot: snap,
+        profile: interpretShelf(snap),
+        revealedAt: DateTime(2026, 6, 1),
+      );
+
+      expect(r.scores[CollectorTypeArchetypeId.loyalist], 0);
+      expect(r.archetypeId, isNot(CollectorTypeArchetypeId.loyalist));
     });
 
     test('3 IPs with avg Regular Completion >=50% → Curator', () {
@@ -398,13 +440,17 @@ void main() {
           _series(
             id: 's$i',
             ipId: 'ip_$i',
-            figures: [
-              for (var j = 0; j < 4; j++) _reg('s${i}_$j', 's$i'),
-            ],
+            figures: [for (var j = 0; j < 4; j++) _reg('s${i}_$j', 's$i')],
           ),
       ];
       // 0 owned → avg 0
-      expect(_resolve(_snap(series, {})), CollectorTypeArchetypeId.wanderer);
+      final states = {
+        for (final s in series) s.figures.first.id: _owned(s.figures.first.id),
+      };
+      expect(
+        _resolve(_snap(series, states)),
+        CollectorTypeArchetypeId.wanderer,
+      );
     });
 
     test('Loyalist eligible → Curator score is zero', () {
@@ -452,10 +498,17 @@ void main() {
     test('specialized eligible type beats fallback Wanderer', () {
       final series = [
         for (var i = 0; i < 3; i++)
-          _series(id: 'd$i', ipId: 'dimoo', figures: [_reg('x$i', 'd$i')]),
+          _series(
+            id: 'd$i',
+            ipId: 'dimoo',
+            figures: [_reg('x${i}a', 'd$i'), _reg('x${i}b', 'd$i')],
+          ),
       ];
+      final states = {
+        for (final s in series) s.figures.first.id: _owned(s.figures.first.id),
+      };
       expect(
-        _resolve(_snap(series, {})),
+        _resolve(_snap(series, states)),
         CollectorTypeArchetypeId.loyalist,
       );
     });
@@ -468,9 +521,7 @@ void main() {
           _series(
             id: 's$i',
             ipId: 'ip_$i',
-            figures: [
-              for (var j = 0; j < 10; j++) _reg('s${i}_$j', 's$i'),
-            ],
+            figures: [for (var j = 0; j < 10; j++) _reg('s${i}_$j', 's$i')],
           ),
       ];
       // 7/10 each → 70%
@@ -480,16 +531,17 @@ void main() {
           states[s.figures[j].id] = _owned(s.figures[j].id);
         }
       }
-      expect(_resolve(_snap(series, states)), CollectorTypeArchetypeId.minimalist);
+      expect(
+        _resolve(_snap(series, states)),
+        CollectorTypeArchetypeId.minimalist,
+      );
     });
 
     test('4 series at 100% → not Minimalist', () {
       final series = [
         for (var i = 0; i < 4; i++) _completeSeries('s$i', 'ip_$i'),
       ];
-      final states = {
-        for (final s in series) ..._ownAll(s),
-      };
+      final states = {for (final s in series) ..._ownAll(s)};
       expect(
         _resolve(_snap(series, states)),
         isNot(CollectorTypeArchetypeId.minimalist),
@@ -502,9 +554,7 @@ void main() {
           _series(
             id: 's$i',
             ipId: 'ip_$i',
-            figures: [
-              for (var j = 0; j < 10; j++) _reg('s${i}_$j', 's$i'),
-            ],
+            figures: [for (var j = 0; j < 10; j++) _reg('s${i}_$j', 's$i')],
           ),
       ];
       final states = <String, TrackedFigure>{};
@@ -525,9 +575,7 @@ void main() {
           _series(
             id: 's$i',
             ipId: 'ip_$i',
-            figures: [
-              for (var j = 0; j < 10; j++) _reg('s${i}_$j', 's$i'),
-            ],
+            figures: [for (var j = 0; j < 10; j++) _reg('s${i}_$j', 's$i')],
           ),
       ];
       // 7/10 each → 70%, 20 figures owned, not fully complete
@@ -537,7 +585,10 @@ void main() {
           states[s.figures[j].id] = _owned(s.figures[j].id);
         }
       }
-      expect(_resolve(_snap(series, states)), CollectorTypeArchetypeId.minimalist);
+      expect(
+        _resolve(_snap(series, states)),
+        CollectorTypeArchetypeId.minimalist,
+      );
     });
   });
 
@@ -606,28 +657,36 @@ void main() {
         figures: [_reg('o', 's'), _reg('w1', 's'), _reg('w2', 's')],
       );
       expect(
-        _resolve(_snap([s], {
-          'o': _owned('o'),
-          'w1': _wish('w1'),
-          'w2': _wish('w2'),
-        })),
+        _resolve(
+          _snap([s], {'o': _owned('o'), 'w1': _wish('w1'), 'w2': _wish('w2')}),
+        ),
         CollectorTypeArchetypeId.dreamer,
       );
     });
 
     test('wishlist ratio exactly 50% → does not qualify', () {
-      final s = _series(
-        id: 's',
+      final startedA = _series(
+        id: 'sa',
         ipId: 'ip',
-        figures: [_reg('o1', 's'), _reg('o2', 's'), _reg('w1', 's'), _reg('w2', 's')],
+        figures: [_reg('sa_o', 'sa'), _reg('w1', 'sa')],
+      );
+      final startedB = _series(
+        id: 'sb',
+        ipId: 'ip',
+        figures: [_reg('sb_o', 'sb'), _reg('w2', 'sb')],
       );
       expect(
-        _resolve(_snap([s], {
-          'o1': _owned('o1'),
-          'o2': _owned('o2'),
-          'w1': _wish('w1'),
-          'w2': _wish('w2'),
-        })),
+        _resolve(
+          _snap(
+            [startedA, startedB],
+            {
+              'sa_o': _owned('sa_o'),
+              'sb_o': _owned('sb_o'),
+              'w1': _wish('w1'),
+              'w2': _wish('w2'),
+            },
+          ),
+        ),
         isNot(CollectorTypeArchetypeId.dreamer),
       );
     });
@@ -636,10 +695,10 @@ void main() {
       final s = _series(
         id: 's',
         ipId: 'ip',
-        figures: [_reg('w1', 's')],
+        figures: [_reg('o', 's'), _reg('w1', 's')],
       );
       expect(
-        _resolve(_snap([s], {'w1': _wish('w1')})),
+        _resolve(_snap([s], {'o': _owned('o'), 'w1': _wish('w1')})),
         isNot(CollectorTypeArchetypeId.dreamer),
       );
     });
@@ -674,7 +733,7 @@ void main() {
             id: 's$i',
             ipId: 'ip_$i',
             catalogTemplateId: 'cat_$i',
-            figures: [_reg('r$i', 's$i')],
+            figures: [_reg('r$i', 's$i'), _reg('u$i', 's$i')],
           ),
       ];
       final catalog = catalogWithDates({
@@ -682,8 +741,11 @@ void main() {
         'cat_1': '2026-04-15',
         'cat_2': '2025-01-01',
       });
+      final states = {
+        for (final s in series) s.figures.first.id: _owned(s.figures.first.id),
+      };
       expect(
-        _resolve(_snap(series, {}), catalog: catalog, now: now),
+        _resolve(_snap(series, states), catalog: catalog, now: now),
         CollectorTypeArchetypeId.trendChaser,
       );
     });
@@ -815,21 +877,26 @@ void main() {
             figures: [_reg('r$i', 'h$i'), _sec('s$i', 'h$i')],
           ),
       ];
-      final states = {
-        for (var i = 0; i < 3; i++) 's$i': _owned('s$i'),
-      };
-      expect(
-        _resolve(_snap(series, states)),
-        CollectorTypeArchetypeId.hunter,
-      );
+      final states = {for (var i = 0; i < 3; i++) 's$i': _owned('s$i')};
+      expect(_resolve(_snap(series, states)), CollectorTypeArchetypeId.hunter);
     });
 
     test('one-IP-dominant shelf → Loyalist', () {
       final series = [
         for (var i = 0; i < 3; i++)
-          _series(id: 'd$i', ipId: 'dimoo', figures: [_reg('x$i', 'd$i')]),
+          _series(
+            id: 'd$i',
+            ipId: 'dimoo',
+            figures: [_reg('x${i}a', 'd$i'), _reg('x${i}b', 'd$i')],
+          ),
       ];
-      expect(_resolve(_snap(series, {})), CollectorTypeArchetypeId.loyalist);
+      final states = {
+        for (final s in series) s.figures.first.id: _owned(s.figures.first.id),
+      };
+      expect(
+        _resolve(_snap(series, states)),
+        CollectorTypeArchetypeId.loyalist,
+      );
     });
 
     test('same-brand multi-IP invested shelf → Curator, not Loyalist', () {
@@ -845,10 +912,7 @@ void main() {
       final states = {
         for (final s in series) s.figures.first.id: _owned(s.figures.first.id),
       };
-      expect(
-        _resolve(_snap(series, states)),
-        CollectorTypeArchetypeId.curator,
-      );
+      expect(_resolve(_snap(series, states)), CollectorTypeArchetypeId.curator);
     });
 
     test('broad but shallow / undefined shelf → Wanderer', () {
@@ -857,9 +921,7 @@ void main() {
           _series(
             id: 'w$i',
             ipId: 'ip_$i',
-            figures: [
-              for (var j = 0; j < 10; j++) _reg('w${i}_$j', 'w$i'),
-            ],
+            figures: [for (var j = 0; j < 10; j++) _reg('w${i}_$j', 'w$i')],
           ),
       ];
       // Own 2/10 each → 20% avg, no dominance
@@ -868,7 +930,10 @@ void main() {
         states[s.figures[0].id] = _owned(s.figures[0].id);
         states[s.figures[1].id] = _owned(s.figures[1].id);
       }
-      expect(_resolve(_snap(series, states)), CollectorTypeArchetypeId.wanderer);
+      expect(
+        _resolve(_snap(series, states)),
+        CollectorTypeArchetypeId.wanderer,
+      );
     });
 
     test('small polished shelf → Minimalist', () {
@@ -877,9 +942,7 @@ void main() {
           _series(
             id: 'm$i',
             ipId: 'ip_$i',
-            figures: [
-              for (var j = 0; j < 10; j++) _reg('m${i}_$j', 'm$i'),
-            ],
+            figures: [for (var j = 0; j < 10; j++) _reg('m${i}_$j', 'm$i')],
           ),
       ];
       final states = <String, TrackedFigure>{};
@@ -917,11 +980,9 @@ void main() {
         figures: [_reg('o', 'dr'), _reg('w1', 'dr'), _reg('w2', 'dr')],
       );
       expect(
-        _resolve(_snap([s], {
-          'o': _owned('o'),
-          'w1': _wish('w1'),
-          'w2': _wish('w2'),
-        })),
+        _resolve(
+          _snap([s], {'o': _owned('o'), 'w1': _wish('w1'), 'w2': _wish('w2')}),
+        ),
         CollectorTypeArchetypeId.dreamer,
       );
     });
@@ -962,11 +1023,12 @@ void main() {
 
     test('majority completed shelf → Completionist', () {
       final series = [
-        for (var i = 0; i < 3; i++) _completeSeries('p$i', 'ip_$i'),
+        for (var i = 0; i < 5; i++) _completeSeries('p$i', 'ip_$i'),
       ];
       final states = {
         ..._ownAll(series[0]),
         ..._ownAll(series[1]),
+        ..._ownAll(series[2]),
       };
       expect(
         _resolve(_snap(series, states)),
@@ -993,24 +1055,30 @@ void main() {
           _series(
             id: 'h$i',
             ipId: 'ip_$i',
-            figures: [
-              _reg('hr$i', 'h$i'),
-              if (i < 4) _sec('hs$i', 'h$i'),
-            ],
+            figures: [_reg('hr$i', 'h$i'), if (i < 4) _sec('hs$i', 'h$i')],
           ),
       ];
       reached.add(
-        _resolve(
-          _snap(hunt, {'hs0': _owned('hs0'), 'hs1': _owned('hs1')}),
-        ),
+        _resolve(_snap(hunt, {'hs0': _owned('hs0'), 'hs1': _owned('hs1')})),
       );
 
       // Loyalist
       final loyal = [
         for (var i = 0; i < 3; i++)
-          _series(id: 'd$i', ipId: 'dimoo', figures: [_reg('dx$i', 'd$i')]),
+          _series(
+            id: 'd$i',
+            ipId: 'dimoo',
+            figures: [_reg('dx${i}a', 'd$i'), _reg('dx${i}b', 'd$i')],
+          ),
       ];
-      reached.add(_resolve(_snap(loyal, {})));
+      reached.add(
+        _resolve(
+          _snap(loyal, {
+            for (final s in loyal)
+              s.figures.first.id: _owned(s.figures.first.id),
+          }),
+        ),
+      );
 
       // Curator
       final cur = [
@@ -1035,9 +1103,7 @@ void main() {
           _series(
             id: 'm$i',
             ipId: 'ip_$i',
-            figures: [
-              for (var j = 0; j < 10; j++) _reg('m${i}_$j', 'm$i'),
-            ],
+            figures: [for (var j = 0; j < 10; j++) _reg('m${i}_$j', 'm$i')],
           ),
       ];
       final miniStates = <String, TrackedFigure>{};
@@ -1067,22 +1133,26 @@ void main() {
         figures: [_reg('do', 'dr'), _reg('dw1', 'dr'), _reg('dw2', 'dr')],
       );
       reached.add(
-        _resolve(_snap([dream], {
-          'do': _owned('do'),
-          'dw1': _wish('dw1'),
-          'dw2': _wish('dw2'),
-        })),
+        _resolve(
+          _snap(
+            [dream],
+            {'do': _owned('do'), 'dw1': _wish('dw1'), 'dw2': _wish('dw2')},
+          ),
+        ),
       );
 
       // Completionist
       final comp = [
-        for (var i = 0; i < 3; i++) _completeSeries('p$i', 'ip_$i'),
+        for (var i = 0; i < 5; i++) _completeSeries('p$i', 'ip_$i'),
       ];
       reached.add(
-        _resolve(_snap(comp, {
-          ..._ownAll(comp[0]),
-          ..._ownAll(comp[1]),
-        })),
+        _resolve(
+          _snap(comp, {
+            ..._ownAll(comp[0]),
+            ..._ownAll(comp[1]),
+            ..._ownAll(comp[2]),
+          }),
+        ),
       );
 
       // Trend
@@ -1114,11 +1184,7 @@ void main() {
         figures: const [],
       );
       reached.add(
-        _resolve(
-          _snap(trendSeries, {}),
-          catalog: trendCatalog,
-          now: now,
-        ),
+        _resolve(_snap(trendSeries, {}), catalog: trendCatalog, now: now),
       );
 
       expect(
@@ -1135,6 +1201,26 @@ void main() {
           CollectorTypeArchetypeId.completionist,
           CollectorTypeArchetypeId.trendChaser,
         ]),
+      );
+    });
+  });
+
+  group('Resolver priority contract', () {
+    test('tie-break priority keeps mature identities ahead of fallback', () {
+      expect(
+        CollectorTypeArchetypes.tieBreakPriority.take(6),
+        orderedEquals([
+          CollectorTypeArchetypeId.completionist,
+          CollectorTypeArchetypeId.hunter,
+          CollectorTypeArchetypeId.loyalist,
+          CollectorTypeArchetypeId.curator,
+          CollectorTypeArchetypeId.worldbuilder,
+          CollectorTypeArchetypeId.minimalist,
+        ]),
+      );
+      expect(
+        CollectorTypeArchetypes.tieBreakPriority.last,
+        CollectorTypeArchetypeId.wanderer,
       );
     });
   });

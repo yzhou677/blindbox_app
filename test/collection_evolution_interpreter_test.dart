@@ -35,4 +35,50 @@ void main() {
       isNull,
     );
   });
+
+  test('wishlist-only changes do not create collection memory mood shift', () {
+    final series = [
+      testShelfSeries(
+        id: 's1',
+        taxonomyIpId: 'ip_a',
+        figures: const [
+          ShelfFigure(
+            id: 'w1',
+            seriesId: 's1',
+            name: 'Wishlist A',
+            rarity: 'Regular',
+            isSecret: false,
+          ),
+          ShelfFigure(
+            id: 'w2',
+            seriesId: 's1',
+            name: 'Wishlist B',
+            rarity: 'Regular',
+            isSecret: false,
+          ),
+        ],
+      ),
+      testShelfSeries(id: 's2', taxonomyIpId: 'ip_b'),
+    ];
+    final snap = CollectionSnapshot(
+      shelfSeries: series,
+      figureStates: const {
+        'w1': TrackedFigure(
+          figureId: 'w1',
+          state: FigureCollectionState.wishlist,
+        ),
+        'w2': TrackedFigure(
+          figureId: 'w2',
+          state: FigureCollectionState.wishlist,
+        ),
+      },
+    );
+    const prior = ShelfEra(
+      shelfMood: ShelfMood.dreamy,
+      seriesCount: 2,
+      secretOwnedCount: 0,
+    );
+
+    expect(interpretCollectionEvolution(snap: snap, priorEra: prior), isNull);
+  });
 }

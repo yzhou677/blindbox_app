@@ -41,6 +41,40 @@ void main() {
       expect(p.missing, 1);
       expect(p.completion(3), closeTo(1 / 3, 0.001));
     });
+
+    test('started series requires at least one owned figure', () {
+      final series = testShelfSeries(
+        figures: const [
+          ShelfFigure(
+            id: 'f1',
+            seriesId: 's',
+            name: 'A',
+            rarity: 'Regular',
+            isSecret: false,
+          ),
+        ],
+      );
+
+      expect(isStartedSeries(series, const {}), isFalse);
+      expect(
+        isStartedSeries(series, const {
+          'f1': TrackedFigure(
+            figureId: 'f1',
+            state: FigureCollectionState.wishlist,
+          ),
+        }),
+        isFalse,
+      );
+      expect(
+        isStartedSeries(series, const {
+          'f1': TrackedFigure(
+            figureId: 'f1',
+            state: FigureCollectionState.owned,
+          ),
+        }),
+        isTrue,
+      );
+    });
   });
 
   group('cloneCatalogSeriesOntoShelf', () {
@@ -104,6 +138,61 @@ void main() {
       expect(snap.totalWishlistFigures, 0);
       expect(snap.averageCompletionPercent, 50);
       expect(snap.isWarmStart, isFalse);
+    });
+
+    test('startedSeriesCount ignores collection rows with zero owned figures', () {
+      final unstarted = testShelfSeries(
+        id: 'unstarted',
+        figures: const [
+          ShelfFigure(
+            id: 'wish',
+            seriesId: 'unstarted',
+            name: 'Wish',
+            rarity: 'Regular',
+            isSecret: false,
+          ),
+        ],
+      );
+      final started = testShelfSeries(
+        id: 'started',
+        figures: const [
+          ShelfFigure(
+            id: 'owned',
+            seriesId: 'started',
+            name: 'Owned',
+            rarity: 'Regular',
+            isSecret: false,
+          ),
+        ],
+      );
+
+      final noStarted = CollectionSnapshot(
+        shelfSeries: [unstarted, started],
+        figureStates: const {
+          'wish': TrackedFigure(
+            figureId: 'wish',
+            state: FigureCollectionState.wishlist,
+          ),
+        },
+      );
+      expect(noStarted.startedSeriesCount, 0);
+      expect(noStarted.unstartedSeriesCount, 2);
+
+      final oneStarted = CollectionSnapshot(
+        shelfSeries: [unstarted, started],
+        figureStates: const {
+          'wish': TrackedFigure(
+            figureId: 'wish',
+            state: FigureCollectionState.wishlist,
+          ),
+          'owned': TrackedFigure(
+            figureId: 'owned',
+            state: FigureCollectionState.owned,
+          ),
+        },
+      );
+      expect(oneStarted.startedSeriesCount, 1);
+      expect(oneStarted.unstartedSeriesCount, 1);
     });
 
     test('showWarmStartBanner when no owned figures', () {
