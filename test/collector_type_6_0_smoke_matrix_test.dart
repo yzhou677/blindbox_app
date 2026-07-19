@@ -12,7 +12,7 @@ import 'package:blindbox_app/features/collection/insights/presentation/collector
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Collector Type 6.1 full smoke matrix — explicit fixtures, no random reliance.
+/// Collector Type 6.2 full smoke matrix — explicit fixtures, no random reliance.
 ///
 /// Scenario IDs match the product contract smoke checklist (C1…, H1…, R1…).
 
@@ -1406,7 +1406,7 @@ void main() {
   });
 
   group('R — Resolver lifecycle', () {
-    test('R1 5.3 → 6.1 upgrade needsReveal, no silent rewrite', () {
+    test('R1 5.3 → 6.2 upgrade needsReveal, no silent rewrite', () {
       final series = [
         for (var i = 0; i < 3; i++)
           _series(id: 'd$i', ipId: 'dimoo', figures: [_reg('x$i', 'd$i')]),
@@ -1423,10 +1423,10 @@ void main() {
       );
       // Live candidate may differ from a frozen 5.3 identity — Hero stays
       // frozen until explicit Reveal (no silent rewrite in this pure check).
-      expect(kCollectorTypeResolverVersion, '6.1');
+      expect(kCollectorTypeResolverVersion, '6.2');
     });
 
-    test('R2/R3 after matching 6.1 persist → needsReveal false', () {
+    test('R2/R3 after matching 6.2 persist → needsReveal false', () {
       final series = [
         for (var i = 0; i < 3; i++)
           _series(id: 'd$i', ipId: 'dimoo', figures: [_reg('x$i', 'd$i')]),

@@ -288,7 +288,7 @@ by re-running today’s Resolver over an old shelf.
 
 Related: evolution constants in `collector_type_evolution_gate.dart`; scoring thresholds in `collector_type_resolver.dart`; prefs key `collection_memory_v3`. Canonical registry: `CollectorTypeArchetypes` (**10 types**).
 
-### Collector Types (resolver 6.1) — 10 archetypes
+### Collector Types (resolver 6.2) — 10 archetypes
 
 Each type answers: **what clearly defines this collector’s shelf today?**  
 Pipeline: **Signals → Eligibility → Strength → Soft-capped scale → Winner.**  
@@ -339,7 +339,7 @@ Use canonical Regular-weighted completion (`resolveSeriesCompletion` / `aggregat
 | **Minimalist** | You keep a small, focused shelf and care deeply for what makes the cut | ≤3 series **and** `averageRegularCompletion ≥ 0.70` (**no** owned-figure cap) |
 | **Worldbuilder** | Your own creations define your shelf | ≥2 custom series **and** `customRatio > 0.50`; notes/covers/photos deepen **after** eligibility (custom rows only) |
 | **Dreamer** | You dream about what comes next more than what you have started | ≥2 future-intent signals **and** `wishlistRatio > 0.50` |
-| **Trend Chaser** | Recent releases define your shelf | ≥2 recent catalog series (≤90 days) **and** `recentRatio > 0.50` |
+| **Trend Chaser** | Recent releases define your shelf | ≥2 recent catalog series (≤90 days) **and** `recentRatio > 0.50`; when Lucky One is eligible, requires ≥3 recent series |
 
 #### Why each gate (plain language)
 
@@ -359,6 +359,7 @@ Use canonical Regular-weighted completion (`resolveSeriesCompletion` / `aggregat
 #### Relationships
 
 - **Hunter ⊥ Lucky One** — progression by shelf stage: ≤4 → Lucky One; >4 + ≥2 Secrets → Hunter. Hunter eligible → Lucky One score is zero.  
+- **Lucky One / Trend Chaser (small shelf)** — when Lucky One is eligible, two recent series are insufficient Trend evidence; Trend Chaser may compete from three recent series onward.
 - **Loyalist ⊥ Curator** — Loyalist eligible → Curator score is zero  
 - **Wanderer** does not compete as a dominance archetype  
 
@@ -579,12 +580,15 @@ Until then:
 
 ---
 
-## Collector Type 6.1
+## Collector Type 6.2
 
-Status: **Active** policy version (`kCollectorTypeResolverVersion = 6.1`).
+Status: **Active** policy version (`kCollectorTypeResolverVersion = 6.2`).
 
-Final behavior contract (6.0 base + **6.1** Lucky One → Hunter progression):
+Final behavior contract (6.0 base + **6.1** Lucky One → Hunter progression +
+**6.2** Lucky One / Trend Chaser small-shelf priority):
 Lucky One is ≤4 series; Hunter requires **>4** series with ≥2 Secrets at ≥50% hit.
+When Lucky One is eligible, Trend Chaser requires at least three recent series
+before it may compete.
 IP-first Loyalist, Curator as multi-IP investment, Wanderer as fallback only,
 Secret hit rate over Secret slots, Trend = 90 days with signature `|r:` aging.
 Full eligibility table, metrics, and removed obsolete gates: **§ Collector Types**

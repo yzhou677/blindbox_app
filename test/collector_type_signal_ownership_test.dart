@@ -53,8 +53,8 @@ TrackedFigure _owned(String id) =>
     TrackedFigure(figureId: id, state: FigureCollectionState.owned);
 
 void main() {
-  test('resolverVersion is 6.1 after Lucky One → Hunter progression', () {
-    expect(kCollectorTypeResolverVersion, '6.1');
+  test('resolverVersion is 6.2 after Lucky One / Trend structural gate', () {
+    expect(kCollectorTypeResolverVersion, '6.2');
   });
 
   test('tie-break ranks Worldbuilder above Minimalist', () {
@@ -138,10 +138,7 @@ void main() {
             notes: i == 0 ? 'kept' : null,
           ),
       ],
-      figureStates: {
-        'n0_0': _owned('n0_0'),
-        'n1_0': _owned('n1_0'),
-      },
+      figureStates: {'n0_0': _owned('n0_0'), 'n1_0': _owned('n1_0')},
     );
     final identity = resolveCollectorType(
       snapshot: snap,
@@ -163,40 +160,45 @@ void main() {
     expect(journey.hasHistory, isTrue);
   });
 
-  test('Completionist wins completed multi-IP shelf that Journey used to tip to Curator',
-      () {
-    final series = [
-      _series(id: 'a1', ip: 'ip1', brand: 'pop', figs: 3),
-      _series(id: 'a2', ip: 'ip2', brand: 'pop', figs: 3),
-      _series(id: 'a3', ip: 'ip3', brand: 'pop', figs: 3),
-    ];
-    final states = <String, TrackedFigure>{
-      for (final s in series)
-        for (final f in s.figures) f.id: _owned(f.id),
-    };
-    final snap = CollectionSnapshot(shelfSeries: series, figureStates: states);
-    final identity = resolveCollectorType(
-      snapshot: snap,
-      profile: interpretShelf(snap),
-      revealedAt: DateTime(2026, 7, 1),
-    );
+  test(
+    'Completionist wins completed multi-IP shelf that Journey used to tip to Curator',
+    () {
+      final series = [
+        _series(id: 'a1', ip: 'ip1', brand: 'pop', figs: 3),
+        _series(id: 'a2', ip: 'ip2', brand: 'pop', figs: 3),
+        _series(id: 'a3', ip: 'ip3', brand: 'pop', figs: 3),
+      ];
+      final states = <String, TrackedFigure>{
+        for (final s in series)
+          for (final f in s.figures) f.id: _owned(f.id),
+      };
+      final snap = CollectionSnapshot(
+        shelfSeries: series,
+        figureStates: states,
+      );
+      final identity = resolveCollectorType(
+        snapshot: snap,
+        profile: interpretShelf(snap),
+        revealedAt: DateTime(2026, 7, 1),
+      );
 
-    expect(identity.archetypeId, CollectorTypeArchetypeId.completionist);
-    expect(
-      identity.scores[CollectorTypeArchetypeId.completionist]! >
-          identity.scores[CollectorTypeArchetypeId.curator]!,
-      isTrue,
-    );
+      expect(identity.archetypeId, CollectorTypeArchetypeId.completionist);
+      expect(
+        identity.scores[CollectorTypeArchetypeId.completionist]! >
+            identity.scores[CollectorTypeArchetypeId.curator]!,
+        isTrue,
+      );
 
-    // Journey depth remains independent and high.
-    final journey = buildCollectorJourneySummary(
-      memory: CollectionMemoryData(
-        ipSeriesDepth: {for (var i = 1; i <= 17; i++) 'hist$i': 1},
-        firstSeriesAddedAtMs: DateTime(2024, 1, 1).millisecondsSinceEpoch,
-      ),
-      snapshot: snap,
-      now: DateTime(2026, 7, 1),
-    );
-    expect(journey.ipUniversesExplored, 17);
-  });
+      // Journey depth remains independent and high.
+      final journey = buildCollectorJourneySummary(
+        memory: CollectionMemoryData(
+          ipSeriesDepth: {for (var i = 1; i <= 17; i++) 'hist$i': 1},
+          firstSeriesAddedAtMs: DateTime(2024, 1, 1).millisecondsSinceEpoch,
+        ),
+        snapshot: snap,
+        now: DateTime(2026, 7, 1),
+      );
+      expect(journey.ipUniversesExplored, 17);
+    },
+  );
 }

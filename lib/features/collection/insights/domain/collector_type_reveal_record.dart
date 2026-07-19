@@ -57,6 +57,11 @@ import 'package:flutter/foundation.dart';
 /// hit ≥50%); Hunter requires **>4** series (≥2 Secrets, hit ≥50%). Same-shelf
 /// early Secret luck stays Lucky One until the shelf grows past early stage.
 ///
+/// **6.2** — Lucky One and Trend Chaser are structurally gated on a small
+/// shelf: when Lucky One is eligible, Trend Chaser needs at least three recent
+/// series before it may compete. Two recent series alone cannot erase the
+/// more distinctive early-Secret story.
+///
 /// **Bump when** a change can alter Identity or Explainability for the same
 /// shelf:
 /// - scoring weights
@@ -79,7 +84,7 @@ import 'package:flutter/foundation.dart';
 /// Stamped onto every [CollectorTypeRevealRecord]. Do not branch on this in
 /// Collector Type UI or resolver logic — Timeline / Personality Memory
 /// replay past results without re-running a future resolver.
-const String kCollectorTypeResolverVersion = '6.1';
+const String kCollectorTypeResolverVersion = '6.2';
 
 /// Append-only resolve snapshot — Personality Memory / Timeline / replay.
 ///
@@ -126,10 +131,8 @@ class CollectorTypeRevealRecord {
   final bool isEvolution;
 
   /// Same heal contract as [CollectorTypeIdentity.displayReasonKey].
-  CollectorTypeReasonKey get displayReasonKey => effectiveReasonKey(
-        archetypeId: archetypeId,
-        reasonKey: reasonKey,
-      );
+  CollectorTypeReasonKey get displayReasonKey =>
+      effectiveReasonKey(archetypeId: archetypeId, reasonKey: reasonKey);
 
   /// Snapshot of one reveal — uses [identity] for what was persisted and
   /// [resolution] for scoreboard numbers from that pass.
@@ -139,7 +142,8 @@ class CollectorTypeRevealRecord {
     required bool isEvolution,
   }) {
     final id = identity.archetypeId;
-    final score = resolution.scores[id] ??
+    final score =
+        resolution.scores[id] ??
         (resolution.archetypeId == id ? resolution.score : 0.0);
     return CollectorTypeRevealRecord(
       archetypeId: id,
@@ -154,16 +158,16 @@ class CollectorTypeRevealRecord {
   }
 
   Map<String, dynamic> toJson() => {
-        'v': 2,
-        'archetypeId': archetypeId.name,
-        'revealedAtMs': revealedAt.millisecondsSinceEpoch,
-        'signatureHash': signatureHash,
-        'reasonKey': reasonKey.name,
-        'score': score,
-        'confidence': confidence,
-        'resolverVersion': resolverVersion,
-        'isEvolution': isEvolution,
-      };
+    'v': 2,
+    'archetypeId': archetypeId.name,
+    'revealedAtMs': revealedAt.millisecondsSinceEpoch,
+    'signatureHash': signatureHash,
+    'reasonKey': reasonKey.name,
+    'score': score,
+    'confidence': confidence,
+    'resolverVersion': resolverVersion,
+    'isEvolution': isEvolution,
+  };
 
   factory CollectorTypeRevealRecord.fromJson(Map<String, dynamic> json) {
     final idName = json['archetypeId'] as String? ?? '';
@@ -181,8 +185,9 @@ class CollectorTypeRevealRecord {
       score: (json['score'] as num?)?.toDouble() ?? 0,
       confidence: (json['confidence'] as num?)?.toDouble() ?? 0,
       // Pre-version records were produced under the 1.0 policy.
-      resolverVersion:
-          (version != null && version.isNotEmpty) ? version : '1.0',
+      resolverVersion: (version != null && version.isNotEmpty)
+          ? version
+          : '1.0',
       isEvolution: json['isEvolution'] as bool? ?? false,
     );
   }

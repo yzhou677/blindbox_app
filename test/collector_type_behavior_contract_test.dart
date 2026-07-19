@@ -162,7 +162,7 @@ void main() {
     });
   });
 
-  group('Hunter / Lucky One 6.1', () {
+  group('Hunter / Lucky One 6.2', () {
     test('1 Secret on small shelf at 50% → Lucky One', () {
       final s = _series(
         id: 's1',
@@ -704,7 +704,7 @@ void main() {
     });
   });
 
-  group('Trend Chaser 6.0', () {
+  group('Trend Chaser 6.2', () {
     CatalogSeedBundle catalogWithDates(Map<String, String> idToDate) {
       return CatalogSeedBundle(
         brands: const [],
@@ -724,6 +724,86 @@ void main() {
         figures: const [],
       );
     }
+
+    List<ShelfSeries> recentSeriesWithOptionalSecret(
+      int count, {
+      required bool includeSecret,
+    }) => [
+      for (var i = 0; i < count; i++)
+        _series(
+          id: 'recent_$i',
+          ipId: 'ip_$i',
+          catalogTemplateId: 'recent_cat_$i',
+          figures: [
+            _reg('regular_$i', 'recent_$i'),
+            if (includeSecret && i == 0) _sec('lucky_secret', 'recent_$i'),
+          ],
+        ),
+    ];
+
+    CatalogSeedBundle recentCatalog(int count) => catalogWithDates({
+      for (var i = 0; i < count; i++)
+        'recent_cat_$i': '2026-05-${(i + 1).toString().padLeft(2, '0')}',
+    });
+
+    test('2 recent series plus 100% Secret hit resolves Lucky One', () {
+      final series = recentSeriesWithOptionalSecret(2, includeSecret: true);
+      expect(
+        _resolve(
+          _snap(series, {'lucky_secret': _owned('lucky_secret')}),
+          catalog: recentCatalog(2),
+        ),
+        CollectorTypeArchetypeId.luckyOne,
+      );
+    });
+
+    test('3 recent series are enough to compete past Lucky One', () {
+      final series = recentSeriesWithOptionalSecret(3, includeSecret: true);
+      expect(
+        _resolve(
+          _snap(series, {'lucky_secret': _owned('lucky_secret')}),
+          catalog: recentCatalog(3),
+        ),
+        CollectorTypeArchetypeId.trendChaser,
+      );
+    });
+
+    test('5 recent series plus one Secret resolves Trend Chaser', () {
+      final series = recentSeriesWithOptionalSecret(5, includeSecret: true);
+      expect(
+        _resolve(
+          _snap(series, {'lucky_secret': _owned('lucky_secret')}),
+          catalog: recentCatalog(5),
+        ),
+        CollectorTypeArchetypeId.trendChaser,
+      );
+    });
+
+    test('non-recent small shelf with a Secret resolves Lucky One', () {
+      final series = recentSeriesWithOptionalSecret(2, includeSecret: true);
+      final oldCatalog = catalogWithDates({
+        'recent_cat_0': '2025-01-01',
+        'recent_cat_1': '2025-02-01',
+      });
+      expect(
+        _resolve(
+          _snap(series, {'lucky_secret': _owned('lucky_secret')}),
+          catalog: oldCatalog,
+        ),
+        CollectorTypeArchetypeId.luckyOne,
+      );
+    });
+
+    test('recent small shelf without a Secret resolves Trend Chaser', () {
+      final series = recentSeriesWithOptionalSecret(2, includeSecret: false);
+      expect(
+        _resolve(
+          _snap(series, {'regular_0': _owned('regular_0')}),
+          catalog: recentCatalog(2),
+        ),
+        CollectorTypeArchetypeId.trendChaser,
+      );
+    });
 
     test('2 of 3 within 90 days → qualifies', () {
       final now = DateTime(2026, 6, 1);

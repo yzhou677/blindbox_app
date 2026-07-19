@@ -59,7 +59,8 @@ Do not invent parallel completion percentages in Insights widgets.
 Pipeline reminder: Signals → Eligibility → Strength → soft-capped scale →
 Winner. Presence alone never assigns personality. Wanderer is fallback only.
 
-Structural exclusions: Hunter ⊥ Lucky One; Loyalist ⊥ Curator.
+Structural exclusions: Hunter ⊥ Lucky One; Loyalist ⊥ Curator. When Lucky One
+is eligible, Trend Chaser needs at least three recent series to compete.
 
 ---
 

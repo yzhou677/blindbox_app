@@ -47,6 +47,14 @@ interpretation surfaces.
 Wanderer is an intentional fallback. It is not a failure state. It protects the
 collector from being over-classified when no specialized identity honestly fits.
 
+Lucky One and Trend Chaser require an additional semantic distinction on an
+early-stage shelf. Lucky One captures a distinctive event story: unusually
+strong Secret fortune while the shelf is still small. Trend Chaser describes a
+repeated collecting preference. A small shelf's naturally high recent-series
+ratio is not enough by itself to erase an eligible Lucky One identity; Trend
+Chaser needs stronger repeated-recency evidence before it may compete. The
+concrete evidence threshold remains part of the versioned resolver contract.
+
 ## User Impact
 
 Collectors get a stable, emotionally legible identity that respects their shelf.

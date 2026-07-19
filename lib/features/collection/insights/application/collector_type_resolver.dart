@@ -46,6 +46,10 @@ const double kCollectorTypeTrendRecentRatio = 0.5;
 /// Soft cap on recent series counted toward Trend Chaser scale bonus.
 const int kCollectorTypeTrendRecentCap = 6;
 
+/// Stronger recency evidence required before Trend Chaser may compete with an
+/// eligible Lucky One on an early-stage shelf.
+const int kCollectorTypeTrendRecentCountAgainstLucky = 3;
+
 /// Future-intent share of (Started Series + future intent) for Dreamer.
 const double kCollectorTypeDreamerWishlistRatio = 0.5;
 
@@ -85,7 +89,7 @@ const int kCollectorTypeMinimalistSeriesCap = 3;
 const double kCollectorTypeScoreTieEpsilon = 0.01;
 
 // ---------------------------------------------------------------------------
-// Collector Type 6.1 — Lucky One → Hunter progression on 6.0 contract
+// Collector Type 6.2 — early Lucky One / Trend Chaser structural priority
 //
 // Pipeline: Signals → Behavior eligibility → Strength → Soft-capped scale.
 // Presence alone never assigns personality. Journey / Reveal History stay out.
@@ -102,7 +106,7 @@ const double kCollectorTypeScoreTieEpsilon = 0.01;
 // | Minimalist    | Small, refined shelf           | ≤3 series + avg ≥ 0.70               |
 // | Worldbuilder  | Self-created worlds dominate   | ≥2 custom + customRatio > 0.50       |
 // | Dreamer       | Wishlist defines intent        | ≥2 wishlist + wishlistRatio > 0.50   |
-// | Trend Chaser  | Recent releases define shelf   | ≥2 recent + recentRatio > 0.50       |
+// | Trend Chaser  | Recent releases define shelf   | ≥2 recent + ratio >.50; ≥3 if Lucky |
 // ---------------------------------------------------------------------------
 
 /// Confidence when winner score is non-positive (empty / fallback).
@@ -480,11 +484,13 @@ _scoreArchetypes({
   }
 
   // Lucky One — early fortune; Hunter's prequel on a still-small shelf.
-  if (!hunterEligible &&
+  final luckyOneEligible =
+      !hunterEligible &&
       seriesCount <= kCollectorTypeCompactSeriesCap &&
       stats.secretOwned >= 1 &&
       stats.secretSlots > 0 &&
-      secretHitRate >= kCollectorTypeSecretHitRate) {
+      secretHitRate >= kCollectorTypeSecretHitRate;
+  if (luckyOneEligible) {
     scores[CollectorTypeArchetypeId.luckyOne] = 38 + secretHitRate * 40;
     reasons[CollectorTypeArchetypeId.luckyOne] =
         CollectorTypeReasonKey.fortunateSecrets;
@@ -545,7 +551,11 @@ _scoreArchetypes({
   }
 
   // Trend Chaser — recent releases define the shelf (90-day window).
-  if (recentCatalogSeries >= 2 &&
+  final hasEnoughTrendEvidenceAgainstLucky =
+      !luckyOneEligible ||
+      recentCatalogSeries >= kCollectorTypeTrendRecentCountAgainstLucky;
+  if (hasEnoughTrendEvidenceAgainstLucky &&
+      recentCatalogSeries >= 2 &&
       recentRatio > kCollectorTypeTrendRecentRatio) {
     final cappedRecent = math.min(
       recentCatalogSeries,
