@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="on_display_surface">#FFF5F0FA</color>
+    <color name="on_display_surface_low">#FFF0E9FA</color>
+    <color name="on_display_info_mat">#F7FFFAFC</color>
+    <color name="on_display_icon_well">#FFE4D6F8</color>
+    <color name="on_display_primary">#FF6652A5</color>
+    <color name="on_display_text">#FF211F24</color>
+    <color name="on_display_meta">#FF6A626F</color>
+    <color name="on_display_outline">#FFC8B8D8</color>
+    <color name="on_display_large_info_surface">#FFFFF8FC</color>
+    <color name="on_display_stat_mat">#FFF0E8F7</color>
+    <color name="on_display_stat_outline">#24C8B8D8</color>
+    <color name="on_display_eyebrow">#FF7D6D91</color>
+    <color name="on_display_brand">#FF8D8592</color>
+    <color name="on_display_chip_surface">#8FF3ECF9</color>
+    <color name="on_display_fade_clear">#00FFF8FC</color>
+    <color name="on_display_fade_mid">#24FFF8FC</color>
+    <color name="on_display_metric_icon">#FF6652A5</color>
+    <color name="on_display_transition_line">#2EC8B8D8</color>
+    <color name="on_display_progress_track">#52A79EB0</color>
+</resources>
