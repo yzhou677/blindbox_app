@@ -9,11 +9,11 @@
     android:outlineProvider="background"
     android:padding="4dp">
 
-    <!-- Region 1: 66% hero cover, clipped by its container. -->
+    <!-- Region 1: 62% hero cover, clipped by its container. -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="66"
+        android:layout_weight="62"
         android:background="@drawable/on_display_widget_image_container"
         android:clipToOutline="true"
         android:outlineProvider="background">
@@ -57,27 +57,27 @@
                 android:letterSpacing="0.06"
                 android:text="ON DISPLAY"
                 android:textColor="@color/on_display_primary"
-                android:textSize="9sp" />
+                android:textSize="8sp" />
         </LinearLayout>
     </FrameLayout>
 
-    <!-- Region 2: 19% compact identity. -->
+    <!-- Region 2: 18% compact identity. -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="19"
+        android:layout_weight="18"
         android:background="@drawable/on_display_widget_large_info_surface"
         android:gravity="center_vertical"
         android:orientation="vertical"
         android:paddingStart="14dp"
-        android:paddingTop="4dp"
+        android:paddingTop="3dp"
         android:paddingEnd="14dp"
-        android:paddingBottom="4dp">
+        android:paddingBottom="3dp">
 
         <ImageView
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:layout_marginBottom="4dp"
+            android:layout_marginBottom="3dp"
             android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp"
             android:background="@color/on_display_transition_line"
@@ -92,7 +92,7 @@
             android:maxLines="1"
             android:textStyle="bold"
             android:textColor="@color/on_display_text"
-            android:textSize="19sp" />
+            android:textSize="14sp" />
 
         <TextView
             android:id="@+id/widget_meta"
@@ -102,7 +102,7 @@
             android:ellipsize="end"
             android:maxLines="2"
             android:textColor="@color/on_display_primary"
-            android:textSize="10sp" />
+            android:textSize="9sp" />
 
         <TextView
             android:id="@+id/widget_brand"
@@ -116,15 +116,15 @@
             android:textSize="8sp" />
     </LinearLayout>
 
-    <!-- Region 3: 15% collection summary. -->
+    <!-- Region 3: 20% collection summary. -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="15"
+        android:layout_weight="20"
         android:background="@drawable/on_display_widget_large_info_surface"
         android:orientation="vertical"
         android:paddingStart="14dp"
-        android:paddingTop="4dp"
+        android:paddingTop="3dp"
         android:paddingEnd="14dp"
         android:paddingBottom="4dp">
 
@@ -166,16 +166,16 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="3dp"
             android:layout_weight="1"
             android:orientation="horizontal">
 
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_marginTop="2dp"
+                android:layout_marginTop="1dp"
                 android:layout_marginEnd="4dp"
-                android:layout_marginBottom="2dp"
+                android:layout_marginBottom="1dp"
                 android:layout_weight="1"
                 android:background="@drawable/on_display_widget_stat_mat"
                 android:gravity="center_vertical"
@@ -214,9 +214,9 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_marginStart="4dp"
-                android:layout_marginTop="2dp"
+                android:layout_marginTop="1dp"
                 android:layout_marginEnd="4dp"
-                android:layout_marginBottom="2dp"
+                android:layout_marginBottom="1dp"
                 android:layout_weight="1"
                 android:background="@drawable/on_display_widget_stat_mat"
                 android:gravity="center_vertical"
@@ -258,8 +258,8 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_marginStart="4dp"
-                android:layout_marginTop="2dp"
-                android:layout_marginBottom="2dp"
+                android:layout_marginTop="1dp"
+                android:layout_marginBottom="1dp"
                 android:layout_weight="1"
                 android:background="@drawable/on_display_widget_stat_mat"
                 android:gravity="center_vertical"
