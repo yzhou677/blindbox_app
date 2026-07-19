@@ -1,5 +1,6 @@
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_wishlist_browse.dart';
+import 'package:blindbox_app/features/collection/widgets/collection_browse_card.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_wishlist_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -48,15 +49,16 @@ void main() {
     expect(find.text('Molly'), findsOneWidget);
   });
 
-  testWidgets('Figure card prioritizes Figure name, parent Series, then Brand', (
-    tester,
-  ) async {
-    await _pumpWishlist(tester, snapshot: _figureOnlySnapshot());
+  testWidgets(
+    'Figure card prioritizes Figure name, parent Series, then Brand',
+    (tester) async {
+      await _pumpWishlist(tester, snapshot: _figureOnlySnapshot());
 
-    expect(find.text('Wish Figure With A Long Name'), findsOneWidget);
-    expect(find.text('Parent Series'), findsOneWidget);
-    expect(find.text('POP MART'), findsOneWidget);
-  });
+      expect(find.text('DIMOO as Alien (Special Ver.)'), findsOneWidget);
+      expect(find.text('Parent Series'), findsOneWidget);
+      expect(find.text('POP MART'), findsOneWidget);
+    },
+  );
 
   testWidgets('Figure card tap opens preview without removing item', (
     tester,
@@ -70,14 +72,16 @@ void main() {
       onRemoveFigure: (_) => removes++,
     );
 
-    await tester.tap(find.text('Wish Figure With A Long Name'));
+    await tester.tap(find.text('DIMOO as Alien (Special Ver.)'));
     await tester.pump();
 
     expect(opens, 1);
     expect(removes, 0);
   });
 
-  testWidgets('true empty copy avoids using Wishlist as a verb', (tester) async {
+  testWidgets('true empty copy avoids using Wishlist as a verb', (
+    tester,
+  ) async {
     await _pumpWishlist(tester, snapshot: CollectionSnapshot.emptyTest());
 
     expect(find.text('Your wishlist is empty.'), findsOneWidget);
@@ -125,8 +129,57 @@ void main() {
     expect(find.text('Series (0)'), findsNothing);
     expect(find.text('No Series match your search.'), findsNothing);
     expect(find.text('Figures (1)'), findsOneWidget);
-    expect(find.text('Wish Figure With A Long Name'), findsOneWidget);
+    expect(find.text('DIMOO as Alien (Special Ver.)'), findsOneWidget);
   });
+
+  for (final textScale in <double>[1, 1.35]) {
+    testWidgets(
+      'Wishlist Figure cards fit long metadata and align at ${textScale}x text',
+      (tester) async {
+        await _pumpWishlist(
+          tester,
+          snapshot: _twoFigureSnapshot(),
+          textScale: textScale,
+        );
+
+        expect(tester.takeException(), isNull);
+        expect(find.text('DIMOO as Alien (Special Ver.)'), findsOneWidget);
+        final cards = find.byType(CollectionBrowseCard);
+        expect(cards, findsNWidgets(2));
+        expect(
+          find.descendant(
+            of: cards,
+            matching: find.text('Parent Series With A Long Display Name'),
+          ),
+          findsNWidgets(2),
+        );
+        expect(
+          find.descendant(of: cards, matching: find.text('POP MART')),
+          findsNWidgets(2),
+        );
+
+        final title = tester.widget<Text>(
+          find.text('DIMOO as Alien (Special Ver.)'),
+        );
+        expect(title.maxLines, 2);
+        expect(title.overflow, TextOverflow.ellipsis);
+
+        expect(tester.getSize(cards.at(0)), tester.getSize(cards.at(1)));
+        expect(
+          tester.getTopLeft(cards.at(0)).dy,
+          tester.getTopLeft(cards.at(1)).dy,
+        );
+
+        final firstRemove = find.byKey(
+          const ValueKey('wishlist_remove_figure_wish-figure'),
+        );
+        expect(
+          tester.getTopLeft(firstRemove).dy - tester.getTopLeft(cards.at(0)).dy,
+          10,
+        );
+      },
+    );
+  }
 }
 
 Future<void> _pumpWishlist(
@@ -137,6 +190,7 @@ Future<void> _pumpWishlist(
   ValueChanged<WishlistedFigureRow>? onRemoveFigure,
   ValueChanged<WishlistedCatalogSeries>? onOpenSeries,
   ValueChanged<WishlistedFigureRow>? onOpenFigure,
+  double textScale = 1,
 }) async {
   tester.view.physicalSize = const Size(430, 900);
   tester.view.devicePixelRatio = 1;
@@ -145,6 +199,12 @@ Future<void> _pumpWishlist(
 
   await tester.pumpWidget(
     MaterialApp(
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(textScale)),
+        child: child!,
+      ),
       home: Scaffold(
         body: SingleChildScrollView(
           child: CollectionWishlistPage(
@@ -220,19 +280,56 @@ CollectionSnapshot _mixedSnapshot() {
 ShelfSeries _parentSeries() {
   return const ShelfSeries(
     id: 'parent-series',
-    name: 'Parent Series',
+    name: 'Parent Series With A Long Display Name',
     brand: 'POP MART',
     ipName: 'THE MONSTERS',
     figures: [
       ShelfFigure(
         id: 'wish-figure',
         seriesId: 'parent-series',
-        name: 'Wish Figure With A Long Name',
+        name: 'DIMOO as Alien (Special Ver.)',
         imageKey: 'wish-figure',
         rarity: 'Regular',
         isSecret: false,
       ),
     ],
     shelfAccent: Color(0xFFE8DEF5),
+  );
+}
+
+CollectionSnapshot _twoFigureSnapshot() {
+  final first = _parentSeries();
+  final second = ShelfSeries(
+    id: first.id,
+    name: first.name,
+    brand: first.brand,
+    ipName: first.ipName,
+    figures: [
+      ...first.figures,
+      const ShelfFigure(
+        id: 'neighbor-figure',
+        seriesId: 'parent-series',
+        name: 'DIMOO Neighbor Figure',
+        imageKey: 'neighbor-figure',
+        rarity: 'Regular',
+        isSecret: false,
+      ),
+    ],
+    shelfAccent: first.shelfAccent,
+  );
+  return CollectionSnapshot(
+    shelfSeries: [second],
+    figureStates: const {
+      'wish-figure': TrackedFigure(
+        figureId: 'wish-figure',
+        state: FigureCollectionState.wishlist,
+        updatedAtMicros: 20,
+      ),
+      'neighbor-figure': TrackedFigure(
+        figureId: 'neighbor-figure',
+        state: FigureCollectionState.wishlist,
+        updatedAtMicros: 19,
+      ),
+    },
   );
 }
