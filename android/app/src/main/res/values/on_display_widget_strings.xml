@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="on_display_widget_name">On Display</string>
+    <string name="on_display_widget_description">A series from your shelf, on display each day.</string>
+    <string name="on_display_your_collection">IN THIS SERIES</string>
+    <string name="on_display_empty_eyebrow">ON DISPLAY</string>
+    <string name="on_display_empty_title">Your display case\nis waiting.</string>
+    <string name="on_display_empty_subtitle">Add your first series\nto get started.</string>
+    <string name="on_display_empty_action">+ Add Series</string>
+    <string name="on_display_new_on_shelf">New on your shelf</string>
+</resources>

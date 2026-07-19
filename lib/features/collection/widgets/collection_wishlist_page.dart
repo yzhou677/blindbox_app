@@ -318,16 +318,19 @@ class _FigureGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cardHeight = CollectionCardTokens.wishlistFigureHeight(
+      MediaQuery.textScalerOf(context),
+    );
     return GridView.builder(
       key: const Key('wishlist_figures_grid'),
       padding: const EdgeInsets.symmetric(horizontal: 20),
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
-        mainAxisExtent: CollectionCardTokens.minRailHeight,
+        mainAxisExtent: cardHeight,
       ),
       itemCount: figures.length,
       itemBuilder: (context, index) {
@@ -340,6 +343,8 @@ class _FigureGrid extends StatelessWidget {
               : shelfSeriesIpLabel(row.series),
           imageKey: row.figure.imageKey ?? row.figure.id,
           imageMode: CatalogImageDisplayMode.figureWishlistCard,
+          height: cardHeight,
+          reserveTwoTitleLines: true,
           removeSemanticsLabel: 'Remove Figure from Wishlist',
           removeTargetKey: ValueKey('wishlist_remove_figure_${row.figure.id}'),
           onRemove: () => onRemove(row),
@@ -360,6 +365,8 @@ class _WishlistCard extends StatelessWidget {
     required this.removeSemanticsLabel,
     required this.removeTargetKey,
     required this.onRemove,
+    this.height = CollectionCardTokens.minRailHeight,
+    this.reserveTwoTitleLines = false,
     this.onTap,
   });
 
@@ -372,6 +379,8 @@ class _WishlistCard extends StatelessWidget {
   final Key removeTargetKey;
   final VoidCallback onRemove;
   final VoidCallback? onTap;
+  final double height;
+  final bool reserveTwoTitleLines;
 
   @override
   Widget build(BuildContext context) {
@@ -384,6 +393,8 @@ class _WishlistCard extends StatelessWidget {
         title: title,
         subtitle: subtitle,
         subtitleMaxLines: 2,
+        reserveTwoTitleLines: reserveTwoTitleLines,
+        height: height,
         titleStyle: CollectibleTypography.catalogSeriesRowTitle(
           textTheme,
           scheme,
@@ -403,9 +414,7 @@ class _WishlistCard extends StatelessWidget {
           style: CollectibleTypography.catalogSeriesRowMeta(
             textTheme,
             scheme,
-          ).copyWith(
-            color: scheme.onSurfaceVariant.withValues(alpha: 0.62),
-          ),
+          ).copyWith(color: scheme.onSurfaceVariant.withValues(alpha: 0.62)),
         ),
         borderColor: scheme.outlineVariant.withValues(
           alpha: isDark ? 0.32 : 0.38,

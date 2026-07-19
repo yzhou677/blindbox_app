@@ -43,6 +43,7 @@ import 'package:blindbox_app/features/collection/widgets/collection_warm_start_b
 import 'package:blindbox_app/features/collection/widgets/catalog_series_preview_sheet.dart';
 import 'package:blindbox_app/features/collection/widgets/series_figures_sheet.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_wishlist_page.dart';
+import 'package:blindbox_app/features/collection/widget/on_display_widget_sync.dart';
 import 'package:blindbox_app/features/sharing/presentation/share_card_preview.dart';
 import 'package:blindbox_app/features/sharing/presentation/widgets/shelfy_collector_cards.dart';
 import 'package:blindbox_app/shared/widgets/app_search_field.dart';
@@ -77,6 +78,8 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
   final ScrollController _scrollController = ScrollController();
   VoidCallback? _routerListener;
   Timer? _searchDebounceTimer;
+  ProviderSubscription<OnDisplayWidgetNavigationTarget?>? _widgetNavigation;
+  String? _activeWidgetSeriesSheetId;
 
   /// Debounced query for the browse pipeline — text field updates immediately.
   String _debouncedSearchQuery = '';
@@ -86,6 +89,35 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     super.initState();
     CollectionModalOverlayRegistry.instance.register(_dismissBranchOverlays);
     ShellTabReselectBus.instance.reselectedBranch.addListener(_onTabReselected);
+    _widgetNavigation = ref.listenManual(onDisplayWidgetNavigationProvider, (
+      _,
+      target,
+    ) {
+      if (target == null) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        switch (target) {
+          case OnDisplayWidgetSeriesTarget(:final seriesId):
+            final exists = ref
+                .read(collectionNotifierProvider)
+                .shelfSeries
+                .any((series) => series.id == seriesId);
+            if (exists && _activeWidgetSeriesSheetId != seriesId) {
+              _activeWidgetSeriesSheetId = seriesId;
+              unawaited(
+                _openFiguresSheet(context, seriesId).whenComplete(() {
+                  if (_activeWidgetSeriesSheetId == seriesId) {
+                    _activeWidgetSeriesSheetId = null;
+                  }
+                }),
+              );
+            }
+          case OnDisplayWidgetAddTarget():
+            _openAddToCollection(context);
+        }
+        ref.read(onDisplayWidgetNavigationProvider.notifier).state = null;
+      });
+    }, fireImmediately: true);
   }
 
   void _onTabReselected() {
@@ -145,6 +177,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
   @override
   void dispose() {
     _searchDebounceTimer?.cancel();
+    _widgetNavigation?.close();
     ShellTabReselectBus.instance.reselectedBranch.removeListener(
       _onTabReselected,
     );
@@ -163,8 +196,8 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     super.dispose();
   }
 
-  void _openFiguresSheet(BuildContext context, String seriesId) {
-    showCollectibleBottomSheet<void>(
+  Future<void> _openFiguresSheet(BuildContext context, String seriesId) {
+    return showCollectibleBottomSheet<void>(
       context: context,
       heightFraction: FeedRhythm.sheetFiguresOpenScreenFraction,
       builder: (_, scroll) => SeriesFiguresSheet(seriesId: seriesId),

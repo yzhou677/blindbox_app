@@ -11,6 +11,7 @@ import 'package:blindbox_app/features/home/application/catalog_bundle_refresh_br
 import 'package:blindbox_app/features/home/application/home_feed_provider.dart';
 import 'package:blindbox_app/features/market/data/market_catalog_identity_cache.dart';
 import 'package:blindbox_app/features/collection/widgets/master_complete_celebration_host.dart';
+import 'package:blindbox_app/features/collection/widget/on_display_widget_sync.dart';
 import 'package:blindbox_app/features/market/data/market_listings_bootstrap.dart';
 import 'package:blindbox_app/features/recommendations/application/recommendation_sync_notifier.dart';
 import 'package:flutter/material.dart';
@@ -67,8 +68,10 @@ class BlindboxApp extends ConsumerWidget {
       darkTheme: AppTheme.dark(),
       routerConfig: appRouter,
       builder: (context, child) {
-        return MasterCompleteCelebrationHost(
-          child: child ?? const SizedBox.shrink(),
+        return OnDisplayWidgetSyncHost(
+          child: MasterCompleteCelebrationHost(
+            child: child ?? const SizedBox.shrink(),
+          ),
         );
       },
     );

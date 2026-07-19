@@ -36,12 +36,22 @@ abstract final class CollectionCardTokens {
   /// The card owns this height; rails use [CollectionSeriesCard.railExtent].
   static const double minRailHeight = 276;
 
+  /// Wishlist Figure cards reserve two lines each for figure and series names,
+  /// plus a persistent brand footer. The base adds only the 12dp required by
+  /// the fixed two-line title slot; larger text receives one
+  /// shared grid-wide allowance so neighboring cards remain aligned.
+  static const double wishlistFigureBaseHeight = minRailHeight + 12;
+
+  static double wishlistFigureHeight(TextScaler textScaler) {
+    final extraScale = (textScaler.scale(1) - 1).clamp(0.0, double.infinity);
+    return wishlistFigureBaseHeight + (extraScale * 96);
+  }
+
   // —— Compact (Insights dashboard / mini shelf rail) ——
 
   static const double compactWidth = 132;
 
-  static const EdgeInsets compactPadding =
-      EdgeInsets.fromLTRB(10, 10, 10, 12);
+  static const EdgeInsets compactPadding = EdgeInsets.fromLTRB(10, 10, 10, 12);
 
   static const double compactImageInset = 20;
 

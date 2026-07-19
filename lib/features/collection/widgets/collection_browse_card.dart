@@ -27,6 +27,7 @@ class CollectionBrowseCard extends StatelessWidget {
     this.titleToMetaGap = CollectionCardTokens.titleToMetaGap,
     this.metaToFooterGap = CollectionCardTokens.metaToProgressGap,
     this.titleMaxLines = 2,
+    this.reserveTwoTitleLines = false,
     this.subtitleMaxLines = 1,
     this.titleStyle,
     this.subtitleStyle,
@@ -49,6 +50,7 @@ class CollectionBrowseCard extends StatelessWidget {
   final double titleToMetaGap;
   final double metaToFooterGap;
   final int titleMaxLines;
+  final bool reserveTwoTitleLines;
   final int subtitleMaxLines;
   final TextStyle? titleStyle;
   final TextStyle? subtitleStyle;
@@ -63,8 +65,16 @@ class CollectionBrowseCard extends StatelessWidget {
     final resolvedBorderColor =
         borderColor ??
         scheme.outlineVariant.withValues(alpha: isDark ? 0.32 : 0.38);
-    final resolvedImageExtent =
-        imageExtent ?? CollectionCardTokens.coverExtent;
+    final resolvedImageExtent = imageExtent ?? CollectionCardTokens.coverExtent;
+    final resolvedTitleStyle =
+        titleStyle ??
+        CollectibleTypography.catalogSeriesRowTitle(textTheme, scheme);
+    final titleWidget = Text(
+      title,
+      maxLines: titleMaxLines,
+      overflow: TextOverflow.ellipsis,
+      style: resolvedTitleStyle,
+    );
 
     return SizedBox(
       width: width,
@@ -103,23 +113,21 @@ class CollectionBrowseCard extends StatelessWidget {
                         ),
                       ),
                       SizedBox(height: imageToTitleGap),
-                      Text(
-                        title,
-                        maxLines: titleMaxLines,
-                        overflow: TextOverflow.ellipsis,
-                        style: titleStyle ??
-                            CollectibleTypography.catalogSeriesRowTitle(
-                              textTheme,
-                              scheme,
-                            ),
-                      ),
+                      if (reserveTwoTitleLines)
+                        SizedBox(
+                          height: _lineHeight(context, resolvedTitleStyle) * 2,
+                          child: titleWidget,
+                        )
+                      else
+                        titleWidget,
                       if (subtitle != null && subtitle!.trim().isNotEmpty) ...[
                         SizedBox(height: titleToMetaGap),
                         Text(
                           subtitle!,
                           maxLines: subtitleMaxLines,
                           overflow: TextOverflow.ellipsis,
-                          style: subtitleStyle ??
+                          style:
+                              subtitleStyle ??
                               CollectibleTypography.seriesIpLine(
                                 textTheme,
                                 scheme,
@@ -150,5 +158,15 @@ class CollectionBrowseCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  double _lineHeight(BuildContext context, TextStyle style) {
+    final painter = TextPainter(
+      text: TextSpan(text: 'Ag', style: style),
+      maxLines: 1,
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+    )..layout();
+    return painter.preferredLineHeight;
   }
 }

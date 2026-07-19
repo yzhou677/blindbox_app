@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/on_display_widget_background"
+    android:orientation="vertical"
+    android:padding="4dp">
+
+    <!-- Region 1: 58% empty display illustration. -->
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="58"
+        android:background="@drawable/on_display_widget_image_clip"
+        android:clipToOutline="true"
+        android:contentDescription="@null"
+        android:outlineProvider="background"
+        android:scaleType="centerCrop"
+        android:src="@drawable/on_display_widget_empty_illustration" />
+
+    <!-- Region 2: 28% identity and invitation. -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="28"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:paddingStart="12dp"
+        android:paddingTop="3dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="1dp">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <ImageView
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:contentDescription="@null"
+                android:src="@drawable/on_display_widget_secret" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="3dp"
+                android:fontFamily="sans-serif-medium"
+                android:letterSpacing="0.06"
+                android:text="@string/on_display_empty_eyebrow"
+                android:textColor="@color/on_display_primary"
+                android:textSize="8sp" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center"
+            android:lineSpacingExtra="-1dp"
+            android:maxLines="2"
+            android:text="@string/on_display_empty_title"
+            android:textColor="@color/on_display_text"
+            android:textSize="15sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="1dp"
+            android:gravity="center"
+            android:lineSpacingExtra="-1dp"
+            android:maxLines="2"
+            android:text="@string/on_display_empty_subtitle"
+            android:textColor="@color/on_display_meta"
+            android:textSize="10sp" />
+    </LinearLayout>
+
+    <!-- Region 3: 14% full-width Add Series action. -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="14"
+        android:paddingStart="10dp"
+        android:paddingTop="1dp"
+        android:paddingEnd="10dp"
+        android:paddingBottom="5dp">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/on_display_widget_action"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center"
+            android:text="@string/on_display_empty_action"
+            android:textColor="@color/on_display_primary"
+            android:textSize="10sp" />
+    </FrameLayout>
+</LinearLayout>
