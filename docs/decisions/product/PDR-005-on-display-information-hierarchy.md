@@ -15,7 +15,7 @@ Populated Medium and Large widgets use two clear information regions:
 
 1. The featured-series region identifies today's display with its cover,
    series name, IP, and brand.
-2. The `YOUR COLLECTION` region summarizes the user's relationship with that
+2. The `IN THIS SERIES` region summarizes the user's relationship with that
    series using existing exported collection values.
 
 The collection summary shows owned figure count and regular completion
