@@ -3,6 +3,7 @@ import type {
   ImageEmbeddingClient,
   ImageEmbeddingLogger,
   ImageEmbeddingResult,
+  StoredImage,
   StorageImageReader,
 } from './imageEmbeddingTypes';
 
@@ -19,24 +20,33 @@ export class ImageEmbeddingProvider {
     const startedAt = this.now();
     try {
       const image = await this.storage.read(objectPath);
-      const vector = await this.client.embed(image);
-      validateVector(vector, this.config.outputDimension);
-      const elapsedMs = Math.max(0, this.now() - startedAt);
-      this.logger.log(this.logEntry(true, vector.length, elapsedMs));
-      return {
-        vector,
-        model: this.config.model,
-        location: this.config.location,
-        dimension: vector.length,
-        elapsedMs,
-      };
+      return await this.embedImage(image, startedAt);
     } catch (error) {
-      const elapsedMs = Math.max(0, this.now() - startedAt);
-      this.logger.log(
-        this.logEntry(false, this.config.outputDimension, elapsedMs),
-      );
+      this.logFailure(startedAt);
       throw error;
     }
+  }
+
+  async embedStoredImage(image: StoredImage): Promise<ImageEmbeddingResult> {
+    const startedAt = this.now();
+    try {
+      return await this.embedImage(image, startedAt);
+    } catch (error) {
+      this.logFailure(startedAt);
+      throw error;
+    }
+  }
+
+  private async embedImage(image: StoredImage, startedAt: number): Promise<ImageEmbeddingResult> {
+    const vector = await this.client.embed(image);
+    validateVector(vector, this.config.outputDimension);
+    const elapsedMs = Math.max(0, this.now() - startedAt);
+    this.logger.log(this.logEntry(true, vector.length, elapsedMs));
+    return { vector, model: this.config.model, location: this.config.location, dimension: vector.length, elapsedMs };
+  }
+
+  private logFailure(startedAt: number): void {
+    this.logger.log(this.logEntry(false, this.config.outputDimension, Math.max(0, this.now() - startedAt)));
   }
 
   private logEntry(success: boolean, dimension: number, elapsedMs: number) {
