@@ -7,7 +7,7 @@ const { IMAGE_EMBEDDING_CONFIG } = require('../lib/figureRecognition/imageEmbedd
 const { FirebaseCatalogImageResolver } = require('../lib/figureRecognition/catalogImageResolver');
 const { FirestoreCatalogEmbeddingStore } = require('../lib/figureRecognition/catalogEmbeddingStore');
 const { CatalogEmbeddingJob, withTransientRetries } = require('../lib/figureRecognition/catalogEmbeddingJob');
-const { parseCatalogEmbeddingArgs } = require('../lib/figureRecognition/catalogEmbeddingCli');
+const { parseCatalogEmbeddingArgs, createStartupDiagnostic } = require('../lib/figureRecognition/catalogEmbeddingCli');
 
 const figure = (overrides = {}) => ({
   figureId: 'fig-1', seriesId: 'series-1', brandId: 'brand-1', ipId: 'ip-1', isSecret: false,
@@ -42,12 +42,47 @@ function compatible(data = {}, vector = Array(1024).fill(0.1)) {
 }
 
 describe('CatalogEmbeddingJob', () => {
+  it('treats no arguments as full-catalog mode and enumerates every available figure', async () => {
+    const figures = [figure(), figure({ figureId: 'fig-2' }), figure({ figureId: 'fig-3' })];
+    const { job, calls } = harness({ figures });
+    const plan = await job.plan(parseCatalogEmbeddingArgs([]));
+    assert.equal(plan.summary.totalFigures, 3);
+    assert.equal(plan.summary.requiresEmbedding, 3);
+    assert.equal(calls.embeds, 0);
+    assert.equal(calls.writes.length, 0);
+  });
+
+  it('emits sanitized planning progress every 25 figures', async () => {
+    const figures = Array.from({ length: 50 }, (_, index) => figure({
+      figureId: `fig-${index + 1}`,
+      imageKey: `fig-${index + 1}`,
+    }));
+    const { job, calls } = harness({ figures });
+    const progress = [];
+    await job.plan({}, 0.00012, (entry) => progress.push(entry));
+    assert.deepEqual(progress.map((entry) => entry.processed), [25, 50]);
+    assert.ok(progress.every((entry) => entry.total === undefined));
+    assert.deepEqual(progress[1], {
+      processed: 50,
+      alreadyUpToDate: 0,
+      metadataOnlyUpdates: 0,
+      requiresEmbedding: 50,
+      missingImages: 0,
+      failed: 0,
+      elapsedMs: progress[1].elapsedMs,
+    });
+    assert.equal(calls.embeds, 0);
+    assert.equal(calls.writes.length, 0);
+    assert.doesNotMatch(JSON.stringify(progress), /same-image|contentHash|vector|token|https?:/);
+  });
+
   it('plans API calls and cost without embedding or Firestore writes', async () => {
     const { job, calls } = harness({ figures: [figure(), figure({ figureId: 'fig-2' })] });
     const plan = await job.plan({ limit: 2 }, 0.5);
     assert.deepEqual(plan.summary, {
       totalFigures: 2, alreadyUpToDate: 0, metadataOnlyUpdates: 0, requiresEmbedding: 2,
       missingImages: 0, estimatedEmbeddingApiCalls: 2, estimatedAiCostUsd: 1,
+      missingImageCount: 0, missingImageFigureIds: [],
     });
     assert.equal(calls.embeds, 0);
     assert.equal(calls.writes.length, 0);
@@ -129,6 +164,63 @@ describe('CatalogEmbeddingJob', () => {
     assert.equal(summary.scanned, 1);
     assert.equal(selected.calls.writes[0].metadata.figureId, 'fig-3');
   });
+
+  it('reports zero missing images in planning and execution summaries', async () => {
+    const { job } = harness();
+    const plan = await job.plan({});
+    assert.equal(plan.summary.missingImages, 0);
+    assert.equal(plan.summary.missingImageCount, 0);
+    assert.deepEqual(plan.summary.missingImageFigureIds, []);
+    const summary = await job.execute(plan);
+    assert.equal(summary.missingImages, 0);
+    assert.equal(summary.missingImageCount, 0);
+    assert.deepEqual(summary.missingImageFigureIds, []);
+  });
+
+  it('reports two missing-image figure IDs in both summaries', async () => {
+    const base = harness({ figures: [
+      figure(),
+      figure({ figureId: 'fig-2', imageKey: 'fig-2' }),
+      figure({ figureId: 'fig-3', imageKey: 'fig-3' }),
+    ] });
+    base.job.images = { async resolve(imageKey) {
+      if (imageKey === 'fig-1' || imageKey === 'fig-2') throw new Error('missing');
+      return { objectPath: `${imageKey}.webp`, bytes: Buffer.from('same-image'), mimeType: 'image/webp' };
+    } };
+    const plan = await base.job.plan({});
+    assert.equal(plan.summary.missingImages, 2);
+    assert.equal(plan.summary.missingImageCount, 2);
+    assert.deepEqual(plan.summary.missingImageFigureIds, ['fig-1', 'fig-2']);
+    const summary = await base.job.execute(plan);
+    assert.equal(summary.missingImages, 2);
+    assert.equal(summary.missingImageCount, 2);
+    assert.deepEqual(summary.missingImageFigureIds, ['fig-1', 'fig-2']);
+  });
+
+  it('bounds missing-image IDs at twenty and marks truncation', async () => {
+    const figures = Array.from({ length: 25 }, (_, index) => figure({ figureId: `fig-${index + 1}`, imageKey: `fig-${index + 1}` }));
+    const base = harness({ figures });
+    base.job.images = { async resolve() { throw new Error('missing'); } };
+    const plan = await base.job.plan({});
+    assert.equal(plan.summary.missingImageCount, 25);
+    assert.equal(plan.summary.missingImageFigureIds.length, 20);
+    assert.equal(plan.summary.missingImageFigureIdsTruncated, true);
+    const summary = await base.job.execute(plan);
+    assert.equal(summary.missingImageCount, 25);
+    assert.equal(summary.missingImageFigureIds.length, 20);
+    assert.equal(summary.missingImageFigureIdsTruncated, true);
+    assert.doesNotMatch(JSON.stringify(summary), /\.webp|https?:|contentHash|same-image/);
+  });
+
+  it('keeps limit and figure-id planning behavior distinct', async () => {
+    const figures = [figure(), figure({ figureId: 'fig-2' }), figure({ figureId: 'fig-3' })];
+    const limited = harness({ figures });
+    assert.equal((await limited.job.plan(parseCatalogEmbeddingArgs(['--limit', '2']))).summary.totalFigures, 2);
+    const selected = harness({ figures });
+    const plan = await selected.job.plan(parseCatalogEmbeddingArgs(['--figure-id', 'fig-3']));
+    assert.equal(plan.summary.totalFigures, 1);
+    assert.equal(plan.items[0].figure.figureId, 'fig-3');
+  });
 });
 
 describe('adapters and CLI', () => {
@@ -163,8 +255,25 @@ describe('adapters and CLI', () => {
   });
 
   it('parses only limit, figure-id, and force', () => {
-    assert.deepEqual(parseCatalogEmbeddingArgs(['--limit', '10', '--figure-id', 'fig-1', '--force']), { limit: 10, figureId: 'fig-1', force: true });
+    assert.deepEqual(parseCatalogEmbeddingArgs([]), {});
+    assert.deepEqual(parseCatalogEmbeddingArgs(['--limit', '10', '--force']), { limit: 10, force: true });
+    assert.deepEqual(parseCatalogEmbeddingArgs(['--figure-id', 'fig-1', '--force']), { figureId: 'fig-1', force: true });
+    assert.throws(() => parseCatalogEmbeddingArgs(['--limit', '10', '--figure-id', 'fig-1']));
+    assert.throws(() => parseCatalogEmbeddingArgs(['--limit', '10', '--limit', '20']));
     assert.throws(() => parseCatalogEmbeddingArgs(['--concurrency', '2']));
+  });
+
+  it('reports a sanitized startup exception with its failing component', () => {
+    assert.deepEqual(createStartupDiagnostic(
+      new TypeError('Failed at https://example.test/path with token=secret'),
+      'argument-parser',
+    ), {
+      success: false,
+      errorCode: 'catalog-embedding-startup-failed',
+      exceptionClass: 'TypeError',
+      component: 'argument-parser',
+      reason: 'Failed at [redacted-url] with token [redacted]',
+    });
   });
 
   it('retries transient failures at most three attempts', async () => {

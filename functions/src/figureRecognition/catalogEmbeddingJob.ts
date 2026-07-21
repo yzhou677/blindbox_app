@@ -14,6 +14,7 @@ import type {
 export type CatalogEmbeddingJobOptions = { limit?: number; figureId?: string; force?: boolean };
 export type CatalogEmbeddingSummary = {
   scanned: number; embedded: number; metadataUpdated: number; skipped: number; failed: number; elapsedMs: number;
+  missingImages: number; missingImageCount: number; missingImageFigureIds: string[]; missingImageFigureIdsTruncated?: true;
 };
 export type CatalogEmbeddingPlanSummary = {
   totalFigures: number;
@@ -23,6 +24,19 @@ export type CatalogEmbeddingPlanSummary = {
   missingImages: number;
   estimatedEmbeddingApiCalls: number;
   estimatedAiCostUsd: number;
+  missingImageCount: number;
+  missingImageFigureIds: string[];
+  missingImageFigureIdsTruncated?: true;
+};
+export type CatalogEmbeddingPlanningProgress = {
+  processed: number;
+  total?: number;
+  alreadyUpToDate: number;
+  metadataOnlyUpdates: number;
+  requiresEmbedding: number;
+  missingImages: number;
+  failed: number;
+  elapsedMs: number;
 };
 type PlannedItem = { figure: CatalogFigure; metadata: EmbeddingMetadata; action: 'embedded' | 'metadataUpdated'; isNew: boolean };
 export type CatalogEmbeddingPlan = { summary: CatalogEmbeddingPlanSummary; items: PlannedItem[] };
@@ -43,13 +57,32 @@ export class CatalogEmbeddingJob {
     return this.execute(plan);
   }
 
-  async plan(options: CatalogEmbeddingJobOptions, pricePerImageUsd = IMAGE_EMBEDDING_CONFIG.estimatedPricePerImageUsd): Promise<CatalogEmbeddingPlan> {
+  async plan(
+    options: CatalogEmbeddingJobOptions,
+    pricePerImageUsd = IMAGE_EMBEDDING_CONFIG.estimatedPricePerImageUsd,
+    onProgress?: (progress: CatalogEmbeddingPlanningProgress) => void,
+  ): Promise<CatalogEmbeddingPlan> {
     if (!Number.isFinite(pricePerImageUsd) || pricePerImageUsd < 0) throw new Error('Per-image price must be a non-negative number');
+    const startedAt = this.now();
     const summary: CatalogEmbeddingPlanSummary = {
       totalFigures: 0, alreadyUpToDate: 0, metadataOnlyUpdates: 0, requiresEmbedding: 0,
       missingImages: 0, estimatedEmbeddingApiCalls: 0, estimatedAiCostUsd: 0,
+      missingImageCount: 0, missingImageFigureIds: [],
     };
     const items: PlannedItem[] = [];
+    const emitProgress = (): void => {
+      if (summary.totalFigures % 25 !== 0) return;
+      onProgress?.({
+        processed: summary.totalFigures,
+        ...knownPlanningTotal(options),
+        alreadyUpToDate: summary.alreadyUpToDate,
+        metadataOnlyUpdates: summary.metadataOnlyUpdates,
+        requiresEmbedding: summary.requiresEmbedding,
+        missingImages: summary.missingImages,
+        failed: 0,
+        elapsedMs: Math.max(0, this.now() - startedAt),
+      });
+    };
     for await (const figure of this.selectFigures(options)) {
       if (options.limit !== undefined && summary.totalFigures >= options.limit) break;
       summary.totalFigures++;
@@ -58,6 +91,10 @@ export class CatalogEmbeddingJob {
         image = await withTransientRetries(() => this.images.resolve(figure.imageKey));
       } catch {
         summary.missingImages++;
+        summary.missingImageCount++;
+        if (summary.missingImageFigureIds.length < 20) summary.missingImageFigureIds.push(figure.figureId);
+        else summary.missingImageFigureIdsTruncated = true;
+        emitProgress();
         continue;
       }
       const metadata = createMetadata(figure, image.objectPath, image.bytes);
@@ -71,6 +108,7 @@ export class CatalogEmbeddingJob {
         summary.requiresEmbedding++;
         items.push({ figure, metadata, action: 'embedded', isNew: existing === null });
       }
+      emitProgress();
     }
     summary.estimatedEmbeddingApiCalls = summary.requiresEmbedding;
     summary.estimatedAiCostUsd = summary.requiresEmbedding * pricePerImageUsd;
@@ -82,6 +120,10 @@ export class CatalogEmbeddingJob {
     const summary = {
       scanned: plan.summary.totalFigures, embedded: 0, metadataUpdated: 0,
       skipped: plan.summary.alreadyUpToDate, failed: plan.summary.missingImages, elapsedMs: 0,
+      missingImages: plan.summary.missingImages,
+      missingImageCount: plan.summary.missingImageCount,
+      missingImageFigureIds: [...plan.summary.missingImageFigureIds],
+      ...(plan.summary.missingImageFigureIdsTruncated ? { missingImageFigureIdsTruncated: true as const } : {}),
     };
     for (const item of plan.items) {
       try {
@@ -115,6 +157,12 @@ export class CatalogEmbeddingJob {
     for await (const page of this.source.pages(100)) for (const figure of page) yield figure;
   }
 
+}
+
+function knownPlanningTotal(options: CatalogEmbeddingJobOptions): { total?: number } {
+  if (options.figureId) return { total: 1 };
+  if (options.limit !== undefined) return { total: options.limit };
+  return {};
 }
 
 function createMetadata(figure: CatalogFigure, imageObjectPath: string, bytes: Buffer): EmbeddingMetadata {
