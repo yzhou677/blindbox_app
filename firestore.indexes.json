@@ -8,6 +8,17 @@
         { "fieldPath": "status", "order": "ASCENDING" },
         { "fieldPath": "publishedAt", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "catalogFigureEmbeddings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "embeddingSpace", "order": "ASCENDING" },
+        {
+          "fieldPath": "embedding",
+          "vectorConfig": { "dimension": 1024, "flat": {} }
+        }
+      ]
     }
   ],
   "fieldOverrides": []

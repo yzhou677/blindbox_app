@@ -13,6 +13,7 @@
     "test": "npm run build && node --test test/*.test.js",
     "verify:image-embedding": "npm run build && node tools/verify-image-embedding.mjs",
     "embed:catalog-figures": "npm run build && node tools/embed-catalog-figures.mjs",
+    "retrieve:catalog-figures": "npm run build && node tools/retrieve-catalog-figures.mjs",
     "audit:coverage": "npm run build && node tools/audit-browse-coverage.mjs",
     "audit:coverage:probe": "npm run build && node tools/audit-browse-coverage.mjs --probe-failures",
     "audit:ecosystem": "npm run build && node tools/audit-ecosystem-calibration.mjs",
