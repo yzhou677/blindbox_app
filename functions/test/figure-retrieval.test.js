@@ -5,7 +5,7 @@ const assert = require('node:assert/strict');
 const { IMAGE_EMBEDDING_CONFIG } = require('../lib/figureRecognition/imageEmbeddingConfig');
 const { LocalImageReader, detectImageMimeType } = require('../lib/figureRecognition/localImageReader');
 const { FigureRetrievalService, validateQueryVector } = require('../lib/figureRecognition/figureRetrievalService');
-const { parseFigureRetrievalArgs, formatFigureRetrievalCandidate } = require('../lib/figureRecognition/figureRetrievalCli');
+const { parseFigureRetrievalArgs, formatFigureRetrievalCandidate, formatPrimarySubjectResult } = require('../lib/figureRecognition/figureRetrievalCli');
 const { FirestoreFigureVectorSearch, FigureVectorIndexUnavailableError } = require('../lib/figureRecognition/figureVectorSearch');
 
 const vector = () => Array(1024).fill(0.25);
@@ -154,9 +154,47 @@ describe('Figure retrieval', () => {
   });
 
   it('parses only a local file and a Top-K from 1 through 20', () => {
-    assert.deepEqual(parseFigureRetrievalArgs(['--file', 'photo.jpg']), { file: 'photo.jpg', topK: 5 });
-    assert.deepEqual(parseFigureRetrievalArgs(['--file', 'photo.jpg', '--top-k', '20']), { file: 'photo.jpg', topK: 20 });
+    assert.deepEqual(parseFigureRetrievalArgs(['--file', 'photo.jpg']), { file: 'photo.jpg', topK: 5, isolateSubject: false, previewDir: undefined, overwritePreview: false });
+    assert.deepEqual(parseFigureRetrievalArgs(['--file', 'photo.jpg', '--top-k', '20']), { file: 'photo.jpg', topK: 20, isolateSubject: false, previewDir: undefined, overwritePreview: false });
+    assert.deepEqual(parseFigureRetrievalArgs(['--file', 'photo.jpg', '--isolate-subject', '--preview-dir', 'previews', '--overwrite-preview']), { file: 'photo.jpg', topK: 5, isolateSubject: true, previewDir: 'previews', overwritePreview: true });
+    assert.throws(() => parseFigureRetrievalArgs(['--file', 'photo.jpg', '--preview-dir', 'previews']));
     assert.throws(() => parseFigureRetrievalArgs(['--file', 'photo.jpg', '--top-k', '0']));
     assert.throws(() => parseFigureRetrievalArgs(['--storage-path', 'photo.jpg']));
+  });
+
+  it('prints full-precision crop, blur, and failed-check diagnostics', () => {
+    const lines = formatPrimarySubjectResult({
+      status: 'too_blurry', reason: 'crop_detail_below_threshold',
+      candidates: [{ candidateNumber: 1, normalized: { ymin: 101, xmin: 202, ymax: 899, xmax: 798 }, pixels: { top: 40, left: 80, width: 260, height: 360 },
+        centerScore: 0.91, sharpnessScore: 0.82, areaScore: 0.76, backgroundScore: 0.7, totalScore: 0.83, selected: true }],
+      diagnostics: {
+        locatorModel: 'configured-model', locatorPromptVersion: 'configured-prompt', elapsedMs: 7,
+        sourceWidth: 640, sourceHeight: 480, cropWidth: 260, cropHeight: 360,
+        subjectAreaRatio: 0.476123456789, blurMetric: 1.234567890123,
+        blurThreshold: 1.5, blurAlgorithm: 'sharp.stats().sharpness', detailMetric: 0.75,
+        detailThreshold: 1, detailAlgorithm: 'mean absolute grayscale gradient', combinedBlurPassed: false,
+        failedBlurSignals: ['sharpness', 'gradient energy'], padding: 0.12, processingResolution: '260x360', failedChecks: ['blur'],
+        refinement: { attempted: true, accepted: false, reason: 'area_reduction_too_small',
+          coarseNormalizedBox: { ymin: 90, xmin: 190, ymax: 910, xmax: 810 }, refinedNormalizedBox: { ymin: 101, xmin: 202, ymax: 899, xmax: 798 },
+          coarsePixelBox: { top: 35, left: 75, width: 270, height: 370 }, refinedPixelBox: { top: 40, left: 80, width: 260, height: 360 },
+          coarseArea: 99900, refinedArea: 93600, areaReductionRatio: 0.06306306306306306, finalPadding: 0.06 },
+      },
+    }, { coarseOverlay: 'photo.coarse-subject-overlay.jpg', refinedOverlay: 'photo.refined-subject-overlay.jpg', coarseCrop: 'photo.coarse-subject-crop.jpg', crop: 'photo.subject-crop.jpg' });
+    const output = lines.join('\n');
+    assert.match(output, /Blur diagnostics\n\nsharpnessMetric:\n1\.234567890123/);
+    assert.match(output, /sharpnessThreshold:\n1\.5\n\nsharpnessPassed:\nfalse/);
+    assert.match(output, /sharpnessAlgorithm:\nsharp\.stats\(\)\.sharpness/);
+    assert.match(output, /detailMetric:\n0\.75[\s\S]*detailThreshold:\n1[\s\S]*combinedDecision:\nfailed/);
+    assert.match(output, /failedSignals:\n\n- sharpness\n- gradient energy/);
+    assert.match(output, /Candidate scores[\s\S]*Candidate 1[\s\S]*centerScore:\n0\.91[\s\S]*totalScore:\n0\.83[\s\S]*selected:\ntrue/);
+    assert.match(output, /Crop diagnostics[\s\S]*sourceWidth:\n640[\s\S]*normalizedBoundingBox:/);
+    assert.match(output, /Quality Gate[\s\S]*status:\ntoo_blurry[\s\S]*failedChecks:\n\n- blur/);
+    assert.match(output, /Refinement diagnostics[\s\S]*attempted:\ntrue[\s\S]*accepted:\nfalse/);
+    assert.match(output, /reason:\narea_reduction_too_small[\s\S]*areaReductionRatio:\n0\.06306306306306306/);
+    assert.doesNotMatch(output, /base64|image bytes|vector|credentials/i);
+    assert.match(output, /Coarse overlay preview: photo\.coarse-subject-overlay\.jpg/);
+    assert.match(output, /Refined overlay preview: photo\.refined-subject-overlay\.jpg/);
+    assert.match(output, /Coarse crop preview: photo\.coarse-subject-crop\.jpg/);
+    assert.match(output, /Crop preview: photo\.subject-crop\.jpg/);
   });
 });

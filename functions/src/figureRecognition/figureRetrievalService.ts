@@ -1,5 +1,6 @@
 import { IMAGE_EMBEDDING_CONFIG } from './imageEmbeddingConfig';
 import type { FigureRetrievalCandidate, FigureVectorSearch, QueryEmbeddingProvider, QueryImageReader } from './figureRetrievalTypes';
+import type { StoredImage } from './imageEmbeddingTypes';
 
 export const DEFAULT_TOP_K = 5;
 export const MAX_TOP_K = 20;
@@ -14,6 +15,11 @@ export class FigureRetrievalService {
   async retrieve(filePath: string, topK: number): Promise<FigureRetrievalCandidate[]> {
     validateTopK(topK);
     const image = await this.images.read(filePath);
+    return this.retrieveStoredImage(image, topK);
+  }
+
+  async retrieveStoredImage(image: StoredImage, topK: number): Promise<FigureRetrievalCandidate[]> {
+    validateTopK(topK);
     const result = await this.embeddings.embedStoredImage(image);
     validateQueryVector(result.vector);
     return this.search.search(result.vector, topK);
