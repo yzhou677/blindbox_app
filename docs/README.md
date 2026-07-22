@@ -43,6 +43,8 @@ product philosophy without naming which role they serve.
   notes, performance baselines, market identity notes
 - [`PROJECT_OVERVIEW.md`](PROJECT_OVERVIEW.md) - product outline and current scope
 - [`TESTING.md`](TESTING.md) - current automated and smoke verification guidance
+- [`FIGURE_RECOGNITION_PR7.md`](FIGURE_RECOGNITION_PR7.md) - local whole-image
+  quality precheck and its non-recognition responsibility boundary
 - [`KNOWN_RUNTIME_NOTES.md`](KNOWN_RUNTIME_NOTES.md) - debug/logcat triage
 - [`TECH_DEBT.md`](TECH_DEBT.md) - non-blocking debt and future triggers
 - [`FIREBASE_LOCAL_SETUP.md`](FIREBASE_LOCAL_SETUP.md) - Firebase local setup and

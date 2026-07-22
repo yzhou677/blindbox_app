@@ -15,7 +15,7 @@ import 'package:blindbox_app/features/collection/presentation/collection_series_
 import 'package:blindbox_app/shared/widgets/app_search_field.dart';
 import 'package:blindbox_app/shared/widgets/feed_search_screen.dart';
 import 'package:blindbox_app/shared/image/catalog_photo_acquisition.dart';
-import 'package:blindbox_app/shared/widgets/catalog_photo_placeholder.dart';
+import 'package:blindbox_app/shared/widgets/catalog_photo_verification_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -116,7 +116,7 @@ class _CatalogSearchExperienceState
   }
 
   void _onImageSelected(CatalogPhotoSelection selection) {
-    showCatalogPhotoPlaceholder(context, selection);
+    showCatalogPhotoVerification(context, selection);
   }
 
   void _scheduleDeferredSearchRecord(String? query) {

@@ -113,6 +113,27 @@ void main() {
     expect(find.text('Add a series'), findsNothing);
   }
 
+  testWidgets('Add a Series camera entry uses shared pre-capture guidance', (
+    tester,
+  ) async {
+    final series = testShelfSeries(id: 's1', name: 'Dimoo One');
+    await pumpScreen(
+      tester,
+      CollectionSnapshot(shelfSeries: [series], figureStates: const {}),
+    );
+    await openPhotoSourceSheet(tester);
+
+    await tester.tap(find.text('Take Photo'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(
+      find.text('Keep the collectible centered and in focus.'),
+      findsOneWidget,
+    );
+    expect(find.text('Open Camera'), findsOneWidget);
+  });
+
   void expectCollectionGeometryUnchanged(
     WidgetTester tester,
     ({
@@ -384,6 +405,9 @@ void main() {
       });
       await verifyDismiss(() async {
         await tester.tap(find.text('Take Photo'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
+        await tester.binding.handlePopRoute();
       });
       await verifyDismiss(() async {
         await tester.tap(find.text('Choose from Photos'));

@@ -25,9 +25,7 @@ CatalogSeedBundle _bundle() {
   const ipId = 'where_moments_meet_ip';
   const seriesId = 'where_moments_meet';
   return const CatalogSeedBundle(
-    brands: [
-      CatalogBrand(id: brandId, displayName: 'Nyota'),
-    ],
+    brands: [CatalogBrand(id: brandId, displayName: 'Nyota')],
     ips: [
       CatalogIp(id: ipId, brandId: brandId, displayName: 'Where Moments Meet'),
     ],
@@ -86,7 +84,9 @@ void main() {
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     CatalogSearchExperience.debugBuildCount = 0;
-    tempCacheRoot = await Directory.systemTemp.createTemp('discover_search_test_');
+    tempCacheRoot = await Directory.systemTemp.createTemp(
+      'discover_search_test_',
+    );
     CatalogImageDiskCache.testRootOverride = tempCacheRoot;
     CatalogImageResolver.storageFallbackOverride = false;
     CatalogImageResolver.resetSessionCachesForTest();
@@ -101,7 +101,9 @@ void main() {
     }
   });
 
-  testWidgets('single keystroke triggers exactly one screen rebuild', (tester) async {
+  testWidgets('single keystroke triggers exactly one screen rebuild', (
+    tester,
+  ) async {
     await _pumpDiscoverSearch(tester);
     expect(find.byKey(const Key('catalog-photo-action')), findsOneWidget);
     CatalogSearchExperience.debugBuildCount = 0;
@@ -116,16 +118,32 @@ void main() {
     );
   });
 
-  testWidgets('live search still updates results every keystroke', (tester) async {
+  testWidgets('Discover camera entry uses shared pre-capture guidance', (
+    tester,
+  ) async {
+    await _pumpDiscoverSearch(tester);
+
+    await tester.tap(find.byKey(const Key('catalog-photo-action')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Take Photo'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Keep the collectible centered and in focus.'),
+      findsOneWidget,
+    );
+    expect(find.text('Open Camera'), findsOneWidget);
+  });
+
+  testWidgets('live search still updates results every keystroke', (
+    tester,
+  ) async {
     await _pumpDiscoverSearch(tester);
 
     await tester.enterText(_searchField, 'where');
     await tester.pump();
 
-    expect(
-      find.text('Where Moments Meet Series Plush Doll'),
-      findsOneWidget,
-    );
+    expect(find.text('Where Moments Meet Series Plush Doll'), findsOneWidget);
     expect(find.text('Matches'), findsOneWidget);
   });
 
@@ -149,13 +167,12 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
 
     expect(find.text('where'), findsOneWidget);
-    expect(
-      find.text('Where Moments Meet Series Plush Doll'),
-      findsOneWidget,
-    );
+    expect(find.text('Where Moments Meet Series Plush Doll'), findsOneWidget);
   });
 
-  testWidgets('clear restores history chrome and drops matches', (tester) async {
+  testWidgets('clear restores history chrome and drops matches', (
+    tester,
+  ) async {
     await _pumpDiscoverSearch(tester);
 
     await tester.enterText(_searchField, 'where');
@@ -166,9 +183,6 @@ void main() {
     await tester.pump();
 
     expect(find.text('Matches'), findsNothing);
-    expect(
-      find.text('Where Moments Meet Series Plush Doll'),
-      findsNothing,
-    );
+    expect(find.text('Where Moments Meet Series Plush Doll'), findsNothing);
   });
 }

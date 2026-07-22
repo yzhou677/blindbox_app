@@ -1,6 +1,7 @@
 import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/shared/image/catalog_photo_acquisition.dart';
+import 'package:blindbox_app/shared/widgets/camera_capture_guidance.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -165,6 +166,10 @@ class AppSearchField extends StatelessWidget {
     FocusManager.instance.primaryFocus?.unfocus();
     final source = await _showPhotoSourceSheet(context);
     if (source == null || !context.mounted) return;
+    if (source == CatalogPhotoSource.camera) {
+      final shouldOpenCamera = await showCameraCaptureGuidance(context);
+      if (!shouldOpenCamera || !context.mounted) return;
+    }
     try {
       final result = await (photoAcquirer ?? ImagePickerCatalogPhotoAcquirer())
           .acquire(source);

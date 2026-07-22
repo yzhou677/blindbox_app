@@ -121,6 +121,13 @@ void main() {
       expect(find.text('Choose from Photos'), findsOneWidget);
       await tester.tap(find.text('Take Photo'));
       await tester.pumpAndSettle();
+      expect(
+        find.text('Keep the collectible centered and in focus.'),
+        findsOneWidget,
+      );
+      expect(acquirer.requested, isNull);
+      await tester.tap(find.text('Open Camera'));
+      await tester.pumpAndSettle();
       expect(acquirer.requested, CatalogPhotoSource.camera);
       expect(received, same(selection));
       expect(find.text('Hirono'), findsOneWidget);
@@ -149,6 +156,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Choose from Photos'));
     await tester.pumpAndSettle();
+    expect(find.byKey(const Key('camera-capture-guidance')), findsNothing);
     expect(acquirer.requested, CatalogPhotoSource.gallery);
     expect(callbacks, 0); // Native picker cancellation returns null.
   });
@@ -205,10 +213,25 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Take Photo'));
       await tester.pumpAndSettle();
+      await tester.tap(find.text('Open Camera'));
+      await tester.pumpAndSettle();
       expect(find.textContaining('access was denied'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets('camera guidance back does not open camera', (tester) async {
+    final acquirer = _FakePhotoAcquirer();
+    await _pumpPhotoField(tester, acquirer: acquirer);
+
+    await tester.tap(find.text('Take Photo'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('camera-capture-guidance')), findsOneWidget);
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(acquirer.requested, isNull);
+  });
 
   testWidgets('dragging the handle beyond threshold dismisses the sheet', (
     tester,
