@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:blindbox_app/shared/image/catalog_photo_acquisition.dart';
+import 'package:blindbox_app/shared/image/catalog_figure_recognition.dart';
 import 'package:blindbox_app/shared/image/catalog_subject_locator_gateway.dart';
 import 'package:blindbox_app/shared/image/catalog_subject_selection.dart';
 import 'package:blindbox_app/shared/image/whole_image_quality.dart';
@@ -421,18 +422,25 @@ void main() {
       );
       await _settleFraming(tester);
 
-      expect(find.text('AI suggested this frame. Adjust if needed.'), findsOneWidget);
+      expect(
+        find.text('AI suggested this frame. Adjust if needed.'),
+        findsOneWidget,
+      );
       expect(
         tester.element(find.byType(CatalogPhotoVerificationPage)),
         same(sheetElement),
       );
-      final box = tester.getRect(find.byKey(const Key('subject-selection-box')));
-      final imageRect = tester.getRect(find.byKey(const Key('subject-selection-image')));
+      final box = tester.getRect(
+        find.byKey(const Key('subject-selection-box')),
+      );
+      final imageRect = tester.getRect(
+        find.byKey(const Key('subject-selection-image')),
+      );
       expect((box.left - imageRect.left) / imageRect.width, closeTo(0.1, 0.02));
       expect((box.top - imageRect.top) / imageRect.height, closeTo(0.2, 0.02));
       await tester.ensureVisible(find.text('Continue'));
       await tester.tap(find.text('Continue'));
-      await tester.pumpAndSettle();
+      await _confirmFirstCandidate(tester);
       expect(confirmed!.photo, same(photo));
       expect(confirmed!.origin, SubjectSelectionOrigin.suggestedBox);
       expect(confirmed!.normalizedRect.left, 0.1);
@@ -464,20 +472,23 @@ void main() {
     await tester.ensureVisible(selectionBox);
     await tester.pump(const Duration(milliseconds: 220));
     final before = tester.getRect(selectionBox);
-    await tester.drag(
-      selectionBox,
-      const Offset(30, 8),
-    );
+    await tester.drag(selectionBox, const Offset(30, 8));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 220));
     expect(tester.getRect(selectionBox).left, greaterThan(before.left));
-    expect(find.text('AI suggested this frame. Adjust if needed.'), findsNothing);
+    expect(
+      find.text('AI suggested this frame. Adjust if needed.'),
+      findsNothing,
+    );
 
     await tester.ensureVisible(find.text('Reset Selection'));
     await tester.tap(find.text('Reset Selection'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 220));
-    expect(find.text('AI suggested this frame. Adjust if needed.'), findsOneWidget);
+    expect(
+      find.text('AI suggested this frame. Adjust if needed.'),
+      findsOneWidget,
+    );
 
     final imageRect = tester.getRect(
       find.byKey(const Key('subject-selection-image')),
@@ -488,67 +499,79 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 220));
-    expect(find.text('AI suggested this frame. Adjust if needed.'), findsNothing);
+    expect(
+      find.text('AI suggested this frame. Adjust if needed.'),
+      findsNothing,
+    );
     expect(locator.calls, 1);
   });
 
-  testWidgets('no suggestion, unavailable, and inconsistent dimensions fall back silently', (
-    tester,
-  ) async {
-    final results = <CatalogSubjectLocatorResult>[
-      const CatalogSubjectLocatorNoSuggestion(),
-      const CatalogSubjectLocatorUnavailable(reason: 'locator_timeout'),
-      const CatalogSubjectLocatorSuggestion(
-        rect: NormalizedSubjectRect(
-          left: 0.1,
-          top: 0.1,
-          right: 0.8,
-          bottom: 0.8,
+  testWidgets(
+    'no suggestion, unavailable, and inconsistent dimensions fall back silently',
+    (tester) async {
+      final results = <CatalogSubjectLocatorResult>[
+        const CatalogSubjectLocatorNoSuggestion(),
+        const CatalogSubjectLocatorUnavailable(reason: 'locator_timeout'),
+        const CatalogSubjectLocatorSuggestion(
+          rect: NormalizedSubjectRect(
+            left: 0.1,
+            top: 0.1,
+            right: 0.8,
+            bottom: 0.8,
+          ),
+          orientedSize: Size(40, 10),
         ),
-        orientedSize: Size(40, 10),
-      ),
-    ];
-    for (final result in results) {
-      await _pumpHost(tester, locatorGateway: _FakeSubjectLocator(result));
+      ];
+      for (final result in results) {
+        await _pumpHost(tester, locatorGateway: _FakeSubjectLocator(result));
+        await tester.tap(find.text('Acquire'));
+        await _settlePhotoLoad(tester);
+        await tester.tap(find.text('Use This Photo'));
+        await _settleFraming(tester);
+
+        expect(
+          find.text('AI suggested this frame. Adjust if needed.'),
+          findsNothing,
+        );
+        expect(find.byType(SnackBar), findsNothing);
+        final box = tester.getRect(
+          find.byKey(const Key('subject-selection-box')),
+        );
+        final imageRect = tester.getRect(
+          find.byKey(const Key('subject-selection-image')),
+        );
+        expect(box.width / imageRect.width, closeTo(0.6, 0.02));
+        expect(box.height / imageRect.height, closeTo(0.6, 0.02));
+        await tester.tap(find.byKey(const Key('catalog-photo-close')));
+        await tester.pumpAndSettle();
+      }
+    },
+  );
+
+  testWidgets(
+    'duplicate submissions call locator once and close ignores completion',
+    (tester) async {
+      final locator = _ControlledSubjectLocator();
+      await _pumpHost(tester, locatorGateway: locator);
       await tester.tap(find.text('Acquire'));
       await _settlePhotoLoad(tester);
-      await tester.tap(find.text('Use This Photo'));
-      await _settleFraming(tester);
 
-      expect(find.text('AI suggested this frame. Adjust if needed.'), findsNothing);
-      expect(find.byType(SnackBar), findsNothing);
-      final box = tester.getRect(find.byKey(const Key('subject-selection-box')));
-      final imageRect = tester.getRect(find.byKey(const Key('subject-selection-image')));
-      expect(box.width / imageRect.width, closeTo(0.6, 0.02));
-      expect(box.height / imageRect.height, closeTo(0.6, 0.02));
+      await tester.tap(find.text('Use This Photo'));
+      await tester.tap(find.text('Use This Photo'));
+      await tester.pump();
+      expect(locator.photos, hasLength(1));
+
       await tester.tap(find.byKey(const Key('catalog-photo-close')));
       await tester.pumpAndSettle();
-    }
-  });
-
-  testWidgets('duplicate submissions call locator once and close ignores completion', (
-    tester,
-  ) async {
-    final locator = _ControlledSubjectLocator();
-    await _pumpHost(tester, locatorGateway: locator);
-    await tester.tap(find.text('Acquire'));
-    await _settlePhotoLoad(tester);
-
-    await tester.tap(find.text('Use This Photo'));
-    await tester.tap(find.text('Use This Photo'));
-    await tester.pump();
-    expect(locator.photos, hasLength(1));
-
-    await tester.tap(find.byKey(const Key('catalog-photo-close')));
-    await tester.pumpAndSettle();
-    locator.pending.single.complete(
-      const CatalogSubjectLocatorNoSuggestion(),
-    );
-    await tester.pump();
-    expect(find.byType(CatalogPhotoVerificationPage), findsNothing);
-    expect(tester.takeException(), isNull);
-    expect(locator.cancellations, greaterThan(0));
-  });
+      locator.pending.single.complete(
+        const CatalogSubjectLocatorNoSuggestion(),
+      );
+      await tester.pump();
+      expect(find.byType(CatalogPhotoVerificationPage), findsNothing);
+      expect(tester.takeException(), isNull);
+      expect(locator.cancellations, greaterThan(0));
+    },
+  );
 
   testWidgets('recovery replacement reruns evaluation and continues', (
     tester,
@@ -574,7 +597,7 @@ void main() {
     await tester.tap(find.text('Choose Another Photo'));
     await _settleFraming(tester);
     await tester.tap(find.text('Continue'));
-    await tester.pumpAndSettle();
+    await _confirmFirstCandidate(tester);
 
     expect(evaluator.calls, 2);
     expect(accepted, same(replacement));
@@ -652,7 +675,7 @@ void main() {
     );
     await _settleFraming(tester);
     await tester.tap(find.text('Continue'));
-    await tester.pumpAndSettle();
+    await _confirmFirstCandidate(tester);
     expect(accepted, same(replacement));
   });
 
@@ -701,12 +724,37 @@ void main() {
   );
 }
 
+final class _FakeRecognitionGateway implements CatalogFigureRecognitionGateway {
+  @override
+  Future<CatalogFigureRecognitionResult> recognize(
+    CatalogSubjectSelectionResult selection, {
+    required bool continueBorderline,
+  }) async => const CatalogRecognitionCandidates(
+    quality: CatalogSubjectQuality.good,
+    candidates: [
+      CatalogRecognitionCandidate(
+        rank: 1,
+        figureId: 'figure-test',
+        figureName: 'Test Figure',
+        seriesId: 'series-test',
+        seriesName: 'Test Series',
+        ipId: 'ip-test',
+        ipName: 'Test IP',
+        imageKey: 'test-figure',
+      ),
+    ],
+  );
+  @override
+  void cancelPending() {}
+}
+
 Future<void> _pumpHost(
   WidgetTester tester, {
   CatalogPhotoSelection? selection,
   WholeImageQualityEvaluator? evaluator,
   CatalogPhotoAcquirer? acquirer,
   CatalogSubjectLocator? locatorGateway,
+  CatalogFigureRecognitionCoordinator? recognitionCoordinator,
   ValueChanged<CatalogPhotoSelection>? onAccepted,
   ValueChanged<CatalogSubjectSelectionResult>? onResult,
   GlobalKey? hostKey,
@@ -735,8 +783,12 @@ Future<void> _pumpHost(
                       evaluator ??
                       _FakeEvaluator(WholeImageQualityOutcome.usable),
                   photoAcquirer: acquirer,
-                  locatorGateway:
-                      locatorGateway ?? _FakeSubjectLocator(),
+                  locatorGateway: locatorGateway ?? _FakeSubjectLocator(),
+                  recognitionCoordinator:
+                      recognitionCoordinator ??
+                      CatalogFigureRecognitionCoordinator(
+                        _FakeRecognitionGateway(),
+                      ),
                 );
                 if (accepted != null) {
                   onResult?.call(accepted);
@@ -792,6 +844,24 @@ Future<void> _useAndConfirm(WidgetTester tester) async {
   await _settleFraming(tester);
   await tester.ensureVisible(find.text('Continue'));
   await tester.tap(find.text('Continue'));
+  await _confirmFirstCandidate(tester);
+}
+
+Future<void> _confirmFirstCandidate(WidgetTester tester) async {
+  for (var attempt = 0; attempt < 20; attempt++) {
+    await tester.pump(const Duration(milliseconds: 50));
+    if (find.text('Test Figure').evaluate().isNotEmpty) break;
+  }
+  await tester.pump(const Duration(milliseconds: 250));
+  final candidate = find.byKey(const Key('recognition-candidate-figure-test'));
+  await tester.ensureVisible(candidate);
+  await tester.pump();
+  await tester.tap(candidate);
+  await tester.pump();
+  final confirm = find.byKey(const Key('recognition-confirm-candidate'));
+  await tester.ensureVisible(confirm);
+  await tester.pump();
+  await tester.tap(confirm);
   await tester.pumpAndSettle();
 }
 

@@ -1,10 +1,13 @@
 import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/shared/image/catalog_photo_acquisition.dart';
+import 'package:blindbox_app/shared/image/catalog_figure_recognition.dart';
+import 'package:blindbox_app/shared/image/catalog_figure_recognition_gateway.dart';
 import 'package:blindbox_app/shared/image/catalog_subject_selection.dart';
 import 'package:blindbox_app/shared/image/catalog_subject_locator_gateway.dart';
 import 'package:blindbox_app/shared/image/local_whole_image_quality_evaluator.dart';
 import 'package:blindbox_app/shared/image/whole_image_quality.dart';
 import 'package:blindbox_app/shared/widgets/catalog_subject_selection_screen.dart';
+import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as image;
@@ -17,12 +20,16 @@ Future<void> showCatalogPhotoVerification(
   WholeImageQualityEvaluator evaluator =
       const LocalWholeImageQualityEvaluator(),
   CatalogSubjectLocator? locatorGateway,
+  CatalogFigureRecognitionCoordinator? recognitionCoordinator,
+  ValueChanged<CatalogRecognitionCandidate>? onCandidateConfirmed,
 }) async {
   await showCatalogPhotoScanSheet(
     context,
     selection,
     evaluator: evaluator,
     locatorGateway: locatorGateway,
+    recognitionCoordinator: recognitionCoordinator,
+    onCandidateConfirmed: onCandidateConfirmed,
   );
 }
 
@@ -33,6 +40,8 @@ Future<CatalogSubjectSelectionResult?> showCatalogPhotoScanSheet(
       const LocalWholeImageQualityEvaluator(),
   CatalogPhotoAcquirer? photoAcquirer,
   CatalogSubjectLocator? locatorGateway,
+  CatalogFigureRecognitionCoordinator? recognitionCoordinator,
+  ValueChanged<CatalogRecognitionCandidate>? onCandidateConfirmed,
 }) {
   final viewportWidth = MediaQuery.sizeOf(context).width;
   return showModalBottomSheet<CatalogSubjectSelectionResult>(
@@ -58,12 +67,25 @@ Future<CatalogSubjectSelectionResult?> showCatalogPhotoScanSheet(
         evaluator: evaluator,
         photoAcquirer: photoAcquirer,
         locatorGateway: locatorGateway,
+        recognitionCoordinator: recognitionCoordinator,
+        onCandidateConfirmed: onCandidateConfirmed,
       ),
     ),
   );
 }
 
-enum CatalogPhotoScanPresentationState { review, locating, framing }
+enum CatalogPhotoScanPresentationState {
+  review,
+  locating,
+  framing,
+  checkingSubjectQuality,
+  borderline,
+  tooBlurry,
+  recognizing,
+  candidates,
+  noConfidentMatch,
+  recoverableFailure,
+}
 
 /// Stateful content for the continuous local-photo scan sheet.
 class CatalogPhotoVerificationPage extends StatefulWidget {
@@ -73,12 +95,16 @@ class CatalogPhotoVerificationPage extends StatefulWidget {
     this.evaluator = const LocalWholeImageQualityEvaluator(),
     this.photoAcquirer,
     this.locatorGateway,
+    this.recognitionCoordinator,
+    this.onCandidateConfirmed,
   });
 
   final CatalogPhotoSelection selection;
   final WholeImageQualityEvaluator evaluator;
   final CatalogPhotoAcquirer? photoAcquirer;
   final CatalogSubjectLocator? locatorGateway;
+  final CatalogFigureRecognitionCoordinator? recognitionCoordinator;
+  final ValueChanged<CatalogRecognitionCandidate>? onCandidateConfirmed;
 
   @override
   State<CatalogPhotoVerificationPage> createState() =>
@@ -99,6 +125,12 @@ class _CatalogPhotoVerificationPageState
   late CatalogPhotoSelection _selection;
   late final CatalogSubjectLocator _locatorGateway =
       widget.locatorGateway ?? CatalogSubjectLocatorGateway();
+  CatalogFigureRecognitionCoordinator? _ownedRecognitionCoordinator;
+  CatalogFigureRecognitionCoordinator get _recognitionCoordinator =>
+      widget.recognitionCoordinator ??
+      (_ownedRecognitionCoordinator ??= CatalogFigureRecognitionCoordinator(
+        FirebaseCatalogFigureRecognitionGateway(),
+      ));
   Uint8List? _previewBytes;
   Size? _orientedSize;
   Rect _subjectSelection = catalogDefaultSubjectSelection;
@@ -114,6 +146,10 @@ class _CatalogPhotoVerificationPageState
   var _acquiring = false;
   var _previewLoading = true;
   var _validating = false;
+  CatalogSubjectSelectionResult? _confirmedSelection;
+  List<CatalogRecognitionCandidate> _candidates = const [];
+  CatalogRecognitionCandidate? _selectedCandidate;
+  CatalogRecognitionFailureKind? _failureKind;
 
   @override
   void initState() {
@@ -125,12 +161,16 @@ class _CatalogPhotoVerificationPageState
   @override
   void dispose() {
     _locatorGateway.cancelPending();
+    widget.recognitionCoordinator?.cancelPending();
+    _ownedRecognitionCoordinator?.cancelPending();
     _stateController.dispose();
     super.dispose();
   }
 
   Future<void> _loadPreview(CatalogPhotoSelection selection) async {
     _locatorGateway.cancelPending();
+    widget.recognitionCoordinator?.cancelPending();
+    _ownedRecognitionCoordinator?.cancelPending();
     final generation = ++_generation;
     setState(() {
       _previewBytes = null;
@@ -143,6 +183,10 @@ class _CatalogPhotoVerificationPageState
       _selectionOrigin = SubjectSelectionOrigin.defaultBox;
       _initialFramingSelection = catalogDefaultSubjectSelection;
       _initialFramingOrigin = SubjectSelectionOrigin.defaultBox;
+      _confirmedSelection = null;
+      _candidates = const [];
+      _selectedCandidate = null;
+      _failureKind = null;
     });
     _stateController.value = 0;
 
@@ -198,12 +242,13 @@ class _CatalogPhotoVerificationPageState
         locatorResult = const CatalogSubjectLocatorUnavailable();
       }
       if (!mounted || generation != _generation) return;
-      final suggestion = locatorResult is CatalogSubjectLocatorSuggestion &&
+      final suggestion =
+          locatorResult is CatalogSubjectLocatorSuggestion &&
               _isUsableSuggestion(locatorResult, _orientedSize)
           ? locatorResult
           : null;
-      final selectionRect = suggestion?.rect.rect ??
-          catalogDefaultSubjectSelection;
+      final selectionRect =
+          suggestion?.rect.rect ?? catalogDefaultSubjectSelection;
       final origin = suggestion == null
           ? SubjectSelectionOrigin.defaultBox
           : SubjectSelectionOrigin.suggestedBox;
@@ -225,25 +270,63 @@ class _CatalogPhotoVerificationPageState
     });
   }
 
-  void _confirmSelection() {
+  Future<void> _confirmSelection({bool continueBorderline = false}) async {
     final size = _orientedSize;
     if (size == null) return;
-    Navigator.pop(
-      context,
-      CatalogSubjectSelectionResult(
-        photo: _selection,
-        normalizedRect: NormalizedSubjectRect.fromRect(_subjectSelection),
-        sourceImageRect: Rect.fromLTRB(
-          _subjectSelection.left * size.width,
-          _subjectSelection.top * size.height,
-          _subjectSelection.right * size.width,
-          _subjectSelection.bottom * size.height,
-        ),
-        orientedSourceSize: size,
-        origin: _selectionOrigin,
-      ),
+    final selection =
+        _confirmedSelection ??
+        CatalogSubjectSelectionResult(
+          photo: _selection,
+          normalizedRect: NormalizedSubjectRect.fromRect(_subjectSelection),
+          sourceImageRect: Rect.fromLTRB(
+            _subjectSelection.left * size.width,
+            _subjectSelection.top * size.height,
+            _subjectSelection.right * size.width,
+            _subjectSelection.bottom * size.height,
+          ),
+          orientedSourceSize: size,
+          origin: _selectionOrigin,
+        );
+    _confirmedSelection = selection;
+    final generation = _generation;
+    final result = await _recognitionCoordinator.recognize(
+      selection,
+      continueBorderline: continueBorderline,
+      onPhase: (phase) {
+        if (!mounted || generation != _generation) return;
+        setState(
+          () => _presentationState =
+              phase == CatalogRecognitionPhase.checkingQuality
+              ? CatalogPhotoScanPresentationState.checkingSubjectQuality
+              : CatalogPhotoScanPresentationState.recognizing,
+        );
+      },
     );
+    if (!mounted || generation != _generation || result == null) return;
+    setState(() {
+      switch (result) {
+        case CatalogRecognitionBorderline():
+          _presentationState = CatalogPhotoScanPresentationState.borderline;
+        case CatalogRecognitionTooBlurry():
+          _presentationState = CatalogPhotoScanPresentationState.tooBlurry;
+        case CatalogRecognitionCandidates():
+          _candidates = result.candidates;
+          _selectedCandidate = null;
+          _presentationState = CatalogPhotoScanPresentationState.candidates;
+        case CatalogRecognitionNoConfidentMatch():
+          _presentationState =
+              CatalogPhotoScanPresentationState.noConfidentMatch;
+        case CatalogRecognitionFailure():
+          _failureKind = result.kind;
+          _presentationState =
+              CatalogPhotoScanPresentationState.recoverableFailure;
+      }
+    });
   }
+
+  void _adjustFrame() => setState(
+    () => _presentationState = CatalogPhotoScanPresentationState.framing,
+  );
 
   Future<void> _replacePhoto(CatalogPhotoSource source) async {
     if (_acquiring) return;
@@ -270,6 +353,162 @@ class _CatalogPhotoVerificationPageState
     }
   }
 
+  String get _title => switch (_presentationState) {
+    CatalogPhotoScanPresentationState.review => 'Review photo',
+    CatalogPhotoScanPresentationState.locating => 'Finding the collectible…',
+    CatalogPhotoScanPresentationState.framing => 'Frame your collectible',
+    CatalogPhotoScanPresentationState.checkingSubjectQuality =>
+      'Checking photo quality…',
+    CatalogPhotoScanPresentationState.recognizing =>
+      'Finding your collectible…',
+    CatalogPhotoScanPresentationState.borderline =>
+      'Photo may be a little soft',
+    CatalogPhotoScanPresentationState.tooBlurry =>
+      'Selected collectible is too blurry',
+    CatalogPhotoScanPresentationState.candidates => 'Is this your collectible?',
+    CatalogPhotoScanPresentationState.noConfidentMatch => 'No confident match',
+    CatalogPhotoScanPresentationState.recoverableFailure => 'Scan unavailable',
+  };
+
+  Widget _stateGuidance(ColorScheme scheme) {
+    final style = Theme.of(
+      context,
+    ).textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant);
+    return switch (_presentationState) {
+      CatalogPhotoScanPresentationState.framing => _FramingGuidance(
+        key: ValueKey(_selectionOrigin),
+        suggested: _selectionOrigin == SubjectSelectionOrigin.suggestedBox,
+      ),
+      CatalogPhotoScanPresentationState.locating => Text(
+        'Looking for the main subject in your photo.',
+        key: const ValueKey('locating-guidance'),
+        style: style,
+      ),
+      CatalogPhotoScanPresentationState.checkingSubjectQuality ||
+      CatalogPhotoScanPresentationState.recognizing => Text(
+        'Comparing your photo with the Shelfy catalog.',
+        style: style,
+      ),
+      CatalogPhotoScanPresentationState.borderline => Text(
+        'This photo is a little soft and may be harder to recognize.',
+        style: style,
+      ),
+      CatalogPhotoScanPresentationState.tooBlurry => Text(
+        'The selected collectible is too blurry to identify reliably.',
+        style: style,
+      ),
+      CatalogPhotoScanPresentationState.noConfidentMatch => Text(
+        'We couldn’t find a confident match.',
+        style: style,
+      ),
+      CatalogPhotoScanPresentationState.recoverableFailure => Text(
+        _failureKind == CatalogRecognitionFailureKind.qualityUnavailable
+            ? 'We couldn’t check photo quality.'
+            : _failureKind == CatalogRecognitionFailureKind.imagePreparation
+            ? 'We couldn’t prepare this selection.'
+            : 'We couldn’t scan this photo right now.',
+        style: style,
+      ),
+      _ => _GuidanceText(
+        key: const ValueKey('review-guidance'),
+        colorScheme: scheme,
+      ),
+    };
+  }
+
+  Widget _stateActions() {
+    return switch (_presentationState) {
+      CatalogPhotoScanPresentationState.framing => _FrameActions(
+        key: const ValueKey('frame-actions'),
+        onContinue: _confirmSelection,
+        onReset: () => setState(() {
+          _subjectSelection = _initialFramingSelection;
+          _selectionOrigin = _initialFramingOrigin;
+        }),
+      ),
+      CatalogPhotoScanPresentationState.locating ||
+      CatalogPhotoScanPresentationState.checkingSubjectQuality ||
+      CatalogPhotoScanPresentationState.recognizing => const _LocatingActions(
+        key: ValueKey('recognition-progress'),
+      ),
+      CatalogPhotoScanPresentationState.borderline => _RecognitionActions(
+        primaryLabel: 'Continue Anyway',
+        onPrimary: () => _confirmSelection(continueBorderline: true),
+        secondary: [
+          ('Adjust Frame', _adjustFrame),
+          ('Retake Photo', () => _replacePhoto(CatalogPhotoSource.camera)),
+        ],
+      ),
+      CatalogPhotoScanPresentationState.tooBlurry => _RecognitionActions(
+        primaryLabel: 'Adjust Frame',
+        onPrimary: _adjustFrame,
+        secondary: [
+          ('Retake Photo', () => _replacePhoto(CatalogPhotoSource.camera)),
+          (
+            'Choose Another Photo',
+            () => _replacePhoto(CatalogPhotoSource.gallery),
+          ),
+        ],
+      ),
+      CatalogPhotoScanPresentationState.candidates => _CandidateActions(
+        candidates: _candidates,
+        selected: _selectedCandidate,
+        onSelected: (candidate) =>
+            setState(() => _selectedCandidate = candidate),
+        onConfirm: _selectedCandidate == null
+            ? null
+            : () {
+                widget.onCandidateConfirmed?.call(_selectedCandidate!);
+                Navigator.pop(context, _confirmedSelection);
+              },
+        onNone: () => setState(
+          () => _presentationState =
+              CatalogPhotoScanPresentationState.noConfidentMatch,
+        ),
+        onTryAnother: () => _replacePhoto(CatalogPhotoSource.gallery),
+      ),
+      CatalogPhotoScanPresentationState.noConfidentMatch => _RecognitionActions(
+        primaryLabel: 'Adjust Frame',
+        onPrimary: _adjustFrame,
+        secondary: [
+          (
+            'Try Another Photo',
+            () => _replacePhoto(CatalogPhotoSource.gallery),
+          ),
+          ('Browse Catalog', () => Navigator.pop(context)),
+        ],
+      ),
+      CatalogPhotoScanPresentationState.recoverableFailure =>
+        _RecognitionActions(
+          primaryLabel:
+              _failureKind == CatalogRecognitionFailureKind.imagePreparation
+              ? 'Adjust Frame'
+              : 'Retry',
+          onPrimary:
+              _failureKind == CatalogRecognitionFailureKind.imagePreparation
+              ? _adjustFrame
+              : _confirmSelection,
+          secondary: [
+            (
+              'Try Another Photo',
+              () => _replacePhoto(CatalogPhotoSource.gallery),
+            ),
+            ('Cancel', () => Navigator.pop(context)),
+          ],
+        ),
+      CatalogPhotoScanPresentationState.review => _ReviewActions(
+        key: const ValueKey('review-actions'),
+        tooBlurry: _obviouslyTooBlurry,
+        validating: _validating,
+        acquiring: _acquiring,
+        onUsePhoto: _validateAndConfirm,
+        onRetake: () => _replacePhoto(CatalogPhotoSource.camera),
+        onChooseAnother: () => _replacePhoto(CatalogPhotoSource.gallery),
+        onCancel: () => Navigator.pop(context),
+      ),
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -279,9 +518,6 @@ class _CatalogPhotoVerificationPageState
     );
     final framing =
         _presentationState == CatalogPhotoScanPresentationState.framing;
-    final locating =
-        _presentationState == CatalogPhotoScanPresentationState.locating;
-
     return Material(
       key: const Key('catalog-photo-confirmation'),
       color: scheme.surface,
@@ -325,11 +561,7 @@ class _CatalogPhotoVerificationPageState
                           children: [...previous, ?current],
                         ),
                         child: Text(
-                          framing
-                              ? 'Frame your collectible'
-                              : locating
-                              ? 'Finding the collectible…'
-                              : 'Review photo',
+                          _title,
                           key: ValueKey(_presentationState),
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
@@ -352,23 +584,7 @@ class _CatalogPhotoVerificationPageState
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 180),
-                  child: framing
-                      ? _FramingGuidance(
-                          key: ValueKey(_selectionOrigin),
-                          suggested: _selectionOrigin ==
-                              SubjectSelectionOrigin.suggestedBox,
-                        )
-                      : locating
-                      ? Text(
-                          'Looking for the main subject in your photo.',
-                          key: const ValueKey('locating-guidance'),
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: scheme.onSurfaceVariant),
-                        )
-                      : _GuidanceText(
-                          key: const ValueKey('review-guidance'),
-                          colorScheme: scheme,
-                        ),
+                  child: _stateGuidance(scheme),
                 ),
               ),
               const SizedBox(height: AppSpacing.xs),
@@ -418,31 +634,7 @@ class _CatalogPhotoVerificationPageState
                     child: child,
                   ),
                 ),
-                child: framing
-                    ? _FrameActions(
-                        key: const ValueKey('frame-actions'),
-                        onContinue: _confirmSelection,
-                        onReset: () => setState(() {
-                          _subjectSelection = _initialFramingSelection;
-                          _selectionOrigin = _initialFramingOrigin;
-                        }),
-                      )
-                    : locating
-                    ? const _LocatingActions(
-                        key: ValueKey('locating-actions'),
-                      )
-                    : _ReviewActions(
-                        key: const ValueKey('review-actions'),
-                        tooBlurry: _obviouslyTooBlurry,
-                        validating: _validating,
-                        acquiring: _acquiring,
-                        onUsePhoto: _validateAndConfirm,
-                        onRetake: () =>
-                            _replacePhoto(CatalogPhotoSource.camera),
-                        onChooseAnother: () =>
-                            _replacePhoto(CatalogPhotoSource.gallery),
-                        onCancel: () => Navigator.pop(context),
-                      ),
+                child: _stateActions(),
               ),
             ],
           ),
@@ -450,6 +642,102 @@ class _CatalogPhotoVerificationPageState
       ),
     );
   }
+}
+
+class _RecognitionActions extends StatelessWidget {
+  const _RecognitionActions({
+    required this.primaryLabel,
+    required this.onPrimary,
+    required this.secondary,
+  });
+  final String primaryLabel;
+  final VoidCallback onPrimary;
+  final List<(String, VoidCallback)> secondary;
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      SizedBox(
+        height: 52,
+        child: FilledButton(onPressed: onPrimary, child: Text(primaryLabel)),
+      ),
+      for (final action in secondary) ...[
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 48,
+          child: TextButton(onPressed: action.$2, child: Text(action.$1)),
+        ),
+      ],
+    ],
+  );
+}
+
+class _CandidateActions extends StatelessWidget {
+  const _CandidateActions({
+    required this.candidates,
+    required this.selected,
+    required this.onSelected,
+    required this.onConfirm,
+    required this.onNone,
+    required this.onTryAnother,
+  });
+  final List<CatalogRecognitionCandidate> candidates;
+  final CatalogRecognitionCandidate? selected;
+  final ValueChanged<CatalogRecognitionCandidate> onSelected;
+  final VoidCallback? onConfirm;
+  final VoidCallback onNone;
+  final VoidCallback onTryAnother;
+  @override
+  Widget build(BuildContext context) => RadioGroup<String>(
+    groupValue: selected?.figureId,
+    onChanged: (id) {
+      if (id == null) return;
+      onSelected(
+        candidates.firstWhere((candidate) => candidate.figureId == id),
+      );
+    },
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final candidate in candidates)
+          RadioListTile<String>(
+            key: Key('recognition-candidate-${candidate.figureId}'),
+            value: candidate.figureId,
+            secondary: SizedBox(
+              width: 52,
+              height: 52,
+              child: CatalogImageFromKey.legacy(
+                imageKey: candidate.imageKey,
+                name: candidate.figureName,
+                seedKey: candidate.figureId,
+                compact: true,
+              ),
+            ),
+            title: Text(candidate.figureName),
+            subtitle: Text('${candidate.seriesName} · ${candidate.ipName}'),
+          ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 52,
+          child: FilledButton(
+            key: const Key('recognition-confirm-candidate'),
+            onPressed: onConfirm,
+            child: const Text('This Is It'),
+          ),
+        ),
+        TextButton(
+          key: const Key('recognition-none'),
+          onPressed: onNone,
+          child: const Text('None of These'),
+        ),
+        TextButton(
+          key: const Key('recognition-try-another'),
+          onPressed: onTryAnother,
+          child: const Text('Try Another Photo'),
+        ),
+      ],
+    ),
+  );
 }
 
 class _GuidanceText extends StatelessWidget {
@@ -512,7 +800,11 @@ class _FramingGuidance extends StatelessWidget {
           Row(
             key: const Key('subject-selection-ai-suggestion'),
             children: [
-              Icon(Icons.auto_awesome, size: 18, color: scheme.onSurfaceVariant),
+              Icon(
+                Icons.auto_awesome,
+                size: 18,
+                color: scheme.onSurfaceVariant,
+              ),
               const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: Text(

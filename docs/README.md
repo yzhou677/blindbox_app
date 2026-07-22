@@ -44,7 +44,9 @@ product philosophy without naming which role they serve.
 - [`PROJECT_OVERVIEW.md`](PROJECT_OVERVIEW.md) - product outline and current scope
 - [`TESTING.md`](TESTING.md) - current automated and smoke verification guidance
 - [`FIGURE_RECOGNITION_PR7.md`](FIGURE_RECOGNITION_PR7.md) - local whole-image
-  quality precheck and its non-recognition responsibility boundary
+  quality precheck and scan intake behavior.
+- [`FIGURE_RECOGNITION_ENDPOINT.md`](FIGURE_RECOGNITION_ENDPOINT.md) - PR7 Part 4
+  recognition callable, original-image contract, and runtime requirements.
 - [`KNOWN_RUNTIME_NOTES.md`](KNOWN_RUNTIME_NOTES.md) - debug/logcat triage
 - [`TECH_DEBT.md`](TECH_DEBT.md) - non-blocking debt and future triggers
 - [`FIREBASE_LOCAL_SETUP.md`](FIREBASE_LOCAL_SETUP.md) - Firebase local setup and

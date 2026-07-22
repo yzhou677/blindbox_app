@@ -8,6 +8,8 @@ import {
 } from './recommendationsRouter';
 import { SUBJECT_LOCATOR_ENDPOINT_CONFIG } from './figureRecognition/subjectLocatorEndpointConfig';
 import { createProductionSubjectLocatorHandler } from './subjectLocatorCallable';
+import { RECOGNIZE_FIGURE_ENDPOINT_CONFIG } from './figureRecognition/recognizeFigureEndpointConfig';
+import { createProductionRecognizeFigureHandler } from './recognizeFigureCallable';
 
 initializeApp();
 
@@ -21,6 +23,18 @@ export const subjectLocatorV1 = onCall(
     enforceAppCheck: true,
   },
   createProductionSubjectLocatorHandler(),
+);
+
+export const recognizeFigureV1 = onCall(
+  {
+    region: RECOGNIZE_FIGURE_ENDPOINT_CONFIG.region,
+    timeoutSeconds: RECOGNIZE_FIGURE_ENDPOINT_CONFIG.functionTimeoutSeconds,
+    memory: '2GiB',
+    concurrency: 1,
+    maxInstances: 10,
+    enforceAppCheck: true,
+  },
+  createProductionRecognizeFigureHandler(),
 );
 
 /**

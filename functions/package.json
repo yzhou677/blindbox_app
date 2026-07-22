@@ -23,7 +23,8 @@
     "audit:ecosystem": "npm run build && node tools/audit-ecosystem-calibration.mjs",
     "serve": "npm run build && npx firebase emulators:start --only functions",
     "deploy": "npm run build && npx firebase deploy --only functions:market",
-    "deploy:subject-locator": "npm run build && npx firebase deploy --only functions:market:subjectLocatorV1"
+    "deploy:subject-locator": "npm run build && npx firebase deploy --only functions:market:subjectLocatorV1",
+    "deploy:figure-recognition": "npm run build && npx firebase deploy --only functions:market:recognizeFigureV1"
   },
   "dependencies": {
     "@google-cloud/firestore": "8.6.0",
