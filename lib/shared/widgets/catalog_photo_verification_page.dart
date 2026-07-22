@@ -1,6 +1,7 @@
 import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/shared/image/catalog_photo_acquisition.dart';
 import 'package:blindbox_app/shared/image/catalog_subject_selection.dart';
+import 'package:blindbox_app/shared/image/catalog_subject_locator_gateway.dart';
 import 'package:blindbox_app/shared/image/local_whole_image_quality_evaluator.dart';
 import 'package:blindbox_app/shared/image/whole_image_quality.dart';
 import 'package:blindbox_app/shared/widgets/catalog_subject_selection_screen.dart';
@@ -15,8 +16,14 @@ Future<void> showCatalogPhotoVerification(
   CatalogPhotoSelection selection, {
   WholeImageQualityEvaluator evaluator =
       const LocalWholeImageQualityEvaluator(),
+  CatalogSubjectLocator? locatorGateway,
 }) async {
-  await showCatalogPhotoScanSheet(context, selection, evaluator: evaluator);
+  await showCatalogPhotoScanSheet(
+    context,
+    selection,
+    evaluator: evaluator,
+    locatorGateway: locatorGateway,
+  );
 }
 
 Future<CatalogSubjectSelectionResult?> showCatalogPhotoScanSheet(
@@ -25,6 +32,7 @@ Future<CatalogSubjectSelectionResult?> showCatalogPhotoScanSheet(
   WholeImageQualityEvaluator evaluator =
       const LocalWholeImageQualityEvaluator(),
   CatalogPhotoAcquirer? photoAcquirer,
+  CatalogSubjectLocator? locatorGateway,
 }) {
   final viewportWidth = MediaQuery.sizeOf(context).width;
   return showModalBottomSheet<CatalogSubjectSelectionResult>(
@@ -49,12 +57,13 @@ Future<CatalogSubjectSelectionResult?> showCatalogPhotoScanSheet(
         selection: selection,
         evaluator: evaluator,
         photoAcquirer: photoAcquirer,
+        locatorGateway: locatorGateway,
       ),
     ),
   );
 }
 
-enum CatalogPhotoScanPresentationState { review, framing }
+enum CatalogPhotoScanPresentationState { review, locating, framing }
 
 /// Stateful content for the continuous local-photo scan sheet.
 class CatalogPhotoVerificationPage extends StatefulWidget {
@@ -63,11 +72,13 @@ class CatalogPhotoVerificationPage extends StatefulWidget {
     required this.selection,
     this.evaluator = const LocalWholeImageQualityEvaluator(),
     this.photoAcquirer,
+    this.locatorGateway,
   });
 
   final CatalogPhotoSelection selection;
   final WholeImageQualityEvaluator evaluator;
   final CatalogPhotoAcquirer? photoAcquirer;
+  final CatalogSubjectLocator? locatorGateway;
 
   @override
   State<CatalogPhotoVerificationPage> createState() =>
@@ -86,10 +97,15 @@ class _CatalogPhotoVerificationPageState
     curve: Curves.easeOutCubic,
   );
   late CatalogPhotoSelection _selection;
+  late final CatalogSubjectLocator _locatorGateway =
+      widget.locatorGateway ?? CatalogSubjectLocatorGateway();
   Uint8List? _previewBytes;
   Size? _orientedSize;
   Rect _subjectSelection = catalogDefaultSubjectSelection;
   SubjectSelectionOrigin _selectionOrigin = SubjectSelectionOrigin.defaultBox;
+  Rect _initialFramingSelection = catalogDefaultSubjectSelection;
+  SubjectSelectionOrigin _initialFramingOrigin =
+      SubjectSelectionOrigin.defaultBox;
   CatalogPhotoScanPresentationState _presentationState =
       CatalogPhotoScanPresentationState.review;
   var _selectionInteractionActive = false;
@@ -108,11 +124,13 @@ class _CatalogPhotoVerificationPageState
 
   @override
   void dispose() {
+    _locatorGateway.cancelPending();
     _stateController.dispose();
     super.dispose();
   }
 
   Future<void> _loadPreview(CatalogPhotoSelection selection) async {
+    _locatorGateway.cancelPending();
     final generation = ++_generation;
     setState(() {
       _previewBytes = null;
@@ -123,6 +141,8 @@ class _CatalogPhotoVerificationPageState
       _presentationState = CatalogPhotoScanPresentationState.review;
       _subjectSelection = catalogDefaultSubjectSelection;
       _selectionOrigin = SubjectSelectionOrigin.defaultBox;
+      _initialFramingSelection = catalogDefaultSubjectSelection;
+      _initialFramingOrigin = SubjectSelectionOrigin.defaultBox;
     });
     _stateController.value = 0;
 
@@ -158,6 +178,7 @@ class _CatalogPhotoVerificationPageState
     setState(() {
       _validating = true;
       _obviouslyTooBlurry = false;
+      _presentationState = CatalogPhotoScanPresentationState.locating;
     });
     WholeImageQualityResult result;
     try {
@@ -170,8 +191,28 @@ class _CatalogPhotoVerificationPageState
     }
     if (!mounted || generation != _generation) return;
     if (result.canContinue) {
+      CatalogSubjectLocatorResult locatorResult;
+      try {
+        locatorResult = await _locatorGateway.locate(selection);
+      } catch (_) {
+        locatorResult = const CatalogSubjectLocatorUnavailable();
+      }
+      if (!mounted || generation != _generation) return;
+      final suggestion = locatorResult is CatalogSubjectLocatorSuggestion &&
+              _isUsableSuggestion(locatorResult, _orientedSize)
+          ? locatorResult
+          : null;
+      final selectionRect = suggestion?.rect.rect ??
+          catalogDefaultSubjectSelection;
+      final origin = suggestion == null
+          ? SubjectSelectionOrigin.defaultBox
+          : SubjectSelectionOrigin.suggestedBox;
       setState(() {
         _validating = false;
+        _subjectSelection = selectionRect;
+        _selectionOrigin = origin;
+        _initialFramingSelection = selectionRect;
+        _initialFramingOrigin = origin;
         _presentationState = CatalogPhotoScanPresentationState.framing;
       });
       _stateController.forward(from: 0);
@@ -180,6 +221,7 @@ class _CatalogPhotoVerificationPageState
     setState(() {
       _validating = false;
       _obviouslyTooBlurry = true;
+      _presentationState = CatalogPhotoScanPresentationState.review;
     });
   }
 
@@ -237,6 +279,8 @@ class _CatalogPhotoVerificationPageState
     );
     final framing =
         _presentationState == CatalogPhotoScanPresentationState.framing;
+    final locating =
+        _presentationState == CatalogPhotoScanPresentationState.locating;
 
     return Material(
       key: const Key('catalog-photo-confirmation'),
@@ -281,8 +325,12 @@ class _CatalogPhotoVerificationPageState
                           children: [...previous, ?current],
                         ),
                         child: Text(
-                          framing ? 'Frame your collectible' : 'Review photo',
-                          key: ValueKey(framing),
+                          framing
+                              ? 'Frame your collectible'
+                              : locating
+                              ? 'Finding the collectible…'
+                              : 'Review photo',
+                          key: ValueKey(_presentationState),
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                       ),
@@ -305,9 +353,15 @@ class _CatalogPhotoVerificationPageState
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 180),
                   child: framing
+                      ? _FramingGuidance(
+                          key: ValueKey(_selectionOrigin),
+                          suggested: _selectionOrigin ==
+                              SubjectSelectionOrigin.suggestedBox,
+                        )
+                      : locating
                       ? Text(
-                          'Move and resize the frame until it fits your collectible.',
-                          key: const ValueKey('framing-guidance'),
+                          'Looking for the main subject in your photo.',
+                          key: const ValueKey('locating-guidance'),
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(color: scheme.onSurfaceVariant),
                         )
@@ -369,9 +423,13 @@ class _CatalogPhotoVerificationPageState
                         key: const ValueKey('frame-actions'),
                         onContinue: _confirmSelection,
                         onReset: () => setState(() {
-                          _subjectSelection = catalogDefaultSubjectSelection;
-                          _selectionOrigin = SubjectSelectionOrigin.defaultBox;
+                          _subjectSelection = _initialFramingSelection;
+                          _selectionOrigin = _initialFramingOrigin;
                         }),
+                      )
+                    : locating
+                    ? const _LocatingActions(
+                        key: ValueKey('locating-actions'),
                       )
                     : _ReviewActions(
                         key: const ValueKey('review-actions'),
@@ -428,6 +486,93 @@ class _GuidanceText extends StatelessWidget {
       ),
     );
   }
+}
+
+class _FramingGuidance extends StatelessWidget {
+  const _FramingGuidance({super.key, required this.suggested});
+
+  final bool suggested;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final style = Theme.of(
+      context,
+    ).textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Move and resize the frame until it fits your collectible.',
+          key: const ValueKey('framing-guidance'),
+          style: style,
+        ),
+        if (suggested) ...[
+          const SizedBox(height: AppSpacing.xs),
+          Row(
+            key: const Key('subject-selection-ai-suggestion'),
+            children: [
+              Icon(Icons.auto_awesome, size: 18, color: scheme.onSurfaceVariant),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: Text(
+                  'AI suggested this frame. Adjust if needed.',
+                  style: style,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _LocatingActions extends StatelessWidget {
+  const _LocatingActions({super.key});
+
+  @override
+  Widget build(BuildContext context) => const Padding(
+    padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+    child: Center(
+      child: SizedBox(
+        key: Key('subject-locator-progress'),
+        width: 28,
+        height: 28,
+        child: CircularProgressIndicator(strokeWidth: 3),
+      ),
+    ),
+  );
+}
+
+bool _isUsableSuggestion(
+  CatalogSubjectLocatorSuggestion suggestion,
+  Size? originalOrientedSize,
+) {
+  final rect = suggestion.rect.rect;
+  final dimensions = suggestion.orientedSize;
+  if (!rect.left.isFinite ||
+      !rect.top.isFinite ||
+      !rect.width.isFinite ||
+      !rect.height.isFinite ||
+      !dimensions.width.isFinite ||
+      !dimensions.height.isFinite ||
+      rect.left < 0 ||
+      rect.top < 0 ||
+      rect.width <= 0 ||
+      rect.height <= 0 ||
+      rect.right > 1 ||
+      rect.bottom > 1 ||
+      dimensions.width <= 0 ||
+      dimensions.height <= 0 ||
+      originalOrientedSize == null) {
+    return false;
+  }
+  const aspectTolerance = 0.02;
+  final locatorAspect = dimensions.width / dimensions.height;
+  final originalAspect =
+      originalOrientedSize.width / originalOrientedSize.height;
+  return (locatorAspect - originalAspect).abs() <= aspectTolerance;
 }
 
 class _ReviewActions extends StatelessWidget {

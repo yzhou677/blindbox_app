@@ -86,7 +86,12 @@ final class BoundedSubjectLocatorTransportEncoder implements SubjectLocatorTrans
   }
 }
 
-final class CatalogSubjectLocatorGateway {
+abstract interface class CatalogSubjectLocator {
+  Future<CatalogSubjectLocatorResult> locate(CatalogPhotoSelection originalPhoto);
+  void cancelPending();
+}
+
+final class CatalogSubjectLocatorGateway implements CatalogSubjectLocator {
   CatalogSubjectLocatorGateway({SubjectLocatorCallable? callable, SubjectLocatorTransportEncoder? encoder})
     : _callable = callable ?? FirebaseSubjectLocatorCallable(),
       _encoder = encoder ?? const BoundedSubjectLocatorTransportEncoder();
@@ -95,6 +100,7 @@ final class CatalogSubjectLocatorGateway {
   final SubjectLocatorTransportEncoder _encoder;
   var _generation = 0;
 
+  @override
   Future<CatalogSubjectLocatorResult> locate(CatalogPhotoSelection originalPhoto) async {
     final generation = ++_generation;
     try {
@@ -114,6 +120,7 @@ final class CatalogSubjectLocatorGateway {
     }
   }
 
+  @override
   void cancelPending() { _generation++; }
 
   CatalogSubjectLocatorResult _mapResponse(Object? value) {

@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:blindbox_app/shared/image/catalog_photo_acquisition.dart';
+import 'package:blindbox_app/shared/image/catalog_subject_locator_gateway.dart';
 import 'package:blindbox_app/shared/image/whole_image_quality.dart';
 import 'package:blindbox_app/shared/widgets/catalog_photo_verification_page.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +19,18 @@ final class _AlwaysUsableEvaluator implements WholeImageQualityEvaluator {
     outcome: WholeImageQualityOutcome.usable,
     evaluatorVersion: 'handoff-test',
   );
+}
+
+final class _NoSuggestionLocator implements CatalogSubjectLocator {
+  const _NoSuggestionLocator();
+
+  @override
+  Future<CatalogSubjectLocatorResult> locate(
+    CatalogPhotoSelection originalPhoto,
+  ) async => const CatalogSubjectLocatorNoSuggestion();
+
+  @override
+  void cancelPending() {}
 }
 
 void main() {
@@ -130,6 +143,7 @@ Future<void> _pumpEntryHost(
                     context,
                     entry.value,
                     evaluator: const _AlwaysUsableEvaluator(),
+                    locatorGateway: const _NoSuggestionLocator(),
                   ),
                   child: Text(entry.key),
                 ),
