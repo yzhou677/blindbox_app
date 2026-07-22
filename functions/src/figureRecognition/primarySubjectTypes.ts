@@ -1,5 +1,6 @@
 import type { StoredImage } from './imageEmbeddingTypes';
 import type { SubjectSegmentationPreview, SubjectSegmentationResult } from './subjectSegmentationTypes';
+import type { BlurQualityResult } from './primarySubjectBlurEvaluator';
 
 export type NormalizedBoundingBox = { ymin: number; xmin: number; ymax: number; xmax: number };
 export type PixelBoundingBox = { top: number; left: number; width: number; height: number };
@@ -52,7 +53,8 @@ export type PrimarySubjectDiagnostics = {
   detailThreshold?: number;
   detailAlgorithm?: string;
   combinedBlurPassed?: boolean;
-  failedBlurSignals?: Array<'sharpness' | 'gradient energy'>;
+  failedBlurSignals?: Array<'sharpness' | 'laplacian variance'>;
+  blurQuality?: BlurQualityResult;
   padding?: number;
   processingResolution?: string;
   failedChecks?: Array<'blur' | 'subject size' | 'subject area'>;

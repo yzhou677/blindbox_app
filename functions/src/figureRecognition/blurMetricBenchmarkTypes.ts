@@ -1,0 +1,10 @@
+import type { BlurValidationDatasetEntry, BlurValidationLabel } from './figureBlurValidationTypes';
+export type BlurMetricDirection='higher_is_sharper'|'lower_is_sharper';
+export type BlurMetricValue={metricId:string;displayName:string;direction:BlurMetricDirection;rawValue:number;normalizedValue?:number;simplicity:number};
+export type BlurBenchmarkImage={file:string;expectedLabel:BlurValidationLabel;metrics:BlurMetricValue[];metricPredictions:Record<string,BlurValidationLabel>;combinationPredictions:Record<string,BlurValidationLabel>};
+export type BlurClassificationMetrics={accuracy:number;balancedAccuracy:number;precisionForReject:number;recallForReject:number;specificityForUsable:number;falseRejectRate:number;falseAcceptRate:number;f1ForReject:number;trueSharp:number;falseRejects:number;trueBlurry:number;falseAccepts:number};
+export type BlurThresholdResult={metricId:string;direction:BlurMetricDirection;threshold:number;metrics:BlurClassificationMetrics};
+export type BlurMetricBenchmark={metricId:string;displayName:string;declaredDirection:BlurMetricDirection;simplicity:number;bestBalanced:BlurThresholdResult;zeroFalseRejectIfAvailable?:BlurThresholdResult;lowestFalseAcceptWithFalseRejectRateAtMost10Percent?:BlurThresholdResult};
+export type BlurCombinationResult={combinationId:string;metricsUsed:string[];formula:string;thresholds:Record<string,number>;decisionRule:string;metrics:BlurClassificationMetrics};
+export type BlurMetricBenchmarkSummary={datasetCounts:{total:number;sharp:number;blurry:number};metricRankings:BlurMetricBenchmark[];bestThresholdPerMetric:BlurThresholdResult[];conservativeThresholdOptions:Array<{metricId:string;zeroFalseRejectIfAvailable?:BlurThresholdResult;lowestFalseAcceptWithFalseRejectRateAtMost10Percent?:BlurThresholdResult}>;shortlistedCombinations:BlurCombinationResult[];falseRejectCases:Array<{file:string;expectedLabel:'sharp';predictedLabel:'blurry';metrics:BlurMetricValue[]}>;falseAcceptCases:Array<{file:string;expectedLabel:'blurry';predictedLabel:'sharp';metrics:BlurMetricValue[]}>;caveat:string};
+export type DecodedBenchmarkImage=BlurValidationDatasetEntry&{bytes:Buffer};

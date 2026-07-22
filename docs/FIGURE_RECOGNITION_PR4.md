@@ -126,8 +126,8 @@ Current evaluation defaults (not permanent product semantics) are:
 
 - minimum crop: 160 x 160 source pixels
 - minimum unpadded subject area ratio: 0.02
-- minimum crop-local Sharp `stats().sharpness`: 1.5
-- minimum mean absolute grayscale gradient: 1.0
+- minimum crop-local Sharp `stats().sharpness`: 0.25
+- minimum mean absolute grayscale gradient: 0.65
 - padding ratio: 0.12
 - maximum processed dimension: 4096
 
@@ -136,12 +136,60 @@ Final statuses are `usable`, `no_subject`, `too_blurry`, and
 scored into one primary; the pipeline never embeds more than one candidate and
 never falls back to the whole image.
 
-Blur is a deterministic composite check. Sharp `stats().sharpness` remains one
-signal, while mean absolute horizontal/vertical grayscale gradient supplies a
-second local-detail signal for smooth collectibles with crisp boundaries. A
-crop is rejected as `too_blurry` only when both signals are below their
-configured thresholds. Diagnostics report both raw metrics, thresholds,
-per-signal failures, and the combined decision.
+Blur is evaluated by the frozen production policy validated on an independent
+holdout set: variance of Laplacian must reach `18.5355773954885`, and Sharp
+`stats().sharpness` must reach `0.2893231373558213`. Threshold equality passes.
+Both passing is `good`, exactly one passing is `borderline`, and neither
+passing is `too_blurry`. Current product behavior accepts both `good` and
+`borderline`; only `too_blurry` is rejected. The metrics, thresholds, and
+evaluator version are centralized and included in diagnostics.
+
+These frozen values replace the earlier uncalibrated evaluation defaults. They
+are a validated V1 production policy, not a dynamic classifier: production
+does not search, rank, or optimize thresholds. Deliberately blurred negative
+samples and an independent holdout set remain required for any future policy
+revision.
+
+### Offline blur validation
+
+Arrange independent labeled examples under `blur-validation/sharp/` and
+`blur-validation/blurry/` using JPG, JPEG, PNG, or WebP files. From
+`functions/`, run:
+
+```powershell
+npm run validate:figure-blur -- `
+  --dataset-dir "D:\figure-eval\blur-validation" `
+  --output-dir "D:\figure-eval\results\blur-validation"
+```
+
+The developer-only tool reuses the production metrics, centralized thresholds,
+and combined rule. Existing reports require `--overwrite`. It makes no cloud
+or paid calls and never recommends or changes thresholds.
+
+### Offline blur metric benchmark
+
+To compare deterministic local metrics without changing the production gate:
+
+```powershell
+npm run benchmark:figure-blur-metrics -- `
+  --dataset-dir "D:\figure-eval\blur-validation" `
+  --output-dir "D:\figure-eval\results\blur-metric-benchmark"
+```
+
+The benchmark evaluates observed-value thresholds and a constrained set of
+explainable combinations. Normalized values use dataset min-max scaling after
+orienting each metric so larger normalized values mean sharper. The
+high-frequency metric is a spatial Gaussian high-pass residual energy ratio,
+an equivalent deterministic high-frequency filter rather than an FFT.
+Results are calibration evidence only: the dataset is small, thresholds are
+selected and scored on the same samples, and no result is production-ready or
+automatically promoted.
+
+To evaluate a frozen policy on an independent holdout without any search or
+ranking, add `--fixed-policy` with both metric IDs, exact thresholds, and the
+decision rule. The resulting report is labeled `Fixed Holdout Policy
+Evaluation`; equality passes, dataset order is retained, and the supplied
+policy is recorded verbatim.
 
 ## CLI usage
 

@@ -1,8 +1,9 @@
 import { DEFAULT_TOP_K, validateTopK } from './figureRetrievalService';
 import type { FigureRetrievalCandidate } from './figureRetrievalTypes';
 import type { PrimarySubjectPreviewArtifacts, PrimarySubjectResult } from './primarySubjectTypes';
+import type { RetrievalDecision, RetrievalEvaluationRecord, RetrievalEvidenceSummary } from './retrievalDecisionTypes';
 
-export type FigureRetrievalCliOptions = { file: string; topK: number; isolateSubject: boolean; previewDir?: string; overwritePreview: boolean };
+export type FigureRetrievalCliOptions = { file: string; topK: number; isolateSubject: boolean; previewDir?: string; overwritePreview: boolean; evaluationLabel?: string };
 
 export function parseFigureRetrievalArgs(args: string[]): FigureRetrievalCliOptions {
   let file: string | undefined;
@@ -10,6 +11,7 @@ export function parseFigureRetrievalArgs(args: string[]): FigureRetrievalCliOpti
   let isolateSubject = false;
   let previewDir: string | undefined;
   let overwritePreview = false;
+  let evaluationLabel: string | undefined;
   for (let index = 0; index < args.length; index++) {
     const arg = args[index];
     if (arg === '--file') {
@@ -28,12 +30,16 @@ export function parseFigureRetrievalArgs(args: string[]): FigureRetrievalCliOpti
       previewDir = value;
     } else if (arg === '--overwrite-preview') {
       overwritePreview = true;
+    } else if (arg === '--evaluation-label') {
+      const value = args[++index];
+      if (!value || value.startsWith('--')) throw new Error('--evaluation-label requires an expected figure ID');
+      evaluationLabel = value.trim();
     } else throw new Error(`Unknown option: ${arg}`);
   }
   if (!file) throw new Error('--file is required');
   if (previewDir && !isolateSubject) throw new Error('--preview-dir requires --isolate-subject');
   if (overwritePreview && !previewDir) throw new Error('--overwrite-preview requires --preview-dir');
-  return { file, topK, isolateSubject, previewDir, overwritePreview };
+  return { file, topK, isolateSubject, previewDir, overwritePreview, evaluationLabel };
 }
 
 export function formatPrimarySubjectResult(result: PrimarySubjectResult, previews: PrimarySubjectPreviewArtifacts = {}): string[] {
@@ -108,5 +114,53 @@ export function formatFigureRetrievalCandidate(candidate: FigureRetrievalCandida
     `ipId: ${candidate.ipId}`,
     `isSecret: ${candidate.isSecret}`,
     `distance: ${candidate.distance}`,
+  ];
+}
+
+export function formatRetrievalDecision(decision: RetrievalDecision, heading = 'Retrieval decision'): string[] {
+  const lines = [
+    '', heading, '', 'Outcome:', decision.outcome,
+    '', 'Policy version:', decision.policyVersion,
+    '', 'Calibration profile:', decision.calibrationProfile,
+    '', 'Reasons:', ...decision.reasons.map((reason) => `- ${reason}`),
+    '', 'Evidence',
+  ];
+  for (const [label, value] of evidenceEntries(decision.evidence)) lines.push('', `${label}:`, String(value));
+  return lines;
+}
+
+export function buildRetrievalEvaluationRecord(expectedFigureId: string, candidates: readonly FigureRetrievalCandidate[], decision: RetrievalDecision): RetrievalEvaluationRecord {
+  const expectedRank = candidates.find((candidate) => candidate.figureId === expectedFigureId)?.rank;
+  return {
+    expectedFigureId,
+    expectedRank,
+    top1Correct: candidates[0]?.figureId === expectedFigureId,
+    presentInTopK: expectedRank !== undefined,
+    decisionOutcome: decision.outcome,
+    policyVersion: decision.policyVersion,
+    calibrationProfile: decision.calibrationProfile,
+  };
+}
+
+export function formatRetrievalEvaluationRecord(record: RetrievalEvaluationRecord): string[] {
+  return ['', 'Evaluation record', '', 'expectedFigureId:', record.expectedFigureId, '', 'expectedRank:', String(record.expectedRank),
+    '', 'top1Correct:', String(record.top1Correct), '', 'presentInTopK:', String(record.presentInTopK),
+    '', 'decisionOutcome:', record.decisionOutcome, '', 'policyVersion:', record.policyVersion,
+    '', 'calibrationProfile:', record.calibrationProfile];
+}
+
+function evidenceEntries(summary: RetrievalEvidenceSummary): Array<[string, number | boolean | undefined]> {
+  return [
+    ['candidateCount', summary.candidateCount], ['requestedTopK', summary.requestedTopK], ['returnedCandidateRatio', summary.returnedCandidateRatio],
+    ['top1Distance', summary.top1Distance], ['top2Distance', summary.top2Distance], ['top1Top2Gap', summary.top1Top2Gap],
+    ['relativeTop1Top2Gap', summary.relativeTop1Top2Gap], ['distanceSpread', summary.distanceSpread],
+    ['leadingTieCount', summary.leadingTieCount], ['nearDuplicateDistanceCount', summary.nearDuplicateDistanceCount],
+    ['distinctFigureCount', summary.distinctFigureCount], ['distinctSeriesCount', summary.distinctSeriesCount],
+    ['distinctIpCount', summary.distinctIpCount], ['distinctBrandCount', summary.distinctBrandCount],
+    ['topSeriesCandidateCount', summary.topSeriesCandidateCount], ['topIpCandidateCount', summary.topIpCandidateCount],
+    ['topBrandCandidateCount', summary.topBrandCandidateCount], ['topSeriesRatio', summary.topSeriesRatio],
+    ['topIpRatio', summary.topIpRatio], ['topBrandRatio', summary.topBrandRatio],
+    ['top1SeriesCandidateCount', summary.top1SeriesCandidateCount], ['top1IpCandidateCount', summary.top1IpCandidateCount],
+    ['top1BrandCandidateCount', summary.top1BrandCandidateCount], ['sameSeriesLeadingAmbiguity', summary.sameSeriesLeadingAmbiguity],
   ];
 }

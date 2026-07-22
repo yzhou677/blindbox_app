@@ -2,11 +2,13 @@ import type { PrimarySubjectConfig } from './primarySubjectConfig';
 import { PrimarySubjectCropper, type PreparedCrop, type PreparedImage } from './primarySubjectCropper';
 import { validateRefinementResponse } from './primarySubjectOutputValidator';
 import type { NormalizedBoundingBox, PixelBoundingBox, PrimarySubjectRefinementDiagnostics, PrimarySubjectRefiner } from './primarySubjectTypes';
+import { PrimarySubjectBlurEvaluator } from './primarySubjectBlurEvaluator';
 
 export type PrimarySubjectRefinementResult = { crop: PreparedCrop; box: PixelBoundingBox; normalized: NormalizedBoundingBox; diagnostics: PrimarySubjectRefinementDiagnostics };
 
 export class PrimarySubjectRefinementService {
-  constructor(private readonly refiner: PrimarySubjectRefiner, private readonly cropper: PrimarySubjectCropper, private readonly config: PrimarySubjectConfig) {}
+  private readonly blur: PrimarySubjectBlurEvaluator;
+  constructor(private readonly refiner: PrimarySubjectRefiner, private readonly cropper: PrimarySubjectCropper, private readonly config: PrimarySubjectConfig, blur?: PrimarySubjectBlurEvaluator) { this.blur = blur ?? new PrimarySubjectBlurEvaluator(cropper); }
 
   async refine(prepared: PreparedImage, coarse: PreparedCrop): Promise<PrimarySubjectRefinementResult> {
     const coarseNormalized = toNormalized(coarse.box, prepared.width, prepared.height);
@@ -27,7 +29,7 @@ export class PrimarySubjectRefinementService {
       if (finalBox.width < this.config.minCropWidth || finalBox.height < this.config.minCropHeight || subjectAreaRatio < this.config.minSubjectAreaRatio) {
         return this.fallback(coarse, coarseNormalized, details, 'refined_crop_too_small');
       }
-      if (finalCrop.sharpness < this.config.minSharpness && finalCrop.gradientEnergy < this.config.minGradientEnergy) {
+      if (!(await this.blur.evaluateImage(finalCrop.image)).usable) {
         return this.fallback(coarse, coarseNormalized, details, 'refined_crop_too_blurry');
       }
       return { crop: finalCrop, box: refinedBox, normalized: details.refinedNormalizedBox, diagnostics: { ...details, accepted: true, reason: 'accepted' } };

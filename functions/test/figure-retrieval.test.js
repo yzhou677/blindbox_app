@@ -154,9 +154,10 @@ describe('Figure retrieval', () => {
   });
 
   it('parses only a local file and a Top-K from 1 through 20', () => {
-    assert.deepEqual(parseFigureRetrievalArgs(['--file', 'photo.jpg']), { file: 'photo.jpg', topK: 5, isolateSubject: false, previewDir: undefined, overwritePreview: false });
-    assert.deepEqual(parseFigureRetrievalArgs(['--file', 'photo.jpg', '--top-k', '20']), { file: 'photo.jpg', topK: 20, isolateSubject: false, previewDir: undefined, overwritePreview: false });
-    assert.deepEqual(parseFigureRetrievalArgs(['--file', 'photo.jpg', '--isolate-subject', '--preview-dir', 'previews', '--overwrite-preview']), { file: 'photo.jpg', topK: 5, isolateSubject: true, previewDir: 'previews', overwritePreview: true });
+    assert.deepEqual(parseFigureRetrievalArgs(['--file', 'photo.jpg']), { file: 'photo.jpg', topK: 5, isolateSubject: false, previewDir: undefined, overwritePreview: false, evaluationLabel: undefined });
+    assert.deepEqual(parseFigureRetrievalArgs(['--file', 'photo.jpg', '--top-k', '20']), { file: 'photo.jpg', topK: 20, isolateSubject: false, previewDir: undefined, overwritePreview: false, evaluationLabel: undefined });
+    assert.deepEqual(parseFigureRetrievalArgs(['--file', 'photo.jpg', '--isolate-subject', '--preview-dir', 'previews', '--overwrite-preview']), { file: 'photo.jpg', topK: 5, isolateSubject: true, previewDir: 'previews', overwritePreview: true, evaluationLabel: undefined });
+    assert.equal(parseFigureRetrievalArgs(['--file', 'photo.jpg', '--evaluation-label', 'figure-1']).evaluationLabel, 'figure-1');
     assert.throws(() => parseFigureRetrievalArgs(['--file', 'photo.jpg', '--preview-dir', 'previews']));
     assert.throws(() => parseFigureRetrievalArgs(['--file', 'photo.jpg', '--top-k', '0']));
     assert.throws(() => parseFigureRetrievalArgs(['--storage-path', 'photo.jpg']));
@@ -170,9 +171,9 @@ describe('Figure retrieval', () => {
       diagnostics: {
         locatorModel: 'configured-model', locatorPromptVersion: 'configured-prompt', elapsedMs: 7,
         sourceWidth: 640, sourceHeight: 480, cropWidth: 260, cropHeight: 360,
-        subjectAreaRatio: 0.476123456789, blurMetric: 1.234567890123,
-        blurThreshold: 1.5, blurAlgorithm: 'sharp.stats().sharpness', detailMetric: 0.75,
-        detailThreshold: 1, detailAlgorithm: 'mean absolute grayscale gradient', combinedBlurPassed: false,
+        subjectAreaRatio: 0.476123456789, blurMetric: 0.234567890123,
+        blurThreshold: 0.25, blurAlgorithm: 'sharp.stats().sharpness', detailMetric: 0.64,
+        detailThreshold: 0.65, detailAlgorithm: 'mean absolute grayscale gradient', combinedBlurPassed: false,
         failedBlurSignals: ['sharpness', 'gradient energy'], padding: 0.12, processingResolution: '260x360', failedChecks: ['blur'],
         refinement: { attempted: true, accepted: false, reason: 'area_reduction_too_small',
           coarseNormalizedBox: { ymin: 90, xmin: 190, ymax: 910, xmax: 810 }, refinedNormalizedBox: { ymin: 101, xmin: 202, ymax: 899, xmax: 798 },
@@ -181,10 +182,10 @@ describe('Figure retrieval', () => {
       },
     }, { coarseOverlay: 'photo.coarse-subject-overlay.jpg', refinedOverlay: 'photo.refined-subject-overlay.jpg', coarseCrop: 'photo.coarse-subject-crop.jpg', crop: 'photo.subject-crop.jpg' });
     const output = lines.join('\n');
-    assert.match(output, /Blur diagnostics\n\nsharpnessMetric:\n1\.234567890123/);
-    assert.match(output, /sharpnessThreshold:\n1\.5\n\nsharpnessPassed:\nfalse/);
+    assert.match(output, /Blur diagnostics\n\nsharpnessMetric:\n0\.234567890123/);
+    assert.match(output, /sharpnessThreshold:\n0\.25\n\nsharpnessPassed:\nfalse/);
     assert.match(output, /sharpnessAlgorithm:\nsharp\.stats\(\)\.sharpness/);
-    assert.match(output, /detailMetric:\n0\.75[\s\S]*detailThreshold:\n1[\s\S]*combinedDecision:\nfailed/);
+    assert.match(output, /detailMetric:\n0\.64[\s\S]*detailThreshold:\n0\.65[\s\S]*combinedDecision:\nfailed/);
     assert.match(output, /failedSignals:\n\n- sharpness\n- gradient energy/);
     assert.match(output, /Candidate scores[\s\S]*Candidate 1[\s\S]*centerScore:\n0\.91[\s\S]*totalScore:\n0\.83[\s\S]*selected:\ntrue/);
     assert.match(output, /Crop diagnostics[\s\S]*sourceWidth:\n640[\s\S]*normalizedBoundingBox:/);

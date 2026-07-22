@@ -1,0 +1,1 @@
+export const BLUR_METRIC_BENCHMARK_CONFIG=Object.freeze({maxAnalysisDimension:512,localBlockSize:32,highPassSigma:2,combinationMetricLimit:3,shortlistCombinationLimit:10,caveat:'Offline benchmark evidence only. No metric or threshold is production-ready or automatically selected.'});
