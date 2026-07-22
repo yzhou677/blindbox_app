@@ -1,10 +1,12 @@
-import 'dart:typed_data';
-
+import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/shared/image/catalog_photo_acquisition.dart';
+import 'package:blindbox_app/shared/image/catalog_subject_selection.dart';
 import 'package:blindbox_app/shared/image/local_whole_image_quality_evaluator.dart';
 import 'package:blindbox_app/shared/image/whole_image_quality.dart';
 import 'package:blindbox_app/shared/widgets/catalog_subject_selection_screen.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:image/image.dart' as image;
 
 const catalogPhotoGuidance = 'Keep the collectible centered and in focus.';
 
@@ -14,24 +16,47 @@ Future<void> showCatalogPhotoVerification(
   WholeImageQualityEvaluator evaluator =
       const LocalWholeImageQualityEvaluator(),
 }) async {
-  final accepted = await showDialog<CatalogPhotoSelection>(
-    context: context,
-    useRootNavigator: false,
-    barrierDismissible: true,
-    barrierColor: Colors.black.withValues(alpha: 0.48),
-    builder: (_) => CatalogPhotoVerificationPage(
-      selection: selection,
-      evaluator: evaluator,
-    ),
-  );
-  if (accepted != null && context.mounted) {
-    await Navigator.of(
-      context,
-    ).push(buildCatalogSubjectSelectionRoute(accepted));
-  }
+  await showCatalogPhotoScanSheet(context, selection, evaluator: evaluator);
 }
 
-/// Stateful content for the shared floating local-photo confirmation.
+Future<CatalogSubjectSelectionResult?> showCatalogPhotoScanSheet(
+  BuildContext context,
+  CatalogPhotoSelection selection, {
+  WholeImageQualityEvaluator evaluator =
+      const LocalWholeImageQualityEvaluator(),
+  CatalogPhotoAcquirer? photoAcquirer,
+}) {
+  final viewportWidth = MediaQuery.sizeOf(context).width;
+  return showModalBottomSheet<CatalogSubjectSelectionResult>(
+    context: context,
+    useRootNavigator: false,
+    isScrollControlled: true,
+    useSafeArea: false,
+    isDismissible: true,
+    enableDrag: true,
+    showDragHandle: false,
+    barrierColor: Colors.black.withValues(alpha: 0.36),
+    backgroundColor: Colors.transparent,
+    elevation: 0,
+    constraints: BoxConstraints(
+      minWidth: viewportWidth,
+      maxWidth: viewportWidth,
+    ),
+    builder: (_) => FractionallySizedBox(
+      heightFactor: 0.9,
+      alignment: Alignment.bottomCenter,
+      child: CatalogPhotoVerificationPage(
+        selection: selection,
+        evaluator: evaluator,
+        photoAcquirer: photoAcquirer,
+      ),
+    ),
+  );
+}
+
+enum CatalogPhotoScanPresentationState { review, framing }
+
+/// Stateful content for the continuous local-photo scan sheet.
 class CatalogPhotoVerificationPage extends StatefulWidget {
   const CatalogPhotoVerificationPage({
     super.key,
@@ -50,9 +75,24 @@ class CatalogPhotoVerificationPage extends StatefulWidget {
 }
 
 class _CatalogPhotoVerificationPageState
-    extends State<CatalogPhotoVerificationPage> {
+    extends State<CatalogPhotoVerificationPage>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _stateController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 180),
+  );
+  late final Animation<double> _stateAnimation = CurvedAnimation(
+    parent: _stateController,
+    curve: Curves.easeOutCubic,
+  );
   late CatalogPhotoSelection _selection;
   Uint8List? _previewBytes;
+  Size? _orientedSize;
+  Rect _subjectSelection = catalogDefaultSubjectSelection;
+  SubjectSelectionOrigin _selectionOrigin = SubjectSelectionOrigin.defaultBox;
+  CatalogPhotoScanPresentationState _presentationState =
+      CatalogPhotoScanPresentationState.review;
+  var _selectionInteractionActive = false;
   var _obviouslyTooBlurry = false;
   var _generation = 0;
   var _acquiring = false;
@@ -66,18 +106,39 @@ class _CatalogPhotoVerificationPageState
     _loadPreview(_selection);
   }
 
+  @override
+  void dispose() {
+    _stateController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadPreview(CatalogPhotoSelection selection) async {
     final generation = ++_generation;
     setState(() {
       _previewBytes = null;
+      _orientedSize = null;
       _previewLoading = true;
       _obviouslyTooBlurry = false;
       _validating = false;
+      _presentationState = CatalogPhotoScanPresentationState.review;
+      _subjectSelection = catalogDefaultSubjectSelection;
+      _selectionOrigin = SubjectSelectionOrigin.defaultBox;
     });
+    _stateController.value = 0;
 
     Uint8List? bytes;
+    Size? orientedSize;
     try {
       bytes = await selection.file.readAsBytes();
+      if (bytes.isNotEmpty) {
+        final dimensions = await compute(_scanImageDimensions, bytes);
+        if (dimensions != null) {
+          orientedSize = Size(
+            dimensions.$1.toDouble(),
+            dimensions.$2.toDouble(),
+          );
+        }
+      }
     } catch (_) {
       bytes = null;
     }
@@ -85,6 +146,7 @@ class _CatalogPhotoVerificationPageState
     setState(() {
       _selection = selection;
       _previewBytes = bytes;
+      _orientedSize = orientedSize;
       _previewLoading = false;
     });
   }
@@ -108,13 +170,37 @@ class _CatalogPhotoVerificationPageState
     }
     if (!mounted || generation != _generation) return;
     if (result.canContinue) {
-      Navigator.pop(context, selection);
+      setState(() {
+        _validating = false;
+        _presentationState = CatalogPhotoScanPresentationState.framing;
+      });
+      _stateController.forward(from: 0);
       return;
     }
     setState(() {
       _validating = false;
       _obviouslyTooBlurry = true;
     });
+  }
+
+  void _confirmSelection() {
+    final size = _orientedSize;
+    if (size == null) return;
+    Navigator.pop(
+      context,
+      CatalogSubjectSelectionResult(
+        photo: _selection,
+        normalizedRect: NormalizedSubjectRect.fromRect(_subjectSelection),
+        sourceImageRect: Rect.fromLTRB(
+          _subjectSelection.left * size.width,
+          _subjectSelection.top * size.height,
+          _subjectSelection.right * size.width,
+          _subjectSelection.bottom * size.height,
+        ),
+        orientedSourceSize: size,
+        origin: _selectionOrigin,
+      ),
+    );
   }
 
   Future<void> _replacePhoto(CatalogPhotoSource source) async {
@@ -145,65 +231,161 @@ class _CatalogPhotoVerificationPageState
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final previewHeight = (MediaQuery.sizeOf(context).height * 0.37).clamp(
-      170.0,
-      370.0,
+    final previewHeight = (MediaQuery.sizeOf(context).height * 0.4).clamp(
+      220.0,
+      380.0,
     );
+    final framing =
+        _presentationState == CatalogPhotoScanPresentationState.framing;
 
-    return Dialog(
+    return Material(
       key: const Key('catalog-photo-confirmation'),
-      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-      backgroundColor: scheme.surfaceContainerLow,
-      surfaceTintColor: scheme.surfaceTint,
-      elevation: 8,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      color: scheme.surface,
+      elevation: 12,
+      shadowColor: scheme.shadow.withValues(alpha: 0.24),
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
       clipBehavior: Clip.antiAlias,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 560),
+      child: SafeArea(
+        top: false,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+          physics: _selectionInteractionActive
+              ? const NeverScrollableScrollPhysics()
+              : null,
+          padding: const EdgeInsets.fromLTRB(4, 0, 4, 2),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Align(
-                alignment: Alignment.centerRight,
-                child: IconButton(
-                  key: const Key('catalog-photo-close'),
-                  tooltip: 'Close photo confirmation',
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close_rounded),
+              SizedBox(
+                key: const Key('subject-selection-drag-handle'),
+                height: 18,
+                child: Center(
+                  child: Container(
+                    width: 34,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: scheme.outlineVariant.withValues(alpha: 0.72),
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                  ),
                 ),
               ),
-              _PhotoPreview(
-                bytes: _previewBytes,
-                height: previewHeight,
-                loading: _previewLoading,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 180),
+                        layoutBuilder: (current, previous) => Stack(
+                          alignment: Alignment.centerLeft,
+                          children: [...previous, ?current],
+                        ),
+                        child: Text(
+                          framing ? 'Frame your collectible' : 'Review photo',
+                          key: ValueKey(framing),
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      key: const Key('catalog-photo-close'),
+                      tooltip: 'Close photo scan',
+                      constraints: const BoxConstraints.tightFor(
+                        width: 48,
+                        height: 48,
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close_rounded),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 8),
-              _GuidanceText(colorScheme: scheme),
-              const SizedBox(height: 14),
-              if (_obviouslyTooBlurry)
-                _ValidationFailureState(
-                  onRetake: _acquiring
-                      ? null
-                      : () => _replacePhoto(CatalogPhotoSource.camera),
-                  onChooseAnother: _acquiring
-                      ? null
-                      : () => _replacePhoto(CatalogPhotoSource.gallery),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 180),
+                  child: framing
+                      ? Text(
+                          'Move and resize the frame until it fits your collectible.',
+                          key: const ValueKey('framing-guidance'),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: scheme.onSurfaceVariant),
+                        )
+                      : _GuidanceText(
+                          key: const ValueKey('review-guidance'),
+                          colorScheme: scheme,
+                        ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              if (_previewLoading)
+                SizedBox(
+                  height: previewHeight,
+                  child: const Center(child: CircularProgressIndicator()),
+                )
+              else if (_previewBytes == null || _orientedSize == null)
+                SizedBox(
+                  height: previewHeight,
+                  child: Icon(
+                    Icons.broken_image_outlined,
+                    size: 42,
+                    color: scheme.onSurfaceVariant,
+                  ),
                 )
               else
-                _PassActions(
-                  onUsePhoto: _validating ? null : _validateAndConfirm,
-                  validating: _validating,
-                  onRetake: _acquiring
-                      ? null
-                      : () => _replacePhoto(CatalogPhotoSource.camera),
-                  onChooseAnother: _acquiring
-                      ? null
-                      : () => _replacePhoto(CatalogPhotoSource.gallery),
-                  onCancel: () => Navigator.pop(context),
+                CatalogSubjectSelectionEditor(
+                  key: const Key('catalog-photo-shared-editor'),
+                  height: previewHeight,
+                  bytes: _previewBytes!,
+                  orientedSize: _orientedSize!,
+                  normalizedSelection: _subjectSelection,
+                  onSelectionChanged: (selection, origin) {
+                    setState(() {
+                      _subjectSelection = selection;
+                      _selectionOrigin = origin;
+                    });
+                  },
+                  onInteractionChanged: (active) {
+                    if (_selectionInteractionActive == active) return;
+                    setState(() => _selectionInteractionActive = active);
+                  },
+                  selectionAnimation: _stateAnimation,
+                  interactionActive: _selectionInteractionActive,
+                  selectionEnabled: framing,
                 ),
+              const SizedBox(height: AppSpacing.md),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 180),
+                transitionBuilder: (child, animation) => FadeTransition(
+                  opacity: animation,
+                  child: SizeTransition(
+                    sizeFactor: animation,
+                    axisAlignment: -1,
+                    child: child,
+                  ),
+                ),
+                child: framing
+                    ? _FrameActions(
+                        key: const ValueKey('frame-actions'),
+                        onContinue: _confirmSelection,
+                        onReset: () => setState(() {
+                          _subjectSelection = catalogDefaultSubjectSelection;
+                          _selectionOrigin = SubjectSelectionOrigin.defaultBox;
+                        }),
+                      )
+                    : _ReviewActions(
+                        key: const ValueKey('review-actions'),
+                        tooBlurry: _obviouslyTooBlurry,
+                        validating: _validating,
+                        acquiring: _acquiring,
+                        onUsePhoto: _validateAndConfirm,
+                        onRetake: () =>
+                            _replacePhoto(CatalogPhotoSource.camera),
+                        onChooseAnother: () =>
+                            _replacePhoto(CatalogPhotoSource.gallery),
+                        onCancel: () => Navigator.pop(context),
+                      ),
+              ),
             ],
           ),
         ),
@@ -213,7 +395,7 @@ class _CatalogPhotoVerificationPageState
 }
 
 class _GuidanceText extends StatelessWidget {
-  const _GuidanceText({required this.colorScheme});
+  const _GuidanceText({super.key, required this.colorScheme});
 
   final ColorScheme colorScheme;
 
@@ -248,52 +430,79 @@ class _GuidanceText extends StatelessWidget {
   }
 }
 
-class _PhotoPreview extends StatelessWidget {
-  const _PhotoPreview({
-    required this.bytes,
-    required this.height,
-    required this.loading,
+class _ReviewActions extends StatelessWidget {
+  const _ReviewActions({
+    super.key,
+    required this.tooBlurry,
+    required this.validating,
+    required this.acquiring,
+    required this.onUsePhoto,
+    required this.onRetake,
+    required this.onChooseAnother,
+    required this.onCancel,
   });
 
-  final Uint8List? bytes;
-  final double height;
-  final bool loading;
+  final bool tooBlurry;
+  final bool validating;
+  final bool acquiring;
+  final VoidCallback onUsePhoto;
+  final VoidCallback onRetake;
+  final VoidCallback onChooseAnother;
+  final VoidCallback onCancel;
+
+  @override
+  Widget build(BuildContext context) => tooBlurry
+      ? _ValidationFailureState(
+          onRetake: acquiring ? null : onRetake,
+          onChooseAnother: acquiring ? null : onChooseAnother,
+        )
+      : _PassActions(
+          onUsePhoto: validating ? null : onUsePhoto,
+          validating: validating,
+          onRetake: acquiring ? null : onRetake,
+          onChooseAnother: acquiring ? null : onChooseAnother,
+          onCancel: onCancel,
+        );
+}
+
+class _FrameActions extends StatelessWidget {
+  const _FrameActions({
+    super.key,
+    required this.onContinue,
+    required this.onReset,
+  });
+
+  final VoidCallback onContinue;
+  final VoidCallback onReset;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return SizedBox(
-      key: const Key('catalog-photo-preview-frame'),
-      height: height,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(22),
-        child: ColoredBox(
-          color: scheme.surfaceContainerHighest,
-          child: loading
-              ? const Center(child: CircularProgressIndicator())
-              : bytes == null
-              ? Icon(
-                  Icons.broken_image_outlined,
-                  size: 42,
-                  color: scheme.onSurfaceVariant,
-                )
-              : Semantics(
-                  image: true,
-                  label: 'Selected collectible photo',
-                  child: Image.memory(
-                    bytes!,
-                    key: const Key('catalog-photo-preview'),
-                    fit: BoxFit.contain,
-                    gaplessPlayback: true,
-                    errorBuilder: (_, _, _) => Icon(
-                      Icons.broken_image_outlined,
-                      size: 42,
-                      color: scheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        FilledButton(
+          key: const Key('subject-selection-confirm'),
+          onPressed: onContinue,
+          style: FilledButton.styleFrom(
+            elevation: 4,
+            minimumSize: const Size.fromHeight(56),
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+          ),
+          child: const Text('Continue'),
         ),
-      ),
+        TextButton.icon(
+          key: const Key('subject-selection-reset'),
+          onPressed: onReset,
+          style: TextButton.styleFrom(
+            foregroundColor: scheme.onSurfaceVariant,
+            minimumSize: const Size.fromHeight(48),
+            padding: const EdgeInsets.symmetric(vertical: 4),
+          ),
+          icon: const Icon(Icons.refresh_rounded, size: 17),
+          label: const Text('Reset Selection'),
+        ),
+      ],
     );
   }
 }
@@ -441,4 +650,11 @@ class _PassActions extends StatelessWidget {
       ],
     );
   }
+}
+
+(int, int)? _scanImageDimensions(Uint8List bytes) {
+  final decoded = image.decodeImage(bytes);
+  if (decoded == null) return null;
+  final oriented = image.bakeOrientation(decoded);
+  return (oriented.width, oriented.height);
 }

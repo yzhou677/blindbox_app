@@ -1,13 +1,27 @@
 import { initializeApp } from 'firebase-admin/app';
-import { onRequest } from 'firebase-functions/v2/https';
+import { onCall, onRequest } from 'firebase-functions/v2/https';
 import { handleMarketBrowseRequest } from './marketBrowseRouter';
 import { handleMarketItemRequest } from './marketItemRouter';
 import {
   handleRecommendationForYouRequest,
   handleRecommendationProfileRequest,
 } from './recommendationsRouter';
+import { SUBJECT_LOCATOR_ENDPOINT_CONFIG } from './figureRecognition/subjectLocatorEndpointConfig';
+import { createProductionSubjectLocatorHandler } from './subjectLocatorCallable';
 
 initializeApp();
+
+export const subjectLocatorV1 = onCall(
+  {
+    region: SUBJECT_LOCATOR_ENDPOINT_CONFIG.region,
+    timeoutSeconds: SUBJECT_LOCATOR_ENDPOINT_CONFIG.functionTimeoutSeconds,
+    memory: '1GiB',
+    concurrency: 1,
+    maxInstances: 10,
+    enforceAppCheck: true,
+  },
+  createProductionSubjectLocatorHandler(),
+);
 
 /**
  * Thin market provider gateway.

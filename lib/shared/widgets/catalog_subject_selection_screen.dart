@@ -1,26 +1,47 @@
+import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/shared/image/catalog_photo_acquisition.dart';
 import 'package:blindbox_app/shared/image/catalog_subject_selection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as image;
 
-const catalogSubjectSelectionRouteName = '/scan/subject-selection';
-const _defaultSelection = Rect.fromLTWH(0.2, 0.2, 0.6, 0.6);
+const catalogDefaultSubjectSelection = Rect.fromLTWH(0.2, 0.2, 0.6, 0.6);
 const _minimumSelectionExtent = 0.12;
 
-Route<CatalogSubjectSelectionResult> buildCatalogSubjectSelectionRoute(
+Future<CatalogSubjectSelectionResult?> showCatalogSubjectSelectionSheet(
+  BuildContext context,
   CatalogPhotoSelection selection, {
   NormalizedSubjectRect? suggestedSelection,
-}) => MaterialPageRoute<CatalogSubjectSelectionResult>(
-  settings: const RouteSettings(name: catalogSubjectSelectionRouteName),
-  builder: (_) => CatalogSubjectSelectionScreen(
-    selection: selection,
-    initialSelection: suggestedSelection,
-    initialOrigin: suggestedSelection == null
-        ? SubjectSelectionOrigin.defaultBox
-        : SubjectSelectionOrigin.suggestedBox,
-  ),
-);
+}) {
+  final viewportWidth = MediaQuery.sizeOf(context).width;
+  return showModalBottomSheet<CatalogSubjectSelectionResult>(
+    context: context,
+    useRootNavigator: false,
+    isScrollControlled: true,
+    useSafeArea: false,
+    isDismissible: true,
+    enableDrag: true,
+    showDragHandle: false,
+    barrierColor: Colors.black.withValues(alpha: 0.36),
+    backgroundColor: Colors.transparent,
+    elevation: 0,
+    constraints: BoxConstraints(
+      minWidth: viewportWidth,
+      maxWidth: viewportWidth,
+    ),
+    builder: (_) => FractionallySizedBox(
+      heightFactor: 0.9,
+      alignment: Alignment.bottomCenter,
+      child: CatalogSubjectSelectionScreen(
+        selection: selection,
+        initialSelection: suggestedSelection,
+        initialOrigin: suggestedSelection == null
+            ? SubjectSelectionOrigin.defaultBox
+            : SubjectSelectionOrigin.suggestedBox,
+      ),
+    ),
+  );
+}
 
 class CatalogSubjectSelectionScreen extends StatefulWidget {
   const CatalogSubjectSelectionScreen({
@@ -58,7 +79,8 @@ class _CatalogSubjectSelectionScreenState
   @override
   void initState() {
     super.initState();
-    _selection = widget.initialSelection?.rect ?? _defaultSelection;
+    _selection =
+        widget.initialSelection?.rect ?? catalogDefaultSubjectSelection;
     _origin = widget.initialOrigin;
   }
 
@@ -113,110 +135,199 @@ class _CatalogSubjectSelectionScreenState
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Scaffold(
-      appBar: AppBar(
-        toolbarHeight: 78,
-        titleSpacing: 0,
-        title: FadeTransition(
-          opacity: _entranceAnimation,
-          child: Text(
-            'Frame your collectible',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontSize: 30,
-              fontWeight: FontWeight.w700,
-              height: 1.1,
-            ),
-          ),
-        ),
-      ),
-      body: SafeArea(
-        child: FutureBuilder<_LoadedSubjectImage?>(
-          future: _loadedImage,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState != ConnectionState.done) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            final loaded = snapshot.data;
-            if (loaded == null) {
-              return Center(
-                child: Icon(
-                  Icons.broken_image_outlined,
-                  size: 44,
-                  color: scheme.onSurfaceVariant,
-                ),
-              );
-            }
-            return LayoutBuilder(
-              builder: (context, constraints) => SingleChildScrollView(
-                physics: _selectionInteractionActive
-                    ? const NeverScrollableScrollPhysics()
-                    : null,
-                padding: const EdgeInsets.fromLTRB(8, 2, 8, 8),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: constraints.maxHeight - 36,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      FadeTransition(
-                        opacity: _entranceAnimation,
-                        child: Text(
-                          'Move and resize the frame until it fits your collectible.',
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                color: scheme.onSurfaceVariant.withValues(
-                                  alpha: 0.82,
-                                ),
-                                height: 1.22,
-                              ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      _SubjectSelectionViewport(
-                        image: loaded,
-                        normalizedSelection: _selection,
-                        onSelectionChanged: _setSelection,
-                        entranceAnimation: _entranceAnimation,
-                        interactionActive: _selectionInteractionActive,
-                        onInteractionChanged: (active) {
-                          if (_selectionInteractionActive == active) return;
-                          setState(() => _selectionInteractionActive = active);
-                        },
-                      ),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        height: 56,
-                        child: FilledButton(
-                          key: const Key('subject-selection-confirm'),
-                          onPressed: () => _confirm(loaded),
-                          style: FilledButton.styleFrom(
-                            elevation: 3,
-                            padding: const EdgeInsets.symmetric(horizontal: 28),
-                          ),
-                          child: const Text('Continue'),
-                        ),
-                      ),
-                      SizedBox(
-                        height: 48,
-                        child: TextButton.icon(
-                          key: const Key('subject-selection-reset'),
-                          onPressed: () => _setSelection(
-                            _defaultSelection,
-                            SubjectSelectionOrigin.defaultBox,
-                          ),
-                          icon: const Icon(Icons.refresh_rounded, size: 19),
-                          label: const Text('Reset Selection'),
-                        ),
-                      ),
-                    ],
+    return Material(
+      key: const Key('subject-selection-sheet'),
+      color: scheme.surface,
+      elevation: 12,
+      shadowColor: scheme.shadow.withValues(alpha: 0.24),
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+      clipBehavior: Clip.antiAlias,
+      child: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            SizedBox(
+              key: const Key('subject-selection-drag-handle'),
+              height: 18,
+              width: double.infinity,
+              child: Center(
+                child: Container(
+                  width: 34,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: scheme.outlineVariant.withValues(alpha: 0.72),
+                    borderRadius: BorderRadius.circular(99),
                   ),
                 ),
               ),
-            );
-          },
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: FadeTransition(
+                      opacity: _entranceAnimation,
+                      child: Text(
+                        'Frame your collectible',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    key: const Key('subject-selection-close'),
+                    tooltip: 'Close subject framing',
+                    constraints: const BoxConstraints.tightFor(
+                      width: 48,
+                      height: 48,
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: FutureBuilder<_LoadedSubjectImage?>(
+                future: _loadedImage,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState != ConnectionState.done) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final loaded = snapshot.data;
+                  if (loaded == null) {
+                    return Center(
+                      child: Icon(
+                        Icons.broken_image_outlined,
+                        size: 44,
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    );
+                  }
+                  return LayoutBuilder(
+                    builder: (context, constraints) {
+                      final viewportHeight = (constraints.maxHeight - 208)
+                          .clamp(220.0, 680.0);
+                      return SingleChildScrollView(
+                        physics: _selectionInteractionActive
+                            ? const NeverScrollableScrollPhysics()
+                            : null,
+                        padding: const EdgeInsets.fromLTRB(8, 0, 8, 2),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.md,
+                              ),
+                              child: FadeTransition(
+                                opacity: _entranceAnimation,
+                                child: Text(
+                                  'Move and resize the frame until it fits your collectible.',
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(
+                                        color: scheme.onSurfaceVariant,
+                                      ),
+                                ),
+                              ),
+                            ),
+                            if (_origin ==
+                                SubjectSelectionOrigin.suggestedBox) ...[
+                              const SizedBox(height: AppSpacing.sm),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.md,
+                                ),
+                                child: _AiSuggestionStatus(colorScheme: scheme),
+                              ),
+                            ],
+                            const SizedBox(height: AppSpacing.xs),
+                            _SubjectSelectionViewport(
+                              height: viewportHeight,
+                              image: loaded,
+                              normalizedSelection: _selection,
+                              onSelectionChanged: _setSelection,
+                              entranceAnimation: _entranceAnimation,
+                              interactionActive: _selectionInteractionActive,
+                              onInteractionChanged: (active) {
+                                if (_selectionInteractionActive == active) {
+                                  return;
+                                }
+                                setState(
+                                  () => _selectionInteractionActive = active,
+                                );
+                              },
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            FilledButton(
+                              key: const Key('subject-selection-confirm'),
+                              onPressed: () => _confirm(loaded),
+                              style: FilledButton.styleFrom(
+                                elevation: 4,
+                                minimumSize: const Size.fromHeight(56),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 28,
+                                  vertical: 12,
+                                ),
+                              ),
+                              child: const Text('Continue'),
+                            ),
+                            TextButton.icon(
+                              key: const Key('subject-selection-reset'),
+                              onPressed: () => _setSelection(
+                                catalogDefaultSubjectSelection,
+                                SubjectSelectionOrigin.defaultBox,
+                              ),
+                              style: TextButton.styleFrom(
+                                foregroundColor: scheme.onSurfaceVariant,
+                                minimumSize: const Size.fromHeight(48),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 4,
+                                ),
+                              ),
+                              icon: const Icon(Icons.refresh_rounded, size: 17),
+                              label: const Text('Reset Selection'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
+    );
+  }
+}
+
+class _AiSuggestionStatus extends StatelessWidget {
+  const _AiSuggestionStatus({required this.colorScheme});
+
+  final ColorScheme colorScheme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      key: const Key('subject-selection-ai-suggestion'),
+      children: [
+        Icon(
+          Icons.auto_awesome_rounded,
+          size: 18,
+          color: colorScheme.onSurfaceVariant,
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: Text(
+            'AI suggested this frame. Adjust if needed.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -227,22 +338,65 @@ class _LoadedSubjectImage {
   final Size orientedSize;
 }
 
+/// Shared photo editor used by both the continuous scan sheet and the
+/// standalone subject-selection harness.
+class CatalogSubjectSelectionEditor extends StatelessWidget {
+  const CatalogSubjectSelectionEditor({
+    super.key,
+    required this.height,
+    required this.bytes,
+    required this.orientedSize,
+    required this.normalizedSelection,
+    required this.onSelectionChanged,
+    required this.onInteractionChanged,
+    required this.selectionAnimation,
+    required this.interactionActive,
+    required this.selectionEnabled,
+  });
+
+  final double height;
+  final Uint8List bytes;
+  final Size orientedSize;
+  final Rect normalizedSelection;
+  final void Function(Rect, SubjectSelectionOrigin) onSelectionChanged;
+  final ValueChanged<bool> onInteractionChanged;
+  final Animation<double> selectionAnimation;
+  final bool interactionActive;
+  final bool selectionEnabled;
+
+  @override
+  Widget build(BuildContext context) => _SubjectSelectionViewport(
+    height: height,
+    image: _LoadedSubjectImage(bytes: bytes, orientedSize: orientedSize),
+    normalizedSelection: normalizedSelection,
+    onSelectionChanged: onSelectionChanged,
+    onInteractionChanged: onInteractionChanged,
+    entranceAnimation: selectionAnimation,
+    interactionActive: interactionActive,
+    selectionEnabled: selectionEnabled,
+  );
+}
+
 class _SubjectSelectionViewport extends StatefulWidget {
   const _SubjectSelectionViewport({
+    required this.height,
     required this.image,
     required this.normalizedSelection,
     required this.onSelectionChanged,
     required this.onInteractionChanged,
     required this.entranceAnimation,
     required this.interactionActive,
+    this.selectionEnabled = true,
   });
 
+  final double height;
   final _LoadedSubjectImage image;
   final Rect normalizedSelection;
   final void Function(Rect, SubjectSelectionOrigin) onSelectionChanged;
   final ValueChanged<bool> onInteractionChanged;
   final Animation<double> entranceAnimation;
   final bool interactionActive;
+  final bool selectionEnabled;
 
   @override
   State<_SubjectSelectionViewport> createState() =>
@@ -255,8 +409,8 @@ class _SubjectSelectionViewportState extends State<_SubjectSelectionViewport> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return AspectRatio(
-      aspectRatio: 3 / 4,
+    return SizedBox(
+      height: widget.height,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final viewportSize = constraints.biggest;
@@ -289,126 +443,129 @@ class _SubjectSelectionViewportState extends State<_SubjectSelectionViewport> {
               return ClipRRect(
                 borderRadius: BorderRadius.circular(24),
                 child: ColoredBox(
-                  color: scheme.surfaceContainerHighest,
+                  color: scheme.surfaceContainerLow,
                   child: Stack(
                     key: const Key('subject-selection-viewport'),
                     children: [
                       Positioned.fromRect(
                         rect: imageRect,
-                        child: FadeTransition(
-                          opacity: widget.entranceAnimation,
-                          child: Image.memory(
-                            widget.image.bytes,
-                            key: const Key('subject-selection-image'),
-                            fit: BoxFit.fill,
-                            gaplessPlayback: true,
+                        child: Image.memory(
+                          widget.image.bytes,
+                          key: const Key('subject-selection-image'),
+                          fit: BoxFit.fill,
+                          gaplessPlayback: true,
+                        ),
+                      ),
+                      if (widget.selectionEnabled)
+                        Positioned.fill(
+                          child: GestureDetector(
+                            key: const Key('subject-selection-redraw-area'),
+                            behavior: HitTestBehavior.translucent,
+                            onPanStart: (details) {
+                              final point = _normalizedPoint(
+                                details.localPosition,
+                                imageRect,
+                              );
+                              if (point == null ||
+                                  selectionRect.contains(
+                                    details.localPosition,
+                                  )) {
+                                return;
+                              }
+                              widget.onInteractionChanged(true);
+                              _redrawAnchor = point;
+                              widget.onSelectionChanged(
+                                _minimumRectAt(point),
+                                SubjectSelectionOrigin.userRedrawn,
+                              );
+                            },
+                            onPanUpdate: (details) {
+                              final anchor = _redrawAnchor;
+                              final point = _normalizedPoint(
+                                details.localPosition,
+                                imageRect,
+                              );
+                              if (anchor == null || point == null) return;
+                              widget.onSelectionChanged(
+                                _rectBetween(anchor, point),
+                                SubjectSelectionOrigin.userRedrawn,
+                              );
+                            },
+                            onPanEnd: (_) {
+                              _redrawAnchor = null;
+                              widget.onInteractionChanged(false);
+                            },
+                            onPanCancel: () {
+                              _redrawAnchor = null;
+                              widget.onInteractionChanged(false);
+                            },
                           ),
                         ),
-                      ),
-                      Positioned.fill(
-                        child: GestureDetector(
-                          key: const Key('subject-selection-redraw-area'),
-                          behavior: HitTestBehavior.translucent,
-                          onPanStart: (details) {
-                            final point = _normalizedPoint(
-                              details.localPosition,
-                              imageRect,
-                            );
-                            if (point == null ||
-                                selectionRect.contains(details.localPosition)) {
-                              return;
-                            }
-                            widget.onInteractionChanged(true);
-                            _redrawAnchor = point;
-                            widget.onSelectionChanged(
-                              _minimumRectAt(point),
-                              SubjectSelectionOrigin.userRedrawn,
-                            );
-                          },
-                          onPanUpdate: (details) {
-                            final anchor = _redrawAnchor;
-                            final point = _normalizedPoint(
-                              details.localPosition,
-                              imageRect,
-                            );
-                            if (anchor == null || point == null) return;
-                            widget.onSelectionChanged(
-                              _rectBetween(anchor, point),
-                              SubjectSelectionOrigin.userRedrawn,
-                            );
-                          },
-                          onPanEnd: (_) {
-                            _redrawAnchor = null;
-                            widget.onInteractionChanged(false);
-                          },
-                          onPanCancel: () {
-                            _redrawAnchor = null;
-                            widget.onInteractionChanged(false);
-                          },
-                        ),
-                      ),
-                      Positioned.fill(
-                        child: IgnorePointer(
-                          child: CustomPaint(
-                            key: const Key('subject-selection-overlay'),
-                            painter: _SelectionOverlayPainter(
-                              imageRect: imageRect,
-                              selectionRect: visualSelectionRect,
-                              color: scheme.primary,
-                              opacity: progress,
+                      if (widget.selectionEnabled)
+                        Positioned.fill(
+                          child: IgnorePointer(
+                            child: CustomPaint(
+                              key: const Key('subject-selection-overlay'),
+                              painter: _SelectionOverlayPainter(
+                                imageRect: imageRect,
+                                selectionRect: visualSelectionRect,
+                                color: scheme.primary,
+                                opacity: progress,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      Positioned.fromRect(
-                        rect: selectionRect,
-                        child: Listener(
-                          key: const Key('subject-selection-box'),
-                          behavior: HitTestBehavior.opaque,
-                          onPointerDown: (_) =>
-                              widget.onInteractionChanged(true),
-                          onPointerUp: (_) =>
-                              widget.onInteractionChanged(false),
-                          onPointerCancel: (_) =>
-                              widget.onInteractionChanged(false),
-                          onPointerMove: (details) {
-                            final dx = details.delta.dx / imageRect.width;
-                            final dy = details.delta.dy / imageRect.height;
-                            final moved = widget.normalizedSelection.shift(
-                              Offset(dx, dy),
-                            );
-                            widget.onSelectionChanged(
-                              moved.shift(
-                                Offset(
-                                  moved.left < 0
-                                      ? -moved.left
-                                      : moved.right > 1
-                                      ? 1 - moved.right
-                                      : 0,
-                                  moved.top < 0
-                                      ? -moved.top
-                                      : moved.bottom > 1
-                                      ? 1 - moved.bottom
-                                      : 0,
+                      if (widget.selectionEnabled)
+                        Positioned.fromRect(
+                          rect: selectionRect,
+                          child: Listener(
+                            key: const Key('subject-selection-box'),
+                            behavior: HitTestBehavior.opaque,
+                            onPointerDown: (_) =>
+                                widget.onInteractionChanged(true),
+                            onPointerUp: (_) =>
+                                widget.onInteractionChanged(false),
+                            onPointerCancel: (_) =>
+                                widget.onInteractionChanged(false),
+                            onPointerMove: (details) {
+                              final dx = details.delta.dx / imageRect.width;
+                              final dy = details.delta.dy / imageRect.height;
+                              final moved = widget.normalizedSelection.shift(
+                                Offset(dx, dy),
+                              );
+                              widget.onSelectionChanged(
+                                moved.shift(
+                                  Offset(
+                                    moved.left < 0
+                                        ? -moved.left
+                                        : moved.right > 1
+                                        ? 1 - moved.right
+                                        : 0,
+                                    moved.top < 0
+                                        ? -moved.top
+                                        : moved.bottom > 1
+                                        ? 1 - moved.bottom
+                                        : 0,
+                                  ),
                                 ),
-                              ),
-                              SubjectSelectionOrigin.userEdited,
-                            );
-                          },
+                                SubjectSelectionOrigin.userEdited,
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                      for (final corner in _SelectionCorner.values)
-                        _ResizeHandle(
-                          corner: corner,
-                          selectionRect: visualSelectionRect,
-                          imageRect: imageRect,
-                          normalizedSelection: widget.normalizedSelection,
-                          color: scheme.primary,
-                          onSelectionChanged: widget.onSelectionChanged,
-                          onInteractionChanged: widget.onInteractionChanged,
-                          entranceOpacity: progress,
-                          interactionActive: widget.interactionActive,
-                        ),
+                      if (widget.selectionEnabled)
+                        for (final corner in _SelectionCorner.values)
+                          _ResizeHandle(
+                            corner: corner,
+                            selectionRect: visualSelectionRect,
+                            imageRect: imageRect,
+                            normalizedSelection: widget.normalizedSelection,
+                            color: scheme.primary,
+                            onSelectionChanged: widget.onSelectionChanged,
+                            onInteractionChanged: widget.onInteractionChanged,
+                            entranceOpacity: progress,
+                            interactionActive: widget.interactionActive,
+                          ),
                     ],
                   ),
                 ),
@@ -530,14 +687,19 @@ class _ResizeHandle extends StatelessWidget {
           child: Center(
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 100),
-              width: interactionActive ? 17 : 15,
-              height: interactionActive ? 17 : 15,
+              width: interactionActive ? 17 : 14,
+              height: interactionActive ? 17 : 14,
               decoration: BoxDecoration(
                 color: color,
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
+                border: Border.all(color: Colors.white, width: 1.5),
                 boxShadow: const [
-                  BoxShadow(color: Colors.black26, blurRadius: 3),
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 4,
+                    offset: Offset(0, 1),
+                  ),
+                  BoxShadow(color: Colors.white54, blurRadius: 2),
                 ],
               ),
             ),
@@ -569,26 +731,26 @@ class _SelectionOverlayPainter extends CustomPainter {
       ..addRect(selectionRect);
     canvas.drawPath(
       dimPath,
-      Paint()..color = Colors.black.withValues(alpha: 0.36 * opacity),
+      Paint()..color = Colors.black.withValues(alpha: 0.3 * opacity),
     );
     final roundedSelection = RRect.fromRectAndRadius(
       selectionRect,
-      const Radius.circular(10),
+      const Radius.circular(12),
     );
     canvas.drawRRect(
       roundedSelection,
       Paint()
         ..color = Colors.white.withValues(alpha: 0.75 * opacity)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 5
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
+        ..strokeWidth = 4
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.5),
     );
     canvas.drawRRect(
       roundedSelection,
       Paint()
         ..color = color.withValues(alpha: opacity)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2,
+        ..strokeWidth = 1.75,
     );
   }
 

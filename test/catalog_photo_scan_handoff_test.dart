@@ -3,7 +3,6 @@ import 'dart:typed_data';
 import 'package:blindbox_app/shared/image/catalog_photo_acquisition.dart';
 import 'package:blindbox_app/shared/image/whole_image_quality.dart';
 import 'package:blindbox_app/shared/widgets/catalog_photo_verification_page.dart';
-import 'package:blindbox_app/shared/widgets/catalog_subject_selection_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as image;
@@ -29,14 +28,14 @@ void main() {
     await _pumpEntryHost(tester, {'Discover': selection});
 
     await tester.tap(find.text('Discover'));
-    await tester.pumpAndSettle();
+    await _settleReviewImage(tester);
     await tester.tap(find.text('Use This Photo'));
     await _settleSubjectImage(tester);
 
-    final screen = tester.widget<CatalogSubjectSelectionScreen>(
-      find.byType(CatalogSubjectSelectionScreen),
+    final sheet = tester.widget<CatalogPhotoVerificationPage>(
+      find.byType(CatalogPhotoVerificationPage),
     );
-    expect(screen.selection, same(selection));
+    expect(sheet.selection, same(selection));
     expect(find.text('Frame your collectible'), findsOneWidget);
     expect(
       find.text('Move and resize the frame until it fits your collectible.'),
@@ -53,7 +52,7 @@ void main() {
 
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
-    expect(find.byType(CatalogSubjectSelectionScreen), findsNothing);
+    expect(find.byType(CatalogPhotoVerificationPage), findsNothing);
     expect(find.text('Discover'), findsOneWidget);
   });
 
@@ -68,14 +67,14 @@ void main() {
 
     for (final entry in entries.entries) {
       await tester.tap(find.text(entry.key));
-      await tester.pumpAndSettle();
+      await _settleReviewImage(tester);
       await tester.tap(find.text('Use This Photo'));
       await _settleSubjectImage(tester);
 
-      final screen = tester.widget<CatalogSubjectSelectionScreen>(
-        find.byType(CatalogSubjectSelectionScreen),
+      final sheet = tester.widget<CatalogPhotoVerificationPage>(
+        find.byType(CatalogPhotoVerificationPage),
       );
-      expect(screen.selection, same(entry.value));
+      expect(sheet.selection, same(entry.value));
       expect(find.byKey(const Key('subject-selection-source')), findsNothing);
 
       await tester.binding.handlePopRoute();
@@ -90,14 +89,29 @@ Future<void> _settleSubjectImage(WidgetTester tester) async {
       () => Future<void>.delayed(const Duration(milliseconds: 50)),
     );
     await tester.pump();
-    if (find
-        .byKey(const Key('subject-selection-image'))
-        .evaluate()
-        .isNotEmpty) {
+    if (find.text('Frame your collectible').evaluate().isNotEmpty) {
+      await tester.pump(const Duration(milliseconds: 200));
       return;
     }
   }
   fail('Subject image did not finish decoding.');
+}
+
+Future<void> _settleReviewImage(WidgetTester tester) async {
+  for (var attempt = 0; attempt < 20; attempt++) {
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 50)),
+    );
+    await tester.pump();
+    if (find
+        .byKey(const Key('subject-selection-image'))
+        .evaluate()
+        .isNotEmpty) {
+      await tester.pump(const Duration(milliseconds: 200));
+      return;
+    }
+  }
+  fail('Review image did not finish decoding.');
 }
 
 Future<void> _pumpEntryHost(

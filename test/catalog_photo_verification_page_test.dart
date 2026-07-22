@@ -64,12 +64,12 @@ void main() {
     final before = tester.getRect(find.byKey(const Key('underlying-page')));
 
     await tester.tap(find.text('Acquire'));
-    await tester.pumpAndSettle();
+    await _settlePhotoLoad(tester);
 
     expect(find.byKey(const Key('catalog-photo-confirmation')), findsOneWidget);
-    expect(find.byType(Dialog), findsOneWidget);
+    expect(find.byType(BottomSheet), findsOneWidget);
     expect(find.byType(AppBar), findsNothing);
-    expect(find.text('Review photo'), findsNothing);
+    expect(find.text('Review photo'), findsOneWidget);
     expect(find.text(catalogPhotoGuidance), findsOneWidget);
     expect(tester.getRect(find.byKey(const Key('underlying-page'))), before);
     expect(evaluator.calls, 0);
@@ -87,11 +87,36 @@ void main() {
     );
 
     await tester.tap(find.text('Acquire'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Use This Photo'));
-    await tester.pumpAndSettle();
+    await _settlePhotoLoad(tester);
+    await _useAndConfirm(tester);
 
     expect(accepted, same(selection));
+  });
+
+  testWidgets('review transitions to framing in one sheet with one image', (
+    tester,
+  ) async {
+    await _pumpHost(tester);
+    await tester.tap(find.text('Acquire'));
+    await _settlePhotoLoad(tester);
+    final imageElement = tester.element(
+      find.byKey(const Key('subject-selection-image')),
+    );
+
+    await tester.tap(find.text('Use This Photo'));
+    await _settleFraming(tester);
+
+    expect(find.byType(BottomSheet), findsOneWidget);
+    expect(find.text('Review photo'), findsNothing);
+    expect(find.text('Frame your collectible'), findsOneWidget);
+    expect(
+      identical(
+        tester.element(find.byKey(const Key('subject-selection-image'))),
+        imageElement,
+      ),
+      isTrue,
+    );
+    expect(find.byKey(const Key('subject-selection-overlay')), findsOneWidget);
   });
 
   testWidgets('retake replaces the preview selection', (tester) async {
@@ -108,11 +133,10 @@ void main() {
     );
 
     await tester.tap(find.text('Acquire'));
-    await tester.pumpAndSettle();
+    await _settlePhotoLoad(tester);
     await tester.tap(find.text('Retake Photo'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Use This Photo'));
-    await tester.pumpAndSettle();
+    await _settlePhotoLoad(tester);
+    await _useAndConfirm(tester);
 
     expect(acquirer.requested, [CatalogPhotoSource.camera]);
     expect(accepted, same(replacement));
@@ -130,11 +154,10 @@ void main() {
     );
 
     await tester.tap(find.text('Acquire'));
-    await tester.pumpAndSettle();
+    await _settlePhotoLoad(tester);
     await tester.tap(find.text('Retake Photo'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Use This Photo'));
-    await tester.pumpAndSettle();
+    await _useAndConfirm(tester);
 
     expect(accepted, same(initial));
   });
@@ -150,11 +173,10 @@ void main() {
     );
 
     await tester.tap(find.text('Acquire'));
-    await tester.pumpAndSettle();
+    await _settlePhotoLoad(tester);
     await tester.tap(find.text('Choose Another Photo'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Use This Photo'));
-    await tester.pumpAndSettle();
+    await _settlePhotoLoad(tester);
+    await _useAndConfirm(tester);
 
     expect(acquirer.requested, [CatalogPhotoSource.gallery]);
     expect(accepted, same(replacement));
@@ -174,11 +196,10 @@ void main() {
     );
 
     await tester.tap(find.text('Acquire'));
-    await tester.pumpAndSettle();
+    await _settlePhotoLoad(tester);
     await tester.tap(find.text('Choose Another Photo'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Use This Photo'));
-    await tester.pumpAndSettle();
+    await _useAndConfirm(tester);
 
     expect(accepted, same(initial));
   });
@@ -188,7 +209,7 @@ void main() {
     await _pumpHost(tester, onAccepted: (value) => accepted = value);
 
     await tester.tap(find.text('Acquire'));
-    await tester.pumpAndSettle();
+    await _settlePhotoLoad(tester);
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
 
@@ -203,7 +224,7 @@ void main() {
     await _pumpHost(tester, onAccepted: (value) => accepted = value);
 
     await tester.tap(find.text('Acquire'));
-    await tester.pumpAndSettle();
+    await _settlePhotoLoad(tester);
 
     expect(
       find.ancestor(
@@ -265,7 +286,7 @@ void main() {
     await _pumpHost(tester, evaluator: evaluator);
 
     await tester.tap(find.text('Acquire'));
-    await tester.pumpAndSettle();
+    await _settlePhotoLoad(tester);
     expect(evaluator.calls, 0);
     await tester.tap(find.text('Use This Photo'));
     await tester.pumpAndSettle();
@@ -305,9 +326,8 @@ void main() {
     );
 
     await tester.tap(find.text('Acquire'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Use This Photo'));
-    await tester.pumpAndSettle();
+    await _settlePhotoLoad(tester);
+    await _useAndConfirm(tester);
 
     expect(accepted, isNotNull);
     expect(
@@ -333,11 +353,13 @@ void main() {
     );
 
     await tester.tap(find.text('Acquire'));
-    await tester.pumpAndSettle();
+    await _settlePhotoLoad(tester);
     await tester.tap(find.text('Use This Photo'));
     await tester.pumpAndSettle();
     evaluator.outcome = WholeImageQualityOutcome.usable;
     await tester.tap(find.text('Choose Another Photo'));
+    await _settleFraming(tester);
+    await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
 
     expect(evaluator.calls, 2);
@@ -357,7 +379,7 @@ void main() {
     );
 
     await tester.tap(find.text('Acquire'));
-    await tester.pumpAndSettle();
+    await _settlePhotoLoad(tester);
     await tester.tap(find.text('Use This Photo'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Retake Photo'));
@@ -383,11 +405,20 @@ void main() {
     );
 
     await tester.tap(find.text('Acquire'));
-    await tester.pumpAndSettle();
+    await _settlePhotoLoad(tester);
     await tester.tap(find.text('Use This Photo'));
     await tester.pump();
     await tester.tap(find.text('Choose Another Photo'));
-    await tester.pump();
+    for (
+      var attempt = 0;
+      attempt < 20 && evaluator.pending.length < 2;
+      attempt++
+    ) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 25)),
+      );
+      await tester.pump();
+    }
     expect(evaluator.selections, [initial, replacement]);
 
     evaluator.pending[0].complete(
@@ -405,6 +436,8 @@ void main() {
         evaluatorVersion: 'current',
       ),
     );
+    await _settleFraming(tester);
+    await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
     expect(accepted, same(replacement));
   });
@@ -416,12 +449,22 @@ void main() {
         selection: _selection(width: size.$1, height: size.$2),
       );
       await tester.tap(find.text('Acquire'));
-      await tester.pumpAndSettle();
+      await _settlePhotoLoad(tester);
 
-      final preview = tester.widget<Image>(
-        find.byKey(const Key('catalog-photo-preview')),
+      final previewRect = tester.getRect(
+        find.byKey(const Key('subject-selection-image')),
       );
-      expect(preview.fit, BoxFit.contain);
+      final viewportRect = tester.getRect(
+        find.byKey(const Key('subject-selection-viewport')),
+      );
+      expect(previewRect.left, greaterThanOrEqualTo(viewportRect.left));
+      expect(previewRect.top, greaterThanOrEqualTo(viewportRect.top));
+      expect(previewRect.right, lessThanOrEqualTo(viewportRect.right));
+      expect(previewRect.bottom, lessThanOrEqualTo(viewportRect.bottom));
+      expect(
+        previewRect.width / previewRect.height,
+        closeTo(size.$1 / size.$2, 0.01),
+      );
       expect(tester.takeException(), isNull);
       await tester.tap(find.byKey(const Key('catalog-photo-close')));
       await tester.pumpAndSettle();
@@ -436,7 +479,7 @@ void main() {
       await _pumpHost(tester, textScaler: const TextScaler.linear(2));
 
       await tester.tap(find.text('Acquire'));
-      await tester.pumpAndSettle();
+      await _settlePhotoLoad(tester);
 
       expect(find.byType(SingleChildScrollView), findsOneWidget);
       expect(tester.takeException(), isNull);
@@ -469,17 +512,15 @@ Future<void> _pumpHost(
           child: Builder(
             builder: (context) => FilledButton(
               onPressed: () async {
-                final accepted = await showDialog<CatalogPhotoSelection>(
-                  context: context,
-                  builder: (_) => CatalogPhotoVerificationPage(
-                    selection: selected,
-                    evaluator:
-                        evaluator ??
-                        _FakeEvaluator(WholeImageQualityOutcome.usable),
-                    photoAcquirer: acquirer,
-                  ),
+                final accepted = await showCatalogPhotoScanSheet(
+                  context,
+                  selected,
+                  evaluator:
+                      evaluator ??
+                      _FakeEvaluator(WholeImageQualityOutcome.usable),
+                  photoAcquirer: acquirer,
                 );
-                if (accepted != null) onAccepted?.call(accepted);
+                if (accepted != null) onAccepted?.call(accepted.photo);
               },
               child: const Text('Acquire'),
             ),
@@ -489,6 +530,48 @@ Future<void> _pumpHost(
     ),
   );
   await tester.pump();
+}
+
+Future<void> _settlePhotoLoad(WidgetTester tester) async {
+  for (var attempt = 0; attempt < 20; attempt++) {
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 25)),
+    );
+    await tester.pump();
+    if (find
+        .byKey(const Key('subject-selection-image'))
+        .evaluate()
+        .isNotEmpty) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 50)),
+      );
+      await tester.pump(const Duration(milliseconds: 250));
+      return;
+    }
+  }
+  fail('Photo did not finish decoding.');
+}
+
+Future<void> _settleFraming(WidgetTester tester) async {
+  for (var attempt = 0; attempt < 20; attempt++) {
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 25)),
+    );
+    await tester.pump();
+    if (find.text('Continue').evaluate().isNotEmpty) {
+      await tester.pump(const Duration(milliseconds: 200));
+      return;
+    }
+  }
+  fail('Framing state did not appear.');
+}
+
+Future<void> _useAndConfirm(WidgetTester tester) async {
+  await tester.tap(find.text('Use This Photo'));
+  await _settleFraming(tester);
+  await tester.ensureVisible(find.text('Continue'));
+  await tester.tap(find.text('Continue'));
+  await tester.pumpAndSettle();
 }
 
 CatalogPhotoSelection _selection({

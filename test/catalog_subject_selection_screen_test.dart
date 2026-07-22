@@ -9,6 +9,66 @@ import 'package:image/image.dart' as image;
 import 'package:image_picker/image_picker.dart';
 
 void main() {
+  testWidgets('uses shared Shelfy typography without local text overrides', (
+    tester,
+  ) async {
+    await _pumpScreen(tester, width: 200, height: 100);
+
+    expect(
+      tester.widget<Text>(find.text('Frame your collectible')).style,
+      equals(
+        Theme.of(
+          tester.element(find.text('Frame your collectible')),
+        ).textTheme.titleLarge,
+      ),
+    );
+    expect(tester.widget<Text>(find.text('Continue')).style, isNull);
+    expect(tester.widget<Text>(find.text('Reset Selection')).style, isNull);
+    expect(tester.widget<Icon>(find.byIcon(Icons.refresh_rounded)).size, 17);
+  });
+
+  testWidgets('AI suggestion status appears only until suggestion is edited', (
+    tester,
+  ) async {
+    const suggestion = NormalizedSubjectRect(
+      left: 0.15,
+      top: 0.15,
+      right: 0.75,
+      bottom: 0.75,
+    );
+    await _pumpScreen(
+      tester,
+      width: 200,
+      height: 100,
+      initialSelection: suggestion,
+      initialOrigin: SubjectSelectionOrigin.suggestedBox,
+    );
+
+    expect(
+      find.text('AI suggested this frame. Adjust if needed.'),
+      findsOneWidget,
+    );
+    final box = find.byKey(const Key('subject-selection-box'));
+    await tester.ensureVisible(box);
+    await tester.drag(box, const Offset(20, 0));
+    await tester.pump();
+    expect(
+      find.text('AI suggested this frame. Adjust if needed.'),
+      findsNothing,
+    );
+  });
+
+  testWidgets('deterministic default never claims to be AI suggested', (
+    tester,
+  ) async {
+    await _pumpScreen(tester, width: 200, height: 100);
+
+    expect(
+      find.byKey(const Key('subject-selection-ai-suggestion')),
+      findsNothing,
+    );
+  });
+
   testWidgets('default box appears inside the displayed image', (tester) async {
     await _pumpScreen(tester, width: 200, height: 100);
 
@@ -125,7 +185,7 @@ void main() {
       find.byKey(const Key('subject-selection-image')),
     );
     final start = imageRect.topLeft + const Offset(12, 12);
-    await tester.dragFrom(start, const Offset(90, 110));
+    await tester.dragFrom(start, const Offset(90, 10));
     await tester.pump();
 
     final redrawn = _relativeSelectionRect(tester);
@@ -187,6 +247,8 @@ Future<void> _pumpScreen(
   required int width,
   required int height,
   TextScaler textScaler = TextScaler.noScaling,
+  NormalizedSubjectRect? initialSelection,
+  SubjectSelectionOrigin initialOrigin = SubjectSelectionOrigin.defaultBox,
 }) async {
   final selection = _selection(width, height);
   await tester.pumpWidget(
@@ -195,7 +257,11 @@ Future<void> _pumpScreen(
         data: MediaQuery.of(context).copyWith(textScaler: textScaler),
         child: child!,
       ),
-      home: CatalogSubjectSelectionScreen(selection: selection),
+      home: CatalogSubjectSelectionScreen(
+        selection: selection,
+        initialSelection: initialSelection,
+        initialOrigin: initialOrigin,
+      ),
     ),
   );
   await _settleImageDecode(tester);
@@ -213,9 +279,7 @@ Future<CatalogSubjectSelectionResult> _pumpAndConfirm(
       home: Builder(
         builder: (context) => FilledButton(
           onPressed: () async {
-            result = await Navigator.of(
-              context,
-            ).push(buildCatalogSubjectSelectionRoute(selection));
+            result = await showCatalogSubjectSelectionSheet(context, selection);
           },
           child: const Text('Open'),
         ),
