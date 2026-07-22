@@ -136,7 +136,7 @@ void main() {
 
     await tester.tap(find.text('Acquire'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Choose Another'));
+    await tester.tap(find.text('Choose Another Photo'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Use This Photo'));
     await tester.pumpAndSettle();
@@ -160,7 +160,7 @@ void main() {
 
     await tester.tap(find.text('Acquire'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Choose Another'));
+    await tester.tap(find.text('Choose Another Photo'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Use This Photo'));
     await tester.pumpAndSettle();
@@ -177,6 +177,66 @@ void main() {
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
 
+    expect(accepted, isNull);
+    expect(find.byKey(const Key('catalog-photo-confirmation')), findsNothing);
+  });
+
+  testWidgets('actions use filled, outlined, and dismiss hierarchy', (
+    tester,
+  ) async {
+    CatalogPhotoSelection? accepted;
+    await _pumpHost(tester, onAccepted: (value) => accepted = value);
+
+    await tester.tap(find.text('Acquire'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.ancestor(
+        of: find.text('Use This Photo'),
+        matching: find.byType(FilledButton),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.ancestor(
+        of: find.text('Retake Photo'),
+        matching: find.byType(OutlinedButton),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.ancestor(
+        of: find.text('Choose Another Photo'),
+        matching: find.byType(OutlinedButton),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.ancestor(of: find.text('Cancel'), matching: find.byType(TextButton)),
+      findsOneWidget,
+    );
+    expect(
+      tester.getSize(find.byKey(const Key('catalog-photo-use'))).height,
+      52,
+    );
+    expect(
+      tester.getSize(find.byKey(const Key('catalog-photo-retake'))).height,
+      52,
+    );
+    expect(
+      tester
+          .getSize(find.byKey(const Key('catalog-photo-choose-another')))
+          .height,
+      52,
+    );
+    expect(
+      tester.getSize(find.byKey(const Key('catalog-photo-cancel'))).height,
+      48,
+    );
+
+    await tester.ensureVisible(find.text('Cancel'));
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
     expect(accepted, isNull);
     expect(find.byKey(const Key('catalog-photo-confirmation')), findsNothing);
   });

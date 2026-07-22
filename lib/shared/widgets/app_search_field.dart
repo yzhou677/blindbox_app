@@ -139,16 +139,18 @@ class AppSearchField extends StatelessWidget {
           constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
           padding: const EdgeInsets.all(6),
           icon: DecoratedBox(
+            key: const Key('catalog-photo-action-container'),
             decoration: BoxDecoration(
-              color: scheme.secondaryContainer.withValues(alpha: 0.62),
+              color: scheme.tertiaryContainer.withValues(alpha: 0.62),
               shape: BoxShape.circle,
             ),
             child: SizedBox.square(
               dimension: 36,
               child: Icon(
                 Icons.photo_camera_outlined,
+                key: const Key('catalog-photo-action-icon'),
                 size: 20,
-                color: scheme.onSecondaryContainer.withValues(alpha: 0.88),
+                color: scheme.onTertiaryContainer.withValues(alpha: 0.88),
               ),
             ),
           ),
@@ -194,6 +196,7 @@ class AppSearchField extends StatelessWidget {
 
   Future<CatalogPhotoSource?> _showPhotoSourceSheet(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final viewportWidth = MediaQuery.sizeOf(context).width;
     return showModalBottomSheet<CatalogPhotoSource>(
       context: context,
       useRootNavigator: false,
@@ -206,6 +209,10 @@ class AppSearchField extends StatelessWidget {
       barrierColor: Colors.black.withValues(alpha: 0.36),
       backgroundColor: Colors.transparent,
       elevation: 0,
+      constraints: BoxConstraints(
+        minWidth: viewportWidth,
+        maxWidth: viewportWidth,
+      ),
       builder: (sheetContext) {
         final bottomInset = MediaQuery.viewPaddingOf(sheetContext).bottom;
         return _PhotoSourceSheet(
@@ -256,15 +263,15 @@ class _PhotoSourceSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       key: const Key('photo-source-sheet'),
-      padding: EdgeInsets.fromLTRB(12, 0, 12, 12 + bottomInset),
+      padding: EdgeInsets.zero,
       child: Material(
         color: scheme.surfaceContainerLow,
         elevation: 10,
         shadowColor: scheme.shadow.withValues(alpha: 0.22),
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
         clipBehavior: Clip.antiAlias,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
+          padding: EdgeInsets.fromLTRB(10, 6, 10, 6 + bottomInset),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -297,22 +304,18 @@ class _PhotoSourceSheet extends StatelessWidget {
                 label: 'Choose from Photos',
                 onTap: onGallery,
               ),
-              const SizedBox(height: 4),
-              Divider(
-                height: 1,
-                thickness: 1,
-                indent: 60,
-                endIndent: 12,
-                color: scheme.outlineVariant.withValues(alpha: 0.52),
-              ),
-              const SizedBox(height: 1),
+              const SizedBox(height: 6),
               SizedBox(
                 height: 48,
                 width: double.infinity,
-                child: TextButton(
+                child: OutlinedButton(
+                  key: const Key('photo-source-cancel'),
                   onPressed: onCancel,
-                  style: TextButton.styleFrom(
+                  style: OutlinedButton.styleFrom(
                     foregroundColor: scheme.onSurfaceVariant,
+                    side: BorderSide(
+                      color: scheme.outlineVariant.withValues(alpha: 0.72),
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(18),
                     ),
@@ -321,7 +324,7 @@ class _PhotoSourceSheet extends StatelessWidget {
                     'Cancel',
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       color: scheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w400,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),

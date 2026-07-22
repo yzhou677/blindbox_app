@@ -104,9 +104,9 @@ class _CatalogPhotoVerificationPageState
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final result = _quality;
-    final previewHeight = (MediaQuery.sizeOf(context).height * 0.42).clamp(
-      190.0,
-      420.0,
+    final previewHeight = (MediaQuery.sizeOf(context).height * 0.37).clamp(
+      170.0,
+      370.0,
     );
 
     return Dialog(
@@ -135,9 +135,9 @@ class _CatalogPhotoVerificationPageState
                 ),
               ),
               _PhotoPreview(bytes: _previewBytes, height: previewHeight),
-              const SizedBox(height: 14),
+              const SizedBox(height: 8),
               _GuidanceText(colorScheme: scheme),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
               if (result == null)
                 const _CheckingState()
               else if (result.status == WholeImageQualityStatus.obviouslyBlurry)
@@ -174,6 +174,7 @@ class _CatalogPhotoVerificationPageState
                   onChooseAnother: _acquiring
                       ? null
                       : () => _replacePhoto(CatalogPhotoSource.gallery),
+                  onCancel: () => Navigator.pop(context),
                 ),
             ],
           ),
@@ -326,40 +327,61 @@ class _PassActions extends StatelessWidget {
     required this.onUsePhoto,
     required this.onRetake,
     required this.onChooseAnother,
+    required this.onCancel,
   });
 
   final VoidCallback onUsePhoto;
   final VoidCallback? onRetake;
   final VoidCallback? onChooseAnother;
+  final VoidCallback onCancel;
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final outlinedStyle = OutlinedButton.styleFrom(
+      foregroundColor: scheme.primary,
+      side: BorderSide(color: scheme.outline, width: 1),
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        FilledButton(
-          key: const Key('catalog-photo-use'),
-          onPressed: onUsePhoto,
-          child: const Text('Use This Photo'),
+        SizedBox(
+          height: 52,
+          child: FilledButton(
+            key: const Key('catalog-photo-use'),
+            onPressed: onUsePhoto,
+            child: const Text('Use This Photo'),
+          ),
         ),
-        const SizedBox(height: 6),
-        Row(
-          children: [
-            Expanded(
-              child: TextButton(
-                key: const Key('catalog-photo-retake'),
-                onPressed: onRetake,
-                child: const Text('Retake Photo'),
-              ),
-            ),
-            Expanded(
-              child: TextButton(
-                key: const Key('catalog-photo-choose-another'),
-                onPressed: onChooseAnother,
-                child: const Text('Choose Another'),
-              ),
-            ),
-          ],
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 52,
+          child: OutlinedButton(
+            key: const Key('catalog-photo-retake'),
+            onPressed: onRetake,
+            style: outlinedStyle,
+            child: const Text('Retake Photo'),
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 52,
+          child: OutlinedButton(
+            key: const Key('catalog-photo-choose-another'),
+            onPressed: onChooseAnother,
+            style: outlinedStyle,
+            child: const Text('Choose Another Photo'),
+          ),
+        ),
+        const SizedBox(height: 14),
+        SizedBox(
+          height: 48,
+          child: TextButton(
+            key: const Key('catalog-photo-cancel'),
+            onPressed: onCancel,
+            style: TextButton.styleFrom(foregroundColor: scheme.primary),
+            child: const Text('Cancel'),
+          ),
         ),
       ],
     );

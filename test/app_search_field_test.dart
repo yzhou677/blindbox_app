@@ -88,6 +88,39 @@ void main() {
     expect(prefixIcon.color?.a, closeTo(0.3, 0.01));
   });
 
+  testWidgets('camera action follows the themed tertiary container pair', (
+    tester,
+  ) async {
+    const tertiaryContainer = Color(0xFFBBAADD);
+    const onTertiaryContainer = Color(0xFF221133);
+    final scheme = ColorScheme.fromSeed(seedColor: Colors.blue).copyWith(
+      tertiaryContainer: tertiaryContainer,
+      onTertiaryContainer: onTertiaryContainer,
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(useMaterial3: true, colorScheme: scheme),
+        home: Scaffold(
+          body: AppSearchField(
+            photoAcquirer: _FakePhotoAcquirer(),
+            onImageSelected: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    final container = tester.widget<DecoratedBox>(
+      find.byKey(const Key('catalog-photo-action-container')),
+    );
+    final decoration = container.decoration as BoxDecoration;
+    final icon = tester.widget<Icon>(
+      find.byKey(const Key('catalog-photo-action-icon')),
+    );
+
+    expect(decoration.color, tertiaryContainer.withValues(alpha: 0.62));
+    expect(icon.color, onTertiaryContainer.withValues(alpha: 0.88));
+  });
+
   testWidgets(
     'photo action preserves search input and returns camera selection',
     (tester) async {
@@ -160,6 +193,53 @@ void main() {
     expect(acquirer.requested, CatalogPhotoSource.gallery);
     expect(callbacks, 0); // Native picker cancellation returns null.
   });
+
+  testWidgets('source picker Cancel is a low-emphasis outlined action', (
+    tester,
+  ) async {
+    await _pumpPhotoField(tester);
+
+    final cancel = find.byKey(const Key('photo-source-cancel'));
+    expect(cancel, findsOneWidget);
+    expect(tester.widget<OutlinedButton>(cancel), isA<OutlinedButton>());
+    expect(tester.getSize(cancel).height, 48);
+    expect(find.byType(Divider), findsNothing);
+
+    final cancelRect = tester.getRect(cancel);
+    final photoRowRect = tester.getRect(find.text('Choose from Photos'));
+    expect(cancelRect.left, lessThan(photoRowRect.left));
+    expect(cancelRect.right, greaterThan(photoRowRect.right));
+
+    await tester.tap(cancel);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('photo-source-sheet')), findsNothing);
+  });
+
+  testWidgets(
+    'source picker is flush to viewport bottom with top corners only',
+    (tester) async {
+      await _pumpPhotoField(tester);
+
+      final sheet = find.byKey(const Key('photo-source-sheet'));
+      final rect = tester.getRect(sheet);
+      final logicalViewportHeight =
+          tester.view.physicalSize.height / tester.view.devicePixelRatio;
+      expect(rect.left, 0);
+      expect(
+        rect.right,
+        tester.view.physicalSize.width / tester.view.devicePixelRatio,
+      );
+      expect(rect.bottom, logicalViewportHeight);
+
+      final material = tester.widget<Material>(
+        find.descendant(of: sheet, matching: find.byType(Material)).first,
+      );
+      expect(
+        material.borderRadius,
+        const BorderRadius.vertical(top: Radius.circular(30)),
+      );
+    },
+  );
 
   testWidgets('photo sheet dismissal does not restore search focus', (
     tester,
