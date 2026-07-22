@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "dataset": "golden-v1",
+  "photos": [
+    {
+      "file": "photos/tinytiny_01.jpg",
+      "catalogPresence": "present",
+      "expectedFigureId": "tinytiny_prologue_series_choice",
+      "notes": "Shelf photo with clutter"
+    },
+    {
+      "file": "photos/labubu.jpg",
+      "catalogPresence": "present",
+      "expectedFigureId": "the_monsters_have_a_seat_vinyl_plush_ququ"
+    },
+    {
+      "file": "photos/unknown.jpg",
+      "catalogPresence": "absent",
+      "notes": "Not in catalog"
+    }
+  ]
+}

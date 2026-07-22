@@ -15,9 +15,13 @@ import previewModule from '../lib/figureRecognition/primarySubjectPreviewWriter.
 import refinerModule from '../lib/figureRecognition/googlePrimarySubjectRefiner.js';
 import refinementModule from '../lib/figureRecognition/primarySubjectRefinementService.js';
 import segmenterModule from '../lib/figureRecognition/geminiSubjectSegmenter.js';
+import decisionConfigModule from '../lib/figureRecognition/retrievalDecisionConfig.js';
+import decisionModule from '../lib/figureRecognition/retrievalDecisionResolver.js';
+import candidateConfigModule from '../lib/figureRecognition/retrievalCandidatePolicyConfig.js';
+import candidateDecisionModule from '../lib/figureRecognition/retrievalCandidatePolicyResolver.js';
 import path from 'node:path';
 
-const { parseFigureRetrievalArgs, formatFigureRetrievalCandidate, formatPrimarySubjectResult } = cliModule;
+const { parseFigureRetrievalArgs, formatFigureRetrievalCandidate, formatPrimarySubjectResult, formatRetrievalDecision, buildRetrievalEvaluationRecord, formatRetrievalEvaluationRecord } = cliModule;
 const { FigureRetrievalService } = serviceModule;
 const { FirestoreFigureVectorSearch, FigureVectorIndexUnavailableError } = searchModule;
 const { LocalImageReader } = readerModule;
@@ -32,6 +36,10 @@ const { PrimarySubjectPreviewWriter } = previewModule;
 const { GooglePrimarySubjectRefiner } = refinerModule;
 const { PrimarySubjectRefinementService } = refinementModule;
 const { GeminiSubjectSegmenter } = segmenterModule;
+const { RETRIEVAL_DECISION_CONFIG } = decisionConfigModule;
+const { ShadowRetrievalDecisionResolver } = decisionModule;
+const { RETRIEVAL_CANDIDATE_POLICY_CONFIG } = candidateConfigModule;
+const { CandidateRetrievalDecisionResolver } = candidateDecisionModule;
 
 const startedAt = Date.now();
 let component = 'arguments';
@@ -102,6 +110,25 @@ try {
   }));
   for (const candidate of candidates) {
     for (const line of formatFigureRetrievalCandidate(candidate)) console.log(line);
+  }
+  const decision = new ShadowRetrievalDecisionResolver(RETRIEVAL_DECISION_CONFIG).decide({
+    candidates,
+    requestedTopK: options.topK,
+    distanceSemantics: 'lower_is_better',
+    calibrationProfile: RETRIEVAL_DECISION_CONFIG.currentCalibrationProfile,
+  });
+  const candidateDecision = new CandidateRetrievalDecisionResolver(RETRIEVAL_CANDIDATE_POLICY_CONFIG).decide({
+    candidates,
+    requestedTopK: options.topK,
+    distanceSemantics: 'lower_is_better',
+    calibrationProfile: RETRIEVAL_DECISION_CONFIG.currentCalibrationProfile,
+  });
+  console.log('\nRetrieval decision');
+  for (const line of formatRetrievalDecision(decision, 'Current shadow policy')) console.log(line);
+  for (const line of formatRetrievalDecision(candidateDecision, 'Candidate policy')) console.log(line);
+  if (options.evaluationLabel) {
+    const record = buildRetrievalEvaluationRecord(options.evaluationLabel, candidates, decision);
+    for (const line of formatRetrievalEvaluationRecord(record)) console.log(line);
   }
 } catch (error) {
   console.log(JSON.stringify({

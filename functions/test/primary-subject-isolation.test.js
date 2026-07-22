@@ -49,6 +49,7 @@ describe('Primary subject locator contract', () => {
   it('centralizes the approved stable Vertex configuration', () => {
     assert.deepEqual({ model: PRIMARY_SUBJECT_CONFIG.model, location: PRIMARY_SUBJECT_CONFIG.location, temperature: PRIMARY_SUBJECT_CONFIG.temperature, mediaResolution: PRIMARY_SUBJECT_CONFIG.mediaResolution, promptVersion: PRIMARY_SUBJECT_CONFIG.promptVersion },
       { model: 'gemini-3.5-flash', location: 'us', temperature: 0, mediaResolution: 'MEDIA_RESOLUTION_HIGH', promptVersion: 'primary-subject-v3' });
+    assert.deepEqual({ minSharpness: PRIMARY_SUBJECT_CONFIG.minSharpness, minGradientEnergy: PRIMARY_SUBJECT_CONFIG.minGradientEnergy }, { minSharpness: 0.25, minGradientEnergy: 0.65 });
     assert.equal(Object.values(PRIMARY_SUBJECT_CONFIG.candidateScoreWeights).reduce((sum, weight) => sum + weight, 0), 1);
   });
 
@@ -142,12 +143,10 @@ describe('Primary subject crop and gate', () => {
     const sharpImage = await fixture();
     const usable = await new PrimarySubjectIsolationService({ async locate() { return single(); } }, cropper, config).isolate(sharpImage);
     assert.equal(usable.status, 'usable');
-    const blurryConfig = { ...config, minSharpness: 9999, minGradientEnergy: 9999 };
-    assert.equal((await new PrimarySubjectIsolationService({ async locate() { return single(); } }, new PrimarySubjectCropper(blurryConfig), blurryConfig).isolate(sharpImage)).status, 'too_blurry');
     assert.equal((await new PrimarySubjectIsolationService({ async locate() { return single([490, 490, 510, 510]); } }, cropper, config).isolate(sharpImage)).status, 'subject_too_small');
     assert.equal((await new PrimarySubjectIsolationService({ async locate() { return { candidates: [] }; } }, cropper, config).isolate(sharpImage)).status, 'no_subject');
     assert.equal((await new PrimarySubjectIsolationService({ async locate() { return { bad: true }; } }, cropper, config).isolate(sharpImage)).reason, 'invalid_locator_output');
-    const flatImage = await fixture(640, 480, { blur: true });
+    const flatImage = { bytes: await sharp({ create: { width: 640, height: 480, channels: 3, background: '#808080' } }).png().toBuffer(), mimeType: 'image/png' };
     assert.equal((await new PrimarySubjectIsolationService({ async locate() { return single(); } }, cropper, config).isolate(flatImage)).status, 'too_blurry');
   });
 
@@ -167,25 +166,37 @@ describe('Primary subject crop and gate', () => {
   });
 
   it('rejects blur only when both signals fail and preserves size/area precedence', async () => {
-    const compositeConfig = { ...config, minSharpness: 1.5, minGradientEnergy: 1 };
+    const compositeConfig = { ...config, minSharpness: 0.25, minGradientEnergy: 0.65 };
     const run = async (sharpness, gradientEnergy, box = { left: 10, top: 10, width: 300, height: 300 }) => {
       const fakeCropper = {
         async orient() { return { bytes: Buffer.from('oriented'), width: 640, height: 480, hasAlpha: false }; },
         pixelBox() { return box; },
         async crop() { return { image: { bytes: Buffer.from('crop'), mimeType: 'image/jpeg' }, box, width: box.width, height: box.height, sharpness, gradientEnergy }; },
       };
-      return new PrimarySubjectIsolationService({ async locate() { return single(); } }, fakeCropper, compositeConfig).isolate({ bytes: Buffer.from('source'), mimeType: 'image/jpeg' });
+      const laplacianVariance = gradientEnergy;
+      const blur = { async evaluateImage() { const laplacianPassed = laplacianVariance >= 0.65, sharpStatsPassed = sharpness >= 0.25; return { usable: laplacianPassed || sharpStatsPassed, combinedBlurPassed: laplacianPassed || sharpStatsPassed, failedSignals: [...(!sharpStatsPassed ? ['sharpness'] : []), ...(!laplacianPassed ? ['laplacian variance'] : [])], sharpStats: sharpness, laplacianVariance, sharpStatsThreshold: 0.25, laplacianVarianceThreshold: 0.65, sharpnessAlgorithm: 'sharp.stats().sharpness', detailAlgorithm: 'variance of laplacian' }; } };
+      return new PrimarySubjectIsolationService({ async locate() { return single(); } }, fakeCropper, compositeConfig, undefined, undefined, undefined, undefined, blur).isolate({ bytes: Buffer.from('source'), mimeType: 'image/jpeg' });
     };
-    const sharpnessLow = await run(0.5, 4);
+    const sharpnessBoundary = await run(0.25, 0.2);
+    assert.equal(sharpnessBoundary.status, 'usable');
+    assert.deepEqual(sharpnessBoundary.diagnostics.failedBlurSignals, ['laplacian variance']);
+    const detailBoundary = await run(0.1, 0.65);
+    assert.equal(detailBoundary.status, 'usable');
+    assert.deepEqual(detailBoundary.diagnostics.failedBlurSignals, ['sharpness']);
+    const representativeReal = await run(0.29, 0.78);
+    assert.equal(representativeReal.status, 'usable');
+    const sharpnessLow = await run(0.1, 0.8);
     assert.equal(sharpnessLow.status, 'usable');
     assert.deepEqual(sharpnessLow.diagnostics.failedBlurSignals, ['sharpness']);
-    const gradientLow = await run(3, 0.2);
+    const gradientLow = await run(0.3, 0.2);
     assert.equal(gradientLow.status, 'usable');
-    assert.deepEqual(gradientLow.diagnostics.failedBlurSignals, ['gradient energy']);
-    const bothLow = await run(0.5, 0.2);
+    assert.deepEqual(gradientLow.diagnostics.failedBlurSignals, ['laplacian variance']);
+    const bothLow = await run(0.249999, 0.649999);
     assert.equal(bothLow.status, 'too_blurry');
-    assert.deepEqual(bothLow.diagnostics.failedBlurSignals, ['sharpness', 'gradient energy']);
-    const tooSmall = await run(0.5, 0.2, { left: 10, top: 10, width: 20, height: 20 });
+    assert.deepEqual(bothLow.diagnostics.failedBlurSignals, ['sharpness', 'laplacian variance']);
+    const clearlyLow = await run(0.1, 0.2);
+    assert.equal(clearlyLow.status, 'too_blurry');
+    const tooSmall = await run(0.1, 0.2, { left: 10, top: 10, width: 20, height: 20 });
     assert.equal(tooSmall.status, 'subject_too_small');
     assert.equal(tooSmall.reason, 'crop_dimensions_below_threshold');
   });
@@ -194,7 +205,7 @@ describe('Primary subject crop and gate', () => {
 describe('Primary subject refinement', () => {
   const prepared = { bytes: Buffer.from('oriented'), width: 1000, height: 800, hasAlpha: false };
   const coarse = { image: { bytes: Buffer.from('coarse'), mimeType: 'image/jpeg' }, box: { left: 100, top: 50, width: 400, height: 300 }, width: 400, height: 300, sharpness: 3, gradientEnergy: 3 };
-  const baseConfig = { ...PRIMARY_SUBJECT_CONFIG, minCropWidth: 20, minCropHeight: 20, minSubjectAreaRatio: 0.001, minSharpness: 1.5, minGradientEnergy: 1 };
+  const baseConfig = { ...PRIMARY_SUBJECT_CONFIG, minCropWidth: 20, minCropHeight: 20, minSubjectAreaRatio: 0.001 };
 
   function refinementHarness(response, overrides = {}, cropMetrics = { sharpness: 3, gradientEnergy: 3 }) {
     let calls = 0;
@@ -209,7 +220,8 @@ describe('Primary subject refinement', () => {
       async cropPixelBox(image, box) { return { image: { bytes: Buffer.from(`final:${box.left}:${box.top}:${box.width}:${box.height}`), mimeType: 'image/jpeg' }, box, width: box.width, height: box.height, ...cropMetrics }; },
     };
     const refiner = { async refine() { calls++; if (response instanceof Error) throw response; return response; } };
-    const service = new PrimarySubjectRefinementService(refiner, cropper, { ...baseConfig, ...overrides });
+    const blur = { async evaluateImage() { const laplacianPassed = cropMetrics.gradientEnergy >= 0.65, sharpStatsPassed = cropMetrics.sharpness >= 0.25; return { usable: laplacianPassed || sharpStatsPassed }; } };
+    const service = new PrimarySubjectRefinementService(refiner, cropper, { ...baseConfig, ...overrides }, blur);
     return { service, cropper, calls: () => calls };
   }
 
@@ -271,6 +283,8 @@ describe('Primary subject refinement', () => {
     assert.equal(size.diagnostics.reason, 'refined_crop_too_small');
     const blur = await refinementHarness({ bbox: [100, 100, 900, 900] }, {}, { sharpness: 0.1, gradientEnergy: 0.1 }).service.refine(prepared, coarse);
     assert.equal(blur.diagnostics.reason, 'refined_crop_too_blurry');
+    assert.equal((await refinementHarness({ bbox: [100, 100, 900, 900] }, {}, { sharpness: 0.25, gradientEnergy: 0.2 }).service.refine(prepared, coarse)).diagnostics.accepted, true);
+    assert.equal((await refinementHarness({ bbox: [100, 100, 900, 900] }, {}, { sharpness: 0.1, gradientEnergy: 0.65 }).service.refine(prepared, coarse)).diagnostics.accepted, true);
   });
 
   it('falls back for malformed output and exhausted model failure', async () => {
@@ -394,7 +408,8 @@ describe('Isolation integration and previews', () => {
     let embeds = 0; let searches = 0;
     const service = new FigureRetrievalService({ async read() { throw new Error('unused'); } }, { async embedStoredImage() { embeds++; return { vector: Array(1024).fill(1) }; } }, { async search() { searches++; return []; } });
     const config = { ...PRIMARY_SUBJECT_CONFIG, minCropWidth: 1, minCropHeight: 1, minSubjectAreaRatio: 0, minSharpness: 9999, minGradientEnergy: 9999 };
-    const result = await new PrimarySubjectIsolationService({ async locate() { return single(); } }, new PrimarySubjectCropper(config), config).isolate(await fixture());
+    const flat = { bytes: await sharp({ create: { width: 640, height: 480, channels: 3, background: '#808080' } }).png().toBuffer(), mimeType: 'image/png' };
+    const result = await new PrimarySubjectIsolationService({ async locate() { return single(); } }, new PrimarySubjectCropper(config), config).isolate(flat);
     if (result.status === 'usable') await service.retrieveStoredImage(result.crop, 5);
     assert.deepEqual({ embeds, searches }, { embeds: 0, searches: 0 });
   });
@@ -431,7 +446,7 @@ describe('Isolation integration and previews', () => {
     const fakeFs = { async mkdir() {}, async writeFile(file, bytes) { writes.set(file, bytes); } };
     const config = { ...PRIMARY_SUBJECT_CONFIG, minCropWidth: 1, minCropHeight: 1, minSubjectAreaRatio: 0, minSharpness: 9999, minGradientEnergy: 9999 };
     const cropper = new PrimarySubjectCropper(config);
-    const source = await fixture();
+    const source = { bytes: await sharp({ create: { width: 640, height: 480, channels: 3, background: '#808080' } }).png().toBuffer(), mimeType: 'image/png' };
     const response = single();
     const result = await new PrimarySubjectIsolationService({ async locate() { return response; } }, cropper, config).isolate(source);
     assert.equal(result.status, 'too_blurry');

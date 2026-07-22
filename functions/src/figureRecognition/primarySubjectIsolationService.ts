@@ -7,6 +7,7 @@ import { InvalidLocatorOutputError, validateLocatorResponse } from './primarySub
 import type { PrimarySubjectLocator, PrimarySubjectResult } from './primarySubjectTypes';
 import { SubjectSegmentationStage } from './subjectSegmentationStage';
 import type { SubjectSegmenter } from './subjectSegmentationTypes';
+import { PrimarySubjectBlurEvaluator, type BlurQualityResult } from './primarySubjectBlurEvaluator';
 
 export class PrimarySubjectIsolationService {
   constructor(
@@ -17,9 +18,11 @@ export class PrimarySubjectIsolationService {
     segmenter?: SubjectSegmenter,
     private readonly now: () => number = Date.now,
     private readonly selector: PrimarySubjectCandidateSelector = new PrimarySubjectCandidateSelector(cropper, config),
-  ) { this.segmentation = new SubjectSegmentationStage(segmenter); }
+    blur?: PrimarySubjectBlurEvaluator,
+  ) { this.segmentation = new SubjectSegmentationStage(segmenter); this.blur = blur ?? new PrimarySubjectBlurEvaluator(cropper); }
 
   private readonly segmentation: SubjectSegmentationStage;
+  private readonly blur: PrimarySubjectBlurEvaluator;
 
   async isolate(image: StoredImage): Promise<PrimarySubjectResult> {
     const startedAt = this.now();
@@ -52,16 +55,12 @@ export class PrimarySubjectIsolationService {
     const failedChecks: Array<'blur' | 'subject size' | 'subject area'> = [];
     const cropDimensionsFailed = crop.box.width < this.config.minCropWidth || crop.box.height < this.config.minCropHeight;
     const subjectAreaFailed = areaRatio < this.config.minSubjectAreaRatio;
-    const sharpnessFailed = crop.sharpness < this.config.minSharpness;
-    const gradientEnergyFailed = crop.gradientEnergy < this.config.minGradientEnergy;
-    const blurFailed = sharpnessFailed && gradientEnergyFailed;
-    const failedBlurSignals: Array<'sharpness' | 'gradient energy'> = [];
-    if (sharpnessFailed) failedBlurSignals.push('sharpness');
-    if (gradientEnergyFailed) failedBlurSignals.push('gradient energy');
+    const blur = await this.blur.evaluateImage(crop.image);
+    const blurFailed = !blur.usable;
     if (cropDimensionsFailed) failedChecks.push('subject size');
     if (subjectAreaFailed) failedChecks.push('subject area');
     if (blurFailed) failedChecks.push('blur');
-    const diagnostics = { ...this.diagnostics(startedAt, prepared.width, prepared.height, crop.width, crop.height, areaRatio, crop.sharpness, failedChecks, crop.gradientEnergy, !blurFailed, failedBlurSignals), refinement };
+    const diagnostics = { ...this.diagnostics(startedAt, prepared.width, prepared.height, crop.width, crop.height, areaRatio, blur, failedChecks), refinement };
     if (cropDimensionsFailed) {
       return { status: 'subject_too_small', reason: 'crop_dimensions_below_threshold', candidates: candidateScores, previewCrops: { coarse: coarseCrop.image, final: crop.image }, diagnostics };
     }
@@ -91,7 +90,7 @@ export class PrimarySubjectIsolationService {
     };
   }
 
-  private diagnostics(startedAt: number, sourceWidth?: number, sourceHeight?: number, cropWidth?: number, cropHeight?: number, subjectAreaRatio?: number, blurMetric?: number, failedChecks?: Array<'blur' | 'subject size' | 'subject area'>, detailMetric?: number, combinedBlurPassed?: boolean, failedBlurSignals?: Array<'sharpness' | 'gradient energy'>) {
+  private diagnostics(startedAt: number, sourceWidth?: number, sourceHeight?: number, cropWidth?: number, cropHeight?: number, subjectAreaRatio?: number, blur?: BlurQualityResult, failedChecks?: Array<'blur' | 'subject size' | 'subject area'>) {
     return {
       locatorModel: this.config.model,
       locatorPromptVersion: this.config.promptVersion,
@@ -101,15 +100,16 @@ export class PrimarySubjectIsolationService {
       cropWidth,
       cropHeight,
       subjectAreaRatio,
-      blurMetric,
-      blurThreshold: blurMetric === undefined ? undefined : this.config.minSharpness,
-      blurAlgorithm: blurMetric === undefined ? undefined : 'sharp.stats().sharpness',
-      detailMetric,
-      detailThreshold: detailMetric === undefined ? undefined : this.config.minGradientEnergy,
-      detailAlgorithm: detailMetric === undefined ? undefined : 'mean absolute grayscale gradient',
-      combinedBlurPassed,
-      failedBlurSignals,
-      padding: blurMetric === undefined ? undefined : this.config.paddingRatio,
+      blurMetric: blur?.sharpStats,
+      blurThreshold: blur?.sharpStatsThreshold,
+      blurAlgorithm: blur?.sharpnessAlgorithm,
+      detailMetric: blur?.laplacianVariance,
+      detailThreshold: blur?.laplacianVarianceThreshold,
+      detailAlgorithm: blur?.detailAlgorithm,
+      combinedBlurPassed: blur?.usable,
+      failedBlurSignals: blur?.failedSignals,
+      blurQuality: blur,
+      padding: blur === undefined ? undefined : this.config.paddingRatio,
       processingResolution: cropWidth === undefined || cropHeight === undefined ? undefined : `${cropWidth}x${cropHeight}`,
       failedChecks,
     };
