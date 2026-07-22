@@ -8,6 +8,7 @@ import 'package:blindbox_app/features/home/widgets/home_catalog_rails.dart';
 import 'package:blindbox_app/features/official_feed/widgets/official_feed_section.dart';
 import 'package:blindbox_app/features/recommendations/widgets/for_you_section.dart';
 import 'package:blindbox_app/shared/widgets/app_search_field.dart';
+import 'package:blindbox_app/shared/widgets/catalog_photo_placeholder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -83,6 +84,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: AppSearchField(
                 readOnly: true,
                 onTap: () => context.push('/home/catalog'),
+                onImageSelected: (selection) =>
+                    showCatalogPhotoPlaceholder(context, selection),
                 hintText: SearchPlaceholders.discoverCatalog,
               ),
             ),

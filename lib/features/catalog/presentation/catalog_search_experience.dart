@@ -14,6 +14,8 @@ import 'package:blindbox_app/features/collection/application/collection_notifier
 import 'package:blindbox_app/features/collection/presentation/collection_series_shelf_cta_presentation.dart';
 import 'package:blindbox_app/shared/widgets/app_search_field.dart';
 import 'package:blindbox_app/shared/widgets/feed_search_screen.dart';
+import 'package:blindbox_app/shared/image/catalog_photo_acquisition.dart';
+import 'package:blindbox_app/shared/widgets/catalog_photo_placeholder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -111,6 +113,10 @@ class _CatalogSearchExperienceState
     final q = query.trim();
     if (q.isEmpty) return;
     ref.read(catalogSearchHistoryProvider.notifier).add(q);
+  }
+
+  void _onImageSelected(CatalogPhotoSelection selection) {
+    showCatalogPhotoPlaceholder(context, selection);
   }
 
   void _scheduleDeferredSearchRecord(String? query) {
@@ -387,6 +393,7 @@ class _CatalogSearchExperienceState
       onClear: _clearSearch,
       historySection: historySection,
       results: results,
+      onImageSelected: _onImageSelected,
     );
   }
 
@@ -409,6 +416,7 @@ class _CatalogSearchExperienceState
           onChanged: _onSearchChanged,
           onSubmitted: () => _recordSearch(_trimmedQuery),
           suffixIcon: _buildClearSuffix(scheme),
+          onImageSelected: _onImageSelected,
         ),
       ),
       if (_hasSearchText)

@@ -67,6 +67,72 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
   }
 
+  ({
+    Rect summary,
+    Rect segment,
+    double scrollOffset,
+    EdgeInsets padding,
+    EdgeInsets viewInsets,
+  })
+  collectionGeometry(WidgetTester tester) {
+    final summary = find.byKey(const Key('collection_insights_compact_glance'));
+    final segment = find.byType(CollectionPageSegmentControl);
+    final screenContext = tester.element(find.byType(CollectionScreen));
+    final mediaQuery = MediaQuery.of(screenContext);
+    final scrollable = tester.state<ScrollableState>(
+      find
+          .descendant(
+            of: find.byType(CollectionScreen),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    return (
+      summary: tester.getRect(summary),
+      segment: tester.getRect(segment),
+      scrollOffset: scrollable.position.pixels,
+      padding: mediaQuery.padding,
+      viewInsets: mediaQuery.viewInsets,
+    );
+  }
+
+  Future<void> openPhotoSourceSheet(WidgetTester tester) async {
+    await tester.tap(find.byKey(const Key('collection_header_add_series')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.tap(find.byKey(const Key('catalog-photo-action')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.byKey(const Key('photo-source-sheet')), findsOneWidget);
+  }
+
+  Future<void> closeAddSeriesSheet(WidgetTester tester) async {
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.text('Add a series'), findsNothing);
+  }
+
+  void expectCollectionGeometryUnchanged(
+    WidgetTester tester,
+    ({
+      Rect summary,
+      Rect segment,
+      double scrollOffset,
+      EdgeInsets padding,
+      EdgeInsets viewInsets,
+    })
+    before,
+  ) {
+    final after = collectionGeometry(tester);
+    expect(after.summary, before.summary);
+    expect(after.segment, before.segment);
+    expect(after.scrollOffset, before.scrollOffset);
+    expect(after.padding, before.padding);
+    expect(after.viewInsets, before.viewInsets);
+    expect(after.summary.bottom, lessThanOrEqualTo(after.segment.top));
+  }
+
   testWidgets('Collection page defaults to Shelf with segment control', (
     tester,
   ) async {
@@ -269,4 +335,86 @@ void main() {
     expect(insightsGap, closeTo(shelfGap, 1));
     expect(wishlistGap, closeTo(shelfGap, 1));
   });
+
+  testWidgets(
+    'photo source dismissal paths preserve Collection summary geometry',
+    (tester) async {
+      final series = testShelfSeries(id: 's1', name: 'Dimoo One');
+      await pumpScreen(
+        tester,
+        CollectionSnapshot(shelfSeries: [series], figureStates: const {}),
+      );
+      final before = collectionGeometry(tester);
+      expect(before.summary.bottom, lessThanOrEqualTo(before.segment.top));
+
+      Future<void> verifyDismiss(
+        Future<void> Function() dismissPhotoSource,
+      ) async {
+        await openPhotoSourceSheet(tester);
+        await dismissPhotoSource();
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
+        expect(find.byKey(const Key('photo-source-sheet')), findsNothing);
+        expectCollectionGeometryUnchanged(tester, before);
+        await closeAddSeriesSheet(tester);
+        expectCollectionGeometryUnchanged(tester, before);
+      }
+
+      await verifyDismiss(() async {
+        await tester.drag(
+          find.byKey(const Key('photo-source-drag-region')),
+          const Offset(0, 180),
+        );
+      });
+      await verifyDismiss(() async {
+        await tester.fling(
+          find.byKey(const Key('photo-source-drag-region')),
+          const Offset(0, 60),
+          3000,
+        );
+      });
+      await verifyDismiss(() async {
+        await tester.tapAt(const Offset(4, 4));
+      });
+      await verifyDismiss(() async {
+        await tester.tap(find.text('Cancel'));
+      });
+      await verifyDismiss(() async {
+        await tester.binding.handlePopRoute();
+      });
+      await verifyDismiss(() async {
+        await tester.tap(find.text('Take Photo'));
+      });
+      await verifyDismiss(() async {
+        await tester.tap(find.text('Choose from Photos'));
+      });
+    },
+  );
+
+  testWidgets(
+    'repeated photo source dismissal does not accumulate layout changes',
+    (tester) async {
+      final series = testShelfSeries(id: 's1', name: 'Dimoo One');
+      await pumpScreen(
+        tester,
+        CollectionSnapshot(shelfSeries: [series], figureStates: const {}),
+      );
+      final before = collectionGeometry(tester);
+
+      await tester.tap(find.byKey(const Key('collection_header_add_series')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      for (var index = 0; index < 3; index++) {
+        await tester.tap(find.byKey(const Key('catalog-photo-action')));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
+        await tester.tap(find.text('Cancel'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
+        expectCollectionGeometryUnchanged(tester, before);
+      }
+      await closeAddSeriesSheet(tester);
+      expectCollectionGeometryUnchanged(tester, before);
+    },
+  );
 }

@@ -103,6 +103,7 @@ void main() {
 
   testWidgets('single keystroke triggers exactly one screen rebuild', (tester) async {
     await _pumpDiscoverSearch(tester);
+    expect(find.byKey(const Key('catalog-photo-action')), findsOneWidget);
     CatalogSearchExperience.debugBuildCount = 0;
 
     await tester.enterText(_searchField, 'w');
