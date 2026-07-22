@@ -37,9 +37,9 @@ void main() {
       find.byType(CatalogSubjectSelectionScreen),
     );
     expect(screen.selection, same(selection));
-    expect(find.text('Select the collectible'), findsOneWidget);
+    expect(find.text('Frame your collectible'), findsOneWidget);
     expect(
-      find.text('Adjust the box around the collectible you want to identify.'),
+      find.text('Move and resize the frame until it fits your collectible.'),
       findsOneWidget,
     );
     expect(find.byKey(const Key('subject-selection-image')), findsOneWidget);
@@ -90,7 +90,10 @@ Future<void> _settleSubjectImage(WidgetTester tester) async {
       () => Future<void>.delayed(const Duration(milliseconds: 50)),
     );
     await tester.pump();
-    if (find.byKey(const Key('subject-selection-image')).evaluate().isNotEmpty) {
+    if (find
+        .byKey(const Key('subject-selection-image'))
+        .evaluate()
+        .isNotEmpty) {
       return;
     }
   }

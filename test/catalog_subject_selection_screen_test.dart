@@ -18,7 +18,7 @@ void main() {
     );
 
     expect(find.byKey(const Key('subject-selection-overlay')), findsOneWidget);
-    expect(find.text('Use This Selection'), findsOneWidget);
+    expect(find.text('Continue'), findsOneWidget);
     expect(box.left, greaterThanOrEqualTo(displayedImage.left));
     expect(box.top, greaterThanOrEqualTo(displayedImage.top));
     expect(box.right, lessThanOrEqualTo(displayedImage.right));
@@ -225,9 +225,9 @@ Future<CatalogSubjectSelectionResult> _pumpAndConfirm(
   await tester.tap(find.text('Open'));
   await tester.pump();
   await _settleImageDecode(tester);
-  await tester.ensureVisible(find.text('Use This Selection'));
+  await tester.ensureVisible(find.text('Continue'));
   await tester.pump();
-  await tester.tap(find.text('Use This Selection'));
+  await tester.tap(find.text('Continue'));
   await tester.pumpAndSettle();
   return result!;
 }
@@ -251,7 +251,11 @@ Future<void> _settleImageDecode(WidgetTester tester) async {
       () => Future<void>.delayed(const Duration(milliseconds: 50)),
     );
     await tester.pump();
-    if (find.byKey(const Key('subject-selection-image')).evaluate().isNotEmpty) {
+    if (find
+        .byKey(const Key('subject-selection-image'))
+        .evaluate()
+        .isNotEmpty) {
+      await tester.pump(const Duration(milliseconds: 200));
       return;
     }
   }
