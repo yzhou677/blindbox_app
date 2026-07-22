@@ -1,7 +1,7 @@
 # Figure Recognition PR7: Whole-Image Quality Precheck
 
-PR7 adds a device-local quality precheck immediately after photo acquisition
-and before subject suggestion. It follows
+PR7 adds a device-local quality precheck after the collector confirms a local
+photo and before subject suggestion. It follows
 [`PDR-001: Figure Recognition Principles`](decisions/product/PDR-001-figure-recognition-principles.md):
 guidance should happen before failure, while recognition remains focused on one
 intended collectible.
@@ -17,7 +17,11 @@ flow. Uncertain photographs pass.
 This narrow responsibility is intentional:
 
 - It runs locally, without upload, network access, Cloud Functions, or AI.
-- It uses one deterministic, low-cost, conservatively configured image metric.
+- It normalizes orientation, downsamples to a bounded 512-pixel longest edge,
+  converts to grayscale luminance, and computes Variance of Laplacian.
+- It rejects only scores strictly below the centralized `8.0` extreme-failure
+  floor. Equality passes. The policy is versioned as
+  `whole-image-blur-precheck-v1`.
 - It does not locate a collectible or evaluate the selected subject.
 - It does not predict retrieval quality, recognition confidence, or identity.
 - It does not replace the selected-subject quality gate or later retrieval
@@ -32,23 +36,26 @@ the evidence for a Catalog match.
 
 ```text
 local photo acquisition
+-> local preview and confirmation
 -> whole-image quality precheck
--> local verification and recovery
+-> local recovery when obviously unusable
 -> future subject suggestion and manual adjustment
 -> selected-subject quality evaluation
 -> recognition and retrieval safeguards
 ```
 
-Only the first three stages belong to this part of PR7. A passing result means
+Only the acquisition-through-recovery stages belong to this part of PR7. A passing result means
 only that the complete photograph is not obviously unusable. It is not a claim
 that any visible collectible is sufficiently sharp, large, isolated, or
 recognizable.
 
 ## Ownership
 
-The application-level evaluator owns deterministic preprocessing, the
-versioned conservative policy, and the simple pass/recovery result. Flutter
-owns preview, guidance, and recovery actions. Backend recognition components
+The replaceable application-level evaluator owns orientation normalization,
+bounded analysis, the single Variance-of-Laplacian calculation, and the
+versioned conservative policy. Decode or evaluation failures fail open; they
+are never presented as blur. It returns only a coarse status to Flutter, while
+metrics and thresholds remain implementation details. Flutter owns preview,
+guidance, confirmation, and recovery actions. Backend recognition components
 remain unaware of this precheck, and the precheck remains unaware of subject
 selection, embeddings, retrieval, ranking, and recognition decisions.
-

@@ -11,41 +11,12 @@ import 'package:image_picker/image_picker.dart';
 void main() {
   const evaluator = LocalWholeImageQualityEvaluator();
 
-  test(
-    'obviously blurry whole image fails the conservative precheck',
-    () async {
-      final source = image.Image(width: 160, height: 120);
-      for (var y = 0; y < source.height; y++) {
-        for (var x = 0; x < source.width; x++) {
-          final value = ((x / source.width) * 80 + 80).round();
-          source.setPixelRgb(x, y, value, value, value);
-        }
-      }
-
-      final result = await evaluator.evaluate(
-        _selection(image.encodePng(source)),
-      );
-
-      expect(result.status, WholeImageQualityStatus.obviouslyBlurry);
-      expect(
-        result.laplacianVariance,
-        lessThan(WholeImageQualityConfig.extremeBlurThreshold),
-      );
-    },
-  );
-
-  test('normal detailed whole image passes', () async {
+  test('normal detailed full photo passes', () async {
     final source = image.Image(width: 160, height: 120);
     for (var y = 0; y < source.height; y++) {
       for (var x = 0; x < source.width; x++) {
         final light = ((x ~/ 8) + (y ~/ 8)).isEven;
-        source.setPixelRgb(
-          x,
-          y,
-          light ? 230 : 30,
-          light ? 210 : 40,
-          light ? 190 : 50,
-        );
+        source.setPixelRgb(x, y, light ? 230 : 30, light ? 210 : 40, 80);
       }
     }
 
@@ -53,48 +24,59 @@ void main() {
       _selection(image.encodeJpg(source)),
     );
 
-    expect(result.status, WholeImageQualityStatus.pass);
-    expect(result.passed, isTrue);
+    expect(result.outcome, WholeImageQualityOutcome.usable);
+    expect(result.metricId, WholeImageQualityConfig.metricId);
+    expect(result.metricValue, isNotNull);
   });
 
-  test('empty and unreadable images fail as invalid', () async {
-    final empty = await evaluator.evaluate(_selection(const []));
-    final unreadable = await evaluator.evaluate(_selection([1, 2, 3, 4]));
+  test('obviously blurred full photo is rejected', () async {
+    final source = image.Image(width: 160, height: 120);
+    for (var y = 0; y < source.height; y++) {
+      for (var x = 0; x < source.width; x++) {
+        final value = 60 + ((x / source.width) * 130).round();
+        source.setPixelRgb(x, y, value, value, value);
+      }
+    }
 
-    expect(empty.status, WholeImageQualityStatus.invalid);
-    expect(unreadable.status, WholeImageQualityStatus.invalid);
+    final result = await evaluator.evaluate(
+      _selection(image.encodePng(source)),
+    );
+
+    expect(result.outcome, WholeImageQualityOutcome.obviouslyTooBlurry);
+    expect(
+      result.metricValue,
+      lessThan(WholeImageQualityConfig.varianceOfLaplacianThreshold),
+    );
   });
 
-  test(
-    'policy threshold and equality behavior are centralized and versioned',
-    () {
-      expect(
-        WholeImageQualityConfig.evaluatorVersion,
-        'whole-image-quality-v1',
-      );
-      expect(
-        WholeImageQualityConfig.passes(
-          WholeImageQualityConfig.extremeBlurThreshold,
-        ),
-        isTrue,
-      );
-      expect(
-        WholeImageQualityConfig.passes(
-          WholeImageQualityConfig.extremeBlurThreshold - 0.000001,
-        ),
-        isFalse,
-      );
-    },
-  );
+  test('threshold equality passes by centralized policy', () {
+    expect(
+      WholeImageQualityConfig.passes(
+        WholeImageQualityConfig.varianceOfLaplacianThreshold,
+      ),
+      isTrue,
+    );
+    expect(
+      WholeImageQualityConfig.passes(
+        WholeImageQualityConfig.varianceOfLaplacianThreshold - 0.000001,
+      ),
+      isFalse,
+    );
+  });
+
+  test('decode failure is evaluation unavailable and fails open', () async {
+    final result = await evaluator.evaluate(_selection(const [1, 2, 3]));
+
+    expect(result.outcome, WholeImageQualityOutcome.evaluationUnavailable);
+    expect(result.canContinue, isTrue);
+  });
 }
 
-CatalogPhotoSelection _selection(List<int> bytes) {
-  return CatalogPhotoSelection(
-    file: XFile.fromData(
-      Uint8List.fromList(bytes),
-      name: 'photo.png',
-      mimeType: 'image/png',
-    ),
-    source: CatalogPhotoSource.gallery,
-  );
-}
+CatalogPhotoSelection _selection(List<int> bytes) => CatalogPhotoSelection(
+  file: XFile.fromData(
+    Uint8List.fromList(bytes),
+    name: 'photo.png',
+    mimeType: 'image/png',
+  ),
+  source: CatalogPhotoSource.gallery,
+);

@@ -1,21 +1,28 @@
 import 'package:blindbox_app/shared/image/catalog_photo_acquisition.dart';
 
-enum WholeImageQualityStatus { pass, obviouslyBlurry, invalid }
+enum WholeImageQualityOutcome {
+  usable,
+  obviouslyTooBlurry,
+  evaluationUnavailable,
+}
 
 class WholeImageQualityResult {
   const WholeImageQualityResult({
-    required this.status,
+    required this.outcome,
     required this.evaluatorVersion,
-    this.laplacianVariance,
+    this.metricId,
+    this.metricValue,
   });
 
-  final WholeImageQualityStatus status;
+  final WholeImageQualityOutcome outcome;
   final String evaluatorVersion;
 
-  /// Developer diagnostic only. Flutter presentation must not display it.
-  final double? laplacianVariance;
+  /// Developer diagnostics only. Presentation must not expose these values.
+  final String? metricId;
+  final double? metricValue;
 
-  bool get passed => status == WholeImageQualityStatus.pass;
+  bool get canContinue =>
+      outcome != WholeImageQualityOutcome.obviouslyTooBlurry;
 }
 
 abstract interface class WholeImageQualityEvaluator {

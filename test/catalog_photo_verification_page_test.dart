@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:blindbox_app/shared/image/catalog_photo_acquisition.dart';
@@ -8,10 +9,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as image;
 import 'package:image_picker/image_picker.dart';
 
-final class _FakeQualityEvaluator implements WholeImageQualityEvaluator {
-  _FakeQualityEvaluator(this.status);
+final class _FakeEvaluator implements WholeImageQualityEvaluator {
+  _FakeEvaluator(this.outcome);
 
-  WholeImageQualityStatus status;
+  WholeImageQualityOutcome outcome;
   var calls = 0;
 
   @override
@@ -20,9 +21,8 @@ final class _FakeQualityEvaluator implements WholeImageQualityEvaluator {
   ) async {
     calls++;
     return WholeImageQualityResult(
-      status: status,
+      outcome: outcome,
       evaluatorVersion: 'test-v1',
-      laplacianVariance: status == WholeImageQualityStatus.pass ? 100 : 0,
     );
   }
 }
@@ -41,12 +41,26 @@ final class _FakePhotoAcquirer implements CatalogPhotoAcquirer {
   }
 }
 
+final class _ControlledEvaluator implements WholeImageQualityEvaluator {
+  final pending = <Completer<WholeImageQualityResult>>[];
+  final selections = <CatalogPhotoSelection>[];
+
+  @override
+  Future<WholeImageQualityResult> evaluate(CatalogPhotoSelection selection) {
+    selections.add(selection);
+    final completer = Completer<WholeImageQualityResult>();
+    pending.add(completer);
+    return completer.future;
+  }
+}
+
 void main() {
   testWidgets('acquired photo opens a floating confirmation over stable page', (
     tester,
   ) async {
     final hostKey = GlobalKey();
-    await _pumpHost(tester, hostKey: hostKey);
+    final evaluator = _FakeEvaluator(WholeImageQualityOutcome.usable);
+    await _pumpHost(tester, hostKey: hostKey, evaluator: evaluator);
     final before = tester.getRect(find.byKey(const Key('underlying-page')));
 
     await tester.tap(find.text('Acquire'));
@@ -58,6 +72,7 @@ void main() {
     expect(find.text('Review photo'), findsNothing);
     expect(find.text(catalogPhotoGuidance), findsOneWidget);
     expect(tester.getRect(find.byKey(const Key('underlying-page'))), before);
+    expect(evaluator.calls, 0);
   });
 
   testWidgets('Use This Photo confirms the existing local selection', (
@@ -241,21 +256,157 @@ void main() {
     expect(find.byKey(const Key('catalog-photo-confirmation')), findsNothing);
   });
 
-  testWidgets('obviously blurry state retains recovery actions', (
+  testWidgets('validation failures stay on review with safe recovery UI', (
     tester,
   ) async {
+    final evaluator = _FakeEvaluator(
+      WholeImageQualityOutcome.obviouslyTooBlurry,
+    );
+    await _pumpHost(tester, evaluator: evaluator);
+
+    await tester.tap(find.text('Acquire'));
+    await tester.pumpAndSettle();
+    expect(evaluator.calls, 0);
+    await tester.tap(find.text('Use This Photo'));
+    await tester.pumpAndSettle();
+
+    expect(evaluator.calls, 1);
+    expect(
+      find.byKey(const Key('catalog-photo-validation-error')),
+      findsOneWidget,
+    );
+    expect(find.text('This photo is too blurry'), findsOneWidget);
+    expect(
+      find.text(
+        'Hold your phone steady and keep the collectible in focus before '
+        'trying again.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Retake Photo'), findsOneWidget);
+    expect(find.text('Choose Another Photo'), findsOneWidget);
+    expect(find.text('Use This Photo'), findsNothing);
+    expect(find.textContaining('Laplacian'), findsNothing);
+    expect(find.textContaining('threshold'), findsNothing);
+
+    await tester.tap(find.byKey(const Key('catalog-photo-close')));
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('evaluation unavailable fails open', (tester) async {
+    final evaluator = _FakeEvaluator(
+      WholeImageQualityOutcome.evaluationUnavailable,
+    );
+    CatalogPhotoSelection? accepted;
     await _pumpHost(
       tester,
-      evaluator: _FakeQualityEvaluator(WholeImageQualityStatus.obviouslyBlurry),
+      evaluator: evaluator,
+      onAccepted: (value) => accepted = value,
     );
 
     await tester.tap(find.text('Acquire'));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Use This Photo'));
+    await tester.pumpAndSettle();
 
-    expect(find.text('Photo is too blurry'), findsOneWidget);
-    expect(find.text('Retake Photo'), findsOneWidget);
-    expect(find.text('Choose Another Photo'), findsOneWidget);
-    expect(find.text('Use This Photo'), findsNothing);
+    expect(accepted, isNotNull);
+    expect(
+      find.byKey(const Key('catalog-photo-validation-error')),
+      findsNothing,
+    );
+  });
+
+  testWidgets('recovery replacement reruns evaluation and continues', (
+    tester,
+  ) async {
+    final replacement = _selection(color: image.ColorRgb8(20, 160, 100));
+    final evaluator = _FakeEvaluator(
+      WholeImageQualityOutcome.obviouslyTooBlurry,
+    );
+    final acquirer = _FakePhotoAcquirer([replacement]);
+    CatalogPhotoSelection? accepted;
+    await _pumpHost(
+      tester,
+      evaluator: evaluator,
+      acquirer: acquirer,
+      onAccepted: (value) => accepted = value,
+    );
+
+    await tester.tap(find.text('Acquire'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Use This Photo'));
+    await tester.pumpAndSettle();
+    evaluator.outcome = WholeImageQualityOutcome.usable;
+    await tester.tap(find.text('Choose Another Photo'));
+    await tester.pumpAndSettle();
+
+    expect(evaluator.calls, 2);
+    expect(accepted, same(replacement));
+  });
+
+  testWidgets('cancelled recovery replacement preserves recovery state', (
+    tester,
+  ) async {
+    final evaluator = _FakeEvaluator(
+      WholeImageQualityOutcome.obviouslyTooBlurry,
+    );
+    await _pumpHost(
+      tester,
+      evaluator: evaluator,
+      acquirer: _FakePhotoAcquirer([null]),
+    );
+
+    await tester.tap(find.text('Acquire'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Use This Photo'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Retake Photo'));
+    await tester.pumpAndSettle();
+
+    expect(evaluator.calls, 1);
+    expect(find.text('This photo is too blurry'), findsOneWidget);
+  });
+
+  testWidgets('stale evaluation cannot overwrite a replacement result', (
+    tester,
+  ) async {
+    final initial = _selection();
+    final replacement = _selection(color: image.ColorRgb8(20, 160, 100));
+    final evaluator = _ControlledEvaluator();
+    CatalogPhotoSelection? accepted;
+    await _pumpHost(
+      tester,
+      selection: initial,
+      evaluator: evaluator,
+      acquirer: _FakePhotoAcquirer([replacement]),
+      onAccepted: (value) => accepted = value,
+    );
+
+    await tester.tap(find.text('Acquire'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Use This Photo'));
+    await tester.pump();
+    await tester.tap(find.text('Choose Another Photo'));
+    await tester.pump();
+    expect(evaluator.selections, [initial, replacement]);
+
+    evaluator.pending[0].complete(
+      const WholeImageQualityResult(
+        outcome: WholeImageQualityOutcome.obviouslyTooBlurry,
+        evaluatorVersion: 'stale',
+      ),
+    );
+    await tester.pump();
+    expect(find.text('This photo is too blurry'), findsNothing);
+
+    evaluator.pending[1].complete(
+      const WholeImageQualityResult(
+        outcome: WholeImageQualityOutcome.usable,
+        evaluatorVersion: 'current',
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(accepted, same(replacement));
   });
 
   testWidgets('portrait and landscape previews do not stretch', (tester) async {
@@ -296,7 +447,7 @@ void main() {
 Future<void> _pumpHost(
   WidgetTester tester, {
   CatalogPhotoSelection? selection,
-  _FakeQualityEvaluator? evaluator,
+  WholeImageQualityEvaluator? evaluator,
   CatalogPhotoAcquirer? acquirer,
   ValueChanged<CatalogPhotoSelection>? onAccepted,
   GlobalKey? hostKey,
@@ -324,7 +475,7 @@ Future<void> _pumpHost(
                     selection: selected,
                     evaluator:
                         evaluator ??
-                        _FakeQualityEvaluator(WholeImageQualityStatus.pass),
+                        _FakeEvaluator(WholeImageQualityOutcome.usable),
                     photoAcquirer: acquirer,
                   ),
                 );

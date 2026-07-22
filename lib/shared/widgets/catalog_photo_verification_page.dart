@@ -3,24 +3,31 @@ import 'dart:typed_data';
 import 'package:blindbox_app/shared/image/catalog_photo_acquisition.dart';
 import 'package:blindbox_app/shared/image/local_whole_image_quality_evaluator.dart';
 import 'package:blindbox_app/shared/image/whole_image_quality.dart';
-import 'package:blindbox_app/shared/widgets/catalog_photo_placeholder.dart';
+import 'package:blindbox_app/shared/widgets/catalog_subject_selection_screen.dart';
 import 'package:flutter/material.dart';
 
 const catalogPhotoGuidance = 'Keep the collectible centered and in focus.';
 
 Future<void> showCatalogPhotoVerification(
   BuildContext context,
-  CatalogPhotoSelection selection,
-) async {
+  CatalogPhotoSelection selection, {
+  WholeImageQualityEvaluator evaluator =
+      const LocalWholeImageQualityEvaluator(),
+}) async {
   final accepted = await showDialog<CatalogPhotoSelection>(
     context: context,
     useRootNavigator: false,
     barrierDismissible: true,
     barrierColor: Colors.black.withValues(alpha: 0.48),
-    builder: (_) => CatalogPhotoVerificationPage(selection: selection),
+    builder: (_) => CatalogPhotoVerificationPage(
+      selection: selection,
+      evaluator: evaluator,
+    ),
   );
   if (accepted != null && context.mounted) {
-    showCatalogPhotoPlaceholder(context, accepted);
+    await Navigator.of(
+      context,
+    ).push(buildCatalogSubjectSelectionRoute(accepted));
   }
 }
 
@@ -46,22 +53,26 @@ class _CatalogPhotoVerificationPageState
     extends State<CatalogPhotoVerificationPage> {
   late CatalogPhotoSelection _selection;
   Uint8List? _previewBytes;
-  WholeImageQualityResult? _quality;
+  var _obviouslyTooBlurry = false;
   var _generation = 0;
   var _acquiring = false;
+  var _previewLoading = true;
+  var _validating = false;
 
   @override
   void initState() {
     super.initState();
     _selection = widget.selection;
-    _evaluate(_selection);
+    _loadPreview(_selection);
   }
 
-  Future<void> _evaluate(CatalogPhotoSelection selection) async {
+  Future<void> _loadPreview(CatalogPhotoSelection selection) async {
     final generation = ++_generation;
     setState(() {
       _previewBytes = null;
-      _quality = null;
+      _previewLoading = true;
+      _obviouslyTooBlurry = false;
+      _validating = false;
     });
 
     Uint8List? bytes;
@@ -70,23 +81,54 @@ class _CatalogPhotoVerificationPageState
     } catch (_) {
       bytes = null;
     }
-    final quality = await widget.evaluator.evaluate(selection);
     if (!mounted || generation != _generation) return;
     setState(() {
       _selection = selection;
       _previewBytes = bytes;
-      _quality = quality;
+      _previewLoading = false;
+    });
+  }
+
+  Future<void> _validateAndConfirm() async {
+    if (_validating) return;
+    final generation = _generation;
+    final selection = _selection;
+    setState(() {
+      _validating = true;
+      _obviouslyTooBlurry = false;
+    });
+    WholeImageQualityResult result;
+    try {
+      result = await widget.evaluator.evaluate(selection);
+    } catch (_) {
+      result = const WholeImageQualityResult(
+        outcome: WholeImageQualityOutcome.evaluationUnavailable,
+        evaluatorVersion: 'evaluation-unavailable',
+      );
+    }
+    if (!mounted || generation != _generation) return;
+    if (result.canContinue) {
+      Navigator.pop(context, selection);
+      return;
+    }
+    setState(() {
+      _validating = false;
+      _obviouslyTooBlurry = true;
     });
   }
 
   Future<void> _replacePhoto(CatalogPhotoSource source) async {
     if (_acquiring) return;
+    final rerunEvaluation = _obviouslyTooBlurry || _validating;
     setState(() => _acquiring = true);
     try {
       final selected =
           await (widget.photoAcquirer ?? ImagePickerCatalogPhotoAcquirer())
               .acquire(source);
-      if (selected != null && mounted) await _evaluate(selected);
+      if (selected != null && mounted) {
+        await _loadPreview(selected);
+        if (rerunEvaluation && mounted) await _validateAndConfirm();
+      }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -103,7 +145,6 @@ class _CatalogPhotoVerificationPageState
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final result = _quality;
     final previewHeight = (MediaQuery.sizeOf(context).height * 0.37).clamp(
       170.0,
       370.0,
@@ -134,30 +175,16 @@ class _CatalogPhotoVerificationPageState
                   icon: const Icon(Icons.close_rounded),
                 ),
               ),
-              _PhotoPreview(bytes: _previewBytes, height: previewHeight),
+              _PhotoPreview(
+                bytes: _previewBytes,
+                height: previewHeight,
+                loading: _previewLoading,
+              ),
               const SizedBox(height: 8),
               _GuidanceText(colorScheme: scheme),
               const SizedBox(height: 14),
-              if (result == null)
-                const _CheckingState()
-              else if (result.status == WholeImageQualityStatus.obviouslyBlurry)
-                _RecoveryState(
-                  icon: Icons.motion_photos_off_outlined,
-                  title: 'Photo is too blurry',
-                  body:
-                      'Hold your phone steady and keep the collectible in focus before taking another photo.',
-                  onRetake: _acquiring
-                      ? null
-                      : () => _replacePhoto(CatalogPhotoSource.camera),
-                  onChooseAnother: _acquiring
-                      ? null
-                      : () => _replacePhoto(CatalogPhotoSource.gallery),
-                )
-              else if (result.status == WholeImageQualityStatus.invalid)
-                _RecoveryState(
-                  icon: Icons.broken_image_outlined,
-                  title: 'Couldn’t use this photo',
-                  body: 'Choose a readable photo and try again.',
+              if (_obviouslyTooBlurry)
+                _ValidationFailureState(
                   onRetake: _acquiring
                       ? null
                       : () => _replacePhoto(CatalogPhotoSource.camera),
@@ -167,7 +194,8 @@ class _CatalogPhotoVerificationPageState
                 )
               else
                 _PassActions(
-                  onUsePhoto: () => Navigator.pop(context, _selection),
+                  onUsePhoto: _validating ? null : _validateAndConfirm,
+                  validating: _validating,
                   onRetake: _acquiring
                       ? null
                       : () => _replacePhoto(CatalogPhotoSource.camera),
@@ -221,10 +249,15 @@ class _GuidanceText extends StatelessWidget {
 }
 
 class _PhotoPreview extends StatelessWidget {
-  const _PhotoPreview({required this.bytes, required this.height});
+  const _PhotoPreview({
+    required this.bytes,
+    required this.height,
+    required this.loading,
+  });
 
   final Uint8List? bytes;
   final double height;
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {
@@ -236,8 +269,14 @@ class _PhotoPreview extends StatelessWidget {
         borderRadius: BorderRadius.circular(22),
         child: ColoredBox(
           color: scheme.surfaceContainerHighest,
-          child: bytes == null
+          child: loading
               ? const Center(child: CircularProgressIndicator())
+              : bytes == null
+              ? Icon(
+                  Icons.broken_image_outlined,
+                  size: 42,
+                  color: scheme.onSurfaceVariant,
+                )
               : Semantics(
                   image: true,
                   label: 'Selected collectible photo',
@@ -259,27 +298,12 @@ class _PhotoPreview extends StatelessWidget {
   }
 }
 
-class _CheckingState extends StatelessWidget {
-  const _CheckingState();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(child: Text('Checking photo…'));
-  }
-}
-
-class _RecoveryState extends StatelessWidget {
-  const _RecoveryState({
-    required this.icon,
-    required this.title,
-    required this.body,
+class _ValidationFailureState extends StatelessWidget {
+  const _ValidationFailureState({
     required this.onRetake,
     required this.onChooseAnother,
   });
 
-  final IconData icon;
-  final String title;
-  final String body;
   final VoidCallback? onRetake;
   final VoidCallback? onChooseAnother;
 
@@ -287,35 +311,64 @@ class _RecoveryState extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Icon(icon, size: 34, color: scheme.onSurfaceVariant),
-        const SizedBox(height: 10),
-        Text(
-          title,
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.headlineSmall,
+        Container(
+          key: const Key('catalog-photo-validation-error'),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: scheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.info_outline_rounded,
+                size: 20,
+                color: scheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'This photo is too blurry',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Hold your phone steady and keep the collectible in '
+                      'focus before trying again.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          body,
-          textAlign: TextAlign.center,
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
-        ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         SizedBox(
-          width: double.infinity,
+          height: 52,
           child: FilledButton(
             key: const Key('catalog-photo-retake'),
             onPressed: onRetake,
             child: const Text('Retake Photo'),
           ),
         ),
-        TextButton(
-          key: const Key('catalog-photo-choose-another'),
-          onPressed: onChooseAnother,
-          child: const Text('Choose Another Photo'),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 52,
+          child: OutlinedButton(
+            key: const Key('catalog-photo-choose-another'),
+            onPressed: onChooseAnother,
+            child: const Text('Choose Another Photo'),
+          ),
         ),
       ],
     );
@@ -325,12 +378,14 @@ class _RecoveryState extends StatelessWidget {
 class _PassActions extends StatelessWidget {
   const _PassActions({
     required this.onUsePhoto,
+    required this.validating,
     required this.onRetake,
     required this.onChooseAnother,
     required this.onCancel,
   });
 
-  final VoidCallback onUsePhoto;
+  final VoidCallback? onUsePhoto;
+  final bool validating;
   final VoidCallback? onRetake;
   final VoidCallback? onChooseAnother;
   final VoidCallback onCancel;
@@ -350,7 +405,7 @@ class _PassActions extends StatelessWidget {
           child: FilledButton(
             key: const Key('catalog-photo-use'),
             onPressed: onUsePhoto,
-            child: const Text('Use This Photo'),
+            child: Text(validating ? 'Checking photo…' : 'Use This Photo'),
           ),
         ),
         const SizedBox(height: 12),
