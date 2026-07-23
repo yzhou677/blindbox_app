@@ -87,18 +87,25 @@ describe('ShadowRetrievalDecisionResolver', () => {
 
 describe('CandidateRetrievalDecisionResolver', () => {
   it('centralizes the production candidate policy thresholds', () => {
-    assert.deepEqual({ version: RETRIEVAL_CANDIDATE_POLICY_CONFIG.policyVersion, profile: RETRIEVAL_CANDIDATE_POLICY_CONFIG.calibrationProfile, distance: RETRIEVAL_CANDIDATE_POLICY_CONFIG.maximumTop1Distance, gap: RETRIEVAL_CANDIDATE_POLICY_CONFIG.minimumTop1Top2Gap }, { version: 'retrieval-policy-candidate-v1', profile: 'figure-image-retrieval-v1', distance: 0.225, gap: 0.025 });
+    assert.deepEqual({ version: RETRIEVAL_CANDIDATE_POLICY_CONFIG.policyVersion, profile: RETRIEVAL_CANDIDATE_POLICY_CONFIG.calibrationProfile, distance: RETRIEVAL_CANDIDATE_POLICY_CONFIG.maximumTop1Distance, gap: RETRIEVAL_CANDIDATE_POLICY_CONFIG.minimumTop1Top2Gap }, { version: 'retrieval-policy-candidate-v1', profile: 'figure-image-retrieval-v1', distance: 0.240, gap: 0.025 });
   });
-  it('accepts exact inclusive boundaries as high confidence', () => {
-    const decision = candidateResolver.decide(input([candidate(1, 0.225), candidate(2, 0.25)]));
+  it('accepts exact inclusive Top-1 distance 0.240 as high confidence when gap holds', () => {
+    const decision = candidateResolver.decide(input([candidate(1, 0.240), candidate(2, 0.265)]));
     assert.equal(decision.outcome, 'high_confidence'); assert.deepEqual(decision.reasons, ['candidate_policy_match']); assert.equal(decision.candidate.rank, 1);
   });
-  it('returns no_confident_match when Top-1 absolute distance exceeds the gate', () => {
-    for (const candidates of [[candidate(1, 0.2250001), candidate(2, 0.3)], [candidate(1, 0.23), candidate(2, 0.5)]]) {
+  it('returns no_confident_match when Top-1 absolute distance exceeds 0.240', () => {
+    for (const candidates of [[candidate(1, 0.2400001), candidate(2, 0.3)], [candidate(1, 0.241), candidate(2, 0.5)]]) {
       const decision = candidateResolver.decide(input(candidates));
       assert.equal(decision.outcome, 'no_confident_match');
       assert.deepEqual(decision.reasons, ['weak_top1_distance_signal']);
     }
+  });
+  it('presents candidates for a true-match distance formerly blocked between 0.225 and 0.240', () => {
+    const decision = candidateResolver.decide(input([candidate(1, 0.232), candidate(2, 0.27)]));
+    assert.equal(decision.outcome, 'high_confidence');
+    assert.deepEqual(decision.reasons, ['candidate_policy_match']);
+    assert.equal(decision.candidate.figureId, 'figure-1');
+    assert.deepEqual(decision.candidate, candidate(1, 0.232));
   });
   it('returns needs_review when Top-1 passes the absolute gate but margin is below minimum', () => {
     const decision = candidateResolver.decide(input([
@@ -108,6 +115,7 @@ describe('CandidateRetrievalDecisionResolver', () => {
     assert.equal(decision.outcome, 'needs_review');
     assert.deepEqual(decision.reasons, ['candidate_policy_not_met']);
     assert.equal(decision.candidates.length, 2);
+    assert.deepEqual(decision.candidates.map((c) => c.rank), [1, 2]);
   });
   it('rejects bracelet-like weak Top-K as no_confident_match (not presentable)', () => {
     const braceletLike = [candidate(1, 0.41), candidate(2, 0.44), candidate(3, 0.47)];
