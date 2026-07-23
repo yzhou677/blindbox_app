@@ -45,5 +45,17 @@ void main() {
       CollectibleMotion.recognitionFindingNoMatchChecklistOpacity,
       inInclusiveRange(0.55, 0.70),
     );
+    expect(
+      CollectibleMotion.recognitionFindingStatusCrossfade.inMilliseconds,
+      inInclusiveRange(180, 220),
+    );
+    expect(
+      CollectibleMotion.recognitionFindingMatchedSettle,
+      greaterThan(CollectibleMotion.recognitionFindingStatusCrossfade),
+    );
+    expect(
+      CollectibleMotion.recognitionFindingMatchedSettle.inMilliseconds,
+      inInclusiveRange(280, 360),
+    );
   });
 }

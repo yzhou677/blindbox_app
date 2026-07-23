@@ -38,6 +38,7 @@ Read these first when touching the relevant area:
 | ---- | -------------------- |
 | Recommendations / For You | [`ADR-001: Recommendation Semantics`](docs/decisions/architecture/ADR-001-recommendation-semantics.md) |
 | Catalog runtime / Search V2 | [`docs/CATALOG_ARCHITECTURE.md`](docs/CATALOG_ARCHITECTURE.md), [`docs/SEARCH_ARCHITECTURE.md`](docs/SEARCH_ARCHITECTURE.md) |
+| Figure Recognition | [`docs/figure-recognition.md`](docs/figure-recognition.md), [`ADR-003`](docs/decisions/architecture/ADR-003-ai-figure-recognition-retrieval-architecture.md), [`PDR-001`](docs/decisions/product/PDR-001-figure-recognition-principles.md) |
 | App-wide architecture notes | [`docs/ARCHITECTURE_NOTES.md`](docs/ARCHITECTURE_NOTES.md) |
 | Three universes, Firebase, folder layout | [`.cursor/ARCHITECTURE.md`](.cursor/ARCHITECTURE.md) |
 

@@ -50,6 +50,15 @@ abstract final class CollectibleMotion {
   /// Soft background emphasis for the settled no-match checklist.
   static const double recognitionFindingNoMatchChecklistOpacity = 0.62;
 
+  /// Active → settled Matching indicator crossfade (✓ or ⊖).
+  static const Duration recognitionFindingStatusCrossfade =
+      Duration(milliseconds: 200);
+
+  /// Brief Matching ✓ hold after a successful resolve before candidate cards.
+  /// Kept longer than [recognitionFindingStatusCrossfade] so ✓ is visible.
+  static const Duration recognitionFindingMatchedSettle =
+      Duration(milliseconds: 320);
+
   /// Unified expand/collapse for Collection insights dashboard (morph + size).
   static const Duration insightsDashboardTransition =
       Duration(milliseconds: 240);

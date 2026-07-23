@@ -1,5 +1,8 @@
 # Figure Recognition Milestone 1
 
+> **Historical implementation.** Bootstrap milestone. Current production
+> recognition is summarized in [`figure-recognition.md`](figure-recognition.md).
+
 Milestone 1 verifies that the existing Firebase backend can read one catalog
 image from the project's default Firebase Storage bucket and request an image
 embedding. It does not expose a Cloud Function, persist the vector, or perform

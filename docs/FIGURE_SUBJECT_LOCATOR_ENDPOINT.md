@@ -1,5 +1,8 @@
 # Figure Subject Locator Endpoint (PR7 Part 3A)
 
+Framing suggestion only. Full recognition flow:
+[`figure-recognition.md`](figure-recognition.md).
+
 ## Boundary
 
 `subjectLocatorV1` is a narrow, App Check-protected Gen 2 callable Function.

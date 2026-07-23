@@ -1,5 +1,9 @@
 # Figure Recognition V1 — Milestone 3 Retrieval
 
+> **Historical implementation.** Developer retrieval CLI milestone. Production
+> recognition decisions are documented in
+> [`figure-recognition.md`](figure-recognition.md).
+
 Milestone 3 is an internal developer evaluation tool. It reads one local image,
 generates a 1024-dimensional `gemini-embedding-2` embedding in Vertex AI, and
 returns the nearest documents from `catalogFigureEmbeddings`. It does not decide

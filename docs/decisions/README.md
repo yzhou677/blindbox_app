@@ -36,3 +36,9 @@ Decisions.
 
 Keep records concise. Link to implementation docs instead of copying them.
 
+## Figure Recognition
+
+- Product principles: [`product/PDR-001-figure-recognition-principles.md`](product/PDR-001-figure-recognition-principles.md)
+- Retrieval architecture: [`architecture/ADR-003-ai-figure-recognition-retrieval-architecture.md`](architecture/ADR-003-ai-figure-recognition-retrieval-architecture.md)
+- Current implementation: [`../figure-recognition.md`](../figure-recognition.md)
+

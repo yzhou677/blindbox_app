@@ -34,7 +34,6 @@ export type RecognitionCandidateV1 = {
 
 type QualityFields = { subjectQuality: 'good' | 'borderline'; blurEvaluatorVersion: string };
 export type RecognizeFigureResponseV1 =
-  | ({ version: 1; status: 'borderline' } & QualityFields)
   | { version: 1; status: 'too_blurry'; blurEvaluatorVersion: string }
   | ({ version: 1; status: 'candidates'; decision: 'needs_review' | 'high_confidence'; candidates: RecognitionCandidateV1[]; policyVersion: string } & QualityFields)
   | ({ version: 1; status: 'no_confident_match'; policyVersion: string } & QualityFields);

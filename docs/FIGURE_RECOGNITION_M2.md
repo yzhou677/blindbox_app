@@ -1,5 +1,8 @@
 # Figure Recognition V1 — Milestone 2
 
+> **Historical implementation.** Embedding backfill milestone. See
+> [`figure-recognition.md`](figure-recognition.md) for the live recognition path.
+
 Milestone 2 creates one resumable, internal catalog-image embedding backfill. It
 reads the canonical `figures` collection and default Firebase Storage bucket,
 then writes one native Firestore vector document to

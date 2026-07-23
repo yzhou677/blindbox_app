@@ -1,5 +1,8 @@
 # Figure Recognition PR7: Whole-Image Quality Precheck
 
+Current whole-image precheck behavior is also summarized in
+[`figure-recognition.md`](figure-recognition.md).
+
 PR7 adds a device-local quality precheck after the collector confirms a local
 photo and before subject suggestion. It follows
 [`PDR-001: Figure Recognition Principles`](decisions/product/PDR-001-figure-recognition-principles.md):

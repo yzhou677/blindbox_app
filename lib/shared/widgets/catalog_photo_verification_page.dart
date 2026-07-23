@@ -187,6 +187,9 @@ class _CatalogPhotoVerificationPageState
   var _obviouslyTooBlurry = false;
   var _generation = 0;
   var _findingSequenceId = 0;
+  /// Successful resolve: hold Matching ✓ briefly before candidate cards.
+  var _findingMatched = false;
+  Timer? _matchedSettleTimer;
   var _acquiring = false;
   var _previewLoading = true;
   var _validating = false;
@@ -208,6 +211,7 @@ class _CatalogPhotoVerificationPageState
 
   @override
   void dispose() {
+    _matchedSettleTimer?.cancel();
     _locatorGateway.cancelPending();
     widget.recognitionCoordinator?.cancelPending();
     _ownedRecognitionCoordinator?.cancelPending();
@@ -397,6 +401,9 @@ class _CatalogPhotoVerificationPageState
               CatalogPhotoScanPresentationState.recognizing) {
             _findingSequenceId++;
           }
+          _findingMatched = false;
+          _matchedSettleTimer?.cancel();
+          _matchedSettleTimer = null;
           _presentationState = CatalogPhotoScanPresentationState.recognizing;
         });
         if (!transitionLogged) {
@@ -413,25 +420,54 @@ class _CatalogPhotoVerificationPageState
     if (!mounted || generation != _generation || result == null) return;
     final resultTransitionTimer = Stopwatch()..start();
     var emitSuccessHaptic = false;
+    _matchedSettleTimer?.cancel();
+    _matchedSettleTimer = null;
     setState(() {
       switch (result) {
         case CatalogRecognitionTooBlurry():
+          _findingMatched = false;
           _presentationState = CatalogPhotoScanPresentationState.tooBlurry;
         case CatalogRecognitionCandidates():
           _candidates = result.candidates;
           _recognitionDecision = result.decision;
-          _presentationState = CatalogPhotoScanPresentationState.candidates;
-          _candidateRevealEpoch++;
+          _findingMatched = true;
+          // Stay on recognizing so Matching can settle ● → ✓, then reveal.
+          _presentationState = CatalogPhotoScanPresentationState.recognizing;
           emitSuccessHaptic = result.candidates.isNotEmpty;
         case CatalogRecognitionNoConfidentMatch():
+          _findingMatched = false;
           _presentationState =
               CatalogPhotoScanPresentationState.noConfidentMatch;
         case CatalogRecognitionFailure():
+          _findingMatched = false;
           _failureKind = result.kind;
           _presentationState =
               CatalogPhotoScanPresentationState.recoverableFailure;
       }
     });
+    if (result is CatalogRecognitionCandidates) {
+      final reduceMotion = !mounted
+          ? true
+          : MediaQuery.disableAnimationsOf(context);
+      final delay = reduceMotion
+          ? Duration.zero
+          : CollectibleMotion.recognitionFindingMatchedSettle;
+      void revealCandidates() {
+        if (!mounted || generation != _generation) return;
+        setState(() {
+          _findingMatched = false;
+          _presentationState = CatalogPhotoScanPresentationState.candidates;
+          _candidateRevealEpoch++;
+        });
+      }
+
+      if (delay == Duration.zero) {
+        // One frame of Matching ✓ for tests / reduced motion, then reveal.
+        WidgetsBinding.instance.addPostFrameCallback((_) => revealCandidates());
+      } else {
+        _matchedSettleTimer = Timer(delay, revealCandidates);
+      }
+    }
     if (emitSuccessHaptic) _emitSuccessHapticOnce(generation);
     _debugScanTiming(
       'client_ui',
@@ -513,10 +549,12 @@ class _CatalogPhotoVerificationPageState
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text('Comparing with the Shelfy catalog.', style: subtitle),
-          const SizedBox(height: AppSpacing.sm),
-          const _FindingProgressIndicator(
-            key: Key('recognition-finding-progress'),
-          ),
+          if (!_findingMatched) ...[
+            const SizedBox(height: AppSpacing.sm),
+            const _FindingProgressIndicator(
+              key: Key('recognition-finding-progress'),
+            ),
+          ],
         ],
       ),
       CatalogPhotoScanPresentationState.tooBlurry => Text(
@@ -848,6 +886,8 @@ class _CatalogPhotoVerificationPageState
                                   sequenceId: _findingSequenceId,
                                   outcome: noConfidentMatch
                                       ? _FindingChecklistOutcome.noMatch
+                                      : _findingMatched
+                                      ? _FindingChecklistOutcome.matched
                                       : _FindingChecklistOutcome.loading,
                                 ),
                               ],
@@ -1122,11 +1162,10 @@ class _FindingProgressIndicator extends StatelessWidget {
 
 /// Display-only analysis steps while recognition runs. Cosmetic pacing only —
 /// not tied to backend stages. Final Matching stays active until the parent
-/// leaves the recognizing state; on no-confident-match every step settles
-/// completed (Matching keeps the purple check — soft failure is the subtitle).
-enum _FindingStepStatus { pending, active, completed }
+/// resolves: ✓ on candidates, ⊖ on no-confident-match.
+enum _FindingStepStatus { pending, active, completed, unmatched }
 
-enum _FindingChecklistOutcome { loading, noMatch }
+enum _FindingChecklistOutcome { loading, noMatch, matched }
 
 class _FindingChecklistStep {
   const _FindingChecklistStep({
@@ -1211,6 +1250,8 @@ class _FindingAnalysisChecklistState extends State<_FindingAnalysisChecklist>
     );
     if (widget.outcome == _FindingChecklistOutcome.noMatch) {
       _applyNoMatchSettlement(immediateSoften: true, notify: false);
+    } else if (widget.outcome == _FindingChecklistOutcome.matched) {
+      _applyMatchedSettlement(notify: false);
     } else {
       _armAdvanceTimers();
     }
@@ -1228,17 +1269,22 @@ class _FindingAnalysisChecklistState extends State<_FindingAnalysisChecklist>
       _softened = false;
       if (widget.outcome == _FindingChecklistOutcome.noMatch) {
         _applyNoMatchSettlement(immediateSoften: true);
+      } else if (widget.outcome == _FindingChecklistOutcome.matched) {
+        _applyMatchedSettlement();
       } else {
         _armAdvanceTimers();
         _syncPulse();
       }
       return;
     }
-    if (oldWidget.outcome != widget.outcome &&
-        widget.outcome == _FindingChecklistOutcome.noMatch) {
-      _applyNoMatchSettlement(
-        immediateSoften: MediaQuery.disableAnimationsOf(context),
-      );
+    if (oldWidget.outcome != widget.outcome) {
+      if (widget.outcome == _FindingChecklistOutcome.noMatch) {
+        _applyNoMatchSettlement(
+          immediateSoften: MediaQuery.disableAnimationsOf(context),
+        );
+      } else if (widget.outcome == _FindingChecklistOutcome.matched) {
+        _applyMatchedSettlement();
+      }
     }
   }
 
@@ -1272,6 +1318,17 @@ class _FindingAnalysisChecklistState extends State<_FindingAnalysisChecklist>
     _advanceTimers.clear();
   }
 
+  void _applyMatchedSettlement({bool notify = true}) {
+    _cancelAdvanceTimers();
+    _softenTimer?.cancel();
+    _softenTimer = null;
+    _pulseController.stop();
+    _pulseController.value = 1;
+    _activeIndex = _matchingIndex;
+    _softened = false;
+    if (notify && mounted) setState(() {});
+  }
+
   void _applyNoMatchSettlement({
     required bool immediateSoften,
     bool notify = true,
@@ -1299,7 +1356,8 @@ class _FindingAnalysisChecklistState extends State<_FindingAnalysisChecklist>
     if (!mounted) return;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     if (reduceMotion ||
-        widget.outcome == _FindingChecklistOutcome.noMatch) {
+        widget.outcome == _FindingChecklistOutcome.noMatch ||
+        widget.outcome == _FindingChecklistOutcome.matched) {
       _pulseController.stop();
       _pulseController.value = 1;
       return;
@@ -1319,6 +1377,10 @@ class _FindingAnalysisChecklistState extends State<_FindingAnalysisChecklist>
 
   _FindingStepStatus _statusFor(int index) {
     if (widget.outcome == _FindingChecklistOutcome.noMatch) {
+      if (index == _matchingIndex) return _FindingStepStatus.unmatched;
+      return _FindingStepStatus.completed;
+    }
+    if (widget.outcome == _FindingChecklistOutcome.matched) {
       return _FindingStepStatus.completed;
     }
     if (index < _activeIndex) return _FindingStepStatus.completed;
@@ -1387,7 +1449,7 @@ class _FindingChecklistRow extends StatelessWidget {
     final muted = scheme.onSurfaceVariant.withValues(alpha: 0.55);
     final titleStyle = AppTypography.cardTitle(textTheme, scheme).copyWith(
       color: switch (status) {
-        _FindingStepStatus.pending => muted,
+        _FindingStepStatus.pending || _FindingStepStatus.unmatched => muted,
         _ => scheme.onSurface,
       },
     );
@@ -1399,9 +1461,11 @@ class _FindingChecklistRow extends StatelessWidget {
               ? null
               : step.completedDetail,
           _FindingStepStatus.active => step.activeDetail,
+          _FindingStepStatus.unmatched => _findingMatchingNoMatchDetail,
           _FindingStepStatus.pending => null,
         };
-    final softDetail = detailOverride != null;
+    final softDetail =
+        detailOverride != null || status == _FindingStepStatus.unmatched;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1422,7 +1486,7 @@ class _FindingChecklistRow extends StatelessWidget {
               AnimatedDefaultTextStyle(
                 duration: reduceMotion
                     ? Duration.zero
-                    : CollectibleMotion.crossfade,
+                    : CollectibleMotion.recognitionFindingStatusCrossfade,
                 style: titleStyle,
                 child: Text(step.title),
               ),
@@ -1438,7 +1502,7 @@ class _FindingChecklistRow extends StatelessWidget {
                       )
               else
                 AnimatedSize(
-                  duration: CollectibleMotion.crossfade,
+                  duration: CollectibleMotion.recognitionFindingStatusCrossfade,
                   curve: CollectibleMotion.easeOut,
                   alignment: Alignment.topLeft,
                   child: detail == null
@@ -1446,7 +1510,8 @@ class _FindingChecklistRow extends StatelessWidget {
                       : Padding(
                           padding: const EdgeInsets.only(top: 2),
                           child: AnimatedSwitcher(
-                            duration: CollectibleMotion.crossfade,
+                            duration: CollectibleMotion
+                                .recognitionFindingStatusCrossfade,
                             child: Text(
                               detail,
                               key: ValueKey('${step.title}-$detail'),
@@ -1495,11 +1560,29 @@ class _FindingStepIndicator extends StatelessWidget {
       ),
     );
 
-    return switch (status) {
+    final child = switch (status) {
       _FindingStepStatus.completed => filled,
       _FindingStepStatus.active => reduceMotion
           ? filled
           : ScaleTransition(scale: pulse, child: filled),
+      _FindingStepStatus.unmatched => SizedBox(
+          width: _size,
+          height: _size,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: scheme.onSurfaceVariant.withValues(alpha: 0.38),
+                width: 1.5,
+              ),
+            ),
+            child: Icon(
+              Icons.remove_rounded,
+              size: 11,
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.55),
+            ),
+          ),
+        ),
       _FindingStepStatus.pending => SizedBox(
           width: _size,
           height: _size,
@@ -1514,6 +1597,18 @@ class _FindingStepIndicator extends StatelessWidget {
           ),
         ),
     };
+
+    return AnimatedSwitcher(
+      duration: reduceMotion
+          ? Duration.zero
+          : CollectibleMotion.recognitionFindingStatusCrossfade,
+      switchInCurve: CollectibleMotion.easeOut,
+      switchOutCurve: CollectibleMotion.easeIn,
+      child: KeyedSubtree(
+        key: ValueKey(status),
+        child: child,
+      ),
+    );
   }
 }
 
@@ -1805,8 +1900,8 @@ class _RecognitionCandidateCard extends StatelessWidget {
                       'Best Match',
                       key: const Key('recognition-best-match-label'),
                       // Scan-result emphasis: primary labelMedium — denser than
-                      // CollectibleScanBadge (labelSmall) and kept for approved
-                      // recognition hierarchy.
+                      // a labelSmall badge and kept for approved recognition
+                      // hierarchy.
                       style: textTheme.labelMedium?.copyWith(
                         color: scheme.primary,
                         fontWeight: FontWeight.w600,

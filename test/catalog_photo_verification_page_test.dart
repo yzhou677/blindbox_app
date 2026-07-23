@@ -839,7 +839,8 @@ void main() {
       ),
     );
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(CollectibleMotion.recognitionFindingMatchedSettle);
+    await tester.pump();
     expect(find.text('We found a close match'), findsOneWidget);
     expect(
       find.byKey(const Key('recognition-finding-progress')),
@@ -963,11 +964,17 @@ void main() {
       expect(
         find.descendant(
           of: find.byKey(const Key('recognition-finding-step-4')),
-          matching: find.byIcon(Icons.check_rounded),
+          matching: find.byIcon(Icons.remove_rounded),
         ),
         findsOneWidget,
       );
-      expect(find.byIcon(Icons.remove_rounded), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('recognition-finding-step-4')),
+          matching: find.byIcon(Icons.check_rounded),
+        ),
+        findsNothing,
+      );
     },
   );
 
@@ -1010,14 +1017,14 @@ void main() {
       expect(
         find.descendant(
           of: find.byKey(const Key('recognition-finding-step-4')),
-          matching: find.byIcon(Icons.check_rounded),
+          matching: find.byIcon(Icons.remove_rounded),
         ),
         findsOneWidget,
       );
       expect(
         find.descendant(
           of: find.byKey(const Key('recognition-finding-step-4')),
-          matching: find.byIcon(Icons.remove_rounded),
+          matching: find.byIcon(Icons.check_rounded),
         ),
         findsNothing,
       );
@@ -1072,7 +1079,7 @@ void main() {
   );
 
   testWidgets(
-    'early recognition result settles Matching as completed with no-match subtitle',
+    'early recognition result settles Matching as ⊖ with no-match subtitle',
     (tester) async {
       final gateway = _PendingRecognitionGateway();
       await _pumpHost(
@@ -1096,9 +1103,16 @@ void main() {
       expect(
         find.descendant(
           of: find.byKey(const Key('recognition-finding-step-4')),
-          matching: find.byIcon(Icons.check_rounded),
+          matching: find.byIcon(Icons.remove_rounded),
         ),
         findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('recognition-finding-step-4')),
+          matching: find.byIcon(Icons.check_rounded),
+        ),
+        findsNothing,
       );
       expect(
         find.byKey(const Key('recognition-finding-checklist')),
@@ -1176,6 +1190,231 @@ void main() {
   );
 
   testWidgets(
+    'Matching status reflects outcome: ● pending, ✓ candidates, ⊖ no-match',
+    (tester) async {
+      final gateway = _PendingRecognitionGateway();
+      await _pumpHost(
+        tester,
+        recognitionCoordinator: CatalogFigureRecognitionCoordinator(gateway),
+      );
+      await tester.tap(find.text('Acquire'));
+      await _settlePhotoLoad(tester);
+      await tester.tap(find.text('Use This Photo'));
+      await _settleFraming(tester);
+      await tester.tap(find.text('Continue'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 1));
+
+      // Untouched later rows stay pending ○ (outlined, no check/dash).
+      expect(find.text('Checking silhouette…'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('recognition-finding-step-0')),
+          matching: find.byIcon(Icons.check_rounded),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('recognition-finding-step-4')),
+          matching: find.byIcon(Icons.check_rounded),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('recognition-finding-step-4')),
+          matching: find.byIcon(Icons.remove_rounded),
+        ),
+        findsNothing,
+      );
+
+      // Advance to Matching ● (active filled primary, no check).
+      await tester.pump(CollectibleMotion.recognitionFindingFacialComplete);
+      await tester.pump();
+      expect(find.text('Matching with the catalog…'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('recognition-finding-step-4')),
+          matching: find.byIcon(Icons.check_rounded),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('recognition-finding-step-3')),
+          matching: find.byIcon(Icons.check_rounded),
+        ),
+        findsOneWidget,
+      );
+
+      gateway.pending.complete(
+        const CatalogRecognitionCandidates(
+          quality: CatalogSubjectQuality.good,
+          decision: CatalogRecognitionDecision.highConfidence,
+          candidates: [
+            CatalogRecognitionCandidate(
+              rank: 1,
+              figureId: 'figure-a',
+              figureName: 'Alpha Figure',
+              seriesId: 'series-a',
+              seriesName: 'Series A',
+              ipId: 'ip-a',
+              ipName: 'IP A',
+              imageKey: 'figure-a',
+            ),
+          ],
+        ),
+      );
+      await tester.pump();
+      await tester.pump(CollectibleMotion.recognitionFindingStatusCrossfade);
+      // Successful resolve: Matching becomes ✓ before candidate cards.
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('recognition-finding-step-4')),
+          matching: find.byIcon(Icons.check_rounded),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Matching completed'), findsOneWidget);
+      expect(
+        find.byKey(const Key('recognition-finding-progress')),
+        findsNothing,
+      );
+
+      await tester.pump(CollectibleMotion.recognitionFindingMatchedSettle);
+      await tester.pump();
+      expect(find.text('We found a close match'), findsOneWidget);
+      expect(
+        find.byKey(const Key('recognition-finding-checklist')),
+        findsNothing,
+      );
+    },
+  );
+
+  testWidgets(
+    'needs_review settles Matching as ✓ like high_confidence',
+    (tester) async {
+      final gateway = _PendingRecognitionGateway();
+      await _pumpHost(
+        tester,
+        recognitionCoordinator: CatalogFigureRecognitionCoordinator(gateway),
+      );
+      await tester.tap(find.text('Acquire'));
+      await _settlePhotoLoad(tester);
+      await tester.tap(find.text('Use This Photo'));
+      await _settleFraming(tester);
+      await tester.tap(find.text('Continue'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 1));
+
+      await tester.pump(CollectibleMotion.recognitionFindingFacialComplete);
+      await tester.pump();
+      expect(find.text('Matching with the catalog…'), findsOneWidget);
+
+      gateway.pending.complete(
+        const CatalogRecognitionCandidates(
+          quality: CatalogSubjectQuality.good,
+          decision: CatalogRecognitionDecision.needsReview,
+          candidates: [
+            CatalogRecognitionCandidate(
+              rank: 1,
+              figureId: 'figure-a',
+              figureName: 'Alpha Figure',
+              seriesId: 'series-a',
+              seriesName: 'Series A',
+              ipId: 'ip-a',
+              ipName: 'IP A',
+              imageKey: 'figure-a',
+            ),
+            CatalogRecognitionCandidate(
+              rank: 2,
+              figureId: 'figure-b',
+              figureName: 'Beta Figure',
+              seriesId: 'series-b',
+              seriesName: 'Series B',
+              ipId: 'ip-b',
+              ipName: 'IP B',
+              imageKey: 'figure-b',
+            ),
+          ],
+        ),
+      );
+      await tester.pump();
+      await tester.pump(CollectibleMotion.recognitionFindingStatusCrossfade);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('recognition-finding-step-4')),
+          matching: find.byIcon(Icons.check_rounded),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('recognition-finding-step-4')),
+          matching: find.byIcon(Icons.remove_rounded),
+        ),
+        findsNothing,
+      );
+      expect(find.text('Matching completed'), findsOneWidget);
+
+      await tester.pump(CollectibleMotion.recognitionFindingMatchedSettle);
+      await tester.pump();
+      expect(find.text('We found a few close matches'), findsOneWidget);
+      expect(find.text('Best Match'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'no_confident_match settles Matching as ⊖ not ✓',
+    (tester) async {
+      final gateway = _PendingRecognitionGateway();
+      await _pumpHost(
+        tester,
+        recognitionCoordinator: CatalogFigureRecognitionCoordinator(gateway),
+      );
+      await tester.tap(find.text('Acquire'));
+      await _settlePhotoLoad(tester);
+      await tester.tap(find.text('Use This Photo'));
+      await _settleFraming(tester);
+      await tester.tap(find.text('Continue'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 1));
+
+      await tester.pump(CollectibleMotion.recognitionFindingFacialComplete);
+      await tester.pump();
+      expect(find.text('Matching with the catalog…'), findsOneWidget);
+
+      gateway.pending.complete(const CatalogRecognitionNoConfidentMatch());
+      await tester.pumpAndSettle();
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('recognition-finding-step-4')),
+          matching: find.byIcon(Icons.remove_rounded),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('recognition-finding-step-4')),
+          matching: find.byIcon(Icons.check_rounded),
+        ),
+        findsNothing,
+      );
+      expect(find.text('No close match found.'), findsOneWidget);
+      expect(find.text('Matching completed'), findsNothing);
+      // Earlier analysis steps remain successfully completed.
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('recognition-finding-step-0')),
+          matching: find.byIcon(Icons.check_rounded),
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
     'borderline candidates remain in the single loading and recognition attempt',
     (tester) async {
       final gateway = _PendingRecognitionGateway();
@@ -1214,7 +1453,8 @@ void main() {
         ),
       );
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(CollectibleMotion.recognitionFindingMatchedSettle);
+      await tester.pump();
       expect(find.text('We found a few close matches'), findsOneWidget);
       expect(
         find.text('Choose the collectible that looks most like yours.'),

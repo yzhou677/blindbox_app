@@ -33,6 +33,8 @@ product philosophy without naming which role they serve.
 
 ## Current Architecture And Implementation
 
+- [`figure-recognition.md`](figure-recognition.md) - **canonical** Figure
+  Recognition product + architecture guide (pipeline, policy, UX, navigation)
 - [`CATALOG_ARCHITECTURE.md`](CATALOG_ARCHITECTURE.md) - catalog runtime, cache,
   providers, Search V2, availability UX
 - [`SEARCH_ARCHITECTURE.md`](SEARCH_ARCHITECTURE.md) - search normalization,
@@ -43,10 +45,12 @@ product philosophy without naming which role they serve.
   notes, performance baselines, market identity notes
 - [`PROJECT_OVERVIEW.md`](PROJECT_OVERVIEW.md) - product outline and current scope
 - [`TESTING.md`](TESTING.md) - current automated and smoke verification guidance
+- [`FIGURE_RECOGNITION_ENDPOINT.md`](FIGURE_RECOGNITION_ENDPOINT.md) -
+  `recognizeFigureV1` callable contract and deploy notes
+- [`FIGURE_SUBJECT_LOCATOR_ENDPOINT.md`](FIGURE_SUBJECT_LOCATOR_ENDPOINT.md) -
+  `subjectLocatorV1` framing suggestion callable
 - [`FIGURE_RECOGNITION_PR7.md`](FIGURE_RECOGNITION_PR7.md) - local whole-image
-  quality precheck and scan intake behavior.
-- [`FIGURE_RECOGNITION_ENDPOINT.md`](FIGURE_RECOGNITION_ENDPOINT.md) - PR7 Part 4
-  recognition callable, original-image contract, and runtime requirements.
+  quality precheck and scan intake behavior
 - [`KNOWN_RUNTIME_NOTES.md`](KNOWN_RUNTIME_NOTES.md) - debug/logcat triage
 - [`TECH_DEBT.md`](TECH_DEBT.md) - non-blocking debt and future triggers
 - [`FIREBASE_LOCAL_SETUP.md`](FIREBASE_LOCAL_SETUP.md) - Firebase local setup and
@@ -74,6 +78,21 @@ Legacy pointer retained for old links:
 
 - [`RECOMMENDATION_SEMANTICS.md`](RECOMMENDATION_SEMANTICS.md) - points to
   ADR-001
+
+## Historical figure-recognition milestones
+
+These remain useful engineering history. Prefer
+[`figure-recognition.md`](figure-recognition.md) for current production behavior.
+
+- [`FIGURE_RECOGNITION_M1.md`](FIGURE_RECOGNITION_M1.md)
+- [`FIGURE_RECOGNITION_M2.md`](FIGURE_RECOGNITION_M2.md)
+- [`FIGURE_RETRIEVAL_M3.md`](FIGURE_RETRIEVAL_M3.md)
+- [`FIGURE_RECOGNITION_PR4.md`](FIGURE_RECOGNITION_PR4.md)
+- [`FIGURE_RECOGNITION_PR5.md`](FIGURE_RECOGNITION_PR5.md)
+- [`FIGURE_RECOGNITION_EVALUATION.md`](FIGURE_RECOGNITION_EVALUATION.md)
+- [`FIGURE_RECOGNITION_CALIBRATION.md`](FIGURE_RECOGNITION_CALIBRATION.md) -
+  calibration tooling; production thresholds summarized in
+  `figure-recognition.md`
 
 ## Archive
 
