@@ -10,6 +10,8 @@ export type RecognizeFigureRequestV1 = {
   };
   continueBorderline?: boolean;
   requestId?: string;
+  /** When set, vector retrieval is scoped to this series only. */
+  seriesId?: string;
 };
 
 export type RecognizeFigureRequestV2 = {
@@ -17,6 +19,8 @@ export type RecognizeFigureRequestV2 = {
   image: { dataBase64: string; mimeType: 'image/jpeg' | 'image/png' | 'image/webp'; role: 'selected_subject_crop' };
   continueBorderline?: boolean;
   requestId?: string;
+  /** When set, vector retrieval is scoped to this series only. */
+  seriesId?: string;
 };
 
 export type RecognizeFigureRequest = RecognizeFigureRequestV1 | RecognizeFigureRequestV2;

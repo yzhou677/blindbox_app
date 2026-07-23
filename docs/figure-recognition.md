@@ -164,14 +164,29 @@ unless the crop / selection changes or a new scan generation invalidates it.
 
 ```text
 Crop (client v2)
-  → validate + decode
+  → validate + decode (optional seriesId)
   → selected-subject blur
-  → image embedding (active Catalog embedding space)
-  → Firestore vector Top-K
+  → image embedding (active Catalog embedding space)  [once]
+  → Firestore vector Top-K [once]:
+       embeddingSpace == active
+       + seriesId == requestedSeriesId   (when Series Scan provides seriesId)
+  → aggregate by figureId (best / lowest distance wins)
   → CandidateRetrievalDecisionResolver
-  → hydrate Catalog display fields (names, imageKey) when presentable
+  → hydrate Catalog display fields (names, primary imageKey) when presentable
   → bounded candidate presentation payload
 ```
+
+Optional `seriesId` on the request scopes retrieval at the **database** filter
+level. Absent `seriesId` keeps the legacy global `embeddingSpace`-only query.
+Series-scoped requests use image-level Top-K **15** (then aggregate / present
+up to the existing figure limits); legacy global requests keep Top-K **5**.
+Malformed `seriesId` is rejected as `invalid_request`; a valid but empty
+series returns `no_confident_match` (never silent global fallback).
+
+Optional `figure.alternativeImages` add precomputed vectors into the **same**
+vector query (no `imageRole` filter). They do not change the client response
+shape. With zero alternatives configured, aggregation is an identity transform
+over primary-only hits.
 
 Lazy Cloud Functions entry keeps `recognizeFigureV1` isolated from Market /
 eBay / Mercari / Recommendations cold-start graphs. App Check remains required.
@@ -210,7 +225,8 @@ V1   Single collectible recognition
   ↓
 
 V1.5 Multiple reference images per figure
-       (richer Catalog embedding evidence for hard poses / packaging)
+       (optional alternativeImages → precomputed alt embeddings in one query;
+        primary imageKey remains canonical for Catalog UI)
 
   ↓
 

@@ -67,8 +67,9 @@ enum CatalogRecognitionFailureKind {
 
 abstract interface class CatalogFigureRecognitionGateway {
   Future<CatalogFigureRecognitionResult> recognize(
-    CatalogSubjectSelectionResult selection,
-  );
+    CatalogSubjectSelectionResult selection, {
+    String? seriesId,
+  });
   void cancelPending();
 }
 
@@ -82,6 +83,7 @@ class CatalogFigureRecognitionCoordinator {
 
   Future<CatalogFigureRecognitionResult?> recognize(
     CatalogSubjectSelectionResult selection, {
+    String? seriesId,
     void Function(CatalogRecognitionPhase phase)? onPhase,
   }) async {
     if (_busy) return null;
@@ -92,7 +94,7 @@ class CatalogFigureRecognitionCoordinator {
       await Future<void>.delayed(Duration.zero);
       if (generation != _generation) return null;
       onPhase?.call(CatalogRecognitionPhase.recognizing);
-      final result = await gateway.recognize(selection);
+      final result = await gateway.recognize(selection, seriesId: seriesId);
       return generation == _generation ? result : null;
     } finally {
       if (generation == _generation) _busy = false;

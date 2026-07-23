@@ -1,9 +1,36 @@
 import { IMAGE_EMBEDDING_CONFIG } from './imageEmbeddingConfig';
-import type { FigureRetrievalCandidate, FigureVectorSearch, QueryEmbeddingProvider, QueryImageReader } from './figureRetrievalTypes';
+import type {
+  FigureRetrievalCandidate,
+  FigureVectorSearch,
+  FigureVectorSearchFilter,
+  QueryEmbeddingProvider,
+  QueryImageReader,
+} from './figureRetrievalTypes';
 import type { StoredImage } from './imageEmbeddingTypes';
 
 export const DEFAULT_TOP_K = 5;
 export const MAX_TOP_K = 20;
+
+export type FigureRetrievalTimingStage =
+  | 'embedding_request'
+  | 'vector_retrieval'
+  | 'aggregation';
+
+export type FigureRetrievalDiagnostics = {
+  userEmbeddingMs: number;
+  vectorSearchMs: number;
+  aggregationMs: number;
+  totalMs: number;
+  candidateImageCount: number;
+  candidateFigureCount: number;
+  alternativeMatchCount: number;
+  winningImageRole?: string;
+  winningVariant?: string;
+  vectorSearchCalls: number;
+  userEmbeddingCalls: number;
+};
+
+export type FigureRetrievalOptions = FigureVectorSearchFilter;
 
 export class FigureRetrievalService {
   constructor(
@@ -15,23 +42,79 @@ export class FigureRetrievalService {
   async retrieve(filePath: string, topK: number): Promise<FigureRetrievalCandidate[]> {
     validateTopK(topK);
     const image = await this.images.read(filePath);
-    return this.retrieveStoredImage(image, topK);
+    return (await this.retrieveStoredImageWithDiagnostics(image, topK)).candidates;
   }
 
   async retrieveStoredImage(
     image: StoredImage,
     topK: number,
-    onTiming?: (stage: 'embedding_request' | 'vector_retrieval', elapsedMs: number) => void,
+    onTiming?: (stage: FigureRetrievalTimingStage, elapsedMs: number) => void,
+    options?: FigureRetrievalOptions,
   ): Promise<FigureRetrievalCandidate[]> {
+    return (await this.retrieveStoredImageWithDiagnostics(image, topK, onTiming, options)).candidates;
+  }
+
+  async retrieveStoredImageWithDiagnostics(
+    image: StoredImage,
+    topK: number,
+    onTiming?: (stage: FigureRetrievalTimingStage, elapsedMs: number) => void,
+    options?: FigureRetrievalOptions,
+  ): Promise<{ candidates: FigureRetrievalCandidate[]; diagnostics: FigureRetrievalDiagnostics }> {
     validateTopK(topK);
+    const totalStartedAt = Date.now();
     const embeddingStartedAt = Date.now();
     const result = await this.embeddings.embedStoredImage(image);
-    onTiming?.('embedding_request', Date.now() - embeddingStartedAt);
+    const userEmbeddingMs = Date.now() - embeddingStartedAt;
+    onTiming?.('embedding_request', userEmbeddingMs);
     validateQueryVector(result.vector);
+
+    const filter: FigureVectorSearchFilter | undefined = options?.seriesId
+      ? { seriesId: options.seriesId }
+      : undefined;
+
     const retrievalStartedAt = Date.now();
-    const candidates = await this.search.search(result.vector, topK);
-    onTiming?.('vector_retrieval', Date.now() - retrievalStartedAt);
-    return candidates;
+    let candidates: FigureRetrievalCandidate[];
+    let aggregationMs = 0;
+    let candidateImageCount = 0;
+    let candidateFigureCount = 0;
+    let alternativeMatchCount = 0;
+    let winningImageRole: string | undefined;
+    let winningVariant: string | undefined;
+
+    if (this.search.searchWithStats) {
+      const searchResult = await this.search.searchWithStats(result.vector, topK, filter);
+      candidates = searchResult.candidates;
+      aggregationMs = searchResult.stats.aggregationMs;
+      candidateImageCount = searchResult.stats.candidateImageCount;
+      candidateFigureCount = searchResult.stats.candidateFigureCount;
+      alternativeMatchCount = searchResult.stats.alternativeMatchCount;
+      winningImageRole = searchResult.stats.winningImageRole;
+      winningVariant = searchResult.stats.winningVariant;
+      onTiming?.('aggregation', aggregationMs);
+    } else {
+      candidates = await this.search.search(result.vector, topK, filter);
+      candidateImageCount = candidates.length;
+      candidateFigureCount = candidates.length;
+    }
+    const vectorSearchMs = Date.now() - retrievalStartedAt;
+    onTiming?.('vector_retrieval', vectorSearchMs);
+
+    return {
+      candidates,
+      diagnostics: {
+        userEmbeddingMs,
+        vectorSearchMs,
+        aggregationMs,
+        totalMs: Math.max(0, Date.now() - totalStartedAt),
+        candidateImageCount,
+        candidateFigureCount,
+        alternativeMatchCount,
+        winningImageRole,
+        winningVariant,
+        vectorSearchCalls: 1,
+        userEmbeddingCalls: 1,
+      },
+    };
   }
 }
 

@@ -47,10 +47,12 @@ final class FirebaseCatalogFigureRecognitionGateway
 
   @override
   Future<CatalogFigureRecognitionResult> recognize(
-    CatalogSubjectSelectionResult selection,
-  ) async {
+    CatalogSubjectSelectionResult selection, {
+    String? seriesId,
+  }) async {
     final generation = ++_generation;
     final requestId = catalogPhotoCorrelationId(selection.photo);
+    final scopedSeriesId = _normalizedSeriesId(seriesId);
     final startedAt = DateTime.now();
     final totalTimer = Stopwatch()..start();
     try {
@@ -64,7 +66,7 @@ final class FirebaseCatalogFigureRecognitionGateway
           kind: CatalogRecognitionFailureKind.imagePreparation,
         );
       }
-      final data = {
+      final data = <String, Object?>{
         'version': prepared.requestVersion,
         'image': {
           'dataBase64': prepared.dataBase64,
@@ -72,6 +74,7 @@ final class FirebaseCatalogFigureRecognitionGateway
           'role': 'selected_subject_crop',
         },
         'requestId': requestId,
+        ?'seriesId': scopedSeriesId,
       };
       _debugRecognitionLog({
         'event': 'request_start',
@@ -157,6 +160,13 @@ final class FirebaseCatalogFigureRecognitionGateway
   @override
   void cancelPending() {
     _generation++;
+  }
+
+  /// Trim and drop empty values so legacy callers omit seriesId from the payload.
+  static String? _normalizedSeriesId(String? seriesId) {
+    final trimmed = seriesId?.trim();
+    if (trimmed == null || trimmed.isEmpty) return null;
+    return trimmed;
   }
 
   CatalogFigureRecognitionResult _map(Object? value) {

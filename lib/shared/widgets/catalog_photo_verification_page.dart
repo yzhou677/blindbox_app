@@ -51,6 +51,7 @@ Future<void> showCatalogPhotoVerification(
   ValueChanged<CatalogRecognitionCandidate>? onCandidateConfirmed,
   VoidCallback? onCreateCustom,
   CatalogScanSelectionHaptic? selectionHaptic,
+  String? seriesId,
 }) async {
   await showCatalogPhotoScanSheet(
     context,
@@ -61,6 +62,7 @@ Future<void> showCatalogPhotoVerification(
     onCandidateConfirmed: onCandidateConfirmed,
     onCreateCustom: onCreateCustom,
     selectionHaptic: selectionHaptic,
+    seriesId: seriesId,
   );
 }
 
@@ -75,6 +77,7 @@ Future<CatalogSubjectSelectionResult?> showCatalogPhotoScanSheet(
   ValueChanged<CatalogRecognitionCandidate>? onCandidateConfirmed,
   VoidCallback? onCreateCustom,
   CatalogScanSelectionHaptic? selectionHaptic,
+  String? seriesId,
 }) async {
   final viewportWidth = MediaQuery.sizeOf(context).width;
   try {
@@ -105,6 +108,7 @@ Future<CatalogSubjectSelectionResult?> showCatalogPhotoScanSheet(
           onCandidateConfirmed: onCandidateConfirmed,
           onCreateCustom: onCreateCustom,
           selectionHaptic: selectionHaptic,
+          seriesId: seriesId,
         ),
       ),
     );
@@ -138,6 +142,7 @@ class CatalogPhotoVerificationPage extends StatefulWidget {
     this.onCandidateConfirmed,
     this.onCreateCustom,
     this.selectionHaptic,
+    this.seriesId,
   });
 
   final CatalogPhotoSelection selection;
@@ -148,6 +153,8 @@ class CatalogPhotoVerificationPage extends StatefulWidget {
   final ValueChanged<CatalogRecognitionCandidate>? onCandidateConfirmed;
   final VoidCallback? onCreateCustom;
   final CatalogScanSelectionHaptic? selectionHaptic;
+  /// When set (Series Scan), recognition is scoped to this series on the backend.
+  final String? seriesId;
 
   @override
   State<CatalogPhotoVerificationPage> createState() =>
@@ -394,6 +401,7 @@ class _CatalogPhotoVerificationPageState
     var transitionLogged = false;
     final result = await _recognitionCoordinator.recognize(
       selection,
+      seriesId: widget.seriesId,
       onPhase: (_) {
         if (!mounted || generation != _generation) return;
         setState(() {

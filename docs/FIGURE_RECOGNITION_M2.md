@@ -59,11 +59,18 @@ For a bounded sequential batch:
 npm run embed:catalog-figures -- --limit 10
 ```
 
-`--force` regenerates otherwise compatible vectors. Supported options are only
-`--limit`, `--figure-id`, and `--force`. The tool exits nonzero if any figure
+`--force` regenerates otherwise compatible vectors. Supported options are
+`--limit`, `--figure-id`, `--force`, `--prune-stale-alternatives`, and
+`--prune-dry-run` (requires prune). The tool exits nonzero if any figure
 fails. It writes each successful figure immediately, so rerunning safely skips
 compatible records. A metadata-only catalog identity change updates metadata
 without another paid embedding call.
+
+When a figure lists `alternativeImages`, the job embeds each supplemental
+`imageKey` into `catalogFigureEmbeddings/{figureId}__alt__{imageKey}` after the
+primary `{figureId}` document. Without `alternativeImages`, behavior remains
+one primary embedding per figure. Stale alternative cleanup runs only when
+`--prune-stale-alternatives` is set; it never deletes the primary document.
 
 Every invocation first completes a read-only planning phase. It scans the
 selected catalog range, resolves and hashes images, compares existing records,

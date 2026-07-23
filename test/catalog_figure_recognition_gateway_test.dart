@@ -32,6 +32,23 @@ void main() {
     expect(sentBytes.length, lessThan(_sourceBytes().length));
     expect(request.containsKey('continueBorderline'), isFalse);
     expect(request['requestId'], 'scan-recognition-test');
+    expect(request.containsKey('seriesId'), isFalse);
+  });
+
+  test('gateway includes seriesId only when provided for Series Scan', () async {
+    final callable = _Callable({'version': 1, 'status': 'no_confident_match'});
+    final gateway = FirebaseCatalogFigureRecognitionGateway(callable: callable);
+    await gateway.recognize(
+      _selection(),
+      seriesId: '  hirono_mist_walker_series_plush_doll_pendant  ',
+    );
+    expect(
+      callable.requests.single['seriesId'],
+      'hirono_mist_walker_series_plush_doll_pendant',
+    );
+
+    await gateway.recognize(_selection(), seriesId: '   ');
+    expect(callable.requests.last.containsKey('seriesId'), isFalse);
   });
 
   test(
@@ -332,8 +349,9 @@ final class _PendingGateway implements CatalogFigureRecognitionGateway {
   var calls = 0;
   @override
   Future<CatalogFigureRecognitionResult> recognize(
-    CatalogSubjectSelectionResult selection,
-  ) {
+    CatalogSubjectSelectionResult selection, {
+    String? seriesId,
+  }) {
     calls++;
     return pending.future;
   }

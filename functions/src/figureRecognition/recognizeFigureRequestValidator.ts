@@ -5,13 +5,16 @@ import { RecognizeFigureRequestError, type RecognizeFigureRequest } from './reco
 import { measureScanStage, measureScanStageSync } from './scanTiming';
 
 const requestIdPattern = /^[A-Za-z0-9._:-]{1,64}$/;
+/** Catalog series IDs (e.g. hirono_mist_walker_series_plush_doll_pendant). */
+const seriesIdPattern = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
 export async function validateRecognizeFigureRequest(value: unknown): Promise<{ request: RecognizeFigureRequest; image: StoredImage }> {
   if (!record(value) || !record(value.image)) throw new RecognizeFigureRequestError('invalid_request');
   const v2 = value.version === 2;
   const v1 = value.version === 1;
-  if ((!v1 && !v2) || unknown(value, v2 ? ['version', 'image', 'continueBorderline', 'requestId'] : ['version', 'image', 'selection', 'continueBorderline', 'requestId']) || unknown(value.image, v2 ? ['dataBase64', 'mimeType', 'role'] : ['dataBase64', 'mimeType']) || (v2 && value.image.role !== 'selected_subject_crop')) throw new RecognizeFigureRequestError('invalid_request');
+  if ((!v1 && !v2) || unknown(value, v2 ? ['version', 'image', 'continueBorderline', 'requestId', 'seriesId'] : ['version', 'image', 'selection', 'continueBorderline', 'requestId', 'seriesId']) || unknown(value.image, v2 ? ['dataBase64', 'mimeType', 'role'] : ['dataBase64', 'mimeType']) || (v2 && value.image.role !== 'selected_subject_crop')) throw new RecognizeFigureRequestError('invalid_request');
   if (value.requestId !== undefined && (typeof value.requestId !== 'string' || !requestIdPattern.test(value.requestId))) throw new RecognizeFigureRequestError('invalid_request');
   if (value.continueBorderline !== undefined && typeof value.continueBorderline !== 'boolean') throw new RecognizeFigureRequestError('invalid_request');
+  const seriesId = parseOptionalSeriesId(value.seriesId);
   const mimeType = value.image.mimeType;
   if (typeof mimeType !== 'string' || !(config.allowedMimeTypes as readonly string[]).includes(mimeType)) throw new RecognizeFigureRequestError('unsupported_mime_type');
   const encoded = value.image.dataBase64;
@@ -27,7 +30,18 @@ export async function validateRecognizeFigureRequest(value: unknown): Promise<{ 
   if (!width || !height) throw new RecognizeFigureRequestError('invalid_image');
   if (width > config.maxWidth || height > config.maxHeight || width * height > config.maxPixels) throw new RecognizeFigureRequestError('image_dimensions_unsupported');
   if (v1) validateLegacySelection(value.selection);
-  return { request: value as RecognizeFigureRequest, image: { bytes, mimeType: mimeType as StoredImage['mimeType'] } };
+  const request = { ...(value as RecognizeFigureRequest) };
+  if (seriesId !== undefined) request.seriesId = seriesId;
+  else delete request.seriesId;
+  return { request, image: { bytes, mimeType: mimeType as StoredImage['mimeType'] } };
+}
+/** Absent → undefined (legacy global). Present but empty/malformed → invalid_request. */
+function parseOptionalSeriesId(value: unknown): string | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== 'string') throw new RecognizeFigureRequestError('invalid_request');
+  const trimmed = value.trim();
+  if (!trimmed || !seriesIdPattern.test(trimmed)) throw new RecognizeFigureRequestError('invalid_request');
+  return trimmed;
 }
 function validateLegacySelection(selection: unknown): void {
   if (!record(selection) || unknown(selection, ['left', 'top', 'width', 'height', 'coordinateSpace'])) throw new RecognizeFigureRequestError('invalid_request');

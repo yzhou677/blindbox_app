@@ -1,12 +1,13 @@
 import { FieldValue, Firestore, Timestamp, VectorValue } from '@google-cloud/firestore';
 import { IMAGE_EMBEDDING_CONFIG } from './imageEmbeddingConfig';
+import { isAlternativeEmbeddingDocumentId } from './catalogEmbeddingIds';
 import type { CatalogEmbeddingStore, EmbeddingMetadata, ExistingCatalogEmbedding } from './catalogEmbeddingTypes';
 
 export class FirestoreCatalogEmbeddingStore implements CatalogEmbeddingStore {
   constructor(private readonly firestore: Firestore) {}
 
-  async get(figureId: string): Promise<ExistingCatalogEmbedding | null> {
-    const snapshot = await this.firestore.collection('catalogFigureEmbeddings').doc(figureId).get();
+  async get(documentId: string): Promise<ExistingCatalogEmbedding | null> {
+    const snapshot = await this.ref(documentId).get();
     if (!snapshot.exists) return null;
     const data = snapshot.data() ?? {};
     const embedding = data.embedding;
@@ -21,7 +22,7 @@ export class FirestoreCatalogEmbeddingStore implements CatalogEmbeddingStore {
     const timestamps = isNew
       ? { createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }
       : { updatedAt: FieldValue.serverTimestamp() };
-    await this.ref(metadata.figureId).set({
+    await this.ref(metadata.documentId).set({
       ...documentMetadata(metadata),
       embedding: nativeVector(vector),
       ...timestamps,
@@ -29,14 +30,29 @@ export class FirestoreCatalogEmbeddingStore implements CatalogEmbeddingStore {
   }
 
   async updateMetadata(metadata: EmbeddingMetadata): Promise<void> {
-    await this.ref(metadata.figureId).set({
+    await this.ref(metadata.documentId).set({
       ...documentMetadata(metadata),
       updatedAt: FieldValue.serverTimestamp(),
     }, { merge: true });
   }
 
-  private ref(figureId: string) {
-    return this.firestore.collection('catalogFigureEmbeddings').doc(figureId);
+  async listDocumentIdsForFigure(figureId: string): Promise<string[]> {
+    const snapshot = await this.firestore
+      .collection('catalogFigureEmbeddings')
+      .where('figureId', '==', figureId)
+      .get();
+    return snapshot.docs.map((doc) => doc.id).sort();
+  }
+
+  async deleteAlternativeDocument(documentId: string): Promise<void> {
+    if (!isAlternativeEmbeddingDocumentId(documentId)) {
+      throw new Error(`Refusing to delete non-alternative embedding document: ${documentId}`);
+    }
+    await this.ref(documentId).delete();
+  }
+
+  private ref(documentId: string) {
+    return this.firestore.collection('catalogFigureEmbeddings').doc(documentId);
   }
 }
 
@@ -53,6 +69,9 @@ function documentMetadata(metadata: EmbeddingMetadata): Record<string, unknown> 
     brandId: metadata.brandId,
     ipId: metadata.ipId,
     isSecret: metadata.isSecret,
+    imageKey: metadata.imageKey,
+    imageRole: metadata.imageRole,
+    variant: metadata.variant,
     imageObjectPath: metadata.imageObjectPath,
     contentHash: metadata.contentHash,
     embeddingSpace: IMAGE_EMBEDDING_CONFIG.embeddingSpace,

@@ -39,6 +39,13 @@ dependency without changing the current recognition path. Legacy optional
 request fields such as `continueBorderline` remain accepted for older clients
 but are ignored by the current service.
 
+Optional request field `seriesId` scopes Firestore vector retrieval to
+embeddings for that series (`embeddingSpace` + `seriesId` filters on one
+`findNearest` call). Absent `seriesId` preserves the legacy global
+`embeddingSpace`-only query. Series-scoped calls use image-level Top-K 15
+before figure aggregation; global calls keep Top-K 5. Response shape,
+distance thresholds, and aggregation rules are unchanged.
+
 ## Failure mapping
 
 The subject locator is advisory. `no_suggestion`, locator timeout, malformed

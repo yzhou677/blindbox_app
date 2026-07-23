@@ -1857,8 +1857,9 @@ final class _PendingRecognitionGateway
 
   @override
   Future<CatalogFigureRecognitionResult> recognize(
-    CatalogSubjectSelectionResult selection,
-  ) {
+    CatalogSubjectSelectionResult selection, {
+    String? seriesId,
+  }) {
     calls++;
     return pending.future;
   }
@@ -1874,8 +1875,9 @@ final class _MultiPendingRecognitionGateway
 
   @override
   Future<CatalogFigureRecognitionResult> recognize(
-    CatalogSubjectSelectionResult selection,
-  ) {
+    CatalogSubjectSelectionResult selection, {
+    String? seriesId,
+  }) {
     calls++;
     final completer = Completer<CatalogFigureRecognitionResult>();
     pending.add(completer);
@@ -1897,8 +1899,9 @@ final class _SequenceRecognitionGateway
 
   @override
   Future<CatalogFigureRecognitionResult> recognize(
-    CatalogSubjectSelectionResult selection,
-  ) async {
+    CatalogSubjectSelectionResult selection, {
+    String? seriesId,
+  }) async {
     calls++;
     selections.add(selection);
     if (calls == 1) return const CatalogRecognitionTooBlurry();
@@ -1930,12 +1933,15 @@ final class _FakeRecognitionGateway implements CatalogFigureRecognitionGateway {
 
   final CatalogFigureRecognitionResult result;
   var calls = 0;
+  final seriesIds = <String?>[];
 
   @override
   Future<CatalogFigureRecognitionResult> recognize(
-    CatalogSubjectSelectionResult selection,
-  ) async {
+    CatalogSubjectSelectionResult selection, {
+    String? seriesId,
+  }) async {
     calls++;
+    seriesIds.add(seriesId);
     return result;
   }
 

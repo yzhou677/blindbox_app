@@ -11,20 +11,33 @@ const { parseCatalogEmbeddingArgs, createStartupDiagnostic } = require('../lib/f
 
 const figure = (overrides = {}) => ({
   figureId: 'fig-1', seriesId: 'series-1', brandId: 'brand-1', ipId: 'ip-1', isSecret: false,
-  imageKey: 'fig-1', catalogModifiedAt: Timestamp.fromMillis(1000), ...overrides,
+  imageKey: 'fig-1', alternativeImages: [], catalogModifiedAt: Timestamp.fromMillis(1000), ...overrides,
 });
 
-function harness({ existing = null, figures = [figure()], image = Buffer.from('same-image'), embedError } = {}) {
-  const calls = { embeds: 0, writes: [], metadata: [], logs: [] };
+function harness({ existing = null, figures = [figure()], image = Buffer.from('same-image'), embedError, existingById } = {}) {
+  const calls = { embeds: 0, writes: [], metadata: [], logs: [], deletes: [], listed: [] };
   const source = {
     async get(id) { return figures.find((item) => item.figureId === id) ?? null; },
     async *pages() { yield figures; },
   };
   const images = { async resolve(imageKey) { return { objectPath: `${imageKey}.webp`, bytes: image, mimeType: 'image/webp' }; } };
   const store = {
-    async get() { return existing; },
+    async get(documentId) {
+      if (existingById && Object.prototype.hasOwnProperty.call(existingById, documentId)) {
+        return existingById[documentId];
+      }
+      return existing;
+    },
     async writeEmbedding(metadata, vector, isNew) { calls.writes.push({ metadata, vector, isNew }); },
     async updateMetadata(metadata) { calls.metadata.push(metadata); },
+    async listDocumentIdsForFigure(figureId) {
+      calls.listed.push(figureId);
+      if (existingById) {
+        return Object.keys(existingById).filter((id) => id === figureId || id.startsWith(`${figureId}__alt__`)).sort();
+      }
+      return existing ? [figureId] : [];
+    },
+    async deleteAlternativeDocument(documentId) { calls.deletes.push(documentId); },
   };
   const provider = { async embedStoredImage() { calls.embeds++; if (embedError) throw embedError; return { vector: Array(1024).fill(0.25) }; } };
   const job = new CatalogEmbeddingJob(source, images, store, provider, (entry) => calls.logs.push(entry), (() => { let n = 0; return () => n += 5; })());
@@ -82,7 +95,7 @@ describe('CatalogEmbeddingJob', () => {
     assert.deepEqual(plan.summary, {
       totalFigures: 2, alreadyUpToDate: 0, metadataOnlyUpdates: 0, requiresEmbedding: 2,
       missingImages: 0, estimatedEmbeddingApiCalls: 2, estimatedAiCostUsd: 1,
-      missingImageCount: 0, missingImageFigureIds: [],
+      missingImageCount: 0, missingImageFigureIds: [], plannedImageRecords: 2,
     });
     assert.equal(calls.embeds, 0);
     assert.equal(calls.writes.length, 0);
@@ -249,18 +262,39 @@ describe('adapters and CLI', () => {
     let written;
     const firestore = { collection() { return { doc() { return { async set(data) { written = data; } }; } }; } };
     const store = new FirestoreCatalogEmbeddingStore(firestore);
-    await store.writeEmbedding({ ...figure(), imageObjectPath: 'a.webp', contentHash: 'abc' }, [1, 2], true);
+    await store.writeEmbedding({
+      documentId: 'fig-1',
+      figureId: 'fig-1',
+      seriesId: 'series-1',
+      brandId: 'brand-1',
+      ipId: 'ip-1',
+      isSecret: false,
+      imageKey: 'fig-1',
+      imageRole: 'primary',
+      variant: 'front',
+      catalogModifiedAt: Timestamp.fromMillis(1000),
+      imageObjectPath: 'a.webp',
+      contentHash: 'abc',
+    }, [1, 2], true);
     assert.ok(written.embedding instanceof VectorValue);
     assert.deepEqual(written.embedding.toArray(), [1, 2]);
+    assert.equal(written.imageRole, 'primary');
+    assert.equal(written.variant, 'front');
+    assert.equal(written.imageKey, 'fig-1');
   });
 
-  it('parses only limit, figure-id, and force', () => {
+  it('parses limit, figure-id, force, and prune flags', () => {
     assert.deepEqual(parseCatalogEmbeddingArgs([]), {});
     assert.deepEqual(parseCatalogEmbeddingArgs(['--limit', '10', '--force']), { limit: 10, force: true });
     assert.deepEqual(parseCatalogEmbeddingArgs(['--figure-id', 'fig-1', '--force']), { figureId: 'fig-1', force: true });
+    assert.deepEqual(
+      parseCatalogEmbeddingArgs(['--prune-stale-alternatives', '--prune-dry-run']),
+      { pruneStaleAlternatives: true, pruneDryRun: true },
+    );
     assert.throws(() => parseCatalogEmbeddingArgs(['--limit', '10', '--figure-id', 'fig-1']));
     assert.throws(() => parseCatalogEmbeddingArgs(['--limit', '10', '--limit', '20']));
     assert.throws(() => parseCatalogEmbeddingArgs(['--concurrency', '2']));
+    assert.throws(() => parseCatalogEmbeddingArgs(['--prune-dry-run']));
   });
 
   it('reports a sanitized startup exception with its failing component', () => {

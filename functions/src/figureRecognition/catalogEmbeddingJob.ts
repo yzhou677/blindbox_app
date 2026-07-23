@@ -2,6 +2,12 @@ import { createHash } from 'node:crypto';
 import type { Timestamp } from '@google-cloud/firestore';
 import { IMAGE_EMBEDDING_CONFIG } from './imageEmbeddingConfig';
 import { ImageEmbeddingProvider } from './imageEmbeddingProvider';
+import {
+  alternativeEmbeddingDocumentId,
+  embeddingDocumentId,
+  isAlternativeEmbeddingDocumentId,
+  primaryEmbeddingDocumentId,
+} from './catalogEmbeddingIds';
 import type {
   CatalogEmbeddingStore,
   CatalogFigure,
@@ -11,10 +17,20 @@ import type {
   ExistingCatalogEmbedding,
 } from './catalogEmbeddingTypes';
 
-export type CatalogEmbeddingJobOptions = { limit?: number; figureId?: string; force?: boolean };
+export type CatalogEmbeddingJobOptions = {
+  limit?: number;
+  figureId?: string;
+  force?: boolean;
+  /** When true, delete alternative embedding docs no longer listed on the figure. */
+  pruneStaleAlternatives?: boolean;
+  /** With prune: log deletions without calling delete. */
+  pruneDryRun?: boolean;
+};
+
 export type CatalogEmbeddingSummary = {
   scanned: number; embedded: number; metadataUpdated: number; skipped: number; failed: number; elapsedMs: number;
   missingImages: number; missingImageCount: number; missingImageFigureIds: string[]; missingImageFigureIdsTruncated?: true;
+  staleAlternativesDeleted: number; staleAlternativesWouldDelete: number;
 };
 export type CatalogEmbeddingPlanSummary = {
   totalFigures: number;
@@ -27,6 +43,7 @@ export type CatalogEmbeddingPlanSummary = {
   missingImageCount: number;
   missingImageFigureIds: string[];
   missingImageFigureIdsTruncated?: true;
+  plannedImageRecords: number;
 };
 export type CatalogEmbeddingPlanningProgress = {
   processed: number;
@@ -38,9 +55,25 @@ export type CatalogEmbeddingPlanningProgress = {
   failed: number;
   elapsedMs: number;
 };
-type PlannedItem = { figure: CatalogFigure; metadata: EmbeddingMetadata; action: 'embedded' | 'metadataUpdated'; isNew: boolean };
-export type CatalogEmbeddingPlan = { summary: CatalogEmbeddingPlanSummary; items: PlannedItem[] };
-export type ProgressLog = { figureId: string; status: 'embedded' | 'metadataUpdated' | 'skipped' | 'failed' };
+type PlannedItem = {
+  figure: CatalogFigure;
+  metadata: EmbeddingMetadata;
+  action: 'embedded' | 'metadataUpdated';
+  isNew: boolean;
+  resolveImageKey: string;
+};
+export type CatalogEmbeddingPlan = {
+  summary: CatalogEmbeddingPlanSummary;
+  items: PlannedItem[];
+  /** Figures visited during plan (for scoped stale-alternative cleanup). */
+  scannedFigures: CatalogFigure[];
+};
+export type ProgressLog = {
+  figureId: string;
+  status: 'embedded' | 'metadataUpdated' | 'skipped' | 'failed' | 'stale_alternative_deleted' | 'stale_alternative_would_delete';
+  documentId?: string;
+  imageRole?: string;
+};
 
 export class CatalogEmbeddingJob {
   constructor(
@@ -54,7 +87,7 @@ export class CatalogEmbeddingJob {
 
   async run(options: CatalogEmbeddingJobOptions): Promise<CatalogEmbeddingSummary> {
     const plan = await this.plan(options);
-    return this.execute(plan);
+    return this.execute(plan, options);
   }
 
   async plan(
@@ -67,9 +100,10 @@ export class CatalogEmbeddingJob {
     const summary: CatalogEmbeddingPlanSummary = {
       totalFigures: 0, alreadyUpToDate: 0, metadataOnlyUpdates: 0, requiresEmbedding: 0,
       missingImages: 0, estimatedEmbeddingApiCalls: 0, estimatedAiCostUsd: 0,
-      missingImageCount: 0, missingImageFigureIds: [],
+      missingImageCount: 0, missingImageFigureIds: [], plannedImageRecords: 0,
     };
     const items: PlannedItem[] = [];
+    const scannedFigures: CatalogFigure[] = [];
     const emitProgress = (): void => {
       if (summary.totalFigures % 25 !== 0) return;
       onProgress?.({
@@ -86,36 +120,44 @@ export class CatalogEmbeddingJob {
     for await (const figure of this.selectFigures(options)) {
       if (options.limit !== undefined && summary.totalFigures >= options.limit) break;
       summary.totalFigures++;
-      let image;
-      try {
-        image = await withTransientRetries(() => this.images.resolve(figure.imageKey));
-      } catch {
-        summary.missingImages++;
+      scannedFigures.push(figure);
+      const imageSpecs = imageSpecsForFigure(figure);
+      let figureMissingImage = false;
+      for (const spec of imageSpecs) {
+        summary.plannedImageRecords++;
+        let image;
+        try {
+          image = await withTransientRetries(() => this.images.resolve(spec.imageKey));
+        } catch {
+          figureMissingImage = true;
+          summary.missingImages++;
+          continue;
+        }
+        const metadata = createMetadata(figure, spec, image.objectPath, image.bytes);
+        const existing = await withTransientRetries(() => this.store.get(metadata.documentId));
+        if (!options.force && isReusable(existing, metadata)) {
+          if (metadataChanged(existing!.data, metadata)) {
+            summary.metadataOnlyUpdates++;
+            items.push({ figure, metadata, action: 'metadataUpdated', isNew: false, resolveImageKey: spec.imageKey });
+          } else summary.alreadyUpToDate++;
+        } else {
+          summary.requiresEmbedding++;
+          items.push({ figure, metadata, action: 'embedded', isNew: existing === null, resolveImageKey: spec.imageKey });
+        }
+      }
+      if (figureMissingImage) {
         summary.missingImageCount++;
         if (summary.missingImageFigureIds.length < 20) summary.missingImageFigureIds.push(figure.figureId);
         else summary.missingImageFigureIdsTruncated = true;
-        emitProgress();
-        continue;
-      }
-      const metadata = createMetadata(figure, image.objectPath, image.bytes);
-      const existing = await withTransientRetries(() => this.store.get(figure.figureId));
-      if (!options.force && isReusable(existing, metadata)) {
-        if (metadataChanged(existing!.data, metadata)) {
-          summary.metadataOnlyUpdates++;
-          items.push({ figure, metadata, action: 'metadataUpdated', isNew: false });
-        } else summary.alreadyUpToDate++;
-      } else {
-        summary.requiresEmbedding++;
-        items.push({ figure, metadata, action: 'embedded', isNew: existing === null });
       }
       emitProgress();
     }
     summary.estimatedEmbeddingApiCalls = summary.requiresEmbedding;
     summary.estimatedAiCostUsd = summary.requiresEmbedding * pricePerImageUsd;
-    return { summary, items };
+    return { summary, items, scannedFigures };
   }
 
-  async execute(plan: CatalogEmbeddingPlan): Promise<CatalogEmbeddingSummary> {
+  async execute(plan: CatalogEmbeddingPlan, options: CatalogEmbeddingJobOptions = {}): Promise<CatalogEmbeddingSummary> {
     const startedAt = this.now();
     const summary = {
       scanned: plan.summary.totalFigures, embedded: 0, metadataUpdated: 0,
@@ -124,6 +166,8 @@ export class CatalogEmbeddingJob {
       missingImageCount: plan.summary.missingImageCount,
       missingImageFigureIds: [...plan.summary.missingImageFigureIds],
       ...(plan.summary.missingImageFigureIdsTruncated ? { missingImageFigureIdsTruncated: true as const } : {}),
+      staleAlternativesDeleted: 0,
+      staleAlternativesWouldDelete: 0,
     };
     for (const item of plan.items) {
       try {
@@ -131,18 +175,82 @@ export class CatalogEmbeddingJob {
           await withTransientRetries(() => this.store.updateMetadata(item.metadata));
           summary.metadataUpdated++;
         } else {
-          const image = await withTransientRetries(() => this.images.resolve(item.figure.imageKey));
-          const metadata = createMetadata(item.figure, image.objectPath, image.bytes);
+          const image = await withTransientRetries(() => this.images.resolve(item.resolveImageKey));
+          const metadata = createMetadata(
+            item.figure,
+            {
+              imageKey: item.metadata.imageKey,
+              imageRole: item.metadata.imageRole,
+              variant: item.metadata.variant,
+            },
+            image.objectPath,
+            image.bytes,
+          );
           const result = await withTransientRetries(() => this.provider.embedStoredImage(image));
           await withTransientRetries(() => this.store.writeEmbedding(metadata, result.vector, item.isNew));
           summary.embedded++;
         }
-        this.log({ figureId: item.figure.figureId, status: item.action });
+        this.log({
+          figureId: item.figure.figureId,
+          status: item.action,
+          documentId: item.metadata.documentId,
+          imageRole: item.metadata.imageRole,
+        });
       } catch {
         summary.failed++;
-        this.log({ figureId: item.figure.figureId, status: 'failed' });
+        this.log({
+          figureId: item.figure.figureId,
+          status: 'failed',
+          documentId: item.metadata.documentId,
+          imageRole: item.metadata.imageRole,
+        });
       }
     }
+
+    if (options.pruneStaleAlternatives) {
+      for (const figure of plan.scannedFigures) {
+        const expectedAltIds = new Set(
+          figure.alternativeImages.map((alt) => alternativeEmbeddingDocumentId(figure.figureId, alt.imageKey)),
+        );
+        let documentIds: string[];
+        try {
+          documentIds = await withTransientRetries(() => this.store.listDocumentIdsForFigure(figure.figureId));
+        } catch {
+          summary.failed++;
+          this.log({ figureId: figure.figureId, status: 'failed' });
+          continue;
+        }
+        for (const documentId of documentIds) {
+          if (!isAlternativeEmbeddingDocumentId(documentId)) continue;
+          if (expectedAltIds.has(documentId)) continue;
+          if (documentId === primaryEmbeddingDocumentId(figure.figureId)) continue;
+          if (options.pruneDryRun) {
+            summary.staleAlternativesWouldDelete++;
+            this.log({
+              figureId: figure.figureId,
+              status: 'stale_alternative_would_delete',
+              documentId,
+              imageRole: 'alternative',
+            });
+          } else {
+            try {
+              await withTransientRetries(() => this.store.deleteAlternativeDocument(documentId));
+              summary.staleAlternativesDeleted++;
+              this.log({
+                figureId: figure.figureId,
+                status: 'stale_alternative_deleted',
+                documentId,
+                imageRole: 'alternative',
+              });
+            } catch {
+              summary.failed++;
+              this.log({ figureId: figure.figureId, status: 'failed', documentId, imageRole: 'alternative' });
+            }
+          }
+        }
+      }
+    }
+
     summary.elapsedMs = Math.max(0, this.now() - startedAt);
     return summary;
   }
@@ -156,7 +264,6 @@ export class CatalogEmbeddingJob {
     }
     for await (const page of this.source.pages(100)) for (const figure of page) yield figure;
   }
-
 }
 
 function knownPlanningTotal(options: CatalogEmbeddingJobOptions): { total?: number } {
@@ -165,10 +272,50 @@ function knownPlanningTotal(options: CatalogEmbeddingJobOptions): { total?: numb
   return {};
 }
 
-function createMetadata(figure: CatalogFigure, imageObjectPath: string, bytes: Buffer): EmbeddingMetadata {
+type ImageSpec = {
+  imageKey: string;
+  imageRole: EmbeddingMetadata['imageRole'];
+  variant: string;
+};
+
+function imageSpecsForFigure(figure: CatalogFigure): ImageSpec[] {
+  const primary: ImageSpec = {
+    imageKey: figure.imageKey,
+    imageRole: 'primary',
+    variant: 'front',
+  };
+  const alternatives = figure.alternativeImages
+    .filter((alt) => alt.imageKey !== figure.imageKey)
+    .map((alt) => ({
+      imageKey: alt.imageKey,
+      imageRole: 'alternative' as const,
+      variant: alt.variant,
+    }));
+  return [primary, ...alternatives];
+}
+
+function createMetadata(
+  figure: CatalogFigure,
+  spec: ImageSpec,
+  imageObjectPath: string,
+  bytes: Buffer,
+): EmbeddingMetadata {
   return {
-    figureId: figure.figureId, seriesId: figure.seriesId, brandId: figure.brandId, ipId: figure.ipId,
-    isSecret: figure.isSecret, catalogModifiedAt: figure.catalogModifiedAt, imageObjectPath,
+    documentId: embeddingDocumentId({
+      figureId: figure.figureId,
+      imageRole: spec.imageRole,
+      imageKey: spec.imageKey,
+    }),
+    figureId: figure.figureId,
+    seriesId: figure.seriesId,
+    brandId: figure.brandId,
+    ipId: figure.ipId,
+    isSecret: figure.isSecret,
+    imageKey: spec.imageKey,
+    imageRole: spec.imageRole,
+    variant: spec.variant,
+    catalogModifiedAt: figure.catalogModifiedAt,
+    imageObjectPath,
     contentHash: createHash('sha256').update(bytes).digest('hex'),
   };
 }
@@ -182,10 +329,20 @@ function isReusable(existing: ExistingCatalogEmbedding | null, metadata: Embeddi
     d.embeddingDimension === IMAGE_EMBEDDING_CONFIG.outputDimension && d.embeddingVersion === IMAGE_EMBEDDING_CONFIG.version;
 }
 
+/**
+ * Identity-field drift only. Does not treat missing legacy imageRole/variant/imageKey
+ * as a change, so existing primary docs are not mass metadata-updated.
+ */
 function metadataChanged(data: Record<string, unknown>, metadata: EmbeddingMetadata): boolean {
-  return data.figureId !== metadata.figureId || data.seriesId !== metadata.seriesId || data.brandId !== metadata.brandId ||
+  if (data.figureId !== metadata.figureId || data.seriesId !== metadata.seriesId || data.brandId !== metadata.brandId ||
     data.ipId !== metadata.ipId || data.isSecret !== metadata.isSecret || data.imageObjectPath !== metadata.imageObjectPath ||
-    timestampMillis(data.catalogModifiedAt) !== timestampMillis(metadata.catalogModifiedAt);
+    timestampMillis(data.catalogModifiedAt) !== timestampMillis(metadata.catalogModifiedAt)) {
+    return true;
+  }
+  if (typeof data.imageKey === 'string' && data.imageKey !== metadata.imageKey) return true;
+  if (typeof data.imageRole === 'string' && data.imageRole !== metadata.imageRole) return true;
+  if (typeof data.variant === 'string' && data.variant !== metadata.variant) return true;
+  return false;
 }
 
 function timestampMillis(value: unknown): number | null {

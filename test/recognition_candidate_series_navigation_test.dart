@@ -108,8 +108,9 @@ final class _FakeRecognitionGateway
     implements CatalogFigureRecognitionGateway {
   @override
   Future<CatalogFigureRecognitionResult> recognize(
-    CatalogSubjectSelectionResult selection,
-  ) async {
+    CatalogSubjectSelectionResult selection, {
+    String? seriesId,
+  }) async {
     return const CatalogRecognitionCandidates(
       quality: CatalogSubjectQuality.good,
       candidates: [
