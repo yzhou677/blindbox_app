@@ -882,10 +882,10 @@ void main() {
       expect(find.text('Checking silhouette…'), findsOneWidget);
       // Reduced motion still follows the paced schedule (no pulse only).
       await tester.pump(const Duration(milliseconds: 850));
-      expect(find.text('Overall silhouette matched'), findsNothing);
+      expect(find.text('Shape analyzed'), findsNothing);
       await tester.pump(const Duration(milliseconds: 100));
       await tester.pump();
-      expect(find.text('Overall silhouette matched'), findsOneWidget);
+      expect(find.text('Shape analyzed'), findsOneWidget);
       expect(find.text('Checking colors…'), findsOneWidget);
     },
   );
@@ -916,22 +916,22 @@ void main() {
 
       await tester.pump(const Duration(milliseconds: 100));
       await tester.pump();
-      expect(find.text('Overall silhouette matched'), findsOneWidget);
+      expect(find.text('Shape analyzed'), findsOneWidget);
       expect(find.text('Checking colors…'), findsOneWidget);
 
       await tester.pump(const Duration(milliseconds: 1000));
       await tester.pump();
-      expect(find.text('Matching color palette'), findsOneWidget);
+      expect(find.text('Colors analyzed'), findsOneWidget);
       expect(find.text('Checking accessories…'), findsOneWidget);
 
       await tester.pump(const Duration(milliseconds: 1200));
       await tester.pump();
-      expect(find.text('Accessories considered'), findsOneWidget);
+      expect(find.text('Accessories analyzed'), findsOneWidget);
       expect(find.text('Checking facial details…'), findsOneWidget);
 
       await tester.pump(const Duration(milliseconds: 1300));
       await tester.pump();
-      expect(find.text('Facial details compared'), findsOneWidget);
+      expect(find.text('Facial details analyzed'), findsOneWidget);
       expect(find.text('Matching with the catalog…'), findsOneWidget);
       expect(find.text('Matching'), findsOneWidget);
 
@@ -957,9 +957,17 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('No close match found.'), findsOneWidget);
-      expect(find.text('Overall silhouette matched'), findsOneWidget);
+      expect(find.text('Shape analyzed'), findsOneWidget);
       expect(find.text('Matching with the catalog…'), findsNothing);
-      expect(find.byIcon(Icons.remove_rounded), findsOneWidget);
+      expect(find.text('Matching completed'), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('recognition-finding-step-4')),
+          matching: find.byIcon(Icons.check_rounded),
+        ),
+        findsOneWidget,
+      );
+      expect(find.byIcon(Icons.remove_rounded), findsNothing);
     },
   );
 
@@ -992,18 +1000,26 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Checking silhouette…'), findsNothing);
-      expect(find.text('Overall silhouette matched'), findsOneWidget);
-      expect(find.text('Matching color palette'), findsOneWidget);
-      expect(find.text('Accessories considered'), findsOneWidget);
-      expect(find.text('Facial details compared'), findsOneWidget);
+      expect(find.text('Shape analyzed'), findsOneWidget);
+      expect(find.text('Colors analyzed'), findsOneWidget);
+      expect(find.text('Accessories analyzed'), findsOneWidget);
+      expect(find.text('Facial details analyzed'), findsOneWidget);
       expect(find.text('No close match found.'), findsOneWidget);
       expect(find.text('Matching with the catalog…'), findsNothing);
+      expect(find.text('Matching completed'), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('recognition-finding-step-4')),
+          matching: find.byIcon(Icons.check_rounded),
+        ),
+        findsOneWidget,
+      );
       expect(
         find.descendant(
           of: find.byKey(const Key('recognition-finding-step-4')),
           matching: find.byIcon(Icons.remove_rounded),
         ),
-        findsOneWidget,
+        findsNothing,
       );
       expect(
         find.descendant(
@@ -1011,6 +1027,11 @@ void main() {
           matching: find.byIcon(Icons.close_rounded),
         ),
         findsNothing,
+      );
+      expect(
+        tester.getSize(find.byKey(const Key('recognition-finding-checklist')))
+            .width,
+        lessThanOrEqualTo(360),
       );
       expect(
         find.byKey(const Key('recognition-finding-progress')),
@@ -1051,7 +1072,7 @@ void main() {
   );
 
   testWidgets(
-    'early recognition result settles checklist into unmatched Matching',
+    'early recognition result settles Matching as completed with no-match subtitle',
     (tester) async {
       final gateway = _PendingRecognitionGateway();
       await _pumpHost(
@@ -1072,6 +1093,13 @@ void main() {
       expect(find.text('Checking silhouette…'), findsNothing);
       expect(find.text('Matching with the catalog…'), findsNothing);
       expect(find.text('No close match found.'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('recognition-finding-step-4')),
+          matching: find.byIcon(Icons.check_rounded),
+        ),
+        findsOneWidget,
+      );
       expect(
         find.byKey(const Key('recognition-finding-checklist')),
         findsOneWidget,
@@ -1128,7 +1156,7 @@ void main() {
 
       await tester.pump(CollectibleMotion.recognitionFindingShapeComplete);
       await tester.pump();
-      expect(find.text('Overall silhouette matched'), findsOneWidget);
+      expect(find.text('Shape analyzed'), findsOneWidget);
       expect(find.text('Checking colors…'), findsOneWidget);
       // Still a single recognition attempt while the checklist advances.
       expect(gateway.calls, 1);

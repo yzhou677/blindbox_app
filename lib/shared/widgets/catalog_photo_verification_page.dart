@@ -30,6 +30,10 @@ const catalogPhotoGuidance = 'Ready when you are.';
 const double _scanSheetTopRadius = 32;
 const double _scanContentMaxWidth = 420;
 
+/// Centered analysis report (photo + title + guidance + checklist) while
+/// finding / no-match — keeps rows from spanning the full modal width.
+const double _scanAnalysisReportMaxWidth = 350;
+
 /// Scan primary CTA height — stadium recognition actions (approved shape).
 const double _scanPrimaryButtonHeight = 56;
 
@@ -661,20 +665,24 @@ class _CatalogPhotoVerificationPageState
         : framing || locating
         ? (screenHeight * 0.40).clamp(230.0, 348.0)
         : (screenHeight * 0.415).clamp(240.0, 360.0);
-    // Frame needs a wider working area; finding/no-match slightly wider than review.
+    // Frame needs a wider working area; analysis report uses the centered
+    // column width (no extra inset). Review / candidates keep page gutters.
     final mediaHorizontalInset = framing || locating
         ? AppSpacing.md
         : recognitionLoading || noConfidentMatch
-        ? AppSpacing.pageHorizontalCompact
+        ? 0.0
         : AppSpacing.pageHorizontal;
 
+    final analysisReport = recognitionLoading || noConfidentMatch;
     final titleBlock = Padding(
-      padding: EdgeInsets.fromLTRB(
-        AppSpacing.pageHorizontal,
-        mediaLeads ? 0 : 2,
-        52,
-        0,
-      ),
+      padding: analysisReport
+          ? EdgeInsets.only(top: mediaLeads ? 0 : 2)
+          : EdgeInsets.fromLTRB(
+              AppSpacing.pageHorizontal,
+              mediaLeads ? 0 : 2,
+              52,
+              0,
+            ),
       child: AnimatedSwitcher(
         duration: CollectibleMotion.crossfade,
         switchInCurve: CollectibleMotion.easeOut,
@@ -700,9 +708,9 @@ class _CatalogPhotoVerificationPageState
 
     final guidanceBlock = Padding(
       padding: EdgeInsets.fromLTRB(
-        AppSpacing.pageHorizontal,
+        analysisReport ? 0 : AppSpacing.pageHorizontal,
         recognitionLoading ? AppSpacing.xs : 6,
-        AppSpacing.pageHorizontal,
+        analysisReport ? 0 : AppSpacing.pageHorizontal,
         0,
       ),
       child: AnimatedSwitcher(
@@ -820,28 +828,38 @@ class _CatalogPhotoVerificationPageState
                           ),
                         ),
                       ),
-                      if (mediaLeads) ...[
-                        SizedBox(
-                          height: recognitionLoading || noConfidentMatch ? 8 : 10,
+                      if (analysisReport) ...[
+                        const SizedBox(height: AppSpacing.sm),
+                        Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(
+                              maxWidth: _scanAnalysisReportMaxWidth,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                mediaBlock,
+                                const SizedBox(height: 10),
+                                titleBlock,
+                                guidanceBlock,
+                                const SizedBox(height: AppSpacing.xl),
+                                _FindingAnalysisChecklist(
+                                  key: ValueKey(_findingSequenceId),
+                                  sequenceId: _findingSequenceId,
+                                  outcome: noConfidentMatch
+                                      ? _FindingChecklistOutcome.noMatch
+                                      : _FindingChecklistOutcome.loading,
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
+                      ] else if (mediaLeads) ...[
+                        const SizedBox(height: 10),
                         mediaBlock,
-                        SizedBox(
-                          height: recognitionLoading || noConfidentMatch
-                              ? 10
-                              : AppSpacing.md,
-                        ),
+                        const SizedBox(height: AppSpacing.md),
                         titleBlock,
                         guidanceBlock,
-                        if (recognitionLoading || noConfidentMatch) ...[
-                          const SizedBox(height: AppSpacing.xl),
-                          _FindingAnalysisChecklist(
-                            key: ValueKey(_findingSequenceId),
-                            sequenceId: _findingSequenceId,
-                            outcome: noConfidentMatch
-                                ? _FindingChecklistOutcome.noMatch
-                                : _FindingChecklistOutcome.loading,
-                          ),
-                        ],
                       ] else ...[
                         titleBlock,
                         guidanceBlock,
@@ -1104,9 +1122,9 @@ class _FindingProgressIndicator extends StatelessWidget {
 
 /// Display-only analysis steps while recognition runs. Cosmetic pacing only —
 /// not tied to backend stages. Final Matching stays active until the parent
-/// leaves the recognizing state, or settles into a soft unmatched row on
-/// no-confident-match.
-enum _FindingStepStatus { pending, active, completed, unmatched }
+/// leaves the recognizing state; on no-confident-match every step settles
+/// completed (Matching keeps the purple check — soft failure is the subtitle).
+enum _FindingStepStatus { pending, active, completed }
 
 enum _FindingChecklistOutcome { loading, noMatch }
 
@@ -1126,31 +1144,31 @@ const _findingChecklistSteps = <_FindingChecklistStep>[
   _FindingChecklistStep(
     title: 'Shape',
     activeDetail: 'Checking silhouette…',
-    completedDetail: 'Overall silhouette matched',
+    completedDetail: 'Shape analyzed',
   ),
   _FindingChecklistStep(
     title: 'Colors',
     activeDetail: 'Checking colors…',
-    completedDetail: 'Matching color palette',
+    completedDetail: 'Colors analyzed',
   ),
   _FindingChecklistStep(
     title: 'Accessories',
     activeDetail: 'Checking accessories…',
-    completedDetail: 'Accessories considered',
+    completedDetail: 'Accessories analyzed',
   ),
   _FindingChecklistStep(
     title: 'Facial details',
     activeDetail: 'Checking facial details…',
-    completedDetail: 'Facial details compared',
+    completedDetail: 'Facial details analyzed',
   ),
   _FindingChecklistStep(
     title: 'Matching',
     activeDetail: 'Matching with the catalog…',
-    completedDetail: '',
+    completedDetail: 'Matching completed',
   ),
 ];
 
-const _findingMatchingUnmatchedDetail = 'No close match found.';
+const _findingMatchingNoMatchDetail = 'No close match found.';
 
 class _FindingAnalysisChecklist extends StatefulWidget {
   const _FindingAnalysisChecklist({
@@ -1301,7 +1319,6 @@ class _FindingAnalysisChecklistState extends State<_FindingAnalysisChecklist>
 
   _FindingStepStatus _statusFor(int index) {
     if (widget.outcome == _FindingChecklistOutcome.noMatch) {
-      if (index == _matchingIndex) return _FindingStepStatus.unmatched;
       return _FindingStepStatus.completed;
     }
     if (index < _activeIndex) return _FindingStepStatus.completed;
@@ -1331,6 +1348,11 @@ class _FindingAnalysisChecklistState extends State<_FindingAnalysisChecklist>
                 key: Key('recognition-finding-step-$i'),
                 step: _findingChecklistSteps[i],
                 status: _statusFor(i),
+                detailOverride:
+                    widget.outcome == _FindingChecklistOutcome.noMatch &&
+                        i == _matchingIndex
+                    ? _findingMatchingNoMatchDetail
+                    : null,
                 pulse: _pulse,
                 reduceMotion: reduceMotion,
               ),
@@ -1349,12 +1371,14 @@ class _FindingChecklistRow extends StatelessWidget {
     required this.status,
     required this.pulse,
     required this.reduceMotion,
+    this.detailOverride,
   });
 
   final _FindingChecklistStep step;
   final _FindingStepStatus status;
   final Animation<double> pulse;
   final bool reduceMotion;
+  final String? detailOverride;
 
   @override
   Widget build(BuildContext context) {
@@ -1363,20 +1387,21 @@ class _FindingChecklistRow extends StatelessWidget {
     final muted = scheme.onSurfaceVariant.withValues(alpha: 0.55);
     final titleStyle = AppTypography.cardTitle(textTheme, scheme).copyWith(
       color: switch (status) {
-        _FindingStepStatus.pending || _FindingStepStatus.unmatched => muted,
+        _FindingStepStatus.pending => muted,
         _ => scheme.onSurface,
       },
     );
     final detailStyle = CollectibleTypography.figureMeta(textTheme, scheme);
-    final unmatchedDetailStyle = detailStyle.copyWith(color: muted);
-    final detail = switch (status) {
-      _FindingStepStatus.completed => step.completedDetail.isEmpty
-          ? null
-          : step.completedDetail,
-      _FindingStepStatus.active => step.activeDetail,
-      _FindingStepStatus.unmatched => _findingMatchingUnmatchedDetail,
-      _FindingStepStatus.pending => null,
-    };
+    final softDetailStyle = detailStyle.copyWith(color: muted);
+    final detail = detailOverride ??
+        switch (status) {
+          _FindingStepStatus.completed => step.completedDetail.isEmpty
+              ? null
+              : step.completedDetail,
+          _FindingStepStatus.active => step.activeDetail,
+          _FindingStepStatus.pending => null,
+        };
+    final softDetail = detailOverride != null;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1408,9 +1433,7 @@ class _FindingChecklistRow extends StatelessWidget {
                         padding: const EdgeInsets.only(top: 2),
                         child: Text(
                           detail,
-                          style: status == _FindingStepStatus.unmatched
-                              ? unmatchedDetailStyle
-                              : detailStyle,
+                          style: softDetail ? softDetailStyle : detailStyle,
                         ),
                       )
               else
@@ -1427,8 +1450,8 @@ class _FindingChecklistRow extends StatelessWidget {
                             child: Text(
                               detail,
                               key: ValueKey('${step.title}-$detail'),
-                              style: status == _FindingStepStatus.unmatched
-                                  ? unmatchedDetailStyle
+                              style: softDetail
+                                  ? softDetailStyle
                                   : detailStyle,
                             ),
                           ),
@@ -1477,24 +1500,6 @@ class _FindingStepIndicator extends StatelessWidget {
       _FindingStepStatus.active => reduceMotion
           ? filled
           : ScaleTransition(scale: pulse, child: filled),
-      _FindingStepStatus.unmatched => SizedBox(
-          width: _size,
-          height: _size,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: scheme.onSurfaceVariant.withValues(alpha: 0.38),
-                width: 1.5,
-              ),
-            ),
-            child: Icon(
-              Icons.remove_rounded,
-              size: 11,
-              color: scheme.onSurfaceVariant.withValues(alpha: 0.55),
-            ),
-          ),
-        ),
       _FindingStepStatus.pending => SizedBox(
           width: _size,
           height: _size,
