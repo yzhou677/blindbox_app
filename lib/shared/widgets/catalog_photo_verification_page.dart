@@ -1,7 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
+import 'package:blindbox_app/core/theme/collectible_elevation.dart';
+import 'package:blindbox_app/core/theme/collectible_motion.dart';
+import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/shared/image/catalog_photo_acquisition.dart';
 import 'package:blindbox_app/shared/image/catalog_figure_recognition.dart';
 import 'package:blindbox_app/shared/image/catalog_figure_recognition_gateway.dart';
@@ -11,11 +15,17 @@ import 'package:blindbox_app/shared/image/local_whole_image_quality_evaluator.da
 import 'package:blindbox_app/shared/image/whole_image_quality.dart';
 import 'package:blindbox_app/shared/widgets/catalog_subject_selection_screen.dart';
 import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
+import 'package:blindbox_app/shared/widgets/collectible_browse_card.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image/image.dart' as image;
 
 const catalogPhotoGuidance = 'Keep the collectible centered and in focus.';
+
+/// Optional override for success haptics (tests inject a counter; production
+/// defaults to [HapticFeedback.selectionClick]).
+typedef CatalogScanSelectionHaptic = void Function();
 
 Future<void> showCatalogPhotoVerification(
   BuildContext context,
@@ -25,6 +35,8 @@ Future<void> showCatalogPhotoVerification(
   CatalogSubjectLocator? locatorGateway,
   CatalogFigureRecognitionCoordinator? recognitionCoordinator,
   ValueChanged<CatalogRecognitionCandidate>? onCandidateConfirmed,
+  VoidCallback? onCreateCustom,
+  CatalogScanSelectionHaptic? selectionHaptic,
 }) async {
   await showCatalogPhotoScanSheet(
     context,
@@ -33,6 +45,8 @@ Future<void> showCatalogPhotoVerification(
     locatorGateway: locatorGateway,
     recognitionCoordinator: recognitionCoordinator,
     onCandidateConfirmed: onCandidateConfirmed,
+    onCreateCustom: onCreateCustom,
+    selectionHaptic: selectionHaptic,
   );
 }
 
@@ -45,36 +59,46 @@ Future<CatalogSubjectSelectionResult?> showCatalogPhotoScanSheet(
   CatalogSubjectLocator? locatorGateway,
   CatalogFigureRecognitionCoordinator? recognitionCoordinator,
   ValueChanged<CatalogRecognitionCandidate>? onCandidateConfirmed,
-}) {
+  VoidCallback? onCreateCustom,
+  CatalogScanSelectionHaptic? selectionHaptic,
+}) async {
   final viewportWidth = MediaQuery.sizeOf(context).width;
-  return showModalBottomSheet<CatalogSubjectSelectionResult>(
-    context: context,
-    useRootNavigator: false,
-    isScrollControlled: true,
-    useSafeArea: false,
-    isDismissible: true,
-    enableDrag: true,
-    showDragHandle: false,
-    barrierColor: Colors.black.withValues(alpha: 0.36),
-    backgroundColor: Colors.transparent,
-    elevation: 0,
-    constraints: BoxConstraints(
-      minWidth: viewportWidth,
-      maxWidth: viewportWidth,
-    ),
-    builder: (_) => FractionallySizedBox(
-      heightFactor: 0.9,
-      alignment: Alignment.bottomCenter,
-      child: CatalogPhotoVerificationPage(
-        selection: selection,
-        evaluator: evaluator,
-        photoAcquirer: photoAcquirer,
-        locatorGateway: locatorGateway,
-        recognitionCoordinator: recognitionCoordinator,
-        onCandidateConfirmed: onCandidateConfirmed,
+  try {
+    return await showModalBottomSheet<CatalogSubjectSelectionResult>(
+      context: context,
+      useRootNavigator: false,
+      isScrollControlled: true,
+      useSafeArea: false,
+      isDismissible: true,
+      enableDrag: true,
+      showDragHandle: false,
+      barrierColor: Colors.black.withValues(alpha: 0.36),
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      constraints: BoxConstraints(
+        minWidth: viewportWidth,
+        maxWidth: viewportWidth,
       ),
-    ),
-  );
+      builder: (_) => FractionallySizedBox(
+        heightFactor: 0.9,
+        alignment: Alignment.bottomCenter,
+        child: CatalogPhotoVerificationPage(
+          selection: selection,
+          evaluator: evaluator,
+          photoAcquirer: photoAcquirer,
+          locatorGateway: locatorGateway,
+          recognitionCoordinator: recognitionCoordinator,
+          onCandidateConfirmed: onCandidateConfirmed,
+          onCreateCustom: onCreateCustom,
+          selectionHaptic: selectionHaptic,
+        ),
+      ),
+    );
+  } finally {
+    // Clear any focus/keyboard left under nested Collection sheets so the
+    // host tab does not keep a stale viewInsets after the scan route pops.
+    FocusManager.instance.primaryFocus?.unfocus();
+  }
 }
 
 enum CatalogPhotoScanPresentationState {
@@ -98,6 +122,8 @@ class CatalogPhotoVerificationPage extends StatefulWidget {
     this.locatorGateway,
     this.recognitionCoordinator,
     this.onCandidateConfirmed,
+    this.onCreateCustom,
+    this.selectionHaptic,
   });
 
   final CatalogPhotoSelection selection;
@@ -106,6 +132,8 @@ class CatalogPhotoVerificationPage extends StatefulWidget {
   final CatalogSubjectLocator? locatorGateway;
   final CatalogFigureRecognitionCoordinator? recognitionCoordinator;
   final ValueChanged<CatalogRecognitionCandidate>? onCandidateConfirmed;
+  final VoidCallback? onCreateCustom;
+  final CatalogScanSelectionHaptic? selectionHaptic;
 
   @override
   State<CatalogPhotoVerificationPage> createState() =>
@@ -117,11 +145,11 @@ class _CatalogPhotoVerificationPageState
     with SingleTickerProviderStateMixin {
   late final AnimationController _stateController = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 180),
+    duration: CollectibleMotion.crossfade,
   );
   late final Animation<double> _stateAnimation = CurvedAnimation(
     parent: _stateController,
-    curve: Curves.easeOutCubic,
+    curve: CollectibleMotion.easeOut,
   );
   late CatalogPhotoSelection _selection;
   late final CatalogSubjectLocator _locatorGateway =
@@ -149,8 +177,9 @@ class _CatalogPhotoVerificationPageState
   var _validating = false;
   CatalogSubjectSelectionResult? _confirmedSelection;
   List<CatalogRecognitionCandidate> _candidates = const [];
-  CatalogRecognitionCandidate? _selectedCandidate;
   CatalogRecognitionFailureKind? _failureKind;
+  var _candidateRevealEpoch = 0;
+  var _successHapticGeneration = -1;
   static const _locatorPresentationDeadline = Duration(seconds: 3);
 
   @override
@@ -188,7 +217,6 @@ class _CatalogPhotoVerificationPageState
       _initialFramingOrigin = SubjectSelectionOrigin.defaultBox;
       _confirmedSelection = null;
       _candidates = const [];
-      _selectedCandidate = null;
       _failureKind = null;
     });
     _stateController.value = 0;
@@ -363,14 +391,16 @@ class _CatalogPhotoVerificationPageState
     );
     if (!mounted || generation != _generation || result == null) return;
     final resultTransitionTimer = Stopwatch()..start();
+    var emitSuccessHaptic = false;
     setState(() {
       switch (result) {
         case CatalogRecognitionTooBlurry():
           _presentationState = CatalogPhotoScanPresentationState.tooBlurry;
         case CatalogRecognitionCandidates():
           _candidates = result.candidates;
-          _selectedCandidate = null;
           _presentationState = CatalogPhotoScanPresentationState.candidates;
+          _candidateRevealEpoch++;
+          emitSuccessHaptic = result.candidates.isNotEmpty;
         case CatalogRecognitionNoConfidentMatch():
           _presentationState =
               CatalogPhotoScanPresentationState.noConfidentMatch;
@@ -380,6 +410,7 @@ class _CatalogPhotoVerificationPageState
               CatalogPhotoScanPresentationState.recoverableFailure;
       }
     });
+    if (emitSuccessHaptic) _emitSuccessHapticOnce(generation);
     _debugScanTiming(
       'client_ui',
       'recognition_result_transition',
@@ -387,6 +418,14 @@ class _CatalogPhotoVerificationPageState
       correlationId: catalogPhotoCorrelationId(_selection),
       safeFields: {'resultType': result.runtimeType.toString()},
     );
+  }
+
+  void _emitSuccessHapticOnce(int generation) {
+    if (_successHapticGeneration == generation) return;
+    _successHapticGeneration = generation;
+    // Tests inject [selectionHaptic] to observe; default is a no-op under the
+    // test binding and selectionClick on device.
+    (widget.selectionHaptic ?? HapticFeedback.selectionClick)();
   }
 
   void _adjustFrame() => setState(
@@ -426,8 +465,10 @@ class _CatalogPhotoVerificationPageState
       'Finding your collectible…',
     CatalogPhotoScanPresentationState.tooBlurry =>
       'Selected collectible is too blurry',
-    CatalogPhotoScanPresentationState.candidates => 'Is this your collectible?',
-    CatalogPhotoScanPresentationState.noConfidentMatch => 'No confident match',
+    CatalogPhotoScanPresentationState.candidates =>
+      'We found a few close matches',
+    CatalogPhotoScanPresentationState.noConfidentMatch =>
+      'We couldn’t confidently identify this collectible.',
     CatalogPhotoScanPresentationState.recoverableFailure => 'Scan unavailable',
   };
 
@@ -437,7 +478,9 @@ class _CatalogPhotoVerificationPageState
     ).textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant);
     return switch (_presentationState) {
       CatalogPhotoScanPresentationState.framing => _FramingGuidance(
-        key: ValueKey(_selectionOrigin),
+        // Key by presentation state so origin edits rebuild in place
+        // (instant AI-hint hide) instead of crossfading stale copy.
+        key: const ValueKey('framing-state-guidance'),
         suggested: _selectionOrigin == SubjectSelectionOrigin.suggestedBox,
       ),
       CatalogPhotoScanPresentationState.locating => Text(
@@ -453,8 +496,14 @@ class _CatalogPhotoVerificationPageState
         'The selected collectible is too blurry to identify reliably.',
         style: style,
       ),
+      CatalogPhotoScanPresentationState.candidates => Text(
+        'Choose the collectible that looks most like yours.',
+        key: const ValueKey('candidates-guidance'),
+        style: style,
+      ),
       CatalogPhotoScanPresentationState.noConfidentMatch => Text(
-        'We couldn’t find a confident match.',
+        'Try adjusting the frame, taking a closer photo, or reducing glare.',
+        key: const ValueKey('no-match-guidance'),
         style: style,
       ),
       CatalogPhotoScanPresentationState.recoverableFailure => Text(
@@ -472,6 +521,19 @@ class _CatalogPhotoVerificationPageState
     };
   }
 
+  void _confirmCandidate(CatalogRecognitionCandidate candidate) {
+    // Keep the scan sheet open so Series detail can stack above it and
+    // system back returns to recognition results.
+    widget.onCandidateConfirmed?.call(candidate);
+  }
+
+  void _createCustom() {
+    final onCreate = widget.onCreateCustom;
+    Navigator.pop(context, _confirmedSelection);
+    if (onCreate == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) => onCreate());
+  }
+
   Widget _stateActions() {
     return switch (_presentationState) {
       CatalogPhotoScanPresentationState.framing => _FrameActions(
@@ -482,9 +544,13 @@ class _CatalogPhotoVerificationPageState
           _selectionOrigin = _initialFramingOrigin;
         }),
       ),
-      CatalogPhotoScanPresentationState.locating ||
-      CatalogPhotoScanPresentationState.recognizing => const _LocatingActions(
-        key: ValueKey('recognition-progress'),
+      CatalogPhotoScanPresentationState.locating => const _LocatingActions(
+        key: ValueKey('locator-progress'),
+      ),
+      // Finding: crop + localized shimmer carry the wait — no competing spinner.
+      CatalogPhotoScanPresentationState.recognizing => const SizedBox(
+        key: ValueKey('recognition-finding-actions'),
+        height: AppSpacing.sm,
       ),
       CatalogPhotoScanPresentationState.tooBlurry => _RecognitionActions(
         primaryLabel: 'Adjust Frame',
@@ -498,32 +564,18 @@ class _CatalogPhotoVerificationPageState
         ],
       ),
       CatalogPhotoScanPresentationState.candidates => _CandidateActions(
+        key: ValueKey('candidate-actions-$_candidateRevealEpoch'),
         candidates: _candidates,
-        selected: _selectedCandidate,
-        onSelected: (candidate) =>
-            setState(() => _selectedCandidate = candidate),
-        onConfirm: _selectedCandidate == null
-            ? null
-            : () {
-                widget.onCandidateConfirmed?.call(_selectedCandidate!);
-                Navigator.pop(context, _confirmedSelection);
-              },
-        onNone: () => setState(
-          () => _presentationState =
-              CatalogPhotoScanPresentationState.noConfidentMatch,
-        ),
+        revealEpoch: _candidateRevealEpoch,
+        onCandidateTap: _confirmCandidate,
+        onCreateCustom: _createCustom,
         onTryAnother: () => _replacePhoto(CatalogPhotoSource.gallery),
       ),
-      CatalogPhotoScanPresentationState.noConfidentMatch => _RecognitionActions(
-        primaryLabel: 'Adjust Frame',
-        onPrimary: _adjustFrame,
-        secondary: [
-          (
-            'Try Another Photo',
-            () => _replacePhoto(CatalogPhotoSource.gallery),
-          ),
-          ('Browse Catalog', () => Navigator.pop(context)),
-        ],
+      CatalogPhotoScanPresentationState.noConfidentMatch => _NoMatchActions(
+        key: const ValueKey('no-match-actions'),
+        onCreateCustom: _createCustom,
+        onAdjustFrame: _adjustFrame,
+        onTryAnother: () => _replacePhoto(CatalogPhotoSource.gallery),
       ),
       CatalogPhotoScanPresentationState.recoverableFailure =>
         _RecognitionActions(
@@ -567,6 +619,13 @@ class _CatalogPhotoVerificationPageState
         _presentationState == CatalogPhotoScanPresentationState.framing;
     final recognitionLoading =
         _presentationState == CatalogPhotoScanPresentationState.recognizing;
+    final showingResults =
+        _presentationState == CatalogPhotoScanPresentationState.candidates ||
+        _presentationState == CatalogPhotoScanPresentationState.noConfidentMatch;
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final mediaHeight = showingResults
+        ? (previewHeight * 0.42).clamp(112.0, 168.0)
+        : previewHeight;
     return Material(
       key: const Key('catalog-photo-confirmation'),
       color: scheme.surface,
@@ -604,15 +663,29 @@ class _CatalogPhotoVerificationPageState
                   children: [
                     Expanded(
                       child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 180),
-                        layoutBuilder: (current, previous) => Stack(
-                          alignment: Alignment.centerLeft,
-                          children: [...previous, ?current],
-                        ),
+                        duration: CollectibleMotion.crossfade,
+                        switchInCurve: CollectibleMotion.easeOut,
+                        switchOutCurve: CollectibleMotion.easeIn,
+                        transitionBuilder: (child, animation) {
+                          final offset = Tween<Offset>(
+                            begin: const Offset(0, 0.04),
+                            end: Offset.zero,
+                          ).animate(animation);
+                          return FadeTransition(
+                            opacity: animation,
+                            child: SlideTransition(
+                              position: offset,
+                              child: child,
+                            ),
+                          );
+                        },
                         child: Text(
                           _title,
                           key: ValueKey(_presentationState),
-                          style: Theme.of(context).textTheme.titleLarge,
+                          style: CollectibleTypography.shelfSeriesTitle(
+                            Theme.of(context).textTheme,
+                            scheme,
+                          ),
                         ),
                       ),
                     ),
@@ -623,7 +696,8 @@ class _CatalogPhotoVerificationPageState
                         width: 48,
                         height: 48,
                       ),
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () =>
+                          Navigator.pop(context, _confirmedSelection),
                       icon: const Icon(Icons.close_rounded),
                     ),
                   ],
@@ -632,35 +706,49 @@ class _CatalogPhotoVerificationPageState
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
                 child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 180),
+                  duration: CollectibleMotion.crossfade,
+                  switchInCurve: CollectibleMotion.easeOut,
                   child: _stateGuidance(scheme),
                 ),
               ),
-              const SizedBox(height: AppSpacing.xs),
+              const SizedBox(height: AppSpacing.sm),
               if (_previewLoading)
                 SizedBox(
-                  height: previewHeight,
+                  height: mediaHeight,
                   child: const Center(child: CircularProgressIndicator()),
                 )
               else if (_previewBytes == null || _orientedSize == null)
                 SizedBox(
-                  height: previewHeight,
+                  height: mediaHeight,
                   child: Icon(
                     Icons.broken_image_outlined,
                     size: 42,
                     color: scheme.onSurfaceVariant,
                   ),
                 )
-              else if (recognitionLoading)
-                _SelectedSubjectCropPreview(
-                  bytes: _previewBytes!,
-                  orientedSize: _orientedSize!,
-                  selection: _subjectSelection,
+              else if (recognitionLoading || showingResults)
+                AnimatedSize(
+                  duration: reduceMotion
+                      ? Duration.zero
+                      : CollectibleMotion.sectionReveal,
+                  curve: CollectibleMotion.easeOut,
+                  alignment: Alignment.topCenter,
+                  child: SizedBox(
+                    key: const ValueKey('recognition-crop-slot'),
+                    height: mediaHeight,
+                    width: double.infinity,
+                    child: _SelectedSubjectCropPreview(
+                      bytes: _previewBytes!,
+                      orientedSize: _orientedSize!,
+                      selection: _subjectSelection,
+                      showFindingShimmer: recognitionLoading,
+                    ),
+                  ),
                 )
               else
                 CatalogSubjectSelectionEditor(
                   key: const Key('catalog-photo-shared-editor'),
-                  height: previewHeight,
+                  height: mediaHeight,
                   bytes: _previewBytes!,
                   orientedSize: _orientedSize!,
                   normalizedSelection: _subjectSelection,
@@ -680,16 +768,30 @@ class _CatalogPhotoVerificationPageState
                 ),
               const SizedBox(height: AppSpacing.md),
               AnimatedSwitcher(
-                duration: const Duration(milliseconds: 180),
-                transitionBuilder: (child, animation) => FadeTransition(
-                  opacity: animation,
-                  child: SizeTransition(
-                    sizeFactor: animation,
-                    axisAlignment: -1,
-                    child: child,
-                  ),
+                duration: CollectibleMotion.sectionReveal,
+                switchInCurve: CollectibleMotion.easeOut,
+                switchOutCurve: CollectibleMotion.easeIn,
+                transitionBuilder: (child, animation) {
+                  final offset = Tween<Offset>(
+                    begin: const Offset(0, 0.06),
+                    end: Offset.zero,
+                  ).animate(animation);
+                  return FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(
+                      position: offset,
+                      child: SizeTransition(
+                        sizeFactor: animation,
+                        axisAlignment: -1,
+                        child: child,
+                      ),
+                    ),
+                  );
+                },
+                child: KeyedSubtree(
+                  key: ValueKey(_presentationState),
+                  child: _stateActions(),
                 ),
-                child: _stateActions(),
               ),
             ],
           ),
@@ -704,68 +806,135 @@ class _SelectedSubjectCropPreview extends StatelessWidget {
     required this.bytes,
     required this.orientedSize,
     required this.selection,
+    this.showFindingShimmer = false,
   });
 
   final Uint8List bytes;
   final Size orientedSize;
   final Rect selection;
+  final bool showFindingShimmer;
 
   @override
   Widget build(BuildContext context) {
     final cropAspect =
         (orientedSize.width * selection.width) /
         (orientedSize.height * selection.height);
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
     return Semantics(
-      label: 'Selected collectible being compared',
+      label: showFindingShimmer
+          ? 'Selected collectible being compared'
+          : 'Selected collectible from your photo',
       image: true,
       child: LayoutBuilder(
         builder: (context, outerConstraints) {
-          final targetWidth = (180 * cropAspect).clamp(
+          final maxExtent = outerConstraints.maxHeight.isFinite
+              ? outerConstraints.maxHeight
+              : 220.0;
+          final targetHeight = maxExtent;
+          final targetWidth = (targetHeight * cropAspect).clamp(
             1.0,
             outerConstraints.maxWidth,
           );
-          final targetHeight = targetWidth / cropAspect;
           return Center(
             child: SizedBox(
               width: targetWidth,
               height: targetHeight,
               child: ClipRRect(
                 key: const Key('recognition-selected-crop-preview'),
-                borderRadius: BorderRadius.circular(16),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final imageWidth = targetWidth / selection.width;
-                    final imageHeight = targetHeight / selection.height;
-                    return ClipRect(
-                      child: OverflowBox(
-                        alignment: Alignment.topLeft,
-                        minWidth: imageWidth,
-                        maxWidth: imageWidth,
-                        minHeight: imageHeight,
-                        maxHeight: imageHeight,
-                        child: Transform.translate(
-                          offset: Offset(
-                            -selection.left * imageWidth,
-                            -selection.top * imageHeight,
+                borderRadius: AppRadii.cardRadius,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final imageWidth = targetWidth / selection.width;
+                        final imageHeight = targetHeight / selection.height;
+                        return ClipRect(
+                          child: OverflowBox(
+                            alignment: Alignment.topLeft,
+                            minWidth: imageWidth,
+                            maxWidth: imageWidth,
+                            minHeight: imageHeight,
+                            maxHeight: imageHeight,
+                            child: Transform.translate(
+                              offset: Offset(
+                                -selection.left * imageWidth,
+                                -selection.top * imageHeight,
+                              ),
+                              child: Image.memory(
+                                bytes,
+                                width: imageWidth,
+                                height: imageHeight,
+                                fit: BoxFit.fill,
+                                gaplessPlayback: true,
+                                filterQuality: FilterQuality.medium,
+                              ),
+                            ),
                           ),
-                          child: Image.memory(
-                            bytes,
-                            width: imageWidth,
-                            height: imageHeight,
-                            fit: BoxFit.fill,
-                            gaplessPlayback: true,
-                            filterQuality: FilterQuality.medium,
-                          ),
+                        );
+                      },
+                    ),
+                    if (showFindingShimmer && !reduceMotion)
+                      const IgnorePointer(
+                        child: _CropFindingShimmer(
+                          key: Key('recognition-finding-crop-shimmer'),
                         ),
                       ),
-                    );
-                  },
+                  ],
                 ),
               ),
             ),
           );
         },
       ),
+    );
+  }
+}
+
+/// Soft moving highlight limited to the crop surface — never obscures the art.
+class _CropFindingShimmer extends StatefulWidget {
+  const _CropFindingShimmer({super.key});
+
+  @override
+  State<_CropFindingShimmer> createState() => _CropFindingShimmerState();
+}
+
+class _CropFindingShimmerState extends State<_CropFindingShimmer>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse = AnimationController(
+    vsync: this,
+    duration: CollectibleMotion.shimmer,
+  )..repeat();
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return AnimatedBuilder(
+      animation: _pulse,
+      builder: (context, _) {
+        final t = _pulse.value;
+        return DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment(-1.2 + t * 2.4, -0.2),
+              end: Alignment(-0.2 + t * 2.4, 0.2),
+              colors: [
+                Colors.transparent,
+                scheme.surface.withValues(alpha: 0.14),
+                scheme.primary.withValues(alpha: 0.10),
+                Colors.transparent,
+              ],
+              stops: const [0.0, 0.35, 0.55, 1.0],
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -813,70 +982,316 @@ class _RecognitionActions extends StatelessWidget {
 
 class _CandidateActions extends StatelessWidget {
   const _CandidateActions({
+    super.key,
     required this.candidates,
-    required this.selected,
-    required this.onSelected,
-    required this.onConfirm,
-    required this.onNone,
+    required this.revealEpoch,
+    required this.onCandidateTap,
+    required this.onCreateCustom,
     required this.onTryAnother,
   });
+
   final List<CatalogRecognitionCandidate> candidates;
-  final CatalogRecognitionCandidate? selected;
-  final ValueChanged<CatalogRecognitionCandidate> onSelected;
-  final VoidCallback? onConfirm;
-  final VoidCallback onNone;
+  final int revealEpoch;
+  final ValueChanged<CatalogRecognitionCandidate> onCandidateTap;
+  final VoidCallback onCreateCustom;
   final VoidCallback onTryAnother;
+
   @override
-  Widget build(BuildContext context) => RadioGroup<String>(
-    groupValue: selected?.figureId,
-    onChanged: (id) {
-      if (id == null) return;
-      onSelected(
-        candidates.firstWhere((candidate) => candidate.figureId == id),
-      );
-    },
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        for (final candidate in candidates)
-          RadioListTile<String>(
-            key: Key('recognition-candidate-${candidate.figureId}'),
-            value: candidate.figureId,
-            secondary: SizedBox(
-              width: 52,
-              height: 52,
-              child: CatalogImageFromKey.legacy(
-                imageKey: candidate.imageKey,
-                name: candidate.figureName,
-                seedKey: candidate.figureId,
-                compact: true,
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < candidates.length; i++) ...[
+            if (i > 0) const SizedBox(height: AppSpacing.md),
+            _CascadeEntrance(
+              key: ValueKey('recognition-cascade-$revealEpoch-$i'),
+              index: i,
+              revealEpoch: revealEpoch,
+              child: _RecognitionCandidateCard(
+                candidate: candidates[i],
+                isBestMatch: i == 0,
+                onTap: () => onCandidateTap(candidates[i]),
               ),
             ),
-            title: Text(candidate.figureName),
-            subtitle: Text('${candidate.seriesName} · ${candidate.ipName}'),
+          ],
+          const SizedBox(height: AppSpacing.xl),
+          Text(
+            'Not seeing yours?',
+            textAlign: TextAlign.center,
+            style: textTheme.bodyMedium?.copyWith(
+              color: scheme.onSurfaceVariant,
+            ),
           ),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 52,
-          child: FilledButton(
-            key: const Key('recognition-confirm-candidate'),
-            onPressed: onConfirm,
-            child: const Text('This Is It'),
+          const SizedBox(height: AppSpacing.sm),
+          SizedBox(
+            height: 52,
+            child: OutlinedButton(
+              key: const Key('recognition-create-custom'),
+              onPressed: onCreateCustom,
+              child: const Text('Create Custom Figure'),
+            ),
           ),
-        ),
-        TextButton(
-          key: const Key('recognition-none'),
-          onPressed: onNone,
-          child: const Text('None of These'),
-        ),
-        TextButton(
-          key: const Key('recognition-try-another'),
-          onPressed: onTryAnother,
-          child: const Text('Try Another Photo'),
-        ),
-      ],
-    ),
+          const SizedBox(height: AppSpacing.xs),
+          SizedBox(
+            height: 48,
+            child: TextButton(
+              key: const Key('recognition-try-another'),
+              onPressed: onTryAnother,
+              child: const Text('Try Another Photo'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CascadeEntrance extends StatefulWidget {
+  const _CascadeEntrance({
+    super.key,
+    required this.index,
+    required this.revealEpoch,
+    required this.child,
+  });
+
+  final int index;
+  final int revealEpoch;
+  final Widget child;
+
+  @override
+  State<_CascadeEntrance> createState() => _CascadeEntranceState();
+}
+
+class _CascadeEntranceState extends State<_CascadeEntrance>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: CollectibleMotion.crossfade,
   );
+  late final Animation<double> _fade = CurvedAnimation(
+    parent: _controller,
+    curve: CollectibleMotion.easeOut,
+  );
+  late final Animation<Offset> _slide = Tween<Offset>(
+    begin: const Offset(0, 0.04),
+    end: Offset.zero,
+  ).animate(_fade);
+  Timer? _delay;
+
+  static Duration _startDelayFor(int index) {
+    return switch (index) {
+      0 => CollectibleMotion.recognitionCascadeFirst,
+      1 => CollectibleMotion.recognitionCascadeSecond,
+      2 => CollectibleMotion.recognitionCascadeThird,
+      _ => CollectibleMotion.recognitionCascadeThird +
+          Duration(milliseconds: 40 * (index - 2)),
+    };
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _armEntrance());
+  }
+
+  @override
+  void didUpdateWidget(covariant _CascadeEntrance oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.revealEpoch != widget.revealEpoch) {
+      _delay?.cancel();
+      _controller.value = 0;
+      _armEntrance();
+    }
+  }
+
+  void _armEntrance() {
+    if (!mounted) return;
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _controller.value = 1;
+      return;
+    }
+    _delay = Timer(_startDelayFor(widget.index), () {
+      if (mounted) _controller.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _delay?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _fade,
+      child: SlideTransition(position: _slide, child: widget.child),
+    );
+  }
+}
+
+class _RecognitionCandidateCard extends StatelessWidget {
+  const _RecognitionCandidateCard({
+    required this.candidate,
+    required this.isBestMatch,
+    required this.onTap,
+  });
+
+  final CatalogRecognitionCandidate candidate;
+  final bool isBestMatch;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final semanticsLabel = isBestMatch
+        ? 'Best Match, ${candidate.figureName}, ${candidate.seriesName}, ${candidate.ipName}'
+        : '${candidate.figureName}, ${candidate.seriesName}, ${candidate.ipName}';
+
+    return Semantics(
+      button: true,
+      label: semanticsLabel,
+      hint: 'Open series',
+      child: CollectibleBrowseCard(
+        key: Key('recognition-candidate-${candidate.figureId}'),
+        onTap: onTap,
+        padding: const EdgeInsets.fromLTRB(14, 14, 16, 14),
+        child: Row(
+          children: [
+            DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: AppRadii.figureThumbRadius,
+                boxShadow: CollectibleElevation.softCard(context),
+              ),
+              child: ClipRRect(
+                borderRadius: AppRadii.figureThumbRadius,
+                child: SizedBox(
+                  width: 88,
+                  height: 88,
+                  child: CatalogImageFromKey.legacy(
+                    imageKey: candidate.imageKey,
+                    name: candidate.figureName,
+                    seedKey: candidate.figureId,
+                    compact: false,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (isBestMatch) ...[
+                    Text(
+                      '✨ Best Match',
+                      key: const Key('recognition-best-match-label'),
+                      style: textTheme.labelMedium?.copyWith(
+                        color: scheme.primary,
+                        fontWeight: FontWeight.w600,
+                        height: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                  ],
+                  Text(
+                    candidate.figureName,
+                    style: CollectibleTypography.shelfSeriesTitle(
+                      textTheme,
+                      scheme,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    candidate.seriesName,
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                      height: 1.25,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    candidate.ipName,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
+                      height: 1.25,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NoMatchActions extends StatelessWidget {
+  const _NoMatchActions({
+    super.key,
+    required this.onCreateCustom,
+    required this.onAdjustFrame,
+    required this.onTryAnother,
+  });
+
+  final VoidCallback onCreateCustom;
+  final VoidCallback onAdjustFrame;
+  final VoidCallback onTryAnother;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            height: 52,
+            child: FilledButton(
+              key: const Key('recognition-create-custom'),
+              onPressed: onCreateCustom,
+              child: const Text('Create Custom Figure'),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          SizedBox(
+            height: 48,
+            child: OutlinedButton(
+              onPressed: onAdjustFrame,
+              child: const Text('Adjust Frame'),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          SizedBox(
+            height: 48,
+            child: TextButton(
+              key: const Key('recognition-try-another'),
+              onPressed: onTryAnother,
+              child: const Text('Try Another Photo'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _GuidanceText extends StatelessWidget {

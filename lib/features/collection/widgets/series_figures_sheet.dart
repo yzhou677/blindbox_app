@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:blindbox_app/core/theme/app_spacing.dart';
+import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_adapters.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_sheet.dart';
@@ -26,16 +29,68 @@ ShelfSeries? _findSeries(CollectionSnapshot snap, String seriesId) {
 }
 
 /// Figure-first sheet — replaces numeric slot chips.
-class SeriesFiguresSheet extends ConsumerWidget {
-  const SeriesFiguresSheet({super.key, required this.seriesId});
+class SeriesFiguresSheet extends ConsumerStatefulWidget {
+  const SeriesFiguresSheet({
+    super.key,
+    required this.seriesId,
+    this.matchedFigureId,
+  });
 
   final String seriesId;
 
+  /// When opened from recognition, scroll to and briefly highlight this figure.
+  final String? matchedFigureId;
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SeriesFiguresSheet> createState() => _SeriesFiguresSheetState();
+}
+
+class _SeriesFiguresSheetState extends ConsumerState<SeriesFiguresSheet> {
+  static const _matchedLabel = 'Matched from your photo';
+
+  final Map<String, GlobalKey> _figureKeys = {};
+  var _matchHighlightVisible = false;
+  Timer? _highlightTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    final matchedId = widget.matchedFigureId?.trim();
+    if (matchedId != null && matchedId.isNotEmpty) {
+      _matchHighlightVisible = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _revealMatched(matchedId));
+      _highlightTimer = Timer(const Duration(milliseconds: 2400), () {
+        if (mounted) setState(() => _matchHighlightVisible = false);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _highlightTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _revealMatched(String figureId) async {
+    if (!mounted) return;
+    final key = _figureKeys.putIfAbsent(figureId, GlobalKey.new);
+    final ctx = key.currentContext;
+    if (ctx == null) return;
+    await Scrollable.ensureVisible(
+      ctx,
+      alignment: 0.2,
+      duration: MediaQuery.disableAnimationsOf(context)
+          ? Duration.zero
+          : CollectibleMotion.sectionReveal,
+      curve: CollectibleMotion.easeOut,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final snap = ref.watch(collectionNotifierProvider);
     final notifier = ref.read(collectionNotifierProvider.notifier);
-    final series = _findSeries(snap, seriesId);
+    final series = _findSeries(snap, widget.seriesId);
     if (series == null) return const SizedBox.shrink();
 
     final resolution = resolveSeriesCompletion(series, snap.figureStates);
@@ -53,6 +108,7 @@ class SeriesFiguresSheet extends ConsumerWidget {
             figureStates: snap.figureStates,
           )
         : null;
+    final matchedId = widget.matchedFigureId?.trim();
 
     return CollectibleSheetInsets(
       child: CollectibleSheetScrollView(
@@ -67,6 +123,23 @@ class SeriesFiguresSheet extends ConsumerWidget {
           if (seriesNote != null && seriesNote.isNotEmpty)
             SliverToBoxAdapter(
               child: _SeriesNoteText(note: seriesNote, topPadding: 16),
+            ),
+          if (matchedId != null &&
+              matchedId.isNotEmpty &&
+              _matchHighlightVisible)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Text(
+                  _matchedLabel,
+                  key: const Key('recognition-matched-figure-label'),
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
             ),
           if (isComplete)
             SliverToBoxAdapter(
@@ -99,6 +172,9 @@ class SeriesFiguresSheet extends ConsumerWidget {
                 snap: snap,
                 resolution: resolution,
                 onCycleFigure: notifier.cycleFigure,
+                matchedFigureId: matchedId,
+                matchHighlightVisible: _matchHighlightVisible,
+                figureKeys: _figureKeys,
               ),
             ),
           ),
@@ -151,12 +227,18 @@ class _SeriesFigureGrid extends StatelessWidget {
     required this.snap,
     required this.resolution,
     required this.onCycleFigure,
+    this.matchedFigureId,
+    this.matchHighlightVisible = false,
+    this.figureKeys = const {},
   });
 
   final ShelfSeries series;
   final CollectionSnapshot snap;
   final SeriesCompletionResolution resolution;
   final void Function(String figureId) onCycleFigure;
+  final String? matchedFigureId;
+  final bool matchHighlightVisible;
+  final Map<String, GlobalKey> figureKeys;
 
   @override
   Widget build(BuildContext context) {
@@ -173,6 +255,9 @@ class _SeriesFigureGrid extends StatelessWidget {
         figures: series.figures,
         snap: snap,
         onCycleFigure: onCycleFigure,
+        matchedFigureId: matchedFigureId,
+        matchHighlightVisible: matchHighlightVisible,
+        figureKeys: figureKeys,
       );
     }
 
@@ -193,6 +278,9 @@ class _SeriesFigureGrid extends StatelessWidget {
             figures: regularFigures,
             snap: snap,
             onCycleFigure: onCycleFigure,
+            matchedFigureId: matchedFigureId,
+            matchHighlightVisible: matchHighlightVisible,
+            figureKeys: figureKeys,
           ),
         ],
         const SizedBox(height: 28),
@@ -211,6 +299,9 @@ class _SeriesFigureGrid extends StatelessWidget {
           figures: secretFigures,
           snap: snap,
           onCycleFigure: onCycleFigure,
+          matchedFigureId: matchedFigureId,
+          matchHighlightVisible: matchHighlightVisible,
+          figureKeys: figureKeys,
         ),
       ],
     );
@@ -285,15 +376,22 @@ class _FigureCapsuleWrap extends StatelessWidget {
     required this.figures,
     required this.snap,
     required this.onCycleFigure,
+    this.matchedFigureId,
+    this.matchHighlightVisible = false,
+    this.figureKeys = const {},
   });
 
   final ShelfSeries series;
   final List<ShelfFigure> figures;
   final CollectionSnapshot snap;
   final void Function(String figureId) onCycleFigure;
+  final String? matchedFigureId;
+  final bool matchHighlightVisible;
+  final Map<String, GlobalKey> figureKeys;
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return SizedBox(
       width: double.infinity,
       child: Wrap(
@@ -302,20 +400,52 @@ class _FigureCapsuleWrap extends StatelessWidget {
         alignment: WrapAlignment.center,
         children: [
           for (final f in figures)
-            FigureCapsuleCard(
-              series: series,
-              figure: f,
-              tracked: snap.trackedOrDefault(f.id),
-              onTap: () => onCycleFigure(f.id),
-              onBrowseFigure: () {
-                final index = series.figures.indexWhere(
-                  (fig) => fig.id == f.id,
+            Builder(
+              builder: (context) {
+                final isMatched =
+                    matchedFigureId != null &&
+                    matchedFigureId!.isNotEmpty &&
+                    f.id == matchedFigureId;
+                final capsule = FigureCapsuleCard(
+                  key: isMatched
+                      ? figureKeys.putIfAbsent(f.id, GlobalKey.new)
+                      : ValueKey<String>(f.id),
+                  series: series,
+                  figure: f,
+                  tracked: snap.trackedOrDefault(f.id),
+                  onTap: () => onCycleFigure(f.id),
+                  onBrowseFigure: () {
+                    final index = series.figures.indexWhere(
+                      (fig) => fig.id == f.id,
+                    );
+                    showCatalogFigureGallery(
+                      context,
+                      items: catalogGalleryItemsFromShelfSeries(series),
+                      initialIndex: index < 0 ? 0 : index,
+                      seriesTitle: series.name,
+                    );
+                  },
                 );
-                showCatalogFigureGallery(
-                  context,
-                  items: catalogGalleryItemsFromShelfSeries(series),
-                  initialIndex: index < 0 ? 0 : index,
-                  seriesTitle: series.name,
+                if (!isMatched || !matchHighlightVisible) return capsule;
+                return AnimatedContainer(
+                  duration: CollectibleMotion.crossfade,
+                  curve: CollectibleMotion.easeOut,
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: scheme.primary.withValues(alpha: 0.42),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: scheme.primary.withValues(alpha: 0.12),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: capsule,
                 );
               },
             ),

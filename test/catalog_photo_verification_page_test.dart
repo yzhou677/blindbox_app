@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/shared/image/catalog_photo_acquisition.dart';
 import 'package:blindbox_app/shared/image/catalog_figure_recognition.dart';
 import 'package:blindbox_app/shared/image/catalog_subject_locator_gateway.dart';
 import 'package:blindbox_app/shared/image/catalog_subject_selection.dart';
 import 'package:blindbox_app/shared/image/whole_image_quality.dart';
 import 'package:blindbox_app/shared/widgets/catalog_photo_verification_page.dart';
+import 'package:blindbox_app/shared/widgets/collectible_browse_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as image;
@@ -474,11 +476,11 @@ void main() {
 
     final selectionBox = find.byKey(const Key('subject-selection-box'));
     await tester.ensureVisible(selectionBox);
-    await tester.pump(const Duration(milliseconds: 220));
+    await tester.pump(CollectibleMotion.crossfade);
     final before = tester.getRect(selectionBox);
     await tester.drag(selectionBox, const Offset(30, 8));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 220));
+    await tester.pump(CollectibleMotion.crossfade);
     expect(tester.getRect(selectionBox).left, greaterThan(before.left));
     expect(
       find.text('AI suggested this frame. Adjust if needed.'),
@@ -488,7 +490,7 @@ void main() {
     await tester.ensureVisible(find.text('Reset Selection'));
     await tester.tap(find.text('Reset Selection'));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 220));
+    await tester.pump(CollectibleMotion.crossfade);
     expect(
       find.text('AI suggested this frame. Adjust if needed.'),
       findsOneWidget,
@@ -502,7 +504,7 @@ void main() {
       const Offset(90, 10),
     );
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 220));
+    await tester.pump(CollectibleMotion.crossfade);
     expect(
       find.text('AI suggested this frame. Adjust if needed.'),
       findsNothing,
@@ -789,7 +791,11 @@ void main() {
         find.byKey(const Key('recognition-selected-crop-preview')),
         findsOneWidget,
       );
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(
+        find.byKey(const Key('recognition-finding-crop-shimmer')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('subject-locator-progress')), findsNothing);
       await tester.pump(const Duration(milliseconds: 1));
       expect(gateway.calls, 1);
       await tester.tap(find.text('Continue'));
@@ -841,12 +847,276 @@ void main() {
       );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      expect(find.text('Is this your collectible?'), findsOneWidget);
+      expect(find.text('We found a few close matches'), findsOneWidget);
+      expect(
+        find.text('Choose the collectible that looks most like yours.'),
+        findsOneWidget,
+      );
+      expect(find.text('Create Custom Figure'), findsOneWidget);
+      expect(find.text('Not seeing yours?'), findsOneWidget);
       expect(find.text('Photo may be a little soft'), findsNothing);
       expect(find.text('Continue Anyway'), findsNothing);
       expect(gateway.calls, 1);
     },
   );
+
+  testWidgets('candidate card tap confirms without a separate button', (
+    tester,
+  ) async {
+    CatalogRecognitionCandidate? confirmed;
+    final gateway = _FakeRecognitionGateway();
+    await _pumpHost(
+      tester,
+      recognitionCoordinator: CatalogFigureRecognitionCoordinator(gateway),
+      onCandidateConfirmed: (candidate) => confirmed = candidate,
+    );
+    await tester.tap(find.text('Acquire'));
+    await _settlePhotoLoad(tester);
+    await tester.tap(find.text('Use This Photo'));
+    await _settleFraming(tester);
+    await tester.tap(find.text('Continue'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.text('We found a few close matches'), findsOneWidget);
+    expect(find.text('This Is It'), findsNothing);
+    expect(find.byKey(const Key('catalog-photo-confirmation')), findsOneWidget);
+    final candidate = find.byKey(const Key('recognition-candidate-figure-test'));
+    tester.widget<CollectibleBrowseCard>(candidate).onTap();
+    await tester.pump();
+    await tester.pump(CollectibleMotion.crossfade);
+    expect(confirmed?.figureId, 'figure-test');
+    // Scan sheet stays open so Series detail can stack above results.
+    expect(find.byKey(const Key('catalog-photo-confirmation')), findsOneWidget);
+    expect(find.text('We found a few close matches'), findsOneWidget);
+  });
+
+  testWidgets('motion polish: crop persists, Best Match, haptic, cascade', (
+    tester,
+  ) async {
+    var haptics = 0;
+    final gateway = _PendingRecognitionGateway();
+    await _pumpHost(
+      tester,
+      recognitionCoordinator: CatalogFigureRecognitionCoordinator(gateway),
+      selectionHaptic: () => haptics++,
+    );
+    await tester.tap(find.text('Acquire'));
+    await _settlePhotoLoad(tester);
+    await tester.tap(find.text('Use This Photo'));
+    await _settleFraming(tester);
+    await tester.tap(find.text('Continue'));
+    await tester.pump();
+
+    expect(find.text('Finding your collectible…'), findsOneWidget);
+    expect(
+      find.text('Comparing your photo with the Shelfy catalog.'),
+      findsOneWidget,
+    );
+    final findingCrop = find.byKey(
+      const Key('recognition-selected-crop-preview'),
+    );
+    expect(findingCrop, findsOneWidget);
+    expect(
+      find.byKey(const Key('recognition-finding-crop-shimmer')),
+      findsOneWidget,
+    );
+    expect(find.byType(BottomSheet), findsOneWidget);
+    expect(haptics, 0);
+
+    gateway.pending.complete(
+      const CatalogRecognitionCandidates(
+        quality: CatalogSubjectQuality.good,
+        candidates: [
+          CatalogRecognitionCandidate(
+            rank: 1,
+            figureId: 'figure-a',
+            figureName: 'Alpha Figure',
+            seriesId: 'series-a',
+            seriesName: 'Series A',
+            ipId: 'ip-a',
+            ipName: 'IP A',
+            imageKey: 'figure-a',
+          ),
+          CatalogRecognitionCandidate(
+            rank: 2,
+            figureId: 'figure-b',
+            figureName: 'Beta Figure',
+            seriesId: 'series-b',
+            seriesName: 'Series B',
+            ipId: 'ip-b',
+            ipName: 'IP B',
+            imageKey: 'figure-b',
+          ),
+          CatalogRecognitionCandidate(
+            rank: 3,
+            figureId: 'figure-c',
+            figureName: 'Gamma Figure',
+            seriesId: 'series-c',
+            seriesName: 'Series C',
+            ipId: 'ip-c',
+            ipName: 'IP C',
+            imageKey: 'figure-c',
+          ),
+        ],
+      ),
+    );
+    for (var attempt = 0; attempt < 20; attempt++) {
+      await tester.pump(const Duration(milliseconds: 20));
+      if (find.text('We found a few close matches').evaluate().isNotEmpty) {
+        break;
+      }
+    }
+    expect(haptics, 1);
+    expect(find.byType(BottomSheet), findsOneWidget);
+    expect(find.text('We found a few close matches'), findsOneWidget);
+    expect(
+      find.text('Choose the collectible that looks most like yours.'),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('recognition-selected-crop-preview')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('recognition-finding-crop-shimmer')),
+      findsNothing,
+    );
+    expect(find.textContaining('%'), findsNothing);
+    expect(find.text('✨ Best Match'), findsOneWidget);
+    expect(find.byKey(const Key('recognition-best-match-label')), findsOneWidget);
+
+    final firstCard = find.byKey(const Key('recognition-candidate-figure-a'));
+    final secondCard = find.byKey(const Key('recognition-candidate-figure-b'));
+    final thirdCard = find.byKey(const Key('recognition-candidate-figure-c'));
+    expect(firstCard, findsOneWidget);
+    expect(secondCard, findsOneWidget);
+    expect(thirdCard, findsOneWidget);
+    expect(
+      tester.getTopLeft(firstCard).dy,
+      lessThan(tester.getTopLeft(secondCard).dy),
+    );
+    expect(
+      tester.getTopLeft(secondCard).dy,
+      lessThan(tester.getTopLeft(thirdCard).dy),
+    );
+    expect(
+      find.descendant(
+        of: firstCard,
+        matching: find.text('✨ Best Match'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: secondCard,
+        matching: find.text('✨ Best Match'),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.descendant(
+        of: thirdCard,
+        matching: find.text('✨ Best Match'),
+      ),
+      findsNothing,
+    );
+
+    // Finish cascade; ordinary rebuild must not replay or re-fire haptic.
+    await tester.pump(CollectibleMotion.recognitionCascadeThird);
+    await tester.pump(CollectibleMotion.crossfade);
+    final fadeFinder = find.descendant(
+      of: find.byKey(const ValueKey('recognition-cascade-1-0')),
+      matching: find.byType(FadeTransition),
+    );
+    expect(tester.widget<FadeTransition>(fadeFinder).opacity.value, 1.0);
+    final view = tester.view;
+    final oldSize = view.physicalSize;
+    view.physicalSize = Size(oldSize.width, oldSize.height - 20);
+    addTearDown(() => view.physicalSize = oldSize);
+    await tester.pump();
+    expect(tester.widget<FadeTransition>(fadeFinder).opacity.value, 1.0);
+    expect(haptics, 1);
+    expect(find.text('Create Custom Figure'), findsOneWidget);
+  });
+
+  testWidgets('no-match and failure do not fire success haptic', (tester) async {
+    var haptics = 0;
+    final noMatchGateway = _FakeRecognitionGateway(
+      const CatalogRecognitionNoConfidentMatch(),
+    );
+    await _pumpHost(
+      tester,
+      recognitionCoordinator: CatalogFigureRecognitionCoordinator(
+        noMatchGateway,
+      ),
+      selectionHaptic: () => haptics++,
+    );
+    await tester.tap(find.text('Acquire'));
+    await _settlePhotoLoad(tester);
+    await tester.tap(find.text('Use This Photo'));
+    await _settleFraming(tester);
+    await tester.tap(find.text('Continue'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(haptics, 0);
+    expect(find.text('✨ Best Match'), findsNothing);
+    await tester.tap(find.byKey(const Key('catalog-photo-close')));
+    await tester.pumpAndSettle();
+
+    final failureGateway = _FakeRecognitionGateway(
+      const CatalogRecognitionFailure(
+        kind: CatalogRecognitionFailureKind.appCheckRejected,
+      ),
+    );
+    await _pumpHost(
+      tester,
+      recognitionCoordinator: CatalogFigureRecognitionCoordinator(
+        failureGateway,
+      ),
+      selectionHaptic: () => haptics++,
+    );
+    await tester.tap(find.text('Acquire'));
+    await _settlePhotoLoad(tester);
+    await tester.tap(find.text('Use This Photo'));
+    await _settleFraming(tester);
+    await tester.tap(find.text('Continue'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(haptics, 0);
+  });
+
+  testWidgets('no-match copy stays human and offers Create Custom Figure', (
+    tester,
+  ) async {
+    final gateway = _FakeRecognitionGateway(
+      const CatalogRecognitionNoConfidentMatch(),
+    );
+    await _pumpHost(
+      tester,
+      recognitionCoordinator: CatalogFigureRecognitionCoordinator(gateway),
+    );
+    await tester.tap(find.text('Acquire'));
+    await _settlePhotoLoad(tester);
+    await tester.tap(find.text('Use This Photo'));
+    await _settleFraming(tester);
+    await tester.tap(find.text('Continue'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(
+      find.text('We couldn’t confidently identify this collectible.'),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Try adjusting the frame, taking a closer photo, or reducing glare.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Create Custom Figure'), findsOneWidget);
+    expect(find.textContaining('%'), findsNothing);
+  });
 
   testWidgets('too blurry still blocks and Adjust Frame preserves selection', (
     tester,
@@ -986,6 +1256,8 @@ Future<void> _pumpHost(
   CatalogFigureRecognitionCoordinator? recognitionCoordinator,
   ValueChanged<CatalogPhotoSelection>? onAccepted,
   ValueChanged<CatalogSubjectSelectionResult>? onResult,
+  ValueChanged<CatalogRecognitionCandidate>? onCandidateConfirmed,
+  CatalogScanSelectionHaptic? selectionHaptic,
   GlobalKey? hostKey,
   TextScaler textScaler = TextScaler.noScaling,
 }) async {
@@ -1018,6 +1290,8 @@ Future<void> _pumpHost(
                       CatalogFigureRecognitionCoordinator(
                         _FakeRecognitionGateway(),
                       ),
+                  onCandidateConfirmed: onCandidateConfirmed,
+                  selectionHaptic: selectionHaptic,
                 );
                 if (accepted != null) {
                   onResult?.call(accepted);
@@ -1061,7 +1335,9 @@ Future<void> _settleFraming(WidgetTester tester) async {
     );
     await tester.pump();
     if (find.text('Continue').evaluate().isNotEmpty) {
-      await tester.pump(const Duration(milliseconds: 200));
+      // Finish title/guidance AnimatedSwitcher before assertions.
+      await tester.pump(CollectibleMotion.crossfade);
+      await tester.pump(CollectibleMotion.sectionReveal);
       return;
     }
   }
@@ -1077,21 +1353,23 @@ Future<void> _useAndConfirm(WidgetTester tester) async {
 }
 
 Future<void> _confirmFirstCandidate(WidgetTester tester) async {
-  for (var attempt = 0; attempt < 20; attempt++) {
+  for (var attempt = 0; attempt < 40; attempt++) {
     await tester.pump(const Duration(milliseconds: 50));
-    if (find.text('Test Figure').evaluate().isNotEmpty) break;
+    if (find.text('We found a few close matches').evaluate().isNotEmpty) {
+      break;
+    }
   }
-  await tester.pump(const Duration(milliseconds: 250));
-  final candidate = find.byKey(const Key('recognition-candidate-figure-test'));
-  await tester.ensureVisible(candidate);
+  await tester.pump(CollectibleMotion.sectionReveal);
+  expect(
+    find.byKey(const Key('recognition-candidate-figure-test')),
+    findsOneWidget,
+  );
+  // Candidate tap no longer dismisses the scan sheet — close returns the
+  // framed selection for flows that await the sheet result.
+  await tester.tap(find.byKey(const Key('catalog-photo-close')));
   await tester.pump();
-  await tester.tap(candidate);
-  await tester.pump();
-  final confirm = find.byKey(const Key('recognition-confirm-candidate'));
-  await tester.ensureVisible(confirm);
-  await tester.pump();
-  await tester.tap(confirm);
-  await tester.pumpAndSettle();
+  await tester.pump(CollectibleMotion.crossfade);
+  await tester.pump(CollectibleMotion.sheetDismiss);
 }
 
 CatalogPhotoSelection _selection({

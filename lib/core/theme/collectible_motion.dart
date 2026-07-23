@@ -17,6 +17,11 @@ abstract final class CollectibleMotion {
   static const Duration shimmer = Duration(milliseconds: 1400);
   static const Duration sectionReveal = Duration(milliseconds: 320);
 
+  /// Staggered entrance for recognition candidate cards (start delays).
+  static const Duration recognitionCascadeFirst = Duration(milliseconds: 80);
+  static const Duration recognitionCascadeSecond = Duration(milliseconds: 120);
+  static const Duration recognitionCascadeThird = Duration(milliseconds: 160);
+
   /// Unified expand/collapse for Collection insights dashboard (morph + size).
   static const Duration insightsDashboardTransition =
       Duration(milliseconds: 240);

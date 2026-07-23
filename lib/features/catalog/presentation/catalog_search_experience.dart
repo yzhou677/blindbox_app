@@ -12,6 +12,8 @@ import 'package:blindbox_app/features/catalog/widgets/catalog_availability_card.
 import 'package:blindbox_app/features/catalog/widgets/catalog_series_search_row_card.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_series_shelf_cta_presentation.dart';
+import 'package:blindbox_app/features/collection/presentation/open_custom_series_create.dart';
+import 'package:blindbox_app/features/collection/presentation/open_recognition_candidate_series.dart';
 import 'package:blindbox_app/shared/widgets/app_search_field.dart';
 import 'package:blindbox_app/shared/widgets/feed_search_screen.dart';
 import 'package:blindbox_app/shared/image/catalog_photo_acquisition.dart';
@@ -116,7 +118,24 @@ class _CatalogSearchExperienceState
   }
 
   void _onImageSelected(CatalogPhotoSelection selection) {
-    showCatalogPhotoVerification(context, selection);
+    showCatalogPhotoVerification(
+      context,
+      selection,
+      onCreateCustom: () {
+        if (context.mounted) {
+          openCustomSeriesCreateSheet(context, ref);
+        }
+      },
+      onCandidateConfirmed: (candidate) {
+        if (!context.mounted) return;
+        openRecognitionCandidateSeries(
+          context,
+          ref,
+          seriesId: candidate.seriesId,
+          figureId: candidate.figureId,
+        );
+      },
+    );
   }
 
   void _scheduleDeferredSearchRecord(String? query) {

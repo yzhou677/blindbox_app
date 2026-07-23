@@ -60,6 +60,8 @@ class _CollectionInsightsDashboardState
   double? _collapsedHeight;
   double? _expandedHeight;
   bool _measureScheduled = false;
+  EdgeInsets? _lastViewInsets;
+  Size? _lastSize;
 
   @override
   void initState() {
@@ -79,6 +81,25 @@ class _CollectionInsightsDashboardState
   void dispose() {
     _expandController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final media = MediaQuery.of(context);
+    final insets = media.viewInsets;
+    final size = media.size;
+    final insetsChanged = _lastViewInsets != null && _lastViewInsets != insets;
+    final sizeChanged = _lastSize != null && _lastSize != size;
+    _lastViewInsets = insets;
+    _lastSize = size;
+    // Modal/camera/keyboard dismiss can leave ClipRect heights measured under a
+    // shrunken viewport — invalidate so Summary remeasures at the real size.
+    if ((insetsChanged || sizeChanged) &&
+        (_collapsedHeight != null || _expandedHeight != null)) {
+      _collapsedHeight = null;
+      _expandedHeight = null;
+    }
   }
 
   @override

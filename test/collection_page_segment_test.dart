@@ -441,4 +441,91 @@ void main() {
       expectCollectionGeometryUnchanged(tester, before);
     },
   );
+
+  testWidgets(
+    'clearing stale viewInsets restores Summary above segment without overlay',
+    (tester) async {
+      final series = testShelfSeries(id: 's1', name: 'Dimoo One');
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            collectionNotifierProvider.overrideWith(
+              () => _SegmentTestCollectionNotifier(
+                CollectionSnapshot(
+                  shelfSeries: [series],
+                  figureStates: const {},
+                ),
+              ),
+            ),
+            collectionShelfUiPrefsProvider.overrideWith(
+              _DefaultShelfUiPrefsNotifier.new,
+            ),
+            catalogBundleProvider.overrideWith(
+              (ref) async => const CatalogSeedBundle(
+                brands: [],
+                ips: [],
+                series: [],
+                figures: [],
+              ),
+            ),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.light(),
+            home: MediaQuery(
+              data: const MediaQueryData(
+                size: Size(400, 800),
+                viewInsets: EdgeInsets.only(bottom: 280),
+              ),
+              child: const CollectionScreen(),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+
+      // Simulate modal/camera dismiss restoring a zero inset viewport.
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            collectionNotifierProvider.overrideWith(
+              () => _SegmentTestCollectionNotifier(
+                CollectionSnapshot(
+                  shelfSeries: [series],
+                  figureStates: const {},
+                ),
+              ),
+            ),
+            collectionShelfUiPrefsProvider.overrideWith(
+              _DefaultShelfUiPrefsNotifier.new,
+            ),
+            catalogBundleProvider.overrideWith(
+              (ref) async => const CatalogSeedBundle(
+                brands: [],
+                ips: [],
+                series: [],
+                figures: [],
+              ),
+            ),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.light(),
+            home: MediaQuery(
+              data: const MediaQueryData(size: Size(400, 800)),
+              child: const CollectionScreen(),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 80));
+
+      final after = collectionGeometry(tester);
+      expect(after.viewInsets, EdgeInsets.zero);
+      expect(after.summary.bottom, lessThanOrEqualTo(after.segment.top));
+      expect(find.byKey(const Key('catalog-photo-confirmation')), findsNothing);
+      expect(find.byKey(const Key('photo-source-sheet')), findsNothing);
+      expect(find.byType(BottomSheet), findsNothing);
+    },
+  );
 }
