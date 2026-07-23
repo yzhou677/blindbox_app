@@ -1,17 +1,38 @@
+/**
+ * Thin Cloud Functions entry — bounded-context isolation for cold starts.
+ *
+ * Design choice (single Firebase codebase, multiple lazy entry graphs):
+ * - One `firebase.json` codebase (`market`) and one `package.json` `main`.
+ * - Each exported function dynamically imports only its own context on first use.
+ * - Recognition does not load Market, Recommendations, or Subject Locator.
+ *
+ * Multi-codebase splits remain possible later; this keeps deploy ergonomics.
+ */
 import { initializeApp } from 'firebase-admin/app';
-import { onCall, onRequest } from 'firebase-functions/v2/https';
-import { handleMarketBrowseRequest } from './marketBrowseRouter';
-import { handleMarketItemRequest } from './marketItemRouter';
-import {
-  handleRecommendationForYouRequest,
-  handleRecommendationProfileRequest,
-} from './recommendationsRouter';
-import { SUBJECT_LOCATOR_ENDPOINT_CONFIG } from './figureRecognition/subjectLocatorEndpointConfig';
-import { createProductionSubjectLocatorHandler } from './subjectLocatorCallable';
+import { onCall, onRequest, type CallableRequest } from 'firebase-functions/v2/https';
 import { RECOGNIZE_FIGURE_ENDPOINT_CONFIG } from './figureRecognition/recognizeFigureEndpointConfig';
-import { createProductionRecognizeFigureHandler } from './recognizeFigureCallable';
+import { SUBJECT_LOCATOR_ENDPOINT_CONFIG } from './figureRecognition/subjectLocatorEndpointConfig';
+import { lazySingleton } from './shared/lazySingleton';
 
 initializeApp();
+
+const getRecognizeFigureHandler = lazySingleton(async () => {
+  const { createProductionRecognizeFigureHandler } = await import(
+    './recognizeFigureCallable'
+  );
+  return createProductionRecognizeFigureHandler();
+});
+
+const getSubjectLocatorHandler = lazySingleton(async () => {
+  const { createProductionSubjectLocatorHandler } = await import(
+    './subjectLocatorCallable'
+  );
+  return createProductionSubjectLocatorHandler();
+});
+
+const getMarketBrowse = lazySingleton(() => import('./marketBrowseRouter'));
+const getMarketItem = lazySingleton(() => import('./marketItemRouter'));
+const getRecommendations = lazySingleton(() => import('./recommendationsRouter'));
 
 export const subjectLocatorV1 = onCall(
   {
@@ -22,7 +43,10 @@ export const subjectLocatorV1 = onCall(
     maxInstances: 10,
     enforceAppCheck: true,
   },
-  createProductionSubjectLocatorHandler(),
+  async (request: CallableRequest<unknown>) => {
+    const handler = await getSubjectLocatorHandler();
+    return handler(request);
+  },
 );
 
 export const recognizeFigureV1 = onCall(
@@ -34,7 +58,10 @@ export const recognizeFigureV1 = onCall(
     maxInstances: 10,
     enforceAppCheck: true,
   },
-  createProductionRecognizeFigureHandler(),
+  async (request: CallableRequest<unknown>) => {
+    const handler = await getRecognizeFigureHandler();
+    return handler(request);
+  },
 );
 
 /**
@@ -65,10 +92,12 @@ export const market = onRequest(
 
     const path = normalizePath(req.path);
     if (path === '/v1/browse') {
+      const { handleMarketBrowseRequest } = await getMarketBrowse();
       await handleMarketBrowseRequest(req, res);
       return;
     }
     if (path === '/v1/item') {
+      const { handleMarketItemRequest } = await getMarketItem();
       await handleMarketItemRequest(req, res);
       return;
     }
@@ -103,10 +132,12 @@ export const recommendations = onRequest(
 
     const path = normalizePath(req.path);
     if (path === '/v1/profile') {
+      const { handleRecommendationProfileRequest } = await getRecommendations();
       await handleRecommendationProfileRequest(req, res);
       return;
     }
     if (path === '/v1/for-you') {
+      const { handleRecommendationForYouRequest } = await getRecommendations();
       await handleRecommendationForYouRequest(req, res);
       return;
     }

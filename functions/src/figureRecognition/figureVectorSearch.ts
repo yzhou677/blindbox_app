@@ -1,6 +1,7 @@
 import { Firestore } from '@google-cloud/firestore';
 import { IMAGE_EMBEDDING_CONFIG } from './imageEmbeddingConfig';
 import type { FigureRetrievalCandidate, FigureVectorSearch } from './figureRetrievalTypes';
+import { measureScanStage, measureScanStageSync } from './scanTiming';
 
 const DISTANCE_FIELD = '_vectorDistance';
 type VectorSearchQuery = {
@@ -25,12 +26,12 @@ export class FirestoreFigureVectorSearch implements FigureVectorSearch {
 
   async search(queryVector: number[], topK: number): Promise<FigureRetrievalCandidate[]> {
     try {
-      const filteredQuery = this.firestore
+      const filteredQuery = measureScanStageSync('vector_query_preparation', () => this.firestore
         .collection('catalogFigureEmbeddings')
-        .where('embeddingSpace', '==', IMAGE_EMBEDDING_CONFIG.embeddingSpace) as unknown as VectorSearchQuery;
+        .where('embeddingSpace', '==', IMAGE_EMBEDDING_CONFIG.embeddingSpace) as unknown as VectorSearchQuery);
       // firebase-admin v10 contributes an older ambient Query type. The direct
       // Firestore v8 runtime used here provides findNearest on this Query.
-      const snapshot = await filteredQuery
+      const snapshot = await measureScanStage('firestore_vector_index_call', () => filteredQuery
         .findNearest({
           vectorField: 'embedding',
           queryVector,
@@ -38,12 +39,13 @@ export class FirestoreFigureVectorSearch implements FigureVectorSearch {
           distanceMeasure: 'COSINE',
           distanceResultField: DISTANCE_FIELD,
         })
-        .get();
-      return snapshot.docs
+        .get());
+      const parsed = measureScanStageSync('vector_result_parsing', () => snapshot.docs
         .map((document) => parseCandidate(document.data()))
-        .filter((candidate): candidate is Omit<FigureRetrievalCandidate, 'rank'> => candidate !== null)
+        .filter((candidate): candidate is Omit<FigureRetrievalCandidate, 'rank'> => candidate !== null));
+      return measureScanStageSync('candidate_ranking', () => parsed
         .sort((left, right) => left.distance - right.distance || left.figureId.localeCompare(right.figureId))
-        .map((candidate, index) => ({ ...candidate, rank: index + 1 }));
+        .map((candidate, index) => ({ ...candidate, rank: index + 1 })));
     } catch (error) {
       if (isMissingIndexError(error)) throw new FigureVectorIndexUnavailableError();
       throw error;

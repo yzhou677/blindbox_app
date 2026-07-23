@@ -1,18 +1,25 @@
-export type RecognitionSelectionV1 = {
-  left: number;
-  top: number;
-  width: number;
-  height: number;
-  coordinateSpace: 'normalized_oriented_image';
-};
-
 export type RecognizeFigureRequestV1 = {
   version: 1;
   image: { dataBase64: string; mimeType: 'image/jpeg' | 'image/png' | 'image/webp' };
-  selection: RecognitionSelectionV1;
+  selection: {
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+    coordinateSpace: 'normalized_oriented_image';
+  };
   continueBorderline?: boolean;
   requestId?: string;
 };
+
+export type RecognizeFigureRequestV2 = {
+  version: 2;
+  image: { dataBase64: string; mimeType: 'image/jpeg' | 'image/png' | 'image/webp'; role: 'selected_subject_crop' };
+  continueBorderline?: boolean;
+  requestId?: string;
+};
+
+export type RecognizeFigureRequest = RecognizeFigureRequestV1 | RecognizeFigureRequestV2;
 
 export type RecognitionCandidateV1 = {
   rank: number;
@@ -33,7 +40,7 @@ export type RecognizeFigureResponseV1 =
   | ({ version: 1; status: 'no_confident_match'; policyVersion: string } & QualityFields);
 
 export class RecognizeFigureRequestError extends Error {
-  constructor(readonly reason: 'invalid_request' | 'unsupported_mime_type' | 'payload_too_large' | 'invalid_image' | 'image_dimensions_unsupported' | 'invalid_selection') {
+  constructor(readonly reason: 'invalid_request' | 'unsupported_mime_type' | 'payload_too_large' | 'invalid_image' | 'image_dimensions_unsupported') {
     super(reason); this.name = 'RecognizeFigureRequestError';
   }
 }
@@ -45,4 +52,3 @@ export class RecognitionQualityUnavailableError extends Error {
 export class RecognitionHydrationError extends Error {
   constructor() { super('candidate_hydration_failed'); this.name = 'RecognitionHydrationError'; }
 }
-

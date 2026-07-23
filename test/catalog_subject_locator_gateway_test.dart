@@ -37,6 +37,7 @@ final class _ThrowingCallable implements SubjectLocatorCallable {
 CatalogPhotoSelection _photo([int marker = 1]) => CatalogPhotoSelection(
   file: XFile.fromData(Uint8List.fromList([marker, 2, 3]), mimeType: 'image/jpeg', name: 'photo.jpg'),
   source: CatalogPhotoSource.camera,
+  correlationId: 'scan-locator-test-$marker',
 );
 
 Map<String, Object?> _suggestion() => {
@@ -62,6 +63,7 @@ void main() {
     expect(suggestion.rect.bottom, closeTo(0.8, 1e-12));
     expect(suggestion.orientedSize.width, 3024);
     expect(callable.calls.single['image'], isA<Map>());
+    expect(callable.calls.single['requestId'], 'scan-locator-test-1');
     expect(original.file, same(encoder.received!.file));
   });
 

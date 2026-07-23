@@ -9,10 +9,19 @@ export class FirestoreRecognitionCandidateHydrator implements RecognitionCandida
   async hydrate(candidates: readonly FigureRetrievalCandidate[]): Promise<RecognitionCandidateV1[]> {
     try {
       const limited = [...candidates];
-      const refs = limited.flatMap((candidate) => [this.firestore.collection('figures').doc(candidate.figureId), this.firestore.collection('series').doc(candidate.seriesId), this.firestore.collection('ips').doc(candidate.ipId)]);
+      const refsByPath = new Map<string, ReturnType<Firestore['doc']>>();
+      for (const candidate of limited) {
+        for (const ref of [
+          this.firestore.collection('figures').doc(candidate.figureId),
+          this.firestore.collection('series').doc(candidate.seriesId),
+          this.firestore.collection('ips').doc(candidate.ipId),
+        ]) refsByPath.set(ref.path, ref);
+      }
+      const refs = [...refsByPath.values()];
       const snapshots = await this.firestore.getAll(...refs);
-      return limited.map((candidate, index) => {
-        const figure = snapshots[index * 3]?.data(), series = snapshots[index * 3 + 1]?.data(), ip = snapshots[index * 3 + 2]?.data();
+      const dataByPath = new Map(snapshots.map((snapshot, index) => [refs[index].path, snapshot.data()]));
+      return limited.map((candidate) => {
+        const figure = dataByPath.get(`figures/${candidate.figureId}`), series = dataByPath.get(`series/${candidate.seriesId}`), ip = dataByPath.get(`ips/${candidate.ipId}`);
         const figureName = text(figure?.displayName ?? figure?.name), seriesName = text(series?.displayName ?? series?.name), ipName = text(ip?.displayName ?? ip?.name), imageKey = text(figure?.imageKey);
         if (!figureName || !seriesName || !ipName || !imageKey) throw new RecognitionHydrationError();
         return { rank: candidate.rank, figureId: candidate.figureId, figureName, seriesId: candidate.seriesId, seriesName, ipId: candidate.ipId, ipName, imageKey };
@@ -21,4 +30,3 @@ export class FirestoreRecognitionCandidateHydrator implements RecognitionCandida
   }
 }
 function text(value: unknown): string { return typeof value === 'string' ? value.trim() : ''; }
-

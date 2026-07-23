@@ -381,7 +381,7 @@ void main() {
   });
 
   testWidgets(
-    'Use This Photo keeps one sheet mounted through locating and applies suggestion',
+    'Use This Photo shows default framing immediately and applies suggestion',
     (tester) async {
       final photo = _selection();
       final locator = _ControlledSubjectLocator();
@@ -399,11 +399,15 @@ void main() {
         find.byType(CatalogPhotoVerificationPage),
       );
       await tester.tap(find.text('Use This Photo'));
-      await tester.pump();
+      await _settleFraming(tester);
 
       expect(locator.photos, [same(photo)]);
-      expect(find.text('Finding the collectible…'), findsOneWidget);
-      expect(find.byKey(const Key('subject-locator-progress')), findsOneWidget);
+      expect(find.text('Frame your collectible'), findsOneWidget);
+      expect(
+        find.text('AI suggested this frame. Adjust if needed.'),
+        findsNothing,
+      );
+      expect(find.byKey(const Key('subject-locator-progress')), findsNothing);
       expect(
         tester.element(find.byType(CatalogPhotoVerificationPage)),
         same(sheetElement),
@@ -504,6 +508,43 @@ void main() {
       findsNothing,
     );
     expect(locator.calls, 1);
+  });
+
+  testWidgets('late suggestion never overwrites a user-edited frame', (
+    tester,
+  ) async {
+    final locator = _ControlledSubjectLocator();
+    await _pumpHost(tester, locatorGateway: locator);
+    await tester.tap(find.text('Acquire'));
+    await _settlePhotoLoad(tester);
+    await tester.tap(find.text('Use This Photo'));
+    await _settleFraming(tester);
+
+    final selectionBox = find.byKey(const Key('subject-selection-box'));
+    final before = tester.getRect(selectionBox);
+    await tester.drag(selectionBox, const Offset(24, 0));
+    await tester.pump(const Duration(milliseconds: 220));
+    final edited = tester.getRect(selectionBox);
+    expect(edited.left, greaterThan(before.left));
+
+    locator.pending.single.complete(
+      const CatalogSubjectLocatorSuggestion(
+        rect: NormalizedSubjectRect(
+          left: 0.05,
+          top: 0.05,
+          right: 0.45,
+          bottom: 0.45,
+        ),
+        orientedSize: Size(16, 16),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 250));
+
+    expect(tester.getRect(selectionBox), edited);
+    expect(
+      find.text('AI suggested this frame. Adjust if needed.'),
+      findsNothing,
+    );
   });
 
   testWidgets(
@@ -722,28 +763,216 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets(
+    'Continue enters recognition loading immediately with the selected crop and blocks duplicates',
+    (tester) async {
+      final gateway = _PendingRecognitionGateway();
+      await _pumpHost(
+        tester,
+        recognitionCoordinator: CatalogFigureRecognitionCoordinator(gateway),
+      );
+      await tester.tap(find.text('Acquire'));
+      await _settlePhotoLoad(tester);
+      await tester.tap(find.text('Use This Photo'));
+      await _settleFraming(tester);
+
+      await tester.tap(find.text('Continue'));
+      await tester.pump();
+
+      expect(find.text('Finding your collectible…'), findsOneWidget);
+      expect(
+        find.text('Comparing your photo with the Shelfy catalog.'),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('recognition-selected-crop-preview')),
+        findsOneWidget,
+      );
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      await tester.pump(const Duration(milliseconds: 1));
+      expect(gateway.calls, 1);
+      await tester.tap(find.text('Continue'));
+      await tester.pump(const Duration(milliseconds: 1));
+      expect(gateway.calls, 1);
+
+      gateway.pending.complete(const CatalogRecognitionNoConfidentMatch());
+      await tester.pumpAndSettle();
+    },
+  );
+
+  testWidgets(
+    'borderline candidates remain in the single loading and recognition attempt',
+    (tester) async {
+      final gateway = _PendingRecognitionGateway();
+      await _pumpHost(
+        tester,
+        recognitionCoordinator: CatalogFigureRecognitionCoordinator(gateway),
+      );
+      await tester.tap(find.text('Acquire'));
+      await _settlePhotoLoad(tester);
+      await tester.tap(find.text('Use This Photo'));
+      await _settleFraming(tester);
+      await tester.tap(find.text('Continue'));
+      await tester.pump();
+
+      expect(find.text('Finding your collectible…'), findsOneWidget);
+      expect(find.text('Photo may be a little soft'), findsNothing);
+      expect(find.text('Continue Anyway'), findsNothing);
+      await tester.pump(const Duration(milliseconds: 1));
+      expect(gateway.calls, 1);
+
+      gateway.pending.complete(
+        const CatalogRecognitionCandidates(
+          quality: CatalogSubjectQuality.borderline,
+          candidates: [
+            CatalogRecognitionCandidate(
+              rank: 1,
+              figureId: 'borderline-figure',
+              figureName: 'Borderline Figure',
+              seriesId: 'series',
+              seriesName: 'Series',
+              ipId: 'ip',
+              ipName: 'IP',
+              imageKey: 'borderline-figure',
+            ),
+          ],
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Is this your collectible?'), findsOneWidget);
+      expect(find.text('Photo may be a little soft'), findsNothing);
+      expect(find.text('Continue Anyway'), findsNothing);
+      expect(gateway.calls, 1);
+    },
+  );
+
+  testWidgets('too blurry still blocks and Adjust Frame preserves selection', (
+    tester,
+  ) async {
+    final gateway = _SequenceRecognitionGateway();
+    await _pumpHost(
+      tester,
+      recognitionCoordinator: CatalogFigureRecognitionCoordinator(gateway),
+    );
+    await tester.tap(find.text('Acquire'));
+    await _settlePhotoLoad(tester);
+    await tester.tap(find.text('Use This Photo'));
+    await _settleFraming(tester);
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Selected collectible is too blurry'), findsOneWidget);
+    expect(gateway.calls, 1);
+    await tester.tap(find.text('Adjust Frame'));
+    await tester.pumpAndSettle();
+    expect(find.text('Continue'), findsOneWidget);
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+
+    expect(gateway.calls, 2);
+    expect(
+      gateway.selections[1].normalizedRect.rect,
+      gateway.selections[0].normalizedRect.rect,
+    );
+  });
+
+  testWidgets(
+    'fatal recognition dependency opens Scan unavailable and Retry reruns only recognition',
+    (tester) async {
+      final gateway = _FakeRecognitionGateway(
+        const CatalogRecognitionFailure(
+          kind: CatalogRecognitionFailureKind.appCheckRejected,
+        ),
+      );
+      await _pumpHost(
+        tester,
+        recognitionCoordinator: CatalogFigureRecognitionCoordinator(gateway),
+      );
+      await tester.tap(find.text('Acquire'));
+      await _settlePhotoLoad(tester);
+      await tester.tap(find.text('Use This Photo'));
+      await _settleFraming(tester);
+      await tester.tap(find.text('Continue'));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('Scan unavailable'), findsOneWidget);
+      expect(gateway.calls, 1);
+      await tester.pump(const Duration(milliseconds: 250));
+      await tester.tap(find.text('Retry'));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(gateway.calls, 2);
+    },
+  );
+}
+
+final class _PendingRecognitionGateway
+    implements CatalogFigureRecognitionGateway {
+  final pending = Completer<CatalogFigureRecognitionResult>();
+  var calls = 0;
+
+  @override
+  Future<CatalogFigureRecognitionResult> recognize(
+    CatalogSubjectSelectionResult selection,
+  ) {
+    calls++;
+    return pending.future;
+  }
+
+  @override
+  void cancelPending() {}
+}
+
+final class _SequenceRecognitionGateway
+    implements CatalogFigureRecognitionGateway {
+  var calls = 0;
+  final selections = <CatalogSubjectSelectionResult>[];
+
+  @override
+  Future<CatalogFigureRecognitionResult> recognize(
+    CatalogSubjectSelectionResult selection,
+  ) async {
+    calls++;
+    selections.add(selection);
+    if (calls == 1) return const CatalogRecognitionTooBlurry();
+    return const CatalogRecognitionNoConfidentMatch();
+  }
+
+  @override
+  void cancelPending() {}
 }
 
 final class _FakeRecognitionGateway implements CatalogFigureRecognitionGateway {
+  _FakeRecognitionGateway([
+    this.result = const CatalogRecognitionCandidates(
+      quality: CatalogSubjectQuality.good,
+      candidates: [
+        CatalogRecognitionCandidate(
+          rank: 1,
+          figureId: 'figure-test',
+          figureName: 'Test Figure',
+          seriesId: 'series-test',
+          seriesName: 'Test Series',
+          ipId: 'ip-test',
+          ipName: 'Test IP',
+          imageKey: 'test-figure',
+        ),
+      ],
+    ),
+  ]);
+
+  final CatalogFigureRecognitionResult result;
+  var calls = 0;
+
   @override
   Future<CatalogFigureRecognitionResult> recognize(
-    CatalogSubjectSelectionResult selection, {
-    required bool continueBorderline,
-  }) async => const CatalogRecognitionCandidates(
-    quality: CatalogSubjectQuality.good,
-    candidates: [
-      CatalogRecognitionCandidate(
-        rank: 1,
-        figureId: 'figure-test',
-        figureName: 'Test Figure',
-        seriesId: 'series-test',
-        seriesName: 'Test Series',
-        ipId: 'ip-test',
-        ipName: 'Test IP',
-        imageKey: 'test-figure',
-      ),
-    ],
-  );
+    CatalogSubjectSelectionResult selection,
+  ) async {
+    calls++;
+    return result;
+  }
+
   @override
   void cancelPending() {}
 }

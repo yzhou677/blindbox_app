@@ -18,11 +18,20 @@ export class FigureRetrievalService {
     return this.retrieveStoredImage(image, topK);
   }
 
-  async retrieveStoredImage(image: StoredImage, topK: number): Promise<FigureRetrievalCandidate[]> {
+  async retrieveStoredImage(
+    image: StoredImage,
+    topK: number,
+    onTiming?: (stage: 'embedding_request' | 'vector_retrieval', elapsedMs: number) => void,
+  ): Promise<FigureRetrievalCandidate[]> {
     validateTopK(topK);
+    const embeddingStartedAt = Date.now();
     const result = await this.embeddings.embedStoredImage(image);
+    onTiming?.('embedding_request', Date.now() - embeddingStartedAt);
     validateQueryVector(result.vector);
-    return this.search.search(result.vector, topK);
+    const retrievalStartedAt = Date.now();
+    const candidates = await this.search.search(result.vector, topK);
+    onTiming?.('vector_retrieval', Date.now() - retrievalStartedAt);
+    return candidates;
   }
 }
 

@@ -16,32 +16,44 @@ import { validateRecognizeFigureRequest } from './figureRecognition/recognizeFig
 import { RecognizeFigureService } from './figureRecognition/recognizeFigureService';
 import { RETRIEVAL_DECISION_CONFIG } from './figureRecognition/retrievalDecisionConfig';
 import { ShadowRetrievalDecisionResolver } from './figureRecognition/retrievalDecisionResolver';
+import { measureScanStage, withScanTimingContext } from './figureRecognition/scanTiming';
 
 export type RecognizeFigureHandler = (data: unknown) => Promise<RecognizeFigureResponseV1>;
 
 export function createRecognizeFigureHandler(service: RecognizeFigureService): RecognizeFigureHandler {
   return async (data) => {
     const startedAt = Date.now();
-    try {
-      const { request, image } = await validateRecognizeFigureRequest(data);
+    let correlationId = safeCorrelationId(data, 'recognition-unavailable');
+    return withScanTimingContext({ component: 'backend_recognition', correlationId }, async () => { try {
+      const verificationStartedAt = Date.now();
+      const { request, image } = await measureScanStage('request_validation_total', () => validateRecognizeFigureRequest(data));
+      correlationId = request.requestId ?? correlationId;
+      logger.debug('Figure scan timing', { component: 'backend_recognition', correlationId, stage: 'request_verification_and_image_decode', elapsedMs: Date.now() - verificationStartedAt });
       const response = await service.recognize(request, image);
-      logger.info('Figure recognition request completed', { success: true, status: response.status, elapsedMs: Date.now() - startedAt });
+      logger.info('Figure recognition request completed', { success: true, correlationId, status: response.status, elapsedMs: Date.now() - startedAt });
       return response;
     } catch (error) {
       const reason = safeReason(error);
-      logger.warn('Figure recognition request failed', { success: false, reason, elapsedMs: Date.now() - startedAt });
+      logger.warn('Figure recognition request failed', { success: false, correlationId, reason, elapsedMs: Date.now() - startedAt });
       if (error instanceof RecognizeFigureRequestError) throw new HttpsError(error.reason === 'payload_too_large' ? 'resource-exhausted' : 'invalid-argument', 'Figure recognition request was rejected', { reason });
       if (error instanceof RecognitionQualityUnavailableError) throw new HttpsError('unavailable', 'Photo quality could not be checked', { reason: 'quality_unavailable' });
       if (error instanceof RecognitionHydrationError) throw new HttpsError('unavailable', 'Figure recognition is unavailable', { reason: 'candidate_hydration_failed' });
       throw new HttpsError('unavailable', 'Figure recognition is unavailable', { reason: 'recognition_unavailable' });
-    }
+    } });
   };
+}
+
+function safeCorrelationId(data: unknown, fallback: string): string {
+  if (typeof data !== 'object' || data === null) return fallback;
+  const value = (data as { requestId?: unknown }).requestId;
+  return typeof value === 'string' && /^[A-Za-z0-9._:-]{1,64}$/.test(value) ? value : fallback;
 }
 
 export function createProductionRecognizeFigureHandler(): (request: CallableRequest<unknown>) => Promise<RecognizeFigureResponseV1> {
   let handler: RecognizeFigureHandler | undefined;
   return (request) => {
     if (!handler) {
+      const initializationStartedAt = process.hrtime.bigint();
       const projectId = process.env.GCLOUD_PROJECT ?? process.env.GOOGLE_CLOUD_PROJECT ?? '';
       if (!projectId) throw new HttpsError('failed-precondition', 'Figure recognition is not configured', { reason: 'recognition_unavailable' });
       const firestore = new Firestore({ projectId });
@@ -55,6 +67,9 @@ export function createProductionRecognizeFigureHandler(): (request: CallableRequ
       const retrieval = new FigureRetrievalService({ read: async () => { throw new Error('File reads are not supported by recognizeFigureV1'); } }, embeddings, new FirestoreFigureVectorSearch(firestore));
       const service = new RecognizeFigureService(cropper, new PrimarySubjectBlurEvaluator(cropper, BLUR_QUALITY_CONFIG), retrieval, new ShadowRetrievalDecisionResolver(RETRIEVAL_DECISION_CONFIG), new FirestoreRecognitionCandidateHydrator(firestore));
       handler = createRecognizeFigureHandler(service);
+      logger.debug('Figure scan service initialized', { component: 'backend_recognition', initializationMs: Number(process.hrtime.bigint() - initializationStartedAt) / 1_000_000 });
+    } else {
+      logger.debug('Figure scan service reused', { component: 'backend_recognition' });
     }
     return handler(request.data);
   };

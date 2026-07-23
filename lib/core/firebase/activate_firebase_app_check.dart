@@ -15,4 +15,29 @@ Future<void> activateFirebaseAppCheck() async {
         ? const AppleDebugProvider()
         : const AppleAppAttestWithDeviceCheckFallbackProvider(),
   );
+
+  if (kDebugMode) {
+    // Force native debug-provider initialization during startup. Android's
+    // DebugAppCheckProvider prints its local registration secret to logcat.
+    // Never print the returned App Check JWT or the secret from Dart.
+    debugPrint(
+      '[AppCheck] Debug provider active. Look for the native '
+      'DebugAppCheckProvider registration message in logcat.',
+    );
+    try {
+      await FirebaseAppCheck.instance.getToken(true);
+      debugPrint('[AppCheck] Debug token exchange succeeded.');
+    } on FirebaseException catch (error) {
+      debugPrint(
+        '[AppCheck] Debug token exchange failed '
+        '(code=${error.code}, message=${error.message}). '
+        'Register the DebugAppCheckProvider secret in Firebase Console.',
+      );
+    } catch (error) {
+      debugPrint(
+        '[AppCheck] Debug token exchange failed (${error.runtimeType}). '
+        'Register the DebugAppCheckProvider secret in Firebase Console.',
+      );
+    }
+  }
 }

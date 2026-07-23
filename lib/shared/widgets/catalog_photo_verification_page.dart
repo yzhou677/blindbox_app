@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/shared/image/catalog_photo_acquisition.dart';
 import 'package:blindbox_app/shared/image/catalog_figure_recognition.dart';
@@ -78,8 +81,6 @@ enum CatalogPhotoScanPresentationState {
   review,
   locating,
   framing,
-  checkingSubjectQuality,
-  borderline,
   tooBlurry,
   recognizing,
   candidates,
@@ -150,6 +151,7 @@ class _CatalogPhotoVerificationPageState
   List<CatalogRecognitionCandidate> _candidates = const [];
   CatalogRecognitionCandidate? _selectedCandidate;
   CatalogRecognitionFailureKind? _failureKind;
+  static const _locatorPresentationDeadline = Duration(seconds: 3);
 
   @override
   void initState() {
@@ -168,6 +170,7 @@ class _CatalogPhotoVerificationPageState
   }
 
   Future<void> _loadPreview(CatalogPhotoSelection selection) async {
+    final totalTimer = Stopwatch()..start();
     _locatorGateway.cancelPending();
     widget.recognitionCoordinator?.cancelPending();
     _ownedRecognitionCoordinator?.cancelPending();
@@ -192,10 +195,29 @@ class _CatalogPhotoVerificationPageState
 
     Uint8List? bytes;
     Size? orientedSize;
+    final readTimer = Stopwatch()..start();
     try {
       bytes = await selection.file.readAsBytes();
+      _debugScanTiming(
+        'client_preview',
+        'image_read',
+        readTimer.elapsed,
+        correlationId: catalogPhotoCorrelationId(selection),
+      );
       if (bytes.isNotEmpty) {
+        final decodeTimer = Stopwatch()..start();
         final dimensions = await compute(_scanImageDimensions, bytes);
+        _debugScanTiming(
+          'client_preview',
+          'image_decode_orientation',
+          decodeTimer.elapsed,
+          correlationId: catalogPhotoCorrelationId(selection),
+          safeFields: {
+            'sourceWidth': dimensions?.$1,
+            'sourceHeight': dimensions?.$2,
+            'originalBytes': bytes.length,
+          },
+        );
         if (dimensions != null) {
           orientedSize = Size(
             dimensions.$1.toDouble(),
@@ -213,16 +235,24 @@ class _CatalogPhotoVerificationPageState
       _orientedSize = orientedSize;
       _previewLoading = false;
     });
+    _debugScanTiming(
+      'client_preview',
+      'total',
+      totalTimer.elapsed,
+      correlationId: catalogPhotoCorrelationId(selection),
+    );
   }
 
   Future<void> _validateAndConfirm() async {
-    if (_validating) return;
+    if (_validating ||
+        _presentationState != CatalogPhotoScanPresentationState.review) {
+      return;
+    }
     final generation = _generation;
     final selection = _selection;
     setState(() {
       _validating = true;
       _obviouslyTooBlurry = false;
-      _presentationState = CatalogPhotoScanPresentationState.locating;
     });
     WholeImageQualityResult result;
     try {
@@ -235,32 +265,16 @@ class _CatalogPhotoVerificationPageState
     }
     if (!mounted || generation != _generation) return;
     if (result.canContinue) {
-      CatalogSubjectLocatorResult locatorResult;
-      try {
-        locatorResult = await _locatorGateway.locate(selection);
-      } catch (_) {
-        locatorResult = const CatalogSubjectLocatorUnavailable();
-      }
-      if (!mounted || generation != _generation) return;
-      final suggestion =
-          locatorResult is CatalogSubjectLocatorSuggestion &&
-              _isUsableSuggestion(locatorResult, _orientedSize)
-          ? locatorResult
-          : null;
-      final selectionRect =
-          suggestion?.rect.rect ?? catalogDefaultSubjectSelection;
-      final origin = suggestion == null
-          ? SubjectSelectionOrigin.defaultBox
-          : SubjectSelectionOrigin.suggestedBox;
       setState(() {
         _validating = false;
-        _subjectSelection = selectionRect;
-        _selectionOrigin = origin;
-        _initialFramingSelection = selectionRect;
-        _initialFramingOrigin = origin;
+        _subjectSelection = catalogDefaultSubjectSelection;
+        _selectionOrigin = SubjectSelectionOrigin.defaultBox;
+        _initialFramingSelection = catalogDefaultSubjectSelection;
+        _initialFramingOrigin = SubjectSelectionOrigin.defaultBox;
         _presentationState = CatalogPhotoScanPresentationState.framing;
       });
       _stateController.forward(from: 0);
+      unawaited(_applyLocatorSuggestion(selection, generation));
       return;
     }
     setState(() {
@@ -270,7 +284,44 @@ class _CatalogPhotoVerificationPageState
     });
   }
 
-  Future<void> _confirmSelection({bool continueBorderline = false}) async {
+  Future<void> _applyLocatorSuggestion(
+    CatalogPhotoSelection selection,
+    int generation,
+  ) async {
+    final timer = Stopwatch()..start();
+    CatalogSubjectLocatorResult result;
+    try {
+      result = await _locatorGateway.locate(selection);
+    } catch (_) {
+      result = const CatalogSubjectLocatorUnavailable();
+    }
+    if (!mounted || generation != _generation) return;
+    if (timer.elapsed > _locatorPresentationDeadline ||
+        result is! CatalogSubjectLocatorSuggestion ||
+        !_isUsableSuggestion(result, _orientedSize) ||
+        _selectionOrigin != SubjectSelectionOrigin.defaultBox ||
+        _selectionInteractionActive ||
+        _presentationState != CatalogPhotoScanPresentationState.framing) {
+      return;
+    }
+    final suggestion = result;
+    final transitionTimer = Stopwatch()..start();
+    setState(() {
+      _subjectSelection = suggestion.rect.rect;
+      _selectionOrigin = SubjectSelectionOrigin.suggestedBox;
+      _initialFramingSelection = suggestion.rect.rect;
+      _initialFramingOrigin = SubjectSelectionOrigin.suggestedBox;
+    });
+    _stateController.forward(from: 0);
+    _debugScanTiming(
+      'client_ui',
+      'locator_suggestion_transition',
+      transitionTimer.elapsed,
+      correlationId: catalogPhotoCorrelationId(selection),
+    );
+  }
+
+  Future<void> _confirmSelection() async {
     final size = _orientedSize;
     if (size == null) return;
     final selection =
@@ -289,24 +340,31 @@ class _CatalogPhotoVerificationPageState
         );
     _confirmedSelection = selection;
     final generation = _generation;
+    final transitionTimer = Stopwatch()..start();
+    var transitionLogged = false;
     final result = await _recognitionCoordinator.recognize(
       selection,
-      continueBorderline: continueBorderline,
-      onPhase: (phase) {
+      onPhase: (_) {
         if (!mounted || generation != _generation) return;
         setState(
           () => _presentationState =
-              phase == CatalogRecognitionPhase.checkingQuality
-              ? CatalogPhotoScanPresentationState.checkingSubjectQuality
-              : CatalogPhotoScanPresentationState.recognizing,
+              CatalogPhotoScanPresentationState.recognizing,
         );
+        if (!transitionLogged) {
+          transitionLogged = true;
+          _debugScanTiming(
+            'client_ui',
+            'recognition_loading_transition',
+            transitionTimer.elapsed,
+            correlationId: catalogPhotoCorrelationId(_selection),
+          );
+        }
       },
     );
     if (!mounted || generation != _generation || result == null) return;
+    final resultTransitionTimer = Stopwatch()..start();
     setState(() {
       switch (result) {
-        case CatalogRecognitionBorderline():
-          _presentationState = CatalogPhotoScanPresentationState.borderline;
         case CatalogRecognitionTooBlurry():
           _presentationState = CatalogPhotoScanPresentationState.tooBlurry;
         case CatalogRecognitionCandidates():
@@ -322,6 +380,13 @@ class _CatalogPhotoVerificationPageState
               CatalogPhotoScanPresentationState.recoverableFailure;
       }
     });
+    _debugScanTiming(
+      'client_ui',
+      'recognition_result_transition',
+      resultTransitionTimer.elapsed,
+      correlationId: catalogPhotoCorrelationId(_selection),
+      safeFields: {'resultType': result.runtimeType.toString()},
+    );
   }
 
   void _adjustFrame() => setState(
@@ -357,12 +422,8 @@ class _CatalogPhotoVerificationPageState
     CatalogPhotoScanPresentationState.review => 'Review photo',
     CatalogPhotoScanPresentationState.locating => 'Finding the collectible…',
     CatalogPhotoScanPresentationState.framing => 'Frame your collectible',
-    CatalogPhotoScanPresentationState.checkingSubjectQuality =>
-      'Checking photo quality…',
     CatalogPhotoScanPresentationState.recognizing =>
       'Finding your collectible…',
-    CatalogPhotoScanPresentationState.borderline =>
-      'Photo may be a little soft',
     CatalogPhotoScanPresentationState.tooBlurry =>
       'Selected collectible is too blurry',
     CatalogPhotoScanPresentationState.candidates => 'Is this your collectible?',
@@ -384,13 +445,8 @@ class _CatalogPhotoVerificationPageState
         key: const ValueKey('locating-guidance'),
         style: style,
       ),
-      CatalogPhotoScanPresentationState.checkingSubjectQuality ||
       CatalogPhotoScanPresentationState.recognizing => Text(
         'Comparing your photo with the Shelfy catalog.',
-        style: style,
-      ),
-      CatalogPhotoScanPresentationState.borderline => Text(
-        'This photo is a little soft and may be harder to recognize.',
         style: style,
       ),
       CatalogPhotoScanPresentationState.tooBlurry => Text(
@@ -427,17 +483,8 @@ class _CatalogPhotoVerificationPageState
         }),
       ),
       CatalogPhotoScanPresentationState.locating ||
-      CatalogPhotoScanPresentationState.checkingSubjectQuality ||
       CatalogPhotoScanPresentationState.recognizing => const _LocatingActions(
         key: ValueKey('recognition-progress'),
-      ),
-      CatalogPhotoScanPresentationState.borderline => _RecognitionActions(
-        primaryLabel: 'Continue Anyway',
-        onPrimary: () => _confirmSelection(continueBorderline: true),
-        secondary: [
-          ('Adjust Frame', _adjustFrame),
-          ('Retake Photo', () => _replacePhoto(CatalogPhotoSource.camera)),
-        ],
       ),
       CatalogPhotoScanPresentationState.tooBlurry => _RecognitionActions(
         primaryLabel: 'Adjust Frame',
@@ -518,6 +565,8 @@ class _CatalogPhotoVerificationPageState
     );
     final framing =
         _presentationState == CatalogPhotoScanPresentationState.framing;
+    final recognitionLoading =
+        _presentationState == CatalogPhotoScanPresentationState.recognizing;
     return Material(
       key: const Key('catalog-photo-confirmation'),
       color: scheme.surface,
@@ -602,6 +651,12 @@ class _CatalogPhotoVerificationPageState
                     color: scheme.onSurfaceVariant,
                   ),
                 )
+              else if (recognitionLoading)
+                _SelectedSubjectCropPreview(
+                  bytes: _previewBytes!,
+                  orientedSize: _orientedSize!,
+                  selection: _subjectSelection,
+                )
               else
                 CatalogSubjectSelectionEditor(
                   key: const Key('catalog-photo-shared-editor'),
@@ -642,6 +697,90 @@ class _CatalogPhotoVerificationPageState
       ),
     );
   }
+}
+
+class _SelectedSubjectCropPreview extends StatelessWidget {
+  const _SelectedSubjectCropPreview({
+    required this.bytes,
+    required this.orientedSize,
+    required this.selection,
+  });
+
+  final Uint8List bytes;
+  final Size orientedSize;
+  final Rect selection;
+
+  @override
+  Widget build(BuildContext context) {
+    final cropAspect =
+        (orientedSize.width * selection.width) /
+        (orientedSize.height * selection.height);
+    return Semantics(
+      label: 'Selected collectible being compared',
+      image: true,
+      child: LayoutBuilder(
+        builder: (context, outerConstraints) {
+          final targetWidth = (180 * cropAspect).clamp(
+            1.0,
+            outerConstraints.maxWidth,
+          );
+          final targetHeight = targetWidth / cropAspect;
+          return Center(
+            child: SizedBox(
+              width: targetWidth,
+              height: targetHeight,
+              child: ClipRRect(
+                key: const Key('recognition-selected-crop-preview'),
+                borderRadius: BorderRadius.circular(16),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final imageWidth = targetWidth / selection.width;
+                    final imageHeight = targetHeight / selection.height;
+                    return ClipRect(
+                      child: OverflowBox(
+                        alignment: Alignment.topLeft,
+                        minWidth: imageWidth,
+                        maxWidth: imageWidth,
+                        minHeight: imageHeight,
+                        maxHeight: imageHeight,
+                        child: Transform.translate(
+                          offset: Offset(
+                            -selection.left * imageWidth,
+                            -selection.top * imageHeight,
+                          ),
+                          child: Image.memory(
+                            bytes,
+                            width: imageWidth,
+                            height: imageHeight,
+                            fit: BoxFit.fill,
+                            gaplessPlayback: true,
+                            filterQuality: FilterQuality.medium,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+void _debugScanTiming(
+  String component,
+  String stage,
+  Duration elapsed, {
+  String? correlationId,
+  Map<String, Object?> safeFields = const {},
+}) {
+  if (!kDebugMode) return;
+  debugPrint(
+    '[FigureScanTiming] ${jsonEncode({'component': component, 'correlationId': ?correlationId, 'stage': stage, 'elapsedMs': elapsed.inMicroseconds / 1000, ...safeFields})}',
+  );
 }
 
 class _RecognitionActions extends StatelessWidget {

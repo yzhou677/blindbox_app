@@ -3,14 +3,28 @@ import 'package:image_picker/image_picker.dart';
 enum CatalogPhotoSource { camera, gallery }
 
 class CatalogPhotoSelection {
-  const CatalogPhotoSelection({required this.file, required this.source});
+  const CatalogPhotoSelection({
+    required this.file,
+    required this.source,
+    this.correlationId,
+  });
 
   final XFile file;
   final CatalogPhotoSource source;
+  final String? correlationId;
 }
 
 abstract interface class CatalogPhotoAcquirer {
   Future<CatalogPhotoSelection?> acquire(CatalogPhotoSource source);
+}
+
+final Expando<String> _catalogPhotoCorrelationIds = Expando<String>();
+
+String catalogPhotoCorrelationId(CatalogPhotoSelection selection) {
+  final explicit = selection.correlationId;
+  if (explicit != null) return explicit;
+  return _catalogPhotoCorrelationIds[selection] ??=
+      'scan-${DateTime.now().microsecondsSinceEpoch.toRadixString(36)}';
 }
 
 class ImagePickerCatalogPhotoAcquirer implements CatalogPhotoAcquirer {

@@ -2,6 +2,7 @@ import sharp from 'sharp';
 import type { StoredImage } from './imageEmbeddingTypes';
 import { SUBJECT_LOCATOR_ENDPOINT_CONFIG as config } from './subjectLocatorEndpointConfig';
 import { SubjectLocatorRequestError, type SubjectLocatorRequestV1 } from './subjectLocatorEndpointTypes';
+import { measureScanStage, measureScanStageSync } from './scanTiming';
 
 const requestIdPattern = /^[A-Za-z0-9._:-]{1,64}$/;
 
@@ -20,12 +21,15 @@ export async function validateSubjectLocatorRequest(value: unknown): Promise<{ r
   if (typeof dataBase64 !== 'string' || dataBase64.length === 0) throw new SubjectLocatorRequestError('invalid_request');
   if (dataBase64.length > Math.ceil(config.maxDecodedBytes / 3) * 4) throw new SubjectLocatorRequestError('payload_too_large');
   if (!/^[A-Za-z0-9+/]+={0,2}$/.test(dataBase64) || dataBase64.length % 4 !== 0) throw new SubjectLocatorRequestError('invalid_request');
-  const bytes = Buffer.from(dataBase64, 'base64');
+  const bytes = measureScanStageSync('image_base64_decode', () => Buffer.from(dataBase64, 'base64'), {
+    encodedBytes: dataBase64.length,
+    decodedBytesEstimate: Math.floor(dataBase64.length * 0.75),
+  });
   if (bytes.length === 0 || bytes.length > config.maxDecodedBytes || bytes.toString('base64') !== dataBase64) {
     throw new SubjectLocatorRequestError(bytes.length > config.maxDecodedBytes ? 'payload_too_large' : 'invalid_request');
   }
   let metadata: { width?: number; height?: number };
-  try { metadata = await sharp(bytes).metadata(); }
+  try { metadata = await measureScanStage('image_metadata_decode', () => sharp(bytes).metadata()); }
   catch { throw new SubjectLocatorRequestError('invalid_image'); }
   const width = metadata.width ?? 0;
   const height = metadata.height ?? 0;

@@ -94,6 +94,44 @@ Enable the Vertex AI API. The deployed Functions runtime service account needs
 Vertex prediction permission, normally `roles/aiplatform.user`. No API key or
 service-account JSON belongs in the repository.
 
+### Android debug-token registration
+
+Debug builds activate `AndroidDebugProvider` immediately after the default
+Firebase app is initialized. Release builds use `AndroidPlayIntegrityProvider`
+and never run debug-token diagnostics. During debug startup Shelfy forces one
+token refresh so the native Android SDK prints a line like this to logcat:
+
+```text
+DebugAppCheckProvider: Enter this debug secret into the allow list in the Firebase Console for your project: <secret>
+```
+
+The secret is a development credential. Never commit it, paste it into issue
+trackers, or include it in shared logs. To register it:
+
+1. Run a debug build of `app.shelfy.collector` on the development device.
+2. Capture only the `DebugAppCheckProvider` line, for example:
+
+   ```powershell
+   adb logcat -s com.google.firebase.appcheck.debug.internal.DebugAppCheckProvider flutter
+   ```
+
+3. Open Firebase Console for `blindbox-collection`.
+4. Go to **Build > App Check**, then select **Apps**.
+5. Locate the Android app `app.shelfy.collector`.
+6. Open its overflow menu and choose **Manage debug tokens**.
+7. Add the exact secret printed for this device and give it a descriptive local
+   label. Do not paste an App Check JWT, Firebase API key, or placeholder text.
+8. Restart the debug app. Startup should print `Debug token exchange succeeded`.
+9. If an invalid token was previously registered or the installed app retains a
+   stale secret, remove the stale Console entry, clear/reinstall the debug app,
+   capture the newly generated secret, and register that exact value.
+
+After registration, invoke both scan steps and verify the Cloud Functions logs
+contain `Subject locator request completed` and `Figure recognition request
+completed`, with no `app: INVALID` callable-verification entry. Both callable
+gateways remain in `us-central1`, and both Functions continue enforcing App
+Check.
+
 Before production deployment, configure and enforce Firebase App Check for the
 registered Android and Apple apps. Release/Play signing fingerprints required
 by the chosen attestation providers must be registered in Firebase as part of

@@ -27,11 +27,6 @@ sealed class CatalogFigureRecognitionResult {
   const CatalogFigureRecognitionResult();
 }
 
-final class CatalogRecognitionBorderline
-    extends CatalogFigureRecognitionResult {
-  const CatalogRecognitionBorderline();
-}
-
 final class CatalogRecognitionTooBlurry extends CatalogFigureRecognitionResult {
   const CatalogRecognitionTooBlurry();
 }
@@ -57,6 +52,7 @@ final class CatalogRecognitionFailure extends CatalogFigureRecognitionResult {
 }
 
 enum CatalogRecognitionFailureKind {
+  appCheckRejected,
   qualityUnavailable,
   timeout,
   backendUnavailable,
@@ -66,9 +62,8 @@ enum CatalogRecognitionFailureKind {
 
 abstract interface class CatalogFigureRecognitionGateway {
   Future<CatalogFigureRecognitionResult> recognize(
-    CatalogSubjectSelectionResult selection, {
-    required bool continueBorderline,
-  });
+    CatalogSubjectSelectionResult selection,
+  );
   void cancelPending();
 }
 
@@ -82,7 +77,6 @@ class CatalogFigureRecognitionCoordinator {
 
   Future<CatalogFigureRecognitionResult?> recognize(
     CatalogSubjectSelectionResult selection, {
-    bool continueBorderline = false,
     void Function(CatalogRecognitionPhase phase)? onPhase,
   }) async {
     if (_busy) return null;
@@ -93,10 +87,7 @@ class CatalogFigureRecognitionCoordinator {
       await Future<void>.delayed(Duration.zero);
       if (generation != _generation) return null;
       onPhase?.call(CatalogRecognitionPhase.recognizing);
-      final result = await gateway.recognize(
-        selection,
-        continueBorderline: continueBorderline,
-      );
+      final result = await gateway.recognize(selection);
       return generation == _generation ? result : null;
     } finally {
       if (generation == _generation) _busy = false;

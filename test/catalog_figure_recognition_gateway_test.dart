@@ -6,40 +6,33 @@ import 'dart:ui';
 import 'package:blindbox_app/shared/image/catalog_figure_recognition.dart';
 import 'package:blindbox_app/shared/image/catalog_figure_recognition_gateway.dart';
 import 'package:blindbox_app/shared/image/catalog_photo_acquisition.dart';
+import 'package:blindbox_app/shared/image/catalog_recognition_image_preparer.dart';
 import 'package:blindbox_app/shared/image/catalog_subject_selection.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image/image.dart' as image;
 
 void main() {
-  test(
-    'gateway sends original bytes and final normalized oriented rectangle',
-    () async {
-      final callable = _Callable({'version': 1, 'status': 'borderline'});
-      final gateway = FirebaseCatalogFigureRecognitionGateway(
-        callable: callable,
-      );
-      final selection = _selection();
-      final result = await gateway.recognize(
-        selection,
-        continueBorderline: false,
-      );
-      expect(result, isA<CatalogRecognitionBorderline>());
-      final request = callable.requests.single;
-      expect(base64Decode((request['image'] as Map)['dataBase64']), [
-        1,
-        2,
-        3,
-        4,
-      ]);
-      final rect = request['selection'] as Map;
-      expect(rect['left'], 0.1);
-      expect(rect['top'], 0.2);
-      expect(rect['width'], closeTo(0.6, 1e-12));
-      expect(rect['height'], closeTo(0.6, 1e-12));
-      expect(rect['coordinateSpace'], 'normalized_oriented_image');
-      expect(request['continueBorderline'], false);
-    },
-  );
+  test('gateway sends only the bounded selected-subject crop', () async {
+    final callable = _Callable({'version': 1, 'status': 'no_confident_match'});
+    final gateway = FirebaseCatalogFigureRecognitionGateway(callable: callable);
+    final selection = _selection();
+    final result = await gateway.recognize(selection);
+    expect(result, isA<CatalogRecognitionNoConfidentMatch>());
+    final request = callable.requests.single;
+    expect(request['version'], 2);
+    final sentImage = request['image'] as Map;
+    final sentBytes = base64Decode(sentImage['dataBase64']);
+    final decoded = image.decodeImage(sentBytes)!;
+    expect(decoded.width, 60);
+    expect(decoded.height, 30);
+    expect(sentImage['role'], 'selected_subject_crop');
+    expect(request.containsKey('selection'), isFalse);
+    expect(sentBytes.length, lessThan(_sourceBytes().length));
+    expect(request.containsKey('continueBorderline'), isFalse);
+    expect(request['requestId'], 'scan-recognition-test');
+  });
 
   test(
     'gateway maps safe candidate, no-match, too-blurry and malformed outcomes',
@@ -63,7 +56,8 @@ void main() {
             },
           ],
         }),
-      ).recognize(_selection(), continueBorderline: false);
+        imagePreparer: _FakePreparer(),
+      ).recognize(_selection());
       expect(candidates, isA<CatalogRecognitionCandidates>());
       expect(
         (candidates as CatalogRecognitionCandidates).candidates.single.figureId,
@@ -72,13 +66,15 @@ void main() {
       expect(
         await FirebaseCatalogFigureRecognitionGateway(
           callable: _Callable({'version': 1, 'status': 'no_confident_match'}),
-        ).recognize(_selection(), continueBorderline: false),
+          imagePreparer: _FakePreparer(),
+        ).recognize(_selection()),
         isA<CatalogRecognitionNoConfidentMatch>(),
       );
       expect(
         await FirebaseCatalogFigureRecognitionGateway(
           callable: _Callable({'version': 1, 'status': 'too_blurry'}),
-        ).recognize(_selection(), continueBorderline: false),
+          imagePreparer: _FakePreparer(),
+        ).recognize(_selection()),
         isA<CatalogRecognitionTooBlurry>(),
       );
       final malformed = await FirebaseCatalogFigureRecognitionGateway(
@@ -89,11 +85,78 @@ void main() {
           'decision': 'needs_review',
           'candidates': [],
         }),
-      ).recognize(_selection(), continueBorderline: false);
+        imagePreparer: _FakePreparer(),
+      ).recognize(_selection());
       expect(
         (malformed as CatalogRecognitionFailure).kind,
         CatalogRecognitionFailureKind.invalidResponse,
       );
+    },
+  );
+
+  test('preparer bounds the crop without upscaling', () async {
+    final large = image.Image(width: 5000, height: 100)
+      ..clear(image.ColorRgb8(90, 130, 170));
+    final selection = _selectionWith(
+      bytes: Uint8List.fromList(image.encodeJpg(large, quality: 95)),
+      width: 5000,
+      height: 100,
+      rect: const NormalizedSubjectRect(left: 0, top: 0, right: 1, bottom: 1),
+    );
+    final prepared = await const LocalCatalogRecognitionImagePreparer().prepare(
+      selection,
+    );
+    expect(prepared.width, catalogRecognitionMaxInputDimension);
+    expect(prepared.height, 82);
+
+    final small = await const LocalCatalogRecognitionImagePreparer().prepare(
+      _selection(),
+    );
+    expect((small.width, small.height), (60, 30));
+  });
+
+  test('retry reuses one prepared crop and one source read/encode', () async {
+    var encodes = 0;
+    final preparer = LocalCatalogRecognitionImagePreparer(
+      base64Encoder: (bytes) {
+        encodes++;
+        return base64Encode(bytes);
+      },
+    );
+    final callable = _Callable({'version': 1, 'status': 'no_confident_match'});
+    final gateway = FirebaseCatalogFigureRecognitionGateway(
+      callable: callable,
+      imagePreparer: preparer,
+    );
+    final selection = _selection();
+    await gateway.recognize(selection);
+    await gateway.recognize(selection);
+    expect(encodes, 1);
+    expect(
+      callable.requests
+          .map((request) => (request['image'] as Map)['dataBase64'])
+          .toSet(),
+      hasLength(1),
+    );
+  });
+
+  test(
+    'a changed selection prepares and encodes a new recognition crop',
+    () async {
+      var encodes = 0;
+      final preparer = LocalCatalogRecognitionImagePreparer(
+        base64Encoder: (bytes) {
+          encodes++;
+          return base64Encode(bytes);
+        },
+      );
+      final gateway = FirebaseCatalogFigureRecognitionGateway(
+        callable: _Callable({'version': 1, 'status': 'no_confident_match'}),
+        imagePreparer: preparer,
+      );
+      await gateway.recognize(_selection());
+      await gateway.recognize(_selection());
+      expect(encodes, 2);
     },
   );
 
@@ -111,16 +174,33 @@ void main() {
       expect(await first, isNull);
     },
   );
+
+  test('App Check rejection remains a fatal scan dependency failure', () async {
+    final result = await FirebaseCatalogFigureRecognitionGateway(
+      callable: _ThrowingRecognitionCallable(
+        FirebaseFunctionsException(
+          code: 'unauthenticated',
+          message: 'Unauthenticated',
+        ),
+      ),
+      imagePreparer: _FakePreparer(),
+    ).recognize(_selection());
+    expect(
+      (result as CatalogRecognitionFailure).kind,
+      CatalogRecognitionFailureKind.appCheckRejected,
+    );
+  });
 }
 
 CatalogSubjectSelectionResult _selection() => CatalogSubjectSelectionResult(
   photo: CatalogPhotoSelection(
     file: XFile.fromData(
-      Uint8List.fromList([1, 2, 3, 4]),
+      _sourceBytes(),
       name: 'original.png',
       mimeType: 'image/png',
     ),
     source: CatalogPhotoSource.camera,
+    correlationId: 'scan-recognition-test',
   ),
   normalizedRect: const NormalizedSubjectRect(
     left: 0.1,
@@ -128,10 +208,57 @@ CatalogSubjectSelectionResult _selection() => CatalogSubjectSelectionResult(
     right: 0.7,
     bottom: 0.8,
   ),
-  sourceImageRect: const Rect.fromLTWH(100, 100, 600, 300),
-  orientedSourceSize: const Size(1000, 500),
+  sourceImageRect: const Rect.fromLTWH(10, 10, 60, 30),
+  orientedSourceSize: const Size(100, 50),
   origin: SubjectSelectionOrigin.userEdited,
 );
+
+CatalogSubjectSelectionResult _selectionWith({
+  required Uint8List bytes,
+  required double width,
+  required double height,
+  required NormalizedSubjectRect rect,
+}) => CatalogSubjectSelectionResult(
+  photo: CatalogPhotoSelection(
+    file: XFile.fromData(bytes, name: 'fixture.jpg', mimeType: 'image/jpeg'),
+    source: CatalogPhotoSource.camera,
+  ),
+  normalizedRect: rect,
+  sourceImageRect: Rect.fromLTRB(
+    rect.left * width,
+    rect.top * height,
+    rect.right * width,
+    rect.bottom * height,
+  ),
+  orientedSourceSize: Size(width, height),
+  origin: SubjectSelectionOrigin.userEdited,
+);
+
+Uint8List _sourceBytes() => Uint8List.fromList(
+  image.encodeJpg(
+    image.Image(width: 100, height: 50)..clear(image.ColorRgb8(80, 120, 180)),
+    quality: 95,
+  ),
+);
+
+final class _FakePreparer implements CatalogRecognitionImagePreparer {
+  var calls = 0;
+  final encodedValue = base64Encode([1, 2, 3, 4]);
+  @override
+  Future<PreparedCatalogRecognitionImage> prepare(
+    CatalogSubjectSelectionResult selection,
+  ) async {
+    calls++;
+    return PreparedCatalogRecognitionImage(
+      bytes: Uint8List.fromList([1, 2, 3, 4]),
+      mimeType: 'image/jpeg',
+      width: 60,
+      height: 30,
+      originalByteSize: 100,
+      dataBase64: encodedValue,
+    );
+  }
+}
 
 final class _Callable implements FigureRecognitionCallable {
   _Callable(this.response);
@@ -149,13 +276,20 @@ final class _PendingGateway implements CatalogFigureRecognitionGateway {
   var calls = 0;
   @override
   Future<CatalogFigureRecognitionResult> recognize(
-    CatalogSubjectSelectionResult selection, {
-    required bool continueBorderline,
-  }) {
+    CatalogSubjectSelectionResult selection,
+  ) {
     calls++;
     return pending.future;
   }
 
   @override
   void cancelPending() {}
+}
+
+final class _ThrowingRecognitionCallable implements FigureRecognitionCallable {
+  _ThrowingRecognitionCallable(this.error);
+  final Object error;
+  @override
+  Future<Object?> call(Map<String, Object?> data) =>
+      Future<Object?>.error(error);
 }
