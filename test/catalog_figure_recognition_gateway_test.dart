@@ -35,21 +35,45 @@ void main() {
     expect(request.containsKey('seriesId'), isFalse);
   });
 
-  test('gateway includes seriesId only when provided for Series Scan', () async {
-    final callable = _Callable({'version': 1, 'status': 'no_confident_match'});
-    final gateway = FirebaseCatalogFigureRecognitionGateway(callable: callable);
-    await gateway.recognize(
-      _selection(),
-      seriesId: '  hirono_mist_walker_series_plush_doll_pendant  ',
-    );
-    expect(
-      callable.requests.single['seriesId'],
-      'hirono_mist_walker_series_plush_doll_pendant',
-    );
+  test(
+    'gateway includes seriesId only when provided for Series Scan',
+    () async {
+      final callable = _Callable({
+        'version': 1,
+        'status': 'no_confident_match',
+      });
+      final gateway = FirebaseCatalogFigureRecognitionGateway(
+        callable: callable,
+      );
 
-    await gateway.recognize(_selection(), seriesId: '   ');
-    expect(callable.requests.last.containsKey('seriesId'), isFalse);
-  });
+      await gateway.recognize(_selection());
+      final omitted = callable.requests.single;
+      expect(omitted.containsKey('seriesId'), isFalse);
+      expect(omitted['version'], 2);
+      expect(omitted['requestId'], 'scan-recognition-test');
+      expect(omitted['image'], isA<Map>());
+      expect((omitted['image'] as Map)['role'], 'selected_subject_crop');
+
+      await gateway.recognize(
+        _selection(),
+        seriesId: '  hirono_mist_walker_series_plush_doll_pendant  ',
+      );
+      final scoped = callable.requests[1];
+      expect(
+        scoped['seriesId'],
+        'hirono_mist_walker_series_plush_doll_pendant',
+      );
+      expect(scoped['version'], 2);
+      expect(scoped['requestId'], 'scan-recognition-test');
+      expect(scoped['image'], isA<Map>());
+
+      await gateway.recognize(_selection(), seriesId: '   ');
+      expect(callable.requests[2].containsKey('seriesId'), isFalse);
+
+      await gateway.recognize(_selection(), seriesId: null);
+      expect(callable.requests[3].containsKey('seriesId'), isFalse);
+    },
+  );
 
   test(
     'gateway maps safe candidate, no-match, too-blurry and malformed outcomes',
@@ -118,10 +142,10 @@ void main() {
         (highConfidence as CatalogRecognitionCandidates).decision,
         CatalogRecognitionDecision.highConfidence,
       );
-      expect(
-        highConfidence.candidates.map((c) => c.figureId).toList(),
-        ['f1', 'f2'],
-      );
+      expect(highConfidence.candidates.map((c) => c.figureId).toList(), [
+        'f1',
+        'f2',
+      ]);
 
       expect(
         await map({'version': 1, 'status': 'no_confident_match'}),

@@ -7,7 +7,7 @@ const { IMAGE_EMBEDDING_CONFIG } = require('../lib/figureRecognition/imageEmbedd
 const { FirebaseCatalogImageResolver } = require('../lib/figureRecognition/catalogImageResolver');
 const { FirestoreCatalogEmbeddingStore } = require('../lib/figureRecognition/catalogEmbeddingStore');
 const { CatalogEmbeddingJob, withTransientRetries } = require('../lib/figureRecognition/catalogEmbeddingJob');
-const { parseCatalogEmbeddingArgs, createStartupDiagnostic } = require('../lib/figureRecognition/catalogEmbeddingCli');
+const { parseCatalogEmbeddingArgs, optionsForCatalogEmbeddingExecute, createStartupDiagnostic } = require('../lib/figureRecognition/catalogEmbeddingCli');
 
 const figure = (overrides = {}) => ({
   figureId: 'fig-1', seriesId: 'series-1', brandId: 'brand-1', ipId: 'ip-1', isSecret: false,
@@ -295,6 +295,49 @@ describe('adapters and CLI', () => {
     assert.throws(() => parseCatalogEmbeddingArgs(['--limit', '10', '--limit', '20']));
     assert.throws(() => parseCatalogEmbeddingArgs(['--concurrency', '2']));
     assert.throws(() => parseCatalogEmbeddingArgs(['--prune-dry-run']));
+  });
+
+  it('forwards parsed CLI options into CatalogEmbeddingJob.execute unchanged', async () => {
+    assert.deepEqual(optionsForCatalogEmbeddingExecute(parseCatalogEmbeddingArgs([])), {});
+    assert.deepEqual(
+      optionsForCatalogEmbeddingExecute(parseCatalogEmbeddingArgs(['--prune-stale-alternatives'])),
+      { pruneStaleAlternatives: true },
+    );
+    assert.deepEqual(
+      optionsForCatalogEmbeddingExecute(
+        parseCatalogEmbeddingArgs(['--prune-stale-alternatives', '--prune-dry-run']),
+      ),
+      { pruneStaleAlternatives: true, pruneDryRun: true },
+    );
+
+    const calls = [];
+    const emptyPlan = {
+      summary: {
+        totalFigures: 0, alreadyUpToDate: 0, metadataOnlyUpdates: 0, requiresEmbedding: 0,
+        missingImages: 0, estimatedEmbeddingApiCalls: 0, estimatedAiCostUsd: 0,
+        missingImageCount: 0, missingImageFigureIds: [], plannedImageRecords: 0,
+      },
+      items: [],
+      scannedFigures: [],
+    };
+    const job = {
+      async execute(plan, options) {
+        calls.push({ plan, options });
+        return { scanned: 0, embedded: 0, metadataUpdated: 0, skipped: 0, failed: 0, elapsedMs: 0,
+          missingImages: 0, missingImageCount: 0, missingImageFigureIds: [],
+          staleAlternativesDeleted: 0, staleAlternativesWouldDelete: 0 };
+      },
+    };
+    // Mirrors embed-catalog-figures.mjs: execute(plan, optionsForCatalogEmbeddingExecute(options)).
+    for (const argv of [[], ['--prune-stale-alternatives'], ['--prune-stale-alternatives', '--prune-dry-run']]) {
+      const options = parseCatalogEmbeddingArgs(argv);
+      await job.execute(emptyPlan, optionsForCatalogEmbeddingExecute(options));
+    }
+    assert.deepEqual(calls.map((call) => call.options), [
+      {},
+      { pruneStaleAlternatives: true },
+      { pruneStaleAlternatives: true, pruneDryRun: true },
+    ]);
   });
 
   it('reports a sanitized startup exception with its failing component', () => {

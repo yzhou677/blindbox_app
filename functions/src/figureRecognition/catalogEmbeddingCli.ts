@@ -34,6 +34,17 @@ export function parseCatalogEmbeddingArgs(args: string[]): CatalogEmbeddingJobOp
   return options;
 }
 
+/**
+ * Options object that must be passed to {@link CatalogEmbeddingJob.execute}.
+ * Same object used for planning — including prune flags — so CLI argv cannot
+ * silently drop `--prune-stale-alternatives` / `--prune-dry-run`.
+ */
+export function optionsForCatalogEmbeddingExecute(
+  parsed: CatalogEmbeddingJobOptions,
+): CatalogEmbeddingJobOptions {
+  return parsed;
+}
+
 export function createStartupDiagnostic(error: unknown, component: string): CatalogEmbeddingStartupDiagnostic {
   const value = error as { name?: unknown; message?: unknown; constructor?: { name?: unknown } };
   const exceptionClass = safeLabel(value?.name ?? value?.constructor?.name, 'Error');

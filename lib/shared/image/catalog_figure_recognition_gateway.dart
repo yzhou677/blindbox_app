@@ -74,7 +74,10 @@ final class FirebaseCatalogFigureRecognitionGateway
           'role': 'selected_subject_crop',
         },
         'requestId': requestId,
-        ?'seriesId': scopedSeriesId,
+        // Prefer explicit if over ?'key'/key:?value — the former checks the key,
+        // which previously emitted seriesId: null and broke legacy requests.
+        // ignore: use_null_aware_elements
+        if (scopedSeriesId != null) 'seriesId': scopedSeriesId,
       };
       _debugRecognitionLog({
         'event': 'request_start',
