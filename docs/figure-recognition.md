@@ -197,15 +197,40 @@ actions.
 
 ---
 
-## Future improvements
+## Future evolution
 
-Non-commitments — product directions consistent with PDR-001 / ADR-003:
+Non-commitments — roadmap directions consistent with PDR-001 / ADR-003. Each
+step reuses the same closed-world Catalog retrieval core; Collection mutation
+stays explicit.
 
-- Multi-angle / multi-shot evidence for harder figures
-- Series-level scan assist (still one intentional subject at a time)
-- Stronger shelf / multi-figure detection that still yields one confirmed crop
-- Optional downstream reranking over verified Top-K only
-- Broader Catalog coverage and holdout recalibration of thresholds
+```text
+V1   Single collectible recognition
+       (current: one intentional subject, one crop, candidate / no-match UI)
+
+  ↓
+
+V1.5 Multiple reference images per figure
+       (richer Catalog embedding evidence for hard poses / packaging)
+
+  ↓
+
+V2   Series Scan
+       (still intentional, but Series-aware assist across related figures)
+
+  ↓
+
+V3   Whole shelf recognition
+       (detect / crop regions from a shelf photo; each region reuses V1)
+
+  ↓
+
+Future Fine-tuned reranker
+         (optional downstream compare over verified Top-K only)
+```
+
+Related discussion topics that land here later: multi-reference training data,
+shelf detection, model fine-tuning, and reranker evaluation. They do not change
+V1’s human-in-the-loop contract.
 
 Any threshold change remains a deliberate calibration + deploy event; this
 document tracks live values only.
