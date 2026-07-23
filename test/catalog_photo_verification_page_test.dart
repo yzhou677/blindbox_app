@@ -954,13 +954,104 @@ void main() {
       await tester.pumpAndSettle();
       expect(
         find.byKey(const Key('recognition-finding-checklist')),
+        findsOneWidget,
+      );
+      expect(find.text('No close match found.'), findsOneWidget);
+      expect(find.text('Overall silhouette matched'), findsOneWidget);
+      expect(find.text('Matching with the catalog…'), findsNothing);
+      expect(find.byIcon(Icons.remove_rounded), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'no-match keeps checklist continuity and finding photo size',
+    (tester) async {
+      final gateway = _PendingRecognitionGateway();
+      await _pumpHost(
+        tester,
+        recognitionCoordinator: CatalogFigureRecognitionCoordinator(gateway),
+      );
+      await tester.tap(find.text('Acquire'));
+      await _settlePhotoLoad(tester);
+      await tester.tap(find.text('Use This Photo'));
+      await _settleFraming(tester);
+      await tester.tap(find.text('Continue'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 1));
+
+      final findingCrop = tester.getSize(
+        find.byKey(const ValueKey('recognition-crop-slot')),
+      );
+      expect(find.text('Checking silhouette…'), findsOneWidget);
+
+      gateway.pending.complete(const CatalogRecognitionNoConfidentMatch());
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('recognition-finding-checklist')),
+        findsOneWidget,
+      );
+      expect(find.text('Checking silhouette…'), findsNothing);
+      expect(find.text('Overall silhouette matched'), findsOneWidget);
+      expect(find.text('Matching color palette'), findsOneWidget);
+      expect(find.text('Accessories considered'), findsOneWidget);
+      expect(find.text('Facial details compared'), findsOneWidget);
+      expect(find.text('No close match found.'), findsOneWidget);
+      expect(find.text('Matching with the catalog…'), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('recognition-finding-step-4')),
+          matching: find.byIcon(Icons.remove_rounded),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('recognition-finding-step-4')),
+          matching: find.byIcon(Icons.close_rounded),
+        ),
         findsNothing,
+      );
+      expect(
+        find.byKey(const Key('recognition-finding-progress')),
+        findsNothing,
+      );
+      expect(find.text('We couldn’t find a close match.'), findsOneWidget);
+      expect(
+        find.text(
+          'We compared your photo with the Shelfy catalog, but couldn’t identify a confident match.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        tester.getSize(find.byKey(const ValueKey('recognition-crop-slot'))).height,
+        findingCrop.height,
+      );
+      expect(find.text('Try Another Photo'), findsOneWidget);
+      expect(find.text('Adjust Frame'), findsOneWidget);
+      expect(find.text('Create Custom Figure'), findsOneWidget);
+      expect(find.textContaining('%'), findsNothing);
+
+      // Soften after settle — checklist remains, not removed.
+      final faded = tester.widget<AnimatedOpacity>(
+        find.ancestor(
+          of: find.byKey(const Key('recognition-finding-checklist')),
+          matching: find.byType(AnimatedOpacity),
+        ),
+      );
+      expect(
+        faded.opacity,
+        CollectibleMotion.recognitionFindingNoMatchChecklistOpacity,
+      );
+      expect(
+        find.byKey(const Key('recognition-finding-checklist')),
+        findsOneWidget,
       );
     },
   );
 
   testWidgets(
-    'early recognition result leaves finding without finishing checklist',
+    'early recognition result settles checklist into unmatched Matching',
     (tester) async {
       final gateway = _PendingRecognitionGateway();
       await _pumpHost(
@@ -980,9 +1071,10 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Checking silhouette…'), findsNothing);
       expect(find.text('Matching with the catalog…'), findsNothing);
+      expect(find.text('No close match found.'), findsOneWidget);
       expect(
         find.byKey(const Key('recognition-finding-checklist')),
-        findsNothing,
+        findsOneWidget,
       );
       expect(find.text('We couldn’t find a close match.'), findsOneWidget);
     },
@@ -1049,8 +1141,9 @@ void main() {
       );
       expect(
         find.byKey(const Key('recognition-finding-checklist')),
-        findsNothing,
+        findsOneWidget,
       );
+      expect(find.text('No close match found.'), findsOneWidget);
     },
   );
 
@@ -1373,11 +1466,18 @@ void main() {
     );
     expect(
       find.text(
-        'Try another photo, or adjust the frame.',
+        'We compared your photo with the Shelfy catalog, but couldn’t identify a confident match.',
       ),
       findsOneWidget,
     );
+    expect(find.text('No close match found.'), findsOneWidget);
+    expect(
+      find.byKey(const Key('recognition-finding-checklist')),
+      findsOneWidget,
+    );
     expect(find.text('Create Custom Figure'), findsOneWidget);
+    expect(find.text('Try Another Photo'), findsOneWidget);
+    expect(find.text('Adjust Frame'), findsOneWidget);
     expect(find.textContaining('%'), findsNothing);
   });
 
@@ -1447,8 +1547,9 @@ void main() {
       await tester.pumpAndSettle();
       expect(
         find.byKey(const Key('recognition-finding-checklist')),
-        findsNothing,
+        findsOneWidget,
       );
+      expect(find.text('No close match found.'), findsOneWidget);
     },
   );
 

@@ -37,5 +37,13 @@ void main() {
     for (var i = 1; i < advances.length; i++) {
       expect(advances[i] > advances[i - 1], isTrue);
     }
+    expect(
+      CollectibleMotion.recognitionFindingNoMatchSettle.inMilliseconds,
+      inInclusiveRange(400, 600),
+    );
+    expect(
+      CollectibleMotion.recognitionFindingNoMatchChecklistOpacity,
+      inInclusiveRange(0.55, 0.70),
+    );
   });
 }

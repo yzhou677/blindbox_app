@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/app_typography.dart';
 import 'package:blindbox_app/core/theme/collectible_elevation.dart';
@@ -24,9 +25,12 @@ import 'package:image/image.dart' as image;
 /// Calm review reassurance — framing already happened; do not teach again.
 const catalogPhotoGuidance = 'Ready when you are.';
 
+/// Scan sheet top radius — intentionally larger than [AppRadii.spotlight] for
+/// the photo-first recognition chrome (keep as approved product shape).
 const double _scanSheetTopRadius = 32;
 const double _scanContentMaxWidth = 420;
-const double _scanHeroRadius = 24;
+
+/// Scan primary CTA height — stadium recognition actions (approved shape).
 const double _scanPrimaryButtonHeight = 56;
 
 /// Optional override for success haptics (tests inject a counter; production
@@ -505,14 +509,9 @@ class _CatalogPhotoVerificationPageState
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text('Comparing with the Shelfy catalog.', style: subtitle),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           const _FindingProgressIndicator(
             key: Key('recognition-finding-progress'),
-          ),
-          const SizedBox(height: 20),
-          _FindingAnalysisChecklist(
-            key: ValueKey(_findingSequenceId),
-            sequenceId: _findingSequenceId,
           ),
         ],
       ),
@@ -526,7 +525,7 @@ class _CatalogPhotoVerificationPageState
         style: subtitle,
       ),
       CatalogPhotoScanPresentationState.noConfidentMatch => Text(
-        'Try another photo, or adjust the frame.',
+        'We compared your photo with the Shelfy catalog, but couldn’t identify a confident match.',
         key: const ValueKey('no-match-guidance'),
         style: subtitle,
       ),
@@ -646,28 +645,36 @@ class _CatalogPhotoVerificationPageState
         _presentationState == CatalogPhotoScanPresentationState.locating;
     final recognitionLoading =
         _presentationState == CatalogPhotoScanPresentationState.recognizing;
-    final showingResults =
-        _presentationState == CatalogPhotoScanPresentationState.candidates ||
+    final noConfidentMatch =
         _presentationState == CatalogPhotoScanPresentationState.noConfidentMatch;
-    // Finding + results lead with the crop so the photo stays the anchor.
-    final mediaLeads = recognitionLoading || showingResults;
+    final showingCandidates =
+        _presentationState == CatalogPhotoScanPresentationState.candidates;
+    // Finding + no-match + candidates lead with the crop so the photo stays
+    // the anchor. No-match keeps finding-sized media for continuity.
+    final mediaLeads = recognitionLoading || noConfidentMatch || showingCandidates;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
-    final mediaHeight = showingResults
+    final findingMediaHeight = (screenHeight * 0.295).clamp(210.0, 280.0);
+    final mediaHeight = showingCandidates
         ? (resultsBaseline * 0.42).clamp(112.0, 148.0)
-        : recognitionLoading
-        ? (screenHeight * 0.295).clamp(210.0, 280.0)
+        : recognitionLoading || noConfidentMatch
+        ? findingMediaHeight
         : framing || locating
         ? (screenHeight * 0.40).clamp(230.0, 348.0)
         : (screenHeight * 0.415).clamp(240.0, 360.0);
-    // Frame needs a wider working area; finding slightly wider than review.
+    // Frame needs a wider working area; finding/no-match slightly wider than review.
     final mediaHorizontalInset = framing || locating
-        ? 12.0
-        : recognitionLoading
-        ? 16.0
-        : 20.0;
+        ? AppSpacing.md
+        : recognitionLoading || noConfidentMatch
+        ? AppSpacing.pageHorizontalCompact
+        : AppSpacing.pageHorizontal;
 
     final titleBlock = Padding(
-      padding: EdgeInsets.fromLTRB(20, mediaLeads ? 0 : 2, 52, 0),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.pageHorizontal,
+        mediaLeads ? 0 : 2,
+        52,
+        0,
+      ),
       child: AnimatedSwitcher(
         duration: CollectibleMotion.crossfade,
         switchInCurve: CollectibleMotion.easeOut,
@@ -692,7 +699,12 @@ class _CatalogPhotoVerificationPageState
     );
 
     final guidanceBlock = Padding(
-      padding: EdgeInsets.fromLTRB(20, recognitionLoading ? 4 : 6, 20, 0),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.pageHorizontal,
+        recognitionLoading ? AppSpacing.xs : 6,
+        AppSpacing.pageHorizontal,
+        0,
+      ),
       child: AnimatedSwitcher(
         duration: CollectibleMotion.crossfade,
         switchInCurve: CollectibleMotion.easeOut,
@@ -725,7 +737,7 @@ class _CatalogPhotoVerificationPageState
                 color: scheme.onSurfaceVariant,
               ),
             )
-          : recognitionLoading || showingResults
+          : recognitionLoading || noConfidentMatch || showingCandidates
           ? AnimatedSize(
               duration: reduceMotion
                   ? Duration.zero
@@ -783,7 +795,7 @@ class _CatalogPhotoVerificationPageState
               physics: _selectionInteractionActive
                   ? const NeverScrollableScrollPhysics()
                   : null,
-              padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
+              padding: const EdgeInsets.fromLTRB(0, 0, 0, AppSpacing.xxl),
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(
@@ -809,18 +821,34 @@ class _CatalogPhotoVerificationPageState
                         ),
                       ),
                       if (mediaLeads) ...[
-                        SizedBox(height: recognitionLoading ? 8 : 10),
+                        SizedBox(
+                          height: recognitionLoading || noConfidentMatch ? 8 : 10,
+                        ),
                         mediaBlock,
-                        SizedBox(height: recognitionLoading ? 10 : 12),
+                        SizedBox(
+                          height: recognitionLoading || noConfidentMatch
+                              ? 10
+                              : AppSpacing.md,
+                        ),
                         titleBlock,
                         guidanceBlock,
+                        if (recognitionLoading || noConfidentMatch) ...[
+                          const SizedBox(height: AppSpacing.xl),
+                          _FindingAnalysisChecklist(
+                            key: ValueKey(_findingSequenceId),
+                            sequenceId: _findingSequenceId,
+                            outcome: noConfidentMatch
+                                ? _FindingChecklistOutcome.noMatch
+                                : _FindingChecklistOutcome.loading,
+                          ),
+                        ],
                       ] else ...[
                         titleBlock,
                         guidanceBlock,
-                        const SizedBox(height: 12),
+                        const SizedBox(height: AppSpacing.md),
                         mediaBlock,
                       ],
-                      const SizedBox(height: 20),
+                      const SizedBox(height: AppSpacing.xl),
                       AnimatedSwitcher(
                         duration: reduceMotion
                             ? Duration.zero
@@ -847,7 +875,9 @@ class _CatalogPhotoVerificationPageState
                         child: KeyedSubtree(
                           key: ValueKey(_presentationState),
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.xxl,
+                            ),
                             child: _stateActions(),
                           ),
                         ),
@@ -927,7 +957,7 @@ class _SelectedSubjectCropPreview extends StatelessWidget {
           return Center(
             child: DecoratedBox(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(_scanHeroRadius),
+                borderRadius: BorderRadius.circular(AppRadii.figureGallery),
                 boxShadow: CollectibleElevation.softCard(context),
               ),
               child: SizedBox(
@@ -935,7 +965,7 @@ class _SelectedSubjectCropPreview extends StatelessWidget {
                 height: targetHeight,
                 child: ClipRRect(
                   key: const Key('recognition-selected-crop-preview'),
-                  borderRadius: BorderRadius.circular(_scanHeroRadius),
+                  borderRadius: BorderRadius.circular(AppRadii.figureGallery),
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
@@ -1074,8 +1104,11 @@ class _FindingProgressIndicator extends StatelessWidget {
 
 /// Display-only analysis steps while recognition runs. Cosmetic pacing only —
 /// not tied to backend stages. Final Matching stays active until the parent
-/// leaves the recognizing state (request resolved).
-enum _FindingStepStatus { pending, active, completed }
+/// leaves the recognizing state, or settles into a soft unmatched row on
+/// no-confident-match.
+enum _FindingStepStatus { pending, active, completed, unmatched }
+
+enum _FindingChecklistOutcome { loading, noMatch }
 
 class _FindingChecklistStep {
   const _FindingChecklistStep({
@@ -1117,14 +1150,18 @@ const _findingChecklistSteps = <_FindingChecklistStep>[
   ),
 ];
 
+const _findingMatchingUnmatchedDetail = 'No close match found.';
+
 class _FindingAnalysisChecklist extends StatefulWidget {
   const _FindingAnalysisChecklist({
     super.key,
     required this.sequenceId,
+    required this.outcome,
   });
 
   /// Bumped once per recognition attempt so rebuilds do not restart pacing.
   final int sequenceId;
+  final _FindingChecklistOutcome outcome;
 
   @override
   State<_FindingAnalysisChecklist> createState() =>
@@ -1133,12 +1170,16 @@ class _FindingAnalysisChecklist extends StatefulWidget {
 
 class _FindingAnalysisChecklistState extends State<_FindingAnalysisChecklist>
     with SingleTickerProviderStateMixin {
-  /// Active step index. Cap is last step (Matching); never auto-completes it.
+  /// Active step index while loading. Cap is last step (Matching).
   var _activeIndex = 0;
   final List<Timer> _advanceTimers = [];
+  Timer? _softenTimer;
   var _scheduleStarted = false;
+  var _softened = false;
   late final AnimationController _pulseController;
   late final Animation<double> _pulse;
+
+  static const int _matchingIndex = 4;
 
   @override
   void initState() {
@@ -1150,7 +1191,11 @@ class _FindingAnalysisChecklistState extends State<_FindingAnalysisChecklist>
     _pulse = Tween<double>(begin: 0.92, end: 1.0).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
-    _armAdvanceTimers();
+    if (widget.outcome == _FindingChecklistOutcome.noMatch) {
+      _applyNoMatchSettlement(immediateSoften: true, notify: false);
+    } else {
+      _armAdvanceTimers();
+    }
   }
 
   @override
@@ -1158,10 +1203,24 @@ class _FindingAnalysisChecklistState extends State<_FindingAnalysisChecklist>
     super.didUpdateWidget(oldWidget);
     if (oldWidget.sequenceId != widget.sequenceId) {
       _cancelAdvanceTimers();
+      _softenTimer?.cancel();
+      _softenTimer = null;
       _activeIndex = 0;
       _scheduleStarted = false;
-      _armAdvanceTimers();
-      _syncPulse();
+      _softened = false;
+      if (widget.outcome == _FindingChecklistOutcome.noMatch) {
+        _applyNoMatchSettlement(immediateSoften: true);
+      } else {
+        _armAdvanceTimers();
+        _syncPulse();
+      }
+      return;
+    }
+    if (oldWidget.outcome != widget.outcome &&
+        widget.outcome == _FindingChecklistOutcome.noMatch) {
+      _applyNoMatchSettlement(
+        immediateSoften: MediaQuery.disableAnimationsOf(context),
+      );
     }
   }
 
@@ -1180,6 +1239,7 @@ class _FindingAnalysisChecklistState extends State<_FindingAnalysisChecklist>
       _advanceTimers.add(
         Timer(advances[i], () {
           if (!mounted) return;
+          if (widget.outcome != _FindingChecklistOutcome.loading) return;
           setState(() => _activeIndex = nextIndex);
           _syncPulse();
         }),
@@ -1194,15 +1254,38 @@ class _FindingAnalysisChecklistState extends State<_FindingAnalysisChecklist>
     _advanceTimers.clear();
   }
 
+  void _applyNoMatchSettlement({
+    required bool immediateSoften,
+    bool notify = true,
+  }) {
+    _cancelAdvanceTimers();
+    _softenTimer?.cancel();
+    _softenTimer = null;
+    _pulseController.stop();
+    _pulseController.value = 1;
+    _activeIndex = _matchingIndex;
+    _softened = immediateSoften;
+    if (!immediateSoften) {
+      _softenTimer = Timer(
+        CollectibleMotion.recognitionFindingNoMatchSettle,
+        () {
+          if (!mounted) return;
+          setState(() => _softened = true);
+        },
+      );
+    }
+    if (notify && mounted) setState(() {});
+  }
+
   void _syncPulse() {
     if (!mounted) return;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
-    if (reduceMotion) {
+    if (reduceMotion ||
+        widget.outcome == _FindingChecklistOutcome.noMatch) {
       _pulseController.stop();
       _pulseController.value = 1;
       return;
     }
-    // Matching (and earlier active steps) keep a gentle pulse while waiting.
     if (!_pulseController.isAnimating) {
       unawaited(_pulseController.repeat(reverse: true));
     }
@@ -1211,11 +1294,16 @@ class _FindingAnalysisChecklistState extends State<_FindingAnalysisChecklist>
   @override
   void dispose() {
     _cancelAdvanceTimers();
+    _softenTimer?.cancel();
     _pulseController.dispose();
     super.dispose();
   }
 
   _FindingStepStatus _statusFor(int index) {
+    if (widget.outcome == _FindingChecklistOutcome.noMatch) {
+      if (index == _matchingIndex) return _FindingStepStatus.unmatched;
+      return _FindingStepStatus.completed;
+    }
     if (index < _activeIndex) return _FindingStepStatus.completed;
     if (index == _activeIndex) return _FindingStepStatus.active;
     return _FindingStepStatus.pending;
@@ -1224,22 +1312,31 @@ class _FindingAnalysisChecklistState extends State<_FindingAnalysisChecklist>
   @override
   Widget build(BuildContext context) {
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final opacity = widget.outcome == _FindingChecklistOutcome.noMatch &&
+            _softened
+        ? CollectibleMotion.recognitionFindingNoMatchChecklistOpacity
+        : 1.0;
     return ExcludeSemantics(
-      child: Column(
-        key: const Key('recognition-finding-checklist'),
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          for (var i = 0; i < _findingChecklistSteps.length; i++) ...[
-            if (i > 0) const SizedBox(height: 14),
-            _FindingChecklistRow(
-              key: Key('recognition-finding-step-$i'),
-              step: _findingChecklistSteps[i],
-              status: _statusFor(i),
-              pulse: _pulse,
-              reduceMotion: reduceMotion,
-            ),
+      child: AnimatedOpacity(
+        opacity: opacity,
+        duration: reduceMotion ? Duration.zero : CollectibleMotion.crossfade,
+        curve: CollectibleMotion.easeOut,
+        child: Column(
+          key: const Key('recognition-finding-checklist'),
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (var i = 0; i < _findingChecklistSteps.length; i++) ...[
+              if (i > 0) const SizedBox(height: 14),
+              _FindingChecklistRow(
+                key: Key('recognition-finding-step-$i'),
+                step: _findingChecklistSteps[i],
+                status: _statusFor(i),
+                pulse: _pulse,
+                reduceMotion: reduceMotion,
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -1263,19 +1360,21 @@ class _FindingChecklistRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final titleStyle = textTheme.titleSmall?.copyWith(
-      fontWeight: FontWeight.w600,
-      height: 1.25,
-      color: status == _FindingStepStatus.pending
-          ? scheme.onSurfaceVariant.withValues(alpha: 0.55)
-          : scheme.onSurface,
+    final muted = scheme.onSurfaceVariant.withValues(alpha: 0.55);
+    final titleStyle = AppTypography.cardTitle(textTheme, scheme).copyWith(
+      color: switch (status) {
+        _FindingStepStatus.pending || _FindingStepStatus.unmatched => muted,
+        _ => scheme.onSurface,
+      },
     );
     final detailStyle = CollectibleTypography.figureMeta(textTheme, scheme);
+    final unmatchedDetailStyle = detailStyle.copyWith(color: muted);
     final detail = switch (status) {
       _FindingStepStatus.completed => step.completedDetail.isEmpty
           ? null
           : step.completedDetail,
       _FindingStepStatus.active => step.activeDetail,
+      _FindingStepStatus.unmatched => _findingMatchingUnmatchedDetail,
       _FindingStepStatus.pending => null,
     };
 
@@ -1290,7 +1389,7 @@ class _FindingChecklistRow extends StatelessWidget {
             reduceMotion: reduceMotion,
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSpacing.md),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1299,7 +1398,7 @@ class _FindingChecklistRow extends StatelessWidget {
                 duration: reduceMotion
                     ? Duration.zero
                     : CollectibleMotion.crossfade,
-                style: titleStyle!,
+                style: titleStyle,
                 child: Text(step.title),
               ),
               if (reduceMotion)
@@ -1307,7 +1406,12 @@ class _FindingChecklistRow extends StatelessWidget {
                     ? const SizedBox.shrink()
                     : Padding(
                         padding: const EdgeInsets.only(top: 2),
-                        child: Text(detail, style: detailStyle),
+                        child: Text(
+                          detail,
+                          style: status == _FindingStepStatus.unmatched
+                              ? unmatchedDetailStyle
+                              : detailStyle,
+                        ),
                       )
               else
                 AnimatedSize(
@@ -1323,7 +1427,9 @@ class _FindingChecklistRow extends StatelessWidget {
                             child: Text(
                               detail,
                               key: ValueKey('${step.title}-$detail'),
-                              style: detailStyle,
+                              style: status == _FindingStepStatus.unmatched
+                                  ? unmatchedDetailStyle
+                                  : detailStyle,
                             ),
                           ),
                         ),
@@ -1371,6 +1477,24 @@ class _FindingStepIndicator extends StatelessWidget {
       _FindingStepStatus.active => reduceMotion
           ? filled
           : ScaleTransition(scale: pulse, child: filled),
+      _FindingStepStatus.unmatched => SizedBox(
+          width: _size,
+          height: _size,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: scheme.onSurfaceVariant.withValues(alpha: 0.38),
+                width: 1.5,
+              ),
+            ),
+            child: Icon(
+              Icons.remove_rounded,
+              size: 11,
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.55),
+            ),
+          ),
+        ),
       _FindingStepStatus.pending => SizedBox(
           width: _size,
           height: _size,
@@ -1409,7 +1533,7 @@ class _RecognitionActions extends StatelessWidget {
           child: Text(primaryLabel),
         ),
         for (final action in secondary) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           TextButton(
             onPressed: action.$2,
             style: TextButton.styleFrom(
@@ -1460,7 +1584,7 @@ class _CandidateActions extends StatelessWidget {
           ),
         ),
         if (showOthers) ...[
-          const SizedBox(height: 20),
+          const SizedBox(height: AppSpacing.xl),
           Text(
             'Other possibilities',
             key: const Key('recognition-other-possibilities'),
@@ -1482,7 +1606,7 @@ class _CandidateActions extends StatelessWidget {
             ),
           ],
         ],
-        const SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.xxl),
         Text(
           'Not seeing yours?',
           textAlign: TextAlign.center,
@@ -1500,7 +1624,7 @@ class _CandidateActions extends StatelessWidget {
           ),
           child: const Text('Create Custom Figure'),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.xs),
         TextButton(
           key: const Key('recognition-try-another'),
           onPressed: onTryAnother,
@@ -1645,11 +1769,15 @@ class _RecognitionCandidateCard extends StatelessWidget {
           children: [
             DecoratedBox(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(featured ? 20 : 16),
+                borderRadius: BorderRadius.circular(
+                  featured ? AppRadii.figureThumb : 16,
+                ),
                 boxShadow: CollectibleElevation.softCard(context),
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(featured ? 20 : 16),
+                borderRadius: BorderRadius.circular(
+                  featured ? AppRadii.figureThumb : 16,
+                ),
                 child: SizedBox(
                   width: thumb,
                   height: thumb,
@@ -1671,6 +1799,9 @@ class _RecognitionCandidateCard extends StatelessWidget {
                     Text(
                       'Best Match',
                       key: const Key('recognition-best-match-label'),
+                      // Scan-result emphasis: primary labelMedium — denser than
+                      // CollectibleScanBadge (labelSmall) and kept for approved
+                      // recognition hierarchy.
                       style: textTheme.labelMedium?.copyWith(
                         color: scheme.primary,
                         fontWeight: FontWeight.w600,
@@ -1678,7 +1809,7 @@ class _RecognitionCandidateCard extends StatelessWidget {
                         letterSpacing: 0.15,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppSpacing.xs),
                   ],
                   Text(
                     candidate.figureName,
@@ -1686,7 +1817,7 @@ class _RecognitionCandidateCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     candidate.seriesName,
                     style: CollectibleTypography.catalogSeriesRowMeta(
@@ -1754,7 +1885,7 @@ class _NoMatchActions extends StatelessWidget {
           ),
           child: const Text('Adjust Frame'),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.xs),
         TextButton(
           key: const Key('recognition-create-custom'),
           onPressed: onCreateCustom,
@@ -1780,7 +1911,7 @@ class _GuidanceText extends StatelessWidget {
       label: catalogPhotoGuidance,
       child: Padding(
         key: const Key('catalog-photo-guidance'),
-        padding: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
         child: Text(
           catalogPhotoGuidance,
           style: CollectibleTypography.seriesBrandLine(
@@ -1930,7 +2061,7 @@ class _FrameActions extends StatelessWidget {
           style: _scanPrimaryButtonStyle(),
           child: const Text('Continue'),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         TextButton.icon(
           key: const Key('subject-selection-reset'),
           onPressed: onReset,
@@ -1966,6 +2097,7 @@ class _ValidationFailureState extends StatelessWidget {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: scheme.surfaceContainerHighest,
+            // Soft inset panel — matches compact CTA radius used in scan actions.
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -1983,14 +2115,17 @@ class _ValidationFailureState extends StatelessWidget {
                   children: [
                     Text(
                       'This photo is too soft',
-                      style: Theme.of(context).textTheme.titleMedium,
+                      style: AppTypography.sectionTitle(
+                        Theme.of(context).textTheme,
+                        scheme,
+                      ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppSpacing.xs),
                     Text(
                       'Hold steady and keep the collectible in focus, then try again.',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                        height: 1.35,
+                      style: CollectibleTypography.seriesBrandLine(
+                        Theme.of(context).textTheme,
+                        scheme,
                       ),
                     ),
                   ],
@@ -1999,7 +2134,7 @@ class _ValidationFailureState extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md),
         SizedBox(
           height: 52,
           child: FilledButton(
@@ -2008,7 +2143,7 @@ class _ValidationFailureState extends StatelessWidget {
             child: const Text('Retake Photo'),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         SizedBox(
           height: 52,
           child: OutlinedButton(
@@ -2049,7 +2184,7 @@ class _PassActions extends StatelessWidget {
           style: _scanPrimaryButtonStyle(),
           child: Text(validating ? 'One moment…' : 'Use This Photo'),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md),
         OutlinedButton(
           key: const Key('catalog-photo-retake'),
           onPressed: onRetake,
@@ -2061,7 +2196,7 @@ class _PassActions extends StatelessWidget {
           ),
           child: const Text('Retake Photo'),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.xs),
         TextButton(
           key: const Key('catalog-photo-choose-another'),
           onPressed: onChooseAnother,

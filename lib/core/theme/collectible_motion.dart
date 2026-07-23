@@ -43,6 +43,13 @@ abstract final class CollectibleMotion {
     recognitionFindingFacialComplete,
   ];
 
+  /// After no-match, keep the finished checklist fully visible before softening.
+  static const Duration recognitionFindingNoMatchSettle =
+      Duration(milliseconds: 500);
+
+  /// Soft background emphasis for the settled no-match checklist.
+  static const double recognitionFindingNoMatchChecklistOpacity = 0.62;
+
   /// Unified expand/collapse for Collection insights dashboard (morph + size).
   static const Duration insightsDashboardTransition =
       Duration(milliseconds: 240);
