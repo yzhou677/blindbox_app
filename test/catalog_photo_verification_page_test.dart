@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:blindbox_app/core/theme/collectible_motion.dart';
+import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/shared/image/catalog_photo_acquisition.dart';
 import 'package:blindbox_app/shared/image/catalog_figure_recognition.dart';
 import 'package:blindbox_app/shared/image/catalog_subject_locator_gateway.dart';
@@ -282,7 +283,7 @@ void main() {
     expect(
       find.ancestor(
         of: find.text('Retake Photo'),
-        matching: find.byType(TextButton),
+        matching: find.byType(OutlinedButton),
       ),
       findsOneWidget,
     );
@@ -299,21 +300,21 @@ void main() {
     );
     expect(
       tester.getSize(find.byKey(const Key('catalog-photo-use'))).height,
-      56,
+      greaterThanOrEqualTo(56),
     );
     expect(
       tester.getSize(find.byKey(const Key('catalog-photo-retake'))).height,
-      44,
+      greaterThanOrEqualTo(48),
     );
     expect(
       tester
           .getSize(find.byKey(const Key('catalog-photo-choose-another')))
           .height,
-      44,
+      greaterThanOrEqualTo(44),
     );
     expect(
       tester.getSize(find.byKey(const Key('catalog-photo-cancel'))).height,
-      44,
+      greaterThanOrEqualTo(44),
     );
 
     await tester.ensureVisible(find.text('Cancel'));
@@ -766,6 +767,227 @@ void main() {
     },
   );
 
+  testWidgets('scan titles reuse Shelfy sheet typography roles', (tester) async {
+    final gateway = _PendingRecognitionGateway();
+    await _pumpHost(
+      tester,
+      recognitionCoordinator: CatalogFigureRecognitionCoordinator(gateway),
+    );
+    await tester.tap(find.text('Acquire'));
+    await _settlePhotoLoad(tester);
+
+    final reviewTitle = tester.widget<Text>(find.text('Looks good'));
+    final scheme = Theme.of(
+      tester.element(find.byKey(const Key('catalog-photo-confirmation'))),
+    ).colorScheme;
+    final textTheme = Theme.of(
+      tester.element(find.byKey(const Key('catalog-photo-confirmation'))),
+    ).textTheme;
+    expect(
+      reviewTitle.style,
+      CollectibleTypography.seriesHeroTitle(textTheme, scheme),
+    );
+    expect(reviewTitle.style?.fontSize, isNot(32));
+
+    await tester.tap(find.text('Use This Photo'));
+    await _settleFraming(tester);
+    final frameTitle = tester.widget<Text>(find.text('Frame your collectible'));
+    expect(
+      frameTitle.style,
+      CollectibleTypography.seriesHeroTitle(textTheme, scheme),
+    );
+
+    await tester.tap(find.text('Continue'));
+    await tester.pump();
+    final findingTitle = tester.widget<Text>(
+      find.text('Finding your collectible'),
+    );
+    expect(
+      findingTitle.style,
+      CollectibleTypography.seriesHeroTitle(textTheme, scheme),
+    );
+    expect(
+      find.byKey(const Key('recognition-finding-progress')),
+      findsOneWidget,
+    );
+    expect(find.textContaining('%'), findsNothing);
+    expect(
+      tester
+          .widget<LinearProgressIndicator>(
+            find.byKey(const Key('recognition-finding-progress-bar')),
+          )
+          .value,
+      isNull,
+    );
+
+    gateway.pending.complete(
+      const CatalogRecognitionCandidates(
+        quality: CatalogSubjectQuality.good,
+        decision: CatalogRecognitionDecision.highConfidence,
+        candidates: [
+          CatalogRecognitionCandidate(
+            rank: 1,
+            figureId: 'figure-a',
+            figureName: 'Alpha Figure',
+            seriesId: 'series-a',
+            seriesName: 'Series A',
+            ipId: 'ip-a',
+            ipName: 'IP A',
+            imageKey: 'figure-a',
+          ),
+        ],
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('We found a close match'), findsOneWidget);
+    expect(
+      find.byKey(const Key('recognition-finding-progress')),
+      findsNothing,
+    );
+    final resultsTitle = tester.widget<Text>(
+      find.text('We found a close match'),
+    );
+    expect(
+      resultsTitle.style,
+      CollectibleTypography.seriesHeroTitle(textTheme, scheme),
+    );
+  });
+
+  testWidgets(
+    'finding progress uses a static bar when animations are disabled',
+    (tester) async {
+      final gateway = _PendingRecognitionGateway();
+      await _pumpHost(
+        tester,
+        recognitionCoordinator: CatalogFigureRecognitionCoordinator(gateway),
+        disableAnimations: true,
+      );
+      await tester.tap(find.text('Acquire'));
+      await _settlePhotoLoad(tester);
+      await tester.tap(find.text('Use This Photo'));
+      await _settleFraming(tester);
+      await tester.tap(find.text('Continue'));
+      await tester.pump();
+      // Flush coordinator's Duration.zero phase hop so no timer is left pending.
+      await tester.pump(const Duration(milliseconds: 1));
+      final bar = find.byKey(const Key('recognition-finding-progress-bar'));
+      expect(bar, findsOneWidget);
+      expect(tester.widget<LinearProgressIndicator>(bar).value, 0.42);
+      expect(find.textContaining('%'), findsNothing);
+      expect(
+        find.byKey(const Key('recognition-finding-checklist')),
+        findsOneWidget,
+      );
+      expect(find.text('Checking silhouette…'), findsOneWidget);
+      // Reduced motion still follows the paced schedule (no pulse only).
+      await tester.pump(const Duration(milliseconds: 850));
+      expect(find.text('Overall silhouette matched'), findsNothing);
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump();
+      expect(find.text('Overall silhouette matched'), findsOneWidget);
+      expect(find.text('Checking colors…'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'finding checklist follows the paced schedule and holds Matching',
+    (tester) async {
+      final gateway = _PendingRecognitionGateway();
+      await _pumpHost(
+        tester,
+        recognitionCoordinator: CatalogFigureRecognitionCoordinator(gateway),
+      );
+      await tester.tap(find.text('Acquire'));
+      await _settlePhotoLoad(tester);
+      await tester.tap(find.text('Use This Photo'));
+      await _settleFraming(tester);
+      await tester.tap(find.text('Continue'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 1));
+
+      expect(find.text('Checking silhouette…'), findsOneWidget);
+      expect(find.text('Checking colors…'), findsNothing);
+      expect(find.textContaining('%'), findsNothing);
+      expect(find.textContaining('Almost done'), findsNothing);
+
+      await tester.pump(const Duration(milliseconds: 850));
+      expect(find.text('Checking colors…'), findsNothing);
+
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump();
+      expect(find.text('Overall silhouette matched'), findsOneWidget);
+      expect(find.text('Checking colors…'), findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 1000));
+      await tester.pump();
+      expect(find.text('Matching color palette'), findsOneWidget);
+      expect(find.text('Checking accessories…'), findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 1200));
+      await tester.pump();
+      expect(find.text('Accessories considered'), findsOneWidget);
+      expect(find.text('Checking facial details…'), findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 1300));
+      await tester.pump();
+      expect(find.text('Facial details compared'), findsOneWidget);
+      expect(find.text('Matching with the catalog…'), findsOneWidget);
+      expect(find.text('Matching'), findsOneWidget);
+
+      // Past the staged window — Matching stays active while pending.
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pump();
+      expect(find.text('Matching with the catalog…'), findsOneWidget);
+      expect(
+        find.byKey(const Key('recognition-finding-checklist')),
+        findsOneWidget,
+      );
+      expect(gateway.calls, 1);
+
+      // Ordinary rebuild must not restart the sequence.
+      await tester.pump();
+      expect(find.text('Checking silhouette…'), findsNothing);
+      expect(find.text('Matching with the catalog…'), findsOneWidget);
+
+      gateway.pending.complete(const CatalogRecognitionNoConfidentMatch());
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const Key('recognition-finding-checklist')),
+        findsNothing,
+      );
+    },
+  );
+
+  testWidgets(
+    'early recognition result leaves finding without finishing checklist',
+    (tester) async {
+      final gateway = _PendingRecognitionGateway();
+      await _pumpHost(
+        tester,
+        recognitionCoordinator: CatalogFigureRecognitionCoordinator(gateway),
+      );
+      await tester.tap(find.text('Acquire'));
+      await _settlePhotoLoad(tester);
+      await tester.tap(find.text('Use This Photo'));
+      await _settleFraming(tester);
+      await tester.tap(find.text('Continue'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 1));
+      expect(find.text('Checking silhouette…'), findsOneWidget);
+
+      gateway.pending.complete(const CatalogRecognitionNoConfidentMatch());
+      await tester.pumpAndSettle();
+      expect(find.text('Checking silhouette…'), findsNothing);
+      expect(find.text('Matching with the catalog…'), findsNothing);
+      expect(
+        find.byKey(const Key('recognition-finding-checklist')),
+        findsNothing,
+      );
+      expect(find.text('We couldn’t find a close match.'), findsOneWidget);
+    },
+  );
+
   testWidgets(
     'Continue enters recognition loading immediately with the selected crop and blocks duplicates',
     (tester) async {
@@ -782,11 +1004,24 @@ void main() {
       await tester.tap(find.text('Continue'));
       await tester.pump();
 
-      expect(find.text('Comparing with the Shelfy catalog'), findsOneWidget);
+      expect(find.text('Finding your collectible'), findsOneWidget);
       expect(
-        find.text('Analyzing visual details…'),
+        find.text('Comparing with the Shelfy catalog.'),
         findsOneWidget,
       );
+      expect(
+        find.byKey(const Key('recognition-finding-progress')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('recognition-finding-checklist')),
+        findsOneWidget,
+      );
+      expect(find.text('Shape'), findsOneWidget);
+      expect(find.text('Checking silhouette…'), findsOneWidget);
+      expect(find.byType(ListTile), findsNothing);
+      expect(find.byIcon(Icons.chevron_right), findsNothing);
+      expect(find.byIcon(Icons.chevron_right_rounded), findsNothing);
       expect(
         find.byKey(const Key('recognition-selected-crop-preview')),
         findsOneWidget,
@@ -798,12 +1033,24 @@ void main() {
       expect(find.byKey(const Key('subject-locator-progress')), findsNothing);
       await tester.pump(const Duration(milliseconds: 1));
       expect(gateway.calls, 1);
-      await tester.tap(find.text('Continue'));
-      await tester.pump(const Duration(milliseconds: 1));
+
+      await tester.pump(CollectibleMotion.recognitionFindingShapeComplete);
+      await tester.pump();
+      expect(find.text('Overall silhouette matched'), findsOneWidget);
+      expect(find.text('Checking colors…'), findsOneWidget);
+      // Still a single recognition attempt while the checklist advances.
       expect(gateway.calls, 1);
 
       gateway.pending.complete(const CatalogRecognitionNoConfidentMatch());
       await tester.pumpAndSettle();
+      expect(
+        find.byKey(const Key('recognition-finding-progress')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const Key('recognition-finding-checklist')),
+        findsNothing,
+      );
     },
   );
 
@@ -822,7 +1069,7 @@ void main() {
       await tester.tap(find.text('Continue'));
       await tester.pump();
 
-      expect(find.text('Comparing with the Shelfy catalog'), findsOneWidget);
+      expect(find.text('Finding your collectible'), findsOneWidget);
       expect(find.text('Photo may be a little soft'), findsNothing);
       expect(find.text('Continue Anyway'), findsNothing);
       await tester.pump(const Duration(milliseconds: 1));
@@ -847,13 +1094,13 @@ void main() {
       );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      expect(find.text('Close matches'), findsOneWidget);
+      expect(find.text('We found a few close matches'), findsOneWidget);
       expect(
-        find.byKey(const ValueKey('candidates-guidance')),
+        find.text('Choose the collectible that looks most like yours.'),
         findsOneWidget,
       );
       expect(find.text('Create Custom Figure'), findsOneWidget);
-      expect(find.text('Try Another Photo'), findsOneWidget);
+      expect(find.text('Not seeing yours?'), findsOneWidget);
       expect(find.text('Photo may be a little soft'), findsNothing);
       expect(find.text('Continue Anyway'), findsNothing);
       expect(gateway.calls, 1);
@@ -878,7 +1125,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    expect(find.text('Close matches'), findsOneWidget);
+    expect(find.text('We found a few close matches'), findsOneWidget);
     expect(find.text('This Is It'), findsNothing);
     expect(find.byKey(const Key('catalog-photo-confirmation')), findsOneWidget);
     final candidate = find.byKey(const Key('recognition-candidate-figure-test'));
@@ -888,7 +1135,7 @@ void main() {
     expect(confirmed?.figureId, 'figure-test');
     // Scan sheet stays open so Series detail can stack above results.
     expect(find.byKey(const Key('catalog-photo-confirmation')), findsOneWidget);
-    expect(find.text('Close matches'), findsOneWidget);
+    expect(find.text('We found a few close matches'), findsOneWidget);
   });
 
   testWidgets('motion polish: crop persists, Best Match, haptic, cascade', (
@@ -908,9 +1155,13 @@ void main() {
     await tester.tap(find.text('Continue'));
     await tester.pump();
 
-    expect(find.text('Comparing with the Shelfy catalog'), findsOneWidget);
+    expect(find.text('Finding your collectible'), findsOneWidget);
     expect(
-      find.text('Analyzing visual details…'),
+      find.text('Comparing with the Shelfy catalog.'),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('recognition-finding-progress')),
       findsOneWidget,
     );
     final findingCrop = find.byKey(
@@ -963,15 +1214,15 @@ void main() {
     );
     for (var attempt = 0; attempt < 20; attempt++) {
       await tester.pump(const Duration(milliseconds: 20));
-      if (find.text('Close matches').evaluate().isNotEmpty) {
+      if (find.text('We found a few close matches').evaluate().isNotEmpty) {
         break;
       }
     }
     expect(haptics, 1);
     expect(find.byType(BottomSheet), findsOneWidget);
-    expect(find.text('Close matches'), findsOneWidget);
+    expect(find.text('We found a few close matches'), findsOneWidget);
     expect(
-      find.byKey(const ValueKey('candidates-guidance')),
+      find.text('Choose the collectible that looks most like yours.'),
       findsOneWidget,
     );
     expect(
@@ -980,6 +1231,10 @@ void main() {
     );
     expect(
       find.byKey(const Key('recognition-finding-crop-shimmer')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const Key('recognition-finding-progress')),
       findsNothing,
     );
     expect(find.textContaining('%'), findsNothing);
@@ -1061,6 +1316,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     expect(haptics, 0);
     expect(find.text('Best Match'), findsNothing);
+    expect(
+      find.byKey(const Key('recognition-finding-progress')),
+      findsNothing,
+    );
     await tester.tap(find.byKey(const Key('catalog-photo-close')));
     await tester.pumpAndSettle();
 
@@ -1084,6 +1343,10 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(haptics, 0);
+    expect(
+      find.byKey(const Key('recognition-finding-progress')),
+      findsNothing,
+    );
   });
 
   testWidgets('no-match copy stays human and offers Create Custom Figure', (
@@ -1149,6 +1412,47 @@ void main() {
   });
 
   testWidgets(
+    'Retry starts a fresh finding checklist sequence',
+    (tester) async {
+      final gateway = _MultiPendingRecognitionGateway();
+      await _pumpHost(
+        tester,
+        recognitionCoordinator: CatalogFigureRecognitionCoordinator(gateway),
+      );
+      await tester.tap(find.text('Acquire'));
+      await _settlePhotoLoad(tester);
+      await tester.tap(find.text('Use This Photo'));
+      await _settleFraming(tester);
+      await tester.tap(find.text('Continue'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 1));
+      await tester.pump(CollectibleMotion.recognitionFindingShapeComplete);
+      await tester.pump();
+      expect(find.text('Checking colors…'), findsOneWidget);
+
+      gateway.completeNext(const CatalogRecognitionFailure(
+        kind: CatalogRecognitionFailureKind.appCheckRejected,
+      ));
+      await tester.pumpAndSettle();
+      expect(find.text('Scan unavailable'), findsOneWidget);
+
+      await tester.tap(find.text('Retry'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 1));
+      expect(find.text('Checking silhouette…'), findsOneWidget);
+      expect(find.text('Checking colors…'), findsNothing);
+      expect(gateway.calls, 2);
+
+      gateway.completeNext(const CatalogRecognitionNoConfidentMatch());
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const Key('recognition-finding-checklist')),
+        findsNothing,
+      );
+    },
+  );
+
+  testWidgets(
     'fatal recognition dependency opens Scan unavailable and Retry reruns only recognition',
     (tester) async {
       final gateway = _FakeRecognitionGateway(
@@ -1188,6 +1492,29 @@ final class _PendingRecognitionGateway
   ) {
     calls++;
     return pending.future;
+  }
+
+  @override
+  void cancelPending() {}
+}
+
+final class _MultiPendingRecognitionGateway
+    implements CatalogFigureRecognitionGateway {
+  final pending = <Completer<CatalogFigureRecognitionResult>>[];
+  var calls = 0;
+
+  @override
+  Future<CatalogFigureRecognitionResult> recognize(
+    CatalogSubjectSelectionResult selection,
+  ) {
+    calls++;
+    final completer = Completer<CatalogFigureRecognitionResult>();
+    pending.add(completer);
+    return completer.future;
+  }
+
+  void completeNext(CatalogFigureRecognitionResult result) {
+    pending.firstWhere((c) => !c.isCompleted).complete(result);
   }
 
   @override
@@ -1260,12 +1587,16 @@ Future<void> _pumpHost(
   CatalogScanSelectionHaptic? selectionHaptic,
   GlobalKey? hostKey,
   TextScaler textScaler = TextScaler.noScaling,
+  bool disableAnimations = false,
 }) async {
   final selected = selection ?? _selection();
   await tester.pumpWidget(
     MaterialApp(
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(textScaler: textScaler),
+        data: MediaQuery.of(context).copyWith(
+          textScaler: textScaler,
+          disableAnimations: disableAnimations,
+        ),
         child: child!,
       ),
       home: Scaffold(
@@ -1355,7 +1686,7 @@ Future<void> _useAndConfirm(WidgetTester tester) async {
 Future<void> _confirmFirstCandidate(WidgetTester tester) async {
   for (var attempt = 0; attempt < 40; attempt++) {
     await tester.pump(const Duration(milliseconds: 50));
-    if (find.text('Close matches').evaluate().isNotEmpty) {
+    if (find.text('We found a few close matches').evaluate().isNotEmpty) {
       break;
     }
   }

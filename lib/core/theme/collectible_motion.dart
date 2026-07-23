@@ -22,6 +22,27 @@ abstract final class CollectibleMotion {
   static const Duration recognitionCascadeSecond = Duration(milliseconds: 120);
   static const Duration recognitionCascadeThird = Duration(milliseconds: 160);
 
+  /// Display-only Finding checklist pacing (~6s staged presentation).
+  /// Not tied to backend stages — final Matching step holds until the request
+  /// resolves.
+  static const Duration recognitionFindingShapeComplete =
+      Duration(milliseconds: 900);
+  static const Duration recognitionFindingColorsComplete =
+      Duration(milliseconds: 1900);
+  static const Duration recognitionFindingAccessoriesComplete =
+      Duration(milliseconds: 3100);
+  static const Duration recognitionFindingFacialComplete =
+      Duration(milliseconds: 4400);
+
+  /// Absolute times (from checklist start) when active index advances to the
+  /// next step: Colors, Accessories, Facial details, then Matching.
+  static const List<Duration> recognitionFindingChecklistAdvanceAt = [
+    recognitionFindingShapeComplete,
+    recognitionFindingColorsComplete,
+    recognitionFindingAccessoriesComplete,
+    recognitionFindingFacialComplete,
+  ];
+
   /// Unified expand/collapse for Collection insights dashboard (morph + size).
   static const Duration insightsDashboardTransition =
       Duration(milliseconds: 240);

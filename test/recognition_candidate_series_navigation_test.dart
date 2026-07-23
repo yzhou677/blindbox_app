@@ -251,7 +251,7 @@ void main() {
       await tester.tap(find.text('Continue'));
       for (var i = 0; i < 30; i++) {
         await tester.pump(const Duration(milliseconds: 40));
-        if (find.text('Close matches').evaluate().isNotEmpty) {
+        if (find.text('We found a few close matches').evaluate().isNotEmpty) {
           break;
         }
       }
@@ -283,7 +283,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
       expect(find.byType(CatalogSeriesPreviewSheet), findsNothing);
-      expect(find.text('Close matches'), findsOneWidget);
+      expect(find.text('We found a few close matches'), findsOneWidget);
       expect(find.text('Create Custom Figure'), findsOneWidget);
 
       await tester.tap(find.byKey(const Key('catalog-photo-close')));

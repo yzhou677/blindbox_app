@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
+import 'package:blindbox_app/core/theme/app_typography.dart';
 import 'package:blindbox_app/core/theme/collectible_elevation.dart';
 import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
@@ -23,6 +23,11 @@ import 'package:image/image.dart' as image;
 
 /// Calm review reassurance — framing already happened; do not teach again.
 const catalogPhotoGuidance = 'Ready when you are.';
+
+const double _scanSheetTopRadius = 32;
+const double _scanContentMaxWidth = 420;
+const double _scanHeroRadius = 24;
+const double _scanPrimaryButtonHeight = 56;
 
 /// Optional override for success haptics (tests inject a counter; production
 /// defaults to [HapticFeedback.selectionClick]).
@@ -173,6 +178,7 @@ class _CatalogPhotoVerificationPageState
   var _selectionInteractionActive = false;
   var _obviouslyTooBlurry = false;
   var _generation = 0;
+  var _findingSequenceId = 0;
   var _acquiring = false;
   var _previewLoading = true;
   var _validating = false;
@@ -378,10 +384,13 @@ class _CatalogPhotoVerificationPageState
       selection,
       onPhase: (_) {
         if (!mounted || generation != _generation) return;
-        setState(
-          () => _presentationState =
-              CatalogPhotoScanPresentationState.recognizing,
-        );
+        setState(() {
+          if (_presentationState !=
+              CatalogPhotoScanPresentationState.recognizing) {
+            _findingSequenceId++;
+          }
+          _presentationState = CatalogPhotoScanPresentationState.recognizing;
+        });
         if (!transitionLogged) {
           transitionLogged = true;
           _debugScanTiming(
@@ -467,50 +476,59 @@ class _CatalogPhotoVerificationPageState
     CatalogPhotoScanPresentationState.locating => 'Framing your collectible…',
     CatalogPhotoScanPresentationState.framing => 'Frame your collectible',
     CatalogPhotoScanPresentationState.recognizing =>
-      'Comparing with the Shelfy catalog',
+      'Finding your collectible',
     CatalogPhotoScanPresentationState.tooBlurry => 'A little too soft',
     CatalogPhotoScanPresentationState.candidates =>
       _recognitionDecision == CatalogRecognitionDecision.highConfidence
-          ? 'Best Match'
-          : 'Close matches',
+          ? 'We found a close match'
+          : 'We found a few close matches',
     CatalogPhotoScanPresentationState.noConfidentMatch =>
       'We couldn’t find a close match.',
     CatalogPhotoScanPresentationState.recoverableFailure => 'Scan unavailable',
   };
 
   Widget _stateGuidance(ColorScheme scheme) {
-    final style = Theme.of(context).textTheme.bodyMedium?.copyWith(
-      color: scheme.onSurfaceVariant,
-      height: 1.35,
-    );
+    final textTheme = Theme.of(context).textTheme;
+    final subtitle = CollectibleTypography.seriesBrandLine(textTheme, scheme);
     return switch (_presentationState) {
       CatalogPhotoScanPresentationState.framing => _FramingGuidance(
-        // Key by presentation state so origin edits rebuild in place
-        // (instant suggestion-hint hide) instead of crossfading stale copy.
         key: const ValueKey('framing-state-guidance'),
         suggested: _selectionOrigin == SubjectSelectionOrigin.suggestedBox,
       ),
       CatalogPhotoScanPresentationState.locating => Text(
         'One moment.',
         key: const ValueKey('locating-guidance'),
-        style: style,
+        style: subtitle,
       ),
-      CatalogPhotoScanPresentationState.recognizing => Text(
-        'Analyzing visual details…',
-        style: style,
+      CatalogPhotoScanPresentationState.recognizing => Column(
+        key: const ValueKey('finding-guidance'),
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('Comparing with the Shelfy catalog.', style: subtitle),
+          const SizedBox(height: 8),
+          const _FindingProgressIndicator(
+            key: Key('recognition-finding-progress'),
+          ),
+          const SizedBox(height: 20),
+          _FindingAnalysisChecklist(
+            key: ValueKey(_findingSequenceId),
+            sequenceId: _findingSequenceId,
+          ),
+        ],
       ),
       CatalogPhotoScanPresentationState.tooBlurry => Text(
         'Try a steadier shot with the collectible in focus.',
-        style: style,
+        style: subtitle,
       ),
-      CatalogPhotoScanPresentationState.candidates => const SizedBox(
-        key: ValueKey('candidates-guidance'),
-        height: 0,
+      CatalogPhotoScanPresentationState.candidates => Text(
+        'Choose the collectible that looks most like yours.',
+        key: const ValueKey('candidates-guidance'),
+        style: subtitle,
       ),
       CatalogPhotoScanPresentationState.noConfidentMatch => Text(
         'Try another photo, or adjust the frame.',
         key: const ValueKey('no-match-guidance'),
-        style: style,
+        style: subtitle,
       ),
       CatalogPhotoScanPresentationState.recoverableFailure => Text(
         _failureKind == CatalogRecognitionFailureKind.qualityUnavailable
@@ -518,7 +536,7 @@ class _CatalogPhotoVerificationPageState
             : _failureKind == CatalogRecognitionFailureKind.imagePreparation
             ? 'This selection couldn’t be prepared.'
             : 'Something got in the way — try again in a moment.',
-        style: style,
+        style: subtitle,
       ),
       _ => _GuidanceText(
         key: const ValueKey('review-guidance'),
@@ -572,7 +590,6 @@ class _CatalogPhotoVerificationPageState
       CatalogPhotoScanPresentationState.candidates => _CandidateActions(
         key: ValueKey('candidate-actions-$_candidateRevealEpoch'),
         candidates: _candidates,
-        decision: _recognitionDecision,
         revealEpoch: _candidateRevealEpoch,
         onCandidateTap: _confirmCandidate,
         onCreateCustom: _createCustom,
@@ -618,222 +635,259 @@ class _CatalogPhotoVerificationPageState
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final previewHeight = (MediaQuery.sizeOf(context).height * 0.38).clamp(
-      220.0,
-      360.0,
-    );
+    final textTheme = Theme.of(context).textTheme;
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    // Results keep the prior compact crop; other states reclaim whitespace for
+    // a photography-first hero (approx. Review +22%, Frame +18%, Finding +28%).
+    final resultsBaseline = (screenHeight * 0.34).clamp(200.0, 300.0);
     final framing =
         _presentationState == CatalogPhotoScanPresentationState.framing;
+    final locating =
+        _presentationState == CatalogPhotoScanPresentationState.locating;
     final recognitionLoading =
         _presentationState == CatalogPhotoScanPresentationState.recognizing;
     final showingResults =
         _presentationState == CatalogPhotoScanPresentationState.candidates ||
         _presentationState == CatalogPhotoScanPresentationState.noConfidentMatch;
-    // Framing keeps title-first so instructions precede the interactive frame.
-    final heroFirst =
-        _presentationState != CatalogPhotoScanPresentationState.framing;
+    // Finding + results lead with the crop so the photo stays the anchor.
+    final mediaLeads = recognitionLoading || showingResults;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     final mediaHeight = showingResults
-        ? (previewHeight * 0.40).clamp(120.0, 176.0)
-        : previewHeight;
+        ? (resultsBaseline * 0.42).clamp(112.0, 148.0)
+        : recognitionLoading
+        ? (screenHeight * 0.295).clamp(210.0, 280.0)
+        : framing || locating
+        ? (screenHeight * 0.40).clamp(230.0, 348.0)
+        : (screenHeight * 0.415).clamp(240.0, 360.0);
+    // Frame needs a wider working area; finding slightly wider than review.
+    final mediaHorizontalInset = framing || locating
+        ? 12.0
+        : recognitionLoading
+        ? 16.0
+        : 20.0;
 
     final titleBlock = Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: AnimatedSwitcher(
-              duration: CollectibleMotion.crossfade,
-              switchInCurve: CollectibleMotion.easeOut,
-              switchOutCurve: CollectibleMotion.easeIn,
-              transitionBuilder: (child, animation) {
-                final offset = Tween<Offset>(
-                  begin: const Offset(0, 0.04),
-                  end: Offset.zero,
-                ).animate(animation);
-                return FadeTransition(
-                  opacity: animation,
-                  child: SlideTransition(
-                    position: offset,
-                    child: child,
-                  ),
-                );
-              },
-              child: Text(
-                _title,
-                key: ValueKey(_presentationState),
-                style: CollectibleTypography.shelfSeriesTitle(
-                  Theme.of(context).textTheme,
-                  scheme,
-                ),
-              ),
-            ),
-          ),
-          IconButton(
-            key: const Key('catalog-photo-close'),
-            tooltip: 'Close photo scan',
-            constraints: const BoxConstraints.tightFor(
-              width: 48,
-              height: 48,
-            ),
-            onPressed: () => Navigator.pop(context, _confirmedSelection),
-            icon: const Icon(Icons.close_rounded),
-          ),
-        ],
+      padding: EdgeInsets.fromLTRB(20, mediaLeads ? 0 : 2, 52, 0),
+      child: AnimatedSwitcher(
+        duration: CollectibleMotion.crossfade,
+        switchInCurve: CollectibleMotion.easeOut,
+        switchOutCurve: CollectibleMotion.easeIn,
+        transitionBuilder: (child, animation) {
+          final offset = Tween<Offset>(
+            begin: const Offset(0, 0.04),
+            end: Offset.zero,
+          ).animate(animation);
+          return FadeTransition(
+            opacity: animation,
+            child: SlideTransition(position: offset, child: child),
+          );
+        },
+        child: Text(
+          _title,
+          key: ValueKey('scan-title-$_presentationState-$_title'),
+          textAlign: TextAlign.start,
+          style: CollectibleTypography.seriesHeroTitle(textTheme, scheme),
+        ),
       ),
     );
 
     final guidanceBlock = Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        AppSpacing.xs,
-        AppSpacing.md,
-        0,
-      ),
+      padding: EdgeInsets.fromLTRB(20, recognitionLoading ? 4 : 6, 20, 0),
       child: AnimatedSwitcher(
         duration: CollectibleMotion.crossfade,
         switchInCurve: CollectibleMotion.easeOut,
-        child: _stateGuidance(scheme),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: _stateGuidance(scheme),
+        ),
       ),
     );
 
-    final mediaBlock = _previewLoading
-        ? SizedBox(
-            height: mediaHeight,
-            child: const Center(
-              child: SizedBox(
-                width: 28,
-                height: 28,
-                child: CircularProgressIndicator(strokeWidth: 2.5),
-              ),
-            ),
-          )
-        : (_previewBytes == null || _orientedSize == null)
-        ? SizedBox(
-            height: mediaHeight,
-            child: Icon(
-              Icons.broken_image_outlined,
-              size: 42,
-              color: scheme.onSurfaceVariant,
-            ),
-          )
-        : recognitionLoading || showingResults
-        ? AnimatedSize(
-            duration: reduceMotion
-                ? Duration.zero
-                : CollectibleMotion.sectionReveal,
-            curve: CollectibleMotion.easeOut,
-            alignment: Alignment.topCenter,
-            child: SizedBox(
-              key: const ValueKey('recognition-crop-slot'),
+    final mediaBlock = Padding(
+      padding: EdgeInsets.symmetric(horizontal: mediaHorizontalInset),
+      child: _previewLoading
+          ? SizedBox(
               height: mediaHeight,
-              width: double.infinity,
-              child: _SelectedSubjectCropPreview(
-                bytes: _previewBytes!,
-                orientedSize: _orientedSize!,
-                selection: _subjectSelection,
-                showFindingShimmer: recognitionLoading,
+              child: const Center(
+                child: SizedBox(
+                  width: 28,
+                  height: 28,
+                  child: CircularProgressIndicator(strokeWidth: 2.5),
+                ),
               ),
+            )
+          : (_previewBytes == null || _orientedSize == null)
+          ? SizedBox(
+              height: mediaHeight,
+              child: Icon(
+                Icons.broken_image_outlined,
+                size: 42,
+                color: scheme.onSurfaceVariant,
+              ),
+            )
+          : recognitionLoading || showingResults
+          ? AnimatedSize(
+              duration: reduceMotion
+                  ? Duration.zero
+                  : CollectibleMotion.sectionReveal,
+              curve: CollectibleMotion.easeOut,
+              alignment: Alignment.topCenter,
+              child: SizedBox(
+                key: const ValueKey('recognition-crop-slot'),
+                height: mediaHeight,
+                width: double.infinity,
+                child: _SelectedSubjectCropPreview(
+                  bytes: _previewBytes!,
+                  orientedSize: _orientedSize!,
+                  selection: _subjectSelection,
+                  showFindingShimmer: recognitionLoading,
+                ),
+              ),
+            )
+          : CatalogSubjectSelectionEditor(
+              key: const Key('catalog-photo-shared-editor'),
+              height: mediaHeight,
+              bytes: _previewBytes!,
+              orientedSize: _orientedSize!,
+              normalizedSelection: _subjectSelection,
+              onSelectionChanged: (selection, origin) {
+                setState(() {
+                  _subjectSelection = selection;
+                  _selectionOrigin = origin;
+                });
+              },
+              onInteractionChanged: (active) {
+                if (_selectionInteractionActive == active) return;
+                setState(() => _selectionInteractionActive = active);
+              },
+              selectionAnimation: _stateAnimation,
+              interactionActive: _selectionInteractionActive,
+              selectionEnabled: framing,
             ),
-          )
-        : CatalogSubjectSelectionEditor(
-            key: const Key('catalog-photo-shared-editor'),
-            height: mediaHeight,
-            bytes: _previewBytes!,
-            orientedSize: _orientedSize!,
-            normalizedSelection: _subjectSelection,
-            onSelectionChanged: (selection, origin) {
-              setState(() {
-                _subjectSelection = selection;
-                _selectionOrigin = origin;
-              });
-            },
-            onInteractionChanged: (active) {
-              if (_selectionInteractionActive == active) return;
-              setState(() => _selectionInteractionActive = active);
-            },
-            selectionAnimation: _stateAnimation,
-            interactionActive: _selectionInteractionActive,
-            selectionEnabled: framing,
-          );
+    );
 
     return Material(
       key: const Key('catalog-photo-confirmation'),
       color: scheme.surface,
       elevation: 12,
-      shadowColor: scheme.shadow.withValues(alpha: 0.24),
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+      shadowColor: scheme.shadow.withValues(alpha: 0.2),
+      borderRadius: const BorderRadius.vertical(
+        top: Radius.circular(_scanSheetTopRadius),
+      ),
       clipBehavior: Clip.antiAlias,
       child: SafeArea(
         top: false,
-        child: SingleChildScrollView(
-          physics: _selectionInteractionActive
-              ? const NeverScrollableScrollPhysics()
-              : null,
-          padding: const EdgeInsets.fromLTRB(4, 0, 4, AppSpacing.sm),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SizedBox(
-                key: const Key('subject-selection-drag-handle'),
-                height: 18,
-                child: Center(
-                  child: Container(
-                    width: 34,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: scheme.outlineVariant.withValues(alpha: 0.72),
-                      borderRadius: BorderRadius.circular(99),
-                    ),
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              physics: _selectionInteractionActive
+                  ? const NeverScrollableScrollPhysics()
+                  : null,
+              padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: _scanContentMaxWidth,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SizedBox(
+                        key: const Key('subject-selection-drag-handle'),
+                        height: 22,
+                        child: Center(
+                          child: Container(
+                            width: 36,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: scheme.outlineVariant.withValues(
+                                alpha: 0.55,
+                              ),
+                              borderRadius: BorderRadius.circular(99),
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (mediaLeads) ...[
+                        SizedBox(height: recognitionLoading ? 8 : 10),
+                        mediaBlock,
+                        SizedBox(height: recognitionLoading ? 10 : 12),
+                        titleBlock,
+                        guidanceBlock,
+                      ] else ...[
+                        titleBlock,
+                        guidanceBlock,
+                        const SizedBox(height: 12),
+                        mediaBlock,
+                      ],
+                      const SizedBox(height: 20),
+                      AnimatedSwitcher(
+                        duration: reduceMotion
+                            ? Duration.zero
+                            : CollectibleMotion.sectionReveal,
+                        switchInCurve: CollectibleMotion.easeOut,
+                        switchOutCurve: CollectibleMotion.easeIn,
+                        transitionBuilder: (child, animation) {
+                          final offset = Tween<Offset>(
+                            begin: const Offset(0, 0.05),
+                            end: Offset.zero,
+                          ).animate(animation);
+                          return FadeTransition(
+                            opacity: animation,
+                            child: SlideTransition(
+                              position: offset,
+                              child: SizeTransition(
+                                sizeFactor: animation,
+                                axisAlignment: -1,
+                                child: child,
+                              ),
+                            ),
+                          );
+                        },
+                        child: KeyedSubtree(
+                          key: ValueKey(_presentationState),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            child: _stateActions(),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-              if (heroFirst) ...[
-                const SizedBox(height: AppSpacing.sm),
-                mediaBlock,
-                const SizedBox(height: AppSpacing.lg),
-                titleBlock,
-                guidanceBlock,
-              ] else ...[
-                titleBlock,
-                guidanceBlock,
-                const SizedBox(height: AppSpacing.md),
-                mediaBlock,
-              ],
-              const SizedBox(height: AppSpacing.xl),
-              AnimatedSwitcher(
-                duration: CollectibleMotion.sectionReveal,
-                switchInCurve: CollectibleMotion.easeOut,
-                switchOutCurve: CollectibleMotion.easeIn,
-                transitionBuilder: (child, animation) {
-                  final offset = Tween<Offset>(
-                    begin: const Offset(0, 0.06),
-                    end: Offset.zero,
-                  ).animate(animation);
-                  return FadeTransition(
-                    opacity: animation,
-                    child: SlideTransition(
-                      position: offset,
-                      child: SizeTransition(
-                        sizeFactor: animation,
-                        axisAlignment: -1,
-                        child: child,
-                      ),
-                    ),
-                  );
-                },
-                child: KeyedSubtree(
-                  key: ValueKey(_presentationState),
-                  child: _stateActions(),
+            ),
+            Positioned(
+              top: 4,
+              right: 4,
+              child: IconButton(
+                key: const Key('catalog-photo-close'),
+                tooltip: 'Close photo scan',
+                constraints: const BoxConstraints.tightFor(
+                  width: 48,
+                  height: 48,
+                ),
+                onPressed: () => Navigator.pop(context, _confirmedSelection),
+                icon: Icon(
+                  Icons.close_rounded,
+                  color: scheme.onSurfaceVariant.withValues(alpha: 0.55),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
+}
+
+ButtonStyle _scanPrimaryButtonStyle() {
+  return FilledButton.styleFrom(
+    minimumSize: const Size.fromHeight(_scanPrimaryButtonHeight),
+    padding: const EdgeInsets.symmetric(horizontal: 28),
+    shape: const StadiumBorder(),
+    elevation: 0,
+  );
 }
 
 class _SelectedSubjectCropPreview extends StatelessWidget {
@@ -871,51 +925,57 @@ class _SelectedSubjectCropPreview extends StatelessWidget {
             outerConstraints.maxWidth,
           );
           return Center(
-            child: SizedBox(
-              width: targetWidth,
-              height: targetHeight,
-              child: ClipRRect(
-                key: const Key('recognition-selected-crop-preview'),
-                borderRadius: AppRadii.cardRadius,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final imageWidth = targetWidth / selection.width;
-                        final imageHeight = targetHeight / selection.height;
-                        return ClipRect(
-                          child: OverflowBox(
-                            alignment: Alignment.topLeft,
-                            minWidth: imageWidth,
-                            maxWidth: imageWidth,
-                            minHeight: imageHeight,
-                            maxHeight: imageHeight,
-                            child: Transform.translate(
-                              offset: Offset(
-                                -selection.left * imageWidth,
-                                -selection.top * imageHeight,
-                              ),
-                              child: Image.memory(
-                                bytes,
-                                width: imageWidth,
-                                height: imageHeight,
-                                fit: BoxFit.fill,
-                                gaplessPlayback: true,
-                                filterQuality: FilterQuality.medium,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(_scanHeroRadius),
+                boxShadow: CollectibleElevation.softCard(context),
+              ),
+              child: SizedBox(
+                width: targetWidth,
+                height: targetHeight,
+                child: ClipRRect(
+                  key: const Key('recognition-selected-crop-preview'),
+                  borderRadius: BorderRadius.circular(_scanHeroRadius),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final imageWidth = targetWidth / selection.width;
+                          final imageHeight = targetHeight / selection.height;
+                          return ClipRect(
+                            child: OverflowBox(
+                              alignment: Alignment.topLeft,
+                              minWidth: imageWidth,
+                              maxWidth: imageWidth,
+                              minHeight: imageHeight,
+                              maxHeight: imageHeight,
+                              child: Transform.translate(
+                                offset: Offset(
+                                  -selection.left * imageWidth,
+                                  -selection.top * imageHeight,
+                                ),
+                                child: Image.memory(
+                                  bytes,
+                                  width: imageWidth,
+                                  height: imageHeight,
+                                  fit: BoxFit.fill,
+                                  gaplessPlayback: true,
+                                  filterQuality: FilterQuality.medium,
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      },
-                    ),
-                    if (showFindingShimmer && !reduceMotion)
-                      const IgnorePointer(
-                        child: _CropFindingShimmer(
-                          key: Key('recognition-finding-crop-shimmer'),
-                        ),
+                          );
+                        },
                       ),
-                  ],
+                      if (showFindingShimmer && !reduceMotion)
+                        const IgnorePointer(
+                          child: _CropFindingShimmer(
+                            key: Key('recognition-finding-crop-shimmer'),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -987,6 +1047,347 @@ void _debugScanTiming(
   );
 }
 
+/// Thin indeterminate finding progress — Shelfy purple, no fake percentages.
+class _FindingProgressIndicator extends StatelessWidget {
+  const _FindingProgressIndicator({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    return Semantics(
+      label: 'Finding matches',
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(99),
+        child: LinearProgressIndicator(
+          key: const Key('recognition-finding-progress-bar'),
+          minHeight: 3,
+          // Reduced motion: static soft bar instead of indeterminate motion.
+          value: reduceMotion ? 0.42 : null,
+          color: scheme.primary,
+          backgroundColor: scheme.primary.withValues(alpha: 0.14),
+        ),
+      ),
+    );
+  }
+}
+
+/// Display-only analysis steps while recognition runs. Cosmetic pacing only —
+/// not tied to backend stages. Final Matching stays active until the parent
+/// leaves the recognizing state (request resolved).
+enum _FindingStepStatus { pending, active, completed }
+
+class _FindingChecklistStep {
+  const _FindingChecklistStep({
+    required this.title,
+    required this.activeDetail,
+    required this.completedDetail,
+  });
+
+  final String title;
+  final String activeDetail;
+  final String completedDetail;
+}
+
+const _findingChecklistSteps = <_FindingChecklistStep>[
+  _FindingChecklistStep(
+    title: 'Shape',
+    activeDetail: 'Checking silhouette…',
+    completedDetail: 'Overall silhouette matched',
+  ),
+  _FindingChecklistStep(
+    title: 'Colors',
+    activeDetail: 'Checking colors…',
+    completedDetail: 'Matching color palette',
+  ),
+  _FindingChecklistStep(
+    title: 'Accessories',
+    activeDetail: 'Checking accessories…',
+    completedDetail: 'Accessories considered',
+  ),
+  _FindingChecklistStep(
+    title: 'Facial details',
+    activeDetail: 'Checking facial details…',
+    completedDetail: 'Facial details compared',
+  ),
+  _FindingChecklistStep(
+    title: 'Matching',
+    activeDetail: 'Matching with the catalog…',
+    completedDetail: '',
+  ),
+];
+
+class _FindingAnalysisChecklist extends StatefulWidget {
+  const _FindingAnalysisChecklist({
+    super.key,
+    required this.sequenceId,
+  });
+
+  /// Bumped once per recognition attempt so rebuilds do not restart pacing.
+  final int sequenceId;
+
+  @override
+  State<_FindingAnalysisChecklist> createState() =>
+      _FindingAnalysisChecklistState();
+}
+
+class _FindingAnalysisChecklistState extends State<_FindingAnalysisChecklist>
+    with SingleTickerProviderStateMixin {
+  /// Active step index. Cap is last step (Matching); never auto-completes it.
+  var _activeIndex = 0;
+  final List<Timer> _advanceTimers = [];
+  var _scheduleStarted = false;
+  late final AnimationController _pulseController;
+  late final Animation<double> _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: CollectibleMotion.glow,
+    );
+    _pulse = Tween<double>(begin: 0.92, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+    _armAdvanceTimers();
+  }
+
+  @override
+  void didUpdateWidget(covariant _FindingAnalysisChecklist oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.sequenceId != widget.sequenceId) {
+      _cancelAdvanceTimers();
+      _activeIndex = 0;
+      _scheduleStarted = false;
+      _armAdvanceTimers();
+      _syncPulse();
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncPulse();
+  }
+
+  void _armAdvanceTimers() {
+    if (_scheduleStarted) return;
+    _scheduleStarted = true;
+    final advances = CollectibleMotion.recognitionFindingChecklistAdvanceAt;
+    for (var i = 0; i < advances.length; i++) {
+      final nextIndex = i + 1;
+      _advanceTimers.add(
+        Timer(advances[i], () {
+          if (!mounted) return;
+          setState(() => _activeIndex = nextIndex);
+          _syncPulse();
+        }),
+      );
+    }
+  }
+
+  void _cancelAdvanceTimers() {
+    for (final timer in _advanceTimers) {
+      timer.cancel();
+    }
+    _advanceTimers.clear();
+  }
+
+  void _syncPulse() {
+    if (!mounted) return;
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    if (reduceMotion) {
+      _pulseController.stop();
+      _pulseController.value = 1;
+      return;
+    }
+    // Matching (and earlier active steps) keep a gentle pulse while waiting.
+    if (!_pulseController.isAnimating) {
+      unawaited(_pulseController.repeat(reverse: true));
+    }
+  }
+
+  @override
+  void dispose() {
+    _cancelAdvanceTimers();
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  _FindingStepStatus _statusFor(int index) {
+    if (index < _activeIndex) return _FindingStepStatus.completed;
+    if (index == _activeIndex) return _FindingStepStatus.active;
+    return _FindingStepStatus.pending;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    return ExcludeSemantics(
+      child: Column(
+        key: const Key('recognition-finding-checklist'),
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < _findingChecklistSteps.length; i++) ...[
+            if (i > 0) const SizedBox(height: 14),
+            _FindingChecklistRow(
+              key: Key('recognition-finding-step-$i'),
+              step: _findingChecklistSteps[i],
+              status: _statusFor(i),
+              pulse: _pulse,
+              reduceMotion: reduceMotion,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _FindingChecklistRow extends StatelessWidget {
+  const _FindingChecklistRow({
+    super.key,
+    required this.step,
+    required this.status,
+    required this.pulse,
+    required this.reduceMotion,
+  });
+
+  final _FindingChecklistStep step;
+  final _FindingStepStatus status;
+  final Animation<double> pulse;
+  final bool reduceMotion;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final titleStyle = textTheme.titleSmall?.copyWith(
+      fontWeight: FontWeight.w600,
+      height: 1.25,
+      color: status == _FindingStepStatus.pending
+          ? scheme.onSurfaceVariant.withValues(alpha: 0.55)
+          : scheme.onSurface,
+    );
+    final detailStyle = CollectibleTypography.figureMeta(textTheme, scheme);
+    final detail = switch (status) {
+      _FindingStepStatus.completed => step.completedDetail.isEmpty
+          ? null
+          : step.completedDetail,
+      _FindingStepStatus.active => step.activeDetail,
+      _FindingStepStatus.pending => null,
+    };
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 1),
+          child: _FindingStepIndicator(
+            status: status,
+            pulse: pulse,
+            reduceMotion: reduceMotion,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AnimatedDefaultTextStyle(
+                duration: reduceMotion
+                    ? Duration.zero
+                    : CollectibleMotion.crossfade,
+                style: titleStyle!,
+                child: Text(step.title),
+              ),
+              if (reduceMotion)
+                detail == null
+                    ? const SizedBox.shrink()
+                    : Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(detail, style: detailStyle),
+                      )
+              else
+                AnimatedSize(
+                  duration: CollectibleMotion.crossfade,
+                  curve: CollectibleMotion.easeOut,
+                  alignment: Alignment.topLeft,
+                  child: detail == null
+                      ? const SizedBox.shrink()
+                      : Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: AnimatedSwitcher(
+                            duration: CollectibleMotion.crossfade,
+                            child: Text(
+                              detail,
+                              key: ValueKey('${step.title}-$detail'),
+                              style: detailStyle,
+                            ),
+                          ),
+                        ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _FindingStepIndicator extends StatelessWidget {
+  const _FindingStepIndicator({
+    required this.status,
+    required this.pulse,
+    required this.reduceMotion,
+  });
+
+  final _FindingStepStatus status;
+  final Animation<double> pulse;
+  final bool reduceMotion;
+
+  static const double _size = 18;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final filled = DecoratedBox(
+      decoration: BoxDecoration(
+        color: scheme.primary,
+        shape: BoxShape.circle,
+      ),
+      child: SizedBox(
+        width: _size,
+        height: _size,
+        child: status == _FindingStepStatus.completed
+            ? Icon(Icons.check_rounded, size: 12, color: scheme.onPrimary)
+            : null,
+      ),
+    );
+
+    return switch (status) {
+      _FindingStepStatus.completed => filled,
+      _FindingStepStatus.active => reduceMotion
+          ? filled
+          : ScaleTransition(scale: pulse, child: filled),
+      _FindingStepStatus.pending => SizedBox(
+          width: _size,
+          height: _size,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: scheme.onSurfaceVariant.withValues(alpha: 0.35),
+                width: 1.5,
+              ),
+            ),
+          ),
+        ),
+    };
+  }
+}
+
 class _RecognitionActions extends StatelessWidget {
   const _RecognitionActions({
     required this.primaryLabel,
@@ -997,29 +1398,36 @@ class _RecognitionActions extends StatelessWidget {
   final VoidCallback onPrimary;
   final List<(String, VoidCallback)> secondary;
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      SizedBox(
-        height: 52,
-        child: FilledButton(onPressed: onPrimary, child: Text(primaryLabel)),
-      ),
-      for (final action in secondary) ...[
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 48,
-          child: TextButton(onPressed: action.$2, child: Text(action.$1)),
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        FilledButton(
+          onPressed: onPrimary,
+          style: _scanPrimaryButtonStyle(),
+          child: Text(primaryLabel),
         ),
+        for (final action in secondary) ...[
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: action.$2,
+            style: TextButton.styleFrom(
+              foregroundColor: scheme.onSurfaceVariant,
+              minimumSize: const Size.fromHeight(48),
+            ),
+            child: Text(action.$1),
+          ),
+        ],
       ],
-    ],
-  );
+    );
+  }
 }
 
 class _CandidateActions extends StatelessWidget {
   const _CandidateActions({
     super.key,
     required this.candidates,
-    required this.decision,
     required this.revealEpoch,
     required this.onCandidateTap,
     required this.onCreateCustom,
@@ -1027,7 +1435,6 @@ class _CandidateActions extends StatelessWidget {
   });
 
   final List<CatalogRecognitionCandidate> candidates;
-  final CatalogRecognitionDecision decision;
   final int revealEpoch;
   final ValueChanged<CatalogRecognitionCandidate> onCandidateTap;
   final VoidCallback onCreateCustom;
@@ -1037,63 +1444,73 @@ class _CandidateActions extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final showOthersLabel = candidates.length > 1;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          for (var i = 0; i < candidates.length; i++) ...[
-            if (i == 1 && showOthersLabel) ...[
-              const SizedBox(height: AppSpacing.lg),
-              Text(
-                'Other possibilities',
-                key: const Key('recognition-other-possibilities'),
-                style: textTheme.titleSmall?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.1,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-            ] else if (i > 0)
-              const SizedBox(height: AppSpacing.md),
+    final showOthers = candidates.length > 1;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _CascadeEntrance(
+          key: ValueKey('recognition-cascade-$revealEpoch-0'),
+          index: 0,
+          revealEpoch: revealEpoch,
+          child: _RecognitionCandidateCard(
+            candidate: candidates.first,
+            isBestMatch: true,
+            featured: true,
+            onTap: () => onCandidateTap(candidates.first),
+          ),
+        ),
+        if (showOthers) ...[
+          const SizedBox(height: 20),
+          Text(
+            'Other possibilities',
+            key: const Key('recognition-other-possibilities'),
+            style: AppTypography.sectionTitle(textTheme, scheme),
+          ),
+          const SizedBox(height: 10),
+          for (var i = 1; i < candidates.length; i++) ...[
+            if (i > 1) const SizedBox(height: 10),
             _CascadeEntrance(
               key: ValueKey('recognition-cascade-$revealEpoch-$i'),
               index: i,
               revealEpoch: revealEpoch,
               child: _RecognitionCandidateCard(
                 candidate: candidates[i],
-                isBestMatch: i == 0,
-                emphasizeBest:
-                    decision == CatalogRecognitionDecision.highConfidence ||
-                    i == 0,
+                isBestMatch: false,
+                featured: false,
                 onTap: () => onCandidateTap(candidates[i]),
               ),
             ),
           ],
-          const SizedBox(height: AppSpacing.xxl),
-          SizedBox(
-            height: 48,
-            child: TextButton(
-              key: const Key('recognition-try-another'),
-              onPressed: onTryAnother,
-              child: const Text('Try Another Photo'),
-            ),
-          ),
-          SizedBox(
-            height: 44,
-            child: TextButton(
-              key: const Key('recognition-create-custom'),
-              onPressed: onCreateCustom,
-              style: TextButton.styleFrom(
-                foregroundColor: scheme.onSurfaceVariant,
-              ),
-              child: const Text('Create Custom Figure'),
-            ),
-          ),
         ],
-      ),
+        const SizedBox(height: 24),
+        Text(
+          'Not seeing yours?',
+          textAlign: TextAlign.center,
+          style: CollectibleTypography.seriesBrandLine(textTheme, scheme),
+        ),
+        const SizedBox(height: 10),
+        OutlinedButton(
+          key: const Key('recognition-create-custom'),
+          onPressed: onCreateCustom,
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size.fromHeight(52),
+            shape: const StadiumBorder(),
+            foregroundColor: scheme.primary,
+            side: BorderSide(color: scheme.outline.withValues(alpha: 0.55)),
+          ),
+          child: const Text('Create Custom Figure'),
+        ),
+        const SizedBox(height: 4),
+        TextButton(
+          key: const Key('recognition-try-another'),
+          onPressed: onTryAnother,
+          style: TextButton.styleFrom(
+            foregroundColor: scheme.onSurfaceVariant,
+            minimumSize: const Size.fromHeight(44),
+          ),
+          child: const Text('Try Another Photo'),
+        ),
+      ],
     );
   }
 }
@@ -1187,20 +1604,20 @@ class _RecognitionCandidateCard extends StatelessWidget {
   const _RecognitionCandidateCard({
     required this.candidate,
     required this.isBestMatch,
-    required this.emphasizeBest,
+    required this.featured,
     required this.onTap,
   });
 
   final CatalogRecognitionCandidate candidate;
   final bool isBestMatch;
-  final bool emphasizeBest;
+  final bool featured;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final thumb = isBestMatch ? 108.0 : 88.0;
+    final thumb = featured ? 112.0 : 80.0;
     final semanticsLabel = isBestMatch
         ? 'Best Match, ${candidate.figureName}, ${candidate.seriesName}, ${candidate.ipName}'
         : '${candidate.figureName}, ${candidate.seriesName}, ${candidate.ipName}';
@@ -1212,24 +1629,27 @@ class _RecognitionCandidateCard extends StatelessWidget {
       child: CollectibleBrowseCard(
         key: Key('recognition-candidate-${candidate.figureId}'),
         onTap: onTap,
-        borderColor: emphasizeBest && isBestMatch
-            ? scheme.primary.withValues(alpha: 0.28)
+        fillColor: featured
+            ? Color.lerp(scheme.surface, scheme.primaryContainer, 0.42)
             : null,
+        borderColor: featured
+            ? scheme.primary.withValues(alpha: 0.18)
+            : scheme.outlineVariant.withValues(alpha: 0.28),
         padding: EdgeInsets.fromLTRB(
-          isBestMatch ? 16 : 14,
-          isBestMatch ? 16 : 14,
-          18,
-          isBestMatch ? 16 : 14,
+          featured ? 18 : 14,
+          featured ? 18 : 12,
+          featured ? 18 : 14,
+          featured ? 18 : 12,
         ),
         child: Row(
           children: [
             DecoratedBox(
               decoration: BoxDecoration(
-                borderRadius: AppRadii.figureThumbRadius,
+                borderRadius: BorderRadius.circular(featured ? 20 : 16),
                 boxShadow: CollectibleElevation.softCard(context),
               ),
               child: ClipRRect(
-                borderRadius: AppRadii.figureThumbRadius,
+                borderRadius: BorderRadius.circular(featured ? 20 : 16),
                 child: SizedBox(
                   width: thumb,
                   height: thumb,
@@ -1242,7 +1662,7 @@ class _RecognitionCandidateCard extends StatelessWidget {
                 ),
               ),
             ),
-            SizedBox(width: isBestMatch ? AppSpacing.lg : AppSpacing.md),
+            SizedBox(width: featured ? 18 : 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1255,26 +1675,23 @@ class _RecognitionCandidateCard extends StatelessWidget {
                         color: scheme.primary,
                         fontWeight: FontWeight.w600,
                         height: 1.2,
-                        letterSpacing: 0.2,
+                        letterSpacing: 0.15,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 4),
                   ],
                   Text(
                     candidate.figureName,
-                    style: CollectibleTypography.shelfSeriesTitle(
-                      textTheme,
-                      scheme,
-                    ),
-                    maxLines: 2,
+                    style: AppTypography.cardTitle(textTheme, scheme),
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
                   Text(
                     candidate.seriesName,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                      height: 1.25,
+                    style: CollectibleTypography.catalogSeriesRowMeta(
+                      textTheme,
+                      scheme,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -1282,9 +1699,9 @@ class _RecognitionCandidateCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     candidate.ipName,
-                    style: textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant.withValues(alpha: 0.8),
-                      height: 1.25,
+                    style: CollectibleTypography.catalogSeriesRowIp(
+                      textTheme,
+                      scheme,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -1292,6 +1709,11 @@ class _RecognitionCandidateCard extends StatelessWidget {
                 ],
               ),
             ),
+            if (featured)
+              Icon(
+                Icons.chevron_right_rounded,
+                color: scheme.onSurfaceVariant.withValues(alpha: 0.45),
+              ),
           ],
         ),
       ),
@@ -1314,41 +1736,35 @@ class _NoMatchActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SizedBox(
-            height: 52,
-            child: FilledButton(
-              key: const Key('recognition-try-another'),
-              onPressed: onTryAnother,
-              child: const Text('Try Another Photo'),
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        FilledButton(
+          key: const Key('recognition-try-another'),
+          onPressed: onTryAnother,
+          style: _scanPrimaryButtonStyle(),
+          child: const Text('Try Another Photo'),
+        ),
+        const SizedBox(height: 10),
+        OutlinedButton(
+          onPressed: onAdjustFrame,
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size.fromHeight(52),
+            shape: const StadiumBorder(),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          SizedBox(
-            height: 48,
-            child: OutlinedButton(
-              onPressed: onAdjustFrame,
-              child: const Text('Adjust Frame'),
-            ),
+          child: const Text('Adjust Frame'),
+        ),
+        const SizedBox(height: 4),
+        TextButton(
+          key: const Key('recognition-create-custom'),
+          onPressed: onCreateCustom,
+          style: TextButton.styleFrom(
+            foregroundColor: scheme.onSurfaceVariant,
+            minimumSize: const Size.fromHeight(44),
           ),
-          const SizedBox(height: AppSpacing.xs),
-          SizedBox(
-            height: 44,
-            child: TextButton(
-              key: const Key('recognition-create-custom'),
-              onPressed: onCreateCustom,
-              style: TextButton.styleFrom(
-                foregroundColor: scheme.onSurfaceVariant,
-              ),
-              child: const Text('Create Custom Figure'),
-            ),
-          ),
-        ],
-      ),
+          child: const Text('Create Custom Figure'),
+        ),
+      ],
     );
   }
 }
@@ -1367,9 +1783,9 @@ class _GuidanceText extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 4),
         child: Text(
           catalogPhotoGuidance,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-            height: 1.35,
+          style: CollectibleTypography.seriesBrandLine(
+            Theme.of(context).textTheme,
+            colorScheme,
           ),
         ),
       ),
@@ -1385,15 +1801,15 @@ class _FramingGuidance extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final style = Theme.of(context).textTheme.bodyMedium?.copyWith(
-      color: scheme.onSurfaceVariant,
-      height: 1.35,
+    final style = CollectibleTypography.seriesBrandLine(
+      Theme.of(context).textTheme,
+      scheme,
     );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Fit the frame to your collectible.',
+          'Drag to adjust the frame.',
           key: const ValueKey('framing-guidance'),
           style: style,
         ),
@@ -1511,20 +1927,16 @@ class _FrameActions extends StatelessWidget {
         FilledButton(
           key: const Key('subject-selection-confirm'),
           onPressed: onContinue,
-          style: FilledButton.styleFrom(
-            elevation: 4,
-            minimumSize: const Size.fromHeight(56),
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
-          ),
+          style: _scanPrimaryButtonStyle(),
           child: const Text('Continue'),
         ),
+        const SizedBox(height: 8),
         TextButton.icon(
           key: const Key('subject-selection-reset'),
           onPressed: onReset,
           style: TextButton.styleFrom(
-            foregroundColor: scheme.onSurfaceVariant,
+            foregroundColor: scheme.onSurfaceVariant.withValues(alpha: 0.85),
             minimumSize: const Size.fromHeight(48),
-            padding: const EdgeInsets.symmetric(vertical: 4),
           ),
           icon: const Icon(Icons.refresh_rounded, size: 17),
           label: const Text('Reset Selection'),
@@ -1631,48 +2043,42 @@ class _PassActions extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SizedBox(
-          height: 56,
-          child: FilledButton(
-            key: const Key('catalog-photo-use'),
-            onPressed: onUsePhoto,
-            child: Text(validating ? 'One moment…' : 'Use This Photo'),
-          ),
+        FilledButton(
+          key: const Key('catalog-photo-use'),
+          onPressed: onUsePhoto,
+          style: _scanPrimaryButtonStyle(),
+          child: Text(validating ? 'One moment…' : 'Use This Photo'),
         ),
-        const SizedBox(height: AppSpacing.md),
-        SizedBox(
-          height: 44,
-          child: TextButton(
-            key: const Key('catalog-photo-retake'),
-            onPressed: onRetake,
-            style: TextButton.styleFrom(
-              foregroundColor: scheme.onSurfaceVariant,
-            ),
-            child: const Text('Retake Photo'),
+        const SizedBox(height: 12),
+        OutlinedButton(
+          key: const Key('catalog-photo-retake'),
+          onPressed: onRetake,
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size.fromHeight(52),
+            shape: const StadiumBorder(),
+            foregroundColor: scheme.primary,
+            side: BorderSide(color: scheme.outline.withValues(alpha: 0.55)),
           ),
+          child: const Text('Retake Photo'),
         ),
-        SizedBox(
-          height: 44,
-          child: TextButton(
-            key: const Key('catalog-photo-choose-another'),
-            onPressed: onChooseAnother,
-            style: TextButton.styleFrom(
-              foregroundColor: scheme.onSurfaceVariant,
-            ),
-            child: const Text('Choose Another Photo'),
+        const SizedBox(height: 4),
+        TextButton(
+          key: const Key('catalog-photo-choose-another'),
+          onPressed: onChooseAnother,
+          style: TextButton.styleFrom(
+            foregroundColor: scheme.onSurfaceVariant,
+            minimumSize: const Size.fromHeight(44),
           ),
+          child: const Text('Choose Another Photo'),
         ),
-        const SizedBox(height: AppSpacing.sm),
-        SizedBox(
-          height: 44,
-          child: TextButton(
-            key: const Key('catalog-photo-cancel'),
-            onPressed: onCancel,
-            style: TextButton.styleFrom(
-              foregroundColor: scheme.onSurfaceVariant.withValues(alpha: 0.9),
-            ),
-            child: const Text('Cancel'),
+        TextButton(
+          key: const Key('catalog-photo-cancel'),
+          onPressed: onCancel,
+          style: TextButton.styleFrom(
+            foregroundColor: scheme.onSurfaceVariant.withValues(alpha: 0.75),
+            minimumSize: const Size.fromHeight(44),
           ),
+          child: const Text('Cancel'),
         ),
       ],
     );
