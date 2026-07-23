@@ -8,7 +8,7 @@ import type { RetrievalDecisionResolver } from './retrievalDecisionTypes';
 import { RECOGNIZE_FIGURE_ENDPOINT_CONFIG as config } from './recognizeFigureEndpointConfig';
 import type { RecognitionCandidateHydrator } from './recognitionCandidateHydrator';
 import { RecognitionQualityUnavailableError, type RecognizeFigureRequest, type RecognizeFigureResponseV1 } from './recognizeFigureEndpointTypes';
-import { RETRIEVAL_DECISION_CONFIG } from './retrievalDecisionConfig';
+import { RETRIEVAL_CANDIDATE_POLICY_CONFIG } from './retrievalCandidatePolicyConfig';
 
 export class RecognizeFigureService {
   constructor(private readonly cropper: PrimarySubjectCropper, private readonly blur: PrimarySubjectBlurEvaluator, private readonly retrieval: FigureRetrievalService, private readonly resolver: RetrievalDecisionResolver, private readonly hydrator: RecognitionCandidateHydrator) {}
@@ -37,18 +37,39 @@ export class RecognizeFigureService {
       (stage, elapsedMs) => logger.debug('Figure scan timing', { component: 'backend_recognition', correlationId, stage, elapsedMs }),
     );
     const decisionStartedAt = Date.now();
-    const decision = this.resolver.decide({ candidates, requestedTopK: config.retrievalTopK, distanceSemantics: 'lower_is_better', calibrationProfile: RETRIEVAL_DECISION_CONFIG.currentCalibrationProfile });
+    const decision = this.resolver.decide({
+      candidates,
+      requestedTopK: config.retrievalTopK,
+      distanceSemantics: 'lower_is_better',
+      calibrationProfile: RETRIEVAL_CANDIDATE_POLICY_CONFIG.calibrationProfile,
+    });
     this.timing(correlationId, 'decision_policy', decisionStartedAt);
     const subjectQuality = quality.quality === 'borderline' ? 'borderline' as const : 'good' as const;
     const base = { version: 1 as const, subjectQuality, blurEvaluatorVersion: quality.evaluatorVersion, policyVersion: decision.policyVersion };
-    if (decision.outcome !== 'needs_review' || !decision.candidates.length) {
+
+    if (decision.outcome === 'no_confident_match') {
       this.timing(correlationId, 'total_service', totalStartedAt);
       return { ...base, status: 'no_confident_match' };
     }
-    const visible = decision.candidates.slice(0, config.presentationCandidateLimit);
+
+    const presentable =
+      decision.outcome === 'needs_review'
+        ? decision.candidates
+        : candidates;
+    if (!presentable.length) {
+      this.timing(correlationId, 'total_service', totalStartedAt);
+      return { ...base, status: 'no_confident_match' };
+    }
+
+    const visible = presentable.slice(0, config.presentationCandidateLimit);
     const hydrated = await measureScanStage('candidate_hydration', () => this.hydrator.hydrate(visible));
     const serializationStartedAt = Date.now();
-    const response: RecognizeFigureResponseV1 = { ...base, status: 'candidates', decision: 'needs_review', candidates: hydrated };
+    const response: RecognizeFigureResponseV1 = {
+      ...base,
+      status: 'candidates',
+      decision: decision.outcome,
+      candidates: hydrated,
+    };
     this.timing(correlationId, 'response_serialization', serializationStartedAt);
     this.timing(correlationId, 'total_service', totalStartedAt);
     return response;

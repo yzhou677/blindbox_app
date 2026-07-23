@@ -1,4 +1,4 @@
-/** Calibration-derived candidate thresholds. Shadow-only and pending holdout validation. */
+/** Calibration-derived production thresholds for recognizeFigureV1 decisions. */
 export const RETRIEVAL_CANDIDATE_POLICY_CONFIG = Object.freeze({
   policyVersion: 'retrieval-policy-candidate-v1',
   calibrationProfile: 'figure-image-retrieval-v1',

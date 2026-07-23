@@ -115,7 +115,7 @@ void main() {
     expect(find.byKey(const Key('catalog-photo-confirmation')), findsOneWidget);
     expect(find.byType(BottomSheet), findsOneWidget);
     expect(find.byType(AppBar), findsNothing);
-    expect(find.text('Review photo'), findsOneWidget);
+    expect(find.text('Looks good'), findsOneWidget);
     expect(find.text(catalogPhotoGuidance), findsOneWidget);
     expect(tester.getRect(find.byKey(const Key('underlying-page'))), before);
     expect(evaluator.calls, 0);
@@ -153,7 +153,7 @@ void main() {
     await _settleFraming(tester);
 
     expect(find.byType(BottomSheet), findsOneWidget);
-    expect(find.text('Review photo'), findsNothing);
+    expect(find.text('Looks good'), findsNothing);
     expect(find.text('Frame your collectible'), findsOneWidget);
     expect(
       identical(
@@ -282,14 +282,14 @@ void main() {
     expect(
       find.ancestor(
         of: find.text('Retake Photo'),
-        matching: find.byType(OutlinedButton),
+        matching: find.byType(TextButton),
       ),
       findsOneWidget,
     );
     expect(
       find.ancestor(
         of: find.text('Choose Another Photo'),
-        matching: find.byType(OutlinedButton),
+        matching: find.byType(TextButton),
       ),
       findsOneWidget,
     );
@@ -299,21 +299,21 @@ void main() {
     );
     expect(
       tester.getSize(find.byKey(const Key('catalog-photo-use'))).height,
-      52,
+      56,
     );
     expect(
       tester.getSize(find.byKey(const Key('catalog-photo-retake'))).height,
-      52,
+      44,
     );
     expect(
       tester
           .getSize(find.byKey(const Key('catalog-photo-choose-another')))
           .height,
-      52,
+      44,
     );
     expect(
       tester.getSize(find.byKey(const Key('catalog-photo-cancel'))).height,
-      48,
+      44,
     );
 
     await tester.ensureVisible(find.text('Cancel'));
@@ -342,11 +342,10 @@ void main() {
       find.byKey(const Key('catalog-photo-validation-error')),
       findsOneWidget,
     );
-    expect(find.text('This photo is too blurry'), findsOneWidget);
+    expect(find.text('This photo is too soft'), findsOneWidget);
     expect(
       find.text(
-        'Hold your phone steady and keep the collectible in focus before '
-        'trying again.',
+        'Hold steady and keep the collectible in focus, then try again.',
       ),
       findsOneWidget,
     );
@@ -406,7 +405,7 @@ void main() {
       expect(locator.photos, [same(photo)]);
       expect(find.text('Frame your collectible'), findsOneWidget);
       expect(
-        find.text('AI suggested this frame. Adjust if needed.'),
+        find.text('Suggested frame — adjust if you like.'),
         findsNothing,
       );
       expect(find.byKey(const Key('subject-locator-progress')), findsNothing);
@@ -429,7 +428,7 @@ void main() {
       await _settleFraming(tester);
 
       expect(
-        find.text('AI suggested this frame. Adjust if needed.'),
+        find.text('Suggested frame — adjust if you like.'),
         findsOneWidget,
       );
       expect(
@@ -483,7 +482,7 @@ void main() {
     await tester.pump(CollectibleMotion.crossfade);
     expect(tester.getRect(selectionBox).left, greaterThan(before.left));
     expect(
-      find.text('AI suggested this frame. Adjust if needed.'),
+      find.text('Suggested frame — adjust if you like.'),
       findsNothing,
     );
 
@@ -492,7 +491,7 @@ void main() {
     await tester.pump();
     await tester.pump(CollectibleMotion.crossfade);
     expect(
-      find.text('AI suggested this frame. Adjust if needed.'),
+      find.text('Suggested frame — adjust if you like.'),
       findsOneWidget,
     );
 
@@ -506,7 +505,7 @@ void main() {
     await tester.pump();
     await tester.pump(CollectibleMotion.crossfade);
     expect(
-      find.text('AI suggested this frame. Adjust if needed.'),
+      find.text('Suggested frame — adjust if you like.'),
       findsNothing,
     );
     expect(locator.calls, 1);
@@ -544,7 +543,7 @@ void main() {
 
     expect(tester.getRect(selectionBox), edited);
     expect(
-      find.text('AI suggested this frame. Adjust if needed.'),
+      find.text('Suggested frame — adjust if you like.'),
       findsNothing,
     );
   });
@@ -573,7 +572,7 @@ void main() {
         await _settleFraming(tester);
 
         expect(
-          find.text('AI suggested this frame. Adjust if needed.'),
+          find.text('Suggested frame — adjust if you like.'),
           findsNothing,
         );
         expect(find.byType(SnackBar), findsNothing);
@@ -637,6 +636,7 @@ void main() {
     await tester.tap(find.text('Use This Photo'));
     await tester.pumpAndSettle();
     evaluator.outcome = WholeImageQualityOutcome.usable;
+    await tester.ensureVisible(find.text('Choose Another Photo'));
     await tester.tap(find.text('Choose Another Photo'));
     await _settleFraming(tester);
     await tester.tap(find.text('Continue'));
@@ -666,7 +666,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(evaluator.calls, 1);
-    expect(find.text('This photo is too blurry'), findsOneWidget);
+    expect(find.text('This photo is too soft'), findsOneWidget);
   });
 
   testWidgets('stale evaluation cannot overwrite a replacement result', (
@@ -708,7 +708,7 @@ void main() {
       ),
     );
     await tester.pump();
-    expect(find.text('This photo is too blurry'), findsNothing);
+    expect(find.text('This photo is too soft'), findsNothing);
 
     evaluator.pending[1].complete(
       const WholeImageQualityResult(
@@ -782,9 +782,9 @@ void main() {
       await tester.tap(find.text('Continue'));
       await tester.pump();
 
-      expect(find.text('Finding your collectible…'), findsOneWidget);
+      expect(find.text('Comparing with the Shelfy catalog'), findsOneWidget);
       expect(
-        find.text('Comparing your photo with the Shelfy catalog.'),
+        find.text('Analyzing visual details…'),
         findsOneWidget,
       );
       expect(
@@ -822,7 +822,7 @@ void main() {
       await tester.tap(find.text('Continue'));
       await tester.pump();
 
-      expect(find.text('Finding your collectible…'), findsOneWidget);
+      expect(find.text('Comparing with the Shelfy catalog'), findsOneWidget);
       expect(find.text('Photo may be a little soft'), findsNothing);
       expect(find.text('Continue Anyway'), findsNothing);
       await tester.pump(const Duration(milliseconds: 1));
@@ -847,13 +847,13 @@ void main() {
       );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      expect(find.text('We found a few close matches'), findsOneWidget);
+      expect(find.text('Close matches'), findsOneWidget);
       expect(
-        find.text('Choose the collectible that looks most like yours.'),
+        find.byKey(const ValueKey('candidates-guidance')),
         findsOneWidget,
       );
       expect(find.text('Create Custom Figure'), findsOneWidget);
-      expect(find.text('Not seeing yours?'), findsOneWidget);
+      expect(find.text('Try Another Photo'), findsOneWidget);
       expect(find.text('Photo may be a little soft'), findsNothing);
       expect(find.text('Continue Anyway'), findsNothing);
       expect(gateway.calls, 1);
@@ -878,7 +878,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    expect(find.text('We found a few close matches'), findsOneWidget);
+    expect(find.text('Close matches'), findsOneWidget);
     expect(find.text('This Is It'), findsNothing);
     expect(find.byKey(const Key('catalog-photo-confirmation')), findsOneWidget);
     final candidate = find.byKey(const Key('recognition-candidate-figure-test'));
@@ -888,7 +888,7 @@ void main() {
     expect(confirmed?.figureId, 'figure-test');
     // Scan sheet stays open so Series detail can stack above results.
     expect(find.byKey(const Key('catalog-photo-confirmation')), findsOneWidget);
-    expect(find.text('We found a few close matches'), findsOneWidget);
+    expect(find.text('Close matches'), findsOneWidget);
   });
 
   testWidgets('motion polish: crop persists, Best Match, haptic, cascade', (
@@ -908,9 +908,9 @@ void main() {
     await tester.tap(find.text('Continue'));
     await tester.pump();
 
-    expect(find.text('Finding your collectible…'), findsOneWidget);
+    expect(find.text('Comparing with the Shelfy catalog'), findsOneWidget);
     expect(
-      find.text('Comparing your photo with the Shelfy catalog.'),
+      find.text('Analyzing visual details…'),
       findsOneWidget,
     );
     final findingCrop = find.byKey(
@@ -963,15 +963,15 @@ void main() {
     );
     for (var attempt = 0; attempt < 20; attempt++) {
       await tester.pump(const Duration(milliseconds: 20));
-      if (find.text('We found a few close matches').evaluate().isNotEmpty) {
+      if (find.text('Close matches').evaluate().isNotEmpty) {
         break;
       }
     }
     expect(haptics, 1);
     expect(find.byType(BottomSheet), findsOneWidget);
-    expect(find.text('We found a few close matches'), findsOneWidget);
+    expect(find.text('Close matches'), findsOneWidget);
     expect(
-      find.text('Choose the collectible that looks most like yours.'),
+      find.byKey(const ValueKey('candidates-guidance')),
       findsOneWidget,
     );
     expect(
@@ -983,7 +983,7 @@ void main() {
       findsNothing,
     );
     expect(find.textContaining('%'), findsNothing);
-    expect(find.text('✨ Best Match'), findsOneWidget);
+    expect(find.text('Best Match'), findsOneWidget);
     expect(find.byKey(const Key('recognition-best-match-label')), findsOneWidget);
 
     final firstCard = find.byKey(const Key('recognition-candidate-figure-a'));
@@ -1003,21 +1003,21 @@ void main() {
     expect(
       find.descendant(
         of: firstCard,
-        matching: find.text('✨ Best Match'),
+        matching: find.text('Best Match'),
       ),
       findsOneWidget,
     );
     expect(
       find.descendant(
         of: secondCard,
-        matching: find.text('✨ Best Match'),
+        matching: find.text('Best Match'),
       ),
       findsNothing,
     );
     expect(
       find.descendant(
         of: thirdCard,
-        matching: find.text('✨ Best Match'),
+        matching: find.text('Best Match'),
       ),
       findsNothing,
     );
@@ -1060,7 +1060,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(haptics, 0);
-    expect(find.text('✨ Best Match'), findsNothing);
+    expect(find.text('Best Match'), findsNothing);
     await tester.tap(find.byKey(const Key('catalog-photo-close')));
     await tester.pumpAndSettle();
 
@@ -1105,12 +1105,12 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(
-      find.text('We couldn’t confidently identify this collectible.'),
+      find.text('We couldn’t find a close match.'),
       findsOneWidget,
     );
     expect(
       find.text(
-        'Try adjusting the frame, taking a closer photo, or reducing glare.',
+        'Try another photo, or adjust the frame.',
       ),
       findsOneWidget,
     );
@@ -1133,7 +1133,7 @@ void main() {
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Selected collectible is too blurry'), findsOneWidget);
+    expect(find.text('A little too soft'), findsOneWidget);
     expect(gateway.calls, 1);
     await tester.tap(find.text('Adjust Frame'));
     await tester.pumpAndSettle();
@@ -1355,7 +1355,7 @@ Future<void> _useAndConfirm(WidgetTester tester) async {
 Future<void> _confirmFirstCandidate(WidgetTester tester) async {
   for (var attempt = 0; attempt < 40; attempt++) {
     await tester.pump(const Duration(milliseconds: 50));
-    if (find.text('We found a few close matches').evaluate().isNotEmpty) {
+    if (find.text('Close matches').evaluate().isNotEmpty) {
       break;
     }
   }

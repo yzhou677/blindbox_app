@@ -86,21 +86,46 @@ describe('ShadowRetrievalDecisionResolver', () => {
 });
 
 describe('CandidateRetrievalDecisionResolver', () => {
-  it('centralizes the pending-holdout candidate policy', () => {
+  it('centralizes the production candidate policy thresholds', () => {
     assert.deepEqual({ version: RETRIEVAL_CANDIDATE_POLICY_CONFIG.policyVersion, profile: RETRIEVAL_CANDIDATE_POLICY_CONFIG.calibrationProfile, distance: RETRIEVAL_CANDIDATE_POLICY_CONFIG.maximumTop1Distance, gap: RETRIEVAL_CANDIDATE_POLICY_CONFIG.minimumTop1Top2Gap }, { version: 'retrieval-policy-candidate-v1', profile: 'figure-image-retrieval-v1', distance: 0.225, gap: 0.025 });
   });
-  it('accepts exact inclusive boundaries', () => {
+  it('accepts exact inclusive boundaries as high confidence', () => {
     const decision = candidateResolver.decide(input([candidate(1, 0.225), candidate(2, 0.25)]));
     assert.equal(decision.outcome, 'high_confidence'); assert.deepEqual(decision.reasons, ['candidate_policy_match']); assert.equal(decision.candidate.rank, 1);
   });
-  it('reviews excessive distance, insufficient gap, and either signal alone', () => {
-    for (const candidates of [[candidate(1, 0.2250001), candidate(2, 0.3)], [candidate(1, 0.1), candidate(2, 0.124)], [candidate(1, 0.23), candidate(2, 0.5)]]) {
-      const decision = candidateResolver.decide(input(candidates)); assert.equal(decision.outcome, 'needs_review'); assert.deepEqual(decision.reasons, ['candidate_policy_not_met']);
+  it('returns no_confident_match when Top-1 absolute distance exceeds the gate', () => {
+    for (const candidates of [[candidate(1, 0.2250001), candidate(2, 0.3)], [candidate(1, 0.23), candidate(2, 0.5)]]) {
+      const decision = candidateResolver.decide(input(candidates));
+      assert.equal(decision.outcome, 'no_confident_match');
+      assert.deepEqual(decision.reasons, ['weak_top1_distance_signal']);
     }
   });
+  it('returns needs_review when Top-1 passes the absolute gate but margin is below minimum', () => {
+    const decision = candidateResolver.decide(input([
+      candidate(1, 0.1, { seriesId: 'series-a' }),
+      candidate(2, 0.124, { seriesId: 'series-b' }),
+    ]));
+    assert.equal(decision.outcome, 'needs_review');
+    assert.deepEqual(decision.reasons, ['candidate_policy_not_met']);
+    assert.equal(decision.candidates.length, 2);
+  });
+  it('rejects bracelet-like weak Top-K as no_confident_match (not presentable)', () => {
+    const braceletLike = [candidate(1, 0.41), candidate(2, 0.44), candidate(3, 0.47)];
+    const decision = candidateResolver.decide(input(braceletLike));
+    assert.equal(decision.outcome, 'no_confident_match');
+    assert.deepEqual(decision.reasons, ['weak_top1_distance_signal']);
+  });
+  it('returns no_confident_match when Top-1 passes but Top-2 gap evidence is missing', () => {
+    const decision = candidateResolver.decide(input([candidate(1, 0.1)]));
+    assert.equal(decision.outcome, 'no_confident_match');
+    assert.deepEqual(decision.reasons, ['candidate_policy_not_met']);
+  });
   it('retains fail-closed empty, invalid, and unsupported-profile behavior', () => {
+    assert.equal(candidateResolver.decide(input([])).outcome, 'no_confident_match');
     assert.deepEqual(candidateResolver.decide(input([])).reasons, ['no_candidates']);
+    assert.equal(candidateResolver.decide(input([candidate(1, NaN)])).outcome, 'no_confident_match');
     assert.deepEqual(candidateResolver.decide(input([candidate(1, NaN)])).reasons, ['invalid_evidence']);
+    assert.equal(candidateResolver.decide(input([candidate(1, 0.1), candidate(2, 0.2)], { calibrationProfile: 'other' })).outcome, 'no_confident_match');
     assert.deepEqual(candidateResolver.decide(input([candidate(1, 0.1), candidate(2, 0.2)], { calibrationProfile: 'other' })).reasons, ['uncalibrated_profile']);
   });
   it('does not mutate candidates or affect the current shadow resolver', () => {

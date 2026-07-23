@@ -37,58 +37,114 @@ void main() {
   test(
     'gateway maps safe candidate, no-match, too-blurry and malformed outcomes',
     () async {
-      final candidates = await FirebaseCatalogFigureRecognitionGateway(
-        callable: _Callable({
-          'version': 1,
-          'status': 'candidates',
-          'subjectQuality': 'good',
-          'decision': 'needs_review',
-          'candidates': [
-            {
-              'rank': 1,
-              'figureId': 'f',
-              'figureName': 'Figure',
-              'seriesId': 's',
-              'seriesName': 'Series',
-              'ipId': 'i',
-              'ipName': 'IP',
-              'imageKey': 'figure',
-            },
-          ],
-        }),
-        imagePreparer: _FakePreparer(),
-      ).recognize(_selection());
-      expect(candidates, isA<CatalogRecognitionCandidates>());
+      Future<CatalogFigureRecognitionResult> map(Object response) =>
+          FirebaseCatalogFigureRecognitionGateway(
+            callable: _Callable(response),
+            imagePreparer: _FakePreparer(),
+          ).recognize(_selection());
+
+      final needsReview = await map({
+        'version': 1,
+        'status': 'candidates',
+        'subjectQuality': 'good',
+        'decision': 'needs_review',
+        'candidates': [
+          {
+            'rank': 1,
+            'figureId': 'f',
+            'figureName': 'Figure',
+            'seriesId': 's',
+            'seriesName': 'Series',
+            'ipId': 'i',
+            'ipName': 'IP',
+            'imageKey': 'figure',
+          },
+        ],
+      });
+      expect(needsReview, isA<CatalogRecognitionCandidates>());
       expect(
-        (candidates as CatalogRecognitionCandidates).candidates.single.figureId,
-        'f',
+        (needsReview as CatalogRecognitionCandidates).decision,
+        CatalogRecognitionDecision.needsReview,
+      );
+      expect(needsReview.candidates.single.figureId, 'f');
+
+      final highConfidence = await map({
+        'version': 1,
+        'status': 'candidates',
+        'subjectQuality': 'good',
+        'decision': 'high_confidence',
+        'candidates': [
+          {
+            'rank': 1,
+            'figureId': 'f1',
+            'figureName': 'Figure',
+            'seriesId': 's',
+            'seriesName': 'Series',
+            'ipId': 'i',
+            'ipName': 'IP',
+            'imageKey': 'figure',
+          },
+          {
+            'rank': 2,
+            'figureId': 'f2',
+            'figureName': 'Figure 2',
+            'seriesId': 's2',
+            'seriesName': 'Series 2',
+            'ipId': 'i',
+            'ipName': 'IP',
+            'imageKey': 'figure-2',
+          },
+        ],
+      });
+      expect(highConfidence, isA<CatalogRecognitionCandidates>());
+      expect(
+        (highConfidence as CatalogRecognitionCandidates).decision,
+        CatalogRecognitionDecision.highConfidence,
       );
       expect(
-        await FirebaseCatalogFigureRecognitionGateway(
-          callable: _Callable({'version': 1, 'status': 'no_confident_match'}),
-          imagePreparer: _FakePreparer(),
-        ).recognize(_selection()),
+        highConfidence.candidates.map((c) => c.figureId).toList(),
+        ['f1', 'f2'],
+      );
+
+      expect(
+        await map({'version': 1, 'status': 'no_confident_match'}),
         isA<CatalogRecognitionNoConfidentMatch>(),
       );
       expect(
-        await FirebaseCatalogFigureRecognitionGateway(
-          callable: _Callable({'version': 1, 'status': 'too_blurry'}),
-          imagePreparer: _FakePreparer(),
-        ).recognize(_selection()),
+        await map({'version': 1, 'status': 'too_blurry'}),
         isA<CatalogRecognitionTooBlurry>(),
       );
-      final malformed = await FirebaseCatalogFigureRecognitionGateway(
-        callable: _Callable({
-          'version': 1,
-          'status': 'candidates',
-          'subjectQuality': 'good',
-          'decision': 'needs_review',
-          'candidates': [],
-        }),
-        imagePreparer: _FakePreparer(),
-      ).recognize(_selection());
+      final malformed = await map({
+        'version': 1,
+        'status': 'candidates',
+        'subjectQuality': 'good',
+        'decision': 'needs_review',
+        'candidates': [],
+      });
       expect(
         (malformed as CatalogRecognitionFailure).kind,
+        CatalogRecognitionFailureKind.invalidResponse,
+      );
+      final rejectedDecision = await map({
+        'version': 1,
+        'status': 'candidates',
+        'subjectQuality': 'good',
+        'decision': 'no_confident_match',
+        'candidates': [
+          {
+            'rank': 1,
+            'figureId': 'f',
+            'figureName': 'Figure',
+            'seriesId': 's',
+            'seriesName': 'Series',
+            'ipId': 'i',
+            'ipName': 'IP',
+            'imageKey': 'figure',
+          },
+        ],
+      });
+      expect(
+        (rejectedDecision as CatalogRecognitionFailure).kind,
         CatalogRecognitionFailureKind.invalidResponse,
       );
     },

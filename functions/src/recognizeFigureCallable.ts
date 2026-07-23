@@ -14,11 +14,16 @@ import { FirestoreRecognitionCandidateHydrator } from './figureRecognition/recog
 import { RecognitionHydrationError, RecognitionQualityUnavailableError, RecognizeFigureRequestError, type RecognizeFigureResponseV1 } from './figureRecognition/recognizeFigureEndpointTypes';
 import { validateRecognizeFigureRequest } from './figureRecognition/recognizeFigureRequestValidator';
 import { RecognizeFigureService } from './figureRecognition/recognizeFigureService';
-import { RETRIEVAL_DECISION_CONFIG } from './figureRecognition/retrievalDecisionConfig';
-import { ShadowRetrievalDecisionResolver } from './figureRecognition/retrievalDecisionResolver';
+import { RETRIEVAL_CANDIDATE_POLICY_CONFIG } from './figureRecognition/retrievalCandidatePolicyConfig';
+import { CandidateRetrievalDecisionResolver } from './figureRecognition/retrievalCandidatePolicyResolver';
 import { measureScanStage, withScanTimingContext } from './figureRecognition/scanTiming';
 
 export type RecognizeFigureHandler = (data: unknown) => Promise<RecognizeFigureResponseV1>;
+
+/** Production decision resolver — absolute distance gate + margin review. */
+export function createProductionRetrievalDecisionResolver() {
+  return new CandidateRetrievalDecisionResolver(RETRIEVAL_CANDIDATE_POLICY_CONFIG);
+}
 
 export function createRecognizeFigureHandler(service: RecognizeFigureService): RecognizeFigureHandler {
   return async (data) => {
@@ -65,7 +70,7 @@ export function createProductionRecognizeFigureHandler(): (request: CallableRequ
         { log: (entry) => logger.info('Recognition embedding completed', entry) },
       );
       const retrieval = new FigureRetrievalService({ read: async () => { throw new Error('File reads are not supported by recognizeFigureV1'); } }, embeddings, new FirestoreFigureVectorSearch(firestore));
-      const service = new RecognizeFigureService(cropper, new PrimarySubjectBlurEvaluator(cropper, BLUR_QUALITY_CONFIG), retrieval, new ShadowRetrievalDecisionResolver(RETRIEVAL_DECISION_CONFIG), new FirestoreRecognitionCandidateHydrator(firestore));
+      const service = new RecognizeFigureService(cropper, new PrimarySubjectBlurEvaluator(cropper, BLUR_QUALITY_CONFIG), retrieval, createProductionRetrievalDecisionResolver(), new FirestoreRecognitionCandidateHydrator(firestore));
       handler = createRecognizeFigureHandler(service);
       logger.debug('Figure scan service initialized', { component: 'backend_recognition', initializationMs: Number(process.hrtime.bigint() - initializationStartedAt) / 1_000_000 });
     } else {

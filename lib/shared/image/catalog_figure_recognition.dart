@@ -2,6 +2,9 @@ import 'package:blindbox_app/shared/image/catalog_subject_selection.dart';
 
 enum CatalogSubjectQuality { good, borderline }
 
+/// Backend presentation decision for hydrated candidate cards.
+enum CatalogRecognitionDecision { needsReview, highConfidence }
+
 class CatalogRecognitionCandidate {
   const CatalogRecognitionCandidate({
     required this.rank,
@@ -36,9 +39,11 @@ final class CatalogRecognitionCandidates
   const CatalogRecognitionCandidates({
     required this.quality,
     required this.candidates,
+    this.decision = CatalogRecognitionDecision.needsReview,
   });
   final CatalogSubjectQuality quality;
   final List<CatalogRecognitionCandidate> candidates;
+  final CatalogRecognitionDecision decision;
 }
 
 final class CatalogRecognitionNoConfidentMatch

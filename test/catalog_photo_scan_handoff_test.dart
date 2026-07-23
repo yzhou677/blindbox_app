@@ -51,7 +51,7 @@ void main() {
     expect(sheet.selection, same(selection));
     expect(find.text('Frame your collectible'), findsOneWidget);
     expect(
-      find.text('Move and resize the frame until it fits your collectible.'),
+      find.text('Fit the frame to your collectible.'),
       findsOneWidget,
     );
     expect(find.byKey(const Key('subject-selection-image')), findsOneWidget);

@@ -36,7 +36,7 @@ type QualityFields = { subjectQuality: 'good' | 'borderline'; blurEvaluatorVersi
 export type RecognizeFigureResponseV1 =
   | ({ version: 1; status: 'borderline' } & QualityFields)
   | { version: 1; status: 'too_blurry'; blurEvaluatorVersion: string }
-  | ({ version: 1; status: 'candidates'; decision: 'needs_review'; candidates: RecognitionCandidateV1[]; policyVersion: string } & QualityFields)
+  | ({ version: 1; status: 'candidates'; decision: 'needs_review' | 'high_confidence'; candidates: RecognitionCandidateV1[]; policyVersion: string } & QualityFields)
   | ({ version: 1; status: 'no_confident_match'; policyVersion: string } & QualityFields);
 
 export class RecognizeFigureRequestError extends Error {

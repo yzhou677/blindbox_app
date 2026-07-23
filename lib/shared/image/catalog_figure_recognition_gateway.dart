@@ -171,7 +171,8 @@ final class FirebaseCatalogFigureRecognitionGateway
       case 'no_confident_match':
         return const CatalogRecognitionNoConfidentMatch();
       case 'candidates':
-        if (value['decision'] != 'needs_review' ||
+        final decision = value['decision'];
+        if ((decision != 'needs_review' && decision != 'high_confidence') ||
             value['candidates'] is! List ||
             value['subjectQuality'] is! String) {
           return const CatalogRecognitionFailure(
@@ -227,6 +228,9 @@ final class FirebaseCatalogFigureRecognitionGateway
           quality: value['subjectQuality'] == 'borderline'
               ? CatalogSubjectQuality.borderline
               : CatalogSubjectQuality.good,
+          decision: decision == 'high_confidence'
+              ? CatalogRecognitionDecision.highConfidence
+              : CatalogRecognitionDecision.needsReview,
           candidates: List.unmodifiable(mapped),
         );
       default:

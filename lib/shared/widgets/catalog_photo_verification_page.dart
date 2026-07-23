@@ -21,7 +21,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image/image.dart' as image;
 
-const catalogPhotoGuidance = 'Keep the collectible centered and in focus.';
+/// Calm review reassurance — framing already happened; do not teach again.
+const catalogPhotoGuidance = 'Ready when you are.';
 
 /// Optional override for success haptics (tests inject a counter; production
 /// defaults to [HapticFeedback.selectionClick]).
@@ -177,6 +178,8 @@ class _CatalogPhotoVerificationPageState
   var _validating = false;
   CatalogSubjectSelectionResult? _confirmedSelection;
   List<CatalogRecognitionCandidate> _candidates = const [];
+  CatalogRecognitionDecision _recognitionDecision =
+      CatalogRecognitionDecision.needsReview;
   CatalogRecognitionFailureKind? _failureKind;
   var _candidateRevealEpoch = 0;
   var _successHapticGeneration = -1;
@@ -217,6 +220,7 @@ class _CatalogPhotoVerificationPageState
       _initialFramingOrigin = SubjectSelectionOrigin.defaultBox;
       _confirmedSelection = null;
       _candidates = const [];
+      _recognitionDecision = CatalogRecognitionDecision.needsReview;
       _failureKind = null;
     });
     _stateController.value = 0;
@@ -398,6 +402,7 @@ class _CatalogPhotoVerificationPageState
           _presentationState = CatalogPhotoScanPresentationState.tooBlurry;
         case CatalogRecognitionCandidates():
           _candidates = result.candidates;
+          _recognitionDecision = result.decision;
           _presentationState = CatalogPhotoScanPresentationState.candidates;
           _candidateRevealEpoch++;
           emitSuccessHaptic = result.candidates.isNotEmpty;
@@ -458,60 +463,61 @@ class _CatalogPhotoVerificationPageState
   }
 
   String get _title => switch (_presentationState) {
-    CatalogPhotoScanPresentationState.review => 'Review photo',
-    CatalogPhotoScanPresentationState.locating => 'Finding the collectible…',
+    CatalogPhotoScanPresentationState.review => 'Looks good',
+    CatalogPhotoScanPresentationState.locating => 'Framing your collectible…',
     CatalogPhotoScanPresentationState.framing => 'Frame your collectible',
     CatalogPhotoScanPresentationState.recognizing =>
-      'Finding your collectible…',
-    CatalogPhotoScanPresentationState.tooBlurry =>
-      'Selected collectible is too blurry',
+      'Comparing with the Shelfy catalog',
+    CatalogPhotoScanPresentationState.tooBlurry => 'A little too soft',
     CatalogPhotoScanPresentationState.candidates =>
-      'We found a few close matches',
+      _recognitionDecision == CatalogRecognitionDecision.highConfidence
+          ? 'Best Match'
+          : 'Close matches',
     CatalogPhotoScanPresentationState.noConfidentMatch =>
-      'We couldn’t confidently identify this collectible.',
+      'We couldn’t find a close match.',
     CatalogPhotoScanPresentationState.recoverableFailure => 'Scan unavailable',
   };
 
   Widget _stateGuidance(ColorScheme scheme) {
-    final style = Theme.of(
-      context,
-    ).textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant);
+    final style = Theme.of(context).textTheme.bodyMedium?.copyWith(
+      color: scheme.onSurfaceVariant,
+      height: 1.35,
+    );
     return switch (_presentationState) {
       CatalogPhotoScanPresentationState.framing => _FramingGuidance(
         // Key by presentation state so origin edits rebuild in place
-        // (instant AI-hint hide) instead of crossfading stale copy.
+        // (instant suggestion-hint hide) instead of crossfading stale copy.
         key: const ValueKey('framing-state-guidance'),
         suggested: _selectionOrigin == SubjectSelectionOrigin.suggestedBox,
       ),
       CatalogPhotoScanPresentationState.locating => Text(
-        'Looking for the main subject in your photo.',
+        'One moment.',
         key: const ValueKey('locating-guidance'),
         style: style,
       ),
       CatalogPhotoScanPresentationState.recognizing => Text(
-        'Comparing your photo with the Shelfy catalog.',
+        'Analyzing visual details…',
         style: style,
       ),
       CatalogPhotoScanPresentationState.tooBlurry => Text(
-        'The selected collectible is too blurry to identify reliably.',
+        'Try a steadier shot with the collectible in focus.',
         style: style,
       ),
-      CatalogPhotoScanPresentationState.candidates => Text(
-        'Choose the collectible that looks most like yours.',
-        key: const ValueKey('candidates-guidance'),
-        style: style,
+      CatalogPhotoScanPresentationState.candidates => const SizedBox(
+        key: ValueKey('candidates-guidance'),
+        height: 0,
       ),
       CatalogPhotoScanPresentationState.noConfidentMatch => Text(
-        'Try adjusting the frame, taking a closer photo, or reducing glare.',
+        'Try another photo, or adjust the frame.',
         key: const ValueKey('no-match-guidance'),
         style: style,
       ),
       CatalogPhotoScanPresentationState.recoverableFailure => Text(
         _failureKind == CatalogRecognitionFailureKind.qualityUnavailable
-            ? 'We couldn’t check photo quality.'
+            ? 'Photo quality couldn’t be checked just now.'
             : _failureKind == CatalogRecognitionFailureKind.imagePreparation
-            ? 'We couldn’t prepare this selection.'
-            : 'We couldn’t scan this photo right now.',
+            ? 'This selection couldn’t be prepared.'
+            : 'Something got in the way — try again in a moment.',
         style: style,
       ),
       _ => _GuidanceText(
@@ -566,6 +572,7 @@ class _CatalogPhotoVerificationPageState
       CatalogPhotoScanPresentationState.candidates => _CandidateActions(
         key: ValueKey('candidate-actions-$_candidateRevealEpoch'),
         candidates: _candidates,
+        decision: _recognitionDecision,
         revealEpoch: _candidateRevealEpoch,
         onCandidateTap: _confirmCandidate,
         onCreateCustom: _createCustom,
@@ -611,9 +618,9 @@ class _CatalogPhotoVerificationPageState
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final previewHeight = (MediaQuery.sizeOf(context).height * 0.4).clamp(
+    final previewHeight = (MediaQuery.sizeOf(context).height * 0.38).clamp(
       220.0,
-      380.0,
+      360.0,
     );
     final framing =
         _presentationState == CatalogPhotoScanPresentationState.framing;
@@ -622,10 +629,135 @@ class _CatalogPhotoVerificationPageState
     final showingResults =
         _presentationState == CatalogPhotoScanPresentationState.candidates ||
         _presentationState == CatalogPhotoScanPresentationState.noConfidentMatch;
+    // Framing keeps title-first so instructions precede the interactive frame.
+    final heroFirst =
+        _presentationState != CatalogPhotoScanPresentationState.framing;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     final mediaHeight = showingResults
-        ? (previewHeight * 0.42).clamp(112.0, 168.0)
+        ? (previewHeight * 0.40).clamp(120.0, 176.0)
         : previewHeight;
+
+    final titleBlock = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: AnimatedSwitcher(
+              duration: CollectibleMotion.crossfade,
+              switchInCurve: CollectibleMotion.easeOut,
+              switchOutCurve: CollectibleMotion.easeIn,
+              transitionBuilder: (child, animation) {
+                final offset = Tween<Offset>(
+                  begin: const Offset(0, 0.04),
+                  end: Offset.zero,
+                ).animate(animation);
+                return FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: offset,
+                    child: child,
+                  ),
+                );
+              },
+              child: Text(
+                _title,
+                key: ValueKey(_presentationState),
+                style: CollectibleTypography.shelfSeriesTitle(
+                  Theme.of(context).textTheme,
+                  scheme,
+                ),
+              ),
+            ),
+          ),
+          IconButton(
+            key: const Key('catalog-photo-close'),
+            tooltip: 'Close photo scan',
+            constraints: const BoxConstraints.tightFor(
+              width: 48,
+              height: 48,
+            ),
+            onPressed: () => Navigator.pop(context, _confirmedSelection),
+            icon: const Icon(Icons.close_rounded),
+          ),
+        ],
+      ),
+    );
+
+    final guidanceBlock = Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.xs,
+        AppSpacing.md,
+        0,
+      ),
+      child: AnimatedSwitcher(
+        duration: CollectibleMotion.crossfade,
+        switchInCurve: CollectibleMotion.easeOut,
+        child: _stateGuidance(scheme),
+      ),
+    );
+
+    final mediaBlock = _previewLoading
+        ? SizedBox(
+            height: mediaHeight,
+            child: const Center(
+              child: SizedBox(
+                width: 28,
+                height: 28,
+                child: CircularProgressIndicator(strokeWidth: 2.5),
+              ),
+            ),
+          )
+        : (_previewBytes == null || _orientedSize == null)
+        ? SizedBox(
+            height: mediaHeight,
+            child: Icon(
+              Icons.broken_image_outlined,
+              size: 42,
+              color: scheme.onSurfaceVariant,
+            ),
+          )
+        : recognitionLoading || showingResults
+        ? AnimatedSize(
+            duration: reduceMotion
+                ? Duration.zero
+                : CollectibleMotion.sectionReveal,
+            curve: CollectibleMotion.easeOut,
+            alignment: Alignment.topCenter,
+            child: SizedBox(
+              key: const ValueKey('recognition-crop-slot'),
+              height: mediaHeight,
+              width: double.infinity,
+              child: _SelectedSubjectCropPreview(
+                bytes: _previewBytes!,
+                orientedSize: _orientedSize!,
+                selection: _subjectSelection,
+                showFindingShimmer: recognitionLoading,
+              ),
+            ),
+          )
+        : CatalogSubjectSelectionEditor(
+            key: const Key('catalog-photo-shared-editor'),
+            height: mediaHeight,
+            bytes: _previewBytes!,
+            orientedSize: _orientedSize!,
+            normalizedSelection: _subjectSelection,
+            onSelectionChanged: (selection, origin) {
+              setState(() {
+                _subjectSelection = selection;
+                _selectionOrigin = origin;
+              });
+            },
+            onInteractionChanged: (active) {
+              if (_selectionInteractionActive == active) return;
+              setState(() => _selectionInteractionActive = active);
+            },
+            selectionAnimation: _stateAnimation,
+            interactionActive: _selectionInteractionActive,
+            selectionEnabled: framing,
+          );
+
     return Material(
       key: const Key('catalog-photo-confirmation'),
       color: scheme.surface,
@@ -639,7 +771,7 @@ class _CatalogPhotoVerificationPageState
           physics: _selectionInteractionActive
               ? const NeverScrollableScrollPhysics()
               : null,
-          padding: const EdgeInsets.fromLTRB(4, 0, 4, 2),
+          padding: const EdgeInsets.fromLTRB(4, 0, 4, AppSpacing.sm),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -657,116 +789,19 @@ class _CatalogPhotoVerificationPageState
                   ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: AnimatedSwitcher(
-                        duration: CollectibleMotion.crossfade,
-                        switchInCurve: CollectibleMotion.easeOut,
-                        switchOutCurve: CollectibleMotion.easeIn,
-                        transitionBuilder: (child, animation) {
-                          final offset = Tween<Offset>(
-                            begin: const Offset(0, 0.04),
-                            end: Offset.zero,
-                          ).animate(animation);
-                          return FadeTransition(
-                            opacity: animation,
-                            child: SlideTransition(
-                              position: offset,
-                              child: child,
-                            ),
-                          );
-                        },
-                        child: Text(
-                          _title,
-                          key: ValueKey(_presentationState),
-                          style: CollectibleTypography.shelfSeriesTitle(
-                            Theme.of(context).textTheme,
-                            scheme,
-                          ),
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      key: const Key('catalog-photo-close'),
-                      tooltip: 'Close photo scan',
-                      constraints: const BoxConstraints.tightFor(
-                        width: 48,
-                        height: 48,
-                      ),
-                      onPressed: () =>
-                          Navigator.pop(context, _confirmedSelection),
-                      icon: const Icon(Icons.close_rounded),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                child: AnimatedSwitcher(
-                  duration: CollectibleMotion.crossfade,
-                  switchInCurve: CollectibleMotion.easeOut,
-                  child: _stateGuidance(scheme),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              if (_previewLoading)
-                SizedBox(
-                  height: mediaHeight,
-                  child: const Center(child: CircularProgressIndicator()),
-                )
-              else if (_previewBytes == null || _orientedSize == null)
-                SizedBox(
-                  height: mediaHeight,
-                  child: Icon(
-                    Icons.broken_image_outlined,
-                    size: 42,
-                    color: scheme.onSurfaceVariant,
-                  ),
-                )
-              else if (recognitionLoading || showingResults)
-                AnimatedSize(
-                  duration: reduceMotion
-                      ? Duration.zero
-                      : CollectibleMotion.sectionReveal,
-                  curve: CollectibleMotion.easeOut,
-                  alignment: Alignment.topCenter,
-                  child: SizedBox(
-                    key: const ValueKey('recognition-crop-slot'),
-                    height: mediaHeight,
-                    width: double.infinity,
-                    child: _SelectedSubjectCropPreview(
-                      bytes: _previewBytes!,
-                      orientedSize: _orientedSize!,
-                      selection: _subjectSelection,
-                      showFindingShimmer: recognitionLoading,
-                    ),
-                  ),
-                )
-              else
-                CatalogSubjectSelectionEditor(
-                  key: const Key('catalog-photo-shared-editor'),
-                  height: mediaHeight,
-                  bytes: _previewBytes!,
-                  orientedSize: _orientedSize!,
-                  normalizedSelection: _subjectSelection,
-                  onSelectionChanged: (selection, origin) {
-                    setState(() {
-                      _subjectSelection = selection;
-                      _selectionOrigin = origin;
-                    });
-                  },
-                  onInteractionChanged: (active) {
-                    if (_selectionInteractionActive == active) return;
-                    setState(() => _selectionInteractionActive = active);
-                  },
-                  selectionAnimation: _stateAnimation,
-                  interactionActive: _selectionInteractionActive,
-                  selectionEnabled: framing,
-                ),
-              const SizedBox(height: AppSpacing.md),
+              if (heroFirst) ...[
+                const SizedBox(height: AppSpacing.sm),
+                mediaBlock,
+                const SizedBox(height: AppSpacing.lg),
+                titleBlock,
+                guidanceBlock,
+              ] else ...[
+                titleBlock,
+                guidanceBlock,
+                const SizedBox(height: AppSpacing.md),
+                mediaBlock,
+              ],
+              const SizedBox(height: AppSpacing.xl),
               AnimatedSwitcher(
                 duration: CollectibleMotion.sectionReveal,
                 switchInCurve: CollectibleMotion.easeOut,
@@ -984,6 +1019,7 @@ class _CandidateActions extends StatelessWidget {
   const _CandidateActions({
     super.key,
     required this.candidates,
+    required this.decision,
     required this.revealEpoch,
     required this.onCandidateTap,
     required this.onCreateCustom,
@@ -991,6 +1027,7 @@ class _CandidateActions extends StatelessWidget {
   });
 
   final List<CatalogRecognitionCandidate> candidates;
+  final CatalogRecognitionDecision decision;
   final int revealEpoch;
   final ValueChanged<CatalogRecognitionCandidate> onCandidateTap;
   final VoidCallback onCreateCustom;
@@ -1000,13 +1037,27 @@ class _CandidateActions extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final showOthersLabel = candidates.length > 1;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           for (var i = 0; i < candidates.length; i++) ...[
-            if (i > 0) const SizedBox(height: AppSpacing.md),
+            if (i == 1 && showOthersLabel) ...[
+              const SizedBox(height: AppSpacing.lg),
+              Text(
+                'Other possibilities',
+                key: const Key('recognition-other-possibilities'),
+                style: textTheme.titleSmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.1,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+            ] else if (i > 0)
+              const SizedBox(height: AppSpacing.md),
             _CascadeEntrance(
               key: ValueKey('recognition-cascade-$revealEpoch-$i'),
               index: i,
@@ -1014,34 +1065,31 @@ class _CandidateActions extends StatelessWidget {
               child: _RecognitionCandidateCard(
                 candidate: candidates[i],
                 isBestMatch: i == 0,
+                emphasizeBest:
+                    decision == CatalogRecognitionDecision.highConfidence ||
+                    i == 0,
                 onTap: () => onCandidateTap(candidates[i]),
               ),
             ),
           ],
-          const SizedBox(height: AppSpacing.xl),
-          Text(
-            'Not seeing yours?',
-            textAlign: TextAlign.center,
-            style: textTheme.bodyMedium?.copyWith(
-              color: scheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          SizedBox(
-            height: 52,
-            child: OutlinedButton(
-              key: const Key('recognition-create-custom'),
-              onPressed: onCreateCustom,
-              child: const Text('Create Custom Figure'),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: AppSpacing.xxl),
           SizedBox(
             height: 48,
             child: TextButton(
               key: const Key('recognition-try-another'),
               onPressed: onTryAnother,
               child: const Text('Try Another Photo'),
+            ),
+          ),
+          SizedBox(
+            height: 44,
+            child: TextButton(
+              key: const Key('recognition-create-custom'),
+              onPressed: onCreateCustom,
+              style: TextButton.styleFrom(
+                foregroundColor: scheme.onSurfaceVariant,
+              ),
+              child: const Text('Create Custom Figure'),
             ),
           ),
         ],
@@ -1139,17 +1187,20 @@ class _RecognitionCandidateCard extends StatelessWidget {
   const _RecognitionCandidateCard({
     required this.candidate,
     required this.isBestMatch,
+    required this.emphasizeBest,
     required this.onTap,
   });
 
   final CatalogRecognitionCandidate candidate;
   final bool isBestMatch;
+  final bool emphasizeBest;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final thumb = isBestMatch ? 108.0 : 88.0;
     final semanticsLabel = isBestMatch
         ? 'Best Match, ${candidate.figureName}, ${candidate.seriesName}, ${candidate.ipName}'
         : '${candidate.figureName}, ${candidate.seriesName}, ${candidate.ipName}';
@@ -1161,7 +1212,15 @@ class _RecognitionCandidateCard extends StatelessWidget {
       child: CollectibleBrowseCard(
         key: Key('recognition-candidate-${candidate.figureId}'),
         onTap: onTap,
-        padding: const EdgeInsets.fromLTRB(14, 14, 16, 14),
+        borderColor: emphasizeBest && isBestMatch
+            ? scheme.primary.withValues(alpha: 0.28)
+            : null,
+        padding: EdgeInsets.fromLTRB(
+          isBestMatch ? 16 : 14,
+          isBestMatch ? 16 : 14,
+          18,
+          isBestMatch ? 16 : 14,
+        ),
         child: Row(
           children: [
             DecoratedBox(
@@ -1172,8 +1231,8 @@ class _RecognitionCandidateCard extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: AppRadii.figureThumbRadius,
                 child: SizedBox(
-                  width: 88,
-                  height: 88,
+                  width: thumb,
+                  height: thumb,
                   child: CatalogImageFromKey.legacy(
                     imageKey: candidate.imageKey,
                     name: candidate.figureName,
@@ -1183,22 +1242,23 @@ class _RecognitionCandidateCard extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: AppSpacing.md),
+            SizedBox(width: isBestMatch ? AppSpacing.lg : AppSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (isBestMatch) ...[
                     Text(
-                      '✨ Best Match',
+                      'Best Match',
                       key: const Key('recognition-best-match-label'),
                       style: textTheme.labelMedium?.copyWith(
                         color: scheme.primary,
                         fontWeight: FontWeight.w600,
                         height: 1.2,
+                        letterSpacing: 0.2,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                   ],
                   Text(
                     candidate.figureName,
@@ -1223,7 +1283,7 @@ class _RecognitionCandidateCard extends StatelessWidget {
                   Text(
                     candidate.ipName,
                     style: textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
+                      color: scheme.onSurfaceVariant.withValues(alpha: 0.8),
                       height: 1.25,
                     ),
                     maxLines: 1,
@@ -1231,11 +1291,6 @@ class _RecognitionCandidateCard extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
             ),
           ],
         ),
@@ -1258,6 +1313,7 @@ class _NoMatchActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
       child: Column(
@@ -1266,9 +1322,9 @@ class _NoMatchActions extends StatelessWidget {
           SizedBox(
             height: 52,
             child: FilledButton(
-              key: const Key('recognition-create-custom'),
-              onPressed: onCreateCustom,
-              child: const Text('Create Custom Figure'),
+              key: const Key('recognition-try-another'),
+              onPressed: onTryAnother,
+              child: const Text('Try Another Photo'),
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -1281,11 +1337,14 @@ class _NoMatchActions extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xs),
           SizedBox(
-            height: 48,
+            height: 44,
             child: TextButton(
-              key: const Key('recognition-try-another'),
-              onPressed: onTryAnother,
-              child: const Text('Try Another Photo'),
+              key: const Key('recognition-create-custom'),
+              onPressed: onCreateCustom,
+              style: TextButton.styleFrom(
+                foregroundColor: scheme.onSurfaceVariant,
+              ),
+              child: const Text('Create Custom Figure'),
             ),
           ),
         ],
@@ -1306,24 +1365,12 @@ class _GuidanceText extends StatelessWidget {
       child: Padding(
         key: const Key('catalog-photo-guidance'),
         padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Row(
-          children: [
-            Icon(
-              Icons.center_focus_strong_outlined,
-              size: 20,
-              color: colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                catalogPhotoGuidance,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                  height: 1.3,
-                ),
-              ),
-            ),
-          ],
+        child: Text(
+          catalogPhotoGuidance,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+            height: 1.35,
+          ),
         ),
       ),
     );
@@ -1338,35 +1385,24 @@ class _FramingGuidance extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final style = Theme.of(
-      context,
-    ).textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant);
+    final style = Theme.of(context).textTheme.bodyMedium?.copyWith(
+      color: scheme.onSurfaceVariant,
+      height: 1.35,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Move and resize the frame until it fits your collectible.',
+          'Fit the frame to your collectible.',
           key: const ValueKey('framing-guidance'),
           style: style,
         ),
         if (suggested) ...[
           const SizedBox(height: AppSpacing.xs),
-          Row(
+          Text(
             key: const Key('subject-selection-ai-suggestion'),
-            children: [
-              Icon(
-                Icons.auto_awesome,
-                size: 18,
-                color: scheme.onSurfaceVariant,
-              ),
-              const SizedBox(width: AppSpacing.xs),
-              Expanded(
-                child: Text(
-                  'AI suggested this frame. Adjust if needed.',
-                  style: style,
-                ),
-              ),
-            ],
+            'Suggested frame — adjust if you like.',
+            style: style,
           ),
         ],
       ],
@@ -1534,13 +1570,12 @@ class _ValidationFailureState extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'This photo is too blurry',
+                      'This photo is too soft',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Hold your phone steady and keep the collectible in '
-                      'focus before trying again.',
+                      'Hold steady and keep the collectible in focus, then try again.',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: scheme.onSurfaceVariant,
                         height: 1.35,
@@ -1593,48 +1628,49 @@ class _PassActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final outlinedStyle = OutlinedButton.styleFrom(
-      foregroundColor: scheme.primary,
-      side: BorderSide(color: scheme.outline, width: 1),
-    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SizedBox(
-          height: 52,
+          height: 56,
           child: FilledButton(
             key: const Key('catalog-photo-use'),
             onPressed: onUsePhoto,
-            child: Text(validating ? 'Checking photo…' : 'Use This Photo'),
+            child: Text(validating ? 'One moment…' : 'Use This Photo'),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md),
         SizedBox(
-          height: 52,
-          child: OutlinedButton(
+          height: 44,
+          child: TextButton(
             key: const Key('catalog-photo-retake'),
             onPressed: onRetake,
-            style: outlinedStyle,
+            style: TextButton.styleFrom(
+              foregroundColor: scheme.onSurfaceVariant,
+            ),
             child: const Text('Retake Photo'),
           ),
         ),
-        const SizedBox(height: 8),
         SizedBox(
-          height: 52,
-          child: OutlinedButton(
+          height: 44,
+          child: TextButton(
             key: const Key('catalog-photo-choose-another'),
             onPressed: onChooseAnother,
-            style: outlinedStyle,
+            style: TextButton.styleFrom(
+              foregroundColor: scheme.onSurfaceVariant,
+            ),
             child: const Text('Choose Another Photo'),
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: AppSpacing.sm),
         SizedBox(
-          height: 48,
+          height: 44,
           child: TextButton(
             key: const Key('catalog-photo-cancel'),
             onPressed: onCancel,
-            style: TextButton.styleFrom(foregroundColor: scheme.primary),
+            style: TextButton.styleFrom(
+              foregroundColor: scheme.onSurfaceVariant.withValues(alpha: 0.9),
+            ),
             child: const Text('Cancel'),
           ),
         ),
