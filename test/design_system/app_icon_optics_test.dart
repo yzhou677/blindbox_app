@@ -9,10 +9,7 @@ void main() {
     test('hierarchy stays ordered', () {
       expect(AppIconSizes.metadata, lessThan(AppIconSizes.toolbar));
       expect(AppIconSizes.toolbar, lessThanOrEqualTo(AppIconSizes.standard));
-      expect(
-        AppIconSizes.standard,
-        lessThanOrEqualTo(AppIconSizes.navigation),
-      );
+      expect(AppIconSizes.standard, lessThanOrEqualTo(AppIconSizes.navigation));
       expect(AppIconSizes.cta, AppIconSizes.standard);
       expect(AppIconSizes.emptyHero, inInclusiveRange(72, 84));
       expect(AppIconSizes.headerQuiet, lessThan(AppIconSizes.toolbar));

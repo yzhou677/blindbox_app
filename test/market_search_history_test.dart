@@ -1,4 +1,3 @@
-import 'package:blindbox_app/features/catalog/search/catalog_search_history.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_history_section.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_history_storage.dart';
 import 'package:blindbox_app/features/catalog/search/suggested_searches.dart';

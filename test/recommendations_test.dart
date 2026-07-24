@@ -1,7 +1,6 @@
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_brand.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_ip.dart';
-import 'package:blindbox_app/features/catalog/models/catalog_series.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_series.dart'
     as catalog;
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';

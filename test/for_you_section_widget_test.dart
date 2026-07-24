@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_brand.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_ip.dart';
-import 'package:blindbox_app/features/catalog/models/catalog_series.dart';
 import 'package:blindbox_app/core/theme/app_theme.dart';
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';

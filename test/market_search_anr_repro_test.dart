@@ -6,7 +6,6 @@ import 'package:blindbox_app/features/catalog/application/catalog_bundle_provide
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
-import 'package:blindbox_app/features/market/application/market_live_browse_controller.dart';
 import 'package:blindbox_app/features/market/data/gateway/market_gateway_config.dart';
 import 'package:blindbox_app/features/market/presentation/market_browse_search_screen.dart';
 import 'package:flutter/material.dart';

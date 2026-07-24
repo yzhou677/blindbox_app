@@ -1,6 +1,5 @@
 import 'package:blindbox_app/core/router/app_router.dart';
 import 'package:blindbox_app/core/theme/app_theme.dart';
-import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/application/master_complete_celebration_controller.dart';

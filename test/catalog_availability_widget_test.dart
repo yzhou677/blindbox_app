@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:blindbox_app/core/theme/app_theme.dart';
-import 'package:blindbox_app/features/catalog/application/catalog_availability.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';

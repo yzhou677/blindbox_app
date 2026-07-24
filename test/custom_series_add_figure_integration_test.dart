@@ -6,7 +6,6 @@ import 'package:blindbox_app/features/collection/data/collection_memory_store.da
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_series_management.dart';
 import 'package:blindbox_app/features/collection/widgets/custom_series_form_sheet.dart';
-import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

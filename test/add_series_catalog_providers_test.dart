@@ -3,14 +3,11 @@ import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_brand.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_figure.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_ip.dart';
-import 'package:blindbox_app/features/catalog/models/catalog_series.dart';
 import 'package:blindbox_app/features/collection/application/add_series_catalog_providers.dart';
 import 'package:blindbox_app/features/collection/application/catalog_series_shelf_commit.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_series.dart'
     as catalog;
-import 'package:blindbox_app/features/collection/domain/collection_domain.dart'
-    show CollectionSnapshot;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
