@@ -200,6 +200,13 @@ describe('official_feed_curation helpers', () => {
       true,
     );
     assert.equal(bodyHasUnavailableCopy('Welcome to POP MART'), false);
+    // Live upcoming PDPs still embed i18n catalogs — must not false-positive.
+    assert.equal(
+      bodyHasUnavailableCopy(
+        '{"product_empty_text":"The product you are looking for is not available","product_not_found":"Product Not Found","back_to_homepage":"BACK TO HOMEPAGE"}',
+      ),
+      false,
+    );
   });
 
   it('extracts og:image and cdn-global from HTML', () => {

@@ -23,12 +23,14 @@ export const SPA_SHELL_MAX_BYTES = 28_000;
 /** Phantom ids that must not resolve to real products if the server validated ids. */
 export const PHANTOM_PRODUCT_IDS = ['1', '99999999'];
 
-/** Case-insensitive unavailable copy (substring match on HTML body). */
+/**
+ * Case-insensitive unavailable copy (substring match on HTML body).
+ * POP MART US HTML embeds i18n catalogs with these strings even on live
+ * upcoming PDPs — strip JSON `"key":"value"` pairs before matching.
+ */
 export const UNAVAILABLE_COPY = [
-  'not available',
   'the product you are looking for is not available',
   'not available in your region',
-  'back to homepage',
   'strconv.parseuint',
   'product not found',
 ];
@@ -38,7 +40,9 @@ export const UNAVAILABLE_COPY = [
  */
 export function bodyHasUnavailableCopy(body) {
   const lower = body.toLowerCase();
-  return UNAVAILABLE_COPY.some((phrase) => lower.includes(phrase));
+  // Remove JSON string pairs (i18n dictionaries) so catalog values don't match.
+  const stripped = lower.replace(/"(?:\\.|[^"\\])*":\s*"(?:\\.|[^"\\])*"/g, '""');
+  return UNAVAILABLE_COPY.some((phrase) => stripped.includes(phrase));
 }
 
 /**
