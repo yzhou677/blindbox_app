@@ -6,9 +6,11 @@ import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.d
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_brand.dart';
-import 'package:blindbox_app/features/catalog/models/catalog_figure.dart' as seed;
+import 'package:blindbox_app/features/catalog/models/catalog_figure.dart'
+    as seed;
 import 'package:blindbox_app/features/catalog/models/catalog_ip.dart';
-import 'package:blindbox_app/features/catalog/models/catalog_series.dart' as seed;
+import 'package:blindbox_app/features/catalog/models/catalog_series.dart'
+    as seed;
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
@@ -97,15 +99,13 @@ final class _FakeLocator implements CatalogSubjectLocator {
   @override
   Future<CatalogSubjectLocatorResult> locate(
     CatalogPhotoSelection photo,
-  ) async =>
-      const CatalogSubjectLocatorNoSuggestion();
+  ) async => const CatalogSubjectLocatorNoSuggestion();
 
   @override
   void cancelPending() {}
 }
 
-final class _FakeRecognitionGateway
-    implements CatalogFigureRecognitionGateway {
+final class _FakeRecognitionGateway implements CatalogFigureRecognitionGateway {
   @override
   Future<CatalogFigureRecognitionResult> recognize(
     CatalogSubjectSelectionResult selection, {
@@ -203,7 +203,9 @@ void main() {
           child: MaterialApp(
             theme: ThemeData(
               useMaterial3: true,
-              colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF6750A4)),
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: const Color(0xFF6750A4),
+              ),
             ),
             home: Scaffold(
               body: Consumer(
@@ -218,8 +220,8 @@ void main() {
                         locatorGateway: _FakeLocator(),
                         recognitionCoordinator:
                             CatalogFigureRecognitionCoordinator(
-                          _FakeRecognitionGateway(),
-                        ),
+                              _FakeRecognitionGateway(),
+                            ),
                         onCandidateConfirmed: (candidate) {
                           openRecognitionCandidateSeries(
                             context,
@@ -256,10 +258,18 @@ void main() {
           break;
         }
       }
-      expect(find.byKey(const Key('catalog-photo-confirmation')), findsOneWidget);
+      expect(
+        find.byKey(const Key('catalog-photo-confirmation')),
+        findsOneWidget,
+      );
 
-      final beforeOwned = ref.read(collectionNotifierProvider).shelfSeries.length;
-      final candidate = find.byKey(const Key('recognition-candidate-fig_match'));
+      final beforeOwned = ref
+          .read(collectionNotifierProvider)
+          .shelfSeries
+          .length;
+      final candidate = find.byKey(
+        const Key('recognition-candidate-fig_match'),
+      );
       tester.widget<CollectibleBrowseCard>(candidate).onTap();
       await tester.pump();
       await tester.pump(CollectibleMotion.sheet);
@@ -274,8 +284,14 @@ void main() {
       );
       expect(find.text('Matched from your photo'), findsOneWidget);
       expect(find.textContaining('%'), findsNothing);
-      expect(ref.read(collectionNotifierProvider).shelfSeries.length, beforeOwned);
-      expect(find.byKey(const Key('catalog-photo-confirmation')), findsOneWidget);
+      expect(
+        ref.read(collectionNotifierProvider).shelfSeries.length,
+        beforeOwned,
+      );
+      expect(
+        find.byKey(const Key('catalog-photo-confirmation')),
+        findsOneWidget,
+      );
 
       // Pop the stacked Series preview; scan results remain underneath.
       Navigator.of(
@@ -341,7 +357,9 @@ void main() {
           child: MaterialApp(
             theme: ThemeData(
               useMaterial3: true,
-              colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF6750A4)),
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: const Color(0xFF6750A4),
+              ),
             ),
             home: Scaffold(
               body: Consumer(

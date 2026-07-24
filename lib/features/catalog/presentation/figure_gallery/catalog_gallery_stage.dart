@@ -93,9 +93,8 @@ class CatalogGalleryStage extends StatelessWidget {
         decodeExtent: decode,
         fadeInDuration: spec.fadeInDuration,
         fadeOutDuration: spec.fadeOutDuration,
-        placeholder: (_, _) => AppImageShimmer(
-          borderRadius: AppRadii.figureGalleryRadius,
-        ),
+        placeholder: (_, _) =>
+            AppImageShimmer(borderRadius: AppRadii.figureGalleryRadius),
         errorWidget: (_, _, _) => CollectibleFigurePlaceholder(
           name: name,
           seedKey: seedKey,
@@ -132,9 +131,7 @@ class CatalogGalleryStage extends StatelessWidget {
                 ),
               ),
               Positioned.fill(
-                child: ColoredBox(
-                  color: scheme.scrim.withValues(alpha: 0.42),
-                ),
+                child: ColoredBox(color: scheme.scrim.withValues(alpha: 0.42)),
               ),
             ] else
               ColoredBox(color: AppImageStyles.figureMat(scheme)),

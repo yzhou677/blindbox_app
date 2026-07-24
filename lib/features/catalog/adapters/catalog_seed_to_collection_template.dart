@@ -1,6 +1,7 @@
-﻿import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/data/catalog_bundle_lookup.dart';
-import 'package:blindbox_app/features/collection/domain/collection_domain.dart' as domain;
+import 'package:blindbox_app/features/collection/domain/collection_domain.dart'
+    as domain;
 
 /// Builds a collection add-sheet / clone template from curated seed JSON.
 ///
@@ -11,6 +12,7 @@ import 'package:blindbox_app/features/collection/domain/collection_domain.dart' 
 Future<domain.CatalogSeries?> catalogTemplateFromSeedSeries(
   CatalogSeedBundle bundle,
   String seriesId, {
+
   /// When false, skips eager URL resolution (deprecated —templates never carry URLs).
   bool resolveFigureImages = true,
   CatalogBundleLookup? lookup,

@@ -13,10 +13,7 @@ abstract final class SearchHistoryPrefsStorage {
 
   static Future<void> save(String prefsKey, List<String> queries) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      prefsKey,
-      CatalogSearchHistoryCodec.encode(queries),
-    );
+    await prefs.setString(prefsKey, CatalogSearchHistoryCodec.encode(queries));
   }
 
   static Future<void> clear(String prefsKey) async {

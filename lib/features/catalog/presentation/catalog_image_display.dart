@@ -348,14 +348,16 @@ class CatalogImageDisplaySpec {
       );
     }
 
-    final maxExtent = presentationMode == CatalogImageMode.figure &&
+    final maxExtent =
+        presentationMode == CatalogImageMode.figure &&
             memCacheLogicalExtent != null &&
             memCacheLogicalExtent! >= 600
         ? 1536
         : 1024;
-    return (logical * devicePixelRatio * scale * zoomFactor)
-        .round()
-        .clamp(96, maxExtent);
+    return (logical * devicePixelRatio * scale * zoomFactor).round().clamp(
+      96,
+      maxExtent,
+    );
   }
 
   @Deprecated(

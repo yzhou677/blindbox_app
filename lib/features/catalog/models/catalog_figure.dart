@@ -20,10 +20,7 @@ class CatalogAlternativeImage {
     );
   }
 
-  Map<String, dynamic> toJson() => {
-        'imageKey': imageKey,
-        'variant': variant,
-      };
+  Map<String, dynamic> toJson() => {'imageKey': imageKey, 'variant': variant};
 }
 
 @immutable
@@ -78,20 +75,18 @@ class CatalogFigure {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'seriesId': seriesId,
-        'brandId': brandId,
-        'ipId': ipId,
-        'displayName': displayName,
-        'isSecret': isSecret,
-        if (rarityLabel != null) 'rarityLabel': rarityLabel,
-        'sortOrder': sortOrder,
-        'imageKey': imageKey,
-        if (alternativeImages.isNotEmpty)
-          'alternativeImages': [
-            for (final alt in alternativeImages) alt.toJson(),
-          ],
-      };
+    'id': id,
+    'seriesId': seriesId,
+    'brandId': brandId,
+    'ipId': ipId,
+    'displayName': displayName,
+    'isSecret': isSecret,
+    if (rarityLabel != null) 'rarityLabel': rarityLabel,
+    'sortOrder': sortOrder,
+    'imageKey': imageKey,
+    if (alternativeImages.isNotEmpty)
+      'alternativeImages': [for (final alt in alternativeImages) alt.toJson()],
+  };
 }
 
 List<CatalogAlternativeImage> _readAlternativeImages(dynamic raw) {

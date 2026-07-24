@@ -22,8 +22,7 @@ class CatalogAvailability {
 
   bool get isCatalogUsable => state == CatalogAvailabilityUiState.ready;
 
-  bool get isLoading =>
-      state == CatalogAvailabilityUiState.loading;
+  bool get isLoading => state == CatalogAvailabilityUiState.loading;
 
   bool get isOfflineFirstLaunch =>
       state == CatalogAvailabilityUiState.offlineFirstLaunch;
@@ -36,23 +35,30 @@ CatalogAvailability _resolveCatalogAvailability({
 }) {
   if (!isCatalogReady) {
     if (bundleAsync.hasError) {
-      return const CatalogAvailability(CatalogAvailabilityUiState.offlineFirstLaunch);
+      return const CatalogAvailability(
+        CatalogAvailabilityUiState.offlineFirstLaunch,
+      );
     }
     return const CatalogAvailability(CatalogAvailabilityUiState.loading);
   }
 
   if (bundleAsync.hasError) {
-    return const CatalogAvailability(CatalogAvailabilityUiState.offlineFirstLaunch);
+    return const CatalogAvailability(
+      CatalogAvailabilityUiState.offlineFirstLaunch,
+    );
   }
 
   if (origin == CatalogBundleMemoryOrigin.resolved) {
     final bundle = CatalogBundleCache.current;
-    final empty = bundle == null ||
+    final empty =
+        bundle == null ||
         (bundle.series.isEmpty &&
             bundle.figures.isEmpty &&
             bundle.brands.isEmpty);
     if (empty) {
-      return const CatalogAvailability(CatalogAvailabilityUiState.offlineFirstLaunch);
+      return const CatalogAvailability(
+        CatalogAvailabilityUiState.offlineFirstLaunch,
+      );
     }
   }
 

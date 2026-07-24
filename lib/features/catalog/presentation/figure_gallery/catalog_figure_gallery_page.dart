@@ -13,10 +13,7 @@ import 'package:flutter/material.dart';
 
 /// Single fullscreen gallery page — immersive stage with progressive loading.
 class CatalogFigureGalleryPage extends StatelessWidget {
-  const CatalogFigureGalleryPage({
-    super.key,
-    required this.item,
-  });
+  const CatalogFigureGalleryPage({super.key, required this.item});
 
   final CatalogFigureGalleryItem item;
 
@@ -27,7 +24,8 @@ class CatalogFigureGalleryPage extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final w = constraints.maxWidth;
-          final h = constraints.maxHeight * FeedRhythm.galleryStageMaxHeightFactor;
+          final h =
+              constraints.maxHeight * FeedRhythm.galleryStageMaxHeightFactor;
 
           return Center(
             child: GestureDetector(
@@ -38,9 +36,9 @@ class CatalogFigureGalleryPage extends StatelessWidget {
                   borderRadius: AppRadii.figureGalleryRadius,
                   boxShadow: [
                     BoxShadow(
-                      color: Theme.of(context).colorScheme.shadow.withValues(
-                        alpha: 0.12,
-                      ),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.shadow.withValues(alpha: 0.12),
                       blurRadius: 36,
                       offset: const Offset(0, 16),
                       spreadRadius: -10,
@@ -50,11 +48,7 @@ class CatalogFigureGalleryPage extends StatelessWidget {
                 child: Stack(
                   fit: StackFit.passthrough,
                   children: [
-                    _GalleryArt(
-                      item: item,
-                      width: w,
-                      height: h,
-                    ),
+                    _GalleryArt(item: item, width: w, height: h),
                     Positioned.fill(
                       child: IgnorePointer(
                         child: DecoratedBox(
@@ -101,20 +95,12 @@ class _GalleryArt extends StatelessWidget {
   Widget build(BuildContext context) {
     final local = item.localImageUri?.trim();
     if (local != null && local.isNotEmpty) {
-      return _localGalleryStage(
-        uri: local,
-        width: width,
-        height: height,
-      );
+      return _localGalleryStage(uri: local, width: width, height: height);
     }
 
     final seriesCover = item.seriesCoverImageUri?.trim();
     if (seriesCover != null && seriesCover.isNotEmpty) {
-      return _localGalleryStage(
-        uri: seriesCover,
-        width: width,
-        height: height,
-      );
+      return _localGalleryStage(uri: seriesCover, width: width, height: height);
     }
 
     if (item.hasCatalogKey) {

@@ -76,7 +76,10 @@ void main() {
 
     final lookup = CatalogBundleLookup.fromBundle(large);
     expect(lookup.figureCountInSeries('target_series'), 1);
-    expect(lookup.seriesTemplate('target_series')!.figures.single.name, 'Figure 4999');
+    expect(
+      lookup.seriesTemplate('target_series')!.figures.single.name,
+      'Figure 4999',
+    );
   });
 
   test('seriesTemplate build stays under budget for typical lineup', () {
@@ -113,7 +116,10 @@ void main() {
     }
     sw.stop();
 
-    expect(sw.elapsedMicroseconds, lessThan(50000),
-        reason: '200 template builds should stay well under one frame');
+    expect(
+      sw.elapsedMicroseconds,
+      lessThan(50000),
+      reason: '200 template builds should stay well under one frame',
+    );
   });
 }

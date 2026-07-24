@@ -130,9 +130,7 @@ abstract final class SearchNormalizer {
   }
 
   static String _removePhrase(String s, String phrase) {
-    final pattern = RegExp(
-      '(?:^|\\s)${RegExp.escape(phrase)}(?:\\s|\$)',
-    );
+    final pattern = RegExp('(?:^|\\s)${RegExp.escape(phrase)}(?:\\s|\$)');
     return _collapseWhitespace(s.replaceAll(pattern, ' '));
   }
 }

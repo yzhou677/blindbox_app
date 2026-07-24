@@ -27,6 +27,7 @@ class CatalogFigureGalleryItem {
 
   /// User series cover when the figure has no dedicated photo (shelf parity).
   final String? seriesCoverImageUri;
+
   /// Descriptive rarity (e.g. Rare, Super Rare Secret) — not pull odds.
   final String? rarityLabel;
 

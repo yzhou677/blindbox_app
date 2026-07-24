@@ -14,51 +14,52 @@ import 'package:shared_preferences/shared_preferences.dart';
 CatalogSeedBundle _bundle({
   List<CatalogSeries>? series,
   List<CatalogFigure>? figures,
-}) =>
-    CatalogSeedBundle(
-      brands: const [CatalogBrand(id: 'b', displayName: 'B')],
-      ips: const [CatalogIp(id: 'ip', brandId: 'b', displayName: 'IP')],
-      series: series ??
-          const [
-            CatalogSeries(
-              id: 'local_series',
-              brandId: 'b',
-              ipId: 'ip',
-              displayName: 'Local Series',
-              releaseDate: '2026-01-01',
-              isBlindBox: true,
-              imageKey: 'local_series',
-            ),
-          ],
-      figures: figures ??
-          const [
-            CatalogFigure(
-              id: 'local_figure',
-              seriesId: 'local_series',
-              brandId: 'b',
-              ipId: 'ip',
-              displayName: 'Local Figure',
-              isSecret: false,
-              sortOrder: 1,
-              imageKey: 'local_figure',
-            ),
-          ],
-    );
-
-CatalogSeedBundle _remoteWithoutDeletedSeries() => _bundle(
-      series: const [
+}) => CatalogSeedBundle(
+  brands: const [CatalogBrand(id: 'b', displayName: 'B')],
+  ips: const [CatalogIp(id: 'ip', brandId: 'b', displayName: 'IP')],
+  series:
+      series ??
+      const [
         CatalogSeries(
-          id: 'remote_series',
+          id: 'local_series',
           brandId: 'b',
           ipId: 'ip',
-          displayName: 'Remote Series',
-          releaseDate: '2026-02-01',
+          displayName: 'Local Series',
+          releaseDate: '2026-01-01',
           isBlindBox: true,
-          imageKey: 'remote_series',
+          imageKey: 'local_series',
         ),
       ],
-      figures: const [],
-    );
+  figures:
+      figures ??
+      const [
+        CatalogFigure(
+          id: 'local_figure',
+          seriesId: 'local_series',
+          brandId: 'b',
+          ipId: 'ip',
+          displayName: 'Local Figure',
+          isSecret: false,
+          sortOrder: 1,
+          imageKey: 'local_figure',
+        ),
+      ],
+);
+
+CatalogSeedBundle _remoteWithoutDeletedSeries() => _bundle(
+  series: const [
+    CatalogSeries(
+      id: 'remote_series',
+      brandId: 'b',
+      ipId: 'ip',
+      displayName: 'Remote Series',
+      releaseDate: '2026-02-01',
+      isBlindBox: true,
+      imageKey: 'remote_series',
+    ),
+  ],
+  figures: const [],
+);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -67,7 +68,9 @@ void main() {
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
-    tempRoot = await Directory.systemTemp.createTemp('catalog_bundle_sync_test_');
+    tempRoot = await Directory.systemTemp.createTemp(
+      'catalog_bundle_sync_test_',
+    );
     CatalogBundleCache.resetForTest();
     CatalogBundlePersistence.testRootOverride = tempRoot;
     CatalogBundleCache.loadFirestoreOverride = () async {
@@ -85,7 +88,9 @@ void main() {
   group('CatalogBundleCodec', () {
     test('round-trips bundle payloads', () {
       final original = _bundle();
-      final decoded = CatalogBundleCodec.tryDecode(CatalogBundleCodec.encode(original));
+      final decoded = CatalogBundleCodec.tryDecode(
+        CatalogBundleCodec.encode(original),
+      );
       expect(decoded, isNotNull);
       expect(decoded!.series.single.id, 'local_series');
       expect(decoded.figures.single.id, 'local_figure');
@@ -98,103 +103,131 @@ void main() {
   });
 
   group('CatalogBundleCache sync', () {
-    test('first install uses bootstrap placeholder when no persisted snapshot exists',
-        () async {
-      final loaded = await CatalogBundleCache.loadOfflineFirst();
+    test(
+      'first install uses bootstrap placeholder when no persisted snapshot exists',
+      () async {
+        final loaded = await CatalogBundleCache.loadOfflineFirst();
 
-      expect(loaded.series, isEmpty);
-      expect(CatalogBundleCache.lastStartupSource, CatalogBundleLoadSource.empty);
-      expect(CatalogBundleCache.isCatalogReady, isFalse);
-      expect(CatalogBundleCache.memoryOriginForTest,
-          CatalogBundleMemoryOrigin.bootstrapPlaceholder);
-      expect(await CatalogBundlePersistence.hasCompletedFirestoreSync(), isFalse);
-      expect(await CatalogBundlePersistence.load(), isNull);
-    });
+        expect(loaded.series, isEmpty);
+        expect(
+          CatalogBundleCache.lastStartupSource,
+          CatalogBundleLoadSource.empty,
+        );
+        expect(CatalogBundleCache.isCatalogReady, isFalse);
+        expect(
+          CatalogBundleCache.memoryOriginForTest,
+          CatalogBundleMemoryOrigin.bootstrapPlaceholder,
+        );
+        expect(
+          await CatalogBundlePersistence.hasCompletedFirestoreSync(),
+          isFalse,
+        );
+        expect(await CatalogBundlePersistence.load(), isNull);
+      },
+    );
 
-    test('successful refresh persists bundle and marks Firestore sync complete',
-        () async {
-      final remote = _remoteWithoutDeletedSeries();
-      CatalogBundleCache.loadFirestoreOverride = () async => remote;
+    test(
+      'successful refresh persists bundle and marks Firestore sync complete',
+      () async {
+        final remote = _remoteWithoutDeletedSeries();
+        CatalogBundleCache.loadFirestoreOverride = () async => remote;
 
-      await CatalogBundleCache.loadOfflineFirst();
-      await CatalogBundleCache.refreshFromFirestore();
+        await CatalogBundleCache.loadOfflineFirst();
+        await CatalogBundleCache.refreshFromFirestore();
 
-      expect(await CatalogBundlePersistence.hasCompletedFirestoreSync(), isTrue);
-      final persisted = await CatalogBundlePersistence.load();
-      expect(persisted?.series.single.id, 'remote_series');
-    });
+        expect(
+          await CatalogBundlePersistence.hasCompletedFirestoreSync(),
+          isTrue,
+        );
+        final persisted = await CatalogBundlePersistence.load();
+        expect(persisted?.series.single.id, 'remote_series');
+      },
+    );
 
-    test('deleted series stays removed after cold start once sync completed',
-        () async {
-      final remote = _remoteWithoutDeletedSeries();
-      CatalogBundleCache.loadFirestoreOverride = () async => remote;
+    test(
+      'deleted series stays removed after cold start once sync completed',
+      () async {
+        final remote = _remoteWithoutDeletedSeries();
+        CatalogBundleCache.loadFirestoreOverride = () async => remote;
 
-      await CatalogBundleCache.loadOfflineFirst();
-      await CatalogBundleCache.refreshFromFirestore();
+        await CatalogBundleCache.loadOfflineFirst();
+        await CatalogBundleCache.refreshFromFirestore();
 
-      CatalogBundleCache.resetForTest();
-      CatalogBundlePersistence.testRootOverride = tempRoot;
-      CatalogBundleCache.loadFirestoreOverride = () async {
-        throw StateError('offline');
-      };
+        CatalogBundleCache.resetForTest();
+        CatalogBundlePersistence.testRootOverride = tempRoot;
+        CatalogBundleCache.loadFirestoreOverride = () async {
+          throw StateError('offline');
+        };
 
-      final relaunched = await CatalogBundleCache.loadOfflineFirst();
+        final relaunched = await CatalogBundleCache.loadOfflineFirst();
 
-      expect(relaunched.series.map((s) => s.id), ['remote_series']);
-      expect(
-        CatalogBundleCache.lastStartupSource,
-        CatalogBundleLoadSource.persisted,
-      );
-    });
+        expect(relaunched.series.map((s) => s.id), ['remote_series']);
+        expect(
+          CatalogBundleCache.lastStartupSource,
+          CatalogBundleLoadSource.persisted,
+        );
+      },
+    );
 
-    test('offline restart after sync serves persisted bundle without network',
-        () async {
-      final remote = _remoteWithoutDeletedSeries();
+    test(
+      'offline restart after sync serves persisted bundle without network',
+      () async {
+        final remote = _remoteWithoutDeletedSeries();
 
-      await CatalogBundlePersistence.save(remote);
-      CatalogBundleCache.resetForTest();
-      CatalogBundlePersistence.testRootOverride = tempRoot;
+        await CatalogBundlePersistence.save(remote);
+        CatalogBundleCache.resetForTest();
+        CatalogBundlePersistence.testRootOverride = tempRoot;
 
-      CatalogBundleCache.loadFirestoreOverride = () async {
-        throw StateError('offline');
-      };
+        CatalogBundleCache.loadFirestoreOverride = () async {
+          throw StateError('offline');
+        };
 
-      final loaded = await CatalogBundleCache.loadOfflineFirst();
+        final loaded = await CatalogBundleCache.loadOfflineFirst();
 
-      expect(loaded.series.single.id, 'remote_series');
-    });
+        expect(loaded.series.single.id, 'remote_series');
+      },
+    );
 
-    test('corrupted persisted cache uses bootstrap placeholder before first sync',
-        () async {
-      await CatalogBundlePersistence.writeCorruptBundleForTest('not-json');
+    test(
+      'corrupted persisted cache uses bootstrap placeholder before first sync',
+      () async {
+        await CatalogBundlePersistence.writeCorruptBundleForTest('not-json');
 
-      CatalogBundleCache.loadFirestoreOverride = () async {
-        throw StateError('offline');
-      };
+        CatalogBundleCache.loadFirestoreOverride = () async {
+          throw StateError('offline');
+        };
 
-      final loaded = await CatalogBundleCache.loadOfflineFirst();
+        final loaded = await CatalogBundleCache.loadOfflineFirst();
 
-      expect(loaded.series, isEmpty);
-      expect(CatalogBundleCache.isCatalogReady, isFalse);
-      expect(await CatalogBundlePersistence.hasCompletedFirestoreSync(), isFalse);
-    });
+        expect(loaded.series, isEmpty);
+        expect(CatalogBundleCache.isCatalogReady, isFalse);
+        expect(
+          await CatalogBundlePersistence.hasCompletedFirestoreSync(),
+          isFalse,
+        );
+      },
+    );
 
-    test('corrupted persisted cache uses bootstrap placeholder after sync completed',
-        () async {
-      final remote = _remoteWithoutDeletedSeries();
-      await CatalogBundlePersistence.save(remote);
-      await CatalogBundlePersistence.writeCorruptBundleForTest('not-json');
+    test(
+      'corrupted persisted cache uses bootstrap placeholder after sync completed',
+      () async {
+        final remote = _remoteWithoutDeletedSeries();
+        await CatalogBundlePersistence.save(remote);
+        await CatalogBundlePersistence.writeCorruptBundleForTest('not-json');
 
-      CatalogBundleCache.loadFirestoreOverride = () async {
-        throw StateError('offline');
-      };
+        CatalogBundleCache.loadFirestoreOverride = () async {
+          throw StateError('offline');
+        };
 
-      final loaded = await CatalogBundleCache.loadOfflineFirst();
+        final loaded = await CatalogBundleCache.loadOfflineFirst();
 
-      expect(loaded.series, isEmpty);
-      expect(CatalogBundleCache.memoryOriginForTest,
-          CatalogBundleMemoryOrigin.bootstrapPlaceholder);
-    });
+        expect(loaded.series, isEmpty);
+        expect(
+          CatalogBundleCache.memoryOriginForTest,
+          CatalogBundleMemoryOrigin.bootstrapPlaceholder,
+        );
+      },
+    );
 
     test('Firestore timeout keeps persisted bundle on getOrLoad', () async {
       final remote = _remoteWithoutDeletedSeries();
@@ -212,81 +245,100 @@ void main() {
       expect(loaded.series.single.id, 'remote_series');
     });
 
-    test('Firestore failure before first sync resolves empty on getOrLoad',
-        () async {
-      CatalogBundleCache.loadFirestoreOverride = () async {
-        throw StateError('offline');
+    test(
+      'Firestore failure before first sync resolves empty on getOrLoad',
+      () async {
+        CatalogBundleCache.loadFirestoreOverride = () async {
+          throw StateError('offline');
+        };
+
+        final loaded = await CatalogBundleCache.getOrLoad();
+
+        expect(loaded.series, isEmpty);
+        expect(
+          CatalogBundleCache.memoryOriginForTest,
+          CatalogBundleMemoryOrigin.resolved,
+        );
+      },
+    );
+  });
+
+  test(
+    'successful refresh notifies listeners and replaces in-memory bundle',
+    () async {
+      final remote = _remoteWithoutDeletedSeries();
+      CatalogBundleCache.loadFirestoreOverride = () async => remote;
+
+      var notified = false;
+      CatalogBundleCache.onBundleReplaced = () => notified = true;
+
+      await CatalogBundleCache.refreshFromFirestore();
+
+      expect(notified, isTrue);
+      expect(CatalogBundleCache.current?.series.single.id, 'remote_series');
+      expect(
+        await CatalogBundlePersistence.hasCompletedFirestoreSync(),
+        isTrue,
+      );
+    },
+  );
+
+  test(
+    'refresh still notifies when persistence fails after Firestore success',
+    () async {
+      final remote = _remoteWithoutDeletedSeries();
+      CatalogBundleCache.loadFirestoreOverride = () async => remote;
+      CatalogBundleCache.persistOverride = (_) async {
+        throw StateError('disk full');
       };
+
+      var notified = false;
+      CatalogBundleCache.onBundleReplaced = () => notified = true;
+
+      await CatalogBundleCache.refreshFromFirestore();
+
+      expect(notified, isTrue);
+      expect(CatalogBundleCache.current?.series.single.id, 'remote_series');
+      expect(
+        await CatalogBundlePersistence.hasCompletedFirestoreSync(),
+        isFalse,
+      );
+    },
+  );
+
+  test(
+    'getOrLoad notifies when Firestore succeeds even if persistence fails',
+    () async {
+      final remote = _remoteWithoutDeletedSeries();
+      CatalogBundleCache.loadFirestoreOverride = () async => remote;
+      CatalogBundleCache.persistOverride = (_) async {
+        throw StateError('disk full');
+      };
+
+      var notified = false;
+      CatalogBundleCache.onBundleReplaced = () => notified = true;
 
       final loaded = await CatalogBundleCache.getOrLoad();
 
-      expect(loaded.series, isEmpty);
-      expect(CatalogBundleCache.memoryOriginForTest,
-          CatalogBundleMemoryOrigin.resolved);
-    });
-  });
+      expect(notified, isTrue);
+      expect(loaded.series.single.id, 'remote_series');
+      expect(CatalogBundleCache.current?.series.single.id, 'remote_series');
+    },
+  );
 
-  test('successful refresh notifies listeners and replaces in-memory bundle',
-      () async {
-    final remote = _remoteWithoutDeletedSeries();
-    CatalogBundleCache.loadFirestoreOverride = () async => remote;
+  test(
+    'refreshFromFirestore skips Firestore within catalogRefreshTtl',
+    () async {
+      CatalogBundleCache.loadFirestoreOverride = () async {
+        throw StateError('should not fetch');
+      };
+      CatalogBundleCache.setLastFirestoreRefreshAtForTest(DateTime.now());
 
-    var notified = false;
-    CatalogBundleCache.onBundleReplaced = () => notified = true;
+      final outcome = await CatalogBundleCache.refreshFromFirestore();
 
-    await CatalogBundleCache.refreshFromFirestore();
-
-    expect(notified, isTrue);
-    expect(CatalogBundleCache.current?.series.single.id, 'remote_series');
-    expect(await CatalogBundlePersistence.hasCompletedFirestoreSync(), isTrue);
-  });
-
-  test('refresh still notifies when persistence fails after Firestore success',
-      () async {
-    final remote = _remoteWithoutDeletedSeries();
-    CatalogBundleCache.loadFirestoreOverride = () async => remote;
-    CatalogBundleCache.persistOverride = (_) async {
-      throw StateError('disk full');
-    };
-
-    var notified = false;
-    CatalogBundleCache.onBundleReplaced = () => notified = true;
-
-    await CatalogBundleCache.refreshFromFirestore();
-
-    expect(notified, isTrue);
-    expect(CatalogBundleCache.current?.series.single.id, 'remote_series');
-    expect(await CatalogBundlePersistence.hasCompletedFirestoreSync(), isFalse);
-  });
-
-  test('getOrLoad notifies when Firestore succeeds even if persistence fails',
-      () async {
-    final remote = _remoteWithoutDeletedSeries();
-    CatalogBundleCache.loadFirestoreOverride = () async => remote;
-    CatalogBundleCache.persistOverride = (_) async {
-      throw StateError('disk full');
-    };
-
-    var notified = false;
-    CatalogBundleCache.onBundleReplaced = () => notified = true;
-
-    final loaded = await CatalogBundleCache.getOrLoad();
-
-    expect(notified, isTrue);
-    expect(loaded.series.single.id, 'remote_series');
-    expect(CatalogBundleCache.current?.series.single.id, 'remote_series');
-  });
-
-  test('refreshFromFirestore skips Firestore within catalogRefreshTtl', () async {
-    CatalogBundleCache.loadFirestoreOverride = () async {
-      throw StateError('should not fetch');
-    };
-    CatalogBundleCache.setLastFirestoreRefreshAtForTest(DateTime.now());
-
-    final outcome = await CatalogBundleCache.refreshFromFirestore();
-
-    expect(outcome, CatalogFirestoreRefreshResult.skippedWithinTtl);
-  });
+      expect(outcome, CatalogFirestoreRefreshResult.skippedWithinTtl);
+    },
+  );
 
   test('refreshFromFirestore force bypasses catalogRefreshTtl', () async {
     final remote = _remoteWithoutDeletedSeries();
@@ -299,19 +351,22 @@ void main() {
     expect(CatalogBundleCache.current?.series.single.id, 'remote_series');
   });
 
-  test('consecutive refreshFromFirestore calls share one in-flight request', () async {
-    var fetchCount = 0;
-    CatalogBundleCache.loadFirestoreOverride = () async {
-      fetchCount++;
-      await Future<void>.delayed(const Duration(milliseconds: 30));
-      return _remoteWithoutDeletedSeries();
-    };
+  test(
+    'consecutive refreshFromFirestore calls share one in-flight request',
+    () async {
+      var fetchCount = 0;
+      CatalogBundleCache.loadFirestoreOverride = () async {
+        fetchCount++;
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+        return _remoteWithoutDeletedSeries();
+      };
 
-    final first = CatalogBundleCache.refreshFromFirestore(force: true);
-    final second = CatalogBundleCache.refreshFromFirestore(force: true);
+      final first = CatalogBundleCache.refreshFromFirestore(force: true);
+      final second = CatalogBundleCache.refreshFromFirestore(force: true);
 
-    expect(await first, CatalogFirestoreRefreshResult.refreshed);
-    expect(await second, CatalogFirestoreRefreshResult.refreshed);
-    expect(fetchCount, 1);
-  });
+      expect(await first, CatalogFirestoreRefreshResult.refreshed);
+      expect(await second, CatalogFirestoreRefreshResult.refreshed);
+      expect(fetchCount, 1);
+    },
+  );
 }

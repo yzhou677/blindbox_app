@@ -143,7 +143,9 @@ void main() {
     });
   });
 
-  testWidgets('secret figure subtitle shows rarity before odds', (tester) async {
+  testWidgets('secret figure subtitle shows rarity before odds', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         home: CatalogFigureGallerySheet(
@@ -170,7 +172,9 @@ void main() {
     expect(find.textContaining('Secret · Secret'), findsNothing);
   });
 
-  testWidgets('page indicator fits narrow width with many figures', (tester) async {
+  testWidgets('page indicator fits narrow width with many figures', (
+    tester,
+  ) async {
     final items = List<CatalogFigureGalleryItem>.generate(
       33,
       (i) => CatalogFigureGalleryItem(id: 'fig_$i', name: 'Figure $i'),

@@ -42,28 +42,32 @@ void main() {
   });
 
   group('persistent disk cache', () {
-    test('successful Storage resolve persists bytes and returns local path',
-        () async {
-      const imageKey = 'nommi_pinky_energy_series';
-      CatalogImageResolver.getDownloadUrlOverride = (path) async {
-        if (path.endsWith('.png')) {
-          return 'https://example.test/$path';
-        }
-        return null;
-      };
+    test(
+      'successful Storage resolve persists bytes and returns local path',
+      () async {
+        const imageKey = 'nommi_pinky_energy_series';
+        CatalogImageResolver.getDownloadUrlOverride = (path) async {
+          if (path.endsWith('.png')) {
+            return 'https://example.test/$path';
+          }
+          return null;
+        };
 
-      final ref = await CatalogImageResolver.resolveSeriesStorageRef(imageKey);
+        final ref = await CatalogImageResolver.resolveSeriesStorageRef(
+          imageKey,
+        );
 
-      expect(ref, isNotNull);
-      expect(ref, startsWith(tempRoot.path));
-      expect(File(ref!).existsSync(), isTrue);
+        expect(ref, isNotNull);
+        expect(ref, startsWith(tempRoot.path));
+        expect(File(ref!).existsSync(), isTrue);
 
-      final lookup = await CatalogImageDiskCache.lookupLocalPath(
-        kind: CatalogImageKind.series,
-        imageKey: imageKey,
-      );
-      expect(lookup, ref);
-    });
+        final lookup = await CatalogImageDiskCache.lookupLocalPath(
+          kind: CatalogImageKind.series,
+          imageKey: imageKey,
+        );
+        expect(lookup, ref);
+      },
+    );
 
     test('cached disk path reused without Storage extension probes', () async {
       const imageKey = 'nyota_where_moments_meet_series';
@@ -79,7 +83,9 @@ void main() {
         return 'https://example.test/$path';
       };
 
-      final first = await CatalogImageResolver.resolveSeriesStorageRef(imageKey);
+      final first = await CatalogImageResolver.resolveSeriesStorageRef(
+        imageKey,
+      );
       expect(first, isNotNull);
       expect(CatalogImageResolver.storageExtensionProbeCount, 0);
 
@@ -90,7 +96,9 @@ void main() {
         return 'https://example.test/$path';
       };
 
-      final second = await CatalogImageResolver.resolveSeriesStorageRef(imageKey);
+      final second = await CatalogImageResolver.resolveSeriesStorageRef(
+        imageKey,
+      );
       expect(second, first);
       expect(CatalogImageResolver.storageExtensionProbeCount, 0);
     });
@@ -120,32 +128,38 @@ void main() {
       expect(probeCalls, 0);
     });
 
-    test('repeated resolver calls do not repeat extension probing after miss',
-        () async {
-      const imageKey = 'another_missing_key_abc';
-      CatalogImageResolver.getDownloadUrlOverride = (_) async => null;
+    test(
+      'repeated resolver calls do not repeat extension probing after miss',
+      () async {
+        const imageKey = 'another_missing_key_abc';
+        CatalogImageResolver.getDownloadUrlOverride = (_) async => null;
 
-      await CatalogImageResolver.resolveFigureStorageRef(imageKey);
-      final probesAfterFirst = CatalogImageResolver.storageExtensionProbeCount;
+        await CatalogImageResolver.resolveFigureStorageRef(imageKey);
+        final probesAfterFirst =
+            CatalogImageResolver.storageExtensionProbeCount;
 
-      await CatalogImageResolver.resolveFigureStorageRef(imageKey);
-      expect(
-        CatalogImageResolver.storageExtensionProbeCount,
-        probesAfterFirst,
-      );
-    });
+        await CatalogImageResolver.resolveFigureStorageRef(imageKey);
+        expect(
+          CatalogImageResolver.storageExtensionProbeCount,
+          probesAfterFirst,
+        );
+      },
+    );
   });
 
   group('bundled + storage fallback contract', () {
-    test('storageFallbackEnabled=false still resolves bundled assets', () async {
-      CatalogImageResolver.storageFallbackOverride = false;
+    test(
+      'storageFallbackEnabled=false still resolves bundled assets',
+      () async {
+        CatalogImageResolver.storageFallbackOverride = false;
 
-      final ref = await CatalogImageResolver.resolveFigureDisplayRef(
-        _bundledFigureKey,
-      );
+        final ref = await CatalogImageResolver.resolveFigureDisplayRef(
+          _bundledFigureKey,
+        );
 
-      expect(ref, 'assets/catalog/figures/$_bundledFigureKey.png');
-    });
+        expect(ref, 'assets/catalog/figures/$_bundledFigureKey.png');
+      },
+    );
 
     test('valid Storage image still resolves when fallback is on', () async {
       const imageKey = 'skullpanda_petals_in_four_acts';

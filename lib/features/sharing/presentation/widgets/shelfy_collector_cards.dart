@@ -6,6 +6,7 @@ import 'package:blindbox_app/features/sharing/domain/share_card_payloads.dart';
 import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
 import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 const Size kShelfyShareCardLogicalSize = Size(360, 640);
 
@@ -53,7 +54,7 @@ class CollectorTypeShareCard extends StatelessWidget {
               children: [
                 Expanded(child: _MetadataRow(payload.metadata)),
                 const SizedBox(width: 10),
-                const _WaxSeal(icon: Icons.all_inclusive_rounded),
+                const _WaxSeal(icon: Symbols.all_inclusive_rounded),
               ],
             ),
           ],
@@ -77,7 +78,7 @@ class MasterCompleteShareCard extends StatelessWidget {
           children: [
             _CardLabel(
               payload.label,
-              icon: Icons.emoji_events_rounded,
+              icon: Symbols.emoji_events_rounded,
               iconColor: const Color(0xFFCBAA45),
             ),
             const SizedBox(height: 24),
@@ -112,7 +113,7 @@ class MasterCompleteShareCard extends StatelessWidget {
               children: [
                 Expanded(child: _MetadataRow(payload.metadata)),
                 const SizedBox(width: 10),
-                const _WaxSeal(icon: Icons.emoji_events_rounded),
+                const _WaxSeal(icon: Symbols.emoji_events_rounded),
               ],
             ),
           ],
@@ -181,7 +182,7 @@ class ShelfShareCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 10),
-                const _WaxSeal(icon: Icons.collections_bookmark_rounded),
+                const _WaxSeal(icon: Symbols.collections_bookmark_rounded),
               ],
             ),
             const SizedBox(height: 10),

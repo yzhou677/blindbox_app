@@ -57,19 +57,16 @@ void main() {
       },
     );
 
-    test(
-      '2) storageFallback=false + local asset missing → null',
-      () async {
-        CatalogImageResolver.storageFallbackOverride = false;
-        await CatalogImageResolver.ensureReady();
+    test('2) storageFallback=false + local asset missing → null', () async {
+      CatalogImageResolver.storageFallbackOverride = false;
+      await CatalogImageResolver.ensureReady();
 
-        final ref = await CatalogImageResolver.resolveFigureDisplayRef(
-          'catalog_key_with_no_bundled_or_storage_asset',
-        );
+      final ref = await CatalogImageResolver.resolveFigureDisplayRef(
+        'catalog_key_with_no_bundled_or_storage_asset',
+      );
 
-        expect(ref, isNull);
-      },
-    );
+      expect(ref, isNull);
+    });
 
     test(
       '3) storageFallback=true + local missing + no Firebase → null',
@@ -121,7 +118,9 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            relationshipHintForCatalogSeriesProvider.overrideWith((ref, _) => null),
+            relationshipHintForCatalogSeriesProvider.overrideWith(
+              (ref, _) => null,
+            ),
           ],
           child: MaterialApp(
             home: Scaffold(
@@ -154,7 +153,9 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            relationshipHintForCatalogSeriesProvider.overrideWith((ref, _) => null),
+            relationshipHintForCatalogSeriesProvider.overrideWith(
+              (ref, _) => null,
+            ),
           ],
           child: MaterialApp(
             home: Scaffold(

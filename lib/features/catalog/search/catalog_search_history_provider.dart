@@ -14,8 +14,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// write runs unawaited, matching the project's offline-first pattern.
 final catalogSearchHistoryProvider =
     NotifierProvider<CatalogSearchHistoryNotifier, List<String>>(
-  CatalogSearchHistoryNotifier.new,
-);
+      CatalogSearchHistoryNotifier.new,
+    );
 
 class CatalogSearchHistoryNotifier extends Notifier<List<String>> {
   @override

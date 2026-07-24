@@ -91,7 +91,10 @@ void main() {
         ),
         isNotNull,
       );
-      expect(await CatalogImageDiskCache.totalCacheBytes(), lessThanOrEqualTo(200));
+      expect(
+        await CatalogImageDiskCache.totalCacheBytes(),
+        lessThanOrEqualTo(200),
+      );
     });
   });
 
@@ -172,39 +175,46 @@ void main() {
   });
 
   group('stale-while-revalidate resolver', () {
-    test('serves stale disk immediately and dedupes background refresh', () async {
-      CatalogImageResolver.storageFallbackOverride = true;
-      const imageKey = 'stale_refresh_series';
-      await CatalogImageDiskCache.persistBytes(
-        kind: CatalogImageKind.series,
-        imageKey: imageKey,
-        extension: '.png',
-        bytes: _pngBytes,
-        writtenAt: now.subtract(
-          CatalogImageCachePolicy.maxEntryAge + const Duration(days: 3),
-        ),
-      );
+    test(
+      'serves stale disk immediately and dedupes background refresh',
+      () async {
+        CatalogImageResolver.storageFallbackOverride = true;
+        const imageKey = 'stale_refresh_series';
+        await CatalogImageDiskCache.persistBytes(
+          kind: CatalogImageKind.series,
+          imageKey: imageKey,
+          extension: '.png',
+          bytes: _pngBytes,
+          writtenAt: now.subtract(
+            CatalogImageCachePolicy.maxEntryAge + const Duration(days: 3),
+          ),
+        );
 
-      var refreshProbes = 0;
-      CatalogImageResolver.getDownloadUrlOverride = (path) async {
-        refreshProbes++;
-        if (path.endsWith('.png')) return 'https://example.test/$path';
-        return null;
-      };
+        var refreshProbes = 0;
+        CatalogImageResolver.getDownloadUrlOverride = (path) async {
+          refreshProbes++;
+          if (path.endsWith('.png')) return 'https://example.test/$path';
+          return null;
+        };
 
-      final first = await CatalogImageResolver.resolveSeriesStorageRef(imageKey);
-      expect(first, isNotNull);
-      expect(refreshProbes, 0);
+        final first = await CatalogImageResolver.resolveSeriesStorageRef(
+          imageKey,
+        );
+        expect(first, isNotNull);
+        expect(refreshProbes, 0);
 
-      await Future<void>.delayed(const Duration(milliseconds: 50));
-      expect(CatalogImageResolver.backgroundRefreshCount, 1);
-      expect(refreshProbes, greaterThan(0));
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        expect(CatalogImageResolver.backgroundRefreshCount, 1);
+        expect(refreshProbes, greaterThan(0));
 
-      refreshProbes = 0;
-      final second = await CatalogImageResolver.resolveSeriesStorageRef(imageKey);
-      expect(second, first);
-      expect(refreshProbes, 0);
-      expect(CatalogImageResolver.backgroundRefreshCount, 1);
-    });
+        refreshProbes = 0;
+        final second = await CatalogImageResolver.resolveSeriesStorageRef(
+          imageKey,
+        );
+        expect(second, first);
+        expect(refreshProbes, 0);
+        expect(CatalogImageResolver.backgroundRefreshCount, 1);
+      },
+    );
   });
 }

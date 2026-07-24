@@ -1,4 +1,4 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 
 import 'package:blindbox_app/features/catalog/data/catalog_bundle_lookup.dart';
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
@@ -87,7 +87,8 @@ List<CatalogSeriesSearchRow> buildCatalogSeriesSearchRows({
         if (series == null) {
           throw StateError('Catalog seed missing series $sid');
         }
-        final figureCount = lookup?.figureCountInSeries(sid) ??
+        final figureCount =
+            lookup?.figureCountInSeries(sid) ??
             _figureCountInSeries(bundle, sid);
         final summaryLine = catalogSearchRowSummary(
           figureCount: figureCount,

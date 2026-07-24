@@ -25,20 +25,28 @@ class CatalogSeedBundle {
 
 List<CatalogBrand> parseCatalogBrandsJson(String json) {
   final decoded = jsonDecode(json);
-  return [for (final m in catalogReadObjectList(decoded)) CatalogBrand.fromJson(m)];
+  return [
+    for (final m in catalogReadObjectList(decoded)) CatalogBrand.fromJson(m),
+  ];
 }
 
 List<CatalogIp> parseCatalogIpsJson(String json) {
   final decoded = jsonDecode(json);
-  return [for (final m in catalogReadObjectList(decoded)) CatalogIp.fromJson(m)];
+  return [
+    for (final m in catalogReadObjectList(decoded)) CatalogIp.fromJson(m),
+  ];
 }
 
 List<CatalogSeries> parseCatalogSeriesJson(String json) {
   final decoded = jsonDecode(json);
-  return [for (final m in catalogReadObjectList(decoded)) CatalogSeries.fromJson(m)];
+  return [
+    for (final m in catalogReadObjectList(decoded)) CatalogSeries.fromJson(m),
+  ];
 }
 
 List<CatalogFigure> parseCatalogFiguresJson(String json) {
   final decoded = jsonDecode(json);
-  return [for (final m in catalogReadObjectList(decoded)) CatalogFigure.fromJson(m)];
+  return [
+    for (final m in catalogReadObjectList(decoded)) CatalogFigure.fromJson(m),
+  ];
 }

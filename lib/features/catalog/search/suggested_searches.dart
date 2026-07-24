@@ -8,10 +8,7 @@ import 'dart:math';
 /// Keep the pool as [SuggestedSearch] (not raw strings) so i18n can later supply
 /// localized [display] while [query] stays catalog/search-stable.
 class SuggestedSearch {
-  const SuggestedSearch({
-    required this.query,
-    this.display,
-  });
+  const SuggestedSearch({required this.query, this.display});
 
   final String query;
   final String? display;

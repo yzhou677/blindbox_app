@@ -31,7 +31,11 @@ void main() {
   });
 
   test('returns null for unknown series', () async {
-    final t = await catalogTemplateFromSeedSeries(bundle, 'missing', resolveFigureImages: false);
+    final t = await catalogTemplateFromSeedSeries(
+      bundle,
+      'missing',
+      resolveFigureImages: false,
+    );
     expect(t, isNull);
   });
 
@@ -45,7 +49,10 @@ void main() {
     expect(t!.templateId, 'dimoo_test_series');
     expect(t.brand, 'POP MART');
     expect(t.ipName, 'DIMOO');
-    expect(t.figures.map((f) => f.templateFigureId), ['dimoo_fig_reg', 'dimoo_fig_secret']);
+    expect(t.figures.map((f) => f.templateFigureId), [
+      'dimoo_fig_reg',
+      'dimoo_fig_secret',
+    ]);
     expect(t.figures.last.catalogImageKey, 'dimoo_fig_secret');
     expect(t.figures.last.rarity, '1:288');
     expect(t.figures.first.rarity, 'Regular');

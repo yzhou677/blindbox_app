@@ -1,6 +1,8 @@
 import 'package:blindbox_app/core/theme/app_spacing.dart';
+import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
 import 'package:blindbox_app/features/catalog/search/suggested_searches.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Vertical rhythm for history / suggestion lists (Catalog + Market search).
 abstract final class SearchHistorySectionSpacing {
@@ -67,8 +69,9 @@ class CatalogSearchHistorySection extends StatelessWidget {
             label: query,
             onTap: () => onQueryTap(query),
             showDeleteButton: showDeleteButtons,
-            onRemove:
-                showDeleteButtons && onRemove != null ? () => onRemove!(query) : null,
+            onRemove: showDeleteButtons && onRemove != null
+                ? () => onRemove!(query)
+                : null,
           ),
         if (showClearAll) _SearchHistoryClearAll(onPressed: onClearAll),
       ],
@@ -110,7 +113,8 @@ class _ShuffledSuggestedSearchesSection extends StatefulWidget {
 
 class _ShuffledSuggestedSearchesSectionState
     extends State<_ShuffledSuggestedSearchesSection> {
-  late final List<SuggestedSearch> _suggestions = pickDisplayedSuggestedSearches();
+  late final List<SuggestedSearch> _suggestions =
+      pickDisplayedSuggestedSearches();
 
   @override
   Widget build(BuildContext context) {
@@ -216,7 +220,7 @@ class SearchHistoryRow extends StatelessWidget {
   final bool showDeleteButton;
   final VoidCallback? onRemove;
 
-  static const double _historyIconSize = 18;
+  static const double _historyIconSize = AppIconSizes.metadata;
   static const double _historyIconGap = 12;
   static const double _deleteLeadingGap = 4;
   static const double _deleteTapSize = 32;
@@ -236,7 +240,7 @@ class SearchHistoryRow extends StatelessWidget {
         child: Row(
           children: [
             Icon(
-              Icons.history_rounded,
+              Symbols.history_rounded,
               size: _historyIconSize,
               color: scheme.onSurfaceVariant.withValues(alpha: 0.55),
             ),
@@ -244,9 +248,7 @@ class SearchHistoryRow extends StatelessWidget {
             Expanded(
               child: Text(
                 label,
-                style: textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurface,
-                ),
+                style: textTheme.bodyMedium?.copyWith(color: scheme.onSurface),
                 maxLines: 1,
                 softWrap: false,
                 overflow: TextOverflow.ellipsis,
@@ -259,7 +261,7 @@ class SearchHistoryRow extends StatelessWidget {
                 height: _deleteTapSize,
                 child: IconButton(
                   icon: Icon(
-                    Icons.close_rounded,
+                    Symbols.close_rounded,
                     size: _historyIconSize,
                     color: scheme.onSurfaceVariant.withValues(alpha: 0.55),
                   ),

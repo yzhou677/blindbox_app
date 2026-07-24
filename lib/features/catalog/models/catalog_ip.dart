@@ -26,9 +26,9 @@ class CatalogIp {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'brandId': brandId,
-        'displayName': displayName,
-        if (aliases.isNotEmpty) 'aliases': aliases,
-      };
+    'id': id,
+    'brandId': brandId,
+    'displayName': displayName,
+    if (aliases.isNotEmpty) 'aliases': aliases,
+  };
 }

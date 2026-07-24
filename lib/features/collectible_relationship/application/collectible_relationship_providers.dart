@@ -16,13 +16,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final collectibleRelationshipIndexProvider =
     Provider<CollectibleRelationshipIndex>((ref) {
-  final snap = ref.watch(collectionNotifierProvider);
-  final catalog = ref.watch(catalogBundleProvider).valueOrNull;
-  return CollectibleRelationshipIndex.fromShelfAndCatalog(
-    snap: snap,
-    catalog: catalog,
-  );
-});
+      final snap = ref.watch(collectionNotifierProvider);
+      final catalog = ref.watch(catalogBundleProvider).valueOrNull;
+      return CollectibleRelationshipIndex.fromShelfAndCatalog(
+        snap: snap,
+        catalog: catalog,
+      );
+    });
 
 final shelfHarmonyLineProvider = Provider<String?>((ref) {
   final snap = ref.watch(collectionNotifierProvider);
@@ -62,7 +62,9 @@ CollectibleRelationshipFocal _focalFromMarketIdentity(
   );
 }
 
-CollectibleRelationshipFocal _focalFromCatalogMatch(MarketIdentityMatch? match) {
+CollectibleRelationshipFocal _focalFromCatalogMatch(
+  MarketIdentityMatch? match,
+) {
   if (match == null) return const CollectibleRelationshipFocal();
   return CollectibleRelationshipFocal(
     catalogSeriesId: match.matchedSeriesId,
@@ -76,74 +78,72 @@ String? _lineForFocal(
   CollectibleRelationshipFocal focal,
   CollectibleRelationshipIndex index,
 ) {
-  final hint = resolveCollectibleRelationshipHint(
-    focal: focal,
-    index: index,
-  );
+  final hint = resolveCollectibleRelationshipHint(focal: focal, index: index);
   if (hint == null) return null;
   return CollectibleRelationshipCopy.lineForHint(hint: hint, index: index);
 }
 
-final relationshipHintForShelfSeriesProvider =
-    Provider.family<String?, String>((ref, shelfSeriesId) {
-  final snap = ref.watch(collectionNotifierProvider);
-  ShelfSeries? series;
-  for (final s in snap.shelfSeries) {
-    if (s.id == shelfSeriesId) {
-      series = s;
-      break;
+final relationshipHintForShelfSeriesProvider = Provider.family<String?, String>(
+  (ref, shelfSeriesId) {
+    final snap = ref.watch(collectionNotifierProvider);
+    ShelfSeries? series;
+    for (final s in snap.shelfSeries) {
+      if (s.id == shelfSeriesId) {
+        series = s;
+        break;
+      }
     }
-  }
-  if (series == null) return null;
-  final index = ref.watch(collectibleRelationshipIndexProvider);
-  return _lineForFocal(_focalFromShelfSeries(series), index);
-});
+    if (series == null) return null;
+    final index = ref.watch(collectibleRelationshipIndexProvider);
+    return _lineForFocal(_focalFromShelfSeries(series), index);
+  },
+);
 
 final relationshipHintForCatalogSeriesProvider =
     Provider.family<String?, String>((ref, templateId) {
-  final catalog = ref.watch(catalogBundleProvider).valueOrNull;
-  if (catalog == null) return null;
-  for (final s in catalog.series) {
-    if (s.id != templateId) continue;
-    final index = ref.watch(collectibleRelationshipIndexProvider);
-    return _lineForFocal(
-      CollectibleRelationshipFocal(
-        catalogSeriesId: s.id,
-        taxonomyIpId: s.ipId,
-        taxonomyBrandId: s.brandId,
-      ),
-      index,
-    );
-  }
-  return null;
-});
+      final catalog = ref.watch(catalogBundleProvider).valueOrNull;
+      if (catalog == null) return null;
+      for (final s in catalog.series) {
+        if (s.id != templateId) continue;
+        final index = ref.watch(collectibleRelationshipIndexProvider);
+        return _lineForFocal(
+          CollectibleRelationshipFocal(
+            catalogSeriesId: s.id,
+            taxonomyIpId: s.ipId,
+            taxonomyBrandId: s.brandId,
+          ),
+          index,
+        );
+      }
+      return null;
+    });
 
 final relationshipHintForMarketSnapshotProvider =
     Provider.family<String?, String>((ref, snapshotId) {
-  final snapshots = ref.watch(collectibleMarketSnapshotsProvider);
-  CollectibleMarketSnapshot? snapshot;
-  for (final s in snapshots) {
-    if (s.identity.snapshotId == snapshotId) {
-      snapshot = s;
-      break;
-    }
-  }
-  if (snapshot == null) return null;
-  final index = ref.watch(collectibleRelationshipIndexProvider);
-  return _lineForFocal(_focalFromMarketIdentity(snapshot), index);
-});
+      final snapshots = ref.watch(collectibleMarketSnapshotsProvider);
+      CollectibleMarketSnapshot? snapshot;
+      for (final s in snapshots) {
+        if (s.identity.snapshotId == snapshotId) {
+          snapshot = s;
+          break;
+        }
+      }
+      if (snapshot == null) return null;
+      final index = ref.watch(collectibleRelationshipIndexProvider);
+      return _lineForFocal(_focalFromMarketIdentity(snapshot), index);
+    });
 
 final relationshipHintForMarketListingProvider =
     Provider.family<String?, String>((ref, listingId) {
-  final listings = ref.watch(marketBrowseListingsProvider);
-  MarketListing? listing;
-  for (final row in listings) {
-    if (row.id == listingId) {
-      listing = row;
-      break;
-    }
-  }
-  if (listing == null) return null;
-  final index = ref.watch(collectibleRelationshipIndexProvider);
-  return _lineForFocal(_focalFromCatalogMatch(listing.catalogMatch), index);
-});
+      final listings = ref.watch(marketBrowseListingsProvider);
+      MarketListing? listing;
+      for (final row in listings) {
+        if (row.id == listingId) {
+          listing = row;
+          break;
+        }
+      }
+      if (listing == null) return null;
+      final index = ref.watch(collectibleRelationshipIndexProvider);
+      return _lineForFocal(_focalFromCatalogMatch(listing.catalogMatch), index);
+    });

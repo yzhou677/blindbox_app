@@ -23,8 +23,7 @@ List<CatalogFigureGalleryItem> catalogGalleryItemsFromShelfSeries(
   ShelfSeries series,
 ) {
   return [
-    for (final f in series.figures)
-      _galleryItemFromShelfFigure(f, series),
+    for (final f in series.figures) _galleryItemFromShelfFigure(f, series),
   ];
 }
 

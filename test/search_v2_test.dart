@@ -49,7 +49,9 @@ void main() {
         'the monsters exciting macaron',
       );
       expect(
-        SearchNormalizer.normalize('SKULLPANDA Petals in Four Acts Series Figures'),
+        SearchNormalizer.normalize(
+          'SKULLPANDA Petals in Four Acts Series Figures',
+        ),
         'skullpanda petals in four acts',
       );
     });
@@ -83,10 +85,12 @@ void main() {
 
   group('SearchTokenizer', () {
     test('splits normalized query on spaces', () {
-      expect(
-        SearchTokenizer.tokenize('the monsters hello kitty'),
-        ['the', 'monsters', 'hello', 'kitty'],
-      );
+      expect(SearchTokenizer.tokenize('the monsters hello kitty'), [
+        'the',
+        'monsters',
+        'hello',
+        'kitty',
+      ]);
     });
 
     test('empty raw query yields no tokens', () {
@@ -283,15 +287,21 @@ void main() {
       expect(spaced, compact);
     });
 
-    test('blind box alone is boilerplate-only and yields no catalog results', () {
-      expect(SearchNormalizer.normalize('blind box'), isEmpty);
-      expect(SearchTokenizer.tokenize('blind box'), isEmpty);
-      expect(svc.search('blind box'), isEmpty);
-    });
+    test(
+      'blind box alone is boilerplate-only and yields no catalog results',
+      () {
+        expect(SearchNormalizer.normalize('blind box'), isEmpty);
+        expect(SearchTokenizer.tokenize('blind box'), isEmpty);
+        expect(svc.search('blind box'), isEmpty);
+      },
+    );
 
-    test('blind box plus content tokens still matches after boilerplate strip', () {
-      expect(figureIds('blind box exciting macaron'), equals({'fig_soy'}));
-    });
+    test(
+      'blind box plus content tokens still matches after boilerplate strip',
+      () {
+        expect(figureIds('blind box exciting macaron'), equals({'fig_soy'}));
+      },
+    );
   });
 
   group('filterShelfSeriesBySearch token matching', () {
@@ -354,7 +364,10 @@ void main() {
         series: 'THE MONSTERS ? HELLO KITTY',
         brand: 'POP MART',
       );
-      expect(marketListingMatchesFreeText(listing, 'hello kitty monsters'), isTrue);
+      expect(
+        marketListingMatchesFreeText(listing, 'hello kitty monsters'),
+        isTrue,
+      );
       expect(marketListingMatchesFreeText(listing, 'football kitty'), isFalse);
     });
 
@@ -367,18 +380,9 @@ void main() {
 
   group('SearchPlaceholders', () {
     test('each surface has a distinct scope-first hint', () {
-      expect(
-        SearchPlaceholders.collection,
-        'Search your collection…',
-      );
-      expect(
-        SearchPlaceholders.discoverCatalog,
-        'Search the catalog…',
-      );
-      expect(
-        SearchPlaceholders.market,
-        'Search market listings…',
-      );
+      expect(SearchPlaceholders.collection, 'Search your collection…');
+      expect(SearchPlaceholders.discoverCatalog, 'Search the catalog…');
+      expect(SearchPlaceholders.market, 'Search market listings…');
       expect(SearchPlaceholders.collection, isNot(SearchPlaceholders.market));
       expect(
         SearchPlaceholders.discoverCatalog,
@@ -389,17 +393,11 @@ void main() {
 
   group('CatalogSearchHistoryRules Search V2', () {
     test('normalize lowercases and folds separators', () {
-      expect(
-        CatalogSearchHistoryRules.normalize('  LABUBU  '),
-        'labubu',
-      );
+      expect(CatalogSearchHistoryRules.normalize('  LABUBU  '), 'labubu');
     });
 
     test('deduplicates case-insensitively after normalize', () {
-      final result = CatalogSearchHistoryRules.add(
-        ['labubu'],
-        'LABUBU',
-      );
+      final result = CatalogSearchHistoryRules.add(['labubu'], 'LABUBU');
       expect(result, equals(['labubu']));
     });
 

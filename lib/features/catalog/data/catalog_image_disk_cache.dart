@@ -50,8 +50,7 @@ abstract final class CatalogImageDiskCache {
   static String entryKey({
     required CatalogImageKind kind,
     required String imageKey,
-  }) =>
-      '${CatalogImageResolver.storagePrefixFor(kind)}/${imageKey.trim()}';
+  }) => '${CatalogImageResolver.storagePrefixFor(kind)}/${imageKey.trim()}';
 
   static Future<Directory> _cacheRoot() {
     if (testRootOverride != null) {
@@ -70,9 +69,9 @@ abstract final class CatalogImageDiskCache {
   }
 
   static String _subdirName(CatalogImageKind kind) => switch (kind) {
-        CatalogImageKind.figure => 'figures',
-        CatalogImageKind.series => 'series',
-      };
+    CatalogImageKind.figure => 'figures',
+    CatalogImageKind.series => 'series',
+  };
 
   static String _safeStem(String imageKey) {
     final k = imageKey.trim();
@@ -378,23 +377,23 @@ final class _CacheEntry {
   DateTime? lastRefreshAttemptAt;
 
   Map<String, dynamic> toJson() => {
-        'path': path,
-        'sizeBytes': sizeBytes,
-        'writtenAt': writtenAt.toIso8601String(),
-        'lastAccessedAt': lastAccessedAt.toIso8601String(),
-        if (lastRefreshAttemptAt != null)
-          'lastRefreshAttemptAt': lastRefreshAttemptAt!.toIso8601String(),
-      };
+    'path': path,
+    'sizeBytes': sizeBytes,
+    'writtenAt': writtenAt.toIso8601String(),
+    'lastAccessedAt': lastAccessedAt.toIso8601String(),
+    if (lastRefreshAttemptAt != null)
+      'lastRefreshAttemptAt': lastRefreshAttemptAt!.toIso8601String(),
+  };
 
   static _CacheEntry fromJson(Map<String, dynamic> json) => _CacheEntry(
-        path: json['path'] as String,
-        sizeBytes: json['sizeBytes'] as int,
-        writtenAt: DateTime.parse(json['writtenAt'] as String),
-        lastAccessedAt: DateTime.parse(json['lastAccessedAt'] as String),
-        lastRefreshAttemptAt: json['lastRefreshAttemptAt'] == null
-            ? null
-            : DateTime.parse(json['lastRefreshAttemptAt'] as String),
-      );
+    path: json['path'] as String,
+    sizeBytes: json['sizeBytes'] as int,
+    writtenAt: DateTime.parse(json['writtenAt'] as String),
+    lastAccessedAt: DateTime.parse(json['lastAccessedAt'] as String),
+    lastRefreshAttemptAt: json['lastRefreshAttemptAt'] == null
+        ? null
+        : DateTime.parse(json['lastRefreshAttemptAt'] as String),
+  );
 }
 
 final class _CacheIndex {

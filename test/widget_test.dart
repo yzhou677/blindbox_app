@@ -15,15 +15,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 List<Override> _blindboxTestOverrides() => [
   catalogBundleProvider.overrideWith(
-    (_) async => const CatalogSeedBundle(
-      brands: [],
-      ips: [],
-      series: [],
-      figures: [],
-    ),
+    (_) async =>
+        const CatalogSeedBundle(brands: [], ips: [], series: [], figures: []),
   ),
   homeFeedSnapshotProvider.overrideWith(
     (_) async => HomeFeedSnapshot(
@@ -138,12 +135,7 @@ void main() {
   setUp(() {
     CatalogBundleCache.resetForTest();
     CatalogBundleCache.prime(
-      const CatalogSeedBundle(
-        brands: [],
-        ips: [],
-        series: [],
-        figures: [],
-      ),
+      const CatalogSeedBundle(brands: [], ips: [], series: [], figures: []),
     );
     // [appRouter] is a process-wide singleton; reset the shell tab between tests.
     appRouter.go('/collection');
@@ -175,7 +167,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
-    await tester.tap(find.byIcon(Icons.explore_outlined));
+    await tester.tap(find.byIcon(Symbols.explore_rounded));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
@@ -203,7 +195,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 600));
 
     expect(find.text('My collection'), findsWidgets);
-    expect(find.byKey(const Key('collection_insights_compact_glance')), findsOneWidget);
+    expect(
+      find.byKey(const Key('collection_insights_compact_glance')),
+      findsOneWidget,
+    );
     expect(find.text('5'), findsOneWidget);
     expect(
       find.byKey(const Key('collection_header_add_series')),
@@ -214,7 +209,10 @@ void main() {
 
     // Completed series are collapsed by default — expand before asserting card text.
     for (var i = 0; i < 4; i++) {
-      await tester.drag(find.byType(CustomScrollView).first, const Offset(0, -400));
+      await tester.drag(
+        find.byType(CustomScrollView).first,
+        const Offset(0, -400),
+      );
       await tester.pump();
     }
     await tester.pump(const Duration(milliseconds: 200));
@@ -259,7 +257,7 @@ void main() {
 
     expect(find.text('Add a series'), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.explore_outlined));
+    await tester.tap(find.byIcon(Symbols.explore_rounded));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 

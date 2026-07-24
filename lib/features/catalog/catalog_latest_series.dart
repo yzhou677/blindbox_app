@@ -1,5 +1,6 @@
-﻿import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
-import 'package:blindbox_app/features/catalog/models/catalog_series.dart' as catalog;
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
+import 'package:blindbox_app/features/catalog/models/catalog_series.dart'
+    as catalog;
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 
 /// Picks up to [limit] newest catalog series (newest [releaseDate] first).
