@@ -21,9 +21,9 @@ import 'helpers/collection_fixtures.dart';
 final class InsightsHintTestNotifier extends CollectionNotifier {
   @override
   CollectionSnapshot build() => CollectionSnapshot(
-        shelfSeries: [testShelfSeries()],
-        figureStates: const {},
-      );
+    shelfSeries: [testShelfSeries()],
+    figureStates: const {},
+  );
 }
 
 void main() {
@@ -78,37 +78,42 @@ void main() {
     expect(find.text(CollectorTypeCopy.analyzingLine), findsNothing);
   });
 
-  testWidgets('stale collection shows compact stale card alongside evolution hint',
-      (tester) async {
-    await CollectionMemoryStore.instance.saveCollectorType(
-      CollectorTypeIdentity(
-        archetypeId: CollectorTypeArchetypeId.wanderer,
-        revealedAt: DateTime.now().subtract(const Duration(days: 1)),
-        signatureHash: 'stale-signature',
-        stats: const CollectorTypeStats(
-          totalOwned: 1,
-          totalWishlist: 0,
-          trackedSeries: 1,
-          completedSeriesCount: 0,
-          masterCompleteSeriesCount: 0,
-          masterEligibleSeriesCount: 0,
-          completionPercent: 50,
-          secretOwned: 0,
-          secretSlots: 0,
-          brandBreakdown: {'pop_mart': 1},
-          topSeries: ['Test Series'],
-          customSeriesRatio: 0,
+  testWidgets(
+    'stale collection shows compact stale card alongside evolution hint',
+    (tester) async {
+      await CollectionMemoryStore.instance.saveCollectorType(
+        CollectorTypeIdentity(
+          archetypeId: CollectorTypeArchetypeId.wanderer,
+          revealedAt: DateTime.now().subtract(const Duration(days: 1)),
+          signatureHash: 'stale-signature',
+          stats: const CollectorTypeStats(
+            totalOwned: 1,
+            totalWishlist: 0,
+            trackedSeries: 1,
+            completedSeriesCount: 0,
+            masterCompleteSeriesCount: 0,
+            masterEligibleSeriesCount: 0,
+            completionPercent: 50,
+            secretOwned: 0,
+            secretSlots: 0,
+            brandBreakdown: {'pop_mart': 1},
+            topSeries: ['Test Series'],
+            customSeriesRatio: 0,
+          ),
         ),
-      ),
-    );
+      );
 
-    await pumpScreen(tester, showHint: true, needsReveal: true);
+      await pumpScreen(tester, showHint: true, needsReveal: true);
 
-    expect(find.text(CollectorTypeCopy.evolutionHint), findsOneWidget);
-    expect(find.byType(CollectorTypeStaleInsightsOverlay), findsOneWidget);
-    expect(find.text(CollectorTypeCopy.staleInsightsMessageCompact), findsOneWidget);
-    expect(find.text(CollectorTypeCopy.staleInsightsMessage), findsNothing);
-    expect(find.text(CollectorTypeCopy.revealAgain), findsOneWidget);
-    expect(find.text('The Wanderer'), findsOneWidget);
-  });
+      expect(find.text(CollectorTypeCopy.evolutionHint), findsOneWidget);
+      expect(find.byType(CollectorTypeStaleInsightsOverlay), findsOneWidget);
+      expect(
+        find.text(CollectorTypeCopy.staleInsightsMessageCompact),
+        findsOneWidget,
+      );
+      expect(find.text(CollectorTypeCopy.staleInsightsMessage), findsNothing);
+      expect(find.text(CollectorTypeCopy.revealAgain), findsOneWidget);
+      expect(find.text('The Wanderer'), findsOneWidget);
+    },
+  );
 }

@@ -1,13 +1,10 @@
 import 'package:blindbox_app/features/collection/application/collection_series_identity.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Visual semantics for shelf add / owned CTAs — shared across Home, Search, Add sheet.
-enum OwnershipShelfCtaVisualState {
-  addable,
-  owned,
-  disabled,
-}
+enum OwnershipShelfCtaVisualState { addable, owned, disabled }
 
 /// Layout profile — same ownership truth, different chrome per surface.
 enum CollectionSeriesShelfCtaLayout {
@@ -61,7 +58,7 @@ class CollectionSeriesShelfCtaPresentation {
           const CollectionSeriesShelfCtaPresentation(
             visualState: OwnershipShelfCtaVisualState.owned,
             label: 'In collection',
-            icon: Icons.check_rounded,
+            icon: Symbols.check_rounded,
             enabled: false,
             semanticsLabel: 'Already in your collection',
             usePrimaryTint: false,
@@ -71,8 +68,8 @@ class CollectionSeriesShelfCtaPresentation {
             visualState: OwnershipShelfCtaVisualState.owned,
             label: '',
             icon: match.removableViaReleaseCta
-                ? Icons.bookmark_added_rounded
-                : Icons.check_circle_rounded,
+                ? Symbols.bookmark_added_rounded
+                : Symbols.check_circle_rounded,
             enabled: true,
             semanticsLabel: match.removableViaReleaseCta
                 ? 'Remove from collection'
@@ -83,7 +80,7 @@ class CollectionSeriesShelfCtaPresentation {
           CollectionSeriesShelfCtaPresentation(
             visualState: OwnershipShelfCtaVisualState.owned,
             label: 'In your collection',
-            icon: Icons.check_rounded,
+            icon: Symbols.check_rounded,
             enabled: match.removableViaReleaseCta,
             semanticsLabel: 'Already in your collection',
             usePrimaryTint: false,
@@ -92,7 +89,7 @@ class CollectionSeriesShelfCtaPresentation {
           const CollectionSeriesShelfCtaPresentation(
             visualState: OwnershipShelfCtaVisualState.owned,
             label: 'View',
-            icon: Icons.chevron_right_rounded,
+            icon: Symbols.chevron_right_rounded,
             enabled: true,
             semanticsLabel: 'View series in your collection',
             usePrimaryTint: false,
@@ -101,7 +98,7 @@ class CollectionSeriesShelfCtaPresentation {
           const CollectionSeriesShelfCtaPresentation(
             visualState: OwnershipShelfCtaVisualState.owned,
             label: 'In collection',
-            icon: Icons.check_rounded,
+            icon: Symbols.check_rounded,
             enabled: false,
             semanticsLabel: 'Already in your collection',
             usePrimaryTint: false,
@@ -114,7 +111,7 @@ class CollectionSeriesShelfCtaPresentation {
         const CollectionSeriesShelfCtaPresentation(
           visualState: OwnershipShelfCtaVisualState.addable,
           label: 'Add',
-          icon: Icons.add_rounded,
+          icon: Symbols.add_rounded,
           enabled: true,
           semanticsLabel: 'Add to collection',
           usePrimaryTint: true,
@@ -123,7 +120,7 @@ class CollectionSeriesShelfCtaPresentation {
         const CollectionSeriesShelfCtaPresentation(
           visualState: OwnershipShelfCtaVisualState.addable,
           label: '',
-          icon: Icons.add_circle_outline_rounded,
+          icon: Symbols.add_circle_outline_rounded,
           enabled: true,
           semanticsLabel: 'Add to my collection',
           usePrimaryTint: true,
@@ -132,7 +129,7 @@ class CollectionSeriesShelfCtaPresentation {
         const CollectionSeriesShelfCtaPresentation(
           visualState: OwnershipShelfCtaVisualState.addable,
           label: 'Add to my collection',
-          icon: Icons.add_rounded,
+          icon: Symbols.add_rounded,
           enabled: true,
           semanticsLabel: 'Add to my collection',
           usePrimaryTint: true,
@@ -141,7 +138,7 @@ class CollectionSeriesShelfCtaPresentation {
         const CollectionSeriesShelfCtaPresentation(
           visualState: OwnershipShelfCtaVisualState.addable,
           label: 'Browse',
-          icon: Icons.chevron_right_rounded,
+          icon: Symbols.chevron_right_rounded,
           enabled: true,
           semanticsLabel: 'Browse series',
           usePrimaryTint: true,
@@ -150,7 +147,7 @@ class CollectionSeriesShelfCtaPresentation {
         const CollectionSeriesShelfCtaPresentation(
           visualState: OwnershipShelfCtaVisualState.addable,
           label: 'Add to shelf',
-          icon: Icons.add_rounded,
+          icon: Symbols.add_rounded,
           enabled: true,
           semanticsLabel: 'Add to shelf',
           usePrimaryTint: true,

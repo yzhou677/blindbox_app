@@ -2,6 +2,7 @@ import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/app_typography.dart';
 import 'package:blindbox_app/core/theme/collectible_shape.dart';
+import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/domain/series_completion_resolution.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
@@ -9,6 +10,7 @@ import 'package:blindbox_app/features/collection/presentation/completion_metric_
 import 'package:blindbox_app/features/collection/presentation/collection_summary_editorial.dart';
 import 'package:blindbox_app/features/collection/widgets/info_tooltip_icon.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Soft glance at the shelf — not a stats dashboard.
 @immutable
@@ -70,8 +72,6 @@ class CollectionSummaryMetricLabels {
     secondary: 'Wishlisted Figures',
     tertiary: '',
     quaternary: '',
-    primaryEmoji: '📚',
-    secondaryEmoji: '💜',
     tertiaryTooltip: null,
     showSecondRow: false,
   );
@@ -128,9 +128,9 @@ class CollectionSummarySection extends StatelessWidget {
             onTap: onSummaryCardTap,
             child: Padding(
               padding: EdgeInsets.fromLTRB(
-                18,
+                16,
                 cardTopPadding ?? cardVerticalPadding,
-                18,
+                16,
                 cardBottomPadding ?? cardVerticalPadding,
               ),
               child: Column(
@@ -305,7 +305,9 @@ class _MetricRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(child: children[0]),
-          Center(child: _Dot(scheme: scheme, muted: muted)),
+          Center(
+            child: _Dot(scheme: scheme, muted: muted),
+          ),
           Expanded(child: children[1]),
         ],
       ),
@@ -347,8 +349,8 @@ class _InsightsEntryRow extends StatelessWidget {
             child: Row(
               children: [
                 Icon(
-                  Icons.auto_awesome_outlined,
-                  size: 18,
+                  Symbols.auto_awesome_rounded,
+                  size: AppIconSizes.metadata,
                   color: scheme.primary.withValues(alpha: 0.7),
                 ),
                 const SizedBox(width: 10),
@@ -365,8 +367,8 @@ class _InsightsEntryRow extends StatelessWidget {
                   ),
                 ),
                 Icon(
-                  Icons.chevron_right_rounded,
-                  size: 20,
+                  Symbols.chevron_right_rounded,
+                  size: AppIconSizes.expand,
                   color: scheme.onSurfaceVariant.withValues(alpha: 0.55),
                 ),
               ],
@@ -425,17 +427,17 @@ class _ShelfGlanceStatCell extends StatelessWidget {
   Widget build(BuildContext context) {
     final countAlpha = muted ? 0.36 : 0.92;
     final labelAlpha = muted
-        ? 0.38
+        ? 0.34
         : emphasizeLabel
-        ? 0.78
-        : 0.72;
+        ? 0.62
+        : 0.54;
 
     final labelStyle = AppTypography.deckText(textTheme, scheme).copyWith(
       color: scheme.onSurfaceVariant.withValues(alpha: labelAlpha),
-      fontWeight: emphasizeLabel ? FontWeight.w600 : FontWeight.w500,
+      fontWeight: emphasizeLabel ? FontWeight.w500 : FontWeight.w400,
       fontSize: 11.5,
       height: 1.18,
-      letterSpacing: 0.02,
+      letterSpacing: 0.04,
     );
 
     final countStyle = AppTypography.insightsTotals(textTheme, scheme).copyWith(

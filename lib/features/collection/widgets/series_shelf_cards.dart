@@ -12,6 +12,7 @@ import 'package:blindbox_app/features/collection/presentation/collection_series_
 import 'package:blindbox_app/features/collection/widgets/collection_progress_voice.dart';
 import 'package:blindbox_app/features/collection/widgets/series_completion_stat_slot.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// One series row on the collector shelf — emotional progress + subtle completion glow.
 class SeriesShelfCard extends StatefulWidget {
@@ -120,7 +121,7 @@ class _SeriesShelfCardState extends State<SeriesShelfCard>
         trailing: widget.onRemove == null
             ? null
             : IconButton(
-                icon: const Icon(Icons.delete_outline_rounded),
+                icon: const Icon(Symbols.delete_outline_rounded),
                 tooltip: 'Remove series',
                 onPressed: widget.onRemove,
               ),

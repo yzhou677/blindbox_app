@@ -5,9 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   Widget wrap(Widget child) => MaterialApp(
-        theme: AppTheme.light(),
-        home: Scaffold(body: Center(child: child)),
-      );
+    theme: AppTheme.light(),
+    home: Scaffold(body: Center(child: child)),
+  );
 
   testWidgets('empty breakdown shows placeholder', (tester) async {
     await tester.pumpWidget(
@@ -17,13 +17,11 @@ void main() {
     expect(find.text('—'), findsOneWidget);
   });
 
-  testWidgets('single brand renders CustomPaint without caption', (tester) async {
+  testWidgets('single brand renders CustomPaint without caption', (
+    tester,
+  ) async {
     await tester.pumpWidget(
-      wrap(
-        const CollectorTypeBrandDonut(
-          brandBreakdown: {'POP MART': 2},
-        ),
-      ),
+      wrap(const CollectorTypeBrandDonut(brandBreakdown: {'POP MART': 2})),
     );
     await tester.pump();
     expect(find.byType(CustomPaint), findsWidgets);
@@ -34,10 +32,7 @@ void main() {
     await tester.pumpWidget(
       wrap(
         const CollectorTypeBrandDonut(
-          brandBreakdown: {
-            'POP MART': 2,
-            'Finding Unicorn': 1,
-          },
+          brandBreakdown: {'POP MART': 2, 'Finding Unicorn': 1},
         ),
       ),
     );

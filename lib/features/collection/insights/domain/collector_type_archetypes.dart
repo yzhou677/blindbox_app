@@ -1,5 +1,6 @@
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_archetype.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Registry of all collector archetypes (single source of truth).
 abstract final class CollectorTypeArchetypes {
@@ -62,7 +63,7 @@ abstract final class CollectorTypeArchetypes {
         'Your future collecting plans are the strongest signal in this reveal.',
     accentColorLight: Color(0xFFB8A8D8),
     accentColorDark: Color(0xFFC4B4E0),
-    icon: Icons.nights_stay_outlined,
+    icon: Symbols.nights_stay_rounded,
   );
 
   static const hunter = CollectorTypeArchetype(
@@ -71,7 +72,7 @@ abstract final class CollectorTypeArchetypes {
     flavorText: 'Secret Figures are a strong signal in this reveal.',
     accentColorLight: Color(0xFFC9A06A),
     accentColorDark: Color(0xFFD4B078),
-    icon: Icons.track_changes_outlined,
+    icon: Symbols.track_changes_rounded,
   );
 
   static const completionist = CollectorTypeArchetype(
@@ -81,7 +82,7 @@ abstract final class CollectorTypeArchetypes {
         'Complete and near-Complete series are the strongest signals in this reveal.',
     accentColorLight: Color(0xFF7BA88A),
     accentColorDark: Color(0xFF8FBC9C),
-    icon: Icons.all_inclusive_outlined,
+    icon: Symbols.all_inclusive_rounded,
   );
 
   static const loyalist = CollectorTypeArchetype(
@@ -90,7 +91,7 @@ abstract final class CollectorTypeArchetypes {
     flavorText: 'One universe has the strongest presence in this reveal.',
     accentColorLight: Color(0xFF8A9BC4),
     accentColorDark: Color(0xFF9AACD0),
-    icon: Icons.favorite_outline,
+    icon: Symbols.favorite_border_rounded,
   );
 
   static const curator = CollectorTypeArchetype(
@@ -100,7 +101,7 @@ abstract final class CollectorTypeArchetypes {
         'Multiple universes have meaningful representation in this reveal.',
     accentColorLight: Color(0xFF9A8AB8),
     accentColorDark: Color(0xFFAC9CC8),
-    icon: Icons.grid_view_rounded,
+    icon: Symbols.grid_view_rounded,
   );
 
   static const trendChaser = CollectorTypeArchetype(
@@ -109,7 +110,7 @@ abstract final class CollectorTypeArchetypes {
     flavorText: 'Recent-release series are a strong signal in this reveal.',
     accentColorLight: Color(0xFFE08A8A),
     accentColorDark: Color(0xFFE89A9A),
-    icon: Icons.bolt_outlined,
+    icon: Symbols.bolt_rounded,
   );
 
   static const worldbuilder = CollectorTypeArchetype(
@@ -118,7 +119,7 @@ abstract final class CollectorTypeArchetypes {
     flavorText: 'Custom series are a strong signal in this reveal.',
     accentColorLight: Color(0xFFB8A0C8),
     accentColorDark: Color(0xFFC8B0D8),
-    icon: Icons.public_outlined,
+    icon: Symbols.public_rounded,
   );
 
   static const minimalist = CollectorTypeArchetype(
@@ -127,7 +128,7 @@ abstract final class CollectorTypeArchetypes {
     flavorText: 'This reveal is based on a small shelf.',
     accentColorLight: Color(0xFF8A9098),
     accentColorDark: Color(0xFF9CA2AA),
-    icon: Icons.crop_square_outlined,
+    icon: Symbols.crop_square_rounded,
   );
 
   static const wanderer = CollectorTypeArchetype(
@@ -136,7 +137,7 @@ abstract final class CollectorTypeArchetypes {
     flavorText: 'No specialized shelf pattern qualified at this reveal.',
     accentColorLight: Color(0xFFA8B0C0),
     accentColorDark: Color(0xFFB8C0D0),
-    icon: Icons.explore_outlined,
+    icon: Symbols.explore_rounded,
   );
 
   static const luckyOne = CollectorTypeArchetype(
@@ -145,6 +146,6 @@ abstract final class CollectorTypeArchetypes {
     flavorText: 'Secret ownership is high for an early shelf.',
     accentColorLight: Color(0xFFE8C878),
     accentColorDark: Color(0xFFF0D488),
-    icon: Icons.auto_awesome_outlined,
+    icon: Symbols.auto_awesome_rounded,
   );
 }

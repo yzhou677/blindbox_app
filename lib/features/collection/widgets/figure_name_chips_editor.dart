@@ -6,6 +6,7 @@ import 'package:blindbox_app/features/collection/data/custom_series_conventions.
 import 'package:blindbox_app/features/collection/widgets/custom_series_quiet_field.dart';
 import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Figure lineup for custom series — list rows, edit in dialog.
 class FigureNameChipsEditor extends StatelessWidget {
@@ -82,23 +83,21 @@ class FigureNameChipsEditor extends StatelessWidget {
           inputFormatters: CollectionInputFormatters.figureName(),
           onSubmitted: (_) => onAddSubmitted(),
           style: CollectibleTypography.figureCaption(textTheme, scheme),
-          decoration: quietCustomSeriesField(
-            scheme,
-            hintText: 'Figure name',
-          ).copyWith(
-            suffixIcon: IconButton(
-              onPressed: onAddSubmitted,
-              icon: Icon(
-                Icons.add_rounded,
-                color: scheme.onSurfaceVariant.withValues(alpha: 0.55),
+          decoration: quietCustomSeriesField(scheme, hintText: 'Figure name')
+              .copyWith(
+                suffixIcon: IconButton(
+                  onPressed: onAddSubmitted,
+                  icon: Icon(
+                    Symbols.add_rounded,
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.55),
+                  ),
+                  visualDensity: VisualDensity.compact,
+                ),
+                suffixIconConstraints: const BoxConstraints(
+                  minWidth: 44,
+                  minHeight: 44,
+                ),
               ),
-              visualDensity: VisualDensity.compact,
-            ),
-            suffixIconConstraints: const BoxConstraints(
-              minWidth: 44,
-              minHeight: 44,
-            ),
-          ),
         ),
       ],
     );
@@ -183,8 +182,8 @@ class _FigureDraftRow extends StatelessWidget {
                 tooltip: hasPhoto ? 'Change photo' : 'Photo',
                 icon: Icon(
                   hasPhoto
-                      ? Icons.image_outlined
-                      : Icons.add_photo_alternate_outlined,
+                      ? Symbols.image_rounded
+                      : Symbols.add_photo_alternate_rounded,
                   size: 20,
                   color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
                 ),
@@ -194,7 +193,7 @@ class _FigureDraftRow extends StatelessWidget {
                 visualDensity: VisualDensity.compact,
                 tooltip: 'Remove',
                 icon: Icon(
-                  Icons.close_rounded,
+                  Symbols.close_rounded,
                   size: 20,
                   color: scheme.onSurfaceVariant.withValues(alpha: 0.45),
                 ),

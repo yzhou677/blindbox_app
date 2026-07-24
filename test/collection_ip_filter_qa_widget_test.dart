@@ -29,7 +29,9 @@ final class _QaCollectionNotifier extends CollectionNotifier {
 Widget _qaHarness(CollectionSnapshot snap) {
   return ProviderScope(
     overrides: [
-      collectionNotifierProvider.overrideWith(() => _QaCollectionNotifier(snap)),
+      collectionNotifierProvider.overrideWith(
+        () => _QaCollectionNotifier(snap),
+      ),
       catalogBundleProvider.overrideWith(
         (ref) async => const CatalogSeedBundle(
           brands: [],
@@ -115,14 +117,14 @@ List<ShelfSeries> _stressShelfDistinctIps(int count) {
 }
 
 Finder _brandChipLabel(String label) => find.descendant(
-      of: find.byType(TaxonomyBrandChipRail).first,
-      matching: find.text(label),
-    );
+  of: find.byType(TaxonomyBrandChipRail).first,
+  matching: find.text(label),
+);
 
 Finder _ipChipLabel(String label) => find.descendant(
-      of: find.byType(TaxonomyBrandChipRail).last,
-      matching: find.text(label),
-    );
+  of: find.byType(TaxonomyBrandChipRail).last,
+  matching: find.text(label),
+);
 
 /// Goldens use system fonts so labels render without google_fonts network fetch.
 ThemeData _qaScreenshotTheme() {
@@ -145,59 +147,60 @@ void main() {
     GoogleFonts.config.allowRuntimeFetching = false;
   });
 
-  testWidgets('stress: 50 IP chips in rail — narrow width, scroll, no rail overflow', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(360, 200);
-    tester.view.devicePixelRatio = 2.0;
-    addTearDown(tester.view.reset);
+  testWidgets(
+    'stress: 50 IP chips in rail — narrow width, scroll, no rail overflow',
+    (tester) async {
+      tester.view.physicalSize = const Size(360, 200);
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(tester.view.reset);
 
-    final shelf = _stressShelfDistinctIps(50);
-    final brandOptions = buildCollectionShelfBrandFilterOptions(shelf);
-    final ipOptions = buildCollectionShelfIpFilterOptions(shelf);
+      final shelf = _stressShelfDistinctIps(50);
+      final brandOptions = buildCollectionShelfBrandFilterOptions(shelf);
+      final ipOptions = buildCollectionShelfIpFilterOptions(shelf);
 
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: _qaScreenshotTheme(),
-        home: RepaintBoundary(
-          key: const Key('qa_collection_screenshot'),
-          child: Scaffold(
-            body: SizedBox(
-              width: 360,
-              child: Column(
-                children: [
-                  CollectionBrandFilterRow(
-                    options: brandOptions,
-                    selectedBrandId: collectionAnyBrandFilterId,
-                    onBrandSelected: (_) {},
-                  ),
-                  const SizedBox(height: 6),
-                  CollectionIpFilterRow(
-                    options: ipOptions,
-                    selectedIpId: collectionAnyIpFilterId,
-                    onIpSelected: (_) {},
-                  ),
-                ],
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: _qaScreenshotTheme(),
+          home: RepaintBoundary(
+            key: const Key('qa_collection_screenshot'),
+            child: Scaffold(
+              body: SizedBox(
+                width: 360,
+                child: Column(
+                  children: [
+                    CollectionBrandFilterRow(
+                      options: brandOptions,
+                      selectedBrandId: collectionAnyBrandFilterId,
+                      onBrandSelected: (_) {},
+                    ),
+                    const SizedBox(height: 6),
+                    CollectionIpFilterRow(
+                      options: ipOptions,
+                      selectedIpId: collectionAnyIpFilterId,
+                      onIpSelected: (_) {},
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
         ),
-      ),
-    );
-    await tester.pump();
-
-    expect(tester.takeException(), isNull);
-    expect(find.byType(TaxonomyBrandChipRail), findsNWidgets(2));
-
-    final ipRail = find.byType(TaxonomyBrandChipRail).last;
-    for (var i = 0; i < 12; i++) {
-      await tester.drag(ipRail, const Offset(-160, 0));
+      );
       await tester.pump();
-    }
-    expect(ipOptions.length, 51);
-    expect(find.byType(TaxonomyBrandChipRail), findsNWidgets(2));
-    expect(tester.takeException(), isNull);
-  });
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(TaxonomyBrandChipRail), findsNWidgets(2));
+
+      final ipRail = find.byType(TaxonomyBrandChipRail).last;
+      for (var i = 0; i < 12; i++) {
+        await tester.drag(ipRail, const Offset(-160, 0));
+        await tester.pump();
+      }
+      expect(ipOptions.length, 51);
+      expect(find.byType(TaxonomyBrandChipRail), findsNWidgets(2));
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('populated shelf screenshot for documentation', (tester) async {
     tester.view.physicalSize = const Size(412, 820);
@@ -326,7 +329,9 @@ void main() {
 
     final shelf = _populatedDemoShelf();
     await tester.pumpWidget(
-      _qaHarness(CollectionSnapshot(shelfSeries: shelf, figureStates: const {})),
+      _qaHarness(
+        CollectionSnapshot(shelfSeries: shelf, figureStates: const {}),
+      ),
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));

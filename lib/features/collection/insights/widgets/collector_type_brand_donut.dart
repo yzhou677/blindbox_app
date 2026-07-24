@@ -17,7 +17,8 @@ class CollectorTypeBrandDonut extends StatefulWidget {
   final ValueChanged<String>? onSectorTap;
 
   @override
-  State<CollectorTypeBrandDonut> createState() => _CollectorTypeBrandDonutState();
+  State<CollectorTypeBrandDonut> createState() =>
+      _CollectorTypeBrandDonutState();
 }
 
 class _CollectorTypeBrandDonutState extends State<CollectorTypeBrandDonut>
@@ -56,8 +57,8 @@ class _CollectorTypeBrandDonutState extends State<CollectorTypeBrandDonut>
           child: Text(
             '—',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
-                ),
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
+            ),
           ),
         ),
       );
@@ -67,7 +68,7 @@ class _CollectorTypeBrandDonutState extends State<CollectorTypeBrandDonut>
     final selectedLabel = _selectedBrandId == null
         ? null
         : (MarketTaxonomy.brandById(_selectedBrandId!)?.displayLabel ??
-            _selectedBrandId);
+              _selectedBrandId);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -75,13 +76,10 @@ class _CollectorTypeBrandDonutState extends State<CollectorTypeBrandDonut>
         GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTapUp: (details) {
-            final canvasOffset = details.localPosition -
+            final canvasOffset =
+                details.localPosition -
                 const Offset(_tapTargetPadding, _tapTargetPadding);
-            final brandId = _brandAtOffset(
-              canvasOffset,
-              entries,
-              total,
-            );
+            final brandId = _brandAtOffset(canvasOffset, entries, total);
             if (brandId != null) {
               setState(() => _selectedBrandId = brandId);
               widget.onSectorTap?.call(brandId);
@@ -116,8 +114,8 @@ class _CollectorTypeBrandDonutState extends State<CollectorTypeBrandDonut>
             child: Text(
               selectedLabel,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant.withValues(alpha: 0.75),
-                  ),
+                color: scheme.onSurfaceVariant.withValues(alpha: 0.75),
+              ),
             ),
           ),
         ],

@@ -23,9 +23,7 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          collectorJourneySummaryProvider.overrideWithValue(summary),
-        ],
+        overrides: [collectorJourneySummaryProvider.overrideWithValue(summary)],
         child: MaterialApp(
           theme: AppTheme.light(),
           home: const Scaffold(body: CollectorJourneyCard()),
@@ -66,9 +64,7 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          collectorJourneySummaryProvider.overrideWithValue(summary),
-        ],
+        overrides: [collectorJourneySummaryProvider.overrideWithValue(summary)],
         child: MaterialApp(
           theme: AppTheme.light(),
           home: const Scaffold(body: CollectorJourneyCard()),
@@ -101,9 +97,7 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          collectorJourneySummaryProvider.overrideWithValue(summary),
-        ],
+        overrides: [collectorJourneySummaryProvider.overrideWithValue(summary)],
         child: MaterialApp(
           theme: AppTheme.light(),
           home: const Scaffold(body: CollectorJourneyCard()),

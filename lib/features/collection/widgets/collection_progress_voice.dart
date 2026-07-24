@@ -128,7 +128,9 @@ abstract final class CollectionProgressVoice {
 
     final parts = <String>[];
     if (owned > 0) {
-      parts.add(CollectionVocabulary.countLabel(owned, CollectionVocabulary.figures));
+      parts.add(
+        CollectionVocabulary.countLabel(owned, CollectionVocabulary.figures),
+      );
     }
     if (wish > 0) {
       parts.add('$wish on ${CollectionVocabulary.wishlist}');

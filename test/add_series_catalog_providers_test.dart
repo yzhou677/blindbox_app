@@ -7,7 +7,8 @@ import 'package:blindbox_app/features/catalog/models/catalog_series.dart';
 import 'package:blindbox_app/features/collection/application/add_series_catalog_providers.dart';
 import 'package:blindbox_app/features/collection/application/catalog_series_shelf_commit.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
-import 'package:blindbox_app/features/catalog/models/catalog_series.dart' as catalog;
+import 'package:blindbox_app/features/catalog/models/catalog_series.dart'
+    as catalog;
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart'
     show CollectionSnapshot;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,9 +16,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 CatalogSeedBundle _browseBundle() {
   return CatalogSeedBundle(
-    brands: const [
-      CatalogBrand(id: 'popmart', displayName: 'POP MART'),
-    ],
+    brands: const [CatalogBrand(id: 'popmart', displayName: 'POP MART')],
     ips: const [
       CatalogIp(id: 'dimoo', brandId: 'popmart', displayName: 'DIMOO'),
     ],

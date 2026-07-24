@@ -97,8 +97,7 @@ class CrownDiamondSparkle {
 
   double get end => start + span;
 
-  bool isActiveAt(double progress) =>
-      progress >= start && progress < end;
+  bool isActiveAt(double progress) => progress >= start && progress < end;
 
   /// Local 0–1 progress while this sparkle is alive.
   double localProgress(double progress) {
@@ -179,7 +178,11 @@ abstract final class MasterCompleteCrownSparkleSequence {
       return 0.55 + Curves.easeOut.transform(p) * 0.45;
     }
     if (t <= 0.72) return 1 - Curves.easeIn.transform((t - 0.42) / 0.3) * 0.35;
-    return (1 - Curves.easeInCubic.transform((t - 0.72) / 0.28)).clamp(0.0, 1.0) * 0.65;
+    return (1 - Curves.easeInCubic.transform((t - 0.72) / 0.28)).clamp(
+          0.0,
+          1.0,
+        ) *
+        0.65;
   }
 
   @visibleForTesting
@@ -217,7 +220,9 @@ class MasterCompleteAchievementEffectsPainter extends CustomPainter {
       MasterCompleteCrownSparkleSequence.crownAnchor.dy * size.height,
     );
 
-    for (final sparkle in MasterCompleteCrownSparkleSequence.activeAt(progress)) {
+    for (final sparkle in MasterCompleteCrownSparkleSequence.activeAt(
+      progress,
+    )) {
       final localT = sparkle.localProgress(progress);
       if (localT < 0) continue;
 
@@ -228,10 +233,12 @@ class MasterCompleteAchievementEffectsPainter extends CustomPainter {
       if (alpha <= 0.02) continue;
 
       final scale = MasterCompleteCrownSparkleSequence.sparkleScale(localT);
-      final center = crown + Offset(
-        sparkle.offsetFromCrown.dx * size.width,
-        sparkle.offsetFromCrown.dy * size.height,
-      );
+      final center =
+          crown +
+          Offset(
+            sparkle.offsetFromCrown.dx * size.width,
+            sparkle.offsetFromCrown.dy * size.height,
+          );
 
       _paintDiamondReflection(
         canvas,
@@ -343,7 +350,9 @@ class MasterCompleteAchievementEffectsPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant MasterCompleteAchievementEffectsPainter oldDelegate) {
+  bool shouldRepaint(
+    covariant MasterCompleteAchievementEffectsPainter oldDelegate,
+  ) {
     return oldDelegate.progress != progress ||
         oldDelegate.intensity != intensity;
   }

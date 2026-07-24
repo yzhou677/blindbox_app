@@ -164,7 +164,9 @@ class _CollectorTypeRevealCeremonyOverlayState
                     onTap: _onBackgroundTap,
                     child: ClipRect(
                       child: BackdropFilter(
-                        key: const Key('collector_type_reveal_ceremony_backdrop'),
+                        key: const Key(
+                          'collector_type_reveal_ceremony_backdrop',
+                        ),
                         filter: blur <= 0.05
                             ? ImageFilter.blur(sigmaX: 0.01, sigmaY: 0.01)
                             : _blurCache.forSigma(blur),
@@ -232,17 +234,17 @@ class _CollectorTypeRevealCeremonyOverlayState
                                     textAlign: TextAlign.center,
                                     style:
                                         CollectibleTypography.seriesHeroTitle(
-                                      textTheme,
-                                      scheme,
-                                    ).copyWith(
-                                      fontSize: _first ? 32 : 28,
-                                      letterSpacing: -0.55,
-                                      height: 1.1,
-                                      fontWeight: FontWeight.w700,
-                                      color: scheme.onSurface.withValues(
-                                        alpha: 0.94,
-                                      ),
-                                    ),
+                                          textTheme,
+                                          scheme,
+                                        ).copyWith(
+                                          fontSize: _first ? 32 : 28,
+                                          letterSpacing: -0.55,
+                                          height: 1.1,
+                                          fontWeight: FontWeight.w700,
+                                          color: scheme.onSurface.withValues(
+                                            alpha: 0.94,
+                                          ),
+                                        ),
                                   ),
                                   const SizedBox(height: 12),
                                   Text(

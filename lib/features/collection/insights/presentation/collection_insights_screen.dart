@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
+import 'package:blindbox_app/core/theme/app_typography.dart';
+import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_providers.dart';
 import 'package:blindbox_app/features/collection/insights/application/collector_type_view_model.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collection_insights_body.dart';
@@ -9,6 +11,7 @@ import 'package:blindbox_app/features/collection/insights/presentation/collector
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 class CollectionInsightsScreen extends ConsumerWidget {
   const CollectionInsightsScreen({super.key});
@@ -18,6 +21,7 @@ class CollectionInsightsScreen extends ConsumerWidget {
     final needsReveal = ref.watch(collectorTypeNeedsRevealProvider);
     final stage = ref.watch(collectorTypeViewModelProvider);
     final textTheme = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
 
     final showRevealAgainMenu =
         stage is CollectorTypeRevealRevealed && !needsReveal;
@@ -52,10 +56,13 @@ class CollectionInsightsScreen extends ConsumerWidget {
               titleSpacing: AppSpacing.pageHorizontal,
               title: Text(
                 CollectorTypeCopy.screenTitle,
-                style: textTheme.titleLarge,
+                style: AppTypography.tabTitle(textTheme, scheme),
               ),
               leading: IconButton(
-                icon: const Icon(Icons.arrow_back_rounded),
+                icon: const Icon(
+                  Symbols.arrow_back_rounded,
+                  size: AppIconSizes.navigation,
+                ),
                 onPressed: () => unawaited(exitInsights()),
               ),
               actions: [

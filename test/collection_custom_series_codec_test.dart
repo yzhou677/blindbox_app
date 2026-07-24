@@ -111,7 +111,9 @@ void main() {
       'figureStates': {},
     });
 
-    final fig = CollectionSnapshotCodec.tryDecode(legacy)!.shelfSeries.single.figures.single;
+    final fig = CollectionSnapshotCodec.tryDecode(
+      legacy,
+    )!.shelfSeries.single.figures.single;
     expect(fig.rarityLabel, '1:72');
     expect(fig.isSecret, isTrue);
   });

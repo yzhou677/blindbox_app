@@ -1,5 +1,7 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/theme/app_typography.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
+import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_card_tokens.dart';
@@ -9,9 +11,12 @@ import 'package:blindbox_app/features/collection/presentation/collection_wishlis
 import 'package:blindbox_app/features/collection/widgets/collection_brand_filter_row.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_browse_card.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_ip_filter_row.dart';
+import 'package:blindbox_app/shared/widgets/bling_heart_empty_state.dart';
 import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
 import 'package:blindbox_app/shared/widgets/catalog_quick_action_button.dart';
+import 'package:blindbox_app/shared/widgets/taxonomy_filter_section_label.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 class CollectionWishlistPage extends StatefulWidget {
   const CollectionWishlistPage({
@@ -107,7 +112,7 @@ class _CollectionWishlistPageState extends State<CollectionWishlistPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const _WishlistFilterLabel(text: 'Brand'),
+          const TaxonomyFilterSectionLabel(text: 'Brand'),
           const SizedBox(height: FeedRhythm.collectionFilterSectionLabelToRail),
           CollectionBrandFilterRow(
             options: [
@@ -120,7 +125,7 @@ class _CollectionWishlistPageState extends State<CollectionWishlistPage> {
           const SizedBox(
             height: FeedRhythm.collectionBrandToIpFilterSectionGap,
           ),
-          const _WishlistFilterLabel(text: 'IP'),
+          const TaxonomyFilterSectionLabel(text: 'IP'),
           const SizedBox(height: FeedRhythm.collectionFilterSectionLabelToRail),
           CollectionIpFilterRow(
             options: [
@@ -131,7 +136,7 @@ class _CollectionWishlistPageState extends State<CollectionWishlistPage> {
             onIpSelected: (id) => setState(() => _ipFilterId = id),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 2),
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 2),
             child: Align(
               alignment: Alignment.centerRight,
               child: _WishlistSortMenu(
@@ -164,7 +169,7 @@ class _CollectionWishlistPageState extends State<CollectionWishlistPage> {
                 ),
             ],
             if (showSeriesSection && showFiguresSection)
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
             if (showFiguresSection) ...[
               _WishlistSectionHeader(
                 title: 'Figures',
@@ -195,28 +200,6 @@ String _resolveSelection(
   return optionIds.contains(selected) ? selected : fallback;
 }
 
-class _WishlistFilterLabel extends StatelessWidget {
-  const _WishlistFilterLabel({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Text(
-        text,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.32,
-          color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
-        ),
-      ),
-    );
-  }
-}
-
 class _WishlistSectionHeader extends StatelessWidget {
   const _WishlistSectionHeader({
     required this.title,
@@ -237,7 +220,7 @@ class _WishlistSectionHeader extends StatelessWidget {
       onTap: onToggle,
       borderRadius: BorderRadius.circular(8),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 6),
         child: Row(
           children: [
             Expanded(
@@ -245,12 +228,16 @@ class _WishlistSectionHeader extends StatelessWidget {
                 '$title ($count)',
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w700,
+                  letterSpacing: -0.15,
                   color: scheme.onSurface.withValues(alpha: 0.92),
                 ),
               ),
             ),
             Icon(
-              expanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+              expanded
+                  ? Symbols.expand_less_rounded
+                  : Symbols.expand_more_rounded,
+              size: AppIconSizes.expand,
               color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
             ),
           ],
@@ -280,8 +267,8 @@ class _SeriesGrid extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
         mainAxisExtent: CollectionCardTokens.minRailHeight,
       ),
       itemCount: series.length,
@@ -328,8 +315,8 @@ class _FigureGrid extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
         mainAxisExtent: cardHeight,
       ),
       itemCount: figures.length,
@@ -395,6 +382,10 @@ class _WishlistCard extends StatelessWidget {
         subtitleMaxLines: 2,
         reserveTwoTitleLines: reserveTwoTitleLines,
         height: height,
+        padding: CollectionCardTokens.padding,
+        imageToTitleGap: CollectionCardTokens.imageToTitleGap,
+        titleToMetaGap: CollectionCardTokens.titleToMetaGap,
+        metaToFooterGap: CollectionCardTokens.metaToProgressGap,
         titleStyle: CollectibleTypography.catalogSeriesRowTitle(
           textTheme,
           scheme,
@@ -420,8 +411,8 @@ class _WishlistCard extends StatelessWidget {
           alpha: isDark ? 0.32 : 0.38,
         ),
         overlayBuilder: (context) => Positioned(
-          top: 10,
-          right: 10,
+          top: 8,
+          right: 8,
           child: _WishlistRemoveAction(
             targetKey: removeTargetKey,
             semanticsLabel: removeSemanticsLabel,
@@ -450,7 +441,7 @@ class _WishlistRemoveAction extends StatelessWidget {
       key: targetKey,
       tooltip: semanticsLabel,
       semanticsLabel: semanticsLabel,
-      icon: Icons.close_rounded,
+      icon: Symbols.close_rounded,
       active: true,
       onPressed: onRemove,
     );
@@ -466,25 +457,21 @@ class _WishlistNoResultsState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+      padding: const EdgeInsets.fromLTRB(28, 20, 28, 16),
       child: Column(
         children: [
           Text(
             title,
             textAlign: TextAlign.center,
-            style: Theme.of(
-              context,
-            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+            style: AppTypography.emptyStateTitle(textTheme, scheme),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(
             body,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: scheme.onSurfaceVariant,
-              height: 1.35,
-            ),
+            style: AppTypography.emptyStateBody(textTheme, scheme),
           ),
         ],
       ),
@@ -492,6 +479,7 @@ class _WishlistNoResultsState extends StatelessWidget {
   }
 }
 
+/// Calm empty composition — bling heart illustration + title + body.
 class _WishlistEmptyState extends StatelessWidget {
   const _WishlistEmptyState({required this.title, required this.body});
 
@@ -501,31 +489,29 @@ class _WishlistEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+    final textTheme = Theme.of(context).textTheme;
+
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 280),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.favorite_border_rounded,
-            color: scheme.primary.withValues(alpha: 0.58),
-            size: 34,
+          const ExcludeSemantics(
+            child: BlingHeartEmptyState(
+              heartKey: Key('wishlist_empty_heart_icon'),
+            ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 20),
           Text(
             title,
             textAlign: TextAlign.center,
-            style: Theme.of(
-              context,
-            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+            style: AppTypography.emptyStateTitle(textTheme, scheme),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           Text(
             body,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: scheme.onSurfaceVariant,
-              height: 1.35,
-            ),
+            style: AppTypography.emptyStateBody(textTheme, scheme),
           ),
         ],
       ),
@@ -539,10 +525,14 @@ class _WishlistWholeEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Padding(
-      padding: EdgeInsets.fromLTRB(20, 32, 20, 40),
-      child: _WishlistEmptyState(
-        title: 'Your wishlist is empty.',
-        body: 'Save catalog series to plan what to collect next.',
+      key: Key('wishlist_whole_empty_state'),
+      padding: EdgeInsets.fromLTRB(24, 28, 24, 20),
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: _WishlistEmptyState(
+          title: 'Your wishlist is empty.',
+          body: 'Save catalog series to plan what to collect next.',
+        ),
       ),
     );
   }
@@ -572,7 +562,7 @@ class _WishlistSortMenu extends StatelessWidget {
                   width: 28,
                   child: sort == selected
                       ? Icon(
-                          Icons.check_rounded,
+                          Symbols.check_rounded,
                           size: 20,
                           color: scheme.primary,
                         )
@@ -587,8 +577,8 @@ class _WishlistSortMenu extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            Icons.sort_rounded,
-            size: 18,
+            Symbols.sort_rounded,
+            size: AppIconSizes.metadata,
             color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
           ),
           const SizedBox(width: 6),
@@ -600,8 +590,8 @@ class _WishlistSortMenu extends StatelessWidget {
             ),
           ),
           Icon(
-            Icons.expand_more_rounded,
-            size: 18,
+            Symbols.expand_more_rounded,
+            size: AppIconSizes.metadata,
             color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
           ),
         ],

@@ -34,20 +34,18 @@ final class NeedsRevealTestNotifier extends CollectionNotifier {
 }
 
 List<Override> _overridesFor(CollectionSnapshot snap) => [
-      collectionNotifierProvider.overrideWith(
-        () => NeedsRevealTestNotifier(snap),
-      ),
-      catalogBundleProvider.overrideWith((ref) async => _emptyCatalog),
-    ];
+  collectionNotifierProvider.overrideWith(() => NeedsRevealTestNotifier(snap)),
+  catalogBundleProvider.overrideWith((ref) async => _emptyCatalog),
+];
 
 WishlistedCatalogSeries _wishlistedSeries(String id) => WishlistedCatalogSeries(
-      catalogSeriesId: id,
-      name: 'Wishlist $id',
-      brand: 'POP MART',
-      ipName: 'IP',
-      imageKey: id,
-      addedAtMicros: 1,
-    );
+  catalogSeriesId: id,
+  name: 'Wishlist $id',
+  brand: 'POP MART',
+  ipName: 'IP',
+  imageKey: id,
+  addedAtMicros: 1,
+);
 
 Future<void> _saveRevealMatchingLive(CollectionSnapshot snap) async {
   final resolution = resolveCollectorType(
@@ -94,23 +92,25 @@ void main() {
     expect(container.read(collectorTypeNeedsRevealProvider), isFalse);
   });
 
-  test('false when candidate matches last reveal under current version',
-      () async {
-    final snap = CollectionSnapshot(
-      shelfSeries: [testShelfSeries()],
-      figureStates: const {},
-    );
-    await _saveRevealMatchingLive(snap);
+  test(
+    'false when candidate matches last reveal under current version',
+    () async {
+      final snap = CollectionSnapshot(
+        shelfSeries: [testShelfSeries()],
+        figureStates: const {},
+      );
+      await _saveRevealMatchingLive(snap);
 
-    final container = ProviderContainer(overrides: _overridesFor(snap));
-    addTearDown(container.dispose);
+      final container = ProviderContainer(overrides: _overridesFor(snap));
+      addTearDown(container.dispose);
 
-    expect(container.read(collectorTypeNeedsRevealProvider), isFalse);
-    expect(
-      container.read(collectorTypeLiveResolutionProvider).archetypeId,
-      CollectionMemoryStore.instance.cachedCollectorTypeIdentity!.archetypeId,
-    );
-  });
+      expect(container.read(collectorTypeNeedsRevealProvider), isFalse);
+      expect(
+        container.read(collectorTypeLiveResolutionProvider).archetypeId,
+        CollectionMemoryStore.instance.cachedCollectorTypeIdentity!.archetypeId,
+      );
+    },
+  );
 
   test('true when stored signature differs from live shelf', () async {
     final snap = CollectionSnapshot(
@@ -145,66 +145,72 @@ void main() {
     expect(container.read(collectorTypeNeedsRevealProvider), isTrue);
   });
 
-  test('true when only figure wishlist changes signature for Dreamer', () async {
-    final series = testShelfSeries(
-      figures: const [
-        ShelfFigure(
-          id: 'w1',
-          seriesId: 'series_test',
-          name: 'Wishlist A',
-          rarity: 'Regular',
-          isSecret: false,
-        ),
-        ShelfFigure(
-          id: 'w2',
-          seriesId: 'series_test',
-          name: 'Wishlist B',
-          rarity: 'Regular',
-          isSecret: false,
-        ),
-      ],
-    );
-    final revealedSnap = CollectionSnapshot(
-      shelfSeries: [series],
-      figureStates: const {},
-    );
-    await _saveRevealMatchingLive(revealedSnap);
+  test(
+    'true when only figure wishlist changes signature for Dreamer',
+    () async {
+      final series = testShelfSeries(
+        figures: const [
+          ShelfFigure(
+            id: 'w1',
+            seriesId: 'series_test',
+            name: 'Wishlist A',
+            rarity: 'Regular',
+            isSecret: false,
+          ),
+          ShelfFigure(
+            id: 'w2',
+            seriesId: 'series_test',
+            name: 'Wishlist B',
+            rarity: 'Regular',
+            isSecret: false,
+          ),
+        ],
+      );
+      final revealedSnap = CollectionSnapshot(
+        shelfSeries: [series],
+        figureStates: const {},
+      );
+      await _saveRevealMatchingLive(revealedSnap);
 
-    final liveSnap = CollectionSnapshot(
-      shelfSeries: [series],
-      figureStates: const {
-        'w1': TrackedFigure(
-          figureId: 'w1',
-          state: FigureCollectionState.wishlist,
-        ),
-        'w2': TrackedFigure(
-          figureId: 'w2',
-          state: FigureCollectionState.wishlist,
-        ),
-      },
-    );
-    final container = ProviderContainer(overrides: _overridesFor(liveSnap));
-    addTearDown(container.dispose);
+      final liveSnap = CollectionSnapshot(
+        shelfSeries: [series],
+        figureStates: const {
+          'w1': TrackedFigure(
+            figureId: 'w1',
+            state: FigureCollectionState.wishlist,
+          ),
+          'w2': TrackedFigure(
+            figureId: 'w2',
+            state: FigureCollectionState.wishlist,
+          ),
+        },
+      );
+      final container = ProviderContainer(overrides: _overridesFor(liveSnap));
+      addTearDown(container.dispose);
 
-    expect(container.read(collectorTypeNeedsRevealProvider), isTrue);
-  });
+      expect(container.read(collectorTypeNeedsRevealProvider), isTrue);
+    },
+  );
 
-  test('true when only series wishlist changes signature for Dreamer', () async {
-    await _saveRevealMatchingLive(CollectionSnapshot.emptyTest());
+  test(
+    'true when only series wishlist changes signature for Dreamer',
+    () async {
+      await _saveRevealMatchingLive(CollectionSnapshot.emptyTest());
 
-    final liveSnap = CollectionSnapshot(
-      shelfSeries: const [],
-      figureStates: const {},
-      seriesWishlist: [
-        _wishlistedSeries('wish_series_a'),
-        _wishlistedSeries('wish_series_b'),
-      ],
-    );
-    final container = ProviderContainer(overrides: _overridesFor(liveSnap));
-    addTearDown(container.dispose);
+      final liveSnap = CollectionSnapshot(
+        shelfSeries: const [],
+        figureStates: const {},
+        seriesWishlist: [
+          _wishlistedSeries('wish_series_a'),
+          _wishlistedSeries('wish_series_b'),
+        ],
+      );
+      final container = ProviderContainer(overrides: _overridesFor(liveSnap));
+      addTearDown(container.dispose);
 
-    expect(container.read(collectorTypeNeedsRevealProvider), isTrue);
-  });
+      expect(container.read(collectorTypeNeedsRevealProvider), isTrue);
+    },
+  );
 
   test('true when resolverVersion on reveal is outdated', () async {
     final snap = CollectionSnapshot(

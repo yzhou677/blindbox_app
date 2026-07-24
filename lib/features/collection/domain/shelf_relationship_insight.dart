@@ -1,10 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-enum ShelfRelationshipKind {
-  sharedUniverse,
-  lineupNeighbor,
-  complementaryMood,
-}
+enum ShelfRelationshipKind { sharedUniverse, lineupNeighbor, complementaryMood }
 
 /// Lightweight pairwise shelf relationship (labels resolved in presentation).
 @immutable

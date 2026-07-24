@@ -17,6 +17,7 @@ enum CollectorTypeReasonKey {
   nearCompletion,
   intentionalSpread,
   compactShelf,
+
   /// Custom worlds / notes / personal imagery — Worldbuilder.
   inventedWorlds,
   freshDrops,

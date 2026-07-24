@@ -14,6 +14,5 @@ abstract final class CollectorTypePalette {
     Color(0xFF8A9098),
   ];
 
-  static Color sectorAt(int index) =>
-      sectorColors[index % sectorColors.length];
+  static Color sectorAt(int index) => sectorColors[index % sectorColors.length];
 }

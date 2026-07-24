@@ -16,10 +16,16 @@ void main() {
     );
   });
 
-  test('catalogSeriesImageKey falls back to template id for catalog clones', () {
-    final series = testShelfSeries(catalogTemplateId: 'aespa_fluffy_club');
-    expect(CollectionSeriesArt.catalogSeriesImageKey(series), 'aespa_fluffy_club');
-  });
+  test(
+    'catalogSeriesImageKey falls back to template id for catalog clones',
+    () {
+      final series = testShelfSeries(catalogTemplateId: 'aespa_fluffy_club');
+      expect(
+        CollectionSeriesArt.catalogSeriesImageKey(series),
+        'aespa_fluffy_club',
+      );
+    },
+  );
 
   test('catalogSeriesImageKey is null for custom local rows', () {
     expect(

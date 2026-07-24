@@ -67,19 +67,19 @@ class CollectorTypeStats {
   final double customSeriesRatio;
 
   Map<String, dynamic> toJson() => {
-        'totalOwned': totalOwned,
-        'totalWishlist': totalWishlist,
-        'trackedSeries': trackedSeries,
-        'completedSeriesCount': completedSeriesCount,
-        'masterCompleteSeriesCount': masterCompleteSeriesCount,
-        'masterEligibleSeriesCount': masterEligibleSeriesCount,
-        'completionPercent': completionPercent,
-        'secretOwned': secretOwned,
-        'secretSlots': secretSlots,
-        'brandBreakdown': brandBreakdown,
-        'topSeries': topSeries,
-        'customSeriesRatio': customSeriesRatio,
-      };
+    'totalOwned': totalOwned,
+    'totalWishlist': totalWishlist,
+    'trackedSeries': trackedSeries,
+    'completedSeriesCount': completedSeriesCount,
+    'masterCompleteSeriesCount': masterCompleteSeriesCount,
+    'masterEligibleSeriesCount': masterEligibleSeriesCount,
+    'completionPercent': completionPercent,
+    'secretOwned': secretOwned,
+    'secretSlots': secretSlots,
+    'brandBreakdown': brandBreakdown,
+    'topSeries': topSeries,
+    'customSeriesRatio': customSeriesRatio,
+  };
 
   factory CollectorTypeStats.fromJson(Map<String, dynamic> json) {
     final breakdownRaw = json['brandBreakdown'];
@@ -93,7 +93,10 @@ class CollectorTypeStats {
     }
     final topRaw = json['topSeries'];
     final top = topRaw is List
-        ? [for (final v in topRaw) if (v is String) v]
+        ? [
+            for (final v in topRaw)
+              if (v is String) v,
+          ]
         : <String>[];
 
     return CollectorTypeStats(

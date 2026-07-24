@@ -11,7 +11,11 @@ void main() {
 
   test('resolve returns null for non-secret figures', () {
     expect(
-      FigureSecretRarityStyle.resolve(isSecret: false, rarityLabel: '1:72', isDark: false),
+      FigureSecretRarityStyle.resolve(
+        isSecret: false,
+        rarityLabel: '1:72',
+        isDark: false,
+      ),
       isNull,
     );
   });
@@ -68,13 +72,16 @@ void main() {
     )!;
     expect(at72.accent, isNot(equals(at144.accent)));
     expect(at144.accent, isNot(equals(at145.accent)));
-    expect(at145.accent, equals(
-      FigureSecretRarityStyle.resolve(
-        isSecret: true,
-        rarityLabel: '1:288',
-        isDark: false,
-      )!.accent,
-    ));
+    expect(
+      at145.accent,
+      equals(
+        FigureSecretRarityStyle.resolve(
+          isSecret: true,
+          rarityLabel: '1:288',
+          isDark: false,
+        )!.accent,
+      ),
+    );
   });
 
   test('cardTint and glowShadows are non-destructive', () {

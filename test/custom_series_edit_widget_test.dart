@@ -131,10 +131,12 @@ Future<void> _pumpFiguresSheet(
 }
 
 Finder _textFieldAt(int index) {
-  return find.descendant(
-    of: find.byType(CustomSeriesFormSheet),
-    matching: find.byType(TextFormField),
-  ).at(index);
+  return find
+      .descendant(
+        of: find.byType(CustomSeriesFormSheet),
+        matching: find.byType(TextFormField),
+      )
+      .at(index);
 }
 
 void main() {
@@ -195,9 +197,7 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          ..._sheetOverrides(() => notifier),
-        ],
+        overrides: [..._sheetOverrides(() => notifier)],
         child: MaterialApp(
           theme: AppTheme.light(),
           initialRoute: '/edit',
@@ -308,18 +308,9 @@ void main() {
     final ipOptions = buildCollectionShelfIpFilterOptions(
       snapAfterEdit.shelfSeries,
     );
-    expect(
-      brandOptions.map((o) => o.label),
-      contains('POP MART'),
-    );
-    expect(
-      brandOptions.map((o) => o.label),
-      isNot(contains('DPL')),
-    );
-    expect(
-      ipOptions.map((o) => o.label),
-      contains('THE MONSTERS'),
-    );
+    expect(brandOptions.map((o) => o.label), contains('POP MART'));
+    expect(brandOptions.map((o) => o.label), isNot(contains('DPL')));
+    expect(ipOptions.map((o) => o.label), contains('THE MONSTERS'));
 
     await tester.pumpWidget(
       MaterialApp(

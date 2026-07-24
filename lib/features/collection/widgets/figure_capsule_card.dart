@@ -7,6 +7,7 @@ import 'package:blindbox_app/features/collection/presentation/collection_vocabul
 import 'package:blindbox_app/features/collection/presentation/figure_secret_rarity_style.dart';
 import 'package:blindbox_app/features/collection/widgets/shelf_figure_thumb.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Mini blind-box / shelf card — collected, wishlist, and open-slot states.
 class FigureCapsuleCard extends StatefulWidget {
@@ -187,8 +188,7 @@ class _FigureCapsuleCardState extends State<FigureCapsuleCard>
             animation: _press,
             builder: (context, child) {
               final t = CollectibleMotion.easeOut.transform(_press.value);
-              final scale =
-                  1.0 - ((1 - CollectibleMotion.pressScale) * t);
+              final scale = 1.0 - ((1 - CollectibleMotion.pressScale) * t);
               return Transform.scale(
                 scale: scale,
                 alignment: Alignment.center,
@@ -222,40 +222,42 @@ class _FigureCapsuleCardState extends State<FigureCapsuleCard>
                                 ? HitTestBehavior.opaque
                                 : HitTestBehavior.deferToChild,
                             child: AspectRatio(
-                            aspectRatio: 1,
-                            child: AnimatedSwitcher(
-                              duration: CollectibleMotion.crossfade,
-                              switchInCurve: CollectibleMotion.easeOut,
-                              switchOutCurve: CollectibleMotion.easeIn,
-                              transitionBuilder: (child, anim) {
-                                return FadeTransition(
-                                  opacity: anim,
-                                  child: ScaleTransition(
-                                    scale: Tween(
-                                      begin: CollectibleMotion.galleryEnterScale,
-                                      end: 1.0,
-                                    ).animate(
-                                      CurvedAnimation(
-                                        parent: anim,
-                                        curve: CollectibleMotion.easeOut,
-                                      ),
+                              aspectRatio: 1,
+                              child: AnimatedSwitcher(
+                                duration: CollectibleMotion.crossfade,
+                                switchInCurve: CollectibleMotion.easeOut,
+                                switchOutCurve: CollectibleMotion.easeIn,
+                                transitionBuilder: (child, anim) {
+                                  return FadeTransition(
+                                    opacity: anim,
+                                    child: ScaleTransition(
+                                      scale:
+                                          Tween(
+                                            begin: CollectibleMotion
+                                                .galleryEnterScale,
+                                            end: 1.0,
+                                          ).animate(
+                                            CurvedAnimation(
+                                              parent: anim,
+                                              curve: CollectibleMotion.easeOut,
+                                            ),
+                                          ),
+                                      child: child,
                                     ),
-                                    child: child,
+                                  );
+                                },
+                                child: _ArtWindow(
+                                  key: ValueKey<String>(
+                                    '${widget.figure.id}-${owned}_${wish}_$missing',
                                   ),
-                                );
-                              },
-                              child: _ArtWindow(
-                                key: ValueKey<String>(
-                                  '${widget.figure.id}-${owned}_${wish}_$missing',
+                                  missing: missing,
+                                  scheme: scheme,
+                                  series: widget.series,
+                                  figure: widget.figure,
+                                  secretLook: secretLook,
                                 ),
-                                missing: missing,
-                                scheme: scheme,
-                                series: widget.series,
-                                figure: widget.figure,
-                                secretLook: secretLook,
                               ),
                             ),
-                          ),
                           ),
                           if (wish && !owned)
                             Positioned(
@@ -287,19 +289,17 @@ class _FigureCapsuleCardState extends State<FigureCapsuleCard>
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(
-                                        Icons.favorite_border_rounded,
+                                        Symbols.favorite_border_rounded,
                                         size: 11,
-                                        color: scheme.onSurfaceVariant.withValues(
-                                          alpha: 0.48,
-                                        ),
+                                        color: scheme.onSurfaceVariant
+                                            .withValues(alpha: 0.48),
                                       ),
                                       const SizedBox(width: 3),
                                       Text(
                                         'tap',
                                         style: textTheme.labelSmall?.copyWith(
-                                          color: scheme.onSurfaceVariant.withValues(
-                                            alpha: 0.48,
-                                          ),
+                                          color: scheme.onSurfaceVariant
+                                              .withValues(alpha: 0.48),
                                           fontWeight: FontWeight.w700,
                                           letterSpacing: 0.2,
                                           height: 1,
@@ -318,14 +318,15 @@ class _FigureCapsuleCardState extends State<FigureCapsuleCard>
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
-                        style: CollectibleTypography.figureCaption(
-                          textTheme,
-                          scheme,
-                        ).copyWith(
-                          color: missing
-                              ? scheme.onSurface.withValues(alpha: 0.55)
-                              : scheme.onSurface.withValues(alpha: 0.88),
-                        ),
+                        style:
+                            CollectibleTypography.figureCaption(
+                              textTheme,
+                              scheme,
+                            ).copyWith(
+                              color: missing
+                                  ? scheme.onSurface.withValues(alpha: 0.55)
+                                  : scheme.onSurface.withValues(alpha: 0.88),
+                            ),
                       ),
                       const SizedBox(height: 5),
                       Text(
@@ -333,14 +334,15 @@ class _FigureCapsuleCardState extends State<FigureCapsuleCard>
                             ? '${widget.figure.displayRarity} · ${CollectionVocabulary.secretFigure}'
                             : widget.figure.displayRarity,
                         textAlign: TextAlign.center,
-                        style: CollectibleTypography.figureMeta(
-                          textTheme,
-                          scheme,
-                        ).copyWith(
-                          color: scheme.onSurfaceVariant.withValues(
-                            alpha: missing ? 0.42 : 0.52,
-                          ),
-                        ),
+                        style:
+                            CollectibleTypography.figureMeta(
+                              textTheme,
+                              scheme,
+                            ).copyWith(
+                              color: scheme.onSurfaceVariant.withValues(
+                                alpha: missing ? 0.42 : 0.52,
+                              ),
+                            ),
                       ),
                     ],
                   ),
@@ -569,11 +571,7 @@ class _WishRibbon extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.favorite_rounded,
-              size: 13,
-              color: Colors.white,
-            ),
+            const Icon(Symbols.favorite_rounded, size: 13, color: Colors.white),
             const SizedBox(width: 4),
             Text(
               'Wishlist',
@@ -619,7 +617,7 @@ class _OwnedSeal extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(4),
         child: Icon(
-          Icons.workspace_premium_rounded,
+          Symbols.workspace_premium_rounded,
           size: 17,
           color: scheme.onTertiaryContainer,
         ),

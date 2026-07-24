@@ -53,7 +53,9 @@ void main() {
 
     expect(container.read(collectorTypeCeremonyProvider), isNull);
 
-    await container.read(collectorTypeViewModelProvider.notifier).requestReveal();
+    await container
+        .read(collectorTypeViewModelProvider.notifier)
+        .requestReveal();
 
     final event = container.read(collectorTypeCeremonyProvider);
     expect(event, isNotNull);
@@ -96,7 +98,9 @@ void main() {
     container.read(collectorTypeViewModelProvider);
     expect(container.read(collectorTypeCeremonyProvider), isNull);
 
-    await container.read(collectorTypeViewModelProvider.notifier).requestReveal();
+    await container
+        .read(collectorTypeViewModelProvider.notifier)
+        .requestReveal();
 
     expect(container.read(collectorTypeCeremonyProvider), isNull);
   });
@@ -139,13 +143,19 @@ void main() {
     addTearDown(container.dispose);
 
     container.read(collectorTypeViewModelProvider);
-    await container.read(collectorTypeViewModelProvider.notifier).requestReveal();
+    await container
+        .read(collectorTypeViewModelProvider.notifier)
+        .requestReveal();
 
     final event = container.read(collectorTypeCeremonyProvider);
-    final revealed = container.read(collectorTypeViewModelProvider)
-        as CollectorTypeRevealRevealed;
+    final revealed =
+        container.read(collectorTypeViewModelProvider)
+            as CollectorTypeRevealRevealed;
     // needsReveal (stale signature) ??always persist resolver candidate.
-    expect(revealed.identity.archetypeId, isNot(CollectorTypeArchetypeId.worldbuilder));
+    expect(
+      revealed.identity.archetypeId,
+      isNot(CollectorTypeArchetypeId.worldbuilder),
+    );
     expect(event, isNotNull);
     expect(event!.isFirstReveal, isFalse);
     expect(event.identity.archetypeId, revealed.identity.archetypeId);

@@ -1,5 +1,6 @@
-﻿import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
-import 'package:blindbox_app/features/catalog/models/catalog_series.dart' as catalog;
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
+import 'package:blindbox_app/features/catalog/models/catalog_series.dart'
+    as catalog;
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 
 /// Deterministic canonicalization for cross-surface ownership identity.
@@ -46,11 +47,11 @@ class CollectionSeriesOwnershipMatch {
     required String matchedSeriesId,
     String? matchedCatalogTemplateId,
   }) : this._(
-          owned: true,
-          kind: kind,
-          matchedSeriesId: matchedSeriesId,
-          matchedCatalogTemplateId: matchedCatalogTemplateId,
-        );
+         owned: true,
+         kind: kind,
+         matchedSeriesId: matchedSeriesId,
+         matchedCatalogTemplateId: matchedCatalogTemplateId,
+       );
 
   final bool owned;
   final CollectionSeriesOwnershipMatchKind? kind;

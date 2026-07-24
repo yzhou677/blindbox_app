@@ -24,6 +24,7 @@ class CollectionBrandFilterRow extends StatelessWidget {
       horizontalPadding: 20,
       height: 40,
       separatorWidth: 8,
+      compact: true,
     );
   }
 }

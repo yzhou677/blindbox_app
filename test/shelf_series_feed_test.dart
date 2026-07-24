@@ -35,11 +35,7 @@ void main() {
           taxonomyIpId: 'crybaby',
           ipName: 'Crybaby',
         ),
-        testShelfSeries(
-          id: 'polar_1',
-          taxonomyIpId: 'polar',
-          ipName: 'Polar',
-        ),
+        testShelfSeries(id: 'polar_1', taxonomyIpId: 'polar', ipName: 'Polar'),
       ]);
 
       expect(sections, hasLength(2));
@@ -52,17 +48,11 @@ void main() {
 
   group('shouldShowShelfUniverseHeader', () {
     test('shows header when multiple IP groups are visible', () {
-      expect(
-        shouldShowShelfUniverseHeader(universeCount: 2),
-        isTrue,
-      );
+      expect(shouldShowShelfUniverseHeader(universeCount: 2), isTrue);
     });
 
     test('hides header when only one IP group is visible', () {
-      expect(
-        shouldShowShelfUniverseHeader(universeCount: 1),
-        isFalse,
-      );
+      expect(shouldShowShelfUniverseHeader(universeCount: 1), isFalse);
     });
   });
 
@@ -78,23 +68,23 @@ void main() {
               children: buildShelfSeriesFeed(
                 context: context,
                 series: [
-                testShelfSeries(
-                  id: 'cry_1',
-                  taxonomyIpId: 'crybaby',
-                  ipName: 'Crybaby',
-                ),
-                testShelfSeries(
-                  id: 'cry_2',
-                  taxonomyIpId: 'crybaby',
-                  ipName: 'Crybaby',
-                ),
-                testShelfSeries(
-                  id: 'polar_1',
-                  taxonomyIpId: 'polar',
-                  ipName: 'Polar',
-                ),
-              ],
-              figureStates: const {},
+                  testShelfSeries(
+                    id: 'cry_1',
+                    taxonomyIpId: 'crybaby',
+                    ipName: 'Crybaby',
+                  ),
+                  testShelfSeries(
+                    id: 'cry_2',
+                    taxonomyIpId: 'crybaby',
+                    ipName: 'Crybaby',
+                  ),
+                  testShelfSeries(
+                    id: 'polar_1',
+                    taxonomyIpId: 'polar',
+                    ipName: 'Polar',
+                  ),
+                ],
+                figureStates: const {},
                 onOpen: (_) {},
                 onRemove: (_) {},
               ),
@@ -345,7 +335,10 @@ void main() {
               figureStates: const {},
               collapseBucketKey: shelfCollapseBucketInProgress,
               collapsedSectionKeys: {
-                shelfIpCollapseSectionKey(shelfCollapseBucketInProgress, 'ip:ia'),
+                shelfIpCollapseSectionKey(
+                  shelfCollapseBucketInProgress,
+                  'ip:ia',
+                ),
               },
             );
             return const SizedBox();

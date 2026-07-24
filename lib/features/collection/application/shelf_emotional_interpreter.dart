@@ -75,14 +75,14 @@ ShelfEmotionalProfile interpretShelf(CollectionSnapshot snap) {
   final confidence = taxonomyCoverage >= 0.75
       ? ShelfInterpretationConfidence.high
       : taxonomyCoverage >= 0.4
-          ? ShelfInterpretationConfidence.medium
-          : ShelfInterpretationConfidence.low;
+      ? ShelfInterpretationConfidence.medium
+      : ShelfInterpretationConfidence.low;
 
   final themes = <String>[];
-  if (secretSlots > 0 && secretOwned > 0) themes.add(ShelfEditorialTheme.secrets);
+  if (secretSlots > 0 && secretOwned > 0)
+    themes.add(ShelfEditorialTheme.secrets);
   if (nearCompleteSeries > 0) themes.add(ShelfEditorialTheme.nearComplete);
-  if (ipCounts.length >= 2 ||
-      ipCounts.values.any((count) => count >= 2)) {
+  if (ipCounts.length >= 2 || ipCounts.values.any((count) => count >= 2)) {
     themes.add(ShelfEditorialTheme.multiUniverse);
   }
   if (seriesComplete == seriesCount && seriesCount > 0) {

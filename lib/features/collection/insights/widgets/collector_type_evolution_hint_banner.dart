@@ -1,7 +1,9 @@
 import 'package:blindbox_app/core/theme/app_typography.dart';
 import 'package:blindbox_app/core/theme/collectible_shape.dart';
+import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Informational banner when the shelf era shifted — not a reveal affordance.
 class CollectorTypeEvolutionHintBanner extends StatelessWidget {
@@ -16,17 +18,15 @@ class CollectorTypeEvolutionHintBanner extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: CollectibleShape.matRadius,
         color: scheme.tertiaryContainer.withValues(alpha: 0.35),
-        border: Border.all(
-          color: scheme.tertiary.withValues(alpha: 0.2),
-        ),
+        border: Border.all(color: scheme.tertiary.withValues(alpha: 0.2)),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         child: Row(
           children: [
             Icon(
-              Icons.auto_awesome_outlined,
-              size: 18,
+              Symbols.auto_awesome_rounded,
+              size: AppIconSizes.metadata,
               color: scheme.tertiary.withValues(alpha: 0.75),
             ),
             const SizedBox(width: 10),

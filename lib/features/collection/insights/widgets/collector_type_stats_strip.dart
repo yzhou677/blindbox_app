@@ -1,4 +1,5 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/app_typography.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
@@ -34,12 +35,9 @@ class CollectorTypeStatsStrip extends StatelessWidget {
                 children: [
                   Text(
                     CollectorTypeCopy.statsSectionTitle,
-                    style: CollectibleTypography.shelfSeriesTitle(
-                      textTheme,
-                      scheme,
-                    ),
+                    style: AppTypography.sectionTitle(textTheme, scheme),
                   ),
-                  const SizedBox(height: AppSpacing.lg),
+                  const SizedBox(height: AppSpacing.md),
                   CollectorTypeTotalsRow(stats: stats),
                 ],
               ),
@@ -54,12 +52,9 @@ class CollectorTypeStatsStrip extends StatelessWidget {
                   children: [
                     Text(
                       'Brand distribution',
-                      style: CollectibleTypography.shelfSeriesTitle(
-                        textTheme,
-                        scheme,
-                      ),
+                      style: AppTypography.sectionTitle(textTheme, scheme),
                     ),
-                    const SizedBox(height: AppSpacing.lg),
+                    const SizedBox(height: AppSpacing.md),
                     _BrandDistributionRow(brandBreakdown: stats.brandBreakdown),
                   ],
                 ),
@@ -106,10 +101,7 @@ class _BrandDistributionRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        CollectorTypeBrandDonut(
-          brandBreakdown: brandBreakdown,
-          size: 112,
-        ),
+        CollectorTypeBrandDonut(brandBreakdown: brandBreakdown, size: 112),
         const SizedBox(width: AppSpacing.md),
         Expanded(
           child: Column(
@@ -119,7 +111,8 @@ class _BrandDistributionRow extends StatelessWidget {
                 if (i > 0) const SizedBox(height: AppSpacing.sm),
                 _BrandLegendLine(
                   color: colors[i % colors.length],
-                  label: MarketTaxonomy.brandById(entries[i].key)?.displayLabel ??
+                  label:
+                      MarketTaxonomy.brandById(entries[i].key)?.displayLabel ??
                       entries[i].key,
                   percent: ((entries[i].value / total) * 100).round(),
                   textTheme: textTheme,
@@ -157,15 +150,15 @@ class _SingleBrandEmphasis extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: AppRadii.matRadius,
         color: color.withValues(alpha: isDark ? 0.14 : 0.10),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg,
-          AppSpacing.lg,
-          AppSpacing.lg,
-          AppSpacing.lg,
+          AppSpacing.md,
+          AppSpacing.md,
+          AppSpacing.md,
+          AppSpacing.md,
         ),
         child: Row(
           children: [
@@ -186,22 +179,25 @@ class _SingleBrandEmphasis extends StatelessWidget {
                     label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: CollectibleTypography.shelfSeriesTitle(
-                      textTheme,
-                      scheme,
-                    ).copyWith(
-                      fontSize: 17,
-                      letterSpacing: -0.2,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style:
+                        CollectibleTypography.shelfSeriesTitle(
+                          textTheme,
+                          scheme,
+                        ).copyWith(
+                          fontSize: 17,
+                          letterSpacing: -0.2,
+                          fontWeight: FontWeight.w600,
+                        ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     '$figureCount ${figureCount == 1 ? 'figure' : 'figures'}',
                     style: AppTypography.insightsCaption(textTheme, scheme)
                         .copyWith(
-                      color: scheme.onSurfaceVariant.withValues(alpha: 0.64),
-                    ),
+                          color: scheme.onSurfaceVariant.withValues(
+                            alpha: 0.64,
+                          ),
+                        ),
                   ),
                 ],
               ),

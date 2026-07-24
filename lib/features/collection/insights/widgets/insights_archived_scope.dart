@@ -27,10 +27,26 @@ class InsightsArchivedScope extends StatelessWidget {
     const b = 0.0722;
     final inv = 1 - s;
     return <double>[
-      r * inv + s, g * inv, b * inv, 0, 0,
-      r * inv, g * inv + s, b * inv, 0, 0,
-      r * inv, g * inv, b * inv + s, 0, 0,
-      0, 0, 0, 1, 0,
+      r * inv + s,
+      g * inv,
+      b * inv,
+      0,
+      0,
+      r * inv,
+      g * inv + s,
+      b * inv,
+      0,
+      0,
+      r * inv,
+      g * inv,
+      b * inv + s,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
     ];
   }
 

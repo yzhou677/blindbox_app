@@ -16,10 +16,12 @@ import 'package:blindbox_app/features/collection/widgets/figure_capsule_card.dar
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/features/sharing/presentation/share_card_preview.dart';
 import 'package:blindbox_app/features/sharing/presentation/widgets/shelfy_collector_cards.dart';
+import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 ShelfSeries? _findSeries(CollectionSnapshot snap, String seriesId) {
   for (final s in snap.shelfSeries) {
@@ -58,7 +60,9 @@ class _SeriesFiguresSheetState extends ConsumerState<SeriesFiguresSheet> {
     final matchedId = widget.matchedFigureId?.trim();
     if (matchedId != null && matchedId.isNotEmpty) {
       _matchHighlightVisible = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) => _revealMatched(matchedId));
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _revealMatched(matchedId),
+      );
       _highlightTimer = Timer(const Duration(milliseconds: 2400), () {
         if (mounted) setState(() => _matchHighlightVisible = false);
       });
@@ -357,7 +361,7 @@ class _FigureSheetSectionHeader extends StatelessWidget {
         children: [
           if (showCrown) ...[
             Icon(
-              Icons.emoji_events_rounded,
+              Symbols.emoji_events_rounded,
               size: 14,
               color: scheme.primary.withValues(alpha: 0.78),
             ),
@@ -503,8 +507,8 @@ class _SeriesCompleteBanner extends StatelessWidget {
               padding: const EdgeInsets.only(top: 1),
               child: Icon(
                 state == SeriesCompletionBannerState.masterComplete
-                    ? Icons.emoji_events_rounded
-                    : Icons.check_circle_outline_rounded,
+                    ? Symbols.emoji_events_rounded
+                    : Symbols.check_circle_outline_rounded,
                 size: 22,
                 color: scheme.primary.withValues(alpha: 0.85),
               ),
@@ -560,25 +564,20 @@ class _InlineShareAction extends StatelessWidget {
     return OutlinedButton.icon(
       onPressed: onPressed,
       icon: Icon(
-        Icons.ios_share_rounded,
-        size: 16,
-        color: scheme.primary.withValues(alpha: 0.72),
+        Symbols.ios_share_rounded,
+        size: AppIconSizes.secondaryShare,
+        color: scheme.onSurfaceVariant.withValues(alpha: 0.62),
       ),
       label: Text(
         label,
         style: textTheme.labelMedium?.copyWith(
           fontWeight: FontWeight.w600,
-          color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
+          fontSize: 12,
+          letterSpacing: 0.05,
+          color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
         ),
       ),
-      style: OutlinedButton.styleFrom(
-        side: BorderSide(color: scheme.primary.withValues(alpha: 0.24)),
-        backgroundColor: scheme.surface.withValues(alpha: 0.18),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        minimumSize: const Size(0, 34),
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      ),
+      style: ShelfyButtonStyles.secondaryShare(scheme),
     );
   }
 }

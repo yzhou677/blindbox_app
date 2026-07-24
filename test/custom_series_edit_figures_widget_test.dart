@@ -147,47 +147,50 @@ Future<_FigureEditTestNotifier> _pumpEditForm(
                 child: CustomSeriesFormSheet.edit(
                   initialSeries: series,
                   pickFigureImage: pickFigureImage,
-                  onSubmit: ({
-                    required String seriesName,
-                    String? brand,
-                    String? ipDisplayName,
-                    String? customCoverImageUri,
-                    String? notes,
-                  }) {},
-                  onFigureSubmit: ({
-                    required String figureId,
-                    required String name,
-                    required bool isSecret,
-                    String? rarityLabel,
-                    String? localImageUri,
-                  }) {
-                    container
-                        .read(collectionNotifierProvider.notifier)
-                        .updateCustomFigure(
-                          seriesId: series.id,
-                          figureId: figureId,
-                          name: name,
-                          isSecret: isSecret,
-                          rarityLabel: rarityLabel,
-                          localImageUri: localImageUri,
-                        );
-                  },
-                  onFigureAdd: ({
-                    required String name,
-                    required bool isSecret,
-                    String? rarityLabel,
-                    String? localImageUri,
-                  }) {
-                    container
-                        .read(collectionNotifierProvider.notifier)
-                        .addCustomFigure(
-                          seriesId: series.id,
-                          name: name,
-                          isSecret: isSecret,
-                          rarityLabel: rarityLabel,
-                          localImageUri: localImageUri,
-                        );
-                  },
+                  onSubmit:
+                      ({
+                        required String seriesName,
+                        String? brand,
+                        String? ipDisplayName,
+                        String? customCoverImageUri,
+                        String? notes,
+                      }) {},
+                  onFigureSubmit:
+                      ({
+                        required String figureId,
+                        required String name,
+                        required bool isSecret,
+                        String? rarityLabel,
+                        String? localImageUri,
+                      }) {
+                        container
+                            .read(collectionNotifierProvider.notifier)
+                            .updateCustomFigure(
+                              seriesId: series.id,
+                              figureId: figureId,
+                              name: name,
+                              isSecret: isSecret,
+                              rarityLabel: rarityLabel,
+                              localImageUri: localImageUri,
+                            );
+                      },
+                  onFigureAdd:
+                      ({
+                        required String name,
+                        required bool isSecret,
+                        String? rarityLabel,
+                        String? localImageUri,
+                      }) {
+                        container
+                            .read(collectionNotifierProvider.notifier)
+                            .addCustomFigure(
+                              seriesId: series.id,
+                              name: name,
+                              isSecret: isSecret,
+                              rarityLabel: rarityLabel,
+                              localImageUri: localImageUri,
+                            );
+                      },
                 ),
               ),
             );
@@ -201,17 +204,21 @@ Future<_FigureEditTestNotifier> _pumpEditForm(
 }
 
 Finder _dialogNameField() {
-  return find.descendant(
-    of: find.byType(EditCustomFigureDialog),
-    matching: find.byType(TextField),
-  ).first;
+  return find
+      .descendant(
+        of: find.byType(EditCustomFigureDialog),
+        matching: find.byType(TextField),
+      )
+      .first;
 }
 
 Finder _dialogRarityField() {
-  return find.descendant(
-    of: find.byType(EditCustomFigureDialog),
-    matching: find.byType(TextField),
-  ).at(1);
+  return find
+      .descendant(
+        of: find.byType(EditCustomFigureDialog),
+        matching: find.byType(TextField),
+      )
+      .at(1);
 }
 
 Future<void> _tapFigure(WidgetTester tester, String figureId) async {
@@ -250,7 +257,9 @@ Future<void> _startAddFigure(WidgetTester tester, String name) async {
     scrollable: find.byType(Scrollable).first,
   );
   await tester.enterText(field, name);
-  await tester.tap(find.byKey(const Key('custom-series-edit-add-figure-button')));
+  await tester.tap(
+    find.byKey(const Key('custom-series-edit-add-figure-button')),
+  );
   await tester.pumpAndSettle();
 }
 
@@ -287,9 +296,7 @@ void main() {
     expect(find.text(editCustomFigureDialogTitle), findsOneWidget);
   });
 
-  testWidgets('Test 3: edit figure name and save updates list', (
-    tester,
-  ) async {
+  testWidgets('Test 3: edit figure name and save updates list', (tester) async {
     final series = _seriesWithFigures();
     await _pumpEditForm(tester, series: series);
 
@@ -331,7 +338,9 @@ void main() {
                 saved = await showDialog<CustomFigureDraft>(
                   context: ctx,
                   builder: (_) => EditCustomFigureDialog(
-                    initial: const CustomFigureDraft(displayName: 'Rabbit Black'),
+                    initial: const CustomFigureDraft(
+                      displayName: 'Rabbit Black',
+                    ),
                     dialogTitle: editCustomFigureDialogTitle,
                     pickImage: (_) async => '/tmp/rabbit_black_new.jpg',
                   ),
@@ -387,7 +396,11 @@ void main() {
     final container = ProviderScope.containerOf(
       tester.element(find.byType(MaterialApp)),
     );
-    final figs = container.read(collectionNotifierProvider).shelfSeries.single.figures;
+    final figs = container
+        .read(collectionNotifierProvider)
+        .shelfSeries
+        .single
+        .figures;
     expect(figs.length, 4);
     expect(figs.last.id, 'custom_figure_edit_test-f-3');
     expect(figs.last.name, 'Rabbit Gold');
@@ -409,7 +422,11 @@ void main() {
     final container = ProviderScope.containerOf(
       tester.element(find.byType(MaterialApp)),
     );
-    final figs = container.read(collectionNotifierProvider).shelfSeries.single.figures;
+    final figs = container
+        .read(collectionNotifierProvider)
+        .shelfSeries
+        .single
+        .figures;
     expect(figs.single.id, 'custom_empty_figure_edit-f-0');
   });
 
@@ -431,7 +448,12 @@ void main() {
     final container = ProviderScope.containerOf(
       tester.element(find.byType(MaterialApp)),
     );
-    final fig = container.read(collectionNotifierProvider).shelfSeries.single.figures.last;
+    final fig = container
+        .read(collectionNotifierProvider)
+        .shelfSeries
+        .single
+        .figures
+        .last;
     expect(fig.isSecret, isTrue);
     expect(fig.rarityLabel, '1:288');
   });
@@ -455,12 +477,19 @@ void main() {
     final container = ProviderScope.containerOf(
       tester.element(find.byType(MaterialApp)),
     );
-    final fig = container.read(collectionNotifierProvider).shelfSeries.single.figures.last;
+    final fig = container
+        .read(collectionNotifierProvider)
+        .shelfSeries
+        .single
+        .figures
+        .last;
     expect(fig.name, 'Rabbit Gold');
     expect(fig.localImageUri, '/tmp/rabbit_gold.jpg');
   });
 
-  testWidgets('cancel add figure dialog does not append figure', (tester) async {
+  testWidgets('cancel add figure dialog does not append figure', (
+    tester,
+  ) async {
     final series = _seriesWithFigures();
     await _pumpEditForm(tester, series: series);
 
@@ -478,7 +507,12 @@ void main() {
       tester.element(find.byType(MaterialApp)),
     );
     expect(
-      container.read(collectionNotifierProvider).shelfSeries.single.figures.length,
+      container
+          .read(collectionNotifierProvider)
+          .shelfSeries
+          .single
+          .figures
+          .length,
       3,
     );
   });

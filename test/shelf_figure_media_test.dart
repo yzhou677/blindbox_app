@@ -77,23 +77,26 @@ void main() {
       expect(ShelfFigureMedia.catalogFigureImageKey(figure), 'foo');
     });
 
-    test('returns null when only series cover exists and fallback disabled', () {
-      const figure = ShelfFigure(
-        id: 'fig_1',
-        seriesId: 'series_1',
-        name: 'Test',
-        rarity: 'Regular',
-        isSecret: false,
-      );
-      expect(
-        ShelfFigureMedia.figureDisplayRef(
-          figure,
-          baseSeries,
-          includeSeriesCoverFallback: false,
-        ),
-        isNull,
-      );
-    });
+    test(
+      'returns null when only series cover exists and fallback disabled',
+      () {
+        const figure = ShelfFigure(
+          id: 'fig_1',
+          seriesId: 'series_1',
+          name: 'Test',
+          rarity: 'Regular',
+          isSecret: false,
+        );
+        expect(
+          ShelfFigureMedia.figureDisplayRef(
+            figure,
+            baseSeries,
+            includeSeriesCoverFallback: false,
+          ),
+          isNull,
+        );
+      },
+    );
   });
 
   group('ShelfFigureMedia.seriesCoverRef', () {

@@ -14,6 +14,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'helpers/collection_fixtures.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 final class _ShelfUxTestCollectionNotifier extends CollectionNotifier {
   _ShelfUxTestCollectionNotifier(this._snap);
@@ -23,7 +24,8 @@ final class _ShelfUxTestCollectionNotifier extends CollectionNotifier {
   CollectionSnapshot build() => _snap;
 }
 
-final class _DefaultShelfUiPrefsNotifier extends CollectionShelfUiPrefsNotifier {
+final class _DefaultShelfUiPrefsNotifier
+    extends CollectionShelfUiPrefsNotifier {
   @override
   CollectionShelfUiPrefs build() => const CollectionShelfUiPrefs();
 }
@@ -31,9 +33,8 @@ final class _DefaultShelfUiPrefsNotifier extends CollectionShelfUiPrefsNotifier 
 final class _AlphabeticalShelfUiPrefsNotifier
     extends CollectionShelfUiPrefsNotifier {
   @override
-  CollectionShelfUiPrefs build() => const CollectionShelfUiPrefs(
-        sort: CollectionShelfSort.alphabetical,
-      );
+  CollectionShelfUiPrefs build() =>
+      const CollectionShelfUiPrefs(sort: CollectionShelfSort.alphabetical);
 }
 
 ShelfSeries _shelfSeries({
@@ -61,10 +62,7 @@ ShelfSeries _shelfSeries({
 Map<String, TrackedFigure> _ownedAll(ShelfSeries series) {
   return {
     for (final f in series.figures)
-      f.id: TrackedFigure(
-        figureId: f.id,
-        state: FigureCollectionState.owned,
-      ),
+      f.id: TrackedFigure(figureId: f.id, state: FigureCollectionState.owned),
   };
 }
 
@@ -122,9 +120,9 @@ double _left(WidgetTester tester, Finder finder) {
 }
 
 Finder get _searchField => find.descendant(
-      of: find.byType(AppSearchField),
-      matching: find.byType(TextField),
-    );
+  of: find.byType(AppSearchField),
+  matching: find.byType(TextField),
+);
 
 void main() {
   setUp(() {
@@ -183,10 +181,14 @@ void main() {
 
       await _scrollShelfIntoView(tester);
 
-      expect(_left(tester, find.text('Alpha Apple')),
-          lessThan(_left(tester, find.text('Mango Mix'))));
-      expect(_left(tester, find.text('Mango Mix')),
-          lessThan(_left(tester, find.text('Zeta Zzz'))));
+      expect(
+        _left(tester, find.text('Alpha Apple')),
+        lessThan(_left(tester, find.text('Mango Mix'))),
+      );
+      expect(
+        _left(tester, find.text('Mango Mix')),
+        lessThan(_left(tester, find.text('Zeta Zzz'))),
+      );
 
       await _scrollToTop(tester);
       await tester.enterText(_searchField, 'Apple');
@@ -199,15 +201,17 @@ void main() {
       expect(find.text('Zeta Zzz'), findsNothing);
 
       await _scrollToTop(tester);
-      await tester.tap(find.byIcon(Icons.close_rounded));
+      await tester.tap(find.byIcon(Symbols.close_rounded));
       await tester.pump();
       await _scrollShelfIntoView(tester);
 
       expect(find.text('Alpha Apple'), findsOneWidget);
       expect(find.text('Mango Mix'), findsOneWidget);
       expect(find.text('Zeta Zzz'), findsOneWidget);
-      expect(_left(tester, find.text('Alpha Apple')),
-          lessThan(_left(tester, find.text('Zeta Zzz'))));
+      expect(
+        _left(tester, find.text('Alpha Apple')),
+        lessThan(_left(tester, find.text('Zeta Zzz'))),
+      );
 
       await _scrollToTop(tester);
       await tester.enterText(_searchField, 'NoMatchQuery');
@@ -250,13 +254,8 @@ void main() {
 
       await _pumpCollectionScreen(
         tester,
-        snap: CollectionSnapshot(
-          shelfSeries: [owned],
-          figureStates: const {},
-        ),
-        overrides: [
-          catalogBundleProvider.overrideWith((ref) async => catalog),
-        ],
+        snap: CollectionSnapshot(shelfSeries: [owned], figureStates: const {}),
+        overrides: [catalogBundleProvider.overrideWith((ref) async => catalog)],
       );
 
       await _scrollShelfIntoView(tester);

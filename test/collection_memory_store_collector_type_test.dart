@@ -13,61 +13,70 @@ void main() {
     CollectionMemoryStore.instance.resetForTest();
   });
 
-  test('saveCollectorType persists identity, reason, and reveal record', () async {
-    final store = CollectionMemoryStore.instance;
-    const stats = CollectorTypeStats(
-      totalOwned: 3,
-      totalWishlist: 1,
-      trackedSeries: 1,
-      completedSeriesCount: 0,
-      masterCompleteSeriesCount: 0,
-      masterEligibleSeriesCount: 0,
-      completionPercent: 50,
-      secretOwned: 0,
-      secretSlots: 0,
-      brandBreakdown: {},
-      topSeries: [],
-      customSeriesRatio: 0,
-    );
-    final identity = CollectorTypeIdentity(
-      archetypeId: CollectorTypeArchetypeId.curator,
-      revealedAt: DateTime(2026, 5, 1),
-      signatureHash: 'hash',
-      stats: stats,
-      reasonKey: CollectorTypeReasonKey.intentionalSpread,
-    );
+  test(
+    'saveCollectorType persists identity, reason, and reveal record',
+    () async {
+      final store = CollectionMemoryStore.instance;
+      const stats = CollectorTypeStats(
+        totalOwned: 3,
+        totalWishlist: 1,
+        trackedSeries: 1,
+        completedSeriesCount: 0,
+        masterCompleteSeriesCount: 0,
+        masterEligibleSeriesCount: 0,
+        completionPercent: 50,
+        secretOwned: 0,
+        secretSlots: 0,
+        brandBreakdown: {},
+        topSeries: [],
+        customSeriesRatio: 0,
+      );
+      final identity = CollectorTypeIdentity(
+        archetypeId: CollectorTypeArchetypeId.curator,
+        revealedAt: DateTime(2026, 5, 1),
+        signatureHash: 'hash',
+        stats: stats,
+        reasonKey: CollectorTypeReasonKey.intentionalSpread,
+      );
 
-    await store.saveCollectorType(identity);
-    expect(
-      store.cached.collectorTypeIdentity?.archetypeId,
-      CollectorTypeArchetypeId.curator,
-    );
-    expect(
-      store.cached.collectorTypeIdentity?.reasonKey,
-      CollectorTypeReasonKey.intentionalSpread,
-    );
-    expect(store.cached.collectorTypeRevealHistory, hasLength(1));
-    expect(
-      store.cached.collectorTypeRevealHistory.single.archetypeId,
-      CollectorTypeArchetypeId.curator,
-    );
-    expect(
-      store.cached.collectorTypeRevealHistory.single.reasonKey,
-      CollectorTypeReasonKey.intentionalSpread,
-    );
-    expect(store.cached.collectorTypeRevealHistory.single.score, 0);
-    expect(store.cached.collectorTypeRevealHistory.single.confidence, 0);
-    expect(store.cached.collectorTypeResolverVersion, kCollectorTypeResolverVersion);
-    expect(store.cached.revealedResolverVersion, kCollectorTypeResolverVersion);
+      await store.saveCollectorType(identity);
+      expect(
+        store.cached.collectorTypeIdentity?.archetypeId,
+        CollectorTypeArchetypeId.curator,
+      );
+      expect(
+        store.cached.collectorTypeIdentity?.reasonKey,
+        CollectorTypeReasonKey.intentionalSpread,
+      );
+      expect(store.cached.collectorTypeRevealHistory, hasLength(1));
+      expect(
+        store.cached.collectorTypeRevealHistory.single.archetypeId,
+        CollectorTypeArchetypeId.curator,
+      );
+      expect(
+        store.cached.collectorTypeRevealHistory.single.reasonKey,
+        CollectorTypeReasonKey.intentionalSpread,
+      );
+      expect(store.cached.collectorTypeRevealHistory.single.score, 0);
+      expect(store.cached.collectorTypeRevealHistory.single.confidence, 0);
+      expect(
+        store.cached.collectorTypeResolverVersion,
+        kCollectorTypeResolverVersion,
+      );
+      expect(
+        store.cached.revealedResolverVersion,
+        kCollectorTypeResolverVersion,
+      );
 
-    final prefs = await SharedPreferences.getInstance();
-    expect(prefs.containsKey('collection_memory_v3'), isTrue);
-    final raw = prefs.getString('collection_memory_v3');
-    expect(raw, contains('curator'));
-    expect(raw, contains('hash'));
-    expect(raw, contains('intentionalSpread'));
-    expect(raw, contains('collectorTypeResolverVersion'));
-  });
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.containsKey('collection_memory_v3'), isTrue);
+      final raw = prefs.getString('collection_memory_v3');
+      expect(raw, contains('curator'));
+      expect(raw, contains('hash'));
+      expect(raw, contains('intentionalSpread'));
+      expect(raw, contains('collectorTypeResolverVersion'));
+    },
+  );
 
   test('clearCollectorType removes identity fields', () async {
     final store = CollectionMemoryStore.instance;

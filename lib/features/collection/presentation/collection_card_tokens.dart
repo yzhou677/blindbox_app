@@ -15,26 +15,26 @@ abstract final class CollectionCardTokens {
   /// Same width as For You / Chasers — not a Collection-only magic number.
   static const double width = AppCardTokens.browseRailWidth;
 
-  static const EdgeInsets padding = AppCardTokens.browseRailPadding;
+  static const EdgeInsets padding = EdgeInsets.fromLTRB(10, 10, 10, 12);
 
-  static const double imageToTitleGap = AppCardTokens.browseRailImageToTitleGap;
+  static const double imageToTitleGap = 8;
 
-  static const double titleToMetaGap = AppCardTokens.browseRailTitleToMetaGap;
+  static const double titleToMetaGap = 3;
 
   /// Full square cover — do not shrink below this for text/footer.
   static double get coverExtent => AppCardTokens.browseRailThumbExtent(width);
 
   /// Gap from IP meta to progress footer.
-  static const double metaToProgressGap = 8;
+  static const double metaToProgressGap = 6;
 
   static const double progressBarHeight = 4;
 
-  static const double progressToLabelGap = 4;
+  static const double progressToLabelGap = 3;
 
   /// Minimum rail / card height — sized so [coverExtent] stays full-bleed.
   ///
   /// The card owns this height; rails use [CollectionSeriesCard.railExtent].
-  static const double minRailHeight = 276;
+  static const double minRailHeight = 268;
 
   /// Wishlist Figure cards reserve two lines each for figure and series names,
   /// plus a persistent brand footer. The base adds only the 12dp required by

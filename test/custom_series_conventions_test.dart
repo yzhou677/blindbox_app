@@ -10,7 +10,10 @@ void main() {
 
   test('brandIdFromDisplay defaults to independent', () {
     expect(CustomSeriesConventions.brandIdFromDisplay(null), 'independent');
-    expect(CustomSeriesConventions.brandIdFromDisplay('My Studio'), 'my_studio');
+    expect(
+      CustomSeriesConventions.brandIdFromDisplay('My Studio'),
+      'my_studio',
+    );
   });
 
   test('figure and series imageKey stems follow instance id pattern', () {

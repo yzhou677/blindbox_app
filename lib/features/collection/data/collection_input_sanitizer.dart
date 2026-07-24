@@ -49,10 +49,16 @@ abstract final class CollectionInputSanitizer {
   }
 
   static String? figureName(String? raw) {
-    return singleLine(raw, maxLength: CollectionInputLimits.figureNameMaxLength);
+    return singleLine(
+      raw,
+      maxLength: CollectionInputLimits.figureNameMaxLength,
+    );
   }
 
   static String? rarityLabel(String? raw) {
-    return singleLine(raw, maxLength: CollectionInputLimits.rarityLabelMaxLength);
+    return singleLine(
+      raw,
+      maxLength: CollectionInputLimits.rarityLabelMaxLength,
+    );
   }
 }

@@ -379,10 +379,7 @@ SeriesProgressCounts progressForSeries(
 ///
 /// This is a Collector Type product concept: a shelf row with zero owned
 /// figures is tracked, but not yet started.
-bool isStartedSeries(
-  ShelfSeries series,
-  Map<String, TrackedFigure> states,
-) =>
+bool isStartedSeries(ShelfSeries series, Map<String, TrackedFigure> states) =>
     progressForSeries(series, states).owned > 0;
 
 /// Per-pass progress cache for shelf browse (partition → sort → feed).

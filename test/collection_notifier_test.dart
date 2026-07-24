@@ -256,8 +256,9 @@ void main() {
     final container = ProviderContainer();
     addTearDown(container.dispose);
     final n = container.read(collectionNotifierProvider.notifier);
-    final removed =
-        container.read(collectionNotifierProvider).seriesWishlist[1];
+    final removed = container
+        .read(collectionNotifierProvider)
+        .seriesWishlist[1];
 
     n.removeSeriesFromWishlist(removed.catalogSeriesId);
     n.restoreSeriesWishlist(removed, atIndex: 1);
@@ -271,41 +272,44 @@ void main() {
     );
   });
 
-  test('remove Series undo does not restore after Series enters Collection', () {
-    CollectionAppBootstrap.prime(CollectionSnapshot.emptyTest());
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
-    final n = container.read(collectionNotifierProvider.notifier);
-    final template = CatalogSeries(
-      templateId: 'cat-series-undo-owned',
-      name: 'Undo Owned Series',
-      brand: 'POP MART',
-      ipName: 'Molly',
-      figures: const [
-        CatalogFigure(
-          templateFigureId: 'cat-fig-undo-owned',
-          catalogSeriesTemplateId: 'cat-series-undo-owned',
-          name: 'Rose',
-          rarity: 'Regular',
-          isSecret: false,
-        ),
-      ],
-      shelfAccent: const Color(0xFFE8DEF5),
-    );
-    final entry = WishlistedCatalogSeries.fromCatalogTemplate(
-      template,
-      addedAtMicros: 42,
-    );
+  test(
+    'remove Series undo does not restore after Series enters Collection',
+    () {
+      CollectionAppBootstrap.prime(CollectionSnapshot.emptyTest());
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final n = container.read(collectionNotifierProvider.notifier);
+      final template = CatalogSeries(
+        templateId: 'cat-series-undo-owned',
+        name: 'Undo Owned Series',
+        brand: 'POP MART',
+        ipName: 'Molly',
+        figures: const [
+          CatalogFigure(
+            templateFigureId: 'cat-fig-undo-owned',
+            catalogSeriesTemplateId: 'cat-series-undo-owned',
+            name: 'Rose',
+            rarity: 'Regular',
+            isSecret: false,
+          ),
+        ],
+        shelfAccent: const Color(0xFFE8DEF5),
+      );
+      final entry = WishlistedCatalogSeries.fromCatalogTemplate(
+        template,
+        addedAtMicros: 42,
+      );
 
-    n.restoreSeriesWishlist(entry);
-    n.removeSeriesFromWishlist(entry.catalogSeriesId);
-    n.addSeriesFromTemplate(template);
-    n.restoreSeriesWishlist(entry);
+      n.restoreSeriesWishlist(entry);
+      n.removeSeriesFromWishlist(entry.catalogSeriesId);
+      n.addSeriesFromTemplate(template);
+      n.restoreSeriesWishlist(entry);
 
-    final snap = container.read(collectionNotifierProvider);
-    expect(snap.shelfSeries, hasLength(1));
-    expect(snap.seriesWishlist, isEmpty);
-  });
+      final snap = container.read(collectionNotifierProvider);
+      expect(snap.shelfSeries, hasLength(1));
+      expect(snap.seriesWishlist, isEmpty);
+    },
+  );
 
   test('remove Figure undo restores exact previous wishlist state', () {
     final container = newContainer();

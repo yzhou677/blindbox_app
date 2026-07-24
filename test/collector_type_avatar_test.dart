@@ -27,7 +27,9 @@ void main() {
     expect(find.byType(Transform), findsWidgets);
     expect(find.byType(Image), findsOneWidget);
 
-    final decorated = tester.widgetList<DecoratedBox>(find.byType(DecoratedBox));
+    final decorated = tester.widgetList<DecoratedBox>(
+      find.byType(DecoratedBox),
+    );
     for (final box in decorated) {
       final border = box.decoration is BoxDecoration
           ? (box.decoration as BoxDecoration).border
@@ -45,10 +47,7 @@ void main() {
         isNotNull,
         reason: 'missing mascot for $id',
       );
-      expect(
-        CollectorTypeMascotAssets.assetPathFor(id),
-        isNotNull,
-      );
+      expect(CollectorTypeMascotAssets.assetPathFor(id), isNotNull);
     }
   });
 }

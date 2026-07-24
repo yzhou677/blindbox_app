@@ -7,6 +7,7 @@ import 'package:blindbox_app/features/collection/widgets/collection_insights_das
 import 'package:blindbox_app/features/collection/widgets/collection_summary_section.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 void main() {
   const stats = CollectionAggregateStats(
@@ -104,7 +105,7 @@ void main() {
       find.text(CollectionInsightsDashboardCopy.summaryHeader),
       findsOneWidget,
     );
-    expect(find.byIcon(Icons.expand_more_rounded), findsOneWidget);
+    expect(find.byIcon(Symbols.expand_more_rounded), findsOneWidget);
     // Insights navigation lives in the Shelf | Insights segment ??not here.
     expect(
       find.text(CollectionInsightsDashboardCopy.sectionTitle),
@@ -179,13 +180,13 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.expand_more_rounded));
+    await tester.tap(find.byIcon(Symbols.expand_more_rounded));
     await tester.pump();
     await tester.pump(CollectibleMotion.insightsDashboardTransition);
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.text(CollectionSummaryLabels.wishlist), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.expand_more_rounded));
+    await tester.tap(find.byIcon(Symbols.expand_more_rounded));
     await tester.pump();
     await tester.pump(CollectibleMotion.insightsDashboardTransition);
     await tester.pump(const Duration(milliseconds: 50));

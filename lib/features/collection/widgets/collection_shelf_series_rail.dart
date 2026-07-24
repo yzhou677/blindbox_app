@@ -41,7 +41,7 @@ class CollectionShelfSeriesRail extends StatelessWidget {
         physics: const BouncingScrollPhysics(),
         itemCount: series.length,
         separatorBuilder: (context, index) =>
-            const SizedBox(width: FeedRhythm.horizontalRailCardGap),
+            const SizedBox(width: FeedRhythm.collectionSeriesRailCardGap),
         itemBuilder: (context, index) {
           final row = series[index];
           return CollectionSeriesCard(
@@ -50,8 +50,7 @@ class CollectionShelfSeriesRail extends StatelessWidget {
             progress: progress.forSeries(row),
             figureStates: figureStates,
             onTap: () => onOpen(row),
-            onLongPress:
-                onManage == null ? null : () => onManage!(row),
+            onLongPress: onManage == null ? null : () => onManage!(row),
           );
         },
       ),

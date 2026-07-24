@@ -7,6 +7,7 @@ import 'package:blindbox_app/features/collection/presentation/collection_vocabul
 import 'package:blindbox_app/features/collection/widgets/custom_series_quiet_field.dart';
 import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Figure lineup on custom series edit — tap a row to edit; add new below.
 class CustomSeriesEditFiguresSection extends StatelessWidget {
@@ -37,11 +38,12 @@ class CustomSeriesEditFiguresSection extends StatelessWidget {
           children: [
             Text(
               'Figures',
-              style: CollectibleTypography.figureMeta(textTheme, scheme).copyWith(
-                fontSize: 12,
-                letterSpacing: 0.14,
-                fontWeight: FontWeight.w600,
-              ),
+              style: CollectibleTypography.figureMeta(textTheme, scheme)
+                  .copyWith(
+                    fontSize: 12,
+                    letterSpacing: 0.14,
+                    fontWeight: FontWeight.w600,
+                  ),
             ),
             if (figures.isNotEmpty) ...[
               const SizedBox(width: 10),
@@ -79,25 +81,23 @@ class CustomSeriesEditFiguresSection extends StatelessWidget {
           inputFormatters: CollectionInputFormatters.figureName(),
           onSubmitted: (_) => onAddSubmitted(),
           style: CollectibleTypography.figureCaption(textTheme, scheme),
-          decoration: quietCustomSeriesField(
-            scheme,
-            hintText: 'Figure name',
-          ).copyWith(
-            suffixIcon: IconButton(
-              key: const Key('custom-series-edit-add-figure-button'),
-              onPressed: onAddSubmitted,
-              tooltip: 'Add figure',
-              icon: Icon(
-                Icons.add_rounded,
-                color: scheme.onSurfaceVariant.withValues(alpha: 0.55),
+          decoration: quietCustomSeriesField(scheme, hintText: 'Figure name')
+              .copyWith(
+                suffixIcon: IconButton(
+                  key: const Key('custom-series-edit-add-figure-button'),
+                  onPressed: onAddSubmitted,
+                  tooltip: 'Add figure',
+                  icon: Icon(
+                    Symbols.add_rounded,
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.55),
+                  ),
+                  visualDensity: VisualDensity.compact,
+                ),
+                suffixIconConstraints: const BoxConstraints(
+                  minWidth: 44,
+                  minHeight: 44,
+                ),
               ),
-              visualDensity: VisualDensity.compact,
-            ),
-            suffixIconConstraints: const BoxConstraints(
-              minWidth: 44,
-              minHeight: 44,
-            ),
-          ),
         ),
       ],
     );
@@ -177,7 +177,7 @@ class _ShelfFigureEditRow extends StatelessWidget {
                   ),
                 ),
                 Icon(
-                  Icons.chevron_right_rounded,
+                  Symbols.chevron_right_rounded,
                   size: 20,
                   color: scheme.onSurfaceVariant.withValues(alpha: 0.45),
                 ),

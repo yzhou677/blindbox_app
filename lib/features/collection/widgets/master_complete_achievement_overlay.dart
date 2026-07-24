@@ -11,10 +11,7 @@ export 'master_complete_achievement_motion.dart';
 
 /// Full-screen achievement overlay — centered, premium, ~0.95s.
 class MasterCompleteAchievementOverlay extends StatefulWidget {
-  const MasterCompleteAchievementOverlay({
-    super.key,
-    required this.onFinished,
-  });
+  const MasterCompleteAchievementOverlay({super.key, required this.onFinished});
 
   final VoidCallback onFinished;
 
@@ -37,10 +34,7 @@ class _MasterCompleteAchievementOverlayState
       return _cachedBlurFilter!;
     }
     _cachedBlurSigma = quantized;
-    _cachedBlurFilter = ImageFilter.blur(
-      sigmaX: quantized,
-      sigmaY: quantized,
-    );
+    _cachedBlurFilter = ImageFilter.blur(sigmaX: quantized, sigmaY: quantized);
     return _cachedBlurFilter!;
   }
 
@@ -107,52 +101,53 @@ class _MasterCompleteAchievementOverlayState
             canPop: false,
             child: AbsorbPointer(
               child: Material(
-              type: MaterialType.transparency,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  ClipRect(
-                    child: BackdropFilter(
-                      key: const Key('master_complete_achievement_backdrop'),
-                      filter: _blurFilterFor(blur),
-                      child: ColoredBox(
-                        color: Colors.black.withValues(alpha: scrim),
+                type: MaterialType.transparency,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    ClipRect(
+                      child: BackdropFilter(
+                        key: const Key('master_complete_achievement_backdrop'),
+                        filter: _blurFilterFor(blur),
+                        child: ColoredBox(
+                          color: Colors.black.withValues(alpha: scrim),
+                        ),
                       ),
                     ),
-                  ),
-                  Center(
-                    child: Opacity(
-                      opacity: master,
-                      child: Transform.scale(
-                        scale: scale,
-                        child: SizedBox(
-                          width: 280,
-                          height: 240,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              RepaintBoundary(
-                                child: CustomPaint(
-                                  key: const Key(
-                                    'master_complete_achievement_particles',
+                    Center(
+                      child: Opacity(
+                        opacity: master,
+                        child: Transform.scale(
+                          scale: scale,
+                          child: SizedBox(
+                            width: 280,
+                            height: 240,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                RepaintBoundary(
+                                  child: CustomPaint(
+                                    key: const Key(
+                                      'master_complete_achievement_particles',
+                                    ),
+                                    painter:
+                                        MasterCompleteAchievementEffectsPainter(
+                                          progress: t,
+                                          intensity: effects,
+                                        ),
+                                    size: const Size(280, 240),
                                   ),
-                                  painter: MasterCompleteAchievementEffectsPainter(
-                                    progress: t,
-                                    intensity: effects,
-                                  ),
-                                  size: const Size(280, 240),
                                 ),
-                              ),
-                              label!,
-                            ],
+                                label!,
+                              ],
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
             ),
           );
         },
@@ -178,8 +173,9 @@ class _AchievementLabel extends StatelessWidget {
             height: 1,
             shadows: [
               Shadow(
-                color: MasterCompleteAchievementColors.gold
-                    .withValues(alpha: 0.28),
+                color: MasterCompleteAchievementColors.gold.withValues(
+                  alpha: 0.28,
+                ),
                 blurRadius: 14,
               ),
             ],
@@ -199,13 +195,15 @@ class _AchievementLabel extends StatelessWidget {
             ),
             shadows: [
               Shadow(
-                color: MasterCompleteAchievementColors.gold
-                    .withValues(alpha: 0.42),
+                color: MasterCompleteAchievementColors.gold.withValues(
+                  alpha: 0.42,
+                ),
                 blurRadius: 22,
               ),
               Shadow(
-                color: MasterCompleteAchievementColors.goldSoft
-                    .withValues(alpha: 0.18),
+                color: MasterCompleteAchievementColors.goldSoft.withValues(
+                  alpha: 0.18,
+                ),
                 blurRadius: 8,
               ),
             ],

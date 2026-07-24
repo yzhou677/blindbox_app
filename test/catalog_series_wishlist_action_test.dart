@@ -4,6 +4,7 @@ import 'package:blindbox_app/features/collection/presentation/collection_series_
 import 'package:blindbox_app/shared/widgets/catalog_quick_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 void main() {
   testWidgets(
@@ -25,13 +26,19 @@ void main() {
         ),
       );
 
-      expect(find.byIcon(Icons.favorite_border_rounded), findsOneWidget);
       expect(find.byType(CatalogQuickActionButton), findsOneWidget);
       expect(
         tester.getSize(find.byType(CatalogQuickActionButton)),
         const Size(40, 40),
       );
-      await tester.tap(find.byIcon(Icons.favorite_border_rounded));
+      final heart = find.descendant(
+        of: find.byType(CatalogQuickActionButton),
+        matching: find.byIcon(Symbols.favorite_rounded),
+      );
+      expect(heart, findsOneWidget);
+      expect(tester.widget<Icon>(heart).fill, 0);
+      expect(tester.widget<Icon>(heart).size, 20);
+      await tester.tap(heart);
       expect(toggles, 1);
 
       await tester.pumpWidget(
@@ -48,7 +55,11 @@ void main() {
         ),
       );
 
-      expect(find.byIcon(Icons.favorite_rounded), findsOneWidget);
+      final filled = find.descendant(
+        of: find.byType(CatalogQuickActionButton),
+        matching: find.byIcon(Symbols.favorite_rounded),
+      );
+      expect(tester.widget<Icon>(filled).fill, 1);
     },
   );
 
@@ -69,8 +80,7 @@ void main() {
       ),
     );
 
-    expect(find.byIcon(Icons.favorite_rounded), findsNothing);
-    expect(find.byIcon(Icons.favorite_border_rounded), findsNothing);
+    expect(find.byIcon(Symbols.favorite_rounded), findsNothing);
   });
 }
 
@@ -89,7 +99,7 @@ const _row = CatalogSeriesSearchRow(
 const _addable = CollectionSeriesShelfCtaPresentation(
   visualState: OwnershipShelfCtaVisualState.addable,
   label: 'Add',
-  icon: Icons.add_rounded,
+  icon: Symbols.add_rounded,
   enabled: true,
   semanticsLabel: 'Add to collection',
   usePrimaryTint: true,
@@ -98,7 +108,7 @@ const _addable = CollectionSeriesShelfCtaPresentation(
 const _owned = CollectionSeriesShelfCtaPresentation(
   visualState: OwnershipShelfCtaVisualState.owned,
   label: 'In collection',
-  icon: Icons.check_rounded,
+  icon: Symbols.check_rounded,
   enabled: false,
   semanticsLabel: 'Already in your collection',
   usePrimaryTint: false,

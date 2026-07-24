@@ -17,6 +17,7 @@ import 'package:blindbox_app/features/collection/widgets/catalog_series_preview_
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:blindbox_app/core/theme/app_radii.dart';
+import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/shared/widgets/collectible_browse_card.dart';
 import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
@@ -24,6 +25,7 @@ import 'package:blindbox_app/shared/widgets/series_hero_meta_block.dart';
 import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Add from catalog suggestions (searchable) or create a custom series.
 class AddToCollectionSheet extends ConsumerStatefulWidget {
@@ -200,16 +202,11 @@ class _AddToCollectionSheetState extends ConsumerState<AddToCollectionSheet> {
                 padding: const EdgeInsets.only(top: 10, bottom: 8),
                 child: FilledButton.tonal(
                   onPressed: widget.onCreateCustom,
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
+                  style: ShelfyButtonStyles.stickySheetCta(),
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.draw_rounded, size: 20),
+                      Icon(Symbols.draw_rounded, size: 20),
                       SizedBox(width: 8),
                       Text('Create my own series'),
                     ],
@@ -376,7 +373,7 @@ class _SuggestionCard extends StatelessWidget {
                       alpha: 0.5,
                     ),
                     child: Icon(
-                      Icons.photo_outlined,
+                      Symbols.photo_rounded,
                       color: scheme.onSurfaceVariant.withValues(alpha: 0.45),
                     ),
                   ),
@@ -411,11 +408,12 @@ class _SuggestionCard extends StatelessWidget {
                   : 'Add series to wishlist',
               onPressed: onWishlistPressed,
               icon: Icon(
-                isWishlisted
-                    ? Icons.favorite_rounded
-                    : Icons.favorite_border_rounded,
+                Symbols.favorite_rounded,
+                fill: isWishlisted
+                    ? ShelfySymbols.fillSolid
+                    : ShelfySymbols.fillOutline,
                 color: isWishlisted ? scheme.primary : scheme.onSurfaceVariant,
-                size: 21,
+                size: AppIconSizes.quickAction,
               ),
             ),
             const SizedBox(width: 2),

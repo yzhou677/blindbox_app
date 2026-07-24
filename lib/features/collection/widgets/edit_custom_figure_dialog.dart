@@ -1,4 +1,5 @@
 import 'package:blindbox_app/core/theme/app_radii.dart';
+import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
 import 'package:blindbox_app/features/collection/data/collection_input_formatters.dart';
 import 'package:blindbox_app/features/collection/data/collection_input_limits.dart';
 import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
@@ -7,6 +8,7 @@ import 'package:blindbox_app/features/collection/widgets/custom_series_quiet_fie
 import 'package:blindbox_app/features/collection/widgets/shelf_gallery_pick.dart';
 import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 const String editCustomFigureDialogTitle = 'Edit Figure';
 const String addCustomFigureDialogTitle = 'Add Figure';
@@ -122,7 +124,9 @@ class _EditCustomFigureDialogState extends State<EditCustomFigureDialog> {
             const SizedBox(height: 16),
             Text(
               'Image',
-              style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+              style: textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 10),
             if (hasPhoto) ...[
@@ -145,7 +149,10 @@ class _EditCustomFigureDialogState extends State<EditCustomFigureDialog> {
               children: [
                 TextButton.icon(
                   onPressed: _replaceImage,
-                  icon: const Icon(Icons.image_outlined, size: 18),
+                  icon: const Icon(
+                    Symbols.image_rounded,
+                    size: AppIconSizes.metadata,
+                  ),
                   label: Text(hasPhoto ? 'Replace' : 'Add photo'),
                 ),
                 if (hasPhoto) ...[

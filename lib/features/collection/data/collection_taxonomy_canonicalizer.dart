@@ -44,7 +44,12 @@ abstract final class CollectionTaxonomyCanonicalizer {
     }
 
     _ensureIndexes();
-    return _resolve(trimmed, _brandIndex!, _ambiguousBrandKeys!, _brandFallback);
+    return _resolve(
+      trimmed,
+      _brandIndex!,
+      _ambiguousBrandKeys!,
+      _brandFallback,
+    );
   }
 
   static CanonicalResult resolveIpFromUserInput(String? rawIp) {
@@ -52,7 +57,10 @@ abstract final class CollectionTaxonomyCanonicalizer {
     if (trimmed.isEmpty) {
       return CanonicalResult(
         displayLabel: trimmed,
-        taxonomyId: CustomSeriesConventions.slugId(trimmed, fallback: 'custom_ip'),
+        taxonomyId: CustomSeriesConventions.slugId(
+          trimmed,
+          fallback: 'custom_ip',
+        ),
         matchedRegistry: false,
       );
     }
@@ -95,7 +103,10 @@ abstract final class CollectionTaxonomyCanonicalizer {
   static CanonicalResult _ipFallback(String trimmed) {
     return CanonicalResult(
       displayLabel: trimmed,
-      taxonomyId: CustomSeriesConventions.slugId(trimmed, fallback: 'custom_ip'),
+      taxonomyId: CustomSeriesConventions.slugId(
+        trimmed,
+        fallback: 'custom_ip',
+      ),
       matchedRegistry: false,
     );
   }
@@ -103,36 +114,23 @@ abstract final class CollectionTaxonomyCanonicalizer {
   static void _ensureIndexes() {
     if (_brandIndex != null && _ipIndex != null) return;
 
-    final brandBuilt = _buildIndex(
-      [
-        for (final b in BrandTaxonomyRegistry.all)
-          (
-            id: b.id,
-            displayName: b.displayName,
-            aliases: b.aliases,
-          ),
-      ],
-      label: 'brand',
-    );
+    final brandBuilt = _buildIndex([
+      for (final b in BrandTaxonomyRegistry.all)
+        (id: b.id, displayName: b.displayName, aliases: b.aliases),
+    ], label: 'brand');
     _brandIndex = brandBuilt.index;
     _ambiguousBrandKeys = brandBuilt.ambiguousKeys;
 
-    final ipBuilt = _buildIndex(
-      [
-        for (final ip in IpTaxonomyRegistry.all)
-          (
-            id: ip.id,
-            displayName: ip.displayName,
-            aliases: ip.aliases,
-          ),
-      ],
-      label: 'ip',
-    );
+    final ipBuilt = _buildIndex([
+      for (final ip in IpTaxonomyRegistry.all)
+        (id: ip.id, displayName: ip.displayName, aliases: ip.aliases),
+    ], label: 'ip');
     _ipIndex = ipBuilt.index;
     _ambiguousIpKeys = ipBuilt.ambiguousKeys;
   }
 
-  static ({Map<String, _TaxonRef> index, Set<String> ambiguousKeys}) _buildIndex(
+  static ({Map<String, _TaxonRef> index, Set<String> ambiguousKeys})
+  _buildIndex(
     List<({String id, String displayName, List<String> aliases})> entries, {
     required String label,
   }) {

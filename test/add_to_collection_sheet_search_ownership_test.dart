@@ -31,9 +31,7 @@ class _SeededCollectionNotifier extends CollectionNotifier {
 
 CatalogSeedBundle _browseBundle() {
   return CatalogSeedBundle(
-    brands: const [
-      CatalogBrand(id: 'popmart', displayName: 'POP MART'),
-    ],
+    brands: const [CatalogBrand(id: 'popmart', displayName: 'POP MART')],
     ips: const [
       CatalogIp(id: 'popmart', brandId: 'popmart', displayName: 'POP MART'),
     ],
@@ -78,9 +76,7 @@ Future<void> _pumpSheet(
         home: Scaffold(
           body: CollectibleSheetScope(
             scrollController: scroll,
-            child: AddToCollectionSheet(
-              onCreateCustom: () {},
-            ),
+            child: AddToCollectionSheet(onCreateCustom: () {}),
           ),
         ),
       ),
@@ -97,7 +93,9 @@ void main() {
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
-    tempCacheRoot = await Directory.systemTemp.createTemp('add_sheet_own_test_');
+    tempCacheRoot = await Directory.systemTemp.createTemp(
+      'add_sheet_own_test_',
+    );
     CatalogImageDiskCache.testRootOverride = tempCacheRoot;
     CatalogImageResolver.storageFallbackOverride = false;
     CatalogImageResolver.resetSessionCachesForTest();
@@ -153,7 +151,10 @@ void main() {
 
     expect(find.text(AddSeriesCatalogCopy.browseHeading), findsNothing);
     expect(find.text('Matches'), findsOneWidget);
-    expect(find.widgetWithText(CollectibleBrowseCard, 'Series 1'), findsOneWidget);
+    expect(
+      find.widgetWithText(CollectibleBrowseCard, 'Series 1'),
+      findsOneWidget,
+    );
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();

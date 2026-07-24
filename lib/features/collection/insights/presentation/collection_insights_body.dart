@@ -48,13 +48,14 @@ class CollectionInsightsBody extends ConsumerWidget {
             child: const CollectibleSectionHeader(
               title: CollectorTypeCopy.screenTitle,
               subtitle: CollectorTypeCopy.screenSubtitle,
-              padding: EdgeInsets.fromLTRB(20, 4, 20, 0),
+              dense: true,
+              padding: EdgeInsets.fromLTRB(20, 2, 20, 0),
             ),
           ),
           Padding(
             padding: EdgeInsets.fromLTRB(
               AppSpacing.pageHorizontal,
-              AppSpacing.lg,
+              AppSpacing.md,
               AppSpacing.pageHorizontal,
               FeedRhythm.tabScrollTailPadding,
             ),
@@ -68,11 +69,11 @@ class CollectionInsightsBody extends ConsumerWidget {
                         .requestReveal(),
                     compactMessage: showEvolutionHint,
                   ),
-                  const SizedBox(height: AppSpacing.lg),
+                  const SizedBox(height: AppSpacing.md),
                 ],
                 if (showEvolutionHint) ...[
                   const CollectorTypeEvolutionHintBanner(),
-                  const SizedBox(height: AppSpacing.lg),
+                  const SizedBox(height: AppSpacing.md),
                 ],
                 // Reveal snapshot only ??muted while awaiting Reveal again.
                 InsightsArchivedScope(

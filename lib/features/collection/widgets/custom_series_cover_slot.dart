@@ -1,7 +1,9 @@
 import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
+import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
 import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Series cover — tap to add or replace from the gallery.
 class CustomSeriesCoverSlot extends StatelessWidget {
@@ -64,7 +66,7 @@ class CustomSeriesCoverSlot extends StatelessWidget {
                   if (!has)
                     Center(
                       child: Icon(
-                        Icons.add_photo_alternate_outlined,
+                        Symbols.add_photo_alternate_rounded,
                         size: 30,
                         color: scheme.onSurfaceVariant.withValues(alpha: 0.38),
                       ),
@@ -79,8 +81,8 @@ class CustomSeriesCoverSlot extends StatelessWidget {
                         child: IconButton(
                           tooltip: 'Remove cover',
                           icon: Icon(
-                            Icons.close_rounded,
-                            size: 18,
+                            Symbols.close_rounded,
+                            size: AppIconSizes.metadata,
                             color: scheme.onSurfaceVariant.withValues(
                               alpha: 0.7,
                             ),

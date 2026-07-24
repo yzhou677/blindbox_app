@@ -51,8 +51,9 @@ final collectorTypeDisplayStatsProvider = Provider<CollectorTypeStats?>((ref) {
 ///
 /// Recomputes whenever collection (or catalog / emotional profile) changes.
 /// Does **not** overwrite SharedPreferences identity.
-final collectorTypeLiveResolutionProvider =
-    Provider<CollectorTypeResolution>((ref) {
+final collectorTypeLiveResolutionProvider = Provider<CollectorTypeResolution>((
+  ref,
+) {
   final snap = ref.watch(collectionNotifierProvider);
   final profile = ref.watch(shelfEmotionalProfileProvider);
   final catalog = ref.watch(catalogBundleProvider).valueOrNull;
@@ -66,8 +67,8 @@ final collectorTypeLiveResolutionProvider =
 /// Live candidate archetype id (convenience for affordances / tests).
 final collectorTypeCandidateArchetypeProvider =
     Provider<CollectorTypeArchetypeId>((ref) {
-  return ref.watch(collectorTypeLiveResolutionProvider).archetypeId;
-});
+      return ref.watch(collectorTypeLiveResolutionProvider).archetypeId;
+    });
 
 /// Whether Insights should encourage another Reveal.
 ///

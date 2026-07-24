@@ -1,4 +1,5 @@
 import 'package:blindbox_app/core/theme/app_spacing.dart';
+import 'package:blindbox_app/core/theme/app_typography.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_stats.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/insights_dashboard_panel.dart';
@@ -49,9 +50,9 @@ class CollectorTypeShelfProgressCard extends StatelessWidget {
         children: [
           Text(
             'Shelf Progress',
-            style: CollectibleTypography.shelfSeriesTitle(textTheme, scheme),
+            style: AppTypography.sectionTitle(textTheme, scheme),
           ),
-          const SizedBox(height: AppSpacing.lg + 2),
+          const SizedBox(height: AppSpacing.md),
           _ProgressRow(
             label: CollectionVocabulary.regularProgress,
             tooltip: CompletionMetricTooltips.regularProgress,

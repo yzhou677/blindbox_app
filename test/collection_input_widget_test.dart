@@ -8,17 +8,16 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   Finder formFieldAt(int index) {
-    return find.descendant(
-      of: find.byType(CustomSeriesFormSheet),
-      matching: find.byType(TextFormField),
-    ).at(index);
+    return find
+        .descendant(
+          of: find.byType(CustomSeriesFormSheet),
+          matching: find.byType(TextFormField),
+        )
+        .at(index);
   }
 
   String fieldText(WidgetTester tester, int index) {
-    return tester
-        .widget<TextFormField>(formFieldAt(index))
-        .controller!
-        .text;
+    return tester.widget<TextFormField>(formFieldAt(index)).controller!.text;
   }
 
   testWidgets('custom series form enforces maxLength and blocks line breaks', (
@@ -54,10 +53,7 @@ void main() {
     );
 
     await tester.enterText(formFieldAt(1), 'b' * 80);
-    expect(
-      fieldText(tester, 1).length,
-      CollectionInputLimits.brandMaxLength,
-    );
+    expect(fieldText(tester, 1).length, CollectionInputLimits.brandMaxLength);
 
     await tester.enterText(formFieldAt(2), 'hello\nworld');
     expect(fieldText(tester, 2), 'helloworld');

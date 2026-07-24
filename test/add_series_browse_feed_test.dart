@@ -8,9 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 CatalogSeedBundle _datedBundle() {
   return CatalogSeedBundle(
-    brands: const [
-      CatalogBrand(id: 'popmart', displayName: 'POP MART'),
-    ],
+    brands: const [CatalogBrand(id: 'popmart', displayName: 'POP MART')],
     ips: const [
       CatalogIp(id: 'dimoo', brandId: 'popmart', displayName: 'DIMOO'),
     ],

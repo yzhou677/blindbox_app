@@ -16,11 +16,11 @@ enum CollectionShelfSort {
 
 extension CollectionShelfSortLabels on CollectionShelfSort {
   String get menuLabel => switch (this) {
-        CollectionShelfSort.recentlyAdded => 'Recently Added',
-        CollectionShelfSort.alphabetical => 'Alphabetical (A–Z)',
-        CollectionShelfSort.figureCount => 'Figure Count',
-        CollectionShelfSort.completion => 'Completion',
-      };
+    CollectionShelfSort.recentlyAdded => 'Recently Added',
+    CollectionShelfSort.alphabetical => 'Alphabetical (A–Z)',
+    CollectionShelfSort.figureCount => 'Figure Count',
+    CollectionShelfSort.completion => 'Completion',
+  };
 
   static CollectionShelfSort? tryParse(String? raw) {
     if (raw == null || raw.isEmpty) return null;
@@ -51,8 +51,8 @@ List<ShelfSeries> filterShelfSeriesBySearch(
   final catalogSeriesIds = catalogSearch != null
       ? catalogSearch.matchingSeriesIds(query)
       : catalog != null
-          ? CatalogSearchService(catalog).matchingSeriesIds(query)
-          : const <String>{};
+      ? CatalogSearchService(catalog).matchingSeriesIds(query)
+      : const <String>{};
 
   final figureSeriesLookup = catalog != null && catalogSeriesIds.isNotEmpty
       ? _catalogFigureIdToSeriesId(catalog)
@@ -71,9 +71,7 @@ List<ShelfSeries> filterShelfSeriesBySearch(
 }
 
 Map<String, String> _catalogFigureIdToSeriesId(CatalogSeedBundle catalog) {
-  return {
-    for (final fig in catalog.figures) fig.id: fig.seriesId,
-  };
+  return {for (final fig in catalog.figures) fig.id: fig.seriesId};
 }
 
 /// Catalog series ids a shelf row may represent (template key and drop imports).
@@ -130,7 +128,8 @@ bool isShelfSeriesComplete(
 }
 
 /// Single-pass split into in-progress and completed buckets.
-(List<ShelfSeries> inProgress, List<ShelfSeries> completed) partitionShelfSeries(
+(List<ShelfSeries> inProgress, List<ShelfSeries> completed)
+partitionShelfSeries(
   List<ShelfSeries> series,
   Map<String, TrackedFigure> states, {
   ShelfBrowseProgressLookup? progress,
@@ -158,10 +157,7 @@ int _compareShelfSeriesByNameThenId(ShelfSeries a, ShelfSeries b) {
 /// Matches product achievement order: Master Complete → Complete →
 /// Near Complete ([SeriesCompletionResolution.isNearComplete]) → In Progress.
 /// Threshold matches [atmosphereForSeries] / shelf “almost complete” voice.
-int _completionSortTier(
-  ShelfSeries series,
-  Map<String, TrackedFigure> states,
-) {
+int _completionSortTier(ShelfSeries series, Map<String, TrackedFigure> states) {
   final resolution = resolveSeriesCompletion(series, states);
   if (resolution.isMasterComplete) return 3;
   if (resolution.isCompleted) return 2;
@@ -203,24 +199,25 @@ List<ShelfSeries> sortShelfSeriesForDisplay(
       return List<ShelfSeries>.from(series)
         ..sort(_compareShelfSeriesByNameThenId);
     case CollectionShelfSort.figureCount:
-      return List<ShelfSeries>.from(series)
-        ..sort((a, b) {
-          final cmp = b.figureCount.compareTo(a.figureCount);
-          if (cmp != 0) return cmp;
-          return _compareShelfSeriesByNameThenId(a, b);
-        });
+      return List<ShelfSeries>.from(series)..sort((a, b) {
+        final cmp = b.figureCount.compareTo(a.figureCount);
+        if (cmp != 0) return cmp;
+        return _compareShelfSeriesByNameThenId(a, b);
+      });
     case CollectionShelfSort.completion:
-      return List<ShelfSeries>.from(series)
-        ..sort((a, b) {
-          final tierCmp = _completionSortTier(b, states)
-              .compareTo(_completionSortTier(a, states));
-          if (tierCmp != 0) return tierCmp;
-          final ratioCmp = _seriesCompletionRatio(b, states, progress: progress)
-              .compareTo(
-            _seriesCompletionRatio(a, states, progress: progress),
-          );
-          if (ratioCmp != 0) return ratioCmp;
-          return _compareShelfSeriesByNameThenId(a, b);
-        });
+      return List<ShelfSeries>.from(series)..sort((a, b) {
+        final tierCmp = _completionSortTier(
+          b,
+          states,
+        ).compareTo(_completionSortTier(a, states));
+        if (tierCmp != 0) return tierCmp;
+        final ratioCmp = _seriesCompletionRatio(
+          b,
+          states,
+          progress: progress,
+        ).compareTo(_seriesCompletionRatio(a, states, progress: progress));
+        if (ratioCmp != 0) return ratioCmp;
+        return _compareShelfSeriesByNameThenId(a, b);
+      });
   }
 }

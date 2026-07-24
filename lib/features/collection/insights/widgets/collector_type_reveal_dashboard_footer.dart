@@ -1,5 +1,6 @@
 import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Optional lightweight re-reveal affordance under the collector type hero.
 class CollectorTypeRevealDashboardFooter extends StatelessWidget {
@@ -35,7 +36,7 @@ class CollectorTypeRevealDashboardFooter extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                Icons.refresh_rounded,
+                Symbols.refresh_rounded,
                 size: 15,
                 color: scheme.primary.withValues(alpha: 0.82),
               ),

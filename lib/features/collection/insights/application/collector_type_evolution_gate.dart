@@ -36,16 +36,17 @@ bool shouldEvolve({
   String? previousResolverVersion,
   String currentResolverVersion = kCollectorTypeResolverVersion,
 }) {
-  final resolverChanged = previousResolverVersion == null ||
+  final resolverChanged =
+      previousResolverVersion == null ||
       previousResolverVersion.isEmpty ||
       previousResolverVersion != currentResolverVersion;
-  final sameSignature =
-      challenger.signatureHash == previous.signatureHash;
+  final sameSignature = challenger.signatureHash == previous.signatureHash;
   final previousScore = challenger.scores[previous.archetypeId] ?? 0;
   final previousAbsentFromBoard = previousScore <= 0;
   final current = now ?? DateTime.now();
   final inCooldown =
-      current.difference(previous.revealedAt) < kCollectorTypeEvolutionSoftCooldown;
+      current.difference(previous.revealedAt) <
+      kCollectorTypeEvolutionSoftCooldown;
 
   // Same title is a refresh, not an evolution.
   if (challenger.archetypeId == previous.archetypeId) {
@@ -77,7 +78,8 @@ bool shouldEvolve({
   }
 
   if (inCooldown) {
-    final required = kCollectorTypeEvolutionScoreMargin +
+    final required =
+        kCollectorTypeEvolutionScoreMargin +
         kCollectorTypeEvolutionCooldownExtraMargin;
     return margin >= required;
   }

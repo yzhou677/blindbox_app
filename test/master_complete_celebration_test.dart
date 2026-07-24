@@ -54,20 +54,14 @@ Map<String, TrackedFigure> _ownedRegularOnly(ShelfSeries series) {
   return {
     for (final f in series.figures)
       if (!f.isSecret)
-        f.id: TrackedFigure(
-          figureId: f.id,
-          state: FigureCollectionState.owned,
-        ),
+        f.id: TrackedFigure(figureId: f.id, state: FigureCollectionState.owned),
   };
 }
 
 Map<String, TrackedFigure> _ownedAll(ShelfSeries series) {
   return {
     for (final f in series.figures)
-      f.id: TrackedFigure(
-        figureId: f.id,
-        state: FigureCollectionState.owned,
-      ),
+      f.id: TrackedFigure(figureId: f.id, state: FigureCollectionState.owned),
   };
 }
 
@@ -147,7 +141,9 @@ void main() {
       var wasActive = false;
       for (var i = 0; i < 200; i++) {
         final t = i / 200.0;
-        final active = MasterCompleteCrownSparkleSequence.activeAt(t).isNotEmpty;
+        final active = MasterCompleteCrownSparkleSequence.activeAt(
+          t,
+        ).isNotEmpty;
         if (active && !wasActive) seen++;
         wasActive = active;
       }
@@ -160,8 +156,14 @@ void main() {
         MasterCompleteCrownSparkleSequence.sparkleOpacity(0.45),
         greaterThan(0.8),
       );
-      expect(MasterCompleteCrownSparkleSequence.sparkleOpacity(1), lessThan(0.2));
-      expect(MasterCompleteCrownSparkleSequence.sparkleScale(0), closeTo(1, 0.01));
+      expect(
+        MasterCompleteCrownSparkleSequence.sparkleOpacity(1),
+        lessThan(0.2),
+      );
+      expect(
+        MasterCompleteCrownSparkleSequence.sparkleScale(0),
+        closeTo(1, 0.01),
+      );
       expect(
         MasterCompleteCrownSparkleSequence.sparkleScale(0.45),
         closeTo(1.15, 0.02),
@@ -174,7 +176,9 @@ void main() {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
-      final notifier = container.read(masterCompleteCelebrationProvider.notifier);
+      final notifier = container.read(
+        masterCompleteCelebrationProvider.notifier,
+      );
 
       notifier.celebrate();
       expect(container.read(masterCompleteCelebrationProvider)?.token, 1);
@@ -196,7 +200,9 @@ void main() {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
-      final notifier = container.read(masterCompleteCelebrationProvider.notifier);
+      final notifier = container.read(
+        masterCompleteCelebrationProvider.notifier,
+      );
 
       notifier.celebrate();
       notifier.celebrate();
@@ -232,10 +238,7 @@ void main() {
         MasterCompleteAchievementTiming.scrimOpacity(0.4),
         closeTo(0.13, 0.01),
       );
-      expect(
-        MasterCompleteAchievementTiming.blurSigma(0.4),
-        closeTo(5.5, 0.1),
-      );
+      expect(MasterCompleteAchievementTiming.blurSigma(0.4), closeTo(5.5, 0.1));
     });
   });
 
@@ -245,9 +248,7 @@ void main() {
         MaterialApp(
           theme: AppTheme.light(),
           home: Scaffold(
-            body: MasterCompleteAchievementOverlay(
-              onFinished: () {},
-            ),
+            body: MasterCompleteAchievementOverlay(onFinished: () {}),
           ),
         ),
       );
@@ -264,7 +265,9 @@ void main() {
       expect(find.text(CollectionVocabulary.masterComplete), findsOneWidget);
     });
 
-    testWidgets('dismisses and notifies host after full duration', (tester) async {
+    testWidgets('dismisses and notifies host after full duration', (
+      tester,
+    ) async {
       var finished = false;
 
       await tester.pumpWidget(
@@ -302,9 +305,7 @@ void main() {
                     child: const Text('underlay'),
                   ),
                 ),
-                MasterCompleteAchievementOverlay(
-                  onFinished: () {},
-                ),
+                MasterCompleteAchievementOverlay(onFinished: () {}),
               ],
             ),
           ),
@@ -342,7 +343,9 @@ void main() {
   });
 
   group('MasterCompleteCelebrationHost', () {
-    testWidgets('presents overlay above modal sheet immediately', (tester) async {
+    testWidgets('presents overlay above modal sheet immediately', (
+      tester,
+    ) async {
       final series = _masterSeries();
       CollectionAppBootstrap.prime(
         CollectionSnapshot(
@@ -385,9 +388,7 @@ void main() {
       final container = ProviderScope.containerOf(
         tester.element(find.byType(MasterCompleteCelebrationHost)),
       );
-      container
-          .read(masterCompleteCelebrationProvider.notifier)
-          .celebrate();
+      container.read(masterCompleteCelebrationProvider.notifier).celebrate();
 
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 32));
@@ -485,7 +486,10 @@ void main() {
       );
 
       expect(find.text('✓ Complete'), findsOneWidget);
-      expect(find.byKey(const Key('series_complete_stat_glow')), findsOneWidget);
+      expect(
+        find.byKey(const Key('series_complete_stat_glow')),
+        findsOneWidget,
+      );
     });
   });
 

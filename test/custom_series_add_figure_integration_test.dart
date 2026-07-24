@@ -116,14 +116,18 @@ void main() {
 
     expect(find.byType(CustomSeriesFormSheet), findsOneWidget);
 
-    final addField = find.byKey(const Key('custom-series-edit-add-figure-field'));
+    final addField = find.byKey(
+      const Key('custom-series-edit-add-figure-field'),
+    );
     await tester.scrollUntilVisible(
       addField,
       120,
       scrollable: find.byType(Scrollable).last,
     );
     await tester.enterText(addField, 'Late Add');
-    await tester.tap(find.byKey(const Key('custom-series-edit-add-figure-button')));
+    await tester.tap(
+      find.byKey(const Key('custom-series-edit-add-figure-button')),
+    );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.text('Save'));
@@ -134,10 +138,10 @@ void main() {
       find.byKey(const ValueKey('fig-edit-custom_integration_add-f-1')),
       findsOneWidget,
     );
-    expect(
-      notifier.state.shelfSeries.single.figures.map((f) => f.name),
-      ['Starter', 'Late Add'],
-    );
+    expect(notifier.state.shelfSeries.single.figures.map((f) => f.name), [
+      'Starter',
+      'Late Add',
+    ]);
     expect(
       notifier.state.shelfSeries.single.figures.last.id,
       'custom_integration_add-f-1',

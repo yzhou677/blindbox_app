@@ -23,9 +23,9 @@ final class _FixedCollectionNotifier extends CollectionNotifier {
 }
 
 Finder get _searchField => find.descendant(
-      of: find.byType(AppSearchField),
-      matching: find.byType(TextField),
-    );
+  of: find.byType(AppSearchField),
+  matching: find.byType(TextField),
+);
 
 Future<void> _pumpCollectionScreen(
   WidgetTester tester, {

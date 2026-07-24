@@ -161,10 +161,7 @@ final class CollectionMemoryStore {
     // Rewrite prefs when legacy stillUnfolding was stored for a non-Wanderer.
     if (loaded != null &&
         _cached.collectorTypeReasonKey != loaded.reasonKey.name) {
-      _cached = _copy(
-        _cached,
-        collectorTypeReasonKey: loaded.reasonKey.name,
-      );
+      _cached = _copy(_cached, collectorTypeReasonKey: loaded.reasonKey.name);
       unawaited(_persist());
     }
   }
@@ -179,7 +176,8 @@ final class CollectionMemoryStore {
   }) async {
     await ensureLoaded();
     final healed = identity.healed();
-    final record = revealRecord ??
+    final record =
+        revealRecord ??
         CollectorTypeRevealRecord(
           archetypeId: healed.archetypeId,
           revealedAt: healed.revealedAt,
@@ -189,10 +187,7 @@ final class CollectionMemoryStore {
           confidence: 0,
           resolverVersion: kCollectorTypeResolverVersion,
         );
-    final history = [
-      ..._cached.collectorTypeRevealHistory,
-      record,
-    ];
+    final history = [..._cached.collectorTypeRevealHistory, record];
     // Cap dormant log so prefs stay small until Personality Memory ships.
     final capped = history.length <= 32
         ? history
@@ -241,12 +236,10 @@ final class CollectionMemoryStore {
     var changed = false;
     final now = DateTime.now().millisecondsSinceEpoch;
 
-    if (data.firstSeriesAddedAtMs == null && previous.shelfSeries.isEmpty &&
+    if (data.firstSeriesAddedAtMs == null &&
+        previous.shelfSeries.isEmpty &&
         next.shelfSeries.isNotEmpty) {
-      data = _copy(
-        data,
-        firstSeriesAddedAtMs: now,
-      );
+      data = _copy(data, firstSeriesAddedAtMs: now);
       changed = true;
     }
 
@@ -358,12 +351,12 @@ final class CollectionMemoryStore {
   }
 
   static Map<String, Object?> _encodeEra(ShelfEra era) => {
-        'shelfMood': era.shelfMood.name,
-        'seriesCount': era.seriesCount,
-        'secretOwnedCount': era.secretOwnedCount,
-        'dominantIpId': era.dominantIpId,
-        'recordedAtMs': era.recordedAt?.millisecondsSinceEpoch,
-      };
+    'shelfMood': era.shelfMood.name,
+    'seriesCount': era.seriesCount,
+    'secretOwnedCount': era.secretOwnedCount,
+    'dominantIpId': era.dominantIpId,
+    'recordedAtMs': era.recordedAt?.millisecondsSinceEpoch,
+  };
 
   static CollectionMemoryData _decode(String raw) {
     try {
@@ -425,8 +418,9 @@ final class CollectionMemoryStore {
       seriesCount: (raw['seriesCount'] as int?) ?? 0,
       secretOwnedCount: (raw['secretOwnedCount'] as int?) ?? 0,
       dominantIpId: raw['dominantIpId'] as String?,
-      recordedAt:
-          atMs == null ? null : DateTime.fromMillisecondsSinceEpoch(atMs),
+      recordedAt: atMs == null
+          ? null
+          : DateTime.fromMillisecondsSinceEpoch(atMs),
     );
   }
 
@@ -450,40 +444,40 @@ final class CollectionMemoryStore {
     List<CollectorTypeRevealRecord>? collectorTypeRevealHistory,
   }) {
     return CollectionMemoryData(
-      firstSecretOwnedAtMs:
-          firstSecretOwnedAtMs ?? data.firstSecretOwnedAtMs,
+      firstSecretOwnedAtMs: firstSecretOwnedAtMs ?? data.firstSecretOwnedAtMs,
       lastCompletedSeriesId:
           lastCompletedSeriesId ?? data.lastCompletedSeriesId,
       lastCompletedAtMs: lastCompletedAtMs ?? data.lastCompletedAtMs,
       firstSeriesAddedAtMs: firstSeriesAddedAtMs ?? data.firstSeriesAddedAtMs,
       lastRecordedEra: lastRecordedEra ?? data.lastRecordedEra,
-      priorEraForEvolution:
-          priorEraForEvolution ?? data.priorEraForEvolution,
+      priorEraForEvolution: priorEraForEvolution ?? data.priorEraForEvolution,
       priorEraSetAtMs: priorEraSetAtMs ?? data.priorEraSetAtMs,
       ipSeriesDepth: ipSeriesDepth ?? data.ipSeriesDepth,
-      collectorTypeArchetypeId: collectorTypeArchetypeId != null &&
-              collectorTypeArchetypeId.isEmpty
+      collectorTypeArchetypeId:
+          collectorTypeArchetypeId != null && collectorTypeArchetypeId.isEmpty
           ? null
           : (collectorTypeArchetypeId ?? data.collectorTypeArchetypeId),
       collectorTypeRevealedAtMs: collectorTypeRevealedAtMs == 0
           ? null
           : (collectorTypeRevealedAtMs ?? data.collectorTypeRevealedAtMs),
-      collectorTypeSignatureHash: collectorTypeSignatureHash != null &&
+      collectorTypeSignatureHash:
+          collectorTypeSignatureHash != null &&
               collectorTypeSignatureHash.isEmpty
           ? null
           : (collectorTypeSignatureHash ?? data.collectorTypeSignatureHash),
-      collectorTypeStatsJson: collectorTypeStatsJson != null &&
-              collectorTypeStatsJson.isEmpty
+      collectorTypeStatsJson:
+          collectorTypeStatsJson != null && collectorTypeStatsJson.isEmpty
           ? null
           : (collectorTypeStatsJson ?? data.collectorTypeStatsJson),
       collectorTypeStatsVersion: collectorTypeStatsVersion == 0
           ? null
           : (collectorTypeStatsVersion ?? data.collectorTypeStatsVersion),
-      collectorTypeReasonKey: collectorTypeReasonKey != null &&
-              collectorTypeReasonKey.isEmpty
+      collectorTypeReasonKey:
+          collectorTypeReasonKey != null && collectorTypeReasonKey.isEmpty
           ? null
           : (collectorTypeReasonKey ?? data.collectorTypeReasonKey),
-      collectorTypeResolverVersion: collectorTypeResolverVersion != null &&
+      collectorTypeResolverVersion:
+          collectorTypeResolverVersion != null &&
               collectorTypeResolverVersion.isEmpty
           ? null
           : (collectorTypeResolverVersion ?? data.collectorTypeResolverVersion),
@@ -499,9 +493,7 @@ final class CollectionMemoryStore {
       if (item is! Map) continue;
       try {
         out.add(
-          CollectorTypeRevealRecord.fromJson(
-            Map<String, dynamic>.from(item),
-          ),
+          CollectorTypeRevealRecord.fromJson(Map<String, dynamic>.from(item)),
         );
       } catch (_) {
         // Skip corrupt dormant records.

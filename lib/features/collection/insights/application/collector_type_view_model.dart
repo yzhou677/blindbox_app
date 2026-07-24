@@ -31,8 +31,8 @@ final class CollectorTypeViewModel extends Notifier<CollectorTypeRevealStage> {
   CollectorTypeRevealStage build() {
     // Read-only: watching the bootstrap future would reset mid-reveal when it completes.
     ref.read(collectionMemoryBootstrapProvider);
-    final cached =
-        CollectionMemoryStore.instance.cachedCollectorTypeIdentity?.healed();
+    final cached = CollectionMemoryStore.instance.cachedCollectorTypeIdentity
+        ?.healed();
     if (cached != null) {
       return CollectorTypeRevealRevealed(cached);
     }
@@ -57,7 +57,8 @@ final class CollectorTypeViewModel extends Notifier<CollectorTypeRevealStage> {
       profile: profile,
       catalog: catalog,
     );
-    final needsReveal = isFirstReveal ||
+    final needsReveal =
+        isFirstReveal ||
         computeCollectorTypeNeedsReveal(
           hasRevealed: true,
           persistedSignatureHash: prior.signatureHash,
@@ -143,8 +144,8 @@ final class CollectorTypeViewModel extends Notifier<CollectorTypeRevealStage> {
     if (state is! CollectorTypeRevealAnalyzing) return;
 
     final elapsed = DateTime.now().difference(started);
-    final remaining = Duration(milliseconds: collectorTypeAnalyzingHoldMs) -
-        elapsed;
+    final remaining =
+        Duration(milliseconds: collectorTypeAnalyzingHoldMs) - elapsed;
     if (remaining > Duration.zero) {
       await Future<void>.delayed(remaining);
       if (state is! CollectorTypeRevealAnalyzing) return;
@@ -154,10 +155,9 @@ final class CollectorTypeViewModel extends Notifier<CollectorTypeRevealStage> {
     state = CollectorTypeRevealRevealed(identity);
 
     if (isFirstReveal || typeChanged) {
-      ref.read(collectorTypeCeremonyProvider.notifier).present(
-            identity: identity,
-            isFirstReveal: isFirstReveal,
-          );
+      ref
+          .read(collectorTypeCeremonyProvider.notifier)
+          .present(identity: identity, isFirstReveal: isFirstReveal);
     }
   }
 

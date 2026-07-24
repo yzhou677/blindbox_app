@@ -4,5 +4,4 @@ import 'package:blindbox_app/features/collection/domain/shelf_relationship_insig
 
 List<ShelfRelationshipInsight> analyzeShelfRelationships(
   CollectionSnapshot snap,
-) =>
-    analyzeCollectibleShelfRelationships(snap);
+) => analyzeCollectibleShelfRelationships(snap);

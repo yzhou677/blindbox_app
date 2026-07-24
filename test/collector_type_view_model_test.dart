@@ -94,7 +94,10 @@ void main() {
     final started = DateTime.now();
     await future;
     final elapsed = DateTime.now().difference(started);
-    expect(elapsed.inMilliseconds, greaterThanOrEqualTo(collectorTypeAnalyzingHoldMs - 50));
+    expect(
+      elapsed.inMilliseconds,
+      greaterThanOrEqualTo(collectorTypeAnalyzingHoldMs - 50),
+    );
 
     final stage = container.read(collectorTypeViewModelProvider);
     expect(stage, isA<CollectorTypeRevealRevealed>());

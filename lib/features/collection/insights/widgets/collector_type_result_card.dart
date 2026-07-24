@@ -2,12 +2,14 @@ import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/app_typography.dart';
 import 'package:blindbox_app/core/theme/collectible_elevation.dart';
-import 'package:blindbox_app/core/theme/collectible_typography.dart';
+import 'package:blindbox_app/core/theme/collectible_motion.dart';
+import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_identity.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_glyph.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_reveal_dashboard_footer.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Hero identity surface for the revealed collector type — visual anchor of Insights.
 ///
@@ -59,58 +61,44 @@ class CollectorTypeResultCard extends StatelessWidget {
           clipBehavior: Clip.antiAlias,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(
-              AppSpacing.xl + AppSpacing.sm,
-              AppSpacing.xl + AppSpacing.md,
-              AppSpacing.xl + AppSpacing.sm,
-              AppSpacing.xl,
+              AppSpacing.xl + AppSpacing.xs,
+              AppSpacing.lg + 2,
+              AppSpacing.xl + AppSpacing.xs,
+              AppSpacing.lg,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Center(
-                  child: CollectorTypeGlyph(archetype: archetype, size: 112),
+                  child: CollectorTypeGlyph(archetype: archetype, size: 100),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 Text(
                   archetype.displayName,
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style:
-                      CollectibleTypography.seriesHeroTitle(
-                        textTheme,
-                        scheme,
-                      ).copyWith(
-                        fontSize: 30,
-                        letterSpacing: -0.55,
-                        height: 1.1,
-                        fontWeight: FontWeight.w700,
-                        color: scheme.onSurface.withValues(alpha: 0.96),
-                      ),
+                  style: AppTypography.insightsHeroName(textTheme, scheme),
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  because,
-                  textAlign: TextAlign.center,
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: scheme.onSurface.withValues(alpha: 0.72),
-                    height: 1.4,
-                    fontWeight: FontWeight.w500,
+                const SizedBox(height: 10),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Text(
+                    because,
+                    textAlign: TextAlign.center,
+                    style: AppTypography.insightsBecause(textTheme, scheme),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 _WhyThisTypeSection(
                   flavorText: archetype.flavorText,
                   helperLine: hasHelper ? helperLine : null,
                 ),
                 if (onShare != null)
                   Padding(
-                    padding: const EdgeInsets.only(top: 6),
+                    padding: const EdgeInsets.only(top: 8),
                     child: Center(
-                      child: _ShareCollectorCardButton(
-                        accent: accent,
-                        onPressed: onShare!,
-                      ),
+                      child: _ShareCollectorCardButton(onPressed: onShare!),
                     ),
                   ),
                 if (showRevealAgain) ...[
@@ -132,12 +120,8 @@ class CollectorTypeResultCard extends StatelessWidget {
 }
 
 class _ShareCollectorCardButton extends StatelessWidget {
-  const _ShareCollectorCardButton({
-    required this.accent,
-    required this.onPressed,
-  });
+  const _ShareCollectorCardButton({required this.onPressed});
 
-  final Color accent;
   final VoidCallback onPressed;
 
   @override
@@ -147,24 +131,21 @@ class _ShareCollectorCardButton extends StatelessWidget {
 
     return OutlinedButton.icon(
       onPressed: onPressed,
-      icon: Icon(Icons.ios_share_rounded, size: 14, color: accent),
+      icon: Icon(
+        Symbols.ios_share_rounded,
+        size: AppIconSizes.secondaryShare,
+        color: scheme.onSurfaceVariant.withValues(alpha: 0.62),
+      ),
       label: Text(
         'Share Collector Card',
         style: textTheme.labelMedium?.copyWith(
           fontWeight: FontWeight.w600,
           fontSize: 12,
-          color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
+          letterSpacing: 0.05,
+          color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
         ),
       ),
-      style: OutlinedButton.styleFrom(
-        side: BorderSide(color: accent.withValues(alpha: 0.18)),
-        foregroundColor: scheme.onSurfaceVariant.withValues(alpha: 0.78),
-        backgroundColor: scheme.surface.withValues(alpha: 0.18),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        minimumSize: const Size(0, 30),
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
+      style: ShelfyButtonStyles.secondaryShare(scheme),
     );
   }
 }
@@ -196,38 +177,39 @@ class _WhyThisTypeSectionState extends State<_WhyThisTypeSection> {
           onTap: () => setState(() => _expanded = !_expanded),
           borderRadius: BorderRadius.circular(8),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   'Why this type',
                   style: textTheme.labelLarge?.copyWith(
-                    color: scheme.onSurfaceVariant.withValues(alpha: 0.62),
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.1,
+                    color: scheme.primary.withValues(alpha: 0.78),
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 0.02,
+                    height: 1.2,
                   ),
                 ),
-                const SizedBox(width: 4),
                 Icon(
                   _expanded
-                      ? Icons.keyboard_arrow_up_rounded
-                      : Icons.keyboard_arrow_down_rounded,
-                  size: 18,
-                  color: scheme.onSurfaceVariant.withValues(alpha: 0.45),
+                      ? Symbols.keyboard_arrow_up_rounded
+                      : Symbols.keyboard_arrow_down_rounded,
+                  size: AppIconSizes.metadata,
+                  color: scheme.primary.withValues(alpha: 0.62),
                 ),
               ],
             ),
           ),
         ),
         AnimatedSize(
-          duration: const Duration(milliseconds: 200),
+          duration: CollectibleMotion.fast,
           curve: Curves.easeOutCubic,
           alignment: Alignment.topCenter,
           child: !_expanded
               ? const SizedBox(width: double.infinity)
               : Padding(
-                  padding: const EdgeInsets.fromLTRB(4, 2, 4, 0),
+                  padding: const EdgeInsets.fromLTRB(12, 2, 12, 0),
                   child: Column(
                     children: [
                       Text(

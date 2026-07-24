@@ -6,8 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Add Series browse rows — synchronous projection of catalog + shelf.
 /// Rebuilds when either changes without async loading flashes.
-final addSeriesCatalogRecommendationsProvider =
-    Provider<List<CatalogSeries>>((ref) {
+final addSeriesCatalogRecommendationsProvider = Provider<List<CatalogSeries>>((
+  ref,
+) {
   ref.watch(catalogBundleRevisionProvider);
   final bundle = resolveCatalogBundleForSearch(
     providerBundle: ref.watch(catalogBundleProvider).valueOrNull,

@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:blindbox_app/core/theme/collectible_shape.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 class InfoTooltipIcon extends StatefulWidget {
   const InfoTooltipIcon({
@@ -175,7 +176,7 @@ class _InfoTooltipIconState extends State<InfoTooltipIcon> {
         child: Padding(
           padding: const EdgeInsets.all(3),
           child: Icon(
-            Icons.info_outline_rounded,
+            Symbols.info_rounded,
             size: widget.size,
             color: widget.color,
           ),

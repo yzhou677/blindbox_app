@@ -89,15 +89,15 @@ class _CollectorTypeRevealCeremonyHostState
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<CollectorTypeCeremonyEvent?>(
-      collectorTypeCeremonyProvider,
-      (previous, next) {
-        if (next == null) return;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) _present(next);
-        });
-      },
-    );
+    ref.listen<CollectorTypeCeremonyEvent?>(collectorTypeCeremonyProvider, (
+      previous,
+      next,
+    ) {
+      if (next == null) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _present(next);
+      });
+    });
     return widget.child;
   }
 }

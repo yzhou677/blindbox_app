@@ -86,7 +86,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.text(CollectionVocabulary.editSeries), findsOneWidget);
-    expect(find.text(CollectionVocabulary.removeFromCollection), findsOneWidget);
+    expect(
+      find.text(CollectionVocabulary.removeFromCollection),
+      findsOneWidget,
+    );
     expect(find.text(CollectionVocabulary.cancel), findsOneWidget);
     expect(find.text('Handmade Set'), findsOneWidget);
     expect(find.text('Baby Three'), findsOneWidget);
@@ -127,7 +130,10 @@ void main() {
 
     expect(find.text('Catalog Set'), findsOneWidget);
     expect(find.text(CollectionVocabulary.editSeries), findsNothing);
-    expect(find.text(CollectionVocabulary.removeFromCollection), findsOneWidget);
+    expect(
+      find.text(CollectionVocabulary.removeFromCollection),
+      findsOneWidget,
+    );
     expect(find.text(CollectionVocabulary.cancel), findsOneWidget);
   });
 
