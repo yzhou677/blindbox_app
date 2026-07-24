@@ -31,3 +31,4 @@ alwaysApply: true
 
 - Small reusable widgets; avoid massive files and excessive boilerplate
 - Follow existing patterns in the feature you are editing
+- UI tokens: [`.cursor/design_system.md`](../design_system.md) — Icons / Buttons / Radius / Typography / Motion
