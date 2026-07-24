@@ -13,13 +13,14 @@ class EbayMarketSource implements MarketSource {
     EbayHttpBrowseDataSource? httpDataSource,
     http.Client? client,
     Uri? browseUri,
-  }) : _http = httpDataSource ??
-            (browseUri != null || client != null
-                ? EbayHttpBrowseDataSource(
-                    client: client ?? http.Client(),
-                    browseUri: browseUri,
-                  )
-                : null);
+  }) : _http =
+           httpDataSource ??
+           (browseUri != null || client != null
+               ? EbayHttpBrowseDataSource(
+                   client: client ?? http.Client(),
+                   browseUri: browseUri,
+                 )
+               : null);
 
   final String? assetPath;
   final EbayHttpBrowseDataSource? _http;

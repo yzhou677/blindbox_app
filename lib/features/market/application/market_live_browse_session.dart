@@ -123,10 +123,7 @@ final class MarketLiveBrowseSession {
 
   void markRefreshing({required int generation}) {
     if (generation != _state.generation) return;
-    _state = _state.copyWith(
-      isRefreshing: true,
-      clearError: true,
-    );
+    _state = _state.copyWith(isRefreshing: true, clearError: true);
   }
 
   void markLoadingMore({required int generation}) {

@@ -49,9 +49,17 @@ void prepareMarketShellTabReselectToBrowseRoot(
   WidgetRef ref, {
   required String routePath,
 }) {
-  logMarketBrowseChromeState(ref, phase: 'shell_before_clear', routePath: routePath);
+  logMarketBrowseChromeState(
+    ref,
+    phase: 'shell_before_clear',
+    routePath: routePath,
+  );
   clearMarketSearchOverlaySession(ref);
-  logMarketBrowseChromeState(ref, phase: 'shell_after_clear', routePath: routePath);
+  logMarketBrowseChromeState(
+    ref,
+    phase: 'shell_after_clear',
+    routePath: routePath,
+  );
 }
 
 /// Navigates the Market branch stack back to [kMarketBrowseRootPath].
@@ -64,7 +72,9 @@ void goToMarketBrowseRoot(BuildContext context) {
 /// Pops collectible preview sheets on the Market branch navigator only.
 void dismissMarketBranchModalOverlays(BuildContext context) {
   final navigator = Navigator.maybeOf(context);
-  if (navigator == null || !navigator.canPop() || navigator.userGestureInProgress) {
+  if (navigator == null ||
+      !navigator.canPop() ||
+      navigator.userGestureInProgress) {
     return;
   }
   navigator.popUntil((route) => route is PageRoute);
@@ -76,10 +86,18 @@ void resetMarketBrowseToRoot({
   required BuildContext context,
 }) {
   final routePath = GoRouter.of(context).state.uri.path;
-  logMarketBrowseChromeState(ref, phase: 'reset_before_clear', routePath: routePath);
+  logMarketBrowseChromeState(
+    ref,
+    phase: 'reset_before_clear',
+    routePath: routePath,
+  );
   dismissMarketBranchModalOverlays(context);
   clearMarketSearchOverlaySession(ref);
-  logMarketBrowseChromeState(ref, phase: 'reset_after_clear', routePath: routePath);
+  logMarketBrowseChromeState(
+    ref,
+    phase: 'reset_after_clear',
+    routePath: routePath,
+  );
   // Always go — parent [MarketScreen] can report `/market` while listing/search
   // child routes are still on the branch stack.
   GoRouter.of(context).go(kMarketBrowseRootPath);

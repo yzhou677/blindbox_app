@@ -1,4 +1,4 @@
-﻿import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_figure.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_series.dart';
 import 'package:blindbox_app/features/market/application/market_listing_title_normalizer.dart';
@@ -224,7 +224,8 @@ class CatalogIdentityIndex {
     final best = sorted.first;
     if (sorted.length > 1) {
       final second = sorted[1];
-      if (best.tier == second.tier && best.indexInHaystack == second.indexInHaystack) {
+      if (best.tier == second.tier &&
+          best.indexInHaystack == second.indexInHaystack) {
         return null;
       }
     }

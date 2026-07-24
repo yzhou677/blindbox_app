@@ -55,7 +55,9 @@ class _MarketBrowseSearchScreenState
 
   @override
   void dispose() {
-    ShellTabReselectBus.instance.reselectedBranch.removeListener(_onTabReselected);
+    ShellTabReselectBus.instance.reselectedBranch.removeListener(
+      _onTabReselected,
+    );
     _debounce?.cancel();
     _search.dispose();
     super.dispose();
@@ -94,9 +96,7 @@ class _MarketBrowseSearchScreenState
   }
 
   void _onSearchChanged(String value) {
-    MarketSearchTrace.event(
-      'TextField.onChanged len=${value.length}',
-    );
+    MarketSearchTrace.event('TextField.onChanged len=${value.length}');
     _debounce?.cancel();
     if (value.trim().isEmpty) {
       _exitSearch(clearField: false);
@@ -134,7 +134,9 @@ class _MarketBrowseSearchScreenState
     final search = ref.watch(marketSearchBrowseNotifierProvider);
     final activeQuery = ref.watch(activeMarketBrowseQueryProvider);
     final snapshots = ref.watch(visibleCollectibleMarketSnapshotsProvider);
-    final browseSignature = collectibleMarketBrowseSignatureFromQuery(activeQuery);
+    final browseSignature = collectibleMarketBrowseSignatureFromQuery(
+      activeQuery,
+    );
     final display = resolveCollectibleMarketDisplaySnapshots(
       snapshots: snapshots,
       browseSignature: browseSignature,
@@ -169,14 +171,15 @@ class _MarketBrowseSearchScreenState
     final showResults = search.isCommitted;
     final liveHasMore = ref.watch(marketLiveBrowseHasMoreProvider);
     final loadingMore = ref.watch(marketBrowseLoadMoreProvider);
-    final sessionTransitioning = ref.watch(marketBrowseSessionTransitionProvider);
+    final sessionTransitioning = ref.watch(
+      marketBrowseSessionTransitionProvider,
+    );
     final history = ref.watch(marketSearchHistoryProvider);
 
     final historyWidget = searchEmptyQuerySection(
       history: history,
       onHistoryTap: _applyHistoryQuery,
-      onRemove: (q) =>
-          ref.read(marketSearchHistoryProvider.notifier).remove(q),
+      onRemove: (q) => ref.read(marketSearchHistoryProvider.notifier).remove(q),
       onClearAll: () =>
           ref.read(marketSearchHistoryProvider.notifier).clearAll(),
       onSuggestedTap: _applySuggestedQuery,
@@ -188,79 +191,82 @@ class _MarketBrowseSearchScreenState
         if (!didPop) _exitSearch(clearField: false);
       },
       child: FeedSearchScreen(
-      title: 'Search market',
-      hintText: SearchPlaceholders.market,
-      emptyPrompt: 'Search by series, figure, or brand.',
-      controller: _search,
-      onChanged: _onSearchChanged,
-      onSubmitted: _onSearchSubmitted,
-      onClear: _clearSearch,
-      onBack: () => _exitSearch(clearField: false),
-      historySection: historyWidget,
-      results: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (sessionTransitioning)
-            LinearProgressIndicator(
-              minHeight: 2,
-              color: scheme.primary.withValues(alpha: 0.55),
-              backgroundColor: scheme.surfaceContainerHighest,
-            ),
-          Expanded(
-            child: !showResults
-                ? const SizedBox.shrink()
-                : sorted.isEmpty
-                ? sessionTransitioning
-                    ? const MarketBrowseResultsSkeleton()
-                    : Center(
-                        child: Text(
-                          'No matches for that search.',
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: scheme.onSurfaceVariant.withValues(alpha: 0.8),
-                          ),
+        title: 'Search market',
+        hintText: SearchPlaceholders.market,
+        emptyPrompt: 'Search by series, figure, or brand.',
+        controller: _search,
+        onChanged: _onSearchChanged,
+        onSubmitted: _onSearchSubmitted,
+        onClear: _clearSearch,
+        onBack: () => _exitSearch(clearField: false),
+        historySection: historyWidget,
+        results: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (sessionTransitioning)
+              LinearProgressIndicator(
+                minHeight: 2,
+                color: scheme.primary.withValues(alpha: 0.55),
+                backgroundColor: scheme.surfaceContainerHighest,
+              ),
+            Expanded(
+              child: !showResults
+                  ? const SizedBox.shrink()
+                  : sorted.isEmpty
+                  ? sessionTransitioning
+                        ? const MarketBrowseResultsSkeleton()
+                        : Center(
+                            child: Text(
+                              'No matches for that search.',
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: scheme.onSurfaceVariant.withValues(
+                                  alpha: 0.8,
+                                ),
+                              ),
+                            ),
+                          )
+                  : MarketBrowseSessionTransition(
+                      active: sessionTransitioning,
+                      child: ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.pageHorizontal,
+                          AppSpacing.xs,
+                          AppSpacing.pageHorizontal,
+                          AppSpacing.xxl,
                         ),
-                      )
-                : MarketBrowseSessionTransition(
-                    active: sessionTransitioning,
-                    child: ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.pageHorizontal,
-                        AppSpacing.xs,
-                        AppSpacing.pageHorizontal,
-                        AppSpacing.xxl,
-                      ),
-                      itemCount: sorted.length +
-                          (MarketGatewayConfig.isActive &&
-                                  liveHasMore &&
-                                  showResults
-                              ? 1
-                              : 0),
-                      // Use the same gap as the main market feed for visual
-                      // consistency when results carry over from the browse tab.
-                      separatorBuilder: (_, _) => const SizedBox(
-                        height: FeedRhythm.marketListingFeedCardVerticalGap,
-                      ),
-                      itemBuilder: (context, index) {
-                        if (index >= sorted.length) {
-                          return MarketLoadMoreFooter(
-                            loading: loadingMore,
-                            onLoadMore: () => ref
-                                .read(marketBrowseLoadMoreProvider.notifier)
-                                .loadMore(),
+                        itemCount:
+                            sorted.length +
+                            (MarketGatewayConfig.isActive &&
+                                    liveHasMore &&
+                                    showResults
+                                ? 1
+                                : 0),
+                        // Use the same gap as the main market feed for visual
+                        // consistency when results carry over from the browse tab.
+                        separatorBuilder: (_, _) => const SizedBox(
+                          height: FeedRhythm.marketListingFeedCardVerticalGap,
+                        ),
+                        itemBuilder: (context, index) {
+                          if (index >= sorted.length) {
+                            return MarketLoadMoreFooter(
+                              loading: loadingMore,
+                              onLoadMore: () => ref
+                                  .read(marketBrowseLoadMoreProvider.notifier)
+                                  .loadMore(),
+                            );
+                          }
+                          final snapshot = sorted[index];
+                          return CollectibleMarketCard(
+                            key: ValueKey(snapshot.identity.snapshotId),
+                            snapshot: snapshot,
+                            onOpen: () => _recordSearch(_trimmedQuery),
                           );
-                        }
-                        final snapshot = sorted[index];
-                        return CollectibleMarketCard(
-                          key: ValueKey(snapshot.identity.snapshotId),
-                          snapshot: snapshot,
-                          onOpen: () => _recordSearch(_trimmedQuery),
-                        );
-                      },
+                        },
+                      ),
                     ),
-                  ),
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -64,7 +64,8 @@ class EbayItemSummaryDto {
       imageUrl: image['imageUrl'] as String? ?? '',
       condition: json['condition'] as String? ?? '',
       itemWebUrl: json['itemWebUrl'] as String? ?? '',
-      appListingId: app['listingId'] as String? ?? json['itemId'] as String? ?? '',
+      appListingId:
+          app['listingId'] as String? ?? json['itemId'] as String? ?? '',
       appTaxonomyBrandId: app['taxonomyBrandId'] as String? ?? '',
       appTaxonomyIpId: switch (app['taxonomyIpId']) {
         final String s => s,
@@ -76,7 +77,8 @@ class EbayItemSummaryDto {
       appImageSeed: app['imageSeed'] as String? ?? '',
       appImageTintHex: app['imageTintHex'] as String? ?? 'ffffff',
       appShelfAccentHex: app['shelfAccentHex'] as String? ?? 'ffffffff',
-      appPriceChangePercent: (app['priceChangePercent'] as num?)?.toDouble() ?? 0,
+      appPriceChangePercent:
+          (app['priceChangePercent'] as num?)?.toDouble() ?? 0,
       appListingCount: (app['listingCount'] as num?)?.toInt() ?? 0,
       appIsTrending: app['isTrending'] as bool? ?? false,
       appWatchingCount: (app['watchingCount'] as num?)?.toInt() ?? 0,

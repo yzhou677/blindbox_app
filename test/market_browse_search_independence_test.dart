@@ -25,50 +25,51 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  testWidgets('search nommi uses Any Brand and Any IP while feed filters stay', (
-    tester,
-  ) async {
-    final container = ProviderContainer(
-      overrides: [
-        collectionNotifierProvider.overrideWith(_EmptyCollectionNotifier.new),
-        catalogBundleProvider.overrideWith(
-          (ref) async => const CatalogSeedBundle(
-            brands: [],
-            ips: [],
-            series: [],
-            figures: [],
+  testWidgets(
+    'search nommi uses Any Brand and Any IP while feed filters stay',
+    (tester) async {
+      final container = ProviderContainer(
+        overrides: [
+          collectionNotifierProvider.overrideWith(_EmptyCollectionNotifier.new),
+          catalogBundleProvider.overrideWith(
+            (ref) async => const CatalogSeedBundle(
+              brands: [],
+              ips: [],
+              series: [],
+              figures: [],
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      container.read(marketFeedBrowseNotifierProvider.notifier)
+        ..setBrand('pop_mart')
+        ..setIp('pucky');
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            theme: AppTheme.light(),
+            home: const MarketBrowseSearchScreen(),
           ),
         ),
-      ],
-    );
-    addTearDown(container.dispose);
+      );
+      await tester.pump();
+      await tester.pump();
 
-    container.read(marketFeedBrowseNotifierProvider.notifier)
-      ..setBrand('pop_mart')
-      ..setIp('pucky');
+      await tester.enterText(find.byType(TextField), 'nommi');
+      await tester.pump(const Duration(milliseconds: 450));
 
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: MaterialApp(
-          theme: AppTheme.light(),
-          home: const MarketBrowseSearchScreen(),
-        ),
-      ),
-    );
-    await tester.pump();
-    await tester.pump();
+      final feed = container.read(marketFeedBrowseNotifierProvider);
+      expect(feed.brandId, 'pop_mart');
+      expect(feed.ipId, 'pucky');
 
-    await tester.enterText(find.byType(TextField), 'nommi');
-    await tester.pump(const Duration(milliseconds: 450));
-
-    final feed = container.read(marketFeedBrowseNotifierProvider);
-    expect(feed.brandId, 'pop_mart');
-    expect(feed.ipId, 'pucky');
-
-    final query = container.read(activeMarketBrowseQueryProvider);
-    expect(query.brandId, MarketTaxonomyIds.anyBrand);
-    expect(query.ipId, MarketTaxonomyIds.anyIp);
-    expect(query.searchText, 'nommi');
-  });
+      final query = container.read(activeMarketBrowseQueryProvider);
+      expect(query.brandId, MarketTaxonomyIds.anyBrand);
+      expect(query.ipId, MarketTaxonomyIds.anyIp);
+      expect(query.searchText, 'nommi');
+    },
+  );
 }

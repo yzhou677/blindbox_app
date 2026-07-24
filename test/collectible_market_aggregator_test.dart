@@ -51,8 +51,10 @@ void main() {
 
     expect(snapshots.length, 1);
     expect(snapshots.single.listingCount, 3);
-    expect(snapshots.single.identity.groupingTier,
-        CollectibleMarketGroupingTier.figure);
+    expect(
+      snapshots.single.identity.groupingTier,
+      CollectibleMarketGroupingTier.figure,
+    );
     expect(snapshots.single.identity.matchedFigureId, 'fig_a');
   });
 
@@ -94,10 +96,14 @@ void main() {
     ]);
 
     expect(snapshots.length, 1);
-    expect(snapshots.single.identity.groupingTier,
-        CollectibleMarketGroupingTier.series);
-    expect(snapshots.single.aggregationConfidence,
-        AggregationConfidence.medium);
+    expect(
+      snapshots.single.identity.groupingTier,
+      CollectibleMarketGroupingTier.series,
+    );
+    expect(
+      snapshots.single.aggregationConfidence,
+      AggregationConfidence.medium,
+    );
   });
 
   test('dedupes same provider listing id', () {

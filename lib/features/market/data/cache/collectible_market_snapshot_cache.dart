@@ -111,7 +111,9 @@ final class CollectibleMarketSnapshotCache {
     };
   }
 
-  static CollectibleMarketSnapshot _snapshotFromJson(Map<String, dynamic> json) {
+  static CollectibleMarketSnapshot _snapshotFromJson(
+    Map<String, dynamic> json,
+  ) {
     return CollectibleMarketSnapshot(
       identity: CollectibleMarketIdentity(
         snapshotId: json['snapshotId'] as String? ?? '',
@@ -138,8 +140,7 @@ final class CollectibleMarketSnapshotCache {
         minUsd: (json['minUsd'] as num?)?.toDouble() ?? 0,
         maxUsd: (json['maxUsd'] as num?)?.toDouble() ?? 0,
       ),
-      representativeListingId:
-          json['representativeListingId'] as String? ?? '',
+      representativeListingId: json['representativeListingId'] as String? ?? '',
       marketMood: MarketMood.values.byName(
         json['marketMood'] as String? ?? 'mixed',
       ),

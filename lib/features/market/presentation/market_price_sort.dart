@@ -1,17 +1,14 @@
 import 'package:blindbox_app/models/market_listing.dart';
 
 /// Local browse price order (UI + future `sort=price_asc` API parity).
-enum MarketPriceSort {
-  lowToHigh,
-  highToLow,
-}
+enum MarketPriceSort { lowToHigh, highToLow }
 
 extension MarketPriceSortBrowseLabel on MarketPriceSort {
   /// Compact header control copy (↑ ascending, ↓ descending).
   String get browseHeaderLabel => switch (this) {
-        MarketPriceSort.lowToHigh => 'Price ↑',
-        MarketPriceSort.highToLow => 'Price ↓',
-      };
+    MarketPriceSort.lowToHigh => 'Price ↑',
+    MarketPriceSort.highToLow => 'Price ↓',
+  };
 }
 
 /// Returns a new list sorted by [MarketListing.currentPriceUsd] (does not mutate [listings]).

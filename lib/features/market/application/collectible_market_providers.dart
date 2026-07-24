@@ -8,29 +8,29 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final collectibleMarketSnapshotsProvider =
     Provider<List<CollectibleMarketSnapshot>>((ref) {
-  if (!CollectibleMarketSession.instance.isInstalled) return const [];
-  return CollectibleMarketSession.instance.list;
-});
+      if (!CollectibleMarketSession.instance.isInstalled) return const [];
+      return CollectibleMarketSession.instance.list;
+    });
 
 final visibleCollectibleMarketSnapshotsProvider =
     Provider<List<CollectibleMarketSnapshot>>((ref) {
-  final query = ref.watch(activeMarketBrowseQueryProvider);
-  final snapshots = ref.watch(collectibleMarketSnapshotsProvider);
+      final query = ref.watch(activeMarketBrowseQueryProvider);
+      final snapshots = ref.watch(collectibleMarketSnapshotsProvider);
 
-  if (MarketGatewayConfig.isActive) {
-    ref.watch(marketLiveBrowseControllerProvider);
-    return snapshots;
-  }
+      if (MarketGatewayConfig.isActive) {
+        ref.watch(marketLiveBrowseControllerProvider);
+        return snapshots;
+      }
 
-  final facets = activeMarketBrowseVisibleFilterFacets(query);
-  return snapshots
-      .where(
-        (s) => collectibleMarketSnapshotVisible(
-          s,
-          brandId: facets.brandId,
-          ipId: facets.ipId,
-          searchText: facets.searchText,
-        ),
-      )
-      .toList(growable: false);
-});
+      final facets = activeMarketBrowseVisibleFilterFacets(query);
+      return snapshots
+          .where(
+            (s) => collectibleMarketSnapshotVisible(
+              s,
+              brandId: facets.brandId,
+              ipId: facets.ipId,
+              searchText: facets.searchText,
+            ),
+          )
+          .toList(growable: false);
+    });

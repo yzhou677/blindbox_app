@@ -8,10 +8,7 @@ import 'package:flutter/foundation.dart';
 /// Resolved presentation labels for a snapshot (not stored on domain types).
 @immutable
 class CollectibleMarketDisplay {
-  const CollectibleMarketDisplay({
-    required this.title,
-    required this.subtitle,
-  });
+  const CollectibleMarketDisplay({required this.title, required this.subtitle});
 
   final String title;
   final String subtitle;

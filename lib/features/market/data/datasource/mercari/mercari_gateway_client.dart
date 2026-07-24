@@ -8,7 +8,8 @@ import 'package:http/http.dart' as http;
 
 /// HTTP client for the Mercari browse gateway (provider wire only).
 class MercariGatewayClient {
-  MercariGatewayClient({http.Client? client}) : _client = client ?? http.Client();
+  MercariGatewayClient({http.Client? client})
+    : _client = client ?? http.Client();
 
   final http.Client _client;
 

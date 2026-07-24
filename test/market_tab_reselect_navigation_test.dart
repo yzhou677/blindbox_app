@@ -22,15 +22,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 List<Override> _marketNavTestOverrides() => [
   catalogBundleProvider.overrideWith(
-    (_) async => const CatalogSeedBundle(
-      brands: [],
-      ips: [],
-      series: [],
-      figures: [],
-    ),
+    (_) async =>
+        const CatalogSeedBundle(brands: [], ips: [], series: [], figures: []),
   ),
   homeFeedSnapshotProvider.overrideWith(
     (_) async => HomeFeedSnapshot(
@@ -43,14 +40,14 @@ List<Override> _marketNavTestOverrides() => [
 ];
 
 Finder _marketNavTab() => find.descendant(
-      of: find.byType(NavigationBar),
-      matching: find.text('Market'),
-    );
+  of: find.byType(NavigationBar),
+  matching: find.text('Market'),
+);
 
 Finder _collectionNavTab() => find.descendant(
-      of: find.byType(NavigationBar),
-      matching: find.text('Collection'),
-    );
+  of: find.byType(NavigationBar),
+  matching: find.text('Collection'),
+);
 
 Future<void> _pumpBlindboxApp(WidgetTester tester) async {
   await tester.pumpWidget(
@@ -187,65 +184,64 @@ void main() {
     CollectibleMarketSession.instance.reset();
   });
 
-  testWidgets(
-    'Market tab reselect from search restores browse root chrome',
-    (WidgetTester tester) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: _marketNavTestOverrides(),
-          child: const BlindboxApp(),
-        ),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
+  testWidgets('Market tab reselect from search restores browse root chrome', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: _marketNavTestOverrides(),
+        child: const BlindboxApp(),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
-      await tester.tap(find.text('Market'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 600));
+    await tester.tap(find.text('Market'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
 
-      expect(appRouter.state.uri.path, kMarketBrowseRootPath);
-      expect(find.text('Brand'), findsOneWidget);
-      expect(find.text('Collectibles'), findsOneWidget);
+    expect(appRouter.state.uri.path, kMarketBrowseRootPath);
+    expect(find.text('Brand'), findsOneWidget);
+    expect(find.text('Collectibles'), findsOneWidget);
 
-      appRouter.push(kMarketSearchRoutePath);
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
+    appRouter.push(kMarketSearchRoutePath);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
 
-      expect(appRouter.state.uri.path, kMarketSearchRoutePath);
-      expect(find.text('Search market'), findsOneWidget);
+    expect(appRouter.state.uri.path, kMarketSearchRoutePath);
+    expect(find.text('Search market'), findsOneWidget);
 
-      await tester.enterText(find.byType(TextField), 'labubu');
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 450));
+    await tester.enterText(find.byType(TextField), 'labubu');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 450));
 
-      final searchState = ProviderScope.containerOf(
-        tester.element(find.byType(MarketBrowseSearchScreen)),
-      ).read(marketSearchBrowseNotifierProvider);
-      expect(searchState.isCommitted, isTrue);
+    final searchState = ProviderScope.containerOf(
+      tester.element(find.byType(MarketBrowseSearchScreen)),
+    ).read(marketSearchBrowseNotifierProvider);
+    expect(searchState.isCommitted, isTrue);
 
-      // Shell reselect: same tab tapped again (goBranch initialLocation + reset).
-      await tester.tap(_marketNavTab());
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
-      await tester.tap(_marketNavTab());
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 500));
+    // Shell reselect: same tab tapped again (goBranch initialLocation + reset).
+    await tester.tap(_marketNavTab());
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(_marketNavTab());
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
 
-      expect(appRouter.state.uri.path, kMarketBrowseRootPath);
-      expect(find.text('Search market'), findsNothing);
-      expect(find.text('Brand'), findsOneWidget);
-      expect(find.text('Collectibles'), findsOneWidget);
+    expect(appRouter.state.uri.path, kMarketBrowseRootPath);
+    expect(find.text('Search market'), findsNothing);
+    expect(find.text('Brand'), findsOneWidget);
+    expect(find.text('Collectibles'), findsOneWidget);
 
-      final container = ProviderScope.containerOf(
-        tester.element(find.text('Collectibles')),
-      );
-      expect(
-        container.read(marketSearchBrowseNotifierProvider).isCommitted,
-        isFalse,
-      );
-      expect(container.read(marketSearchOverlayOpenProvider), isFalse);
-    },
-  );
+    final container = ProviderScope.containerOf(
+      tester.element(find.text('Collectibles')),
+    );
+    expect(
+      container.read(marketSearchBrowseNotifierProvider).isCommitted,
+      isFalse,
+    );
+    expect(container.read(marketSearchOverlayOpenProvider), isFalse);
+  });
 
   testWidgets(
     'Market tab reselect after back from search stays on browse root',
@@ -271,7 +267,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 450));
 
-      await tester.tap(find.byIcon(Icons.arrow_back_rounded));
+      await tester.tap(find.byIcon(Symbols.arrow_back_rounded));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
 
@@ -352,7 +348,9 @@ void main() {
       await _openMarketTab(tester);
       await _openMarketSearchWithQuery(tester, 'baby');
 
-      final searchElement = tester.element(find.byType(MarketBrowseSearchScreen));
+      final searchElement = tester.element(
+        find.byType(MarketBrowseSearchScreen),
+      );
       final containerBefore = ProviderScope.containerOf(searchElement);
       _expectSearchSessionPreserved(
         container: containerBefore,
@@ -384,37 +382,36 @@ void main() {
     },
   );
 
-  testWidgets(
-    'Market tab reselect from listing detail restores browse root',
-    (WidgetTester tester) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: _marketNavTestOverrides(),
-          child: const BlindboxApp(),
-        ),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
+  testWidgets('Market tab reselect from listing detail restores browse root', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: _marketNavTestOverrides(),
+        child: const BlindboxApp(),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
-      await tester.tap(find.text('Market'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 600));
+    await tester.tap(find.text('Market'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
 
-      appRouter.push('/market/listing/mock-listing-1');
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
+    appRouter.push('/market/listing/mock-listing-1');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
 
-      expect(find.byType(MarketDetailScreen), findsOneWidget);
+    expect(find.byType(MarketDetailScreen), findsOneWidget);
 
-      await _assertBrowseChromeAfterFirstReselectPump(tester);
+    await _assertBrowseChromeAfterFirstReselectPump(tester);
 
-      expect(find.byType(MarketDetailScreen), findsNothing);
-      _expectFullBrowseRoot(
-        container: ProviderScope.containerOf(
-          tester.element(find.text('Collectibles')),
-        ),
-        routePath: appRouter.state.uri.path,
-      );
-    },
-  );
+    expect(find.byType(MarketDetailScreen), findsNothing);
+    _expectFullBrowseRoot(
+      container: ProviderScope.containerOf(
+        tester.element(find.text('Collectibles')),
+      ),
+      routePath: appRouter.state.uri.path,
+    );
+  });
 }

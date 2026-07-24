@@ -19,8 +19,18 @@ String formatPriceChangePercent(double percent) {
 String? formatMarketListingDate(DateTime? date) {
   if (date == null) return null;
   const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
   final local = date.toLocal();
   return 'Listed ${months[local.month - 1]} ${local.day}, ${local.year}';

@@ -121,7 +121,11 @@ class TitleTaxonomyResolver {
 }
 
 class _IpScore {
-  const _IpScore({required this.ipId, required this.brandId, required this.score});
+  const _IpScore({
+    required this.ipId,
+    required this.brandId,
+    required this.score,
+  });
   final String ipId;
   final String brandId;
   final int score;

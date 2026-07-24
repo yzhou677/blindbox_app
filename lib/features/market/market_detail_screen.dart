@@ -5,6 +5,7 @@ import 'package:blindbox_app/features/catalog/presentation/catalog_image_display
 import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/collectible_shelf_shadow.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
+import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
 import 'package:blindbox_app/features/market/presentation/market_listing_image.dart';
 import 'package:blindbox_app/features/market/application/market_listing_detail_provider.dart';
 import 'package:blindbox_app/features/market/application/market_listing_lookup.dart';
@@ -22,6 +23,7 @@ import 'package:blindbox_app/shared/widgets/series_hero_meta_block.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 class MarketDetailScreen extends ConsumerStatefulWidget {
   const MarketDetailScreen({super.key, required this.listingId});
@@ -41,7 +43,9 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
 
   @override
   void dispose() {
-    ShellTabReselectBus.instance.reselectedBranch.removeListener(_onTabReselected);
+    ShellTabReselectBus.instance.reselectedBranch.removeListener(
+      _onTabReselected,
+    );
     super.dispose();
   }
 
@@ -61,7 +65,10 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
       return Scaffold(
         appBar: AppBar(
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_rounded),
+            icon: const Icon(
+              Symbols.arrow_back_rounded,
+              size: AppIconSizes.navigation,
+            ),
             onPressed: () => context.pop(),
           ),
         ),
@@ -76,7 +83,8 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
 
     final c = listing.collectible;
     final accent = c.shelfAccent ?? scheme.tertiaryContainer;
-    final appBarTitle = chaserEntry?.identityLabel ??
+    final appBarTitle =
+        chaserEntry?.identityLabel ??
         (c.name.trim().isNotEmpty ? c.name : c.series);
 
     return Scaffold(
@@ -90,15 +98,20 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
             backgroundColor: scheme.surface.withValues(alpha: 0.94),
             surfaceTintColor: scheme.surfaceTint.withValues(alpha: 0.45),
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_rounded),
+              icon: const Icon(
+                Symbols.arrow_back_rounded,
+                size: AppIconSizes.navigation,
+              ),
               onPressed: () => context.pop(),
             ),
             title: Text(
               appBarTitle,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: CollectibleTypography.seriesHeroTitle(textTheme, scheme)
-                  .copyWith(fontSize: 18),
+              style: CollectibleTypography.seriesHeroTitle(
+                textTheme,
+                scheme,
+              ).copyWith(fontSize: 18),
             ),
           ),
           SliverToBoxAdapter(
@@ -109,7 +122,11 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
                 20,
                 0,
               ),
-              child: _MarketDetailHero(listingId: listingId, listing: listing, accent: accent),
+              child: _MarketDetailHero(
+                listingId: listingId,
+                listing: listing,
+                accent: accent,
+              ),
             ),
           ),
           SliverToBoxAdapter(
@@ -154,7 +171,8 @@ class _MarketDetailHero extends ConsumerWidget {
       data: (value) => value?.imageUrl,
       orElse: () => null,
     );
-    final aspect = CatalogImageDisplaySpec.aspectRatioFor(
+    final aspect =
+        CatalogImageDisplaySpec.aspectRatioFor(
           CatalogImageDisplayMode.seriesCoverHero,
         ) ??
         1.0;
@@ -191,8 +209,7 @@ class _MarketDetailHero extends ConsumerWidget {
               ),
             ),
             child: Padding(
-              padding:
-                  const EdgeInsets.all(FeedRhythm.detailHeroInnerPadding),
+              padding: const EdgeInsets.all(FeedRhythm.detailHeroInnerPadding),
               child: AspectRatio(
                 aspectRatio: aspect,
                 child: ClipRRect(
@@ -241,13 +258,13 @@ class _MarketDetailBody extends ConsumerWidget {
     final deltaColor = up
         ? scheme.primary
         : down
-            ? scheme.error
-            : scheme.onSurfaceVariant;
+        ? scheme.error
+        : scheme.onSurfaceVariant;
     final listingTitle = c.name.trim();
     final showFigureSubtitle = chaserEntry != null
         ? listingTitle.isNotEmpty
         : listingTitle.isNotEmpty &&
-            listingTitle.toLowerCase() != c.series.trim().toLowerCase();
+              listingTitle.toLowerCase() != c.series.trim().toLowerCase();
     final release = c.releaseDateLabel.trim();
     final marketFacts = [
       chaserEntry != null
@@ -334,11 +351,12 @@ class _MarketDetailBody extends ConsumerWidget {
           SizedBox(
             width: double.infinity,
             child: FilledButton.tonalIcon(
-              onPressed: () => openMarketListingUrl(
-                context,
-                _listingUrl(listing, detail),
+              onPressed: () =>
+                  openMarketListingUrl(context, _listingUrl(listing, detail)),
+              icon: const Icon(
+                Symbols.open_in_new_rounded,
+                size: AppIconSizes.toolbar,
               ),
-              icon: const Icon(Icons.open_in_new_rounded, size: 18),
               label: Text(
                 listing.providerId == 'ebay' ? 'View on eBay' : 'View listing',
               ),
@@ -359,10 +377,7 @@ String? _listingUrl(MarketListing listing, MarketListingDetail? detail) {
 }
 
 class _MarketListingFacts extends StatelessWidget {
-  const _MarketListingFacts({
-    required this.listing,
-    required this.detail,
-  });
+  const _MarketListingFacts({required this.listing, required this.detail});
 
   final MarketListing listing;
   final MarketListingDetail? detail;
@@ -371,8 +386,9 @@ class _MarketListingFacts extends StatelessWidget {
   Widget build(BuildContext context) {
     final listed = formatMarketListingDate(listing.itemCreationDate);
     final seller = _sellerLine(listing, detail);
-    final quantity =
-        detail == null ? null : formatMarketListingQuantityLine(detail!);
+    final quantity = detail == null
+        ? null
+        : formatMarketListingQuantityLine(detail!);
     final rows = <({String label, String value})>[
       if (detail?.condition case final condition?)
         (label: 'Condition', value: condition),
@@ -415,8 +431,10 @@ class _MarketDetailFactRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final labelStyle = CollectibleTypography.figureMeta(textTheme, scheme)
-        .copyWith(fontWeight: FontWeight.w600);
+    final labelStyle = CollectibleTypography.figureMeta(
+      textTheme,
+      scheme,
+    ).copyWith(fontWeight: FontWeight.w600);
     final valueStyle = textTheme.bodyMedium?.copyWith(
       color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
       height: 1.25,
@@ -425,10 +443,7 @@ class _MarketDetailFactRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: 84,
-          child: Text(label, style: labelStyle),
-        ),
+        SizedBox(width: 84, child: Text(label, style: labelStyle)),
         Expanded(child: Text(value, style: valueStyle)),
       ],
     );

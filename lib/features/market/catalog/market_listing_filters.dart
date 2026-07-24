@@ -27,10 +27,12 @@ bool marketListingMatchesFreeText(MarketListing m, String rawQuery) {
 String _marketListingHaystack(MarketListing m) {
   final c = m.collectible;
   final ipLine = c.ipLine?.trim();
-  final brandTaxon =
-      m.taxonomyBrandId != null ? MarketTaxonomy.brandById(m.taxonomyBrandId!) : null;
-  final ipTaxon =
-      m.taxonomyIpId != null ? MarketTaxonomy.ipById(m.taxonomyIpId!) : null;
+  final brandTaxon = m.taxonomyBrandId != null
+      ? MarketTaxonomy.brandById(m.taxonomyBrandId!)
+      : null;
+  final ipTaxon = m.taxonomyIpId != null
+      ? MarketTaxonomy.ipById(m.taxonomyIpId!)
+      : null;
 
   final parts = <String>[
     c.name,

@@ -15,10 +15,9 @@ void main() {
   });
 
   test('market history uses separate prefs key from catalog', () async {
-    await SearchHistoryPrefsStorage.save(
-      kCatalogSearchHistoryPrefsKey,
-      ['Labubu'],
-    );
+    await SearchHistoryPrefsStorage.save(kCatalogSearchHistoryPrefsKey, [
+      'Labubu',
+    ]);
     await MarketSearchHistoryStorage.save(['Skullpanda']);
 
     expect(await MarketSearchHistoryStorage.load(), ['Skullpanda']);
@@ -42,30 +41,32 @@ void main() {
     );
   });
 
-  testWidgets('market search reuses shared kSuggestedSearches when history empty',
-      (tester) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: searchEmptyQuerySection(
-            history: const [],
-            onHistoryTap: (_) {},
-            onRemove: (_) {},
-            onClearAll: () {},
-            onSuggestedTap: (_) {},
+  testWidgets(
+    'market search reuses shared kSuggestedSearches when history empty',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: searchEmptyQuerySection(
+              history: const [],
+              onHistoryTap: (_) {},
+              onRemove: (_) {},
+              onClearAll: () {},
+              onSuggestedTap: (_) {},
+            ),
           ),
         ),
-      ),
-    );
-    expect(find.text('Suggested Searches'), findsOneWidget);
+      );
+      expect(find.text('Suggested Searches'), findsOneWidget);
 
-    final poolQueries = kSuggestedSearches.map((s) => s.query).toSet();
-    final displayed = kSuggestedSearches
-        .where((s) => find.text(s.displayLabel).evaluate().isNotEmpty)
-        .toList();
-    expect(displayed.length, kSuggestedSearchesDisplayCount);
-    for (final suggestion in displayed) {
-      expect(poolQueries, contains(suggestion.query));
-    }
-  });
+      final poolQueries = kSuggestedSearches.map((s) => s.query).toSet();
+      final displayed = kSuggestedSearches
+          .where((s) => find.text(s.displayLabel).evaluate().isNotEmpty)
+          .toList();
+      expect(displayed.length, kSuggestedSearchesDisplayCount);
+      for (final suggestion in displayed) {
+        expect(poolQueries, contains(suggestion.query));
+      }
+    },
+  );
 }

@@ -8,8 +8,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// ([kMarketSearchHistoryPrefsKey]).
 final marketSearchHistoryProvider =
     NotifierProvider<MarketSearchHistoryNotifier, List<String>>(
-  MarketSearchHistoryNotifier.new,
-);
+      MarketSearchHistoryNotifier.new,
+    );
 
 class MarketSearchHistoryNotifier extends Notifier<List<String>> {
   @override

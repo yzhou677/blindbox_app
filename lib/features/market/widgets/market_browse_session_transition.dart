@@ -1,5 +1,6 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_radii.dart';
+import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/features/market/application/active_market_browse_query.dart';
 import 'package:blindbox_app/features/market/application/market_live_browse_controller.dart';
 import 'package:blindbox_app/features/market/application/market_live_browse_session.dart';
@@ -36,7 +37,7 @@ class MarketBrowseSessionTransition extends StatelessWidget {
   final bool active;
   final Widget child;
 
-  static const _duration = Duration(milliseconds: 200);
+  static const _duration = CollectibleMotion.fast;
 
   @override
   Widget build(BuildContext context) {
@@ -47,10 +48,7 @@ class MarketBrowseSessionTransition extends StatelessWidget {
           duration: _duration,
           curve: Curves.easeOutCubic,
           opacity: active ? 0.34 : 1,
-          child: IgnorePointer(
-            ignoring: active,
-            child: child,
-          ),
+          child: IgnorePointer(ignoring: active, child: child),
         ),
         IgnorePointer(
           child: AnimatedOpacity(
@@ -103,9 +101,9 @@ class _MarketBrowseTransitionIndicator extends StatelessWidget {
             Text(
               'Updating listings',
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
-                    fontWeight: FontWeight.w500,
-                  ),
+                color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
@@ -132,9 +130,8 @@ class MarketBrowseResultsSkeleton extends StatelessWidget {
     return ListView.separated(
       padding: _marketBrowseSkeletonPadding,
       itemCount: count,
-      separatorBuilder: (_, _) => const SizedBox(
-        height: FeedRhythm.marketListingFeedCardVerticalGap,
-      ),
+      separatorBuilder: (_, _) =>
+          const SizedBox(height: FeedRhythm.marketListingFeedCardVerticalGap),
       itemBuilder: (_, _) => const _MarketBrowseSkeletonCard(),
     );
   }
@@ -158,7 +155,9 @@ class MarketBrowseSliverResultsSkeleton extends StatelessWidget {
           children: [
             for (var i = 0; i < count; i++) ...[
               if (i > 0)
-                const SizedBox(height: FeedRhythm.marketListingFeedCardVerticalGap),
+                const SizedBox(
+                  height: FeedRhythm.marketListingFeedCardVerticalGap,
+                ),
               const _MarketBrowseSkeletonCard(),
             ],
           ],
@@ -186,7 +185,7 @@ class _MarketBrowseSkeletonCard extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 14, 16, 14),
+        padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -196,7 +195,11 @@ class _MarketBrowseSkeletonCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _SkeletonBlock(width: double.infinity, height: 14, fill: fill),
+                  _SkeletonBlock(
+                    width: double.infinity,
+                    height: 14,
+                    fill: fill,
+                  ),
                   const SizedBox(height: 8),
                   _SkeletonBlock(width: 120, height: 12, fill: fill),
                   const SizedBox(height: 12),

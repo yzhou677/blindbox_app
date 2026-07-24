@@ -16,11 +16,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Collectible-centered browse row — groups market sightings calmly.
 class CollectibleMarketCard extends ConsumerWidget {
-  const CollectibleMarketCard({
-    super.key,
-    required this.snapshot,
-    this.onOpen,
-  });
+  const CollectibleMarketCard({super.key, required this.snapshot, this.onOpen});
 
   final CollectibleMarketSnapshot snapshot;
 
@@ -55,7 +51,9 @@ class CollectibleMarketCard extends ConsumerWidget {
           shape: RoundedRectangleBorder(
             borderRadius: AppRadii.cardRadius,
             side: BorderSide(
-              color: scheme.outlineVariant.withValues(alpha: isDark ? 0.32 : 0.38),
+              color: scheme.outlineVariant.withValues(
+                alpha: isDark ? 0.32 : 0.38,
+              ),
             ),
           ),
           clipBehavior: Clip.antiAlias,
@@ -70,7 +68,7 @@ class CollectibleMarketCard extends ConsumerWidget {
                     );
                   },
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(14, 14, 16, 14),
+              padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -78,9 +76,10 @@ class CollectibleMarketCard extends ConsumerWidget {
                     MarketListingShowcaseThumb(
                       collectible: rep.collectible,
                       extent: thumb,
-                      heroTag: 'collectible-market-${snapshot.identity.snapshotId}',
+                      heroTag:
+                          'collectible-market-${snapshot.identity.snapshotId}',
                     ),
-                  if (rep != null) const SizedBox(width: 16),
+                  if (rep != null) const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -95,7 +94,7 @@ class CollectibleMarketCard extends ConsumerWidget {
                           ),
                         ),
                         if (display.subtitle.isNotEmpty) ...[
-                          const SizedBox(height: 3),
+                          const SizedBox(height: 2),
                           Text(
                             display.subtitle,
                             maxLines: 1,
@@ -106,28 +105,30 @@ class CollectibleMarketCard extends ConsumerWidget {
                             ),
                           ),
                         ],
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 3),
                         Text(
                           CollectibleMarketMoodCopy.subtitle(snapshot),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: textTheme.bodySmall?.copyWith(
-                            color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
+                            color: scheme.onSurfaceVariant.withValues(
+                              alpha: 0.78,
+                            ),
                             height: 1.25,
                           ),
                         ),
                         CollectibleMarketSignals(snapshot: snapshot),
                         if (relationshipLine != null &&
                             relationshipLine.isNotEmpty) ...[
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 3),
                           CollectibleRelationshipLine(text: relationshipLine),
                         ],
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 5),
                         Text(
                           _priceLabel(),
                           style: textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.1,
                             height: 1.1,
                           ),
                         ),

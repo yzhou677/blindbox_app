@@ -3,7 +3,11 @@ import 'package:flutter/material.dart';
 
 /// Editorial shelf signals — calm, collectible-native (not a trading strip).
 class ListingMarketSignals extends StatelessWidget {
-  const ListingMarketSignals({super.key, required this.listing, this.dense = false});
+  const ListingMarketSignals({
+    super.key,
+    required this.listing,
+    this.dense = false,
+  });
 
   final MarketListing listing;
   final bool dense;
@@ -73,25 +77,28 @@ class _SignalPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final (Color bg, Color border, Color fg) = switch (emphasis) {
       _SignalEmphasis.warm => (
-          Color.lerp(
-                scheme.secondaryContainer,
-                scheme.primaryContainer,
-                0.35,
-              )!
-              .withValues(alpha: 0.44),
-          Color.lerp(scheme.secondary, scheme.primary, 0.25)!.withValues(alpha: 0.22),
-          scheme.onSecondaryContainer.withValues(alpha: 0.88),
-        ),
+        Color.lerp(
+          scheme.secondaryContainer,
+          scheme.primaryContainer,
+          0.35,
+        )!.withValues(alpha: 0.44),
+        Color.lerp(
+          scheme.secondary,
+          scheme.primary,
+          0.25,
+        )!.withValues(alpha: 0.22),
+        scheme.onSecondaryContainer.withValues(alpha: 0.88),
+      ),
       _SignalEmphasis.soft => (
-          scheme.primary.withValues(alpha: 0.09),
-          scheme.primary.withValues(alpha: 0.2),
-          scheme.primary.withValues(alpha: 0.86),
-        ),
+        scheme.primary.withValues(alpha: 0.09),
+        scheme.primary.withValues(alpha: 0.2),
+        scheme.primary.withValues(alpha: 0.86),
+      ),
       _SignalEmphasis.neutral => (
-          scheme.surfaceContainerHighest.withValues(alpha: 0.52),
-          scheme.outlineVariant.withValues(alpha: 0.32),
-          scheme.onSurfaceVariant.withValues(alpha: 0.88),
-        ),
+        scheme.surfaceContainerHighest.withValues(alpha: 0.52),
+        scheme.outlineVariant.withValues(alpha: 0.32),
+        scheme.onSurfaceVariant.withValues(alpha: 0.88),
+      ),
     };
 
     return DecoratedBox(

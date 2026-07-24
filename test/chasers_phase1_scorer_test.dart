@@ -55,10 +55,7 @@ void main() {
           'Pop Mart Labubu Exciting Macaron Series Blind Box',
           seller: 'a',
         ),
-        _listing(
-          'AUTHENTIC POP MART Labubu Macaron Plush',
-          seller: 'b',
-        ),
+        _listing('AUTHENTIC POP MART Labubu Macaron Plush', seller: 'b'),
         _listing('POP MART Dimoo World Figure', seller: 'c'),
       ],
     );
@@ -67,21 +64,24 @@ void main() {
     expect(entries.first.uniqueSellerCount, 2);
   });
 
-  test('buildChaserEntriesFromProbe prefers clean figure over accessory lot', () {
-    final entries = buildChaserEntriesFromProbe(
-      target: target,
-      listings: [
-        _listing('Labubu Keychain Lot of 5', seller: 'a', price: 12),
-        _listing('Pop Mart Labubu Macaron Figure', seller: 'b', price: 28),
-        _listing('AUTHENTIC Labubu Macaron Plush', seller: 'c', price: 30),
-      ],
-    );
-    expect(entries, isNotEmpty);
-    expect(
-      entries.first.representativeListing.collectible.name.toLowerCase(),
-      isNot(contains('keychain')),
-    );
-  });
+  test(
+    'buildChaserEntriesFromProbe prefers clean figure over accessory lot',
+    () {
+      final entries = buildChaserEntriesFromProbe(
+        target: target,
+        listings: [
+          _listing('Labubu Keychain Lot of 5', seller: 'a', price: 12),
+          _listing('Pop Mart Labubu Macaron Figure', seller: 'b', price: 28),
+          _listing('AUTHENTIC Labubu Macaron Plush', seller: 'c', price: 30),
+        ],
+      );
+      expect(entries, isNotEmpty);
+      expect(
+        entries.first.representativeListing.collectible.name.toLowerCase(),
+        isNot(contains('keychain')),
+      );
+    },
+  );
 
   test('mergeChaserEntries keeps highest score per cluster key', () {
     final low = ChasersHeatEntry(

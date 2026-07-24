@@ -1,11 +1,5 @@
 /// Deterministic confidence tier for catalog identity matching (data layer only).
-enum MarketMatchConfidence {
-  none,
-  low,
-  medium,
-  high,
-  exact,
-}
+enum MarketMatchConfidence { none, low, medium, high, exact }
 
 extension MarketMatchConfidenceX on MarketMatchConfidence {
   /// Numeric ordering for comparisons (higher = more confident).

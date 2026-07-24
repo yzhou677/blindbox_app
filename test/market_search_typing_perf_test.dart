@@ -46,7 +46,9 @@ void main() {
     MarketBrowseSearchScreen.debugBuildCount = 0;
   });
 
-  testWidgets('typing does not rebuild screen before 400ms debounce', (tester) async {
+  testWidgets('typing does not rebuild screen before 400ms debounce', (
+    tester,
+  ) async {
     await _pumpMarketSearch(tester);
     MarketBrowseSearchScreen.debugBuildCount = 0;
 

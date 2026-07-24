@@ -13,7 +13,9 @@ void main() {
     return MaterialApp(
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
-      themeMode: brightness == Brightness.dark ? ThemeMode.dark : ThemeMode.light,
+      themeMode: brightness == Brightness.dark
+          ? ThemeMode.dark
+          : ThemeMode.light,
       home: Scaffold(
         body: Center(
           child: SizedBox(
@@ -45,9 +47,7 @@ void main() {
     final long = List.filled(90, 'collectible').join(' ');
 
     await tester.pumpWidget(
-      wrap(
-        ExpandableDescription(text: long, style: bodyStyle),
-      ),
+      wrap(ExpandableDescription(text: long, style: bodyStyle)),
     );
     await tester.pumpAndSettle();
 
@@ -81,9 +81,7 @@ void main() {
 
     final bodyFinder = find.descendant(
       of: find.byType(ExpandableDescription),
-      matching: find.byWidgetPredicate(
-        (w) => w is Text && w.data == long,
-      ),
+      matching: find.byWidgetPredicate((w) => w is Text && w.data == long),
     );
     expect(bodyFinder, findsOneWidget);
 
@@ -152,13 +150,18 @@ void main() {
     await tester.tap(find.text('Read more'));
     await tester.pumpAndSettle();
 
-    await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -120));
+    await tester.drag(
+      find.byType(SingleChildScrollView),
+      const Offset(0, -120),
+    );
     await tester.pump();
 
     expect(find.text('Show less'), findsOneWidget);
   });
 
-  testWidgets('ListingDescriptionSection hides for null and empty', (tester) async {
+  testWidgets('ListingDescriptionSection hides for null and empty', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       wrap(const ListingDescriptionSection(description: null)),
     );
@@ -178,7 +181,9 @@ void main() {
     expect(find.text('About this listing'), findsNothing);
   });
 
-  testWidgets('ListingDescriptionSection renders sanitized HTML copy', (tester) async {
+  testWidgets('ListingDescriptionSection renders sanitized HTML copy', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       wrap(
         const ListingDescriptionSection(

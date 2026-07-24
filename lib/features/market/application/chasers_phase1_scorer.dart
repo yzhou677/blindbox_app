@@ -13,8 +13,8 @@ double scoreChaserCluster(MarketTitleCluster cluster) {
 
   final sighting = (cluster.listingCount / 8.0).clamp(0.0, 1.0);
   final diversity = cluster.sellerDiversity.clamp(0.0, 1.0);
-  final sellerBalance =
-      (cluster.uniqueSellerCount / cluster.listingCount).clamp(0.33, 1.0);
+  final sellerBalance = (cluster.uniqueSellerCount / cluster.listingCount)
+      .clamp(0.33, 1.0);
 
   var chaseBonus = 0.0;
   for (final title in cluster.sampleTitles) {
@@ -90,7 +90,8 @@ MarketListing? _pickRepresentative(
   final matched = listings
       .where(
         (row) =>
-            clusterer.clusterKeyForTitle(row.collectible.name) == cluster.clusterKey,
+            clusterer.clusterKeyForTitle(row.collectible.name) ==
+            cluster.clusterKey,
       )
       .toList();
   if (matched.isEmpty) return null;
@@ -98,8 +99,9 @@ MarketListing? _pickRepresentative(
 
   final median = cluster.medianPriceUsd;
   matched.sort((a, b) {
-    final scoreCmp = MarketListingTitleSignals.presentationScore(b)
-        .compareTo(MarketListingTitleSignals.presentationScore(a));
+    final scoreCmp = MarketListingTitleSignals.presentationScore(
+      b,
+    ).compareTo(MarketListingTitleSignals.presentationScore(a));
     if (scoreCmp != 0) return scoreCmp;
     if (median != null) {
       final aDelta = (a.currentPriceUsd - median).abs();
@@ -112,7 +114,9 @@ MarketListing? _pickRepresentative(
   return matched.first;
 }
 
-List<ChasersHeatEntry> chasersHeatFromFixtureListings(List<MarketListing> items) {
+List<ChasersHeatEntry> chasersHeatFromFixtureListings(
+  List<MarketListing> items,
+) {
   return [
     for (final row in items)
       ChasersHeatEntry(

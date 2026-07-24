@@ -63,7 +63,8 @@ class MarketBrowseQuery {
           limit == other.limit;
 
   @override
-  int get hashCode => Object.hash(brandId, ipId, searchText, sort, cursor, limit);
+  int get hashCode =>
+      Object.hash(brandId, ipId, searchText, sort, cursor, limit);
 }
 
 enum MarketBrowseSort {
@@ -72,8 +73,8 @@ enum MarketBrowseSort {
   priceHighToLow;
 
   String get wireName => switch (this) {
-        MarketBrowseSort.relevance => 'relevance',
-        MarketBrowseSort.priceLowToHigh => 'price_asc',
-        MarketBrowseSort.priceHighToLow => 'price_desc',
-      };
+    MarketBrowseSort.relevance => 'relevance',
+    MarketBrowseSort.priceLowToHigh => 'price_asc',
+    MarketBrowseSort.priceHighToLow => 'price_desc',
+  };
 }

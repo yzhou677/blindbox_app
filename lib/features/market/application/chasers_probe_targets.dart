@@ -27,9 +27,7 @@ class ChasersProbeTarget {
 /// UI-visible brand + IP pairs only — excludes Any IP / hidden rails.
 List<ChasersProbeTarget> buildChasersProbeTargets() {
   final brandRows = MarketTaxonomyAdapter.buildFilterBrandRows();
-  final brandLabels = {
-    for (final b in brandRows) b.id: b.displayLabel,
-  };
+  final brandLabels = {for (final b in brandRows) b.id: b.displayLabel};
   final out = <ChasersProbeTarget>[];
 
   for (final brand in brandRows) {
@@ -66,7 +64,9 @@ List<ChasersProbeTarget> buildChasersProbeTargets() {
 }
 
 /// High-signal IPs first so the rail can hydrate before slower probes finish.
-List<ChasersProbeTarget> _prioritizeChaserProbes(List<ChasersProbeTarget> targets) {
+List<ChasersProbeTarget> _prioritizeChaserProbes(
+  List<ChasersProbeTarget> targets,
+) {
   final priorityKeys = MarketChasersConfig.probePriorityKeys;
 
   int rank(ChasersProbeTarget target) {

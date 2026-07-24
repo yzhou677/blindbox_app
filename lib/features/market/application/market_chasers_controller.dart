@@ -13,8 +13,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final marketChasersControllerProvider =
     NotifierProvider<MarketChasersController, MarketChasersState>(
-  MarketChasersController.new,
-);
+      MarketChasersController.new,
+    );
 
 @immutable
 class MarketChasersState {
@@ -90,7 +90,8 @@ class MarketChasersController extends Notifier<MarketChasersState> {
     if (!_shouldRun || _refreshInFlight) return;
     final last = state.lastRefreshedAt;
     if (last != null &&
-        DateTime.now().difference(last) < MarketChasersConfig.memoryRefreshTtl) {
+        DateTime.now().difference(last) <
+            MarketChasersConfig.memoryRefreshTtl) {
       return;
     }
     await refresh(force: true);
@@ -119,10 +120,7 @@ class MarketChasersController extends Notifier<MarketChasersState> {
       final concurrency = MarketChasersConfig.probeConcurrency.clamp(1, 4);
 
       for (var i = 0; i < targets.length; i += concurrency) {
-        final batch = targets
-            .skip(i)
-            .take(concurrency)
-            .toList(growable: false);
+        final batch = targets.skip(i).take(concurrency).toList(growable: false);
         final batchEntries = await Future.wait([
           for (final target in batch) _fetchProbeEntries(target),
         ]);
@@ -137,9 +135,9 @@ class MarketChasersController extends Notifier<MarketChasersState> {
         }
       }
 
-      final merged = mergeChaserEntries(collected)
-          .take(MarketChasersConfig.maxRailEntries)
-          .toList(growable: false);
+      final merged = mergeChaserEntries(
+        collected,
+      ).take(MarketChasersConfig.maxRailEntries).toList(growable: false);
 
       final refreshedAt = DateTime.now();
       state = MarketChasersState(
@@ -168,17 +166,17 @@ class MarketChasersController extends Notifier<MarketChasersState> {
         limit: MarketChasersConfig.probePageSize,
       ),
     );
-    return buildChaserEntriesFromProbe(
-      target: target,
-      listings: page.listings,
-    );
+    return buildChaserEntriesFromProbe(target: target, listings: page.listings);
   }
 
-  void _publishPartial(List<ChasersHeatEntry> collected, {required bool loading}) {
+  void _publishPartial(
+    List<ChasersHeatEntry> collected, {
+    required bool loading,
+  }) {
     if (!_refreshInFlight) return;
-    final merged = mergeChaserEntries(collected)
-        .take(MarketChasersConfig.maxRailEntries)
-        .toList(growable: false);
+    final merged = mergeChaserEntries(
+      collected,
+    ).take(MarketChasersConfig.maxRailEntries).toList(growable: false);
     state = MarketChasersState(
       entries: merged,
       isLoading: loading,

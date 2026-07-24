@@ -10,9 +10,9 @@ import 'package:blindbox_app/features/market/taxonomy/market_filter_visibility.d
 abstract final class MarketTaxonomyAdapter {
   /// One row per IP in [IpTaxonomyRegistry.all] declaration order.
   static List<({String id, String displayLabel})> buildIpRows() => [
-        for (final ip in IpTaxonomyRegistry.all)
-          (id: ip.id, displayLabel: ip.displayName),
-      ];
+    for (final ip in IpTaxonomyRegistry.all)
+      (id: ip.id, displayLabel: ip.displayName),
+  ];
 
   /// IPs shown on market filter chip rails (subset of [buildIpRows]).
   static List<({String id, String displayLabel})> buildFilterIpRows() {
@@ -33,12 +33,8 @@ abstract final class MarketTaxonomyAdapter {
 
   /// One row per brand in [BrandTaxonomyRegistry.all] declaration order;
   /// [supportedIpIds] follow first occurrence in [IpTaxonomyRegistry.all].
-  static List<
-      ({
-        String id,
-        String displayLabel,
-        List<String> supportedIpIds,
-      })> buildBrandRows() {
+  static List<({String id, String displayLabel, List<String> supportedIpIds})>
+  buildBrandRows() {
     final byBrand = <String, List<String>>{};
     for (final ip in IpTaxonomyRegistry.all) {
       (byBrand[ip.brandId] ??= []).add(ip.id);
@@ -56,12 +52,8 @@ abstract final class MarketTaxonomyAdapter {
   }
 
   /// Brands and per-brand IP ids for filter chip rails only.
-  static List<
-      ({
-        String id,
-        String displayLabel,
-        List<String> supportedIpIds,
-      })> buildFilterBrandRows() {
+  static List<({String id, String displayLabel, List<String> supportedIpIds})>
+  buildFilterBrandRows() {
     return [
       for (final row in buildBrandRows())
         if (!MarketFilterVisibility.hiddenBrandIds.contains(row.id))
@@ -78,7 +70,10 @@ abstract final class MarketTaxonomyAdapter {
     return List<String>.unmodifiable([
       for (final ipId in brandIpIds)
         if (!MarketFilterVisibility.hiddenIpIds.contains(ipId))
-          if (MarketFilterVisibility.shouldShowIpOnFilterRail(ipId, brandIpIdSet))
+          if (MarketFilterVisibility.shouldShowIpOnFilterRail(
+            ipId,
+            brandIpIdSet,
+          ))
             ipId,
     ]);
   }

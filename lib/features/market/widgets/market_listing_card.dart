@@ -39,7 +39,9 @@ class MarketListingCard extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: AppRadii.cardRadius,
             side: BorderSide(
-              color: scheme.outlineVariant.withValues(alpha: isDark ? 0.32 : 0.38),
+              color: scheme.outlineVariant.withValues(
+                alpha: isDark ? 0.32 : 0.38,
+              ),
             ),
           ),
           clipBehavior: Clip.antiAlias,
@@ -94,7 +96,9 @@ class MarketListingCard extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            _PriceChangePill(percent: listing.priceChangePercent),
+                            _PriceChangePill(
+                              percent: listing.priceChangePercent,
+                            ),
                           ],
                         ),
                       ],

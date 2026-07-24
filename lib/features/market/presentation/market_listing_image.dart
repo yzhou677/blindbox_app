@@ -3,6 +3,7 @@ import 'package:blindbox_app/features/catalog/presentation/catalog_image_display
 import 'package:blindbox_app/features/market/utils/ebay_image_url.dart';
 import 'package:blindbox_app/models/collectible.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Market listing art — external photo URLs stay inside this media widget only.
 ///
@@ -57,7 +58,7 @@ class MarketListingImage extends StatelessWidget {
               decoration: BoxDecoration(gradient: _matGradient(scheme)),
               child: Center(
                 child: Icon(
-                  Icons.toys_rounded,
+                  Symbols.toys_rounded,
                   size: 44,
                   color: scheme.onSurfaceVariant.withValues(alpha: 0.42),
                 ),
@@ -95,7 +96,7 @@ class MarketListingImage extends StatelessWidget {
                 decoration: BoxDecoration(gradient: _matGradient(scheme)),
                 child: Center(
                   child: Icon(
-                    Icons.toys_rounded,
+                    Symbols.toys_rounded,
                     size: 44,
                     color: scheme.onSurfaceVariant.withValues(alpha: 0.42),
                   ),

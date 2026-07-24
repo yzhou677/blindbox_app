@@ -7,15 +7,23 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('adapter rows mirror registry sizes and ids', () {
-    expect(MarketTaxonomyAdapter.buildIpRows().length, IpTaxonomyRegistry.all.length);
-    expect(MarketTaxonomyAdapter.buildBrandRows().length, BrandTaxonomyRegistry.all.length);
+    expect(
+      MarketTaxonomyAdapter.buildIpRows().length,
+      IpTaxonomyRegistry.all.length,
+    );
+    expect(
+      MarketTaxonomyAdapter.buildBrandRows().length,
+      BrandTaxonomyRegistry.all.length,
+    );
   });
 
   test('filter chips mirror adapter filter rows only (not catalog)', () {
-    final adapterIpIds =
-        MarketTaxonomyAdapter.buildFilterIpRows().map((e) => e.id).toSet();
-    final adapterBrandIds =
-        MarketTaxonomyAdapter.buildFilterBrandRows().map((e) => e.id).toSet();
+    final adapterIpIds = MarketTaxonomyAdapter.buildFilterIpRows()
+        .map((e) => e.id)
+        .toSet();
+    final adapterBrandIds = MarketTaxonomyAdapter.buildFilterBrandRows()
+        .map((e) => e.id)
+        .toSet();
 
     expect(MarketTaxonomy.allIps.map((e) => e.id).toSet(), adapterIpIds);
     expect(MarketTaxonomy.brands.map((e) => e.id).toSet(), adapterBrandIds);
@@ -35,13 +43,17 @@ void main() {
   test('filter chip POP MART IPs exclude peach riot azura duckoo', () {
     final pop = MarketTaxonomy.brandById('pop_mart');
     expect(pop, isNotNull);
-    final filterPop = MarketTaxonomy.brands.firstWhere((b) => b.id == 'pop_mart');
+    final filterPop = MarketTaxonomy.brands.firstWhere(
+      (b) => b.id == 'pop_mart',
+    );
     for (final hidden in ['peach_riot', 'azura', 'duckoo']) {
       expect(filterPop.supportedIpIds, isNot(contains(hidden)));
       expect(MarketFilterVisibility.hiddenIpIds, contains(hidden));
     }
     expect(filterPop.supportedIpIds, contains('the_monsters'));
-    final monsters = MarketTaxonomy.allIps.firstWhere((i) => i.id == 'the_monsters');
+    final monsters = MarketTaxonomy.allIps.firstWhere(
+      (i) => i.id == 'the_monsters',
+    );
     expect(monsters.displayLabel, 'THE MONSTERS');
   });
 
@@ -51,16 +63,22 @@ void main() {
     expect(tnt.supportedIpIds, isNot(contains('liila')));
   });
 
-  test('filter chip TOPTOY IPs exclude hidden nommi_x_amarilith collab line', () {
-    final toptoy = MarketTaxonomy.brands.firstWhere((b) => b.id == 'toptoy');
-    expect(toptoy.supportedIpIds, contains('nommi'));
-    expect(toptoy.supportedIpIds, isNot(contains('nommi_x_amarilith')));
-    expect(
-      MarketTaxonomy.ipChipOptionsForBrand('toptoy').map((o) => o.id),
-      isNot(contains('nommi_x_amarilith')),
-    );
-    expect(MarketTaxonomy.allIps.map((i) => i.id), isNot(contains('nommi_x_amarilith')));
-  });
+  test(
+    'filter chip TOPTOY IPs exclude hidden nommi_x_amarilith collab line',
+    () {
+      final toptoy = MarketTaxonomy.brands.firstWhere((b) => b.id == 'toptoy');
+      expect(toptoy.supportedIpIds, contains('nommi'));
+      expect(toptoy.supportedIpIds, isNot(contains('nommi_x_amarilith')));
+      expect(
+        MarketTaxonomy.ipChipOptionsForBrand('toptoy').map((o) => o.id),
+        isNot(contains('nommi_x_amarilith')),
+      );
+      expect(
+        MarketTaxonomy.allIps.map((i) => i.id),
+        isNot(contains('nommi_x_amarilith')),
+      );
+    },
+  );
 
   test('catalog-only ip ids never appear on market filter rails', () {
     const catalogOnlyIpIds = {'1001moons', '1001_moons'};
@@ -85,11 +103,15 @@ void main() {
   });
 
   test('ipChipOptionsForBrand uses registry-backed filter rows', () {
-    final ipIds = MarketTaxonomy.ipChipOptionsForBrand('pop_mart').map((o) => o.id);
+    final ipIds = MarketTaxonomy.ipChipOptionsForBrand(
+      'pop_mart',
+    ).map((o) => o.id);
     expect(ipIds, contains('the_monsters'));
     expect(ipIds, isNot(contains('peach_riot')));
     expect(
-      MarketTaxonomy.ipChipOptionsForBrand('pop_mart').firstWhere((o) => o.id == 'the_monsters').label,
+      MarketTaxonomy.ipChipOptionsForBrand(
+        'pop_mart',
+      ).firstWhere((o) => o.id == 'the_monsters').label,
       'THE MONSTERS',
     );
   });

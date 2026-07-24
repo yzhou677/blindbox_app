@@ -9,7 +9,10 @@ String? sanitizeListingDescription(String? raw) {
 
   text = text.replaceAll(RegExp(r'<[^>]*>', multiLine: true), ' ');
   text = _decodeCommonHtmlEntities(text);
-  text = text.replaceAll(RegExp(r'[\u0000-\u0008\u000B\u000C\u000E-\u001F]'), ' ');
+  text = text.replaceAll(
+    RegExp(r'[\u0000-\u0008\u000B\u000C\u000E-\u001F]'),
+    ' ',
+  );
   text = text.replaceAll(RegExp(r'\s+'), ' ').trim();
   if (text.isEmpty) return null;
 

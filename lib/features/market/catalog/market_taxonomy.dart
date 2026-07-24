@@ -12,10 +12,7 @@ abstract final class MarketTaxonomyIds {
 /// Single IP universe in the catalog (expand with API `ip` resources later).
 @immutable
 class MarketIpTaxon {
-  const MarketIpTaxon({
-    required this.id,
-    required this.displayLabel,
-  });
+  const MarketIpTaxon({required this.id, required this.displayLabel});
 
   final String id;
   final String displayLabel;
@@ -99,20 +96,21 @@ abstract final class MarketTaxonomy {
 
   /// Brand row: Any + known brands.
   static List<({String id, String label})> brandChipOptions() => [
-        (id: MarketTaxonomyIds.anyBrand, label: 'Any brand'),
-        for (final b in brands) (id: b.id, label: b.displayLabel),
-      ];
+    (id: MarketTaxonomyIds.anyBrand, label: 'Any brand'),
+    for (final b in brands) (id: b.id, label: b.displayLabel),
+  ];
 
   /// IP row depends on brand: Any brand → all IPs; else only IPs under that brand.
-  static List<({String id, String label})> ipChipOptionsForBrand(String brandId) {
+  static List<({String id, String label})> ipChipOptionsForBrand(
+    String brandId,
+  ) {
     final ips = brandId == MarketTaxonomyIds.anyBrand
         ? allIps
-        : _filterBrandById(brandId)
-                ?.supportedIpIds
-                .map(_filterIpById)
-                .whereType<MarketIpTaxon>()
-                .toList(growable: false) ??
-            const <MarketIpTaxon>[];
+        : _filterBrandById(brandId)?.supportedIpIds
+                  .map(_filterIpById)
+                  .whereType<MarketIpTaxon>()
+                  .toList(growable: false) ??
+              const <MarketIpTaxon>[];
 
     return [
       if (!MarketFilterVisibility.hideAnyIpForBrandIds.contains(brandId))

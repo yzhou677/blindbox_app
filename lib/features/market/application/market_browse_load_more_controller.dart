@@ -20,8 +20,9 @@ final marketLiveBrowseHasMoreProvider = Provider<bool>((ref) {
         live.listings.length < MarketGatewayConfig.maxLiveRows;
   }
   if (!MarketSandboxConfig.isActive) return false;
-  final batch =
-      MarketProviderBrowseCache.instance.batchFor(MarketProviderId.mercari);
+  final batch = MarketProviderBrowseCache.instance.batchFor(
+    MarketProviderId.mercari,
+  );
   if (batch == null) return false;
   return batch.hasMore &&
       batch.listings.length < MarketSandboxConfig.maxMercariTotalRows;
@@ -29,8 +30,8 @@ final marketLiveBrowseHasMoreProvider = Provider<bool>((ref) {
 
 final marketBrowseLoadMoreProvider =
     NotifierProvider<MarketBrowseLoadMoreNotifier, bool>(
-  MarketBrowseLoadMoreNotifier.new,
-);
+      MarketBrowseLoadMoreNotifier.new,
+    );
 
 /// `true` while a calm "load more" request is in flight.
 class MarketBrowseLoadMoreNotifier extends Notifier<bool> {

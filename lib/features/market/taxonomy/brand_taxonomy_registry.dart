@@ -13,11 +13,7 @@ abstract final class BrandTaxonomyRegistry {
       displayName: 'Dreams Inc.',
       aliases: ['DREAMS INC', 'DREAMS'],
     ),
-    BrandTaxonomy(
-      id: 'rolife',
-      displayName: 'Rolife',
-      aliases: ['ROLIFE'],
-    ),
+    BrandTaxonomy(id: 'rolife', displayName: 'Rolife', aliases: ['ROLIFE']),
     BrandTaxonomy(
       id: 'finding_unicorn',
       displayName: 'Finding Unicorn',

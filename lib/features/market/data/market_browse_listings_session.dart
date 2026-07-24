@@ -4,7 +4,8 @@ import 'package:blindbox_app/models/market_listing.dart';
 final class MarketBrowseListingsSession {
   MarketBrowseListingsSession._();
 
-  static final MarketBrowseListingsSession instance = MarketBrowseListingsSession._();
+  static final MarketBrowseListingsSession instance =
+      MarketBrowseListingsSession._();
 
   List<MarketListing>? _list;
 

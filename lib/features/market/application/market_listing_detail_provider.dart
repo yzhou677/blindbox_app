@@ -13,38 +13,39 @@ final marketGatewayClientProvider = Provider<MarketGatewayClient>((ref) {
 });
 
 /// Lazy gateway item detail for a browse row (live eBay only).
-final marketListingDetailProvider =
-    FutureProvider.autoDispose.family<MarketListingDetail?, String>(
-  (ref, listingId) async {
-    if (!MarketGatewayConfig.isActive) return null;
+final marketListingDetailProvider = FutureProvider.autoDispose
+    .family<MarketListingDetail?, String>((ref, listingId) async {
+      if (!MarketGatewayConfig.isActive) return null;
 
-    final listing = findMarketListingById(ref, listingId);
-    if (listing == null) return null;
-    if (listing.providerId != MarketProviderId.ebay.wireName) return null;
+      final listing = findMarketListingById(ref, listingId);
+      if (listing == null) return null;
+      if (listing.providerId != MarketProviderId.ebay.wireName) return null;
 
-    final nativeId = listing.providerListingId?.trim();
-    if (nativeId == null || nativeId.isEmpty) return null;
+      final nativeId = listing.providerListingId?.trim();
+      if (nativeId == null || nativeId.isEmpty) return null;
 
-    final baseUrl = MarketGatewayConfig.gatewayUri;
-    if (baseUrl == null) return null;
+      final baseUrl = MarketGatewayConfig.gatewayUri;
+      if (baseUrl == null) return null;
 
-    final client = ref.watch(marketGatewayClientProvider);
-    final wire = await client.fetchItemDetail(
-      baseUrl: baseUrl,
-      itemId: ebayBrowseItemId(nativeId),
-    );
-    return wire == null ? null : _mapDetail(wire, listing);
-  },
-);
+      final client = ref.watch(marketGatewayClientProvider);
+      final wire = await client.fetchItemDetail(
+        baseUrl: baseUrl,
+        itemId: ebayBrowseItemId(nativeId),
+      );
+      return wire == null ? null : _mapDetail(wire, listing);
+    });
 
-MarketListingDetail _mapDetail(GatewayItemDetailDto wire, MarketListing listing) {
+MarketListingDetail _mapDetail(
+  GatewayItemDetailDto wire,
+  MarketListing listing,
+) {
   final feedback = wire.sellerFeedbackPercentage?.trim();
   final username = wire.sellerUsername?.trim();
   final sellerLine = username == null || username.isEmpty
       ? null
       : feedback == null || feedback.isEmpty
-          ? username
-          : '$username · $feedback% positive';
+      ? username
+      : '$username · $feedback% positive';
 
   final image = wire.imageUrl.trim().isNotEmpty
       ? upgradeEbayImageUrl(wire.imageUrl.trim(), size: EbayImageSize.detail)

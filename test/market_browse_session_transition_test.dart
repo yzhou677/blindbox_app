@@ -9,9 +9,7 @@ void main() {
     const uiDefault = MarketBrowseQuery();
 
     test('is false when UI and live query signatures match and idle', () {
-      const live = MarketLiveBrowseState(
-        query: MarketBrowseQuery(),
-      );
+      const live = MarketLiveBrowseState(query: MarketBrowseQuery());
       expect(
         marketBrowseSessionTransitionActive(
           uiDefault,
@@ -42,33 +40,21 @@ void main() {
         brandId: 'pop_mart',
         ipId: MarketTaxonomyIds.anyIp,
       );
-      const live = MarketLiveBrowseState(
-        query: MarketBrowseQuery(),
-      );
+      const live = MarketLiveBrowseState(query: MarketBrowseQuery());
       expect(
-        marketBrowseSessionTransitionActive(
-          uiQuery,
-          live,
-          gatewayActive: true,
-        ),
+        marketBrowseSessionTransitionActive(uiQuery, live, gatewayActive: true),
         isTrue,
       );
     });
 
     test('is false during loadMore only', () {
-      const uiQuery = MarketBrowseQuery(
-        brandId: 'pop_mart',
-      );
+      const uiQuery = MarketBrowseQuery(brandId: 'pop_mart');
       const live = MarketLiveBrowseState(
         query: MarketBrowseQuery(brandId: 'pop_mart'),
         isLoadingMore: true,
       );
       expect(
-        marketBrowseSessionTransitionActive(
-          uiQuery,
-          live,
-          gatewayActive: true,
-        ),
+        marketBrowseSessionTransitionActive(uiQuery, live, gatewayActive: true),
         isFalse,
       );
     });

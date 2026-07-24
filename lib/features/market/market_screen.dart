@@ -1,6 +1,9 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
 import 'package:blindbox_app/core/search/search_placeholders.dart';
+import 'package:blindbox_app/core/theme/app_typography.dart';
+import 'package:blindbox_app/core/theme/collectible_motion.dart';
+import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
 import 'package:blindbox_app/features/market/application/collectible_market_providers.dart';
 import 'package:blindbox_app/features/market/debug/market_search_trace.dart';
 import 'package:blindbox_app/features/market/application/active_market_browse_query.dart';
@@ -29,6 +32,7 @@ import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 class MarketScreen extends ConsumerStatefulWidget {
   const MarketScreen({super.key});
@@ -54,7 +58,9 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
 
   @override
   void dispose() {
-    ShellTabReselectBus.instance.reselectedBranch.removeListener(_onTabReselected);
+    ShellTabReselectBus.instance.reselectedBranch.removeListener(
+      _onTabReselected,
+    );
     _scrollController.dispose();
     super.dispose();
   }
@@ -101,8 +107,8 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
       if (!_scrollController.hasClients) return;
       _scrollController.animateTo(
         0,
-        duration: const Duration(milliseconds: 320),
-        curve: Curves.easeOutCubic,
+        duration: CollectibleMotion.sectionReveal,
+        curve: CollectibleMotion.easeOut,
       );
     });
   }
@@ -121,7 +127,9 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
     );
     final feedNotifier = ref.read(marketFeedBrowseNotifierProvider.notifier);
     final snapshots = ref.watch(visibleCollectibleMarketSnapshotsProvider);
-    final browseSignature = collectibleMarketBrowseSignatureFromQuery(activeQuery);
+    final browseSignature = collectibleMarketBrowseSignatureFromQuery(
+      activeQuery,
+    );
     final display = resolveCollectibleMarketDisplaySnapshots(
       snapshots: snapshots,
       browseSignature: browseSignature,
@@ -153,7 +161,9 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
     }
     final immersive = overlayOpen && search.isCommitted;
     final loadingMore = ref.watch(marketBrowseLoadMoreProvider);
-    final sessionTransitioning = ref.watch(marketBrowseSessionTransitionProvider);
+    final sessionTransitioning = ref.watch(
+      marketBrowseSessionTransitionProvider,
+    );
     final chasersState = ref.watch(marketChasersControllerProvider);
     final showLiveChasersSlot = MarketChasersConfig.showLiveChasersSlot(
       isLoading: chasersState.isLoading,
@@ -172,161 +182,184 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
             parent: BouncingScrollPhysics(),
           ),
           slivers: [
-          SliverAppBar(
-            pinned: false,
-            floating: false,
-            elevation: 0,
-            scrolledUnderElevation: 0,
-            toolbarHeight: FeedRhythm.mainTabAppBarToolbarHeight,
-            backgroundColor: scheme.surface,
-            centerTitle: false,
-            titleSpacing: 20,
-            title: Text('Market', style: textTheme.titleLarge),
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.only(top: FeedRhythm.headerToSearchField),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  AppSearchField(
-                    readOnly: true,
-                    onTap: () => context.push('/market/search'),
-                    hintText: SearchPlaceholders.market,
-                  ),
-                  if (!immersive) ...[
-                    const SizedBox(height: FeedRhythm.blockGapMedium),
-                    const MarketDataSourceNotice(),
-                  ],
-                  if (!immersive && showLiveChasersSlot) ...[
-                    const SizedBox(height: FeedRhythm.blockGapMedium),
-                    ChasersMarketSection(
-                      entries: chasersState.entries,
-                      isLoading: chasersState.isLoading,
-                    ),
-                    const SizedBox(height: FeedRhythm.marketChasersToBrowseHeaderGap),
-                  ],
-                  if (!immersive && showFixtureChasers) ...[
-                    const SizedBox(height: FeedRhythm.blockGapMedium),
-                    ChasersMarketSection(
-                      entries: chasersHeatFromFixtureListings(mockChasersMarketListings()),
-                    ),
-                    const SizedBox(height: FeedRhythm.marketChasersToBrowseHeaderGap),
-                  ],
-                  if (!immersive) ...[
-                    const SizedBox(height: FeedRhythm.blockGapMedium),
-                    MarketDiscoveryChips(
-                      brandOptions: MarketTaxonomy.brandChipOptions(),
-                      ipOptions: MarketTaxonomy.ipChipOptionsForBrand(feed.brandId),
-                      brandId: feed.brandId,
-                      ipId: feed.ipId,
-                      showIpRail: feed.brandId != MarketTaxonomyIds.anyBrand,
-                      onBrandSelected: feedNotifier.setBrand,
-                      onIpSelected: feedNotifier.setIp,
-                    ),
-                  ],
-                ],
+            SliverAppBar(
+              pinned: false,
+              floating: false,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              toolbarHeight: FeedRhythm.mainTabAppBarToolbarHeight,
+              backgroundColor: scheme.surface,
+              centerTitle: false,
+              titleSpacing: 20,
+              title: Text(
+                'Market',
+                style: AppTypography.tabTitle(textTheme, scheme),
               ),
             ),
-          ),
-          if (!immersive &&
-              !MarketGatewayConfig.isActive &&
-              !showFixtureChasers &&
-              !showLiveChasersSlot)
-            const SliverToBoxAdapter(child: SizedBox(height: FeedRhythm.blockGapMedium)),
-          if (!immersive) ...[
-            if (MarketGatewayConfig.isActive)
-              const SliverToBoxAdapter(child: SizedBox(height: FeedRhythm.blockGapMedium)),
             SliverToBoxAdapter(
-              child: CollectibleSectionHeader(
-                title: 'Collectibles',
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
-                trailing: TextButton(
-                  key: const Key('market_browse_price_sort'),
-                  onPressed: feedNotifier.togglePriceSort,
-                  style: TextButton.styleFrom(
-                    backgroundColor: Color.lerp(
-                      scheme.surface,
-                      scheme.primaryContainer,
-                      0.32,
-                    )!.withValues(alpha: 0.92),
-                    foregroundColor: scheme.primary.withValues(alpha: 0.78),
-                    shadowColor: Colors.transparent,
-                    surfaceTintColor: Colors.transparent,
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    minimumSize: const Size(48, 40),
-                    tapTargetSize: MaterialTapTargetSize.padded,
-                    visualDensity: VisualDensity.compact,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.only(
+                  top: FeedRhythm.compactHeaderToSearchField,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    AppSearchField(
+                      compact: true,
+                      readOnly: true,
+                      onTap: () => context.push('/market/search'),
+                      hintText: SearchPlaceholders.market,
                     ),
-                  ),
-                  child: Text(
-                    feed.priceSort.browseHeaderLabel,
-                    style: textTheme.labelMedium?.copyWith(
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 0.02,
-                      height: 1.1,
-                      color: scheme.primary.withValues(alpha: 0.78),
-                    ),
-                  ),
+                    if (!immersive) ...[
+                      const SizedBox(height: FeedRhythm.compactBlockGap),
+                      const MarketDataSourceNotice(),
+                    ],
+                    if (!immersive && showLiveChasersSlot) ...[
+                      const SizedBox(height: FeedRhythm.compactBlockGap),
+                      ChasersMarketSection(
+                        entries: chasersState.entries,
+                        isLoading: chasersState.isLoading,
+                      ),
+                      const SizedBox(
+                        height: FeedRhythm.marketChasersToBrowseHeaderGap,
+                      ),
+                    ],
+                    if (!immersive && showFixtureChasers) ...[
+                      const SizedBox(height: FeedRhythm.compactBlockGap),
+                      ChasersMarketSection(
+                        entries: chasersHeatFromFixtureListings(
+                          mockChasersMarketListings(),
+                        ),
+                      ),
+                      const SizedBox(
+                        height: FeedRhythm.marketChasersToBrowseHeaderGap,
+                      ),
+                    ],
+                    if (!immersive) ...[
+                      const SizedBox(height: FeedRhythm.compactBlockGap),
+                      MarketDiscoveryChips(
+                        brandOptions: MarketTaxonomy.brandChipOptions(),
+                        ipOptions: MarketTaxonomy.ipChipOptionsForBrand(
+                          feed.brandId,
+                        ),
+                        brandId: feed.brandId,
+                        ipId: feed.ipId,
+                        showIpRail: feed.brandId != MarketTaxonomyIds.anyBrand,
+                        onBrandSelected: feedNotifier.setBrand,
+                        onIpSelected: feedNotifier.setIp,
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ),
-          ],
-          if (sorted.isEmpty)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: sessionTransitioning && MarketGatewayConfig.isActive
-                  ? const MarketBrowseSliverResultsSkeleton()
-                  : _MarketEmptySearch(
-                      query: activeQuery.searchText.trim(),
-                      filterActive: feed.filtersActive,
-                    ),
-            )
-          else ...[
-            // Session-transition loading indicator floats above the list as a
-            // separate sliver so the card list below can remain lazy.
-            if (sessionTransitioning)
+            if (!immersive &&
+                !MarketGatewayConfig.isActive &&
+                !showFixtureChasers &&
+                !showLiveChasersSlot)
               const SliverToBoxAdapter(
-                child: _MarketSessionTransitionIndicator(),
+                child: SizedBox(height: FeedRhythm.compactBlockGap),
               ),
-            // Lazy card list: only visible cards are built and laid out.
-            // SliverOpacity dims stale results while a new session loads,
-            // matching the previous MarketBrowseSessionTransition behaviour.
-            SliverOpacity(
-              opacity: sessionTransitioning ? 0.34 : 1.0,
-              sliver: SliverIgnorePointer(
-                ignoring: sessionTransitioning,
-                sliver: SliverPadding(
-                  padding: EdgeInsets.fromLTRB(
-                    20,
-                    immersive
-                        ? FeedRhythm.blockGapMedium
-                        : FeedRhythm.marketBrowseHeaderToFeedGap,
-                    20,
-                    FeedRhythm.tabScrollTailPadding,
-                  ),
-                  sliver: SliverList.builder(
-                    itemCount: sorted.length,
-                    itemBuilder: (context, i) =>
-                        CollectibleMarketCard(snapshot: sorted[i]),
+            if (!immersive) ...[
+              if (MarketGatewayConfig.isActive)
+                const SliverToBoxAdapter(
+                  child: SizedBox(height: FeedRhythm.compactBlockGap),
+                ),
+              SliverToBoxAdapter(
+                child: CollectibleSectionHeader(
+                  title: 'Collectibles',
+                  dense: true,
+                  padding: const EdgeInsets.fromLTRB(20, 2, 20, 0),
+                  trailing: TextButton(
+                    key: const Key('market_browse_price_sort'),
+                    onPressed: feedNotifier.togglePriceSort,
+                    style: TextButton.styleFrom(
+                      backgroundColor: Color.lerp(
+                        scheme.surface,
+                        scheme.primaryContainer,
+                        0.32,
+                      )!.withValues(alpha: 0.92),
+                      foregroundColor: scheme.primary.withValues(alpha: 0.78),
+                      shadowColor: Colors.transparent,
+                      surfaceTintColor: Colors.transparent,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
+                      minimumSize: const Size(48, 40),
+                      tapTargetSize: MaterialTapTargetSize.padded,
+                      visualDensity: VisualDensity.compact,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      feed.priceSort.browseHeaderLabel,
+                      style: textTheme.labelMedium?.copyWith(
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 0.02,
+                        height: 1.1,
+                        color: scheme.primary.withValues(alpha: 0.78),
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
-          if ((MarketGatewayConfig.isActive || MarketSandboxConfig.isActive) &&
-              liveHasMore &&
-              !immersive)
-            SliverToBoxAdapter(
-              child: MarketLoadMoreFooter(
-                loading: loadingMore,
-                onLoadMore: () => ref
-                    .read(marketBrowseLoadMoreProvider.notifier)
-                    .loadMore(),
+            ],
+            if (sorted.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: sessionTransitioning && MarketGatewayConfig.isActive
+                    ? const MarketBrowseSliverResultsSkeleton()
+                    : _MarketEmptySearch(
+                        query: activeQuery.searchText.trim(),
+                        filterActive: feed.filtersActive,
+                      ),
+              )
+            else ...[
+              // Session-transition loading indicator floats above the list as a
+              // separate sliver so the card list below can remain lazy.
+              if (sessionTransitioning)
+                const SliverToBoxAdapter(
+                  child: _MarketSessionTransitionIndicator(),
+                ),
+              // Lazy card list: only visible cards are built and laid out.
+              // SliverOpacity dims stale results while a new session loads,
+              // matching the previous MarketBrowseSessionTransition behaviour.
+              SliverOpacity(
+                opacity: sessionTransitioning ? 0.34 : 1.0,
+                sliver: SliverIgnorePointer(
+                  ignoring: sessionTransitioning,
+                  sliver: SliverPadding(
+                    padding: EdgeInsets.fromLTRB(
+                      20,
+                      immersive
+                          ? FeedRhythm.blockGapMedium
+                          : FeedRhythm.marketBrowseHeaderToFeedGap,
+                      20,
+                      FeedRhythm.tabScrollTailPadding,
+                    ),
+                    sliver: SliverList.builder(
+                      itemCount: sorted.length,
+                      itemBuilder: (context, i) =>
+                          CollectibleMarketCard(snapshot: sorted[i]),
+                    ),
+                  ),
+                ),
               ),
-            ),
+            ],
+            if ((MarketGatewayConfig.isActive ||
+                    MarketSandboxConfig.isActive) &&
+                liveHasMore &&
+                !immersive)
+              SliverToBoxAdapter(
+                child: MarketLoadMoreFooter(
+                  loading: loadingMore,
+                  onLoadMore: () => ref
+                      .read(marketBrowseLoadMoreProvider.notifier)
+                      .loadMore(),
+                ),
+              ),
           ],
         ),
       ),
@@ -394,10 +427,7 @@ class _MarketSessionTransitionIndicator extends StatelessWidget {
 }
 
 class _MarketEmptySearch extends StatelessWidget {
-  const _MarketEmptySearch({
-    required this.query,
-    this.filterActive = false,
-  });
+  const _MarketEmptySearch({required this.query, this.filterActive = false});
 
   final String query;
   final bool filterActive;
@@ -410,27 +440,33 @@ class _MarketEmptySearch extends StatelessWidget {
     final title = hasQuery
         ? 'No matches'
         : filterActive
-            ? 'Nothing here'
-            : 'No matches';
+        ? 'Nothing here'
+        : 'No matches';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.search_off_rounded,
-            size: 48,
-            color: scheme.onSurfaceVariant.withValues(alpha: 0.4),
+          ExcludeSemantics(
+            child: Icon(
+              Symbols.search_off_rounded,
+              size: AppIconSizes.emptyHero,
+              fill: ShelfySymbols.fillOutline,
+              weight: ShelfySymbols.emptyStateWeight,
+              grade: ShelfySymbols.grade,
+              opticalSize: ShelfySymbols.emptyStateOpticalSize,
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.4),
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           Text(
             title,
             textAlign: TextAlign.center,
-            style: textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
-            ),
+            style: AppTypography.emptyStateTitle(
+              textTheme,
+              scheme,
+            ).copyWith(color: scheme.onSurfaceVariant.withValues(alpha: 0.78)),
           ),
         ],
       ),

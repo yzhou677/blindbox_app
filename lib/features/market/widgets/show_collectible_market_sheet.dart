@@ -37,7 +37,9 @@ Future<void> showCollectibleMarketSheet({
             ),
           );
           final c = rep?.collectible;
-          final trailingMeta = CollectibleMarketMoodCopy.snapshotPriceLabel(snapshot);
+          final trailingMeta = CollectibleMarketMoodCopy.snapshotPriceLabel(
+            snapshot,
+          );
 
           return CollectibleSheetInsets(
             child: CollectibleSheetScrollView(
@@ -57,7 +59,9 @@ Future<void> showCollectibleMarketSheet({
                       Text(
                         CollectibleMarketMoodCopy.subtitle(snapshot),
                         style: textTheme.bodyMedium?.copyWith(
-                          color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
+                          color: scheme.onSurfaceVariant.withValues(
+                            alpha: 0.82,
+                          ),
                           height: 1.35,
                         ),
                       ),
@@ -82,13 +86,10 @@ Future<void> showCollectibleMarketSheet({
                   ),
                 ),
                 SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final listing = listings[index];
-                      return MarketListingCard(listing: listing);
-                    },
-                    childCount: listings.length,
-                  ),
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final listing = listings[index];
+                    return MarketListingCard(listing: listing);
+                  }, childCount: listings.length),
                 ),
               ],
             ),

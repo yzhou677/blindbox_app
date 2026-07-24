@@ -60,8 +60,8 @@ class GatewayItemDetailDto {
       availabilityStatus: (json['availabilityStatus'] as String?)?.trim(),
       shortDescription: (json['shortDescription'] as String?)?.trim(),
       sellerUsername: (seller?['username'] as String?)?.trim(),
-      sellerFeedbackPercentage:
-          (seller?['feedbackPercentage'] as String?)?.trim(),
+      sellerFeedbackPercentage: (seller?['feedbackPercentage'] as String?)
+          ?.trim(),
       shippingSummary: (shipping?['summary'] as String?)?.trim(),
     );
   }

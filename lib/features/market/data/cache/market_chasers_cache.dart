@@ -7,10 +7,7 @@ import 'package:blindbox_app/models/market_listing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final class CachedChasersBatch {
-  const CachedChasersBatch({
-    required this.fetchedAt,
-    required this.entries,
-  });
+  const CachedChasersBatch({required this.fetchedAt, required this.entries});
 
   final DateTime fetchedAt;
   final List<ChasersHeatEntry> entries;

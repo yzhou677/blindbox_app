@@ -5,18 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// Search Market overlay session — taxonomy-free; query only.
 @immutable
 class MarketSearchBrowseState {
-  const MarketSearchBrowseState({
-    this.query = '',
-    this.isCommitted = false,
-  });
+  const MarketSearchBrowseState({this.query = '', this.isCommitted = false});
 
   final String query;
   final bool isCommitted;
 
-  MarketSearchBrowseState copyWith({
-    String? query,
-    bool? isCommitted,
-  }) {
+  MarketSearchBrowseState copyWith({String? query, bool? isCommitted}) {
     return MarketSearchBrowseState(
       query: query ?? this.query,
       isCommitted: isCommitted ?? this.isCommitted,
@@ -26,14 +20,14 @@ class MarketSearchBrowseState {
 
 final marketSearchBrowseNotifierProvider =
     NotifierProvider<MarketSearchBrowseNotifier, MarketSearchBrowseState>(
-  MarketSearchBrowseNotifier.new,
-);
+      MarketSearchBrowseNotifier.new,
+    );
 
 /// True while `/market/search` route is on screen.
 final marketSearchOverlayOpenProvider =
     NotifierProvider<MarketSearchOverlayOpenNotifier, bool>(
-  MarketSearchOverlayOpenNotifier.new,
-);
+      MarketSearchOverlayOpenNotifier.new,
+    );
 
 class MarketSearchOverlayOpenNotifier extends Notifier<bool> {
   @override
@@ -58,10 +52,7 @@ class MarketSearchBrowseNotifier extends Notifier<MarketSearchBrowseState> {
       'marketSearchBrowse.commitQuery committed=${!empty}',
       signature: value.trim().toLowerCase(),
     );
-    state = state.copyWith(
-      query: value,
-      isCommitted: !empty,
-    );
+    state = state.copyWith(query: value, isCommitted: !empty);
   }
 
   void clearSession() {

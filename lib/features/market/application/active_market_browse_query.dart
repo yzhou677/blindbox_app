@@ -44,7 +44,7 @@ final activeMarketBrowseQueryProvider = Provider<MarketBrowseQuery>((ref) {
 
 /// Offline snapshot filter facets — mirrors [activeMarketBrowseQueryProvider].
 ({String brandId, String ipId, String searchText})
-    activeMarketBrowseVisibleFilterFacets(MarketBrowseQuery query) {
+activeMarketBrowseVisibleFilterFacets(MarketBrowseQuery query) {
   return (
     brandId: query.brandId,
     ipId: query.ipId,

@@ -5,10 +5,7 @@ import 'package:http/http.dart' as http;
 ///
 /// eBay OAuth and Browse run in `functions/` only. Do not call api.ebay.com from Flutter.
 class EbayHttpBrowseDataSource {
-  EbayHttpBrowseDataSource({
-    required this.client,
-    this.browseUri,
-  });
+  EbayHttpBrowseDataSource({required this.client, this.browseUri});
 
   final http.Client client;
   final Uri? browseUri;
