@@ -85,25 +85,33 @@ class _BlingHeartGlowPainter extends CustomPainter {
   }
 }
 
-/// Six four-point stars + two quiet dots — curated, balanced, intentionally faint.
+/// Asymmetric upper accents only — incidental, not a ring or badge.
 class _BlingHeartSparklePainter extends CustomPainter {
   _BlingHeartSparklePainter({required this.color});
 
   final Color color;
 
-  /// Positions are fractions of the sparkle canvas (heart + bleed).
+  /// Fractions of the sparkle canvas (heart + bleed). Lower half stays nearly empty.
+  /// Aimed composition (not a horizontal crown above the heart):
+  /// ```
+  ///       ✦
+  ///    ❤️      ✧
+  ///        ·
+  /// ```
   static const List<_SparkleSpec> _stars = [
-    _SparkleSpec(dx: 0.18, dy: 0.20, size: 5.5, opacity: 0.34, rotation: 0.12),
-    _SparkleSpec(dx: 0.82, dy: 0.18, size: 4.2, opacity: 0.28, rotation: -0.2),
-    _SparkleSpec(dx: 0.90, dy: 0.48, size: 6.5, opacity: 0.30, rotation: 0.08),
-    _SparkleSpec(dx: 0.78, dy: 0.78, size: 4.0, opacity: 0.24, rotation: 0.35),
-    _SparkleSpec(dx: 0.14, dy: 0.58, size: 5.0, opacity: 0.32, rotation: -0.15),
-    _SparkleSpec(dx: 0.28, dy: 0.86, size: 4.6, opacity: 0.26, rotation: 0.22),
+    // Medium — upper-right of the heart, lifted so it sits beside (not over) the crown.
+    _SparkleSpec(dx: 0.82, dy: 0.18, size: 5.2, opacity: 0.22, rotation: 0.10),
+    // Small — farther upper-left (~3dp out), slightly lower so it doesn't row with the right.
+    _SparkleSpec(dx: 0.15, dy: 0.31, size: 3.4, opacity: 0.17, rotation: -0.18),
+    // Tiny — solitary whisper above; quieter so it doesn't compete with the heart.
+    _SparkleSpec(dx: 0.54, dy: 0.09, size: 2.6, opacity: 0.09, rotation: 0.28),
   ];
 
   static const List<_DotSpec> _dots = [
-    _DotSpec(dx: 0.62, dy: 0.12, radius: 1.6, opacity: 0.36),
-    _DotSpec(dx: 0.10, dy: 0.38, radius: 1.25, opacity: 0.30),
+    // Farther out, mid-right — quiet secondary accent.
+    _DotSpec(dx: 0.93, dy: 0.40, radius: 1.05, opacity: 0.14),
+    // Solitary lower whisper (does not complete a circle).
+    _DotSpec(dx: 0.22, dy: 0.78, radius: 0.85, opacity: 0.10),
   ];
 
   @override
