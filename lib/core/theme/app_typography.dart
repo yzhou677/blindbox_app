@@ -35,13 +35,13 @@ abstract final class AppTypography {
   static TextStyle sectionTitle(TextTheme t, ColorScheme s) =>
       CollectibleTypography.shelfSeriesTitle(t, s);
 
-  /// Small label above chip rails and taxonomy blocks (market, search).
+  /// Small label above chip rails and taxonomy blocks (market, search, wishlist).
   /// labelSmall w600 with tight letter spacing.
   static TextStyle sectionLabel(TextTheme t, ColorScheme s) =>
       t.labelSmall!.copyWith(
         fontWeight: FontWeight.w600,
         letterSpacing: 0.35,
-        color: s.onSurfaceVariant,
+        color: s.onSurfaceVariant.withValues(alpha: 0.72),
       );
 
   // ── Card / row level ─────────────────────────────────────────────────────
@@ -68,15 +68,50 @@ abstract final class AppTypography {
   static TextStyle supportive(TextTheme t, ColorScheme s) =>
       CollectibleTypography.figureMeta(t, s);
 
+  // ── Empty states ─────────────────────────────────────────────────────────
+
+  /// Centered empty-state title (Wishlist, Market, Collection).
+  static TextStyle emptyStateTitle(TextTheme t, ColorScheme s) =>
+      t.titleSmall!.copyWith(
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.15,
+        height: 1.25,
+        color: s.onSurface,
+      );
+
+  /// Centered empty-state body under [emptyStateTitle].
+  static TextStyle emptyStateBody(TextTheme t, ColorScheme s) => t.bodySmall!
+      .copyWith(height: 1.4, color: s.onSurfaceVariant.withValues(alpha: 0.78));
+
   // ── Insights-specific ────────────────────────────────────────────────────
+
+  /// Revealed Collector Type display name on the hero card.
+  static TextStyle insightsHeroName(TextTheme t, ColorScheme s) =>
+      CollectibleTypography.seriesHeroTitle(t, s).copyWith(
+        fontSize: 28,
+        letterSpacing: -0.5,
+        height: 1.12,
+        fontWeight: FontWeight.w700,
+        color: s.onSurface.withValues(alpha: 0.96),
+      );
+
+  /// “Because …” line under the Collector Type name.
+  static TextStyle insightsBecause(TextTheme t, ColorScheme s) =>
+      t.bodyMedium!.copyWith(
+        color: s.onSurface.withValues(alpha: 0.70),
+        height: 1.38,
+        fontWeight: FontWeight.w500,
+      );
 
   /// Large totals / counts on the Collection Insights screen.
   /// titleLarge w700 with tighter tracking for numerals.
   static TextStyle insightsTotals(TextTheme t, ColorScheme s) =>
       t.titleLarge!.copyWith(
+        fontSize: 24,
         fontWeight: FontWeight.w700,
-        letterSpacing: -0.4,
-        color: s.onSurface,
+        letterSpacing: -0.45,
+        height: 1.02,
+        color: s.onSurface.withValues(alpha: 0.94),
       );
 
   /// Archetype flavor / deck copy on the Collector Type result card.
@@ -92,8 +127,10 @@ abstract final class AppTypography {
   /// labelSmall w600 with light letter spacing — quieter than [sectionTitle].
   static TextStyle insightsCaption(TextTheme t, ColorScheme s) =>
       t.labelSmall!.copyWith(
-        fontWeight: FontWeight.w600,
-        letterSpacing: 0.5,
-        color: s.onSurfaceVariant.withValues(alpha: 0.65),
+        fontWeight: FontWeight.w500,
+        fontSize: 11,
+        letterSpacing: 0.12,
+        height: 1.2,
+        color: s.onSurfaceVariant.withValues(alpha: 0.56),
       );
 }

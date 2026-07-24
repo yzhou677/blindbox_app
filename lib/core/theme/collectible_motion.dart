@@ -6,7 +6,17 @@ abstract final class CollectibleMotion {
 
   // —— Durations ——
 
+  /// Everyday UI micro-interactions (chips, chevrons, light expands).
+  static const Duration fast = Duration(milliseconds: 200);
+
+  /// Standard cross-surface transitions (segment thumbs, soft fades).
+  static const Duration medium = Duration(milliseconds: 280);
+
+  /// Modal sheet presentation open.
   static const Duration sheet = Duration(milliseconds: 360);
+
+  /// Prefer these three for new everyday UI. Specialized durations below stay
+  /// named — do not invent raw `Duration(milliseconds: …)` for chips/sheets.
   static const Duration sheetDismiss = Duration(milliseconds: 280);
   static const Duration galleryOpen = Duration(milliseconds: 340);
   static const Duration galleryClose = Duration(milliseconds: 280);
@@ -25,14 +35,18 @@ abstract final class CollectibleMotion {
   /// Display-only Finding checklist pacing (~6s staged presentation).
   /// Not tied to backend stages — final Matching step holds until the request
   /// resolves.
-  static const Duration recognitionFindingShapeComplete =
-      Duration(milliseconds: 900);
-  static const Duration recognitionFindingColorsComplete =
-      Duration(milliseconds: 1900);
-  static const Duration recognitionFindingAccessoriesComplete =
-      Duration(milliseconds: 3100);
-  static const Duration recognitionFindingFacialComplete =
-      Duration(milliseconds: 4400);
+  static const Duration recognitionFindingShapeComplete = Duration(
+    milliseconds: 900,
+  );
+  static const Duration recognitionFindingColorsComplete = Duration(
+    milliseconds: 1900,
+  );
+  static const Duration recognitionFindingAccessoriesComplete = Duration(
+    milliseconds: 3100,
+  );
+  static const Duration recognitionFindingFacialComplete = Duration(
+    milliseconds: 4400,
+  );
 
   /// Absolute times (from checklist start) when active index advances to the
   /// next step: Colors, Accessories, Facial details, then Matching.
@@ -44,24 +58,28 @@ abstract final class CollectibleMotion {
   ];
 
   /// After no-match, keep the finished checklist fully visible before softening.
-  static const Duration recognitionFindingNoMatchSettle =
-      Duration(milliseconds: 500);
+  static const Duration recognitionFindingNoMatchSettle = Duration(
+    milliseconds: 500,
+  );
 
   /// Soft background emphasis for the settled no-match checklist.
   static const double recognitionFindingNoMatchChecklistOpacity = 0.62;
 
   /// Active → settled Matching indicator crossfade (✓ or ⊖).
-  static const Duration recognitionFindingStatusCrossfade =
-      Duration(milliseconds: 200);
+  static const Duration recognitionFindingStatusCrossfade = Duration(
+    milliseconds: 200,
+  );
 
   /// Brief Matching ✓ hold after a successful resolve before candidate cards.
   /// Kept longer than [recognitionFindingStatusCrossfade] so ✓ is visible.
-  static const Duration recognitionFindingMatchedSettle =
-      Duration(milliseconds: 320);
+  static const Duration recognitionFindingMatchedSettle = Duration(
+    milliseconds: 320,
+  );
 
   /// Unified expand/collapse for Collection insights dashboard (morph + size).
-  static const Duration insightsDashboardTransition =
-      Duration(milliseconds: 240);
+  static const Duration insightsDashboardTransition = Duration(
+    milliseconds: 240,
+  );
 
   // —— Curves (calm, tactile — no bounce gimmicks) ——
 
@@ -80,23 +98,29 @@ abstract final class CollectibleMotion {
   static const double shelfCompleteScaleHump = 0.004;
 
   /// Global Master Complete achievement overlay (~0.95s, root navigator).
-  static const Duration masterCompleteAchievementOverlay =
-      Duration(milliseconds: 950);
+  static const Duration masterCompleteAchievementOverlay = Duration(
+    milliseconds: 950,
+  );
 
   /// First-time Collector Type reveal ceremony.
   /// blur → hero → ~750ms pause → Continue → dwell for reaction.
-  static const Duration collectorTypeRevealCeremonyFirst =
-      Duration(milliseconds: 4200);
+  static const Duration collectorTypeRevealCeremonyFirst = Duration(
+    milliseconds: 4200,
+  );
 
   /// Subsequent Collector Type change ceremony (same rhythm, tighter).
-  static const Duration collectorTypeRevealCeremonyChange =
-      Duration(milliseconds: 3200);
+  static const Duration collectorTypeRevealCeremonyChange = Duration(
+    milliseconds: 3200,
+  );
 
   /// Soft settle for ceremonial mascot entrance (subtle spring, no bounce).
   static const Curve collectorTypeRevealSpring = Cubic(0.22, 1.0, 0.36, 1.0);
 
   /// Builds a curved animation for route / sheet transitions.
-  static Animation<double> curved(Animation<double> parent, {bool reverse = false}) {
+  static Animation<double> curved(
+    Animation<double> parent, {
+    bool reverse = false,
+  }) {
     return CurvedAnimation(
       parent: parent,
       curve: reverse ? easeIn : easeOut,

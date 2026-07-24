@@ -2,6 +2,13 @@ import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('everyday motion aliases stay stable', () {
+    expect(CollectibleMotion.fast, const Duration(milliseconds: 200));
+    expect(CollectibleMotion.medium, const Duration(milliseconds: 280));
+    expect(CollectibleMotion.sheet, const Duration(milliseconds: 360));
+    expect(CollectibleMotion.sectionReveal, const Duration(milliseconds: 320));
+  });
+
   test('gallery motion stays subtle', () {
     expect(CollectibleMotion.galleryEnterScale, greaterThan(0.98));
     expect(CollectibleMotion.galleryEnterScale, lessThan(1));
@@ -16,22 +23,13 @@ void main() {
   test('finding checklist pacing is calm and ordered', () {
     final advances = CollectibleMotion.recognitionFindingChecklistAdvanceAt;
     expect(advances, hasLength(4));
-    expect(
-      advances[0],
-      CollectibleMotion.recognitionFindingShapeComplete,
-    );
-    expect(
-      advances[1],
-      CollectibleMotion.recognitionFindingColorsComplete,
-    );
+    expect(advances[0], CollectibleMotion.recognitionFindingShapeComplete);
+    expect(advances[1], CollectibleMotion.recognitionFindingColorsComplete);
     expect(
       advances[2],
       CollectibleMotion.recognitionFindingAccessoriesComplete,
     );
-    expect(
-      advances[3],
-      CollectibleMotion.recognitionFindingFacialComplete,
-    );
+    expect(advances[3], CollectibleMotion.recognitionFindingFacialComplete);
     expect(advances[0].inMilliseconds, 900);
     expect(advances[3].inMilliseconds, 4400);
     for (var i = 1; i < advances.length; i++) {

@@ -23,6 +23,10 @@ void main() {
       'cardMeta': AppTypography.cardMeta,
       'deckText': AppTypography.deckText,
       'supportive': AppTypography.supportive,
+      'emptyStateTitle': AppTypography.emptyStateTitle,
+      'emptyStateBody': AppTypography.emptyStateBody,
+      'insightsHeroName': AppTypography.insightsHeroName,
+      'insightsBecause': AppTypography.insightsBecause,
       'insightsTotals': AppTypography.insightsTotals,
       'insightsFlavor': AppTypography.insightsFlavor,
       'insightsCaption': AppTypography.insightsCaption,
@@ -69,32 +73,53 @@ void main() {
   });
 
   group('AppTypography — style delegates match CollectibleTypography', () {
-    test('sectionTitle matches CollectibleTypography.shelfSeriesTitle weight', () {
-      _withTheme((t, s) {
-        final appStyle = AppTypography.sectionTitle(t, s);
-        final ctStyle = CollectibleTypography.shelfSeriesTitle(t, s);
-        expect(appStyle.fontWeight, ctStyle.fontWeight);
-      });
-    });
+    test(
+      'sectionTitle matches CollectibleTypography.shelfSeriesTitle weight',
+      () {
+        _withTheme((t, s) {
+          final appStyle = AppTypography.sectionTitle(t, s);
+          final ctStyle = CollectibleTypography.shelfSeriesTitle(t, s);
+          expect(appStyle.fontWeight, ctStyle.fontWeight);
+        });
+      },
+    );
 
-    test('screenTitle matches CollectibleTypography.editorialScreenTitle weight', () {
-      _withTheme((t, s) {
-        final appStyle = AppTypography.screenTitle(t, s);
-        final ctStyle = CollectibleTypography.editorialScreenTitle(t, s);
-        expect(appStyle.fontWeight, ctStyle.fontWeight);
-      });
-    });
+    test(
+      'screenTitle matches CollectibleTypography.editorialScreenTitle weight',
+      () {
+        _withTheme((t, s) {
+          final appStyle = AppTypography.screenTitle(t, s);
+          final ctStyle = CollectibleTypography.editorialScreenTitle(t, s);
+          expect(appStyle.fontWeight, ctStyle.fontWeight);
+        });
+      },
+    );
 
-    test('cardTitle matches CollectibleTypography.catalogSeriesRowTitle weight', () {
-      _withTheme((t, s) {
-        final appStyle = AppTypography.cardTitle(t, s);
-        final ctStyle = CollectibleTypography.catalogSeriesRowTitle(t, s);
-        expect(appStyle.fontWeight, ctStyle.fontWeight);
-      });
-    });
+    test(
+      'cardTitle matches CollectibleTypography.catalogSeriesRowTitle weight',
+      () {
+        _withTheme((t, s) {
+          final appStyle = AppTypography.cardTitle(t, s);
+          final ctStyle = CollectibleTypography.catalogSeriesRowTitle(t, s);
+          expect(appStyle.fontWeight, ctStyle.fontWeight);
+        });
+      },
+    );
   });
 
   group('AppTypography — Insights-specific roles', () {
+    test('insightsHeroName is w700 at 28sp', () {
+      final style = _withTheme(AppTypography.insightsHeroName);
+      expect(style.fontWeight, FontWeight.w700);
+      expect(style.fontSize, 28);
+    });
+
+    test('insightsBecause is w500 body', () {
+      final style = _withTheme(AppTypography.insightsBecause);
+      expect(style.fontWeight, FontWeight.w500);
+      expect(style.height, greaterThan(1.0));
+    });
+
     test('insightsFlavor has italic fontStyle', () {
       final style = _withTheme(AppTypography.insightsFlavor);
       expect(style.fontStyle, FontStyle.italic);
@@ -115,6 +140,26 @@ void main() {
     test('insightsCaption has positive letterSpacing', () {
       final style = _withTheme(AppTypography.insightsCaption);
       expect(style.letterSpacing, isNotNull);
+      expect(style.letterSpacing, greaterThan(0));
+    });
+  });
+
+  group('AppTypography — empty states', () {
+    test('emptyStateTitle is w700', () {
+      final style = _withTheme(AppTypography.emptyStateTitle);
+      expect(style.fontWeight, FontWeight.w700);
+    });
+
+    test('emptyStateBody uses muted onSurfaceVariant', () {
+      final style = _withTheme(AppTypography.emptyStateBody);
+      expect(style.color, isNotNull);
+      expect(style.height, isNotNull);
+      expect(style.height, greaterThan(1.0));
+    });
+
+    test('sectionLabel includes muted alpha on onSurfaceVariant', () {
+      final style = _withTheme(AppTypography.sectionLabel);
+      expect(style.color, isNotNull);
       expect(style.letterSpacing, greaterThan(0));
     });
   });

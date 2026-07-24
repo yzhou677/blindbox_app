@@ -78,7 +78,8 @@ class CollectibleTokens extends ThemeExtension<CollectibleTokens> {
       supportiveBodyAlpha: supportiveBodyAlpha ?? this.supportiveBodyAlpha,
       supportiveMetaAlpha: supportiveMetaAlpha ?? this.supportiveMetaAlpha,
       supportiveBodyHeight: supportiveBodyHeight ?? this.supportiveBodyHeight,
-      shellShadowLightAlpha: shellShadowLightAlpha ?? this.shellShadowLightAlpha,
+      shellShadowLightAlpha:
+          shellShadowLightAlpha ?? this.shellShadowLightAlpha,
       shellShadowDarkAlpha: shellShadowDarkAlpha ?? this.shellShadowDarkAlpha,
       shellShadowAccentMix: shellShadowAccentMix ?? this.shellShadowAccentMix,
       shellShadowBlur: shellShadowBlur ?? this.shellShadowBlur,
@@ -88,15 +89,42 @@ class CollectibleTokens extends ThemeExtension<CollectibleTokens> {
   }
 
   @override
-  ThemeExtension<CollectibleTokens> lerp(ThemeExtension<CollectibleTokens>? other, double t) {
+  ThemeExtension<CollectibleTokens> lerp(
+    ThemeExtension<CollectibleTokens>? other,
+    double t,
+  ) {
     if (other is! CollectibleTokens) return this;
     return CollectibleTokens(
-      supportiveBodyAlpha: _d(supportiveBodyAlpha, other.supportiveBodyAlpha, t),
-      supportiveMetaAlpha: _d(supportiveMetaAlpha, other.supportiveMetaAlpha, t),
-      supportiveBodyHeight: _d(supportiveBodyHeight, other.supportiveBodyHeight, t),
-      shellShadowLightAlpha: _d(shellShadowLightAlpha, other.shellShadowLightAlpha, t),
-      shellShadowDarkAlpha: _d(shellShadowDarkAlpha, other.shellShadowDarkAlpha, t),
-      shellShadowAccentMix: _d(shellShadowAccentMix, other.shellShadowAccentMix, t),
+      supportiveBodyAlpha: _d(
+        supportiveBodyAlpha,
+        other.supportiveBodyAlpha,
+        t,
+      ),
+      supportiveMetaAlpha: _d(
+        supportiveMetaAlpha,
+        other.supportiveMetaAlpha,
+        t,
+      ),
+      supportiveBodyHeight: _d(
+        supportiveBodyHeight,
+        other.supportiveBodyHeight,
+        t,
+      ),
+      shellShadowLightAlpha: _d(
+        shellShadowLightAlpha,
+        other.shellShadowLightAlpha,
+        t,
+      ),
+      shellShadowDarkAlpha: _d(
+        shellShadowDarkAlpha,
+        other.shellShadowDarkAlpha,
+        t,
+      ),
+      shellShadowAccentMix: _d(
+        shellShadowAccentMix,
+        other.shellShadowAccentMix,
+        t,
+      ),
       shellShadowBlur: _d(shellShadowBlur, other.shellShadowBlur, t),
       shellShadowDy: _d(shellShadowDy, other.shellShadowDy, t),
       shellShadowSpread: _d(shellShadowSpread, other.shellShadowSpread, t),
