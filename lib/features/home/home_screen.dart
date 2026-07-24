@@ -7,7 +7,10 @@ import 'package:blindbox_app/features/home/application/home_feed_provider.dart';
 import 'package:blindbox_app/features/home/widgets/home_catalog_rails.dart';
 import 'package:blindbox_app/features/official_feed/widgets/official_feed_section.dart';
 import 'package:blindbox_app/features/recommendations/widgets/for_you_section.dart';
+import 'package:blindbox_app/features/collection/presentation/open_custom_series_create.dart';
+import 'package:blindbox_app/features/collection/presentation/open_recognition_candidate_series.dart';
 import 'package:blindbox_app/shared/widgets/app_search_field.dart';
+import 'package:blindbox_app/shared/widgets/catalog_photo_verification_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -83,6 +86,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: AppSearchField(
                 readOnly: true,
                 onTap: () => context.push('/home/catalog'),
+                onImageSelected: (selection) => showCatalogPhotoVerification(
+                  context,
+                  selection,
+                  onCreateCustom: () {
+                    if (context.mounted) {
+                      openCustomSeriesCreateSheet(context, ref);
+                    }
+                  },
+                  onCandidateConfirmed: (candidate) {
+                    if (!context.mounted) return;
+                    openRecognitionCandidateSeries(
+                      context,
+                      ref,
+                      seriesId: candidate.seriesId,
+                      figureId: candidate.figureId,
+                    );
+                  },
+                ),
                 hintText: SearchPlaceholders.discoverCatalog,
               ),
             ),

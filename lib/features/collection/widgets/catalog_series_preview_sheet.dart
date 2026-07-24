@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:blindbox_app/core/theme/app_spacing.dart';
+import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_adapters.dart';
@@ -25,11 +28,15 @@ class CatalogSeriesPreviewSheet extends ConsumerStatefulWidget {
     required this.series,
     required this.shelfCta,
     required this.onAdd,
+    this.matchedFigureId,
   });
 
   final CatalogSeries series;
   final CollectionSeriesShelfCtaPresentation shelfCta;
   final VoidCallback onAdd;
+
+  /// When opened from recognition, scroll to and briefly highlight this figure.
+  final String? matchedFigureId;
 
   @override
   ConsumerState<CatalogSeriesPreviewSheet> createState() =>
@@ -39,11 +46,45 @@ class CatalogSeriesPreviewSheet extends ConsumerStatefulWidget {
 class _CatalogSeriesPreviewSheetState
     extends ConsumerState<CatalogSeriesPreviewSheet> {
   static const double _stickyActionBarReserve = 92;
+  static const _matchedLabel = 'Matched from your photo';
+
+  final Map<String, GlobalKey> _figureKeys = {};
+  var _matchHighlightVisible = false;
+  Timer? _highlightTimer;
 
   @override
   void initState() {
     super.initState();
     CatalogSeriesPreviewWarm.schedule(context, widget.series);
+    final matchedId = widget.matchedFigureId?.trim();
+    if (matchedId != null && matchedId.isNotEmpty) {
+      _matchHighlightVisible = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _revealMatched(matchedId));
+      _highlightTimer = Timer(const Duration(milliseconds: 2400), () {
+        if (mounted) setState(() => _matchHighlightVisible = false);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _highlightTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _revealMatched(String figureId) async {
+    if (!mounted) return;
+    final key = _figureKeys.putIfAbsent(figureId, GlobalKey.new);
+    final ctx = key.currentContext;
+    if (ctx == null) return;
+    await Scrollable.ensureVisible(
+      ctx,
+      alignment: 0.2,
+      duration: MediaQuery.disableAnimationsOf(context)
+          ? Duration.zero
+          : CollectibleMotion.sectionReveal,
+      curve: CollectibleMotion.easeOut,
+    );
   }
 
   @override
@@ -92,19 +133,36 @@ class _CatalogSeriesPreviewSheetState
                         const SizedBox(height: 14),
                     itemBuilder: (context, i) {
                       final f = series.figures[i];
-                      return _PreviewFigureRow(
+                      final matchedId = widget.matchedFigureId?.trim();
+                      final isMatched =
+                          matchedId != null &&
+                          matchedId.isNotEmpty &&
+                          f.templateFigureId == matchedId;
+                      final rowKey = isMatched
+                          ? _figureKeys.putIfAbsent(
+                              f.templateFigureId,
+                              GlobalKey.new,
+                            )
+                          : null;
+                      return KeyedSubtree(
                         key: ValueKey<String>(f.templateFigureId),
-                        figure: f,
-                        figureIndex: i,
-                        accent: series.shelfAccent,
-                        onTap: () {
-                          showCatalogFigureGallery(
-                            context,
-                            items: galleryItems,
-                            initialIndex: i,
-                            seriesTitle: series.name,
-                          );
-                        },
+                        child: _PreviewFigureRow(
+                          key: rowKey,
+                          figure: f,
+                          figureIndex: i,
+                          accent: series.shelfAccent,
+                          matchedLabel: isMatched && _matchHighlightVisible
+                              ? _matchedLabel
+                              : null,
+                          onTap: () {
+                            showCatalogFigureGallery(
+                              context,
+                              items: galleryItems,
+                              initialIndex: i,
+                              seriesTitle: series.name,
+                            );
+                          },
+                        ),
                       );
                     },
                   ),
@@ -228,6 +286,7 @@ class _PreviewFigureRow extends StatelessWidget {
     required this.figureIndex,
     required this.accent,
     required this.onTap,
+    this.matchedLabel,
   });
 
   static const _resolveBatchSize = 4;
@@ -236,6 +295,7 @@ class _PreviewFigureRow extends StatelessWidget {
   final int figureIndex;
   final Color accent;
   final VoidCallback onTap;
+  final String? matchedLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -251,77 +311,119 @@ class _PreviewFigureRow extends StatelessWidget {
     final rowColor = secretLook != null
         ? secretLook.cardTint(rowBase)
         : rowBase;
+    final matched = matchedLabel != null;
 
     return RepaintBoundary(
-      child: Material(
-        color: rowColor,
-        borderRadius: AppRadii.matRadius,
-        shadowColor: secretLook?.accent.withValues(alpha: 0.12),
-        elevation: secretLook != null ? 0.5 : 0,
-        child: InkWell(
-          onTap: onTap,
+      child: AnimatedContainer(
+        duration: CollectibleMotion.crossfade,
+        curve: CollectibleMotion.easeOut,
+        decoration: BoxDecoration(
           borderRadius: AppRadii.matRadius,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
-            child: Row(
-              children: [
-                CatalogImageSlot(
-                  displayMode: CatalogImageDisplayMode.figureThumb,
-                  child: (figure.catalogImageKey?.trim().isNotEmpty ?? false)
-                      ? CatalogImageFromKey(
-                          imageKey: figure.catalogImageKey!,
-                          name: figure.name,
-                          seedKey: figure.templateFigureId,
-                          isSecret: figure.isSecret,
-                          compact: true,
-                          deferInitialResolve: true,
-                          resolveStaggerBatch: figureIndex ~/ _resolveBatchSize,
-                          displayMode: CatalogImageDisplayMode.figureThumb,
-                          borderRadius: BorderRadius.zero,
-                        )
-                      : ColoredBox(
-                          color: scheme.surfaceContainerHighest.withValues(
-                            alpha: 0.5,
+          border: matched
+              ? Border.all(
+                  color: scheme.primary.withValues(alpha: 0.42),
+                  width: 1.5,
+                )
+              : null,
+          boxShadow: matched
+              ? [
+                  BoxShadow(
+                    color: scheme.primary.withValues(alpha: 0.12),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Material(
+          color: matched
+              ? Color.lerp(
+                  rowColor,
+                  scheme.primaryContainer,
+                  isDark ? 0.28 : 0.22,
+                )
+              : rowColor,
+          borderRadius: AppRadii.matRadius,
+          shadowColor: secretLook?.accent.withValues(alpha: 0.12),
+          elevation: secretLook != null ? 0.5 : 0,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: AppRadii.matRadius,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
+              child: Row(
+                children: [
+                  CatalogImageSlot(
+                    displayMode: CatalogImageDisplayMode.figureThumb,
+                    child: (figure.catalogImageKey?.trim().isNotEmpty ?? false)
+                        ? CatalogImageFromKey(
+                            imageKey: figure.catalogImageKey!,
+                            name: figure.name,
+                            seedKey: figure.templateFigureId,
+                            isSecret: figure.isSecret,
+                            compact: true,
+                            deferInitialResolve: true,
+                            resolveStaggerBatch:
+                                figureIndex ~/ _resolveBatchSize,
+                            displayMode: CatalogImageDisplayMode.figureThumb,
+                            borderRadius: BorderRadius.zero,
+                          )
+                        : ColoredBox(
+                            color: scheme.surfaceContainerHighest.withValues(
+                              alpha: 0.5,
+                            ),
+                          ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (matchedLabel != null) ...[
+                          Text(
+                            matchedLabel!,
+                            key: const Key('recognition-matched-figure-label'),
+                            style: textTheme.labelMedium?.copyWith(
+                              color: scheme.primary,
+                              fontWeight: FontWeight.w600,
+                              height: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                        ],
+                        Text(
+                          figure.name,
+                          style: CollectibleTypography.figureCaption(
+                            textTheme,
+                            scheme,
                           ),
                         ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        figure.name,
-                        style: CollectibleTypography.figureCaption(
-                          textTheme,
-                          scheme,
+                        const SizedBox(height: 3),
+                        Text(
+                          figure.rarity,
+                          style: CollectibleTypography.figureMeta(
+                            textTheme,
+                            scheme,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        figure.rarity,
-                        style: CollectibleTypography.figureMeta(
-                          textTheme,
-                          scheme,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (figure.isSecret)
-                  Icon(
-                    Icons.star_rounded,
-                    size: 20,
-                    color: (secretLook?.accent ?? accent).withValues(
-                      alpha: 0.88,
+                      ],
                     ),
                   ),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  size: 22,
-                  color: scheme.onSurfaceVariant.withValues(alpha: 0.45),
-                ),
-              ],
+                  if (figure.isSecret)
+                    Icon(
+                      Icons.star_rounded,
+                      size: 20,
+                      color: (secretLook?.accent ?? accent).withValues(
+                        alpha: 0.88,
+                      ),
+                    ),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 22,
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.45),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

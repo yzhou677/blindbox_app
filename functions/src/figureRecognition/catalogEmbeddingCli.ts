@@ -16,6 +16,8 @@ export function parseCatalogEmbeddingArgs(args: string[]): CatalogEmbeddingJobOp
     if (seen.has(arg)) throw new Error(`Duplicate option: ${arg}`);
     seen.add(arg);
     if (arg === '--force') options.force = true;
+    else if (arg === '--prune-stale-alternatives') options.pruneStaleAlternatives = true;
+    else if (arg === '--prune-dry-run') options.pruneDryRun = true;
     else if (arg === '--limit') options.limit = positiveInteger(args[++index], '--limit');
     else if (arg === '--figure-id') {
       const value = args[++index];
@@ -26,7 +28,21 @@ export function parseCatalogEmbeddingArgs(args: string[]): CatalogEmbeddingJobOp
   if (options.limit !== undefined && options.figureId !== undefined) {
     throw new Error('--limit and --figure-id cannot be used together');
   }
+  if (options.pruneDryRun && !options.pruneStaleAlternatives) {
+    throw new Error('--prune-dry-run requires --prune-stale-alternatives');
+  }
   return options;
+}
+
+/**
+ * Options object that must be passed to {@link CatalogEmbeddingJob.execute}.
+ * Same object used for planning — including prune flags — so CLI argv cannot
+ * silently drop `--prune-stale-alternatives` / `--prune-dry-run`.
+ */
+export function optionsForCatalogEmbeddingExecute(
+  parsed: CatalogEmbeddingJobOptions,
+): CatalogEmbeddingJobOptions {
+  return parsed;
 }
 
 export function createStartupDiagnostic(error: unknown, component: string): CatalogEmbeddingStartupDiagnostic {

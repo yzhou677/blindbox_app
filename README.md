@@ -23,7 +23,7 @@ It focuses on an image-first, calm browsing experience with local-first collecti
 ## What The App Includes
 
 - `Collection` tab: local-first shelf, custom series, wishlist/owned states, completion tiers (`Completed Series`, `Master Complete`), collapsible **Collection Insights** dashboard, and Insights screen (Collector Type reveal — **10** types, resolver **6.1**; see `docs/COLLECTION_ARCHITECTURE_NOTES.md`)
-- `Discover` tab: Firestore-backed catalog browse, release rails, and shared token-based search (Search V2)
+- `Discover` tab: Firestore-backed catalog browse, release rails, shared token-based search (Search V2), and **Figure Recognition** (human-in-the-loop Catalog scan — see [`docs/figure-recognition.md`](docs/figure-recognition.md))
 - `Market` tab: live eBay browse/search via Firebase gateway (separate from catalog content)
 
 Bottom tab order and cold start are currently:
@@ -54,7 +54,8 @@ For full details, read:
 - Riverpod (`flutter_riverpod`) for state
 - `go_router` for navigation
 - `shared_preferences` for collection persistence
-- Firebase (catalog-only): `firebase_core`, `cloud_firestore`, `firebase_storage`
+- Firebase: `firebase_core`, `cloud_firestore`, `firebase_storage`, plus App
+  Check-protected callable Functions for the subject-locator transport
 
 ## Project Structure
 
@@ -93,7 +94,7 @@ flutter run
 
 ## Firebase Local Setup
 
-Shelfy uses **Firebase Core**, **Cloud Firestore**, and **Cloud Storage** for read-only catalog and official feed. Market browse calls the **HTTPS market Cloud Function** via the `http` package (not `firebase_functions`). Collection shelf data stays local.
+Shelfy uses **Firebase Core**, **Cloud Firestore**, and **Cloud Storage** for read-only catalog and official feed. Market browse calls the **HTTPS market Cloud Function** via the `http` package. The narrow subject-locator callable uses `cloud_functions` with Firebase App Check; see [the endpoint guide](./docs/FIGURE_SUBJECT_LOCATOR_ENDPOINT.md). Collection shelf data stays local.
 
 Use the full setup guide:
 
@@ -104,7 +105,8 @@ Quick notes:
 - `firebase.json` is local and gitignored (copy from `firebase.json.example`)
 - `android/app/google-services.json` is gitignored; `lib/firebase_options.dart` is committed for project `blindbox-collection`
 - Collection data is local-first and not synced to Firestore
-- **Release SHA registration is not required** for the current feature set (no Firebase Auth, Sign-In, Phone Auth, or App Check). See the release checklist in `FIREBASE_LOCAL_SETUP.md`.
+- Firebase Auth and Sign-In are not used. App Check is required before deploying
+  the subject-locator callable; see the endpoint guide and release checklist.
 
 ### Backend deployment (release)
 

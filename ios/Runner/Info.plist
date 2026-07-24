@@ -70,5 +70,7 @@
 		<false/>
 		<key>NSPhotoLibraryUsageDescription</key>
 		<string>Choose cover and figure photos for your private shelf.</string>
+		<key>NSCameraUsageDescription</key>
+		<string>Take a photo of a collectible you want to identify.</string>
 	</dict>
 </plist>

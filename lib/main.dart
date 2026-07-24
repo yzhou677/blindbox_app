@@ -1,4 +1,5 @@
 import 'package:blindbox_app/core/firebase/ensure_firebase_initialized.dart';
+import 'package:blindbox_app/core/firebase/activate_firebase_app_check.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
 import 'package:blindbox_app/core/router/app_router.dart';
 import 'package:blindbox_app/core/theme/app_theme.dart';
@@ -21,6 +22,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     await ensureFirebaseInitialized();
+    await activateFirebaseAppCheck();
   } catch (e, st) {
     debugPrint('Firebase init skipped: $e\n$st');
   }

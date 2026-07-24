@@ -4,6 +4,26 @@
 
 Accepted.
 
+## Current production implementation
+
+See [`docs/figure-recognition.md`](../../figure-recognition.md) for the live
+pipeline. Production `recognizeFigureV1` uses
+`CandidateRetrievalDecisionResolver` (`retrieval-policy-candidate-v1`) with
+absolute Top-1 distance `0.240` and minimum Top-1/Top-2 gap `0.025`. Hydration
+runs only for presentable candidates. Shadow decision tooling remains
+evaluation-only.
+
+Current presentation path:
+
+```text
+Confirmed subject crop
+-> embedding + Top-K retrieval
+-> CandidateRetrievalDecisionResolver
+-> hydrate when presentable
+-> candidate UI or no-match UI
+-> Series navigation (no auto-add)
+```
+
 ## Decision
 
 Shelfy Figure Recognition uses a catalog-constrained multimodal retrieval
@@ -11,14 +31,13 @@ pipeline:
 
 ```text
 Input image
--> image normalization
+-> image normalization / confirmed subject crop
 -> Gemini image embedding
 -> Firestore nearest-neighbor search
 -> Top-K Catalog candidates
--> confidence resolution
--> optional reranking
--> user confirmation
--> Collection-aware action
+-> confidence resolution (candidate policy)
+-> optional reranking (future)
+-> user confirmation via Series / Custom
 ```
 
 ### Recognition is closed-world

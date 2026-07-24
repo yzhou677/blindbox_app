@@ -1,4 +1,5 @@
 import { FieldPath, Firestore, QueryDocumentSnapshot, Timestamp } from '@google-cloud/firestore';
+import { parseAlternativeImages } from './catalogAlternativeImages';
 import type { CatalogFigure, CatalogFigureSource } from './catalogEmbeddingTypes';
 
 export class FirestoreCatalogFigureSource implements CatalogFigureSource {
@@ -37,6 +38,7 @@ function mapFigure(id: string, raw: Record<string, unknown> | undefined, updateT
     ipId: stringField('ipId'),
     isSecret: data.isSecret,
     imageKey: stringField('imageKey'),
+    alternativeImages: parseAlternativeImages(data.alternativeImages),
     catalogModifiedAt: updateTime ?? null,
   };
 }

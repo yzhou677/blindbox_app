@@ -16,36 +16,37 @@ const candidate = (overrides = {}) => ({
 });
 
 function firestoreHarness(rows = [], queryError) {
-  const calls = {};
+  const calls = { wheres: [] };
+  const createQuery = () => ({
+    where(...args) {
+      calls.wheres.push(args);
+      calls.where = args;
+      return createQuery();
+    },
+    findNearest(options) {
+      calls.findNearest = options;
+      return { async get() {
+        if (queryError) throw queryError;
+        return { docs: rows.map((data) => ({ data: () => data })) };
+      } };
+    },
+    select(...fields) {
+      calls.select = fields;
+      return {
+        findNearest(options) {
+          calls.findNearest = options;
+          return { async get() {
+            if (queryError) throw queryError;
+            return { docs: rows.map((data) => ({ data: () => data })) };
+          } };
+        },
+      };
+    },
+  });
   const firestore = {
     collection(name) {
       calls.collection = name;
-      return {
-        where(...args) {
-          calls.where = args;
-          return {
-            findNearest(options) {
-              calls.findNearest = options;
-              return { async get() {
-                if (queryError) throw queryError;
-                return { docs: rows.map((data) => ({ data: () => data })) };
-              } };
-            },
-            select(...fields) {
-              calls.select = fields;
-              return {
-                findNearest(options) {
-                  calls.findNearest = options;
-                  return { async get() {
-                    if (queryError) throw queryError;
-                    return { docs: rows.map((data) => ({ data: () => data })) };
-                  } };
-                },
-              };
-            },
-          };
-        },
-      };
+      return createQuery();
     },
   };
   return { search: new FirestoreFigureVectorSearch(firestore), calls };
@@ -89,12 +90,113 @@ describe('Figure retrieval', () => {
     const { search, calls } = firestoreHarness([candidate()]);
     await search.search(vector(), 5);
     assert.equal(calls.collection, 'catalogFigureEmbeddings');
+    assert.deepEqual(calls.wheres, [['embeddingSpace', '==', IMAGE_EMBEDDING_CONFIG.embeddingSpace]]);
     assert.deepEqual(calls.where, ['embeddingSpace', '==', IMAGE_EMBEDDING_CONFIG.embeddingSpace]);
     assert.deepEqual(calls.findNearest, {
       vectorField: 'embedding', queryVector: vector(), limit: 5,
       distanceMeasure: 'COSINE', distanceResultField: '_vectorDistance',
     });
     assert.equal(calls.select, undefined);
+  });
+
+  it('adds a seriesId equality filter for series-scoped retrieval', async () => {
+    const { search, calls } = firestoreHarness([
+      candidate({ seriesId: 'series_a', figureId: 'fa' }),
+      candidate({ seriesId: 'series_b', figureId: 'fb', _vectorDistance: 0.01 }),
+    ]);
+    const results = await search.search(vector(), 5, { seriesId: 'series_a' });
+    assert.deepEqual(calls.wheres, [
+      ['embeddingSpace', '==', IMAGE_EMBEDDING_CONFIG.embeddingSpace],
+      ['seriesId', '==', 'series_a'],
+    ]);
+    assert.equal(calls.findNearest.limit, 5);
+    assert.deepEqual(results.map((row) => row.figureId), ['fa']);
+  });
+
+  it('excludes cross-series documents even if returned by the index', async () => {
+    const { search } = firestoreHarness([
+      candidate({ seriesId: 'series_b', figureId: 'fb', _vectorDistance: 0.01 }),
+      candidate({ seriesId: 'series_a', figureId: 'fa', _vectorDistance: 0.05 }),
+    ]);
+    const results = await search.search(vector(), 5, { seriesId: 'series_a' });
+    assert.deepEqual(results.map((row) => row.figureId), ['fa']);
+  });
+
+  it('lets an alternative image win within the selected series', async () => {
+    const { search } = firestoreHarness([
+      candidate({
+        figureId: 'fa', seriesId: 'series_a', imageRole: 'primary', variant: 'front',
+        imageKey: 'fa', _vectorDistance: 0.2,
+      }),
+      candidate({
+        figureId: 'fa', seriesId: 'series_a', imageRole: 'alternative', variant: 'side',
+        imageKey: 'fa_side', _vectorDistance: 0.05,
+      }),
+      candidate({
+        figureId: 'fb', seriesId: 'series_b', imageRole: 'alternative', variant: 'side',
+        imageKey: 'fb_side', _vectorDistance: 0.01,
+      }),
+    ]);
+    const results = await search.search(vector(), 15, { seriesId: 'series_a' });
+    assert.equal(results.length, 1);
+    assert.equal(results[0].figureId, 'fa');
+    assert.equal(results[0].imageRole, 'alternative');
+    assert.equal(results[0].matchedImageKey, 'fa_side');
+  });
+
+  it('over-fetches image matches then aggregates unique figures by best distance', async () => {
+    const { aggregateFigureCandidates } = require('../lib/figureRecognition/figureCandidateAggregation');
+    const imageMatches = [];
+    for (let i = 0; i < 5; i += 1) {
+      imageMatches.push({
+        figureId: 'dup', seriesId: 'series_a', brandId: 'b', ipId: 'i', isSecret: false,
+        distance: 0.01 + i * 0.001, embeddingSpace: IMAGE_EMBEDDING_CONFIG.embeddingSpace,
+        imageRole: i === 0 ? 'primary' : 'alternative',
+      });
+    }
+    for (let i = 0; i < 4; i += 1) {
+      imageMatches.push({
+        figureId: `fig-${i}`, seriesId: 'series_a', brandId: 'b', ipId: 'i', isSecret: false,
+        distance: 0.1 + i * 0.01, embeddingSpace: IMAGE_EMBEDDING_CONFIG.embeddingSpace,
+        imageRole: 'primary',
+      });
+    }
+    const { candidates, stats } = aggregateFigureCandidates(imageMatches);
+    assert.equal(stats.candidateImageCount, 9);
+    assert.equal(stats.candidateFigureCount, 5);
+    assert.equal(candidates[0].figureId, 'dup');
+    assert.deepEqual(candidates.slice(1).map((row) => row.figureId), ['fig-0', 'fig-1', 'fig-2', 'fig-3']);
+  });
+
+  it('passes series filter through FigureRetrievalService exactly once', async () => {
+    let searchCalls = 0;
+    let lastFilter;
+    const service = new FigureRetrievalService(
+      { async read() { throw new Error('unused'); } },
+      { async embedStoredImage() { return { vector: vector() }; } },
+      {
+        async search(queryVector, topK, filter) {
+          searchCalls += 1;
+          lastFilter = filter;
+          assert.equal(topK, 15);
+          return [{
+            figureId: 'figure-1', seriesId: 'series_a', brandId: 'brand-1', ipId: 'ip-1',
+            isSecret: false, embeddingSpace: IMAGE_EMBEDDING_CONFIG.embeddingSpace,
+            distance: 0.1, rank: 1,
+          }];
+        },
+      },
+    );
+    const result = await service.retrieveStoredImageWithDiagnostics(
+      { bytes: Buffer.from('x'), mimeType: 'image/png' },
+      15,
+      undefined,
+      { seriesId: 'series_a' },
+    );
+    assert.equal(searchCalls, 1);
+    assert.deepEqual(lastFilter, { seriesId: 'series_a' });
+    assert.equal(result.diagnostics.vectorSearchCalls, 1);
+    assert.equal(result.diagnostics.userEmbeddingCalls, 1);
   });
 
   it('returns a valid candidate when Firestore supplies the synthetic distance field', async () => {

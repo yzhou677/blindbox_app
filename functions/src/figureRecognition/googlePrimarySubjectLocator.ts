@@ -2,6 +2,7 @@ import { GoogleGenAI } from '@google/genai';
 import type { PrimarySubjectConfig } from './primarySubjectConfig';
 import type { StoredImage } from './imageEmbeddingTypes';
 import type { PrimarySubjectLocator } from './primarySubjectTypes';
+import { measureScanStage, measureScanStageSync } from './scanTiming';
 
 export const PRIMARY_SUBJECT_PROMPT = `Propose up to three physical collectible or designer-toy figure candidates visible in the image.
 Each candidate bounding box must represent exactly one collectible. Never merge nearby collectibles or unrelated objects into one box. Do not decide which candidate is primary and do not rank candidates.
@@ -35,7 +36,7 @@ export class GooglePrimarySubjectLocator implements PrimarySubjectLocator {
     this.client = client ?? clientFactory({ vertexai: true, project: projectId, location: config.location });
   }
   async locate(image: StoredImage): Promise<unknown> {
-    const request = {
+    const request = measureScanStageSync('locator_request_serialization', () => ({
       model: this.config.model,
       contents: [{ role: 'user', parts: [{ text: PRIMARY_SUBJECT_PROMPT }, { inlineData: { data: image.bytes.toString('base64'), mimeType: image.mimeType } }] }],
       config: {
@@ -44,17 +45,17 @@ export class GooglePrimarySubjectLocator implements PrimarySubjectLocator {
         responseMimeType: 'application/json',
         responseJsonSchema: PRIMARY_SUBJECT_RESPONSE_SCHEMA,
       },
-    };
+    }));
     let response: { text?: string } | undefined;
     for (let attempt = 0; attempt < 3; attempt++) {
-      try { response = await this.client.models.generateContent(request); break; }
+      try { response = await measureScanStage('locator_model_api_wait', () => this.client.models.generateContent(request), { attempt: attempt + 1 }); break; }
       catch (error) {
         if (!isTransientGoogleError(error) || attempt === 2) throw error;
         await this.delay(400 * 2 ** attempt);
       }
     }
     if (!response || typeof response.text !== 'string') throw new Error('Primary subject locator returned no structured response');
-    try { return JSON.parse(response.text); } catch { throw new Error('Primary subject locator returned malformed JSON'); }
+    try { return measureScanStageSync('locator_response_parsing', () => JSON.parse(response.text!)); } catch { throw new Error('Primary subject locator returned malformed JSON'); }
   }
 }
 

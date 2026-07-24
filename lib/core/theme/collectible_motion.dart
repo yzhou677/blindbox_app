@@ -17,6 +17,48 @@ abstract final class CollectibleMotion {
   static const Duration shimmer = Duration(milliseconds: 1400);
   static const Duration sectionReveal = Duration(milliseconds: 320);
 
+  /// Staggered entrance for recognition candidate cards (start delays).
+  static const Duration recognitionCascadeFirst = Duration(milliseconds: 80);
+  static const Duration recognitionCascadeSecond = Duration(milliseconds: 120);
+  static const Duration recognitionCascadeThird = Duration(milliseconds: 160);
+
+  /// Display-only Finding checklist pacing (~6s staged presentation).
+  /// Not tied to backend stages — final Matching step holds until the request
+  /// resolves.
+  static const Duration recognitionFindingShapeComplete =
+      Duration(milliseconds: 900);
+  static const Duration recognitionFindingColorsComplete =
+      Duration(milliseconds: 1900);
+  static const Duration recognitionFindingAccessoriesComplete =
+      Duration(milliseconds: 3100);
+  static const Duration recognitionFindingFacialComplete =
+      Duration(milliseconds: 4400);
+
+  /// Absolute times (from checklist start) when active index advances to the
+  /// next step: Colors, Accessories, Facial details, then Matching.
+  static const List<Duration> recognitionFindingChecklistAdvanceAt = [
+    recognitionFindingShapeComplete,
+    recognitionFindingColorsComplete,
+    recognitionFindingAccessoriesComplete,
+    recognitionFindingFacialComplete,
+  ];
+
+  /// After no-match, keep the finished checklist fully visible before softening.
+  static const Duration recognitionFindingNoMatchSettle =
+      Duration(milliseconds: 500);
+
+  /// Soft background emphasis for the settled no-match checklist.
+  static const double recognitionFindingNoMatchChecklistOpacity = 0.62;
+
+  /// Active → settled Matching indicator crossfade (✓ or ⊖).
+  static const Duration recognitionFindingStatusCrossfade =
+      Duration(milliseconds: 200);
+
+  /// Brief Matching ✓ hold after a successful resolve before candidate cards.
+  /// Kept longer than [recognitionFindingStatusCrossfade] so ✓ is visible.
+  static const Duration recognitionFindingMatchedSettle =
+      Duration(milliseconds: 320);
+
   /// Unified expand/collapse for Collection insights dashboard (morph + size).
   static const Duration insightsDashboardTransition =
       Duration(milliseconds: 240);

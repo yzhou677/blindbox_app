@@ -17,7 +17,11 @@ Operational decisions and future assumptions captured so we do not re-investigat
 
 **Used in production client:** Firebase Core, Cloud Firestore (catalog + `official_feed_items`), Cloud Storage (`catalog/series/*`, `catalog/figures/*`). Market tab calls the **market** HTTPS Cloud Function via `http` — not the `firebase_functions` Flutter SDK.
 
-**Not used:** Firebase Authentication, Google Sign-In, Phone Authentication, App Check, Analytics, Crashlytics, FCM, Remote Config, Dynamic Links.
+**Not used:** Firebase Authentication, Google Sign-In, Phone Authentication, Analytics, Crashlytics, FCM, Remote Config, Dynamic Links.
+
+**App Check:** Used only for protected callable transports, beginning with the
+PR7 subject-locator endpoint. Catalog reads and local Collection behavior are
+unchanged. See `docs/FIGURE_SUBJECT_LOCATOR_ENDPOINT.md`.
 
 Firestore and Storage rules in repo allow **unauthenticated public read** on catalog paths. The shelf (`CollectionNotifier`) does not sync to Firestore.
 

@@ -7,24 +7,37 @@ const { IMAGE_EMBEDDING_CONFIG } = require('../lib/figureRecognition/imageEmbedd
 const { FirebaseCatalogImageResolver } = require('../lib/figureRecognition/catalogImageResolver');
 const { FirestoreCatalogEmbeddingStore } = require('../lib/figureRecognition/catalogEmbeddingStore');
 const { CatalogEmbeddingJob, withTransientRetries } = require('../lib/figureRecognition/catalogEmbeddingJob');
-const { parseCatalogEmbeddingArgs, createStartupDiagnostic } = require('../lib/figureRecognition/catalogEmbeddingCli');
+const { parseCatalogEmbeddingArgs, optionsForCatalogEmbeddingExecute, createStartupDiagnostic } = require('../lib/figureRecognition/catalogEmbeddingCli');
 
 const figure = (overrides = {}) => ({
   figureId: 'fig-1', seriesId: 'series-1', brandId: 'brand-1', ipId: 'ip-1', isSecret: false,
-  imageKey: 'fig-1', catalogModifiedAt: Timestamp.fromMillis(1000), ...overrides,
+  imageKey: 'fig-1', alternativeImages: [], catalogModifiedAt: Timestamp.fromMillis(1000), ...overrides,
 });
 
-function harness({ existing = null, figures = [figure()], image = Buffer.from('same-image'), embedError } = {}) {
-  const calls = { embeds: 0, writes: [], metadata: [], logs: [] };
+function harness({ existing = null, figures = [figure()], image = Buffer.from('same-image'), embedError, existingById } = {}) {
+  const calls = { embeds: 0, writes: [], metadata: [], logs: [], deletes: [], listed: [] };
   const source = {
     async get(id) { return figures.find((item) => item.figureId === id) ?? null; },
     async *pages() { yield figures; },
   };
   const images = { async resolve(imageKey) { return { objectPath: `${imageKey}.webp`, bytes: image, mimeType: 'image/webp' }; } };
   const store = {
-    async get() { return existing; },
+    async get(documentId) {
+      if (existingById && Object.prototype.hasOwnProperty.call(existingById, documentId)) {
+        return existingById[documentId];
+      }
+      return existing;
+    },
     async writeEmbedding(metadata, vector, isNew) { calls.writes.push({ metadata, vector, isNew }); },
     async updateMetadata(metadata) { calls.metadata.push(metadata); },
+    async listDocumentIdsForFigure(figureId) {
+      calls.listed.push(figureId);
+      if (existingById) {
+        return Object.keys(existingById).filter((id) => id === figureId || id.startsWith(`${figureId}__alt__`)).sort();
+      }
+      return existing ? [figureId] : [];
+    },
+    async deleteAlternativeDocument(documentId) { calls.deletes.push(documentId); },
   };
   const provider = { async embedStoredImage() { calls.embeds++; if (embedError) throw embedError; return { vector: Array(1024).fill(0.25) }; } };
   const job = new CatalogEmbeddingJob(source, images, store, provider, (entry) => calls.logs.push(entry), (() => { let n = 0; return () => n += 5; })());
@@ -82,7 +95,7 @@ describe('CatalogEmbeddingJob', () => {
     assert.deepEqual(plan.summary, {
       totalFigures: 2, alreadyUpToDate: 0, metadataOnlyUpdates: 0, requiresEmbedding: 2,
       missingImages: 0, estimatedEmbeddingApiCalls: 2, estimatedAiCostUsd: 1,
-      missingImageCount: 0, missingImageFigureIds: [],
+      missingImageCount: 0, missingImageFigureIds: [], plannedImageRecords: 2,
     });
     assert.equal(calls.embeds, 0);
     assert.equal(calls.writes.length, 0);
@@ -249,18 +262,82 @@ describe('adapters and CLI', () => {
     let written;
     const firestore = { collection() { return { doc() { return { async set(data) { written = data; } }; } }; } };
     const store = new FirestoreCatalogEmbeddingStore(firestore);
-    await store.writeEmbedding({ ...figure(), imageObjectPath: 'a.webp', contentHash: 'abc' }, [1, 2], true);
+    await store.writeEmbedding({
+      documentId: 'fig-1',
+      figureId: 'fig-1',
+      seriesId: 'series-1',
+      brandId: 'brand-1',
+      ipId: 'ip-1',
+      isSecret: false,
+      imageKey: 'fig-1',
+      imageRole: 'primary',
+      variant: 'front',
+      catalogModifiedAt: Timestamp.fromMillis(1000),
+      imageObjectPath: 'a.webp',
+      contentHash: 'abc',
+    }, [1, 2], true);
     assert.ok(written.embedding instanceof VectorValue);
     assert.deepEqual(written.embedding.toArray(), [1, 2]);
+    assert.equal(written.imageRole, 'primary');
+    assert.equal(written.variant, 'front');
+    assert.equal(written.imageKey, 'fig-1');
   });
 
-  it('parses only limit, figure-id, and force', () => {
+  it('parses limit, figure-id, force, and prune flags', () => {
     assert.deepEqual(parseCatalogEmbeddingArgs([]), {});
     assert.deepEqual(parseCatalogEmbeddingArgs(['--limit', '10', '--force']), { limit: 10, force: true });
     assert.deepEqual(parseCatalogEmbeddingArgs(['--figure-id', 'fig-1', '--force']), { figureId: 'fig-1', force: true });
+    assert.deepEqual(
+      parseCatalogEmbeddingArgs(['--prune-stale-alternatives', '--prune-dry-run']),
+      { pruneStaleAlternatives: true, pruneDryRun: true },
+    );
     assert.throws(() => parseCatalogEmbeddingArgs(['--limit', '10', '--figure-id', 'fig-1']));
     assert.throws(() => parseCatalogEmbeddingArgs(['--limit', '10', '--limit', '20']));
     assert.throws(() => parseCatalogEmbeddingArgs(['--concurrency', '2']));
+    assert.throws(() => parseCatalogEmbeddingArgs(['--prune-dry-run']));
+  });
+
+  it('forwards parsed CLI options into CatalogEmbeddingJob.execute unchanged', async () => {
+    assert.deepEqual(optionsForCatalogEmbeddingExecute(parseCatalogEmbeddingArgs([])), {});
+    assert.deepEqual(
+      optionsForCatalogEmbeddingExecute(parseCatalogEmbeddingArgs(['--prune-stale-alternatives'])),
+      { pruneStaleAlternatives: true },
+    );
+    assert.deepEqual(
+      optionsForCatalogEmbeddingExecute(
+        parseCatalogEmbeddingArgs(['--prune-stale-alternatives', '--prune-dry-run']),
+      ),
+      { pruneStaleAlternatives: true, pruneDryRun: true },
+    );
+
+    const calls = [];
+    const emptyPlan = {
+      summary: {
+        totalFigures: 0, alreadyUpToDate: 0, metadataOnlyUpdates: 0, requiresEmbedding: 0,
+        missingImages: 0, estimatedEmbeddingApiCalls: 0, estimatedAiCostUsd: 0,
+        missingImageCount: 0, missingImageFigureIds: [], plannedImageRecords: 0,
+      },
+      items: [],
+      scannedFigures: [],
+    };
+    const job = {
+      async execute(plan, options) {
+        calls.push({ plan, options });
+        return { scanned: 0, embedded: 0, metadataUpdated: 0, skipped: 0, failed: 0, elapsedMs: 0,
+          missingImages: 0, missingImageCount: 0, missingImageFigureIds: [],
+          staleAlternativesDeleted: 0, staleAlternativesWouldDelete: 0 };
+      },
+    };
+    // Mirrors embed-catalog-figures.mjs: execute(plan, optionsForCatalogEmbeddingExecute(options)).
+    for (const argv of [[], ['--prune-stale-alternatives'], ['--prune-stale-alternatives', '--prune-dry-run']]) {
+      const options = parseCatalogEmbeddingArgs(argv);
+      await job.execute(emptyPlan, optionsForCatalogEmbeddingExecute(options));
+    }
+    assert.deepEqual(calls.map((call) => call.options), [
+      {},
+      { pruneStaleAlternatives: true },
+      { pruneStaleAlternatives: true, pruneDryRun: true },
+    ]);
   });
 
   it('reports a sanitized startup exception with its failing component', () => {

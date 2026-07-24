@@ -1,6 +1,11 @@
 # Figure Recognition Retrieval Calibration
 
-This offline developer tool explores small, explainable retrieval-decision policy families using an existing labeled `evaluation-results.json`. Distance alone is insufficient: a nearby wrong or Catalog-absent result can look deceptively close, so the analyzer also compares separation from competing candidates. It does not run image processing, retrieval, Firebase, or paid APIs, and it does not modify the production shadow decision policy.
+> **Tooling + history.** Live production thresholds and policy wiring are in
+> [`figure-recognition.md`](figure-recognition.md). This document describes the
+> calibration analyzer and the historical selection of
+> `retrieval-policy-candidate-v1`.
+
+This offline developer tool explores small, explainable retrieval-decision policy families using an existing labeled `evaluation-results.json`. Distance alone is insufficient: a nearby wrong or Catalog-absent result can look deceptively close, so the analyzer also compares separation from competing candidates. It does not run image processing, retrieval, Firebase, or paid APIs, and it does not modify production recognition configuration.
 
 ## Run
 
@@ -52,18 +57,16 @@ High-confidence precision measures correct Catalog-present Top-1 accepts divided
 
 Calibration-set results are not production probabilities. Dataset composition, Catalog coverage, image conditions, IP/Series balance, and duplicate-like figures can bias results. Select a policy only after reviewing case diagnostics and evaluating it on a separate holdout dataset. Keep the holdout untouched during threshold selection and report its results independently.
 
-## Shadow candidate selected for further evaluation
+## Production candidate policy
 
-The current comparison identified `retrieval-policy-candidate-v1`: Top-1
+Calibration originally selected `retrieval-policy-candidate-v1` with Top-1
 distance `<= 0.225` and absolute Top-1/Top-2 gap `>= 0.025`. Absolute gap was
-chosen for its simple, inspectable separation requirement. The `0.225`
-distance boundary is intentionally more conservative than `0.23`; calibration
-does not justify broadening automatic coverage at the expense of collector
-trust.
+chosen for its simple, inspectable separation requirement.
 
-The calibration set observed 17 high-confidence cases, 100% precision, zero
-false accepts, zero Catalog-absent high-confidence outcomes, and 40.48%
-coverage. This policy is shadow-only and pending holdout validation. It is
-reported beside the original shadow decision and does not automatically alter
-production acceptance, retrieval output, ranking, or user behavior. The
-analyzer never edits or promotes production policy configuration.
+After collector sample validation, production relaxed only the absolute Top-1
+distance gate to `0.240` while keeping the same policy version string,
+calibration profile, and `0.025` gap. The shadow resolver remains evaluation-
+only; the production callable uses `CandidateRetrievalDecisionResolver`.
+
+Historical calibration-set notes below describe the original `0.225` selection
+and are not live production thresholds.

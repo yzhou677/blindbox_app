@@ -1,5 +1,10 @@
 # Figure Recognition PR4: Primary Subject Isolation
 
+> **Historical implementation.** Superseded for the production scan path by
+> [`figure-recognition.md`](figure-recognition.md). Production recognition sends
+> a client-prepared crop (request v2); this document describes the earlier
+> developer CLI isolation stack.
+
 PR4 adds an optional primary-subject isolation stage to the local developer
 retrieval CLI. It does not change production routes or the default PR3
 whole-image behavior.

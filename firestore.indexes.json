@@ -19,6 +19,18 @@
           "vectorConfig": { "dimension": 1024, "flat": {} }
         }
       ]
+    },
+    {
+      "collectionGroup": "catalogFigureEmbeddings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "embeddingSpace", "order": "ASCENDING" },
+        { "fieldPath": "seriesId", "order": "ASCENDING" },
+        {
+          "fieldPath": "embedding",
+          "vectorConfig": { "dimension": 1024, "flat": {} }
+        }
+      ]
     }
   ],
   "fieldOverrides": []

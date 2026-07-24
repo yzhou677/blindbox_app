@@ -1,5 +1,12 @@
 # Figure Recognition PR5: Retrieval Evidence and Shadow Decisions
 
+> **Historical implementation.** Superseded for production by
+> [`figure-recognition.md`](figure-recognition.md). Production decisions use
+> `CandidateRetrievalDecisionResolver`; `ShadowRetrievalDecisionResolver`
+> remains evaluation / tooling only. Thresholds described below reflect the
+> PR5-era shadow / candidate selection work (including the original `0.225`
+> candidate gate later relaxed to `0.240` in production).
+
 PR5 introduces an evaluation-only decision boundary after ordered Catalog
 retrieval. It follows
 [`PDR-001: Figure Recognition Principles`](decisions/product/PDR-001-figure-recognition-principles.md):

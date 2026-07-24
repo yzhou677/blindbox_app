@@ -16,7 +16,7 @@ Client config files are **gitignored** so API keys are not pushed to GitHub. Eac
 | **Cloud Functions (market)** | Yes (HTTPS) | Client calls `GET …/market/v1/browse` via `http` — **not** `firebase_functions` SDK |
 | Firebase Authentication | No | — |
 | Google Sign-In / Phone Auth | No | — |
-| App Check | No | — |
+| App Check | Yes, locator only | Play Integrity / Apple App Attest protects `subjectLocatorV1` |
 | Analytics / Crashlytics / FCM / Remote Config / Dynamic Links | No | — |
 
 Collection shelf state is **local-only** (`SharedPreferences`); it does not use Firestore.
@@ -62,9 +62,13 @@ Edit `firebase.json` locally if your project needs extra emulators or deploy tar
 
    On Windows, prefer `npx firebase-tools@14.11.0` if the global `firebase` command fails with missing `hosting/init.js`.
 
-### SHA fingerprints (optional — log noise only)
+### SHA fingerprints and App Check
 
-**Not a release blocker for Shelfy v1.0.0.** The app does not use Firebase Auth, Google Sign-In, Phone Authentication, or App Check. Catalog Firestore and Storage use **public read rules** and do not require certificate fingerprints for those flows.
+Catalog Firestore and Storage use public read rules and do not require
+certificate fingerprints. The subject-locator callable uses App Check, so its
+production rollout requires the signing/app registration expected by the
+selected attestation provider. See
+[`FIGURE_SUBJECT_LOCATOR_ENDPOINT.md`](FIGURE_SUBJECT_LOCATOR_ENDPOINT.md).
 
 Unregistered signing SHA-1/SHA-256 can still produce `GoogleApiManager` / `DEVELOPER_ERROR` log noise on some devices while Firestore and Storage continue to work — see [`KNOWN_RUNTIME_NOTES.md`](KNOWN_RUNTIME_NOTES.md).
 
@@ -77,7 +81,9 @@ nvm use 22.21.1   # global firebase-tools may be broken on Node 24
 
 Manual: `cd android && .\gradlew signingReport` → add debug + release SHA-1/SHA-256 in Firebase console if desired.
 
-**Future:** If Shelfy later adopts Firebase Authentication, Google Sign-In, App Check, or Google APIs restricted by Android certificate fingerprints, configure **Release SHA** and **Play App Signing SHA** in Firebase Console at that time (Play-distributed builds use Google's app-signing certificate, not only the upload keystore).
+For Play-distributed builds, register the Play App Signing certificate rather
+than only the upload keystore. Debug App Check tokens belong only in
+development environments.
 
 ---
 
@@ -161,6 +167,7 @@ Deploy commands (from repo root; local `firebase.json` required):
 npx --prefix functions firebase deploy --only firestore:rules,storage --project blindbox-collection
 npx --prefix functions firebase deploy --only firestore:indexes --project blindbox-collection
 npx --prefix functions firebase deploy --only functions:market --project blindbox-collection
+npx --prefix functions firebase deploy --only functions:market:subjectLocatorV1 --project blindbox-collection
 ```
 
 ### Post-deploy smoke (device or staging build)
@@ -170,12 +177,15 @@ npx --prefix functions firebase deploy --only functions:market --project blindbo
 - [ ] Catalog images: Storage objects resolve or placeholder after bundled/disk miss
 - [ ] Market tab (if gateway enabled): listings load or empty state with gateway errors only in logs
 
-### SHA certificates — not required for current features
+### SHA certificates and protected callable rollout
 
-Release SHA registration is **not** a functional requirement for Shelfy v1.0.0 because the app does not use Firebase Authentication, Google Sign-In, Phone Authentication, App Check, or other SHA-dependent Firebase services. Catalog uses unauthenticated Firestore/Storage reads.
+Release SHA registration remains unnecessary for unauthenticated Catalog
+Firestore/Storage reads. It is part of the production App Check setup for the
+subject locator where required by the selected attestation provider.
 
 Optional: run `tools/android/sync_firebase_android_sha.ps1` to reduce `DEVELOPER_ERROR` log noise during development.
 
-**Future:** If Shelfy later adopts Firebase Authentication, Google Sign-In, App Check, or Google APIs restricted by Android certificate fingerprints, configure Release SHA and Play App Signing SHA in Firebase Console at that time.
+Configure Release SHA and Play App Signing SHA before enabling production App
+Check enforcement for the locator.
 
 Manual verification history: [`archive/2026-07/release_candidate_test_plan.md`](archive/2026-07/release_candidate_test_plan.md) §6.

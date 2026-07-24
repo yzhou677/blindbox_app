@@ -1,6 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 import type { ImageEmbeddingConfig } from './imageEmbeddingConfig';
 import type { ImageEmbeddingClient, StoredImage } from './imageEmbeddingTypes';
+import { measureScanStage, measureScanStageSync } from './scanTiming';
 
 type EmbedContentClient = {
   models: {
@@ -36,7 +37,7 @@ export class GoogleImageEmbeddingClient implements ImageEmbeddingClient {
   }
 
   async embed(image: StoredImage): Promise<number[]> {
-    const response = await this.client.models.embedContent({
+    const request = measureScanStageSync('embedding_request_serialization', () => ({
       model: this.config.model,
       contents: {
         parts: [
@@ -49,8 +50,9 @@ export class GoogleImageEmbeddingClient implements ImageEmbeddingClient {
         ],
       },
       config: { outputDimensionality: this.config.outputDimension },
-    });
-    const values = response.embeddings?.[0]?.values;
+    }));
+    const response = await measureScanStage('embedding_api_wait', () => this.client.models.embedContent(request));
+    const values = measureScanStageSync('embedding_response_parsing', () => response.embeddings?.[0]?.values);
     if (!values) throw new Error('Embedding response did not contain a vector');
     return values;
   }

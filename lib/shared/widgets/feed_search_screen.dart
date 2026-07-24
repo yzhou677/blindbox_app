@@ -3,6 +3,7 @@ import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_history_section.dart';
 import 'package:blindbox_app/shared/widgets/app_search_field.dart';
+import 'package:blindbox_app/shared/image/catalog_photo_acquisition.dart';
 import 'package:flutter/material.dart';
 
 /// Full-screen search shell shared by Discover catalog browse and Market browse.
@@ -34,6 +35,7 @@ class FeedSearchScreen extends StatelessWidget {
     this.onBack,
     this.onSubmitted,
     this.historySection,
+    this.onImageSelected,
   });
 
   final String title;
@@ -49,6 +51,7 @@ class FeedSearchScreen extends StatelessWidget {
 
   /// Called when the user presses the keyboard Search/Done action.
   final VoidCallback? onSubmitted;
+  final ValueChanged<CatalogPhotoSelection>? onImageSelected;
 
   /// Optional widget shown below the search field when the trimmed query is empty.
   /// Typically a [CatalogSearchHistorySection]. Rendered instead of [emptyPrompt]
@@ -100,6 +103,7 @@ class FeedSearchScreen extends StatelessWidget {
               hintText: hintText,
               onChanged: onChanged,
               onSubmitted: onSubmitted,
+              onImageSelected: onImageSelected,
               suffixIcon: ValueListenableBuilder<TextEditingValue>(
                 valueListenable: controller,
                 builder: (context, value, _) {

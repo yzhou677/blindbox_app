@@ -1,5 +1,8 @@
 # Figure Recognition Labeled Evaluation
 
+> **Historical / tooling.** Developer evaluation harness. Production policy and
+> UX are documented in [`figure-recognition.md`](figure-recognition.md).
+
 This developer-only tool runs the existing Figure Recognition pipeline over a
 local labeled photo set. Its purpose is to collect evidence for later retrieval
 policy calibration. It does not choose thresholds, train a model, change

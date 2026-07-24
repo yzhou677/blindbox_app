@@ -11,7 +11,7 @@ import readerModule from '../lib/figureRecognition/firebaseStorageImageReader.js
 import providerModule from '../lib/figureRecognition/createImageEmbeddingProvider.js';
 import configModule from '../lib/figureRecognition/imageEmbeddingConfig.js';
 
-const { parseCatalogEmbeddingArgs, createStartupDiagnostic } = cliModule;
+const { parseCatalogEmbeddingArgs, optionsForCatalogEmbeddingExecute, createStartupDiagnostic } = cliModule;
 const { CatalogEmbeddingJob } = jobModule;
 const { FirestoreCatalogFigureSource } = sourceModule;
 const { FirebaseCatalogImageResolver } = resolverModule;
@@ -66,7 +66,7 @@ try {
     process.exit(0);
   }
   phase = 'execution';
-  const summary = await job.execute(plan);
+  const summary = await job.execute(plan, optionsForCatalogEmbeddingExecute(options));
   console.log(JSON.stringify(summary));
   if (summary.failed > 0) process.exitCode = 1;
 } catch (error) {

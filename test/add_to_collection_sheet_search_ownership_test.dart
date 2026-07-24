@@ -126,6 +126,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(AddSeriesCatalogCopy.browseHeading), findsOneWidget);
+    expect(find.byKey(const Key('catalog-photo-action')), findsOneWidget);
     expect(find.text('Latest releases'), findsNothing);
 
     await tester.pumpWidget(const SizedBox.shrink());
