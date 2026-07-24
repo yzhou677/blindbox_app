@@ -1,8 +1,11 @@
+import 'package:blindbox_app/core/theme/collectible_motion.dart';
+import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
 import 'package:flutter/material.dart';
 
 /// Universal circular quick action for catalog-like cards.
 ///
 /// Discover uses this for save hearts; Wishlist uses it for remove actions.
+/// Favorite state: same glyph + [filled] / [active] color — not a border glyph.
 class CatalogQuickActionButton extends StatefulWidget {
   const CatalogQuickActionButton({
     super.key,
@@ -11,6 +14,7 @@ class CatalogQuickActionButton extends StatefulWidget {
     required this.onPressed,
     this.semanticsLabel,
     this.active = false,
+    this.filled = false,
   });
 
   final String tooltip;
@@ -19,13 +23,15 @@ class CatalogQuickActionButton extends StatefulWidget {
   final String? semanticsLabel;
   final bool active;
 
+  /// Solid Material Symbols fill when true (e.g. wishlisted heart).
+  final bool filled;
+
   @override
   State<CatalogQuickActionButton> createState() =>
       _CatalogQuickActionButtonState();
 }
 
 class _CatalogQuickActionButtonState extends State<CatalogQuickActionButton> {
-  static const _pressDuration = Duration(milliseconds: 120);
   bool _pressed = false;
 
   void _setPressed(bool pressed) {
@@ -41,12 +47,12 @@ class _CatalogQuickActionButtonState extends State<CatalogQuickActionButton> {
       button: true,
       label: widget.semanticsLabel ?? widget.tooltip,
       child: SizedBox.square(
-        dimension: 40,
+        dimension: AppIconPadding.quickActionHit,
         child: Center(
           child: AnimatedScale(
-            scale: _pressed ? 0.94 : 1,
-            duration: _pressDuration,
-            curve: Curves.easeOutCubic,
+            scale: _pressed ? CollectibleMotion.pressScale : 1,
+            duration: CollectibleMotion.fast,
+            curve: CollectibleMotion.easeOut,
             child: Listener(
               onPointerDown: (_) => _setPressed(true),
               onPointerCancel: (_) => _setPressed(false),
@@ -54,22 +60,16 @@ class _CatalogQuickActionButtonState extends State<CatalogQuickActionButton> {
               child: IconButton.filledTonal(
                 tooltip: widget.tooltip,
                 onPressed: widget.onPressed,
-                icon: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 220),
-                  switchInCurve: Curves.easeOutCubic,
-                  switchOutCurve: Curves.easeInCubic,
-                  transitionBuilder: (child, animation) {
-                    return FadeTransition(opacity: animation, child: child);
-                  },
-                  child: Icon(
-                    widget.icon,
-                    key: ValueKey<IconData>(widget.icon),
-                    size: 18,
-                  ),
+                icon: Icon(
+                  widget.icon,
+                  size: AppIconSizes.quickAction,
+                  fill: widget.filled
+                      ? ShelfySymbols.fillSolid
+                      : ShelfySymbols.fillOutline,
                 ),
                 style: IconButton.styleFrom(
-                  minimumSize: const Size(32, 32),
-                  fixedSize: const Size(32, 32),
+                  minimumSize: AppIconPadding.quickActionWell,
+                  fixedSize: AppIconPadding.quickActionWell,
                   padding: EdgeInsets.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   visualDensity: VisualDensity.compact,

@@ -256,9 +256,7 @@ class CatalogResolvedImage extends StatelessWidget {
   }
 
   Widget _loadingMat(ColorScheme scheme) {
-    return AppImageShimmer(
-      borderRadius: borderRadius ?? BorderRadius.zero,
-    );
+    return AppImageShimmer(borderRadius: borderRadius ?? BorderRadius.zero);
   }
 
   Widget _placeholder(BorderRadius radius) {

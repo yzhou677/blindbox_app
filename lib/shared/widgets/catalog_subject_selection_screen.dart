@@ -1,9 +1,11 @@
 import 'package:blindbox_app/core/theme/app_spacing.dart';
+import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
 import 'package:blindbox_app/shared/image/catalog_photo_acquisition.dart';
 import 'package:blindbox_app/shared/image/catalog_subject_selection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as image;
+import 'package:material_symbols_icons/symbols.dart';
 
 const catalogDefaultSubjectSelection = Rect.fromLTWH(0.2, 0.2, 0.6, 0.6);
 const _minimumSelectionExtent = 0.12;
@@ -182,7 +184,10 @@ class _CatalogSubjectSelectionScreenState
                       height: 48,
                     ),
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close_rounded),
+                    icon: const Icon(
+                      Symbols.close_rounded,
+                      size: AppIconSizes.navigation,
+                    ),
                   ),
                 ],
               ),
@@ -198,7 +203,7 @@ class _CatalogSubjectSelectionScreenState
                   if (loaded == null) {
                     return Center(
                       child: Icon(
-                        Icons.broken_image_outlined,
+                        Symbols.broken_image_rounded,
                         size: 44,
                         color: scheme.onSurfaceVariant,
                       ),
@@ -285,7 +290,10 @@ class _CatalogSubjectSelectionScreenState
                                   vertical: 4,
                                 ),
                               ),
-                              icon: const Icon(Icons.refresh_rounded, size: 17),
+                              icon: const Icon(
+                                Symbols.refresh_rounded,
+                                size: 17,
+                              ),
                               label: const Text('Reset Selection'),
                             ),
                           ],
@@ -314,8 +322,8 @@ class _AiSuggestionStatus extends StatelessWidget {
       key: const Key('subject-selection-ai-suggestion'),
       children: [
         Icon(
-          Icons.auto_awesome_rounded,
-          size: 18,
+          Symbols.auto_awesome_rounded,
+          size: AppIconSizes.metadata,
           color: colorScheme.onSurfaceVariant,
         ),
         const SizedBox(width: AppSpacing.sm),

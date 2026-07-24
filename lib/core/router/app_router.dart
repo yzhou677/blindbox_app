@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_browse_launch.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_browse_screen.dart';
 import 'package:blindbox_app/features/collection/collection_screen.dart';
@@ -20,10 +21,7 @@ final GoRouter appRouter = GoRouter(
   navigatorKey: rootNavigatorKey,
   initialLocation: '/collection',
   routes: [
-    GoRoute(
-      path: '/',
-      redirect: (context, state) => '/collection',
-    ),
+    GoRoute(path: '/', redirect: (context, state) => '/collection'),
     // Branch order matches bottom nav: Collection (0), Home/Discover (1), Market (2).
     StatefulShellRoute.indexedStack(
       builder: (context, state, shell) => MainShellScaffold(shell: shell),
@@ -42,25 +40,25 @@ final GoRouter appRouter = GoRouter(
                   pageBuilder: (context, state) => CustomTransitionPage<void>(
                     key: state.pageKey,
                     child: const CollectionInsightsScreen(),
-                    transitionDuration: const Duration(milliseconds: 320),
+                    transitionDuration: CollectibleMotion.sectionReveal,
                     transitionsBuilder:
                         (context, animation, secondaryAnimation, child) {
-                      final curved = CurvedAnimation(
-                        parent: animation,
-                        curve: Curves.easeOutCubic,
-                        reverseCurve: Curves.easeInCubic,
-                      );
-                      return FadeTransition(
-                        opacity: curved,
-                        child: SlideTransition(
-                          position: Tween<Offset>(
-                            begin: const Offset(0, 0.04),
-                            end: Offset.zero,
-                          ).animate(curved),
-                          child: child,
-                        ),
-                      );
-                    },
+                          final curved = CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeOutCubic,
+                            reverseCurve: Curves.easeInCubic,
+                          );
+                          return FadeTransition(
+                            opacity: curved,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0, 0.04),
+                                end: Offset.zero,
+                              ).animate(curved),
+                              child: child,
+                            ),
+                          );
+                        },
                   ),
                 ),
               ],
@@ -85,25 +83,25 @@ final GoRouter appRouter = GoRouter(
                           ? state.extra! as CatalogBrowseLaunch
                           : null,
                     ),
-                    transitionDuration: const Duration(milliseconds: 320),
+                    transitionDuration: CollectibleMotion.sectionReveal,
                     transitionsBuilder:
                         (context, animation, secondaryAnimation, child) {
-                      final curved = CurvedAnimation(
-                        parent: animation,
-                        curve: Curves.easeOutCubic,
-                        reverseCurve: Curves.easeInCubic,
-                      );
-                      return FadeTransition(
-                        opacity: curved,
-                        child: SlideTransition(
-                          position: Tween<Offset>(
-                            begin: const Offset(0, 0.04),
-                            end: Offset.zero,
-                          ).animate(curved),
-                          child: child,
-                        ),
-                      );
-                    },
+                          final curved = CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeOutCubic,
+                            reverseCurve: Curves.easeInCubic,
+                          );
+                          return FadeTransition(
+                            opacity: curved,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0, 0.04),
+                                end: Offset.zero,
+                              ).animate(curved),
+                              child: child,
+                            ),
+                          );
+                        },
                   ),
                 ),
                 GoRoute(
@@ -114,23 +112,24 @@ final GoRouter appRouter = GoRouter(
                       key: state.pageKey,
                       child: DropDetailScreen(releaseId: id),
                       transitionDuration: const Duration(milliseconds: 420),
-                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                        final curved = CurvedAnimation(
-                          parent: animation,
-                          curve: Curves.easeOutCubic,
-                          reverseCurve: Curves.easeInCubic,
-                        );
-                        return FadeTransition(
-                          opacity: curved,
-                          child: SlideTransition(
-                            position: Tween<Offset>(
-                              begin: const Offset(0, 0.05),
-                              end: Offset.zero,
-                            ).animate(curved),
-                            child: child,
-                          ),
-                        );
-                      },
+                      transitionsBuilder:
+                          (context, animation, secondaryAnimation, child) {
+                            final curved = CurvedAnimation(
+                              parent: animation,
+                              curve: Curves.easeOutCubic,
+                              reverseCurve: Curves.easeInCubic,
+                            );
+                            return FadeTransition(
+                              opacity: curved,
+                              child: SlideTransition(
+                                position: Tween<Offset>(
+                                  begin: const Offset(0, 0.05),
+                                  end: Offset.zero,
+                                ).animate(curved),
+                                child: child,
+                              ),
+                            );
+                          },
                     );
                   },
                 ),
@@ -152,25 +151,25 @@ final GoRouter appRouter = GoRouter(
                   pageBuilder: (context, state) => CustomTransitionPage<void>(
                     key: state.pageKey,
                     child: const MarketBrowseSearchScreen(),
-                    transitionDuration: const Duration(milliseconds: 320),
+                    transitionDuration: CollectibleMotion.sectionReveal,
                     transitionsBuilder:
                         (context, animation, secondaryAnimation, child) {
-                      final curved = CurvedAnimation(
-                        parent: animation,
-                        curve: Curves.easeOutCubic,
-                        reverseCurve: Curves.easeInCubic,
-                      );
-                      return FadeTransition(
-                        opacity: curved,
-                        child: SlideTransition(
-                          position: Tween<Offset>(
-                            begin: const Offset(0, 0.04),
-                            end: Offset.zero,
-                          ).animate(curved),
-                          child: child,
-                        ),
-                      );
-                    },
+                          final curved = CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeOutCubic,
+                            reverseCurve: Curves.easeInCubic,
+                          );
+                          return FadeTransition(
+                            opacity: curved,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0, 0.04),
+                                end: Offset.zero,
+                              ).animate(curved),
+                              child: child,
+                            ),
+                          );
+                        },
                   ),
                 ),
                 GoRoute(
@@ -181,23 +180,24 @@ final GoRouter appRouter = GoRouter(
                       key: state.pageKey,
                       child: MarketDetailScreen(listingId: id),
                       transitionDuration: const Duration(milliseconds: 420),
-                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                        final curved = CurvedAnimation(
-                          parent: animation,
-                          curve: Curves.easeOutCubic,
-                          reverseCurve: Curves.easeInCubic,
-                        );
-                        return FadeTransition(
-                          opacity: curved,
-                          child: SlideTransition(
-                            position: Tween<Offset>(
-                              begin: const Offset(0, 0.05),
-                              end: Offset.zero,
-                            ).animate(curved),
-                            child: child,
-                          ),
-                        );
-                      },
+                      transitionsBuilder:
+                          (context, animation, secondaryAnimation, child) {
+                            final curved = CurvedAnimation(
+                              parent: animation,
+                              curve: Curves.easeOutCubic,
+                              reverseCurve: Curves.easeInCubic,
+                            );
+                            return FadeTransition(
+                              opacity: curved,
+                              child: SlideTransition(
+                                position: Tween<Offset>(
+                                  begin: const Offset(0, 0.05),
+                                  end: Offset.zero,
+                                ).animate(curved),
+                                child: child,
+                              ),
+                            );
+                          },
                     );
                   },
                 ),

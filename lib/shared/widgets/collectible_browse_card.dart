@@ -49,7 +49,8 @@ class CollectibleBrowseCard extends StatelessWidget {
                   ? (fillColor ?? scheme.surfaceContainerLow)
                   : null,
               border: Border.all(
-                color: borderColor ??
+                color:
+                    borderColor ??
                     scheme.outlineVariant.withValues(alpha: 0.35),
               ),
             ),

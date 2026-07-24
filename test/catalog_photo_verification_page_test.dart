@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as image;
 import 'package:image_picker/image_picker.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 final class _FakeEvaluator implements WholeImageQualityEvaluator {
   _FakeEvaluator(this.outcome);
@@ -405,10 +406,7 @@ void main() {
 
       expect(locator.photos, [same(photo)]);
       expect(find.text('Frame your collectible'), findsOneWidget);
-      expect(
-        find.text('Suggested frame — adjust if you like.'),
-        findsNothing,
-      );
+      expect(find.text('Suggested frame — adjust if you like.'), findsNothing);
       expect(find.byKey(const Key('subject-locator-progress')), findsNothing);
       expect(
         tester.element(find.byType(CatalogPhotoVerificationPage)),
@@ -482,19 +480,13 @@ void main() {
     await tester.pump();
     await tester.pump(CollectibleMotion.crossfade);
     expect(tester.getRect(selectionBox).left, greaterThan(before.left));
-    expect(
-      find.text('Suggested frame — adjust if you like.'),
-      findsNothing,
-    );
+    expect(find.text('Suggested frame — adjust if you like.'), findsNothing);
 
     await tester.ensureVisible(find.text('Reset Selection'));
     await tester.tap(find.text('Reset Selection'));
     await tester.pump();
     await tester.pump(CollectibleMotion.crossfade);
-    expect(
-      find.text('Suggested frame — adjust if you like.'),
-      findsOneWidget,
-    );
+    expect(find.text('Suggested frame — adjust if you like.'), findsOneWidget);
 
     final imageRect = tester.getRect(
       find.byKey(const Key('subject-selection-image')),
@@ -505,10 +497,7 @@ void main() {
     );
     await tester.pump();
     await tester.pump(CollectibleMotion.crossfade);
-    expect(
-      find.text('Suggested frame — adjust if you like.'),
-      findsNothing,
-    );
+    expect(find.text('Suggested frame — adjust if you like.'), findsNothing);
     expect(locator.calls, 1);
   });
 
@@ -543,10 +532,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 250));
 
     expect(tester.getRect(selectionBox), edited);
-    expect(
-      find.text('Suggested frame — adjust if you like.'),
-      findsNothing,
-    );
+    expect(find.text('Suggested frame — adjust if you like.'), findsNothing);
   });
 
   testWidgets(
@@ -767,7 +753,9 @@ void main() {
     },
   );
 
-  testWidgets('scan titles reuse Shelfy sheet typography roles', (tester) async {
+  testWidgets('scan titles reuse Shelfy sheet typography roles', (
+    tester,
+  ) async {
     final gateway = _PendingRecognitionGateway();
     await _pumpHost(
       tester,
@@ -842,10 +830,7 @@ void main() {
     await tester.pump(CollectibleMotion.recognitionFindingMatchedSettle);
     await tester.pump();
     expect(find.text('We found a close match'), findsOneWidget);
-    expect(
-      find.byKey(const Key('recognition-finding-progress')),
-      findsNothing,
-    );
+    expect(find.byKey(const Key('recognition-finding-progress')), findsNothing);
     final resultsTitle = tester.widget<Text>(
       find.text('We found a close match'),
     );
@@ -964,119 +949,118 @@ void main() {
       expect(
         find.descendant(
           of: find.byKey(const Key('recognition-finding-step-4')),
-          matching: find.byIcon(Icons.remove_rounded),
+          matching: find.byIcon(Symbols.remove_rounded),
         ),
         findsOneWidget,
       );
       expect(
         find.descendant(
           of: find.byKey(const Key('recognition-finding-step-4')),
-          matching: find.byIcon(Icons.check_rounded),
+          matching: find.byIcon(Symbols.check_rounded),
         ),
         findsNothing,
       );
     },
   );
 
-  testWidgets(
-    'no-match keeps checklist continuity and finding photo size',
-    (tester) async {
-      final gateway = _PendingRecognitionGateway();
-      await _pumpHost(
-        tester,
-        recognitionCoordinator: CatalogFigureRecognitionCoordinator(gateway),
-      );
-      await tester.tap(find.text('Acquire'));
-      await _settlePhotoLoad(tester);
-      await tester.tap(find.text('Use This Photo'));
-      await _settleFraming(tester);
-      await tester.tap(find.text('Continue'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 1));
+  testWidgets('no-match keeps checklist continuity and finding photo size', (
+    tester,
+  ) async {
+    final gateway = _PendingRecognitionGateway();
+    await _pumpHost(
+      tester,
+      recognitionCoordinator: CatalogFigureRecognitionCoordinator(gateway),
+    );
+    await tester.tap(find.text('Acquire'));
+    await _settlePhotoLoad(tester);
+    await tester.tap(find.text('Use This Photo'));
+    await _settleFraming(tester);
+    await tester.tap(find.text('Continue'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1));
 
-      final findingCrop = tester.getSize(
-        find.byKey(const ValueKey('recognition-crop-slot')),
-      );
-      expect(find.text('Checking silhouette…'), findsOneWidget);
+    final findingCrop = tester.getSize(
+      find.byKey(const ValueKey('recognition-crop-slot')),
+    );
+    expect(find.text('Checking silhouette…'), findsOneWidget);
 
-      gateway.pending.complete(const CatalogRecognitionNoConfidentMatch());
-      await tester.pumpAndSettle();
+    gateway.pending.complete(const CatalogRecognitionNoConfidentMatch());
+    await tester.pumpAndSettle();
 
-      expect(
-        find.byKey(const Key('recognition-finding-checklist')),
-        findsOneWidget,
-      );
-      expect(find.text('Checking silhouette…'), findsNothing);
-      expect(find.text('Shape analyzed'), findsOneWidget);
-      expect(find.text('Colors analyzed'), findsOneWidget);
-      expect(find.text('Accessories analyzed'), findsOneWidget);
-      expect(find.text('Facial details analyzed'), findsOneWidget);
-      expect(find.text('No close match found.'), findsOneWidget);
-      expect(find.text('Matching with the catalog…'), findsNothing);
-      expect(find.text('Matching completed'), findsNothing);
-      expect(
-        find.descendant(
-          of: find.byKey(const Key('recognition-finding-step-4')),
-          matching: find.byIcon(Icons.remove_rounded),
-        ),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(
-          of: find.byKey(const Key('recognition-finding-step-4')),
-          matching: find.byIcon(Icons.check_rounded),
-        ),
-        findsNothing,
-      );
-      expect(
-        find.descendant(
-          of: find.byKey(const Key('recognition-finding-step-4')),
-          matching: find.byIcon(Icons.close_rounded),
-        ),
-        findsNothing,
-      );
-      expect(
-        tester.getSize(find.byKey(const Key('recognition-finding-checklist')))
-            .width,
-        lessThanOrEqualTo(360),
-      );
-      expect(
-        find.byKey(const Key('recognition-finding-progress')),
-        findsNothing,
-      );
-      expect(find.text('We couldn’t find a close match.'), findsOneWidget);
-      expect(
-        find.text(
-          'We compared your photo with the Shelfy catalog, but couldn’t identify a confident match.',
-        ),
-        findsOneWidget,
-      );
-      expect(
-        tester.getSize(find.byKey(const ValueKey('recognition-crop-slot'))).height,
-        findingCrop.height,
-      );
-      expect(find.text('Try Another Photo'), findsOneWidget);
-      expect(find.text('Adjust Frame'), findsOneWidget);
-      expect(find.text('Create Custom Figure'), findsOneWidget);
-      expect(find.textContaining('%'), findsNothing);
+    expect(
+      find.byKey(const Key('recognition-finding-checklist')),
+      findsOneWidget,
+    );
+    expect(find.text('Checking silhouette…'), findsNothing);
+    expect(find.text('Shape analyzed'), findsOneWidget);
+    expect(find.text('Colors analyzed'), findsOneWidget);
+    expect(find.text('Accessories analyzed'), findsOneWidget);
+    expect(find.text('Facial details analyzed'), findsOneWidget);
+    expect(find.text('No close match found.'), findsOneWidget);
+    expect(find.text('Matching with the catalog…'), findsNothing);
+    expect(find.text('Matching completed'), findsNothing);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('recognition-finding-step-4')),
+        matching: find.byIcon(Symbols.remove_rounded),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('recognition-finding-step-4')),
+        matching: find.byIcon(Symbols.check_rounded),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('recognition-finding-step-4')),
+        matching: find.byIcon(Symbols.close_rounded),
+      ),
+      findsNothing,
+    );
+    expect(
+      tester
+          .getSize(find.byKey(const Key('recognition-finding-checklist')))
+          .width,
+      lessThanOrEqualTo(360),
+    );
+    expect(find.byKey(const Key('recognition-finding-progress')), findsNothing);
+    expect(find.text('We couldn’t find a close match.'), findsOneWidget);
+    expect(
+      find.text(
+        'We compared your photo with the Shelfy catalog, but couldn’t identify a confident match.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      tester
+          .getSize(find.byKey(const ValueKey('recognition-crop-slot')))
+          .height,
+      findingCrop.height,
+    );
+    expect(find.text('Try Another Photo'), findsOneWidget);
+    expect(find.text('Adjust Frame'), findsOneWidget);
+    expect(find.text('Create Custom Figure'), findsOneWidget);
+    expect(find.textContaining('%'), findsNothing);
 
-      // Soften after settle — checklist remains, not removed.
-      final faded = tester.widget<AnimatedOpacity>(
-        find.ancestor(
-          of: find.byKey(const Key('recognition-finding-checklist')),
-          matching: find.byType(AnimatedOpacity),
-        ),
-      );
-      expect(
-        faded.opacity,
-        CollectibleMotion.recognitionFindingNoMatchChecklistOpacity,
-      );
-      expect(
-        find.byKey(const Key('recognition-finding-checklist')),
-        findsOneWidget,
-      );
-    },
-  );
+    // Soften after settle — checklist remains, not removed.
+    final faded = tester.widget<AnimatedOpacity>(
+      find.ancestor(
+        of: find.byKey(const Key('recognition-finding-checklist')),
+        matching: find.byType(AnimatedOpacity),
+      ),
+    );
+    expect(
+      faded.opacity,
+      CollectibleMotion.recognitionFindingNoMatchChecklistOpacity,
+    );
+    expect(
+      find.byKey(const Key('recognition-finding-checklist')),
+      findsOneWidget,
+    );
+  });
 
   testWidgets(
     'early recognition result settles Matching as ⊖ with no-match subtitle',
@@ -1103,14 +1087,14 @@ void main() {
       expect(
         find.descendant(
           of: find.byKey(const Key('recognition-finding-step-4')),
-          matching: find.byIcon(Icons.remove_rounded),
+          matching: find.byIcon(Symbols.remove_rounded),
         ),
         findsOneWidget,
       );
       expect(
         find.descendant(
           of: find.byKey(const Key('recognition-finding-step-4')),
-          matching: find.byIcon(Icons.check_rounded),
+          matching: find.byIcon(Symbols.check_rounded),
         ),
         findsNothing,
       );
@@ -1139,10 +1123,7 @@ void main() {
       await tester.pump();
 
       expect(find.text('Finding your collectible'), findsOneWidget);
-      expect(
-        find.text('Comparing with the Shelfy catalog.'),
-        findsOneWidget,
-      );
+      expect(find.text('Comparing with the Shelfy catalog.'), findsOneWidget);
       expect(
         find.byKey(const Key('recognition-finding-progress')),
         findsOneWidget,
@@ -1154,8 +1135,8 @@ void main() {
       expect(find.text('Shape'), findsOneWidget);
       expect(find.text('Checking silhouette…'), findsOneWidget);
       expect(find.byType(ListTile), findsNothing);
-      expect(find.byIcon(Icons.chevron_right), findsNothing);
-      expect(find.byIcon(Icons.chevron_right_rounded), findsNothing);
+      expect(find.byIcon(Symbols.chevron_right), findsNothing);
+      expect(find.byIcon(Symbols.chevron_right_rounded), findsNothing);
       expect(
         find.byKey(const Key('recognition-selected-crop-preview')),
         findsOneWidget,
@@ -1210,21 +1191,21 @@ void main() {
       expect(
         find.descendant(
           of: find.byKey(const Key('recognition-finding-step-0')),
-          matching: find.byIcon(Icons.check_rounded),
+          matching: find.byIcon(Symbols.check_rounded),
         ),
         findsNothing,
       );
       expect(
         find.descendant(
           of: find.byKey(const Key('recognition-finding-step-4')),
-          matching: find.byIcon(Icons.check_rounded),
+          matching: find.byIcon(Symbols.check_rounded),
         ),
         findsNothing,
       );
       expect(
         find.descendant(
           of: find.byKey(const Key('recognition-finding-step-4')),
-          matching: find.byIcon(Icons.remove_rounded),
+          matching: find.byIcon(Symbols.remove_rounded),
         ),
         findsNothing,
       );
@@ -1236,14 +1217,14 @@ void main() {
       expect(
         find.descendant(
           of: find.byKey(const Key('recognition-finding-step-4')),
-          matching: find.byIcon(Icons.check_rounded),
+          matching: find.byIcon(Symbols.check_rounded),
         ),
         findsNothing,
       );
       expect(
         find.descendant(
           of: find.byKey(const Key('recognition-finding-step-3')),
-          matching: find.byIcon(Icons.check_rounded),
+          matching: find.byIcon(Symbols.check_rounded),
         ),
         findsOneWidget,
       );
@@ -1272,7 +1253,7 @@ void main() {
       expect(
         find.descendant(
           of: find.byKey(const Key('recognition-finding-step-4')),
-          matching: find.byIcon(Icons.check_rounded),
+          matching: find.byIcon(Symbols.check_rounded),
         ),
         findsOneWidget,
       );
@@ -1292,127 +1273,123 @@ void main() {
     },
   );
 
-  testWidgets(
-    'needs_review settles Matching as ✓ like high_confidence',
-    (tester) async {
-      final gateway = _PendingRecognitionGateway();
-      await _pumpHost(
-        tester,
-        recognitionCoordinator: CatalogFigureRecognitionCoordinator(gateway),
-      );
-      await tester.tap(find.text('Acquire'));
-      await _settlePhotoLoad(tester);
-      await tester.tap(find.text('Use This Photo'));
-      await _settleFraming(tester);
-      await tester.tap(find.text('Continue'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 1));
+  testWidgets('needs_review settles Matching as ✓ like high_confidence', (
+    tester,
+  ) async {
+    final gateway = _PendingRecognitionGateway();
+    await _pumpHost(
+      tester,
+      recognitionCoordinator: CatalogFigureRecognitionCoordinator(gateway),
+    );
+    await tester.tap(find.text('Acquire'));
+    await _settlePhotoLoad(tester);
+    await tester.tap(find.text('Use This Photo'));
+    await _settleFraming(tester);
+    await tester.tap(find.text('Continue'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1));
 
-      await tester.pump(CollectibleMotion.recognitionFindingFacialComplete);
-      await tester.pump();
-      expect(find.text('Matching with the catalog…'), findsOneWidget);
+    await tester.pump(CollectibleMotion.recognitionFindingFacialComplete);
+    await tester.pump();
+    expect(find.text('Matching with the catalog…'), findsOneWidget);
 
-      gateway.pending.complete(
-        const CatalogRecognitionCandidates(
-          quality: CatalogSubjectQuality.good,
-          decision: CatalogRecognitionDecision.needsReview,
-          candidates: [
-            CatalogRecognitionCandidate(
-              rank: 1,
-              figureId: 'figure-a',
-              figureName: 'Alpha Figure',
-              seriesId: 'series-a',
-              seriesName: 'Series A',
-              ipId: 'ip-a',
-              ipName: 'IP A',
-              imageKey: 'figure-a',
-            ),
-            CatalogRecognitionCandidate(
-              rank: 2,
-              figureId: 'figure-b',
-              figureName: 'Beta Figure',
-              seriesId: 'series-b',
-              seriesName: 'Series B',
-              ipId: 'ip-b',
-              ipName: 'IP B',
-              imageKey: 'figure-b',
-            ),
-          ],
-        ),
-      );
-      await tester.pump();
-      await tester.pump(CollectibleMotion.recognitionFindingStatusCrossfade);
-      expect(
-        find.descendant(
-          of: find.byKey(const Key('recognition-finding-step-4')),
-          matching: find.byIcon(Icons.check_rounded),
-        ),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(
-          of: find.byKey(const Key('recognition-finding-step-4')),
-          matching: find.byIcon(Icons.remove_rounded),
-        ),
-        findsNothing,
-      );
-      expect(find.text('Matching completed'), findsOneWidget);
+    gateway.pending.complete(
+      const CatalogRecognitionCandidates(
+        quality: CatalogSubjectQuality.good,
+        decision: CatalogRecognitionDecision.needsReview,
+        candidates: [
+          CatalogRecognitionCandidate(
+            rank: 1,
+            figureId: 'figure-a',
+            figureName: 'Alpha Figure',
+            seriesId: 'series-a',
+            seriesName: 'Series A',
+            ipId: 'ip-a',
+            ipName: 'IP A',
+            imageKey: 'figure-a',
+          ),
+          CatalogRecognitionCandidate(
+            rank: 2,
+            figureId: 'figure-b',
+            figureName: 'Beta Figure',
+            seriesId: 'series-b',
+            seriesName: 'Series B',
+            ipId: 'ip-b',
+            ipName: 'IP B',
+            imageKey: 'figure-b',
+          ),
+        ],
+      ),
+    );
+    await tester.pump();
+    await tester.pump(CollectibleMotion.recognitionFindingStatusCrossfade);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('recognition-finding-step-4')),
+        matching: find.byIcon(Symbols.check_rounded),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('recognition-finding-step-4')),
+        matching: find.byIcon(Symbols.remove_rounded),
+      ),
+      findsNothing,
+    );
+    expect(find.text('Matching completed'), findsOneWidget);
 
-      await tester.pump(CollectibleMotion.recognitionFindingMatchedSettle);
-      await tester.pump();
-      expect(find.text('We found a few close matches'), findsOneWidget);
-      expect(find.text('Best Match'), findsOneWidget);
-    },
-  );
+    await tester.pump(CollectibleMotion.recognitionFindingMatchedSettle);
+    await tester.pump();
+    expect(find.text('We found a few close matches'), findsOneWidget);
+    expect(find.text('Best Match'), findsOneWidget);
+  });
 
-  testWidgets(
-    'no_confident_match settles Matching as ⊖ not ✓',
-    (tester) async {
-      final gateway = _PendingRecognitionGateway();
-      await _pumpHost(
-        tester,
-        recognitionCoordinator: CatalogFigureRecognitionCoordinator(gateway),
-      );
-      await tester.tap(find.text('Acquire'));
-      await _settlePhotoLoad(tester);
-      await tester.tap(find.text('Use This Photo'));
-      await _settleFraming(tester);
-      await tester.tap(find.text('Continue'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 1));
+  testWidgets('no_confident_match settles Matching as ⊖ not ✓', (tester) async {
+    final gateway = _PendingRecognitionGateway();
+    await _pumpHost(
+      tester,
+      recognitionCoordinator: CatalogFigureRecognitionCoordinator(gateway),
+    );
+    await tester.tap(find.text('Acquire'));
+    await _settlePhotoLoad(tester);
+    await tester.tap(find.text('Use This Photo'));
+    await _settleFraming(tester);
+    await tester.tap(find.text('Continue'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1));
 
-      await tester.pump(CollectibleMotion.recognitionFindingFacialComplete);
-      await tester.pump();
-      expect(find.text('Matching with the catalog…'), findsOneWidget);
+    await tester.pump(CollectibleMotion.recognitionFindingFacialComplete);
+    await tester.pump();
+    expect(find.text('Matching with the catalog…'), findsOneWidget);
 
-      gateway.pending.complete(const CatalogRecognitionNoConfidentMatch());
-      await tester.pumpAndSettle();
-      expect(
-        find.descendant(
-          of: find.byKey(const Key('recognition-finding-step-4')),
-          matching: find.byIcon(Icons.remove_rounded),
-        ),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(
-          of: find.byKey(const Key('recognition-finding-step-4')),
-          matching: find.byIcon(Icons.check_rounded),
-        ),
-        findsNothing,
-      );
-      expect(find.text('No close match found.'), findsOneWidget);
-      expect(find.text('Matching completed'), findsNothing);
-      // Earlier analysis steps remain successfully completed.
-      expect(
-        find.descendant(
-          of: find.byKey(const Key('recognition-finding-step-0')),
-          matching: find.byIcon(Icons.check_rounded),
-        ),
-        findsOneWidget,
-      );
-    },
-  );
+    gateway.pending.complete(const CatalogRecognitionNoConfidentMatch());
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('recognition-finding-step-4')),
+        matching: find.byIcon(Symbols.remove_rounded),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('recognition-finding-step-4')),
+        matching: find.byIcon(Symbols.check_rounded),
+      ),
+      findsNothing,
+    );
+    expect(find.text('No close match found.'), findsOneWidget);
+    expect(find.text('Matching completed'), findsNothing);
+    // Earlier analysis steps remain successfully completed.
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('recognition-finding-step-0')),
+        matching: find.byIcon(Symbols.check_rounded),
+      ),
+      findsOneWidget,
+    );
+  });
 
   testWidgets(
     'borderline candidates remain in the single loading and recognition attempt',
@@ -1489,7 +1466,9 @@ void main() {
     expect(find.text('We found a few close matches'), findsOneWidget);
     expect(find.text('This Is It'), findsNothing);
     expect(find.byKey(const Key('catalog-photo-confirmation')), findsOneWidget);
-    final candidate = find.byKey(const Key('recognition-candidate-figure-test'));
+    final candidate = find.byKey(
+      const Key('recognition-candidate-figure-test'),
+    );
     tester.widget<CollectibleBrowseCard>(candidate).onTap();
     await tester.pump();
     await tester.pump(CollectibleMotion.crossfade);
@@ -1517,10 +1496,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('Finding your collectible'), findsOneWidget);
-    expect(
-      find.text('Comparing with the Shelfy catalog.'),
-      findsOneWidget,
-    );
+    expect(find.text('Comparing with the Shelfy catalog.'), findsOneWidget);
     expect(
       find.byKey(const Key('recognition-finding-progress')),
       findsOneWidget,
@@ -1594,13 +1570,13 @@ void main() {
       find.byKey(const Key('recognition-finding-crop-shimmer')),
       findsNothing,
     );
-    expect(
-      find.byKey(const Key('recognition-finding-progress')),
-      findsNothing,
-    );
+    expect(find.byKey(const Key('recognition-finding-progress')), findsNothing);
     expect(find.textContaining('%'), findsNothing);
     expect(find.text('Best Match'), findsOneWidget);
-    expect(find.byKey(const Key('recognition-best-match-label')), findsOneWidget);
+    expect(
+      find.byKey(const Key('recognition-best-match-label')),
+      findsOneWidget,
+    );
 
     final firstCard = find.byKey(const Key('recognition-candidate-figure-a'));
     final secondCard = find.byKey(const Key('recognition-candidate-figure-b'));
@@ -1617,24 +1593,15 @@ void main() {
       lessThan(tester.getTopLeft(thirdCard).dy),
     );
     expect(
-      find.descendant(
-        of: firstCard,
-        matching: find.text('Best Match'),
-      ),
+      find.descendant(of: firstCard, matching: find.text('Best Match')),
       findsOneWidget,
     );
     expect(
-      find.descendant(
-        of: secondCard,
-        matching: find.text('Best Match'),
-      ),
+      find.descendant(of: secondCard, matching: find.text('Best Match')),
       findsNothing,
     );
     expect(
-      find.descendant(
-        of: thirdCard,
-        matching: find.text('Best Match'),
-      ),
+      find.descendant(of: thirdCard, matching: find.text('Best Match')),
       findsNothing,
     );
 
@@ -1656,7 +1623,9 @@ void main() {
     expect(find.text('Create Custom Figure'), findsOneWidget);
   });
 
-  testWidgets('no-match and failure do not fire success haptic', (tester) async {
+  testWidgets('no-match and failure do not fire success haptic', (
+    tester,
+  ) async {
     var haptics = 0;
     final noMatchGateway = _FakeRecognitionGateway(
       const CatalogRecognitionNoConfidentMatch(),
@@ -1677,10 +1646,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     expect(haptics, 0);
     expect(find.text('Best Match'), findsNothing);
-    expect(
-      find.byKey(const Key('recognition-finding-progress')),
-      findsNothing,
-    );
+    expect(find.byKey(const Key('recognition-finding-progress')), findsNothing);
     await tester.tap(find.byKey(const Key('catalog-photo-close')));
     await tester.pumpAndSettle();
 
@@ -1704,10 +1670,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(haptics, 0);
-    expect(
-      find.byKey(const Key('recognition-finding-progress')),
-      findsNothing,
-    );
+    expect(find.byKey(const Key('recognition-finding-progress')), findsNothing);
   });
 
   testWidgets('no-match copy stays human and offers Create Custom Figure', (
@@ -1728,10 +1691,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    expect(
-      find.text('We couldn’t find a close match.'),
-      findsOneWidget,
-    );
+    expect(find.text('We couldn’t find a close match.'), findsOneWidget);
     expect(
       find.text(
         'We compared your photo with the Shelfy catalog, but couldn’t identify a confident match.',
@@ -1779,47 +1739,48 @@ void main() {
     );
   });
 
-  testWidgets(
-    'Retry starts a fresh finding checklist sequence',
-    (tester) async {
-      final gateway = _MultiPendingRecognitionGateway();
-      await _pumpHost(
-        tester,
-        recognitionCoordinator: CatalogFigureRecognitionCoordinator(gateway),
-      );
-      await tester.tap(find.text('Acquire'));
-      await _settlePhotoLoad(tester);
-      await tester.tap(find.text('Use This Photo'));
-      await _settleFraming(tester);
-      await tester.tap(find.text('Continue'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 1));
-      await tester.pump(CollectibleMotion.recognitionFindingShapeComplete);
-      await tester.pump();
-      expect(find.text('Checking colors…'), findsOneWidget);
+  testWidgets('Retry starts a fresh finding checklist sequence', (
+    tester,
+  ) async {
+    final gateway = _MultiPendingRecognitionGateway();
+    await _pumpHost(
+      tester,
+      recognitionCoordinator: CatalogFigureRecognitionCoordinator(gateway),
+    );
+    await tester.tap(find.text('Acquire'));
+    await _settlePhotoLoad(tester);
+    await tester.tap(find.text('Use This Photo'));
+    await _settleFraming(tester);
+    await tester.tap(find.text('Continue'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1));
+    await tester.pump(CollectibleMotion.recognitionFindingShapeComplete);
+    await tester.pump();
+    expect(find.text('Checking colors…'), findsOneWidget);
 
-      gateway.completeNext(const CatalogRecognitionFailure(
+    gateway.completeNext(
+      const CatalogRecognitionFailure(
         kind: CatalogRecognitionFailureKind.appCheckRejected,
-      ));
-      await tester.pumpAndSettle();
-      expect(find.text('Scan unavailable'), findsOneWidget);
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Scan unavailable'), findsOneWidget);
 
-      await tester.tap(find.text('Retry'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 1));
-      expect(find.text('Checking silhouette…'), findsOneWidget);
-      expect(find.text('Checking colors…'), findsNothing);
-      expect(gateway.calls, 2);
+    await tester.tap(find.text('Retry'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1));
+    expect(find.text('Checking silhouette…'), findsOneWidget);
+    expect(find.text('Checking colors…'), findsNothing);
+    expect(gateway.calls, 2);
 
-      gateway.completeNext(const CatalogRecognitionNoConfidentMatch());
-      await tester.pumpAndSettle();
-      expect(
-        find.byKey(const Key('recognition-finding-checklist')),
-        findsOneWidget,
-      );
-      expect(find.text('No close match found.'), findsOneWidget);
-    },
-  );
+    gateway.completeNext(const CatalogRecognitionNoConfidentMatch());
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('recognition-finding-checklist')),
+      findsOneWidget,
+    );
+    expect(find.text('No close match found.'), findsOneWidget);
+  });
 
   testWidgets(
     'fatal recognition dependency opens Scan unavailable and Retry reruns only recognition',

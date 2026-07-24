@@ -7,6 +7,7 @@ import 'package:blindbox_app/features/collection/presentation/collection_modal_o
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Anchored main navigation — full-width dock (no ambiguous “floating” hit target).
 class MainShellScaffold extends ConsumerWidget {
@@ -14,20 +15,21 @@ class MainShellScaffold extends ConsumerWidget {
 
   final StatefulNavigationShell shell;
 
-  static const List<NavigationDestination> _destinations = [
+  /// Unselected = outline fill; selected = solid fill — same Rounded family.
+  static final List<NavigationDestination> _destinations = [
     NavigationDestination(
-      icon: Icon(Icons.collections_bookmark_outlined),
-      selectedIcon: Icon(Icons.collections_bookmark_rounded),
+      icon: const Icon(Symbols.collections_bookmark_rounded, fill: 0),
+      selectedIcon: const Icon(Symbols.collections_bookmark_rounded, fill: 1),
       label: 'Collection',
     ),
     NavigationDestination(
-      icon: Icon(Icons.explore_outlined),
-      selectedIcon: Icon(Icons.explore_rounded),
+      icon: const Icon(Symbols.explore_rounded, fill: 0),
+      selectedIcon: const Icon(Symbols.explore_rounded, fill: 1),
       label: 'Discover',
     ),
     NavigationDestination(
-      icon: Icon(Icons.storefront_outlined),
-      selectedIcon: Icon(Icons.storefront_rounded),
+      icon: const Icon(Symbols.storefront_rounded, fill: 0),
+      selectedIcon: const Icon(Symbols.storefront_rounded, fill: 1),
       label: 'Market',
     ),
   ];

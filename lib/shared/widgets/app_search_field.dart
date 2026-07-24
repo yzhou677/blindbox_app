@@ -1,9 +1,11 @@
 import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
+import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
 import 'package:blindbox_app/shared/image/catalog_photo_acquisition.dart';
 import 'package:blindbox_app/shared/widgets/camera_capture_guidance.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Unified luxury search field — Market, Discover, catalog browse, Add Series.
 class AppSearchField extends StatelessWidget {
@@ -22,12 +24,10 @@ class AppSearchField extends StatelessWidget {
     this.suffixIcon,
     this.onImageSelected,
     this.photoAcquirer,
-    this.padding = const EdgeInsets.fromLTRB(
-      AppSpacing.xl,
-      0,
-      AppSpacing.xl,
-      10,
-    ),
+    this.padding,
+
+    /// Discover opt-in: slightly shorter field; other surfaces keep defaults.
+    this.compact = false,
   });
 
   final TextEditingController? controller;
@@ -43,7 +43,8 @@ class AppSearchField extends StatelessWidget {
   final Widget? suffixIcon;
   final ValueChanged<CatalogPhotoSelection>? onImageSelected;
   final CatalogPhotoAcquirer? photoAcquirer;
-  final EdgeInsetsGeometry padding;
+  final EdgeInsetsGeometry? padding;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +53,10 @@ class AppSearchField extends StatelessWidget {
     final contentOpacity = enabled ? 1.0 : 0.44;
     final hintOpacity = enabled ? 0.72 : 0.34;
     final iconOpacity = enabled ? 0.75 : 0.3;
+    final verticalPad = compact ? 10.0 : 14.0;
+    final resolvedPadding =
+        padding ??
+        EdgeInsets.fromLTRB(AppSpacing.xl, 0, AppSpacing.xl, compact ? 8 : 10);
 
     final field = IgnorePointer(
       ignoring: !enabled,
@@ -81,8 +86,8 @@ class AppSearchField extends StatelessWidget {
               fontWeight: FontWeight.w500,
             ),
             prefixIcon: Icon(
-              Icons.search_rounded,
-              size: 22,
+              Symbols.search_rounded,
+              size: AppIconSizes.standard,
               color: scheme.onSurfaceVariant.withValues(alpha: iconOpacity),
             ),
             prefixIconConstraints: const BoxConstraints(
@@ -112,11 +117,11 @@ class AppSearchField extends StatelessWidget {
                 width: 1.5,
               ),
             ),
-            contentPadding: const EdgeInsets.fromLTRB(
+            contentPadding: EdgeInsets.fromLTRB(
               AppSpacing.md,
-              14,
+              verticalPad,
               AppSpacing.md,
-              14,
+              verticalPad,
             ),
             isDense: true,
           ),
@@ -124,7 +129,7 @@ class AppSearchField extends StatelessWidget {
       ),
     );
 
-    return Padding(padding: padding, child: field);
+    return Padding(padding: resolvedPadding, child: field);
   }
 
   Widget? _buildSuffix(BuildContext context, ColorScheme scheme) {
@@ -136,8 +141,11 @@ class AppSearchField extends StatelessWidget {
         IconButton(
           key: const Key('catalog-photo-action'),
           tooltip: 'Scan a collectible',
-          constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-          padding: const EdgeInsets.all(6),
+          constraints: BoxConstraints(
+            minWidth: AppIconPadding.cameraHit.width,
+            minHeight: AppIconPadding.cameraHit.height,
+          ),
+          padding: AppIconPadding.cameraPadding,
           icon: DecoratedBox(
             key: const Key('catalog-photo-action-container'),
             decoration: BoxDecoration(
@@ -145,11 +153,11 @@ class AppSearchField extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: SizedBox.square(
-              dimension: 36,
+              dimension: AppIconPadding.cameraGlyphWell,
               child: Icon(
-                Icons.photo_camera_outlined,
+                Symbols.photo_camera_rounded,
                 key: const Key('catalog-photo-action-icon'),
-                size: 20,
+                size: AppIconSizes.standard,
                 color: scheme.onTertiaryContainer.withValues(alpha: 0.88),
               ),
             ),
@@ -294,13 +302,13 @@ class _PhotoSourceSheet extends StatelessWidget {
                 ),
               ),
               _PhotoSourceRow(
-                icon: Icons.photo_camera_outlined,
+                icon: Symbols.photo_camera_rounded,
                 label: 'Take Photo',
                 onTap: onCamera,
               ),
               const SizedBox(height: 2),
               _PhotoSourceRow(
-                icon: Icons.photo_library_outlined,
+                icon: Symbols.photo_library_rounded,
                 label: 'Choose from Photos',
                 onTap: onGallery,
               ),
@@ -364,8 +372,12 @@ class _PhotoSourceRow extends StatelessWidget {
             child: Row(
               children: [
                 SizedBox.square(
-                  dimension: 36,
-                  child: Icon(icon, size: 23, color: scheme.onSurfaceVariant),
+                  dimension: AppIconPadding.cameraGlyphWell,
+                  child: Icon(
+                    icon,
+                    size: AppIconSizes.standard,
+                    color: scheme.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(

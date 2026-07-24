@@ -1,14 +1,11 @@
 import 'package:blindbox_app/core/theme/collectible_motion.dart';
+import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
 import 'package:flutter/material.dart';
 
 /// One option in a [ShelfySegmentedControl].
 @immutable
 class ShelfySegment<T> {
-  const ShelfySegment({
-    required this.value,
-    required this.label,
-    this.icon,
-  });
+  const ShelfySegment({required this.value, required this.label, this.icon});
 
   final T value;
   final String label;
@@ -28,6 +25,9 @@ class ShelfySegmentedControl<T> extends StatelessWidget {
     this.height = 44,
     this.duration = CollectibleMotion.crossfade,
     this.curve = CollectibleMotion.easeOut,
+
+    /// Collection opt-in: flatter selected thumb, slightly shorter track.
+    this.integrated = false,
   });
 
   final T value;
@@ -39,11 +39,11 @@ class ShelfySegmentedControl<T> extends StatelessWidget {
 
   final Duration duration;
   final Curve curve;
+  final bool integrated;
 
   static const double _trackInset = 3;
   static const double _trackRadius = 14;
   static const double _thumbRadius = 11;
-  static const double _iconSize = 18;
   static const double _iconLabelGap = 8;
   static const double _segmentHorizontalPadding = 6;
 
@@ -72,14 +72,15 @@ class ShelfySegmentedControl<T> extends StatelessWidget {
     final trackColor = scheme.surfaceContainer.withValues(
       alpha: isDark ? 0.72 : 0.88,
     );
-    // Deeper selected thumb for clear purple presence; light onPrimary label
-    // for contrast (mid-tone text on mid-purple was unreadable).
+    // Integrated: softer tonal fill (less raised button). Default: deeper purple.
     final thumbColor = Color.lerp(
       scheme.primaryContainer,
       scheme.primary,
-      isDark ? 0.32 : 0.44,
+      integrated ? (isDark ? 0.18 : 0.26) : (isDark ? 0.32 : 0.44),
     )!;
-    final selectedFg = isDark
+    final selectedFg = integrated
+        ? scheme.onPrimaryContainer.withValues(alpha: isDark ? 0.96 : 0.94)
+        : isDark
         ? scheme.onPrimaryContainer.withValues(alpha: 0.96)
         : scheme.onPrimary.withValues(alpha: 0.98);
     final unselectedFg = scheme.onSurfaceVariant.withValues(alpha: 0.72);
@@ -88,15 +89,23 @@ class ShelfySegmentedControl<T> extends StatelessWidget {
       letterSpacing: 0.08,
       height: 1.05,
     );
+    final resolvedHeight = integrated ? 40.0 : height;
 
     return SizedBox(
       key: const Key('shelfy_segmented_control'),
-      height: height,
+      height: resolvedHeight,
       width: double.infinity,
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: trackColor,
           borderRadius: BorderRadius.circular(_trackRadius),
+          border: integrated
+              ? Border.all(
+                  color: scheme.outlineVariant.withValues(
+                    alpha: isDark ? 0.22 : 0.28,
+                  ),
+                )
+              : null,
         ),
         child: Padding(
           padding: const EdgeInsets.all(_trackInset),
@@ -116,16 +125,18 @@ class ShelfySegmentedControl<T> extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: thumbColor,
                       borderRadius: BorderRadius.circular(_thumbRadius),
-                      boxShadow: [
-                        BoxShadow(
-                          color: scheme.shadow.withValues(
-                            alpha: isDark ? 0.18 : 0.06,
-                          ),
-                          blurRadius: isDark ? 5 : 6,
-                          offset: const Offset(0, 1),
-                          spreadRadius: -1,
-                        ),
-                      ],
+                      boxShadow: integrated
+                          ? null
+                          : [
+                              BoxShadow(
+                                color: scheme.shadow.withValues(
+                                  alpha: isDark ? 0.18 : 0.06,
+                                ),
+                                blurRadius: isDark ? 5 : 6,
+                                offset: const Offset(0, 1),
+                                spreadRadius: -1,
+                              ),
+                            ],
                     ),
                   ),
                 ),
@@ -163,10 +174,7 @@ class ShelfySegmentedControl<T> extends StatelessWidget {
 }
 
 class _SegmentHitTarget extends StatelessWidget {
-  const _SegmentHitTarget({
-    required this.onTap,
-    required this.child,
-  });
+  const _SegmentHitTarget({required this.onTap, required this.child});
 
   final VoidCallback onTap;
   final Widget child;
@@ -227,8 +235,11 @@ class _SegmentContent extends StatelessWidget {
                   if (icon != null) ...[
                     Icon(
                       icon,
-                      size: ShelfySegmentedControl._iconSize,
+                      size: AppIconSizes.metadata,
                       color: c,
+                      fill: selected
+                          ? ShelfySymbols.fillSolid
+                          : ShelfySymbols.fillOutline,
                     ),
                     const SizedBox(width: ShelfySegmentedControl._iconLabelGap),
                   ],

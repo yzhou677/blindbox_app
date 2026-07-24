@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as image;
 import 'package:image_picker/image_picker.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 void main() {
   testWidgets('uses shared Shelfy typography without local text overrides', (
@@ -24,7 +25,7 @@ void main() {
     );
     expect(tester.widget<Text>(find.text('Continue')).style, isNull);
     expect(tester.widget<Text>(find.text('Reset Selection')).style, isNull);
-    expect(tester.widget<Icon>(find.byIcon(Icons.refresh_rounded)).size, 17);
+    expect(tester.widget<Icon>(find.byIcon(Symbols.refresh_rounded)).size, 17);
   });
 
   testWidgets('AI suggestion status appears only until suggestion is edited', (

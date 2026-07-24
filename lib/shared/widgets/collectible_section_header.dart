@@ -1,6 +1,6 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/theme/app_typography.dart';
 import 'package:blindbox_app/core/theme/collectible_tokens.dart';
-import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:flutter/material.dart';
 
 /// Section rhythm: soft lead, title row, optional subtitle deck.
@@ -12,6 +12,9 @@ class CollectibleSectionHeader extends StatelessWidget {
     this.trailing,
     this.titleAccessory,
     this.padding = const EdgeInsets.fromLTRB(20, 0, 20, 0),
+
+    /// Discover opt-in: tighter title → subtitle gap; other surfaces keep default.
+    this.dense = false,
   });
 
   final String title;
@@ -21,6 +24,7 @@ class CollectibleSectionHeader extends StatelessWidget {
   /// Optional lead beside the title (e.g. fire icon for market rails).
   final Widget? titleAccessory;
   final EdgeInsetsGeometry padding;
+  final bool dense;
 
   @override
   Widget build(BuildContext context) {
@@ -28,6 +32,10 @@ class CollectibleSectionHeader extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     final deck = subtitle?.trim();
+    final titleStyle = AppTypography.sectionTitle(textTheme, scheme);
+    final deckStyle = CollectibleTokens.of(
+      context,
+    ).supportiveBody(textTheme, scheme);
 
     return Padding(
       padding: padding,
@@ -46,10 +54,12 @@ class CollectibleSectionHeader extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: CollectibleTypography.shelfSeriesTitle(
-                    textTheme,
-                    scheme,
-                  ),
+                  style: dense
+                      ? titleStyle.copyWith(
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.2,
+                        )
+                      : titleStyle,
                 ),
               ),
               if (trailing case final t?) ...[
@@ -65,12 +75,16 @@ class CollectibleSectionHeader extends StatelessWidget {
             ],
           ),
           if (deck case final d? when d.isNotEmpty) ...[
-            const SizedBox(height: FeedRhythm.sectionTitleToSubtitle),
+            SizedBox(
+              height: dense
+                  ? FeedRhythm.sectionTitleToSubtitle - 3
+                  : FeedRhythm.sectionTitleToSubtitle,
+            ),
             Text(
               d,
-              style: CollectibleTokens.of(
-                context,
-              ).supportiveBody(textTheme, scheme),
+              style: dense
+                  ? deckStyle.copyWith(height: 1.35, letterSpacing: 0.02)
+                  : deckStyle,
             ),
           ],
         ],

@@ -25,9 +25,9 @@ class SeriesHeroMetaBlock extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final ipLabel = shelfIpLabelFromBrandLine(brand: brand, line: ipLine);
     final brandLabel = brand.trim();
-    final showBrand = brandLabel.isNotEmpty &&
-        (ipLabel.isEmpty ||
-            ipLabel.toLowerCase() != brandLabel.toLowerCase());
+    final showBrand =
+        brandLabel.isNotEmpty &&
+        (ipLabel.isEmpty || ipLabel.toLowerCase() != brandLabel.toLowerCase());
 
     final topGap = switch (density) {
       SeriesHeroMetaDensity.sheet => 5.0,
@@ -52,7 +52,9 @@ class SeriesHeroMetaBlock extends StatelessWidget {
             height: density == SeriesHeroMetaDensity.sheet ? 1.28 : null,
           );
 
-    final sheetMetaHeight = density == SeriesHeroMetaDensity.sheet ? 1.32 : 1.25;
+    final sheetMetaHeight = density == SeriesHeroMetaDensity.sheet
+        ? 1.32
+        : 1.25;
 
     final brandStyle = density == SeriesHeroMetaDensity.hero
         ? CollectibleTypography.seriesBrandLine(textTheme, scheme)

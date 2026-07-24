@@ -42,18 +42,27 @@ class ImagePickerCatalogPhotoAcquirer implements CatalogPhotoAcquirer {
     );
     if (file == null) return null;
     final length = await file.length();
-    if (length <= 0) throw const FormatException('The selected image is empty.');
+    if (length <= 0)
+      throw const FormatException('The selected image is empty.');
     final mimeType = file.mimeType?.toLowerCase();
     final path = file.path.toLowerCase();
-    final supportedMime = mimeType == null || const {
-      'image/jpeg',
-      'image/png',
-      'image/webp',
-      'image/heic',
-      'image/heif',
-    }.contains(mimeType);
-    final supportedExtension = const ['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif']
-        .any(path.endsWith);
+    final supportedMime =
+        mimeType == null ||
+        const {
+          'image/jpeg',
+          'image/png',
+          'image/webp',
+          'image/heic',
+          'image/heif',
+        }.contains(mimeType);
+    final supportedExtension = const [
+      '.jpg',
+      '.jpeg',
+      '.png',
+      '.webp',
+      '.heic',
+      '.heif',
+    ].any(path.endsWith);
     if (!supportedMime || (mimeType == null && !supportedExtension)) {
       throw const FormatException('That image format is not supported.');
     }
