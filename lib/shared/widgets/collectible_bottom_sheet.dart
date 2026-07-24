@@ -19,8 +19,7 @@ class CollectibleSheetScope extends InheritedWidget {
   final ScrollController scrollController;
 
   static CollectibleSheetScope? maybeOf(BuildContext context) {
-    return context
-        .dependOnInheritedWidgetOfExactType<CollectibleSheetScope>();
+    return context.dependOnInheritedWidgetOfExactType<CollectibleSheetScope>();
   }
 
   static ScrollController? scrollControllerOf(BuildContext context) {
@@ -35,9 +34,7 @@ class CollectibleSheetScope extends InheritedWidget {
 
 /// Scroll physics for sheet lists.
 ScrollPhysics collectibleSheetScrollPhysics([ScrollPhysics? parent]) {
-  return const ClampingScrollPhysics(
-    parent: AlwaysScrollableScrollPhysics(),
-  );
+  return const ClampingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
 }
 
 /// Sheet scroll body. Optional [header] (handle + title) sits above the list.
@@ -57,7 +54,8 @@ class CollectibleSheetScrollView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scroll = controller ?? CollectibleSheetScope.scrollControllerOf(context);
+    final scroll =
+        controller ?? CollectibleSheetScope.scrollControllerOf(context);
     assert(
       scroll != null,
       'CollectibleSheetScrollView requires a scroll controller '
@@ -167,8 +165,7 @@ Future<T?> showCollectibleBottomSheet<T>({
   final scheme = Theme.of(context).colorScheme;
   final openFraction = resolveCollectibleSheetHeightFactor(
     openScreenFraction: heightFraction,
-    minScreenFraction:
-        minHeightFraction ?? FeedRhythm.sheetMinScreenFraction,
+    minScreenFraction: minHeightFraction ?? FeedRhythm.sheetMinScreenFraction,
     maxScreenFraction: maxHeightFraction ?? heightFraction,
   );
 
@@ -196,10 +193,7 @@ Future<T?> showCollectibleBottomSheet<T>({
 
       return Padding(
         padding: EdgeInsets.only(bottom: viewInsets.bottom),
-        child: _CollectibleSheetHost(
-          height: sheetHeight,
-          child: builder,
-        ),
+        child: _CollectibleSheetHost(height: sheetHeight, child: builder),
       );
     },
   );
@@ -207,10 +201,7 @@ Future<T?> showCollectibleBottomSheet<T>({
 
 /// Owns a [ScrollController] for the sheet body for the lifetime of the modal.
 class _CollectibleSheetHost extends StatefulWidget {
-  const _CollectibleSheetHost({
-    required this.height,
-    required this.child,
-  });
+  const _CollectibleSheetHost({required this.height, required this.child});
 
   final double height;
   final CollectibleSheetWidgetBuilder child;

@@ -1,4 +1,4 @@
-﻿import 'package:blindbox_app/features/catalog/debug/catalog_search_pipeline_trace.dart';
+import 'package:blindbox_app/features/catalog/debug/catalog_search_pipeline_trace.dart';
 import 'package:blindbox_app/core/search/search_matcher.dart';
 import 'package:blindbox_app/core/search/search_normalizer.dart';
 import 'package:blindbox_app/core/search/search_tokenizer.dart';
@@ -17,10 +17,10 @@ import 'package:blindbox_app/features/catalog/search/catalog_search_result.dart'
 /// sources by building the same bundle from JSON.
 final class CatalogSearchService {
   CatalogSearchService(CatalogSeedBundle bundle)
-      : _figures = bundle.figures,
-        _seriesById = {for (final s in bundle.series) s.id: s},
-        _ipById = {for (final i in bundle.ips) i.id: i},
-        _brandById = {for (final b in bundle.brands) b.id: b};
+    : _figures = bundle.figures,
+      _seriesById = {for (final s in bundle.series) s.id: s},
+      _ipById = {for (final i in bundle.ips) i.id: i},
+      _brandById = {for (final b in bundle.brands) b.id: b};
 
   final List<CatalogFigure> _figures;
   final Map<String, CatalogSeries> _seriesById;
@@ -123,20 +123,26 @@ final class CatalogSearchService {
       SearchNormalizer.normalizeForMatch(fig.displayName),
       tokens,
     )) {
-      take(_Rank(
-        _tierFigureSubstring,
-        SearchMatcher.earliestTokenIndex(figureNorm, tokens),
-      ));
+      take(
+        _Rank(
+          _tierFigureSubstring,
+          SearchMatcher.earliestTokenIndex(figureNorm, tokens),
+        ),
+      );
     }
 
     final series = _seriesById[fig.seriesId];
     if (series != null) {
-      final seriesMatch = SearchNormalizer.normalizeForMatch(series.displayName);
+      final seriesMatch = SearchNormalizer.normalizeForMatch(
+        series.displayName,
+      );
       if (SearchMatcher.allTokensMatch(seriesMatch, tokens)) {
-        take(_Rank(
-          _tierSeries,
-          SearchMatcher.earliestTokenIndex(seriesMatch, tokens),
-        ));
+        take(
+          _Rank(
+            _tierSeries,
+            SearchMatcher.earliestTokenIndex(seriesMatch, tokens),
+          ),
+        );
       }
       for (final alias in series.aliases) {
         final a = SearchNormalizer.normalizeForMatch(alias);
@@ -150,10 +156,9 @@ final class CatalogSearchService {
     if (ip != null) {
       final ipMatch = SearchNormalizer.normalizeForMatch(ip.displayName);
       if (SearchMatcher.allTokensMatch(ipMatch, tokens)) {
-        take(_Rank(
-          _tierIpName,
-          SearchMatcher.earliestTokenIndex(ipMatch, tokens),
-        ));
+        take(
+          _Rank(_tierIpName, SearchMatcher.earliestTokenIndex(ipMatch, tokens)),
+        );
       }
       for (final alias in ip.aliases) {
         final a = SearchNormalizer.normalizeForMatch(alias);
@@ -167,10 +172,12 @@ final class CatalogSearchService {
     if (brand != null) {
       final brandMatch = SearchNormalizer.normalizeForMatch(brand.displayName);
       if (SearchMatcher.allTokensMatch(brandMatch, tokens)) {
-        take(_Rank(
-          _tierAlias,
-          SearchMatcher.earliestTokenIndex(brandMatch, tokens),
-        ));
+        take(
+          _Rank(
+            _tierAlias,
+            SearchMatcher.earliestTokenIndex(brandMatch, tokens),
+          ),
+        );
       }
       for (final alias in brand.aliases) {
         final a = SearchNormalizer.normalizeForMatch(alias);
@@ -217,7 +224,8 @@ final class CatalogSearchService {
 }
 
 /// Normalized query string —delegates to [SearchNormalizer] (Search V2).
-String normalizeCatalogSearchQuery(String raw) => SearchNormalizer.normalize(raw);
+String normalizeCatalogSearchQuery(String raw) =>
+    SearchNormalizer.normalize(raw);
 
 class _Rank {
   const _Rank(this.tier, this.indexInHaystack);

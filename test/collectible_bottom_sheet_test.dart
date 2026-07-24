@@ -19,55 +19,58 @@ void main() {
     expect(extents.minChildSize, minScreen);
   });
 
-  testWidgets('showCollectibleBottomSheet uses fixed-height host and route Material', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.light(),
-        home: Builder(
-          builder: (context) {
-            return Scaffold(
-              body: Center(
-                child: FilledButton(
-                  onPressed: () {
-                    showCollectibleBottomSheet<void>(
-                      context: context,
-                      heightFraction: 0.5,
-                      builder: (ctx, scroll) => CollectibleSheetScrollView(
-                        controller: scroll,
-                        slivers: const [
-                          SliverToBoxAdapter(child: Text('Sheet body')),
-                        ],
-                      ),
-                    );
-                  },
-                  child: const Text('Open'),
+  testWidgets(
+    'showCollectibleBottomSheet uses fixed-height host and route Material',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light(),
+          home: Builder(
+            builder: (context) {
+              return Scaffold(
+                body: Center(
+                  child: FilledButton(
+                    onPressed: () {
+                      showCollectibleBottomSheet<void>(
+                        context: context,
+                        heightFraction: 0.5,
+                        builder: (ctx, scroll) => CollectibleSheetScrollView(
+                          controller: scroll,
+                          slivers: const [
+                            SliverToBoxAdapter(child: Text('Sheet body')),
+                          ],
+                        ),
+                      );
+                    },
+                    child: const Text('Open'),
+                  ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
-      ),
-    );
+      );
 
-    await tester.tap(find.text('Open'));
-    await tester.pumpAndSettle();
-    expect(find.text('Sheet body'), findsOneWidget);
-    expect(find.byType(DraggableScrollableSheet), findsNothing);
-    expect(find.byType(CollectibleSheetScrollView), findsOneWidget);
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+      expect(find.text('Sheet body'), findsOneWidget);
+      expect(find.byType(DraggableScrollableSheet), findsNothing);
+      expect(find.byType(CollectibleSheetScrollView), findsOneWidget);
 
-    final sheetMaterial = tester.widget<Material>(
-      find.ancestor(
-        of: find.byType(CollectibleSheetScrollView),
-        matching: find.byType(Material),
-      ).first,
-    );
-    expect(sheetMaterial.color, AppTheme.light().colorScheme.surface);
-    expect(sheetMaterial.elevation, greaterThan(0));
+      final sheetMaterial = tester.widget<Material>(
+        find
+            .ancestor(
+              of: find.byType(CollectibleSheetScrollView),
+              matching: find.byType(Material),
+            )
+            .first,
+      );
+      expect(sheetMaterial.color, AppTheme.light().colorScheme.surface);
+      expect(sheetMaterial.elevation, greaterThan(0));
 
-    await tester.tapAt(const Offset(20, 20));
-    await tester.pumpAndSettle();
-    expect(find.text('Sheet body'), findsNothing);
-  });
+      await tester.tapAt(const Offset(20, 20));
+      await tester.pumpAndSettle();
+      expect(find.text('Sheet body'), findsNothing);
+    },
+  );
 }

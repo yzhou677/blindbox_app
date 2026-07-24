@@ -42,7 +42,9 @@ List<ShelfSeries> shelfSeriesVisibleForBrandFilter(
 ) {
   if (brandFilterId == collectionAnyBrandFilterId) return shelfSeries;
   return shelfSeries
-      .where((series) => collectionBrandFilterKeyForSeries(series) == brandFilterId)
+      .where(
+        (series) => collectionBrandFilterKeyForSeries(series) == brandFilterId,
+      )
       .toList(growable: false);
 }
 
@@ -63,8 +65,11 @@ List<CollectionBrandFilterOption> buildCollectionShelfBrandFilterOptions(
     final aliasLabel = _collectionBrandAliasDisplayByKey[key];
     final brandLabel = series.brand.trim();
     final fallback = series.taxonomyBrandId?.trim() ?? '';
-    final label = aliasLabel ??
-        (brandLabel.isNotEmpty ? brandLabel : (fallback.isNotEmpty ? fallback : key));
+    final label =
+        aliasLabel ??
+        (brandLabel.isNotEmpty
+            ? brandLabel
+            : (fallback.isNotEmpty ? fallback : key));
     options.add((id: key, label: label));
     seen.add(key);
   }

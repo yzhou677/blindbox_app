@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 class _FakePhotoAcquirer implements CatalogPhotoAcquirer {
   _FakePhotoAcquirer({this.result, this.error});
@@ -60,6 +61,28 @@ void main() {
       decoration.contentPadding?.resolve(TextDirection.ltr).left,
       AppSpacing.md,
     );
+  });
+
+  testWidgets('AppSearchField compact uses shorter vertical padding', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: AppSearchField(hintText: 'Search catalog', compact: true),
+        ),
+      ),
+    );
+
+    final field = tester.widget<TextField>(find.byType(TextField));
+    final decoration = field.decoration!;
+    final prefixIcon = decoration.prefixIcon! as Icon;
+
+    expect(
+      decoration.contentPadding,
+      const EdgeInsets.fromLTRB(12, 10, 12, 10),
+    );
+    expect(prefixIcon.size, 22);
   });
 
   testWidgets('AppSearchField disabled state lowers chrome and input opacity', (
@@ -282,7 +305,7 @@ void main() {
         MaterialApp(
           home: Scaffold(
             body: AppSearchField(
-              suffixIcon: const Icon(Icons.close),
+              suffixIcon: const Icon(Symbols.close),
               photoAcquirer: acquirer,
               onImageSelected: (_) {},
             ),

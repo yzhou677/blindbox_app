@@ -25,14 +25,18 @@ void main() {
       ]);
 
       expect(clusters, isNotEmpty);
-      final labubu = clusters.firstWhere((c) => c.label.toLowerCase().contains('labubu'));
+      final labubu = clusters.firstWhere(
+        (c) => c.label.toLowerCase().contains('labubu'),
+      );
       expect(labubu.listingCount, 2);
       expect(labubu.uniqueSellerCount, 2);
     });
 
     test('flags accessory-heavy clusters', () {
       final clusters = clusterer.cluster([
-        const MarketTitleClusterInput(title: 'Labubu Macaron Keychain Charm Lot'),
+        const MarketTitleClusterInput(
+          title: 'Labubu Macaron Keychain Charm Lot',
+        ),
         const MarketTitleClusterInput(title: 'Labubu Macaron Pendant Lanyard'),
       ]);
       expect(clusters.single.likelyAccessoryHeavy, isTrue);
@@ -40,7 +44,9 @@ void main() {
 
     test('ignores singleton listings below minClusterSize', () {
       final clusters = clusterer.cluster([
-        const MarketTitleClusterInput(title: 'Unique One Off Listing Title Here'),
+        const MarketTitleClusterInput(
+          title: 'Unique One Off Listing Title Here',
+        ),
       ]);
       expect(clusters, isEmpty);
     });

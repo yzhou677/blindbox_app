@@ -151,12 +151,12 @@ class _CollectionSeriesCardState extends State<CollectionSeriesCard> {
     final borderColor = isMasterComplete
         ? const Color(0xFFE8C547).withValues(alpha: isDark ? 0.42 : 0.4)
         : isComplete
-            ? Color.lerp(
-                scheme.outlineVariant,
-                const Color(0xFFE8C547),
-                0.35,
-              )!.withValues(alpha: isDark ? 0.4 : 0.45)
-            : scheme.outlineVariant.withValues(alpha: isDark ? 0.32 : 0.38);
+        ? Color.lerp(
+            scheme.outlineVariant,
+            const Color(0xFFE8C547),
+            0.35,
+          )!.withValues(alpha: isDark ? 0.4 : 0.45)
+        : scheme.outlineVariant.withValues(alpha: isDark ? 0.32 : 0.38);
 
     final barColor = isComplete
         ? Color.lerp(
@@ -175,23 +175,19 @@ class _CollectionSeriesCardState extends State<CollectionSeriesCard> {
         title: series.name,
         subtitle: meta,
         titleMaxLines: _compact ? 1 : 2,
-        titleStyle: CollectibleTypography.catalogSeriesRowTitle(
-          textTheme,
-          scheme,
-        ).copyWith(
-          fontSize: _compact ? 13 : null,
-          height: _compact ? 1.2 : null,
-        ),
+        titleStyle:
+            CollectibleTypography.catalogSeriesRowTitle(
+              textTheme,
+              scheme,
+            ).copyWith(
+              fontSize: _compact ? 13 : null,
+              height: _compact ? 1.2 : null,
+            ),
         subtitleStyle: CollectibleTypography.seriesIpLine(
           textTheme,
           scheme,
-        ).copyWith(
-          fontSize: _compact ? 11 : null,
-        ),
-        image: CollectionSeriesThumbnail(
-          series: series,
-          extent: coverExtent,
-        ),
+        ).copyWith(fontSize: _compact ? 11 : null),
+        image: CollectionSeriesThumbnail(series: series, extent: coverExtent),
         footer: isComplete
             ? _CompletedFooter(
                 isMasterComplete: isMasterComplete,
@@ -268,8 +264,10 @@ class _InProgressFooter extends StatelessWidget {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: CollectibleTypography.shelfProgressLine(textTheme, scheme)
-                .copyWith(fontSize: compact ? 11 : null),
+            style: CollectibleTypography.shelfProgressLine(
+              textTheme,
+              scheme,
+            ).copyWith(fontSize: compact ? 11 : null),
           ),
         ],
       ],

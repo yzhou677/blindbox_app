@@ -32,8 +32,14 @@ void main() {
         ],
       );
       final states = {
-        'f1': const TrackedFigure(figureId: 'f1', state: FigureCollectionState.owned),
-        'f2': const TrackedFigure(figureId: 'f2', state: FigureCollectionState.wishlist),
+        'f1': const TrackedFigure(
+          figureId: 'f1',
+          state: FigureCollectionState.owned,
+        ),
+        'f2': const TrackedFigure(
+          figureId: 'f2',
+          state: FigureCollectionState.wishlist,
+        ),
       };
       final p = progressForSeries(series, states);
       expect(p.owned, 1);
@@ -130,7 +136,10 @@ void main() {
       final snap = CollectionSnapshot(
         shelfSeries: [series],
         figureStates: {
-          'a': const TrackedFigure(figureId: 'a', state: FigureCollectionState.owned),
+          'a': const TrackedFigure(
+            figureId: 'a',
+            state: FigureCollectionState.owned,
+          ),
         },
       );
       expect(snap.totalShelfFigures, 2);
@@ -140,60 +149,63 @@ void main() {
       expect(snap.isWarmStart, isFalse);
     });
 
-    test('startedSeriesCount ignores collection rows with zero owned figures', () {
-      final unstarted = testShelfSeries(
-        id: 'unstarted',
-        figures: const [
-          ShelfFigure(
-            id: 'wish',
-            seriesId: 'unstarted',
-            name: 'Wish',
-            rarity: 'Regular',
-            isSecret: false,
-          ),
-        ],
-      );
-      final started = testShelfSeries(
-        id: 'started',
-        figures: const [
-          ShelfFigure(
-            id: 'owned',
-            seriesId: 'started',
-            name: 'Owned',
-            rarity: 'Regular',
-            isSecret: false,
-          ),
-        ],
-      );
+    test(
+      'startedSeriesCount ignores collection rows with zero owned figures',
+      () {
+        final unstarted = testShelfSeries(
+          id: 'unstarted',
+          figures: const [
+            ShelfFigure(
+              id: 'wish',
+              seriesId: 'unstarted',
+              name: 'Wish',
+              rarity: 'Regular',
+              isSecret: false,
+            ),
+          ],
+        );
+        final started = testShelfSeries(
+          id: 'started',
+          figures: const [
+            ShelfFigure(
+              id: 'owned',
+              seriesId: 'started',
+              name: 'Owned',
+              rarity: 'Regular',
+              isSecret: false,
+            ),
+          ],
+        );
 
-      final noStarted = CollectionSnapshot(
-        shelfSeries: [unstarted, started],
-        figureStates: const {
-          'wish': TrackedFigure(
-            figureId: 'wish',
-            state: FigureCollectionState.wishlist,
-          ),
-        },
-      );
-      expect(noStarted.startedSeriesCount, 0);
-      expect(noStarted.unstartedSeriesCount, 2);
+        final noStarted = CollectionSnapshot(
+          shelfSeries: [unstarted, started],
+          figureStates: const {
+            'wish': TrackedFigure(
+              figureId: 'wish',
+              state: FigureCollectionState.wishlist,
+            ),
+          },
+        );
+        expect(noStarted.startedSeriesCount, 0);
+        expect(noStarted.unstartedSeriesCount, 2);
 
-      final oneStarted = CollectionSnapshot(
-        shelfSeries: [unstarted, started],
-        figureStates: const {
-          'wish': TrackedFigure(
-            figureId: 'wish',
-            state: FigureCollectionState.wishlist,
-          ),
-          'owned': TrackedFigure(
-            figureId: 'owned',
-            state: FigureCollectionState.owned,
-          ),
-        },
-      );
-      expect(oneStarted.startedSeriesCount, 1);
-      expect(oneStarted.unstartedSeriesCount, 1);
-    });
+        final oneStarted = CollectionSnapshot(
+          shelfSeries: [unstarted, started],
+          figureStates: const {
+            'wish': TrackedFigure(
+              figureId: 'wish',
+              state: FigureCollectionState.wishlist,
+            ),
+            'owned': TrackedFigure(
+              figureId: 'owned',
+              state: FigureCollectionState.owned,
+            ),
+          },
+        );
+        expect(oneStarted.startedSeriesCount, 1);
+        expect(oneStarted.unstartedSeriesCount, 1);
+      },
+    );
 
     test('showWarmStartBanner when no owned figures', () {
       final snap = CollectionSnapshot(
@@ -229,16 +241,16 @@ void main() {
 
     test('trackedOrDefault returns none for unknown figure', () {
       final snap = CollectionSnapshot.emptyTest();
-      expect(snap.trackedOrDefault('missing').state, FigureCollectionState.none);
+      expect(
+        snap.trackedOrDefault('missing').state,
+        FigureCollectionState.none,
+      );
     });
   });
 
   group('ShelfSeries flags', () {
     test('isCustomLocal and isDropImport', () {
-      expect(
-        testShelfSeries(catalogTemplateId: null).isCustomLocal,
-        isTrue,
-      );
+      expect(testShelfSeries(catalogTemplateId: null).isCustomLocal, isTrue);
       expect(
         ShelfSeries(
           id: 'd1',

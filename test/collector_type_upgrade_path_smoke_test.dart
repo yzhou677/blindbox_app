@@ -41,10 +41,8 @@ const _emptyCatalog = CatalogSeedBundle(
   figures: [],
 );
 
-TrackedFigure _owned(String id) => TrackedFigure(
-      figureId: id,
-      state: FigureCollectionState.owned,
-    );
+TrackedFigure _owned(String id) =>
+    TrackedFigure(figureId: id, state: FigureCollectionState.owned);
 
 /// Scenario 1 shelf: regular-complete + master-complete + incomplete.
 CollectionSnapshot upgradeMixedShelf() {
@@ -148,48 +146,45 @@ CollectionSnapshot noSecretShelf() {
   );
   return CollectionSnapshot(
     shelfSeries: [a, b],
-    figureStates: {
-      'a0': _owned('a0'),
-      'b0': _owned('b0'),
-    },
+    figureStates: {'a0': _owned('a0'), 'b0': _owned('b0')},
   );
 }
 
 /// Scenario 7: 5 series — 3 without Secrets, 2 Secret-bearing Master Complete.
 CollectionSnapshot fullyMasteredSecretShelf() {
   ShelfSeries noSecret(String id) => testShelfSeries(
-        id: id,
-        name: id,
-        figures: [
-          ShelfFigure(
-            id: '${id}_r',
-            seriesId: id,
-            name: 'R',
-            rarity: 'Regular',
-            isSecret: false,
-          ),
-        ],
-      );
+    id: id,
+    name: id,
+    figures: [
+      ShelfFigure(
+        id: '${id}_r',
+        seriesId: id,
+        name: 'R',
+        rarity: 'Regular',
+        isSecret: false,
+      ),
+    ],
+  );
   ShelfSeries withSecret(String id) => testShelfSeries(
-        id: id,
-        name: id,
-        figures: [
-          ShelfFigure(
-            id: '${id}_r',
-            seriesId: id,
-            name: 'R',
-            rarity: 'Regular',
-            isSecret: false,
-          ),
-          ShelfFigure(
-            id: '${id}_s',
-            seriesId: id,
-            name: 'S',
-            rarity: 'Secret',
-            isSecret: true,
-          ),
-        ],
-      );
+    id: id,
+    name: id,
+    figures: [
+      ShelfFigure(
+        id: '${id}_r',
+        seriesId: id,
+        name: 'R',
+        rarity: 'Regular',
+        isSecret: false,
+      ),
+      ShelfFigure(
+        id: '${id}_s',
+        seriesId: id,
+        name: 'S',
+        rarity: 'Secret',
+        isSecret: true,
+      ),
+    ],
+  );
 
   final series = [
     noSecret('ns1'),
@@ -242,9 +237,7 @@ String _legacyMemoryJson({
 }
 
 Future<void> _seedLegacyPrefs(String memoryJson) async {
-  SharedPreferences.setMockInitialValues({
-    'collection_memory_v3': memoryJson,
-  });
+  SharedPreferences.setMockInitialValues({'collection_memory_v3': memoryJson});
   CollectionMemoryStore.instance.resetForTest();
   await CollectionMemoryStore.instance.reloadFromPrefsForTest();
 }
@@ -270,70 +263,69 @@ void main() {
   });
 
   group('Upgrade smoke — existing-user path', () {
-    test('S1 legacy reveal (no stats version) live-derives + needsReveal',
-        () async {
-      final snap = upgradeMixedShelf();
-      final expected = aggregateShelfCompletion(snap);
-      expect(expected.completedSeriesCount, 2);
-      expect(expected.masterCompleteSeriesCount, 1);
-      expect(expected.masterEligibleSeriesCount, 1);
-      expect(expected.regularCompletionPercent, 83);
-      expect(expected.masterCompletionPercent, 100);
+    test(
+      'S1 legacy reveal (no stats version) live-derives + needsReveal',
+      () async {
+        final snap = upgradeMixedShelf();
+        final expected = aggregateShelfCompletion(snap);
+        expect(expected.completedSeriesCount, 2);
+        expect(expected.masterCompleteSeriesCount, 1);
+        expect(expected.masterEligibleSeriesCount, 1);
+        expect(expected.regularCompletionPercent, 83);
+        expect(expected.masterCompletionPercent, 100);
 
-      final sig = computeCollectorTypeSignatureHash(snap);
-      await _seedLegacyPrefs(
-        _legacyMemoryJson(
-          archetypeId: CollectorTypeArchetypeId.hunter.name,
-          signatureHash: sig,
-          // Pre-v2 payload: no tier keys, no version stamp.
-          statsMap: {
-            'totalOwned': 4,
-            'totalWishlist': 0,
-            'trackedSeries': 3,
-            'completionPercent': 40,
-            'secretOwned': 0,
-            'secretSlots': 0,
-            'brandBreakdown': <String, int>{},
-            'topSeries': <String>[],
-            'customSeriesRatio': 0,
-          },
-        ),
-      );
+        final sig = computeCollectorTypeSignatureHash(snap);
+        await _seedLegacyPrefs(
+          _legacyMemoryJson(
+            archetypeId: CollectorTypeArchetypeId.hunter.name,
+            signatureHash: sig,
+            // Pre-v2 payload: no tier keys, no version stamp.
+            statsMap: {
+              'totalOwned': 4,
+              'totalWishlist': 0,
+              'trackedSeries': 3,
+              'completionPercent': 40,
+              'secretOwned': 0,
+              'secretSlots': 0,
+              'brandBreakdown': <String, int>{},
+              'topSeries': <String>[],
+              'customSeriesRatio': 0,
+            },
+          ),
+        );
 
-      final versionBefore =
-          CollectionMemoryStore.instance.cached.collectorTypeStatsVersion;
-      final prefsBefore = await _prefsRaw();
-      expect(versionBefore, isNull);
+        final versionBefore =
+            CollectionMemoryStore.instance.cached.collectorTypeStatsVersion;
+        final prefsBefore = await _prefsRaw();
+        expect(versionBefore, isNull);
 
-      final container = _containerFor(snap);
-      addTearDown(container.dispose);
+        final container = _containerFor(snap);
+        addTearDown(container.dispose);
 
-      final identity = container.read(collectorTypeIdentityProvider);
-      final display = container.read(collectorTypeDisplayStatsProvider)!;
-      final needsReveal = container.read(collectorTypeNeedsRevealProvider);
+        final identity = container.read(collectorTypeIdentityProvider);
+        final display = container.read(collectorTypeDisplayStatsProvider)!;
+        final needsReveal = container.read(collectorTypeNeedsRevealProvider);
 
-      expect(identity!.archetypeId, CollectorTypeArchetypeId.hunter);
-      expect(display.completedSeriesCount, 2);
-      expect(display.masterCompleteSeriesCount, 1);
-      expect(display.masterEligibleSeriesCount, 1);
-      expect(display.completionPercent, 83);
-      expect(
-        ShelfProgressPresentation.masterCompletionPercent(display),
-        100,
-      );
-      expect(needsReveal, isTrue);
+        expect(identity!.archetypeId, CollectorTypeArchetypeId.hunter);
+        expect(display.completedSeriesCount, 2);
+        expect(display.masterCompleteSeriesCount, 1);
+        expect(display.masterEligibleSeriesCount, 1);
+        expect(display.completionPercent, 83);
+        expect(ShelfProgressPresentation.masterCompletionPercent(display), 100);
+        expect(needsReveal, isTrue);
 
-      // Identity frozen stats remain the decoded legacy zeros / old %.
-      expect(identity.stats.completedSeriesCount, 0);
-      expect(identity.stats.completionPercent, 40);
+        // Identity frozen stats remain the decoded legacy zeros / old %.
+        expect(identity.stats.completedSeriesCount, 0);
+        expect(identity.stats.completionPercent, 40);
 
-      final prefsAfter = await _prefsRaw();
-      expect(prefsAfter, prefsBefore);
-      expect(
-        CollectionMemoryStore.instance.cached.collectorTypeStatsVersion,
-        isNull,
-      );
-    });
+        final prefsAfter = await _prefsRaw();
+        expect(prefsAfter, prefsBefore);
+        expect(
+          CollectionMemoryStore.instance.cached.collectorTypeStatsVersion,
+          isNull,
+        );
+      },
+    );
 
     test('S2 mixed-version stats: no false 0% Master Completion', () async {
       final snap = upgradeMixedShelf();
@@ -375,7 +367,10 @@ void main() {
       );
 
       final display = container.read(collectorTypeDisplayStatsProvider)!;
-      expect(display.masterEligibleSeriesCount, expected.masterEligibleSeriesCount);
+      expect(
+        display.masterEligibleSeriesCount,
+        expected.masterEligibleSeriesCount,
+      );
       expect(
         ShelfProgressPresentation.masterCompletionPercent(display),
         expected.masterCompletionPercent,
@@ -420,7 +415,10 @@ void main() {
     test('S4 outdated stats + Reveal again settles without loop', () async {
       final snap = upgradeMixedShelf();
       final expected = aggregateShelfCompletion(snap);
-      final sig = computeCollectorTypeSignatureHash(snap, catalog: _emptyCatalog);
+      final sig = computeCollectorTypeSignatureHash(
+        snap,
+        catalog: _emptyCatalog,
+      );
       final liveBefore = resolveCollectorType(
         snapshot: snap,
         profile: interpretShelf(snap),
@@ -452,8 +450,10 @@ void main() {
       final container = _containerFor(snap);
       addTearDown(container.dispose);
 
-      expect(container.read(collectorTypeIdentityProvider)!.archetypeId,
-          CollectorTypeArchetypeId.wanderer);
+      expect(
+        container.read(collectorTypeIdentityProvider)!.archetypeId,
+        CollectorTypeArchetypeId.wanderer,
+      );
       expect(container.read(collectorTypeNeedsRevealProvider), isTrue);
 
       await container
@@ -465,7 +465,10 @@ void main() {
       final memory = CollectionMemoryStore.instance.cached;
 
       expect(memory.collectorTypeStatsVersion, kCollectorTypeStatsVersion);
-      expect(identity.stats.completedSeriesCount, expected.completedSeriesCount);
+      expect(
+        identity.stats.completedSeriesCount,
+        expected.completedSeriesCount,
+      );
       expect(
         identity.stats.masterCompleteSeriesCount,
         expected.masterCompleteSeriesCount,
@@ -474,7 +477,10 @@ void main() {
         identity.stats.masterEligibleSeriesCount,
         expected.masterEligibleSeriesCount,
       );
-      expect(identity.stats.completionPercent, expected.regularCompletionPercent);
+      expect(
+        identity.stats.completionPercent,
+        expected.regularCompletionPercent,
+      );
       expect(display.completionPercent, expected.regularCompletionPercent);
       expect(
         ShelfProgressPresentation.masterCompletionPercent(display),
@@ -577,51 +583,47 @@ void main() {
         ShelfProgressPresentation.masterCompletionRatio(display).isNaN,
         isFalse,
       );
-      expect(
-        ShelfProgressPresentation.showMasterCompletion(display),
-        isFalse,
-      );
+      expect(ShelfProgressPresentation.showMasterCompletion(display), isFalse);
       expect(container.read(collectorTypeNeedsRevealProvider), isTrue);
     });
 
-    test('S7 Secret-eligible shelf fully mastered: Master 2/2 = 100%',
-        () async {
-      final snap = fullyMasteredSecretShelf();
-      final expected = aggregateShelfCompletion(snap);
-      expect(snap.shelfSeries, hasLength(5));
-      expect(expected.masterEligibleSeriesCount, 2);
-      expect(expected.masterCompleteSeriesCount, 2);
-      expect(expected.masterCompletionPercent, 100);
-      // All five series Regular-complete → Regular Completion 100%.
-      expect(expected.regularCompletionPercent, 100);
-      expect(expected.completedSeriesCount, 5);
+    test(
+      'S7 Secret-eligible shelf fully mastered: Master 2/2 = 100%',
+      () async {
+        final snap = fullyMasteredSecretShelf();
+        final expected = aggregateShelfCompletion(snap);
+        expect(snap.shelfSeries, hasLength(5));
+        expect(expected.masterEligibleSeriesCount, 2);
+        expect(expected.masterCompleteSeriesCount, 2);
+        expect(expected.masterCompletionPercent, 100);
+        // All five series Regular-complete → Regular Completion 100%.
+        expect(expected.regularCompletionPercent, 100);
+        expect(expected.completedSeriesCount, 5);
 
-      final live = buildCollectorTypeStats(snap, interpretShelf(snap), null);
-      final sig = computeCollectorTypeSignatureHash(snap);
-      await _seedLegacyPrefs(
-        _legacyMemoryJson(
-          archetypeId: CollectorTypeArchetypeId.completionist.name,
-          signatureHash: sig,
-          statsVersion: kCollectorTypeStatsVersion,
-          statsMap: live.toJson(),
-        ),
-      );
+        final live = buildCollectorTypeStats(snap, interpretShelf(snap), null);
+        final sig = computeCollectorTypeSignatureHash(snap);
+        await _seedLegacyPrefs(
+          _legacyMemoryJson(
+            archetypeId: CollectorTypeArchetypeId.completionist.name,
+            signatureHash: sig,
+            statsVersion: kCollectorTypeStatsVersion,
+            statsMap: live.toJson(),
+          ),
+        );
 
-      final container = _containerFor(snap);
-      addTearDown(container.dispose);
+        final container = _containerFor(snap);
+        addTearDown(container.dispose);
 
-      final display = container.read(collectorTypeDisplayStatsProvider)!;
-      expect(display.trackedSeries, 5);
-      expect(display.masterEligibleSeriesCount, 2);
-      expect(display.masterCompleteSeriesCount, 2);
-      expect(display.completionPercent, 100);
-      expect(
-        ShelfProgressPresentation.masterCompletionPercent(display),
-        100,
-      );
-      // No-secret series excluded from Master denominator.
-      expect(display.masterEligibleSeriesCount, isNot(display.trackedSeries));
-    });
+        final display = container.read(collectorTypeDisplayStatsProvider)!;
+        expect(display.trackedSeries, 5);
+        expect(display.masterEligibleSeriesCount, 2);
+        expect(display.masterCompleteSeriesCount, 2);
+        expect(display.completionPercent, 100);
+        expect(ShelfProgressPresentation.masterCompletionPercent(display), 100);
+        // No-secret series excluded from Master denominator.
+        expect(display.masterEligibleSeriesCount, isNot(display.trackedSeries));
+      },
+    );
   });
 
   group('Upgrade smoke — pure resolve helpers', () {

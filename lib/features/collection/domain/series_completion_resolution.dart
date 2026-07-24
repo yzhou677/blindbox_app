@@ -31,8 +31,9 @@ class SeriesCompletionResolution {
   bool get isMasterComplete =>
       isCompleted && secretSlotCount > 0 && secretOwnedCount >= secretSlotCount;
 
-  int get progressDenominator =>
-      regularSlotCount > 0 ? regularSlotCount : regularSlotCount + secretSlotCount;
+  int get progressDenominator => regularSlotCount > 0
+      ? regularSlotCount
+      : regularSlotCount + secretSlotCount;
 
   int get progressNumerator => regularSlotCount > 0
       ? regularOwnedCount
@@ -128,8 +129,10 @@ class ShelfCompletionAggregate {
   /// Master Complete / Secret-bearing series; `0` when none are eligible.
   double get masterCompletionRatio {
     if (masterEligibleSeriesCount <= 0) return 0;
-    return (masterCompleteSeriesCount / masterEligibleSeriesCount)
-        .clamp(0.0, 1.0);
+    return (masterCompleteSeriesCount / masterEligibleSeriesCount).clamp(
+      0.0,
+      1.0,
+    );
   }
 
   int get masterCompletionPercent =>
@@ -160,15 +163,15 @@ ShelfCompletionAggregate aggregateShelfCompletion(CollectionSnapshot snap) {
     completedSeriesCount: completed,
     masterCompleteSeriesCount: master,
     masterEligibleSeriesCount: eligible,
-    regularCompletionPercent:
-        ((sumRatio / series.length) * 100).round().clamp(0, 100),
+    regularCompletionPercent: ((sumRatio / series.length) * 100).round().clamp(
+      0,
+      100,
+    ),
   );
 }
 
 /// Shelf-wide completed / master-complete series counts for summary UI.
-(int completed, int master) countShelfCompletionTiers(
-  CollectionSnapshot snap,
-) {
+(int completed, int master) countShelfCompletionTiers(CollectionSnapshot snap) {
   final a = aggregateShelfCompletion(snap);
   return (a.completedSeriesCount, a.masterCompleteSeriesCount);
 }

@@ -3,12 +3,14 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' show ImageFilter;
 
+import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/features/sharing/application/share_card_file_store.dart';
 import 'package:blindbox_app/features/sharing/application/share_card_native_share.dart';
 import 'package:blindbox_app/features/sharing/application/share_card_renderer.dart';
 import 'package:blindbox_app/features/sharing/presentation/widgets/shelfy_collector_cards.dart';
 import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 Future<void> showShareCardPreview({
   required BuildContext context,
@@ -354,7 +356,7 @@ class _ShareCardPreviewSheetState extends State<_ShareCardPreviewSheet> {
                               alpha: 0.9,
                             ),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: AppRadii.matRadius,
                             ),
                           ),
                           icon: _sharing
@@ -365,7 +367,7 @@ class _ShareCardPreviewSheetState extends State<_ShareCardPreviewSheet> {
                                     strokeWidth: 2,
                                   ),
                                 )
-                              : const Icon(Icons.ios_share_rounded),
+                              : const Icon(Symbols.ios_share_rounded),
                           label: Text(
                             _sharing ? 'Opening share sheet...' : 'Share',
                           ),

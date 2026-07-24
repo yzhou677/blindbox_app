@@ -2,6 +2,7 @@ import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/shared/widgets/shelfy_segmented_control.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Local Shelf / Insights / Wishlist switch for the Collection page.
 enum CollectionPageSegment { shelf, insights, wishlist }
@@ -29,21 +30,22 @@ class CollectionPageSegmentControl extends StatelessWidget {
       child: ShelfySegmentedControl<CollectionPageSegment>(
         value: selected,
         onChanged: onChanged,
+        integrated: true,
         segments: const [
           ShelfySegment(
             value: CollectionPageSegment.shelf,
             label: 'Shelf',
-            icon: Icons.grid_view_rounded,
+            icon: Symbols.grid_view_rounded,
           ),
           ShelfySegment(
             value: CollectionPageSegment.insights,
             label: 'Insights',
-            icon: Icons.auto_awesome_rounded,
+            icon: Symbols.auto_awesome_rounded,
           ),
           ShelfySegment(
             value: CollectionPageSegment.wishlist,
             label: 'Wishlist',
-            icon: Icons.favorite_border_rounded,
+            icon: Symbols.favorite_rounded,
           ),
         ],
       ),

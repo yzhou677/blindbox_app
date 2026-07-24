@@ -51,7 +51,7 @@ abstract final class CatalogImageResolver {
   /// When set, replaces Firebase [Reference.getDownloadURL] in tests.
   @visibleForTesting
   static Future<String?> Function(String storageObjectPath)?
-      getDownloadUrlOverride;
+  getDownloadUrlOverride;
 
   /// Counts Storage extension probes in the current test session.
   @visibleForTesting
@@ -108,6 +108,7 @@ abstract final class CatalogImageResolver {
 
   static Set<String>? _bundleAssetKeys;
   static Future<void>? _ensureReadyFuture;
+
   /// Session memory for disk paths or network URLs resolved from Storage tier.
   static final Map<String, String> _storageDisplayRefCache = {};
   static final Set<String> _storageMissingCache = <String>{};
@@ -126,9 +127,9 @@ abstract final class CatalogImageResolver {
 
   /// Which Storage subtree to use under `catalog/`.
   static String storagePrefixFor(CatalogImageKind kind) => switch (kind) {
-        CatalogImageKind.figure => storageFiguresPrefix,
-        CatalogImageKind.series => storageSeriesPrefix,
-      };
+    CatalogImageKind.figure => storageFiguresPrefix,
+    CatalogImageKind.series => storageSeriesPrefix,
+  };
 
   /// Deterministic Storage object path: `catalog/{series|figures}/<imageKey><ext>`.
   static String storageObjectPath({
@@ -305,10 +306,7 @@ abstract final class CatalogImageResolver {
     final sessionCached = _storageDisplayRefCache[primaryCacheKey];
     if (sessionCached != null) return sessionCached;
 
-    final diskHit = await CatalogImageDiskCache.lookup(
-      kind: kind,
-      imageKey: k,
-    );
+    final diskHit = await CatalogImageDiskCache.lookup(kind: kind, imageKey: k);
     if (diskHit != null) {
       _storageDisplayRefCache[primaryCacheKey] = diskHit.localPath;
       _traceResolution(
@@ -401,10 +399,11 @@ abstract final class CatalogImageResolver {
     try {
       if (_storageRefreshInFlight.containsKey(job.primaryCacheKey)) return;
 
-      final mayRefresh = await CatalogImageDiskCache.shouldAttemptBackgroundRefresh(
-        kind: job.kind,
-        imageKey: job.imageKey,
-      );
+      final mayRefresh =
+          await CatalogImageDiskCache.shouldAttemptBackgroundRefresh(
+            kind: job.kind,
+            imageKey: job.imageKey,
+          );
       if (!mayRefresh) return;
       if (_storageRefreshInFlight.containsKey(job.primaryCacheKey)) return;
 
@@ -574,7 +573,9 @@ abstract final class CatalogImageResolver {
   static void debugDumpMissingKeys() {
     if (!kDebugMode) return;
     if (_debugLoggedMissingKeys.isEmpty) {
-      debugPrint('CatalogImageResolver: no missing Storage image keys recorded.');
+      debugPrint(
+        'CatalogImageResolver: no missing Storage image keys recorded.',
+      );
       return;
     }
 
@@ -641,7 +642,4 @@ final class _StaleRefreshJob {
 }
 
 /// Catalog art subtree — maps to `catalog/series/` or `catalog/figures/` in Storage.
-enum CatalogImageKind {
-  series,
-  figure,
-}
+enum CatalogImageKind { series, figure }

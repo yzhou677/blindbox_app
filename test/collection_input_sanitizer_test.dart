@@ -5,10 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('CollectionInputSanitizer.singleLine / seriesName', () {
     test('trims leading and trailing whitespace', () {
-      expect(
-        CollectionInputSanitizer.seriesName('  My Series  '),
-        'My Series',
-      );
+      expect(CollectionInputSanitizer.seriesName('  My Series  '), 'My Series');
     });
 
     test('collapses repeated internal whitespace', () {
@@ -20,14 +17,14 @@ void main() {
 
     test('strips CR and LF', () {
       expect(CollectionInputSanitizer.seriesName('dpl\n'), 'dpl');
-      expect(CollectionInputSanitizer.seriesName('Baby\r\nThree'), 'Baby Three');
+      expect(
+        CollectionInputSanitizer.seriesName('Baby\r\nThree'),
+        'Baby Three',
+      );
     });
 
     test('strips control characters', () {
-      expect(
-        CollectionInputSanitizer.seriesName('A\u0000B\u0008C'),
-        'ABC',
-      );
+      expect(CollectionInputSanitizer.seriesName('A\u0000B\u0008C'), 'ABC');
     });
 
     test('truncates at series name max length', () {
@@ -51,10 +48,7 @@ void main() {
     });
 
     test('removes control characters', () {
-      expect(
-        CollectionInputSanitizer.notes('keep\u0000me\nok'),
-        'keepme\nok',
-      );
+      expect(CollectionInputSanitizer.notes('keep\u0000me\nok'), 'keepme\nok');
     });
 
     test('truncates at notes max length', () {

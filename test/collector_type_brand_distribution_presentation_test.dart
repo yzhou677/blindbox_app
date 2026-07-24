@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('single brand uses emphasis row instead of donut', (tester) async {
+  testWidgets('single brand uses emphasis row instead of donut', (
+    tester,
+  ) async {
     const stats = CollectorTypeStats(
       totalOwned: 4,
       totalWishlist: 0,
@@ -48,10 +50,7 @@ void main() {
       completionPercent: 50,
       secretOwned: 0,
       secretSlots: 0,
-      brandBreakdown: {
-        'pop_mart': 3,
-        'finding_unicorn': 2,
-      },
+      brandBreakdown: {'pop_mart': 3, 'finding_unicorn': 2},
       topSeries: [],
       customSeriesRatio: 0,
     );

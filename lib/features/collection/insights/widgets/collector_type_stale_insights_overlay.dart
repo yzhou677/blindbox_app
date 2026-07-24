@@ -30,9 +30,7 @@ class CollectorTypeStaleInsightsOverlay extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: CollectibleShape.matRadius,
         color: scheme.surfaceContainerLow.withValues(alpha: 0.92),
-        border: Border.all(
-          color: scheme.primary.withValues(alpha: 0.22),
-        ),
+        border: Border.all(color: scheme.primary.withValues(alpha: 0.22)),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),

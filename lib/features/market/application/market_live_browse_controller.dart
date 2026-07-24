@@ -15,8 +15,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final marketLiveBrowseControllerProvider =
     NotifierProvider<MarketLiveBrowseController, MarketLiveBrowseState>(
-  MarketLiveBrowseController.new,
-);
+      MarketLiveBrowseController.new,
+    );
 
 /// Query-driven live browse orchestration — session, pagination, stale-while-revalidate.
 ///
@@ -195,10 +195,7 @@ class MarketLiveBrowseController extends Notifier<MarketLiveBrowseState> {
     if (page.listings.isEmpty && !page.fromCache) {
       final err = EbayGatewayMarketSource.lastFetchError;
       if (err != null) {
-        _session.applyError(
-          generation: generation,
-          message: err,
-        );
+        _session.applyError(generation: generation, message: err);
         _publishState();
         return;
       }
@@ -274,10 +271,7 @@ class MarketLiveBrowseController extends Notifier<MarketLiveBrowseState> {
     if (page.listings.isEmpty && !page.fromCache) {
       final err = EbayGatewayMarketSource.lastFetchError;
       if (err != null) {
-        _session.applyError(
-          generation: generation,
-          message: err,
-        );
+        _session.applyError(generation: generation, message: err);
         _publishState();
         MarketSearchTrace.event(
           '_fetchFirstPage END applyError (skipped _commitInstall)',
@@ -297,11 +291,7 @@ class MarketLiveBrowseController extends Notifier<MarketLiveBrowseState> {
       fromStaleCache: page.fromCache,
     );
     _publishState();
-    await _commitInstall(
-      page.listings,
-      query: query,
-      generation: generation,
-    );
+    await _commitInstall(page.listings, query: query, generation: generation);
     MarketSearchTrace.event(
       '_fetchFirstPage END gen=$generation',
       listings: page.listings.length,

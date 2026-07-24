@@ -1,6 +1,7 @@
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/models/catalog_ip.dart';
-import 'package:blindbox_app/features/catalog/models/catalog_series.dart' as seed;
+import 'package:blindbox_app/features/catalog/models/catalog_series.dart'
+    as seed;
 import 'package:blindbox_app/features/collectible_relationship/application/collectible_affinity_resolver.dart';
 import 'package:blindbox_app/features/collectible_relationship/application/collectible_relationship_index.dart';
 import 'package:blindbox_app/features/collectible_relationship/application/collectible_shelf_relationship_bridge.dart';

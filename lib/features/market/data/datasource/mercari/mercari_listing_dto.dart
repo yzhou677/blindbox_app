@@ -33,20 +33,24 @@ class MercariListingDto {
 
   /// Tolerant parse — skips malformed provider rows (schema drift).
   static MercariListingDto? tryParse(Map<String, dynamic> json) {
-    final id = (json['id'] as String? ?? json['itemId'] as String? ?? '').trim();
+    final id = (json['id'] as String? ?? json['itemId'] as String? ?? '')
+        .trim();
     final title = (json['title'] as String? ?? '').trim();
     if (id.isEmpty || title.isEmpty) return null;
 
     final price = json['price'] as Map<String, dynamic>? ?? const {};
     final image = json['image'] as Map<String, dynamic>? ?? const {};
     final seller = json['seller'] as Map<String, dynamic>?;
-  return MercariListingDto(
+    return MercariListingDto(
       id: id,
       title: title,
       priceValue: _wirePriceValue(price, json),
-      currency: price['currency'] as String? ?? json['currency'] as String? ?? 'USD',
-      imageUrl: image['imageUrl'] as String? ?? json['imageUrl'] as String? ?? '',
-      listingUrl: json['listingUrl'] as String? ?? json['itemWebUrl'] as String? ?? '',
+      currency:
+          price['currency'] as String? ?? json['currency'] as String? ?? 'USD',
+      imageUrl:
+          image['imageUrl'] as String? ?? json['imageUrl'] as String? ?? '',
+      listingUrl:
+          json['listingUrl'] as String? ?? json['itemWebUrl'] as String? ?? '',
       sellerUsername: seller?['username'] as String?,
       itemCreationDate: json['itemCreationDate'] as String?,
     );

@@ -26,7 +26,7 @@ bool displayOrderCacheNeedsUpdate({
 /// (including after load-more). When false, gateway relevance order is kept and
 /// load-more appends new ids at the bottom.
 ({List<CollectibleMarketSnapshot> snapshots, List<String> orderIds})
-    resolveCollectibleMarketDisplaySnapshots({
+resolveCollectibleMarketDisplaySnapshots({
   required List<CollectibleMarketSnapshot> snapshots,
   required String browseSignature,
   required MarketPriceSort priceSort,
@@ -69,7 +69,8 @@ bool displayOrderCacheNeedsUpdate({
   }
 
   final feedIds = snapshots.map((s) => s.identity.snapshotId).toList();
-  final resetOrder = previousOrderIds.isEmpty ||
+  final resetOrder =
+      previousOrderIds.isEmpty ||
       previousBrowseSignature != browseSignature ||
       previousPriceSort != priceSort;
 

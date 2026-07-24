@@ -14,7 +14,10 @@ const _goldenDir = '../docs/completion_visual_verification';
 /// Shelfy light palette without Google Fonts (goldens must run offline).
 ThemeData _visualVerificationTheme() {
   const seed = Color(0xFFA892CC);
-  final raw = ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.light);
+  final raw = ColorScheme.fromSeed(
+    seedColor: seed,
+    brightness: Brightness.light,
+  );
   final scheme = raw.copyWith(
     primary: const Color(0xFF6652A5),
     onPrimary: const Color(0xFFFFFBFE),
@@ -141,9 +144,7 @@ void main() {
         regularCount: 12,
         secretCount: 1,
       );
-      final states = _ownedIds([
-        for (var i = 0; i < 12; i++) 'case_a_reg_$i',
-      ]);
+      final states = _ownedIds([for (var i = 0; i < 12; i++) 'case_a_reg_$i']);
       await _pumpCardGolden(
         tester,
         goldenName: 'case_a_complete_secret_missing.png',
@@ -180,9 +181,7 @@ void main() {
         regularCount: 6,
         secretCount: 0,
       );
-      final states = _ownedIds([
-        for (var i = 0; i < 6; i++) 'case_c_reg_$i',
-      ]);
+      final states = _ownedIds([for (var i = 0; i < 6; i++) 'case_c_reg_$i']);
       await _pumpCardGolden(
         tester,
         goldenName: 'case_c_complete_no_secret.png',
@@ -238,9 +237,7 @@ void main() {
         figureStates: {
           ..._ownedIds(['sum_a_reg_0', 'sum_a_reg_1', 'sum_a_reg_2']),
           ..._ownedIds(['sum_b_reg_0', 'sum_b_reg_1', 'sum_b_sec_0']),
-          ..._ownedIds([
-            for (var i = 0; i < 4; i++) 'sum_c_reg_$i',
-          ]),
+          ..._ownedIds([for (var i = 0; i < 4; i++) 'sum_c_reg_$i']),
         },
       );
       final stats = CollectionAggregateStats.fromSnapshot(snap);

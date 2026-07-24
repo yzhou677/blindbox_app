@@ -26,7 +26,12 @@ Future<CatalogSeedBundle> loadFirestoreCatalogBundle({
   final seriesSnap = db.collection('series').get();
   final figuresSnap = db.collection('figures').get();
 
-  final results = await Future.wait([brandsSnap, ipsSnap, seriesSnap, figuresSnap]);
+  final results = await Future.wait([
+    brandsSnap,
+    ipsSnap,
+    seriesSnap,
+    figuresSnap,
+  ]);
 
   final brands = _mapBrands(results[0]);
   final ips = _mapIps(results[1]);
@@ -70,7 +75,10 @@ List<CatalogSeries> _mapSeries(QuerySnapshot<Map<String, dynamic>> snap) {
     final mapped = mapFirestoreSeries(doc.id, doc.data());
     if (mapped != null) out.add((docOrder: i, series: mapped));
   }
-  out.sort((a, b) => _compareSeriesSnapshotOrder(a.series, b.series, a.docOrder, b.docOrder));
+  out.sort(
+    (a, b) =>
+        _compareSeriesSnapshotOrder(a.series, b.series, a.docOrder, b.docOrder),
+  );
   return [for (final e in out) e.series];
 }
 

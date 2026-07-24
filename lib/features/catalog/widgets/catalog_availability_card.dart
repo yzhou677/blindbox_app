@@ -59,7 +59,9 @@ class CatalogAvailabilityCard extends StatelessWidget {
             children: [
               if (isLoading)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: FeedRhythm.sectionHeaderToRail),
+                  padding: const EdgeInsets.only(
+                    bottom: FeedRhythm.sectionHeaderToRail,
+                  ),
                   child: SizedBox(
                     width: 28,
                     height: 28,

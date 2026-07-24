@@ -7,7 +7,9 @@ final officialFeedRepositoryProvider = Provider<OfficialFeedRepository>(
 );
 
 /// POP MART US editorial rail for Home — empty list on failure (section hides).
-final officialFeedListProvider = FutureProvider<List<OfficialFeedItem>>((ref) async {
+final officialFeedListProvider = FutureProvider<List<OfficialFeedItem>>((
+  ref,
+) async {
   final repo = ref.watch(officialFeedRepositoryProvider);
   return repo.loadPopMartUs(limit: 12);
 });

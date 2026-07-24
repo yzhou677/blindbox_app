@@ -54,63 +54,56 @@ void main() {
 
   for (final width in widths) {
     for (final entry in cases.entries) {
-      testWidgets(
-        '[$width dp] ${entry.key}',
-        (tester) async {
-          tester.view.physicalSize = Size(width, 800);
-          tester.view.devicePixelRatio = 1;
-          addTearDown(tester.view.reset);
+      testWidgets('[$width dp] ${entry.key}', (tester) async {
+        tester.view.physicalSize = Size(width, 800);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
 
-          await tester.pumpWidget(
-            MaterialApp(
-              theme: AppTheme.light().copyWith(
-                extensions: [CollectibleTokens.forBrightness(Brightness.light)],
-              ),
-              home: Scaffold(
-                body: CollectionInsightsDashboard(
-                  stats: entry.value,
-                ),
-              ),
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.light().copyWith(
+              extensions: [CollectibleTokens.forBrightness(Brightness.light)],
             ),
-          );
-          await tester.pumpAndSettle();
+            home: Scaffold(
+              body: CollectionInsightsDashboard(stats: entry.value),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
 
-          final glanceFinder = find.byKey(
-            const Key('collection_insights_compact_glance'),
-          );
-          expect(glanceFinder, findsOneWidget);
+        final glanceFinder = find.byKey(
+          const Key('collection_insights_compact_glance'),
+        );
+        expect(glanceFinder, findsOneWidget);
 
-          final counts =
-              CollectionInsightsCompactSummaryFormat.compactCounts(entry.value);
-          final numericTexts = tester
-              .widgetList<Text>(
-                find.descendant(
-                  of: glanceFinder,
-                  matching: find.byType(Text),
-                ),
-              )
-              .map((t) => t.data!)
-              .where((s) => RegExp(r'^\d+$').hasMatch(s))
-              .toList();
-          expect(numericTexts, counts);
+        final counts = CollectionInsightsCompactSummaryFormat.compactCounts(
+          entry.value,
+        );
+        final numericTexts = tester
+            .widgetList<Text>(
+              find.descendant(of: glanceFinder, matching: find.byType(Text)),
+            )
+            .map((t) => t.data!)
+            .where((s) => RegExp(r'^\d+$').hasMatch(s))
+            .toList();
+        expect(numericTexts, counts);
 
-          final rowHeight = tester.getSize(glanceFinder).height;
+        final rowHeight = tester.getSize(glanceFinder).height;
 
-          // ignore: avoid_print
-          print(
-            'STRESS|$width|${entry.key}|counts=${counts.join(' · ')}|'
-            'rowH=${rowHeight.toStringAsFixed(1)}',
-          );
+        // ignore: avoid_print
+        print(
+          'STRESS|$width|${entry.key}|counts=${counts.join(' · ')}|'
+          'rowH=${rowHeight.toStringAsFixed(1)}',
+        );
 
-          expect(rowHeight, lessThanOrEqualTo(80));
+        expect(rowHeight, lessThanOrEqualTo(80));
 
-          expect(
-            tester.takeException(),
-            isNull,
-            reason: 'collapsed dashboard must not overflow at $width dp',
-          );
-        },
-      );
+        expect(
+          tester.takeException(),
+          isNull,
+          reason: 'collapsed dashboard must not overflow at $width dp',
+        );
+      });
     }
   }
 
@@ -130,19 +123,15 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.light(),
-          home: Scaffold(
-            body: CollectionInsightsDashboard(
-              stats: absurd,
-            ),
-          ),
+          home: Scaffold(body: CollectionInsightsDashboard(stats: absurd)),
         ),
       );
       await tester.pumpAndSettle();
       tester.takeException();
 
-      final rowHeight = tester.getSize(
-        find.byKey(const Key('collection_insights_compact_glance')),
-      ).height;
+      final rowHeight = tester
+          .getSize(find.byKey(const Key('collection_insights_compact_glance')))
+          .height;
       expect(rowHeight, lessThanOrEqualTo(80), reason: '@${width}dp');
     }
     tester.view.reset();

@@ -14,12 +14,14 @@ import 'package:blindbox_app/features/collection/widgets/catalog_series_preview_
 import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_radii.dart';
+import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
 import 'package:blindbox_app/features/collectible_relationship/application/collectible_relationship_providers.dart';
 import 'package:blindbox_app/features/collectible_relationship/widgets/collectible_relationship_line.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Read-only catalog lineup preview before adding a series to the shelf.
 class CatalogSeriesPreviewSheet extends ConsumerStatefulWidget {
@@ -59,7 +61,9 @@ class _CatalogSeriesPreviewSheetState
     final matchedId = widget.matchedFigureId?.trim();
     if (matchedId != null && matchedId.isNotEmpty) {
       _matchHighlightVisible = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) => _revealMatched(matchedId));
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _revealMatched(matchedId),
+      );
       _highlightTimer = Timer(const Duration(milliseconds: 2400), () {
         if (mounted) setState(() => _matchHighlightVisible = false);
       });
@@ -198,33 +202,24 @@ class _CatalogSeriesPreviewSheetState
                             onAdd();
                             Navigator.of(context).pop();
                           },
-                          icon: Icon(shelfCta.icon, size: 20),
+                          icon: Icon(shelfCta.icon, size: AppIconSizes.cta),
                           label: Text(shelfCta.label),
-                          style: FilledButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: AppRadii.matRadius,
-                            ),
-                          ),
+                          style: ShelfyButtonStyles.stickySheetCta(),
                         )
                       : FilledButton.tonal(
                           key: const ValueKey<String>(
                             'catalog-preview-owned-cta',
                           ),
                           onPressed: null,
-                          style: FilledButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            foregroundColor: scheme.onSurfaceVariant.withValues(
-                              alpha: 0.85,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: AppRadii.matRadius,
+                          style: ShelfyButtonStyles.stickySheetCta().copyWith(
+                            foregroundColor: WidgetStatePropertyAll(
+                              scheme.onSurfaceVariant.withValues(alpha: 0.85),
                             ),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(shelfCta.icon, size: 20),
+                              Icon(shelfCta.icon, size: AppIconSizes.cta),
                               const SizedBox(width: 8),
                               Text(shelfCta.label),
                             ],
@@ -411,14 +406,14 @@ class _PreviewFigureRow extends StatelessWidget {
                   ),
                   if (figure.isSecret)
                     Icon(
-                      Icons.star_rounded,
+                      Symbols.star_rounded,
                       size: 20,
                       color: (secretLook?.accent ?? accent).withValues(
                         alpha: 0.88,
                       ),
                     ),
                   Icon(
-                    Icons.chevron_right_rounded,
+                    Symbols.chevron_right_rounded,
                     size: 22,
                     color: scheme.onSurfaceVariant.withValues(alpha: 0.45),
                   ),

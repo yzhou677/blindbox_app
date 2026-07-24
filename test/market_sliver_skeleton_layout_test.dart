@@ -5,30 +5,31 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('MarketBrowseSliverResultsSkeleton', () {
-    testWidgets('lays out inside SliverFillRemaining without viewport intrinsics error', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.light(),
-          home: Scaffold(
-            body: CustomScrollView(
-              slivers: [
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: const MarketBrowseSliverResultsSkeleton(),
-                ),
-              ],
+    testWidgets(
+      'lays out inside SliverFillRemaining without viewport intrinsics error',
+      (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.light(),
+            home: Scaffold(
+              body: CustomScrollView(
+                slivers: [
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: const MarketBrowseSliverResultsSkeleton(),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-      );
-      await tester.pump();
+        );
+        await tester.pump();
 
-      expect(tester.takeException(), isNull);
-      expect(find.byType(ListView), findsNothing);
-      expect(find.byType(MarketBrowseSliverResultsSkeleton), findsOneWidget);
-    });
+        expect(tester.takeException(), isNull);
+        expect(find.byType(ListView), findsNothing);
+        expect(find.byType(MarketBrowseSliverResultsSkeleton), findsOneWidget);
+      },
+    );
   });
 
   group('MarketBrowseResultsSkeleton (search)', () {

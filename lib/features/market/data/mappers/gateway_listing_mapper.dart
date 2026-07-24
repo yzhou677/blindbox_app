@@ -44,8 +44,9 @@ extension GatewayListingDtoMapper on MercariListingDto {
       priceChangePercent: 0,
       listingCount: 1,
       sellerUsername: seller != null && seller.isNotEmpty ? seller : null,
-      itemCreationDate:
-          created == null || created.isEmpty ? null : DateTime.tryParse(created),
+      itemCreationDate: created == null || created.isEmpty
+          ? null
+          : DateTime.tryParse(created),
     );
   }
 }

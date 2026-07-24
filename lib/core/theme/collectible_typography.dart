@@ -78,13 +78,15 @@ abstract final class CollectibleTypography {
   }
 
   /// Master-complete achievement — warmer accent, stronger weight.
-  static TextStyle shelfMasterCompleteStatLine(TextTheme t, ColorScheme scheme) {
+  static TextStyle shelfMasterCompleteStatLine(
+    TextTheme t,
+    ColorScheme scheme,
+  ) {
     final gold = Color.lerp(scheme.primary, const Color(0xFFC9A227), 0.68)!;
-    return shelfProgressLine(t, scheme).copyWith(
-      fontWeight: FontWeight.w600,
-      letterSpacing: 0.04,
-      color: gold,
-    );
+    return shelfProgressLine(
+      t,
+      scheme,
+    ).copyWith(fontWeight: FontWeight.w600, letterSpacing: 0.04, color: gold);
   }
 
   /// Quiet section label inside the series figure sheet.

@@ -15,8 +15,6 @@ class LatestDropCard extends StatelessWidget {
 
   final SeriesRelease release;
 
-  static const double _imageAspect = 1.05;
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -25,9 +23,11 @@ class LatestDropCard extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final hero = release.heroCollectible;
     final accent = hero.shelfAccent ?? scheme.tertiaryContainer;
+    final width = FeedRhythm.homeSeriesRailCardWidth;
 
     return SizedBox(
-      width: FeedRhythm.homeSeriesRailCardWidth,
+      width: width,
+      height: FeedRhythm.homeSeriesRailHeight,
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: AppRadii.shellRadius,
@@ -41,7 +41,7 @@ class LatestDropCard extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: AppRadii.shellRadius,
             side: BorderSide(
-              color: accent.withValues(alpha: isDark ? 0.16 : 0.3),
+              color: accent.withValues(alpha: isDark ? 0.16 : 0.28),
             ),
           ),
           clipBehavior: Clip.antiAlias,
@@ -52,10 +52,9 @@ class LatestDropCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    AspectRatio(
-                      aspectRatio: _imageAspect,
+                    Expanded(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
+                        padding: const EdgeInsets.fromLTRB(8, 8, 8, 6),
                         child: DecoratedBox(
                           decoration: BoxDecoration(
                             borderRadius: AppRadii.matRadius,
@@ -68,9 +67,7 @@ class LatestDropCard extends StatelessWidget {
                                   accent,
                                   0.32,
                                 )!.withValues(alpha: isDark ? 0.28 : 0.5),
-                                accent.withValues(
-                                  alpha: isDark ? 0.26 : 0.34,
-                                ),
+                                accent.withValues(alpha: isDark ? 0.26 : 0.34),
                                 scheme.surface.withValues(alpha: 0.08),
                               ],
                               stops: const [0.0, 0.45, 1.0],
@@ -95,18 +92,30 @@ class LatestDropCard extends StatelessWidget {
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 2, 12, 14),
+                      padding: const EdgeInsets.fromLTRB(14, 2, 10, 10),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            release.seriesName,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: CollectibleTypography.seriesHeroTitle(
-                              textTheme,
-                              scheme,
-                            ).copyWith(fontSize: 19),
+                          SizedBox(
+                            height: 42,
+                            child: Align(
+                              alignment: Alignment.topLeft,
+                              child: Text(
+                                release.seriesName,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style:
+                                    CollectibleTypography.seriesHeroTitle(
+                                      textTheme,
+                                      scheme,
+                                    ).copyWith(
+                                      fontSize: 17,
+                                      height: 1.2,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                              ),
+                            ),
                           ),
                           SeriesHeroMetaBlock(
                             brand: release.brand,
@@ -116,7 +125,7 @@ class LatestDropCard extends StatelessWidget {
                                 : '${release.lineup.length} figures',
                             density: SeriesHeroMetaDensity.compact,
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 6),
                           Align(
                             alignment: Alignment.centerRight,
                             child: SaveSeriesReleaseButton(release: release),
@@ -128,8 +137,8 @@ class LatestDropCard extends StatelessWidget {
                 ),
               ),
               Positioned(
-                top: 10,
-                right: 10,
+                top: 8,
+                right: 8,
                 child: SeriesReleaseWishlistButton(release: release),
               ),
             ],

@@ -33,8 +33,7 @@ class ShelfFigureThumb extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final localRef = ShelfFigureMedia.figureDisplayRef(figure, series);
-    if (localRef != null &&
-        DeviceLocalImageRef.looksLikeDevicePath(localRef)) {
+    if (localRef != null && DeviceLocalImageRef.looksLikeDevicePath(localRef)) {
       return CollectibleThumbImage(
         imageRef: localRef,
         name: name,

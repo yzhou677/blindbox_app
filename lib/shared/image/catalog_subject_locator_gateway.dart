@@ -149,10 +149,7 @@ final class CatalogSubjectLocatorGateway implements CatalogSubjectLocator {
       final requestPreparationTimer = Stopwatch()..start();
       final data = {
         'version': 1,
-        'image': {
-          'dataBase64': dataBase64,
-          'mimeType': transport.mimeType,
-        },
+        'image': {'dataBase64': dataBase64, 'mimeType': transport.mimeType},
         'requestId': requestId,
       };
       _debugLocatorLog({

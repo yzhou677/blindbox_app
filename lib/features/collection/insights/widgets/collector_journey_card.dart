@@ -34,29 +34,22 @@ class CollectorJourneyCard extends ConsumerWidget {
     final memory = summary.latestMemory;
 
     return InsightsDashboardPanel(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.pageHorizontal,
-        AppSpacing.lg + 2,
-        AppSpacing.pageHorizontal,
-        AppSpacing.lg + 2,
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             CollectorTypeCopy.journeyTitle,
-            style: CollectibleTypography.shelfSeriesTitle(textTheme, scheme),
+            style: AppTypography.sectionTitle(textTheme, scheme),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 5),
           Text(
             CollectorTypeCopy.journeySubtitle,
-            style: AppTypography.insightsFlavor(textTheme, scheme).copyWith(
-              fontSize: 13,
+            style: AppTypography.deckText(textTheme, scheme).copyWith(
               height: 1.35,
               color: scheme.onSurfaceVariant.withValues(alpha: 0.68),
             ),
           ),
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: AppSpacing.md),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -65,22 +58,23 @@ class CollectorJourneyCard extends ConsumerWidget {
                   label: CollectorTypeCopy.journeyStartedLabel,
                   child: Text(
                     startedValue,
-                    style: CollectibleTypography.shelfSeriesTitle(
-                      textTheme,
-                      scheme,
-                    ).copyWith(
-                      fontSize: 18,
-                      letterSpacing: -0.25,
-                      height: 1.2,
-                      fontWeight: FontWeight.w600,
-                      color: summary.journeyAgeLabel == null
-                          ? scheme.onSurfaceVariant.withValues(alpha: 0.55)
-                          : null,
-                    ),
+                    style:
+                        CollectibleTypography.shelfSeriesTitle(
+                          textTheme,
+                          scheme,
+                        ).copyWith(
+                          fontSize: 18,
+                          letterSpacing: -0.25,
+                          height: 1.2,
+                          fontWeight: FontWeight.w600,
+                          color: summary.journeyAgeLabel == null
+                              ? scheme.onSurfaceVariant.withValues(alpha: 0.55)
+                              : null,
+                        ),
                   ),
                 ),
               ),
-              const SizedBox(width: AppSpacing.lg),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: _StoryBeat(
                   label: CollectorTypeCopy.journeyExploredLabel,
@@ -89,23 +83,21 @@ class CollectorJourneyCard extends ConsumerWidget {
                     children: [
                       Text(
                         '$exploredCount',
-                        style: CollectibleTypography.shelfSeriesTitle(
-                          textTheme,
-                          scheme,
-                        ).copyWith(
-                          fontSize: 22,
-                          letterSpacing: -0.35,
-                          height: 1.05,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style:
+                            CollectibleTypography.shelfSeriesTitle(
+                              textTheme,
+                              scheme,
+                            ).copyWith(
+                              fontSize: 22,
+                              letterSpacing: -0.35,
+                              height: 1.05,
+                              fontWeight: FontWeight.w600,
+                            ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         exploredCount == 1 ? 'IP universe' : 'IP universes',
-                        style: AppTypography.insightsCaption(
-                          textTheme,
-                          scheme,
-                        ),
+                        style: AppTypography.insightsCaption(textTheme, scheme),
                       ),
                     ],
                   ),
@@ -114,7 +106,7 @@ class CollectorJourneyCard extends ConsumerWidget {
             ],
           ),
           if (memory != null) ...[
-            const SizedBox(height: AppSpacing.lg + 2),
+            const SizedBox(height: AppSpacing.md),
             _LatestMemoryBeat(memory: memory),
           ],
         ],
@@ -149,15 +141,13 @@ class _LatestMemoryBeat extends StatelessWidget {
         children: [
           Text(
             title,
-            style: CollectibleTypography.shelfSeriesTitle(
-              textTheme,
-              scheme,
-            ).copyWith(
-              fontSize: 17,
-              letterSpacing: -0.2,
-              height: 1.2,
-              fontWeight: FontWeight.w600,
-            ),
+            style: CollectibleTypography.shelfSeriesTitle(textTheme, scheme)
+                .copyWith(
+                  fontSize: 17,
+                  letterSpacing: -0.2,
+                  height: 1.2,
+                  fontWeight: FontWeight.w600,
+                ),
           ),
           if (seriesName != null && seriesName.isNotEmpty) ...[
             const SizedBox(height: 4),
@@ -175,9 +165,10 @@ class _LatestMemoryBeat extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             memory.ageLabel,
-            style: AppTypography.insightsCaption(textTheme, scheme).copyWith(
-              color: scheme.onSurfaceVariant.withValues(alpha: 0.62),
-            ),
+            style: AppTypography.insightsCaption(
+              textTheme,
+              scheme,
+            ).copyWith(color: scheme.onSurfaceVariant.withValues(alpha: 0.62)),
           ),
         ],
       ),

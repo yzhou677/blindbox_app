@@ -60,10 +60,7 @@ void main() {
         listings: listings,
       );
       // In-memory read — no async needed.
-      final result = cache.readStaleForQuery(
-        MarketProviderId.mercari,
-        'sig_a',
-      );
+      final result = cache.readStaleForQuery(MarketProviderId.mercari, 'sig_a');
       expect(result, isNotNull);
       expect(result!.single.id, 'q-row-1');
     });

@@ -18,7 +18,8 @@ class RecommendationHttpException implements Exception {
 
 /// HTTP client for recommendation Cloud Functions.
 class RecommendationHttpClient {
-  RecommendationHttpClient({http.Client? client}) : _client = client ?? http.Client();
+  RecommendationHttpClient({http.Client? client})
+    : _client = client ?? http.Client();
 
   final http.Client _client;
 
@@ -75,7 +76,9 @@ class RecommendationHttpClient {
     try {
       final parsed = jsonDecode(response.body);
       if (parsed is! Map<String, dynamic>) {
-        throw RecommendationHttpException('For-you response is not a JSON object');
+        throw RecommendationHttpException(
+          'For-you response is not a JSON object',
+        );
       }
       decoded = parsed;
     } catch (error) {

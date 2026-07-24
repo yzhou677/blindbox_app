@@ -76,3 +76,6 @@ ui-debug.log
 
 # Android keystore
 *.jks
+# Flutter golden failure dumps (local)
+test/failures/
+

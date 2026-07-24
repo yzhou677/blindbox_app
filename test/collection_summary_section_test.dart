@@ -161,7 +161,7 @@ void main() {
     }
 
     final defaultHeight = await pumpAndMeasure();
-    final adjustedHeight = await pumpAndMeasure(top: 20, bottom: 12);
+    final adjustedHeight = await pumpAndMeasure(top: 18, bottom: 14);
 
     expect(adjustedHeight, defaultHeight);
   });
@@ -209,11 +209,11 @@ void main() {
     }
     expect(
       _textAlpha(tester.widget<Text>(find.text('Wishlisted Series'))),
-      closeTo(0.38, 0.01),
+      closeTo(0.34, 0.01),
     );
     expect(
       _textAlpha(tester.widget<Text>(find.text('Wishlisted Figures'))),
-      closeTo(0.38, 0.01),
+      closeTo(0.34, 0.01),
     );
 
     const activeStats = CollectionAggregateStats(
@@ -235,11 +235,11 @@ void main() {
     );
     expect(
       _textAlpha(tester.widget<Text>(find.text('Wishlisted Series'))),
-      closeTo(0.72, 0.01),
+      closeTo(0.54, 0.01),
     );
     expect(
       _textAlpha(tester.widget<Text>(find.text('Wishlisted Figures'))),
-      closeTo(0.38, 0.01),
+      closeTo(0.34, 0.01),
     );
 
     const figuresOnlyStats = CollectionAggregateStats(
@@ -261,11 +261,11 @@ void main() {
     );
     expect(
       _textAlpha(tester.widget<Text>(find.text('Wishlisted Series'))),
-      closeTo(0.38, 0.01),
+      closeTo(0.34, 0.01),
     );
     expect(
       _textAlpha(tester.widget<Text>(find.text('Wishlisted Figures'))),
-      closeTo(0.72, 0.01),
+      closeTo(0.54, 0.01),
     );
   });
 }

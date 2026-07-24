@@ -18,8 +18,8 @@ class MercariSandboxMarketSource implements MarketSource {
   MercariSandboxMarketSource({
     MercariGatewayClient? gateway,
     MarketProviderBrowseCache? cache,
-  })  : _gateway = gateway ?? MercariGatewayClient(),
-        _cache = cache ?? MarketProviderBrowseCache.instance;
+  }) : _gateway = gateway ?? MercariGatewayClient(),
+       _cache = cache ?? MarketProviderBrowseCache.instance;
 
   final MercariGatewayClient _gateway;
   final MarketProviderBrowseCache _cache;
@@ -151,12 +151,9 @@ class MercariSandboxMarketSource implements MarketSource {
     required bool hasMore,
     required bool replace,
   }) async {
-    final pageListings =
-        items
-            .map(
-              (e) => e.toMarketListing(providerId: MarketProviderId.mercari),
-            )
-            .toList(growable: false);
+    final pageListings = items
+        .map((e) => e.toMarketListing(providerId: MarketProviderId.mercari))
+        .toList(growable: false);
 
     if (replace) {
       await _cache.write(
@@ -199,7 +196,8 @@ class MercariSandboxMarketSource implements MarketSource {
   }
 
   Future<MarketBrowsePageResult> _fallbackPage() async {
-    final stale = _cache.readStale(providerId, allowExpired: true) ??
+    final stale =
+        _cache.readStale(providerId, allowExpired: true) ??
         await _cache.readStaleFromDisk(providerId);
     final listings = stale ?? const [];
     final batch = _cache.batchFor(providerId);

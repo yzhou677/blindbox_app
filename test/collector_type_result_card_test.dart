@@ -7,6 +7,7 @@ import 'package:blindbox_app/features/collection/insights/domain/collector_type_
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_result_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 const _stats = CollectorTypeStats(
   totalOwned: 3,
@@ -170,5 +171,27 @@ void main() {
     await tester.tap(find.text('Refresh Collector Type'));
     await tester.pump();
     expect(tapped, isTrue);
+  });
+
+  testWidgets('share control stays a compact secondary outlined action', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: CollectorTypeResultCard(
+            identity: _sampleIdentity(),
+            onShare: () {},
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Share Collector Card'), findsOneWidget);
+    expect(find.byIcon(Symbols.ios_share_rounded), findsOneWidget);
+    final button = tester.widget<OutlinedButton>(find.byType(OutlinedButton));
+    expect(button.style?.minimumSize?.resolve({}), const Size(0, 32));
   });
 }

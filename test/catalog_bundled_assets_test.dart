@@ -19,16 +19,19 @@ void main() {
       );
     });
 
-    test('before ensureReady, sync paths prefer highest-priority extension', () {
-      expect(
-        CatalogImageResolver.figureAsset('foo'),
-        'assets/catalog/figures/foo.avif',
-      );
-      expect(
-        CatalogImageResolver.seriesAsset('bar'),
-        'assets/catalog/series/bar.avif',
-      );
-    });
+    test(
+      'before ensureReady, sync paths prefer highest-priority extension',
+      () {
+        expect(
+          CatalogImageResolver.figureAsset('foo'),
+          'assets/catalog/figures/foo.avif',
+        );
+        expect(
+          CatalogImageResolver.seriesAsset('bar'),
+          'assets/catalog/series/bar.avif',
+        );
+      },
+    );
 
     test('storage probe order lists all supported extensions per imageKey', () {
       final paths = [
@@ -48,24 +51,27 @@ void main() {
       ]);
     });
 
-    test('storageObjectPath is deterministic from imageKey kind and extension', () {
-      expect(
-        CatalogImageResolver.storageObjectPath(
-          kind: CatalogImageKind.series,
-          imageKey: 'the_monsters_exciting_macaron',
-          extension: '.webp',
-        ),
-        'catalog/series/the_monsters_exciting_macaron.webp',
-      );
-      expect(
-        CatalogImageResolver.storageObjectPath(
-          kind: CatalogImageKind.figure,
-          imageKey: 'the_monsters_exciting_macaron_labubu_soymilk',
-          extension: 'png',
-        ),
-        'catalog/figures/the_monsters_exciting_macaron_labubu_soymilk.png',
-      );
-    });
+    test(
+      'storageObjectPath is deterministic from imageKey kind and extension',
+      () {
+        expect(
+          CatalogImageResolver.storageObjectPath(
+            kind: CatalogImageKind.series,
+            imageKey: 'the_monsters_exciting_macaron',
+            extension: '.webp',
+          ),
+          'catalog/series/the_monsters_exciting_macaron.webp',
+        );
+        expect(
+          CatalogImageResolver.storageObjectPath(
+            kind: CatalogImageKind.figure,
+            imageKey: 'the_monsters_exciting_macaron_labubu_soymilk',
+            extension: 'png',
+          ),
+          'catalog/figures/the_monsters_exciting_macaron_labubu_soymilk.png',
+        );
+      },
+    );
 
     test('legacy thumbnail paths yield stems for migration reads', () {
       expect(
@@ -80,7 +86,12 @@ void main() {
         ),
         'foo_bar',
       );
-      expect(CatalogImageResolver.imageKeyFromLegacyThumbnailAsset('https://cdn/img.png'), '');
+      expect(
+        CatalogImageResolver.imageKeyFromLegacyThumbnailAsset(
+          'https://cdn/img.png',
+        ),
+        '',
+      );
     });
   });
 }

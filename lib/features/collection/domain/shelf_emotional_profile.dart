@@ -25,8 +25,7 @@ class ShelfEmotionalProfile {
   final int seriesCompleteCount;
   final List<String> editorialThemes;
 
-  bool get hasSecretAffinity =>
-      secretSlotCount > 0 && secretOwnedCount > 0;
+  bool get hasSecretAffinity => secretSlotCount > 0 && secretOwnedCount > 0;
 
   bool themeIncludes(String tag) => editorialThemes.contains(tag);
 }

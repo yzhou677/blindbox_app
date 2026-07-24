@@ -1,6 +1,7 @@
 import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 const String kCameraCaptureGuidance =
     'Keep the collectible centered and in focus.';
@@ -43,7 +44,7 @@ class _CameraCaptureGuidanceSheet extends StatelessWidget {
           Row(
             children: [
               Icon(
-                Icons.center_focus_strong_rounded,
+                Symbols.center_focus_strong_rounded,
                 size: 24,
                 color: scheme.primary,
               ),
@@ -63,7 +64,7 @@ class _CameraCaptureGuidanceSheet extends StatelessWidget {
           FilledButton.icon(
             key: const Key('open-system-camera'),
             onPressed: () => Navigator.pop(context, true),
-            icon: const Icon(Icons.photo_camera_outlined),
+            icon: const Icon(Symbols.photo_camera_rounded),
             label: const Text('Open Camera'),
           ),
         ],

@@ -59,13 +59,64 @@ class MarketTitleClusterer {
   final int minClusterSize;
 
   static const _stopwords = {
-    'pop', 'mart', 'popmart', 'the', 'and', 'for', 'with', 'from', 'new',
-    'box', 'blind', 'figure', 'figurine', 'vinyl', 'plush', 'toy', 'toys',
-    'series', 'set', 'lot', 'authentic', 'official', 'sealed', 'confirmed',
-    'open', 'brand', 'rare', 'cute', 'gift', 'us', 'seller', 'free', 'ship',
-    'shipping', 'pre', 'order', 'preorder', 'sale', 'hot', '2024', '2025',
-    '2026', 'pcs', 'pc', 'pack', 'case', 'only', 'one', 'single', 'pick',
-    'choose', 'your', 'you', 'like', 'style', 'design', 'edition', 'global',
+    'pop',
+    'mart',
+    'popmart',
+    'the',
+    'and',
+    'for',
+    'with',
+    'from',
+    'new',
+    'box',
+    'blind',
+    'figure',
+    'figurine',
+    'vinyl',
+    'plush',
+    'toy',
+    'toys',
+    'series',
+    'set',
+    'lot',
+    'authentic',
+    'official',
+    'sealed',
+    'confirmed',
+    'open',
+    'brand',
+    'rare',
+    'cute',
+    'gift',
+    'us',
+    'seller',
+    'free',
+    'ship',
+    'shipping',
+    'pre',
+    'order',
+    'preorder',
+    'sale',
+    'hot',
+    '2024',
+    '2025',
+    '2026',
+    'pcs',
+    'pc',
+    'pack',
+    'case',
+    'only',
+    'one',
+    'single',
+    'pick',
+    'choose',
+    'your',
+    'you',
+    'like',
+    'style',
+    'design',
+    'edition',
+    'global',
   };
 
   List<MarketTitleCluster> cluster(List<MarketTitleClusterInput> rows) {
@@ -92,12 +143,13 @@ class MarketTitleClusterer {
         if (_hasNoise(row.title)) noise++;
         if (_hasAccessory(row.title)) accessory++;
       }
-      final prices = entry.value
-          .map((e) => e.priceUsd)
-          .whereType<double>()
-          .where((p) => p > 0)
-          .toList()
-        ..sort();
+      final prices =
+          entry.value
+              .map((e) => e.priceUsd)
+              .whereType<double>()
+              .where((p) => p > 0)
+              .toList()
+            ..sort();
       out.add(
         MarketTitleCluster(
           clusterKey: entry.key,
@@ -128,9 +180,7 @@ class MarketTitleClusterer {
         .where((t) => t.isNotEmpty)
         .toList();
     final matched = tokens.where((t) => hint.contains(t)).toList();
-    final core = matched.isNotEmpty
-        ? matched
-        : tokens.take(3).toList();
+    final core = matched.isNotEmpty ? matched : tokens.take(3).toList();
     if (core.isEmpty) return 'cluster:unknown';
     final sorted = [...core]..sort();
     return 'cluster:${sorted.join('|')}';

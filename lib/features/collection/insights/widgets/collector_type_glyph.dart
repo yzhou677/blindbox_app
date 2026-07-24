@@ -2,6 +2,7 @@ import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_archetype.dart';
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_avatar.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Soft halo + [CollectorTypeAvatar] (or icon fallback) for Collector Type.
 class CollectorTypeGlyph extends StatefulWidget {
@@ -25,10 +26,8 @@ class _CollectorTypeGlyphState extends State<CollectorTypeGlyph>
   @override
   void initState() {
     super.initState();
-    _glow = AnimationController(
-      vsync: this,
-      duration: CollectibleMotion.glow,
-    )..forward();
+    _glow = AnimationController(vsync: this, duration: CollectibleMotion.glow)
+      ..forward();
   }
 
   @override
@@ -45,7 +44,7 @@ class _CollectorTypeGlyphState extends State<CollectorTypeGlyph>
       size: widget.size,
       semanticLabel: widget.archetype.displayName,
     );
-    final icon = widget.archetype.icon ?? Icons.auto_awesome_outlined;
+    final icon = widget.archetype.icon ?? Symbols.auto_awesome_rounded;
 
     return AnimatedBuilder(
       animation: _glow,
@@ -72,7 +71,8 @@ class _CollectorTypeGlyphState extends State<CollectorTypeGlyph>
       },
       child: Padding(
         padding: const EdgeInsets.all(12),
-        child: avatar ??
+        child:
+            avatar ??
             SizedBox(
               width: widget.size,
               height: widget.size,

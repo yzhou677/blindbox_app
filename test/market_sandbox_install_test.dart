@@ -96,10 +96,7 @@ void main() {
 
     final session = MarketBrowseListingsSession.instance.list;
     expect(session.length, 2);
-    expect(
-      session.any((e) => e.collectible.name.contains('pop mart')),
-      isTrue,
-    );
+    expect(session.any((e) => e.collectible.name.contains('pop mart')), isTrue);
     expect(CollectibleMarketSession.instance.list.length, 2);
   });
 }

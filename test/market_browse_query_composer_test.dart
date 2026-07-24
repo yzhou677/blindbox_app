@@ -3,13 +3,16 @@ import 'package:blindbox_app/features/market/domain/market_browse_query.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('POP MART + Labubu uses brand q only (verified Character on gateway)', () {
-    const query = MarketBrowseQuery(
-      brandId: 'pop_mart',
-      ipId: 'the_monsters',
-    );
-    expect(MarketBrowseQueryComposer.composeUpstreamQ(query), 'pop mart');
-  });
+  test(
+    'POP MART + Labubu uses brand q only (verified Character on gateway)',
+    () {
+      const query = MarketBrowseQuery(
+        brandId: 'pop_mart',
+        ipId: 'the_monsters',
+      );
+      expect(MarketBrowseQueryComposer.composeUpstreamQ(query), 'pop mart');
+    },
+  );
 
   test('search macaron with verified IP keeps brand q + search text', () {
     const query = MarketBrowseQuery(
@@ -24,14 +27,8 @@ void main() {
   });
 
   test('non-verified Dimoo includes IP keyword in q', () {
-    const query = MarketBrowseQuery(
-      brandId: 'pop_mart',
-      ipId: 'dimoo',
-    );
-    expect(
-      MarketBrowseQueryComposer.composeUpstreamQ(query),
-      'pop mart Dimoo',
-    );
+    const query = MarketBrowseQuery(brandId: 'pop_mart', ipId: 'dimoo');
+    expect(MarketBrowseQueryComposer.composeUpstreamQ(query), 'pop mart Dimoo');
   });
 
   test('Any brand + Any IP uses discover keywords', () {
@@ -68,10 +65,7 @@ void main() {
   test('brand-filtered search keeps chip context without discover anchor', () {
     expect(
       MarketBrowseQueryComposer.composeUpstreamQ(
-        const MarketBrowseQuery(
-          brandId: 'pop_mart',
-          searchText: 'baby',
-        ),
+        const MarketBrowseQuery(brandId: 'pop_mart', searchText: 'baby'),
       ),
       'pop mart baby',
     );
@@ -80,9 +74,7 @@ void main() {
   test('Dreams Inc + Any IP uses preferred any-IP query (gateway parity)', () {
     expect(
       MarketBrowseQueryComposer.composeUpstreamQ(
-        const MarketBrowseQuery(
-          brandId: 'dreams_inc',
-        ),
+        const MarketBrowseQuery(brandId: 'dreams_inc'),
       ),
       'sonny angel blind box',
     );
@@ -91,10 +83,7 @@ void main() {
   test('verified Character IP may include preferred q supplement', () {
     expect(
       MarketBrowseQueryComposer.composeUpstreamQ(
-        const MarketBrowseQuery(
-          brandId: 'pop_mart',
-          ipId: 'crybaby',
-        ),
+        const MarketBrowseQuery(brandId: 'pop_mart', ipId: 'crybaby'),
       ),
       'pop mart Crybaby',
     );

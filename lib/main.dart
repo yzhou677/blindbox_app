@@ -3,6 +3,7 @@ import 'package:blindbox_app/core/firebase/activate_firebase_app_check.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
 import 'package:blindbox_app/core/router/app_router.dart';
 import 'package:blindbox_app/core/theme/app_theme.dart';
+import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
 import 'package:blindbox_app/features/collection/bootstrap/collection_app_bootstrap.dart';
 import 'package:blindbox_app/features/collection/data/collection_seed_data.dart';
 import 'package:blindbox_app/features/collection/data/series_release_lookup.dart';
@@ -20,6 +21,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  ShelfySymbols.ensureInitialized();
   try {
     await ensureFirebaseInitialized();
     await activateFirebaseAppCheck();

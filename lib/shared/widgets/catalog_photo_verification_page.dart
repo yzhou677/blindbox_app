@@ -7,6 +7,7 @@ import 'package:blindbox_app/core/theme/app_typography.dart';
 import 'package:blindbox_app/core/theme/collectible_elevation.dart';
 import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
+import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
 import 'package:blindbox_app/shared/image/catalog_photo_acquisition.dart';
 import 'package:blindbox_app/shared/image/catalog_figure_recognition.dart';
 import 'package:blindbox_app/shared/image/catalog_figure_recognition_gateway.dart';
@@ -21,6 +22,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image/image.dart' as image;
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Calm review reassurance — framing already happened; do not teach again.
 const catalogPhotoGuidance = 'Ready when you are.';
@@ -153,6 +155,7 @@ class CatalogPhotoVerificationPage extends StatefulWidget {
   final ValueChanged<CatalogRecognitionCandidate>? onCandidateConfirmed;
   final VoidCallback? onCreateCustom;
   final CatalogScanSelectionHaptic? selectionHaptic;
+
   /// When set (Series Scan), recognition is scoped to this series on the backend.
   final String? seriesId;
 
@@ -194,6 +197,7 @@ class _CatalogPhotoVerificationPageState
   var _obviouslyTooBlurry = false;
   var _generation = 0;
   var _findingSequenceId = 0;
+
   /// Successful resolve: hold Matching ✓ briefly before candidate cards.
   var _findingMatched = false;
   Timer? _matchedSettleTimer;
@@ -527,8 +531,7 @@ class _CatalogPhotoVerificationPageState
     CatalogPhotoScanPresentationState.review => 'Looks good',
     CatalogPhotoScanPresentationState.locating => 'Framing your collectible…',
     CatalogPhotoScanPresentationState.framing => 'Frame your collectible',
-    CatalogPhotoScanPresentationState.recognizing =>
-      'Finding your collectible',
+    CatalogPhotoScanPresentationState.recognizing => 'Finding your collectible',
     CatalogPhotoScanPresentationState.tooBlurry => 'A little too soft',
     CatalogPhotoScanPresentationState.candidates =>
       _recognitionDecision == CatalogRecognitionDecision.highConfidence
@@ -696,12 +699,14 @@ class _CatalogPhotoVerificationPageState
     final recognitionLoading =
         _presentationState == CatalogPhotoScanPresentationState.recognizing;
     final noConfidentMatch =
-        _presentationState == CatalogPhotoScanPresentationState.noConfidentMatch;
+        _presentationState ==
+        CatalogPhotoScanPresentationState.noConfidentMatch;
     final showingCandidates =
         _presentationState == CatalogPhotoScanPresentationState.candidates;
     // Finding + no-match + candidates lead with the crop so the photo stays
     // the anchor. No-match keeps finding-sized media for continuity.
-    final mediaLeads = recognitionLoading || noConfidentMatch || showingCandidates;
+    final mediaLeads =
+        recognitionLoading || noConfidentMatch || showingCandidates;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     final findingMediaHeight = (screenHeight * 0.295).clamp(210.0, 280.0);
     final mediaHeight = showingCandidates
@@ -786,7 +791,7 @@ class _CatalogPhotoVerificationPageState
           ? SizedBox(
               height: mediaHeight,
               child: Icon(
-                Icons.broken_image_outlined,
+                Symbols.broken_image_rounded,
                 size: 42,
                 color: scheme.onSurfaceVariant,
               ),
@@ -965,7 +970,8 @@ class _CatalogPhotoVerificationPageState
                 ),
                 onPressed: () => Navigator.pop(context, _confirmedSelection),
                 icon: Icon(
-                  Icons.close_rounded,
+                  Symbols.close_rounded,
+                  size: AppIconSizes.navigation,
                   color: scheme.onSurfaceVariant.withValues(alpha: 0.55),
                 ),
               ),
@@ -1399,8 +1405,8 @@ class _FindingAnalysisChecklistState extends State<_FindingAnalysisChecklist>
   @override
   Widget build(BuildContext context) {
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
-    final opacity = widget.outcome == _FindingChecklistOutcome.noMatch &&
-            _softened
+    final opacity =
+        widget.outcome == _FindingChecklistOutcome.noMatch && _softened
         ? CollectibleMotion.recognitionFindingNoMatchChecklistOpacity
         : 1.0;
     return ExcludeSemantics(
@@ -1463,11 +1469,11 @@ class _FindingChecklistRow extends StatelessWidget {
     );
     final detailStyle = CollectibleTypography.figureMeta(textTheme, scheme);
     final softDetailStyle = detailStyle.copyWith(color: muted);
-    final detail = detailOverride ??
+    final detail =
+        detailOverride ??
         switch (status) {
-          _FindingStepStatus.completed => step.completedDetail.isEmpty
-              ? null
-              : step.completedDetail,
+          _FindingStepStatus.completed =>
+            step.completedDetail.isEmpty ? null : step.completedDetail,
           _FindingStepStatus.active => step.activeDetail,
           _FindingStepStatus.unmatched => _findingMatchingNoMatchDetail,
           _FindingStepStatus.pending => null,
@@ -1523,9 +1529,7 @@ class _FindingChecklistRow extends StatelessWidget {
                             child: Text(
                               detail,
                               key: ValueKey('${step.title}-$detail'),
-                              style: softDetail
-                                  ? softDetailStyle
-                                  : detailStyle,
+                              style: softDetail ? softDetailStyle : detailStyle,
                             ),
                           ),
                         ),
@@ -1555,55 +1559,51 @@ class _FindingStepIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final filled = DecoratedBox(
-      decoration: BoxDecoration(
-        color: scheme.primary,
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(color: scheme.primary, shape: BoxShape.circle),
       child: SizedBox(
         width: _size,
         height: _size,
         child: status == _FindingStepStatus.completed
-            ? Icon(Icons.check_rounded, size: 12, color: scheme.onPrimary)
+            ? Icon(Symbols.check_rounded, size: 12, color: scheme.onPrimary)
             : null,
       ),
     );
 
     final child = switch (status) {
       _FindingStepStatus.completed => filled,
-      _FindingStepStatus.active => reduceMotion
-          ? filled
-          : ScaleTransition(scale: pulse, child: filled),
+      _FindingStepStatus.active =>
+        reduceMotion ? filled : ScaleTransition(scale: pulse, child: filled),
       _FindingStepStatus.unmatched => SizedBox(
-          width: _size,
-          height: _size,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: scheme.onSurfaceVariant.withValues(alpha: 0.38),
-                width: 1.5,
-              ),
-            ),
-            child: Icon(
-              Icons.remove_rounded,
-              size: 11,
-              color: scheme.onSurfaceVariant.withValues(alpha: 0.55),
+        width: _size,
+        height: _size,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.38),
+              width: 1.5,
             ),
           ),
+          child: Icon(
+            Symbols.remove_rounded,
+            size: 11,
+            color: scheme.onSurfaceVariant.withValues(alpha: 0.55),
+          ),
         ),
+      ),
       _FindingStepStatus.pending => SizedBox(
-          width: _size,
-          height: _size,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: scheme.onSurfaceVariant.withValues(alpha: 0.35),
-                width: 1.5,
-              ),
+        width: _size,
+        height: _size,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.35),
+              width: 1.5,
             ),
           ),
         ),
+      ),
     };
 
     return AnimatedSwitcher(
@@ -1612,10 +1612,7 @@ class _FindingStepIndicator extends StatelessWidget {
           : CollectibleMotion.recognitionFindingStatusCrossfade,
       switchInCurve: CollectibleMotion.easeOut,
       switchOutCurve: CollectibleMotion.easeIn,
-      child: KeyedSubtree(
-        key: ValueKey(status),
-        child: child,
-      ),
+      child: KeyedSubtree(key: ValueKey(status), child: child),
     );
   }
 }
@@ -1784,8 +1781,9 @@ class _CascadeEntranceState extends State<_CascadeEntrance>
       0 => CollectibleMotion.recognitionCascadeFirst,
       1 => CollectibleMotion.recognitionCascadeSecond,
       2 => CollectibleMotion.recognitionCascadeThird,
-      _ => CollectibleMotion.recognitionCascadeThird +
-          Duration(milliseconds: 40 * (index - 2)),
+      _ =>
+        CollectibleMotion.recognitionCascadeThird +
+            Duration(milliseconds: 40 * (index - 2)),
     };
   }
 
@@ -1950,7 +1948,7 @@ class _RecognitionCandidateCard extends StatelessWidget {
             ),
             if (featured)
               Icon(
-                Icons.chevron_right_rounded,
+                Symbols.chevron_right_rounded,
                 color: scheme.onSurfaceVariant.withValues(alpha: 0.45),
               ),
           ],
@@ -2177,7 +2175,7 @@ class _FrameActions extends StatelessWidget {
             foregroundColor: scheme.onSurfaceVariant.withValues(alpha: 0.85),
             minimumSize: const Size.fromHeight(48),
           ),
-          icon: const Icon(Icons.refresh_rounded, size: 17),
+          icon: const Icon(Symbols.refresh_rounded, size: 17),
           label: const Text('Reset Selection'),
         ),
       ],
@@ -2212,7 +2210,7 @@ class _ValidationFailureState extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(
-                Icons.info_outline_rounded,
+                Symbols.info_rounded,
                 size: 20,
                 color: scheme.onSurfaceVariant,
               ),

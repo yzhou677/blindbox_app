@@ -19,6 +19,7 @@ import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 class ForYouSection extends ConsumerStatefulWidget {
   const ForYouSection({super.key});
@@ -103,10 +104,7 @@ class _ForYouSectionState extends ConsumerState<ForYouSection> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _ForYouSectionReveal(
-          show: true,
-          child: sectionBody,
-        ),
+        _ForYouSectionReveal(show: true, child: sectionBody),
         const SizedBox(height: FeedRhythm.homeMajorSectionGap),
       ],
     );
@@ -202,10 +200,7 @@ class _ForYouSectionState extends ConsumerState<ForYouSection> {
 
 /// Gentle fade + vertical expand when For You first becomes visible.
 class _ForYouSectionReveal extends StatefulWidget {
-  const _ForYouSectionReveal({
-    required this.show,
-    required this.child,
-  });
+  const _ForYouSectionReveal({required this.show, required this.child});
 
   final bool show;
   final Widget child;
@@ -264,10 +259,7 @@ class _ForYouSectionRevealState extends State<_ForYouSectionReveal>
           child: Align(
             alignment: Alignment.topCenter,
             heightFactor: _expand.value.clamp(0.001, 1.0),
-            child: Opacity(
-              opacity: _fade.value,
-              child: child,
-            ),
+            child: Opacity(opacity: _fade.value, child: child),
           ),
         );
       },
@@ -289,7 +281,8 @@ class _ForYouLoadedRail extends StatelessWidget {
   final List<RecommendationItem> items;
   final bool showFirstUnlockBadge;
   final bool Function(String seriesId) isWishlisted;
-  final Future<void> Function(BuildContext context, String seriesId) onOpenSeries;
+  final Future<void> Function(BuildContext context, String seriesId)
+  onOpenSeries;
   final void Function(BuildContext context, String seriesId) onWishlistPressed;
   final VoidCallback onDismissFirstUnlock;
 
@@ -350,7 +343,7 @@ class _ForYouTitleIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Icon(
-      Icons.auto_awesome_outlined,
+      Symbols.auto_awesome_rounded,
       size: 20,
       color: scheme.primary.withValues(alpha: 0.82),
     );
@@ -369,15 +362,17 @@ class _FirstUnlockBadge extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: scheme.primaryContainer.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(999),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
         child: Text(
           label,
           style: textTheme.labelMedium?.copyWith(
             color: scheme.onPrimaryContainer,
             fontWeight: FontWeight.w600,
+            letterSpacing: 0.1,
+            height: 1.05,
           ),
         ),
       ),

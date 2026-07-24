@@ -38,8 +38,7 @@ class MercariBrowseResponseDto {
     if (direct != null && direct.trim().isNotEmpty) return direct.trim();
     final page = json['pagination'];
     if (page is Map<String, dynamic>) {
-      final nested =
-          page['nextCursor'] as String? ?? page['cursor'] as String?;
+      final nested = page['nextCursor'] as String? ?? page['cursor'] as String?;
       if (nested != null && nested.trim().isNotEmpty) return nested.trim();
     }
     return null;

@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Packaging-card style placeholder when there is no photo — reads like a tiny vinyl / blind-box tile.
 class CollectibleFigurePlaceholder extends StatelessWidget {
@@ -201,7 +202,7 @@ class CollectibleFigurePlaceholder extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            Icons.star_rounded,
+                            Symbols.star_rounded,
                             size: 11,
                             color: deep.withValues(alpha: 0.5),
                           ),

@@ -1,6 +1,7 @@
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/catalog_latest_series.dart';
-import 'package:blindbox_app/features/catalog/models/catalog_series.dart' as catalog;
+import 'package:blindbox_app/features/catalog/models/catalog_series.dart'
+    as catalog;
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/home/data/home_feed_picker.dart';
 
@@ -26,10 +27,7 @@ List<catalog.CatalogSeries> pickAddSeriesBrowseFeed(
 
   return pickLatestSeriesRecommendations(
     bundle,
-    const CollectionSnapshot(
-      shelfSeries: [],
-      figureStates: {},
-    ),
+    const CollectionSnapshot(shelfSeries: [], figureStates: {}),
     limit: targetCount,
   );
 }

@@ -41,53 +41,55 @@ class _ProbeHostState extends State<_ProbeHost> {
 }
 
 void main() {
-  testWidgets('clear suffix is driven by ValueListenableBuilder without parent rebuild', (
-    tester,
-  ) async {
-    final hostKey = GlobalKey<_ProbeHostState>();
-    await tester.pumpWidget(_ProbeHost(key: hostKey));
-    await tester.pump();
+  testWidgets(
+    'clear suffix is driven by ValueListenableBuilder without parent rebuild',
+    (tester) async {
+      final hostKey = GlobalKey<_ProbeHostState>();
+      await tester.pumpWidget(_ProbeHost(key: hostKey));
+      await tester.pump();
 
-    final initialBuilds = hostKey.currentState!.buildCount;
-    expect(find.byTooltip('Clear'), findsNothing);
+      final initialBuilds = hostKey.currentState!.buildCount;
+      expect(find.byTooltip('Clear'), findsNothing);
 
-    await tester.enterText(
-      find.descendant(
-        of: find.byType(AppSearchField),
-        matching: find.byType(TextField),
-      ),
-      'labubu',
-    );
-    await tester.pump();
+      await tester.enterText(
+        find.descendant(
+          of: find.byType(AppSearchField),
+          matching: find.byType(TextField),
+        ),
+        'labubu',
+      );
+      await tester.pump();
 
-    expect(
-      hostKey.currentState!.buildCount,
-      initialBuilds,
-      reason: 'parent must not rebuild when only suffix chrome changes',
-    );
-    expect(find.byTooltip('Clear'), findsOneWidget);
-    expect(find.text('Matches'), findsOneWidget);
-    expect(find.text('results-section'), findsOneWidget);
-    expect(find.text('history-section'), findsNothing);
-  });
+      expect(
+        hostKey.currentState!.buildCount,
+        initialBuilds,
+        reason: 'parent must not rebuild when only suffix chrome changes',
+      );
+      expect(find.byTooltip('Clear'), findsOneWidget);
+      expect(find.text('Matches'), findsOneWidget);
+      expect(find.text('results-section'), findsOneWidget);
+      expect(find.text('history-section'), findsNothing);
+    },
+  );
 
-  testWidgets('whitespace-only query keeps history chrome without clear suffix', (
-    tester,
-  ) async {
-    await tester.pumpWidget(const _ProbeHost());
-    await tester.pump();
+  testWidgets(
+    'whitespace-only query keeps history chrome without clear suffix',
+    (tester) async {
+      await tester.pumpWidget(const _ProbeHost());
+      await tester.pump();
 
-    await tester.enterText(
-      find.descendant(
-        of: find.byType(AppSearchField),
-        matching: find.byType(TextField),
-      ),
-      '   ',
-    );
-    await tester.pump();
+      await tester.enterText(
+        find.descendant(
+          of: find.byType(AppSearchField),
+          matching: find.byType(TextField),
+        ),
+        '   ',
+      );
+      await tester.pump();
 
-    expect(find.byTooltip('Clear'), findsNothing);
-    expect(find.text('Matches'), findsNothing);
-    expect(find.text('history-section'), findsOneWidget);
-  });
+      expect(find.byTooltip('Clear'), findsNothing);
+      expect(find.text('Matches'), findsNothing);
+      expect(find.text('history-section'), findsOneWidget);
+    },
+  );
 }

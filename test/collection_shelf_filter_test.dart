@@ -24,10 +24,7 @@ void main() {
       catalogTemplateId: 'o',
       taxonomyBrandId: 'tntspace',
     );
-    final filtered = shelfSeriesVisibleForBrandFilter(
-      [pop, other],
-      'popmart',
-    );
+    final filtered = shelfSeriesVisibleForBrandFilter([pop, other], 'popmart');
     expect(filtered, [pop]);
   });
 }

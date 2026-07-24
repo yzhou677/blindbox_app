@@ -14,14 +14,22 @@ List<String> catalogReadStringList(dynamic value) {
       .toList(growable: false);
 }
 
-String catalogReadString(Map<String, dynamic> json, String key, [String fallback = '']) {
+String catalogReadString(
+  Map<String, dynamic> json,
+  String key, [
+  String fallback = '',
+]) {
   final v = json[key];
   if (v is String) return v;
   if (v != null) return v.toString();
   return fallback;
 }
 
-bool catalogReadBool(Map<String, dynamic> json, String key, {bool fallback = false}) {
+bool catalogReadBool(
+  Map<String, dynamic> json,
+  String key, {
+  bool fallback = false,
+}) {
   final v = json[key];
   if (v is bool) return v;
   return fallback;
@@ -69,7 +77,9 @@ String catalogReadCatalogImageKey(
 }) {
   final k = catalogReadString(json, 'imageKey').trim();
   if (k.isNotEmpty) return k;
-  final fromThumb = CatalogImageResolver.imageKeyFromLegacyThumbnailAsset(legacyThumbField);
+  final fromThumb = CatalogImageResolver.imageKeyFromLegacyThumbnailAsset(
+    legacyThumbField,
+  );
   if (fromThumb.isNotEmpty) return fromThumb;
   final fb = fallbackId.trim();
   return fb;

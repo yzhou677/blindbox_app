@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
+import 'package:blindbox_app/core/theme/app_typography.dart';
+import 'package:blindbox_app/core/theme/collectible_motion.dart';
+import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/collection/debug/collection_shelf_pipeline_trace.dart';
 import 'package:blindbox_app/features/collection/domain/shelf_emotional_profile.dart';
@@ -54,6 +57,7 @@ import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 class CollectionScreen extends ConsumerStatefulWidget {
   const CollectionScreen({super.key});
@@ -128,8 +132,8 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     if (!_scrollController.hasClients) return;
     _scrollController.animateTo(
       0,
-      duration: const Duration(milliseconds: 320),
-      curve: Curves.easeOutCubic,
+      duration: CollectibleMotion.sectionReveal,
+      curve: CollectibleMotion.easeOut,
     );
   }
 
@@ -486,7 +490,10 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               backgroundColor: scheme.surface,
               centerTitle: false,
               titleSpacing: 20,
-              title: Text('My collection', style: textTheme.titleLarge),
+              title: Text(
+                'My collection',
+                style: AppTypography.tabTitle(textTheme, scheme),
+              ),
               actions: _insightsAppBarActions(ref),
             ),
             SliverToBoxAdapter(
@@ -556,7 +563,10 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
             backgroundColor: scheme.surface,
             centerTitle: false,
             titleSpacing: 20,
-            title: Text('My collection', style: textTheme.titleLarge),
+            title: Text(
+              'My collection',
+              style: AppTypography.tabTitle(textTheme, scheme),
+            ),
             actions: _insightsAppBarActions(ref),
           ),
           SliverToBoxAdapter(
@@ -610,7 +620,8 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               child: CollectibleSectionHeader(
                 title: 'My collection',
                 subtitle: sectionSubtitle,
-                padding: const EdgeInsets.fromLTRB(20, 2, 20, 10),
+                dense: true,
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
                 trailing: _CollectionHeaderActions(
                   onShare: () => _shareShelf(context),
                   onAddSeries: () => _openAddToCollection(context),
@@ -646,7 +657,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                       onIpSelected: (id) => setState(() => _ipFilterId = id),
                     ),
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 2),
                       child: Align(
                         alignment: Alignment.centerRight,
                         child: _CollectionShelfSortMenu(
@@ -822,8 +833,11 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
         : SearchPlaceholders.collection;
     return SliverToBoxAdapter(
       child: Padding(
-        padding: const EdgeInsets.only(top: FeedRhythm.headerToSearchField),
+        padding: const EdgeInsets.only(
+          top: FeedRhythm.compactHeaderToSearchField,
+        ),
         child: AppSearchField(
+          compact: true,
           controller: _searchController,
           hintText: hintText,
           readOnly: searchDisabled,
@@ -838,7 +852,10 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                       return const SizedBox.shrink();
                     }
                     return IconButton(
-                      icon: const Icon(Icons.close_rounded, size: 20),
+                      icon: const Icon(
+                        Symbols.close_rounded,
+                        size: AppIconSizes.clear,
+                      ),
                       onPressed: () {
                         _searchDebounceTimer?.cancel();
                         _searchController.clear();
@@ -1054,8 +1071,8 @@ class _CollectionAddSeriesButton extends StatelessWidget {
       key: const Key('collection_header_add_series'),
       onPressed: onPressed,
       icon: Icon(
-        Icons.add_rounded,
-        size: 16,
+        Symbols.add_rounded,
+        size: AppIconSizes.headerQuiet,
         color: scheme.primary.withValues(alpha: 0.72),
       ),
       label: Text(
@@ -1114,16 +1131,19 @@ class _CollectionHeaderActions extends StatelessWidget {
             backgroundColor: Color.lerp(
               scheme.surface,
               scheme.primaryContainer,
-              Theme.of(context).brightness == Brightness.dark ? 0.18 : 0.28,
+              Theme.of(context).brightness == Brightness.dark ? 0.14 : 0.22,
             ),
-            foregroundColor: scheme.primary.withValues(alpha: 0.78),
-            minimumSize: const Size(40, 40),
+            foregroundColor: scheme.primary.withValues(alpha: 0.72),
+            minimumSize: AppIconPadding.buttonMin,
             tapTargetSize: MaterialTapTargetSize.padded,
             visualDensity: VisualDensity.compact,
           ),
-          icon: const Icon(Icons.ios_share_rounded, size: 18),
+          icon: const Icon(
+            Symbols.ios_share_rounded,
+            size: AppIconSizes.toolbar,
+          ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 6),
         _CollectionAddSeriesButton(onPressed: onAddSeries),
       ],
     );
@@ -1171,7 +1191,7 @@ class _CollectionShelfSortMenu extends StatelessWidget {
                   width: 28,
                   child: sort == selected
                       ? Icon(
-                          Icons.check_rounded,
+                          Symbols.check_rounded,
                           size: 20,
                           color: scheme.primary,
                         )
@@ -1195,8 +1215,8 @@ class _CollectionShelfSortMenu extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            Icons.sort_rounded,
-            size: 18,
+            Symbols.sort_rounded,
+            size: AppIconSizes.metadata,
             color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
           ),
           const SizedBox(width: 6),
@@ -1208,8 +1228,8 @@ class _CollectionShelfSortMenu extends StatelessWidget {
             ),
           ),
           Icon(
-            Icons.expand_more_rounded,
-            size: 18,
+            Symbols.expand_more_rounded,
+            size: AppIconSizes.metadata,
             color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
           ),
         ],
@@ -1240,7 +1260,7 @@ class _ShelfBucketSectionHeader extends StatelessWidget {
       onTap: onToggle,
       borderRadius: BorderRadius.circular(8),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: 6),
         child: Row(
           children: [
             Expanded(
@@ -1248,13 +1268,16 @@ class _ShelfBucketSectionHeader extends StatelessWidget {
                 '$title ($count)',
                 style: textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w700,
+                  letterSpacing: -0.15,
                   color: scheme.onSurface.withValues(alpha: 0.92),
                 ),
               ),
             ),
             Icon(
-              expanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
-              size: 22,
+              expanded
+                  ? Symbols.expand_less_rounded
+                  : Symbols.expand_more_rounded,
+              size: AppIconSizes.expand,
               color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
             ),
           ],

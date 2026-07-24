@@ -18,7 +18,7 @@ Future<void> openMarketListingUrl(BuildContext context, String? url) async {
   if (!context.mounted) return;
   if (opened) return;
 
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text('Could not open listing')),
-  );
+  ScaffoldMessenger.of(
+    context,
+  ).showSnackBar(const SnackBar(content: Text('Could not open listing')));
 }

@@ -54,6 +54,7 @@ void scheduleCatalogImageResolveAfterFrames({
     }
     WidgetsBinding.instance.addPostFrameCallback((_) => onFrame());
   }
+
   WidgetsBinding.instance.addPostFrameCallback((_) => onFrame());
 }
 
@@ -134,9 +135,9 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
   bool _loading = true;
 
   CatalogImageDisplaySpec get _spec => CatalogImageDisplaySpec.forMode(
-        widget.displayMode,
-        imageRef: _imageRef ?? widget.imageKey,
-      );
+    widget.displayMode,
+    imageRef: _imageRef ?? widget.imageKey,
+  );
 
   @override
   void initState() {

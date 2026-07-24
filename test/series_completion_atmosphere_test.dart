@@ -18,7 +18,10 @@ void main() {
     final series = testShelfSeries(figures: figures);
     final states = <String, TrackedFigure>{
       for (var i = 0; i < 6; i++)
-        'f$i': TrackedFigure(figureId: 'f$i', state: FigureCollectionState.owned),
+        'f$i': TrackedFigure(
+          figureId: 'f$i',
+          state: FigureCollectionState.owned,
+        ),
     };
 
     final atm = atmosphereForSeries(series, states);
@@ -110,7 +113,10 @@ void main() {
     final series = testShelfSeries(figures: figures);
     final states = <String, TrackedFigure>{
       for (var i = 0; i < 6; i++)
-        'r$i': TrackedFigure(figureId: 'r$i', state: FigureCollectionState.owned),
+        'r$i': TrackedFigure(
+          figureId: 'r$i',
+          state: FigureCollectionState.owned,
+        ),
     };
 
     final atm = atmosphereForSeries(series, states);

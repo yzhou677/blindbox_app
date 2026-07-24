@@ -10,7 +10,8 @@ import 'package:http/http.dart' as http;
 
 /// HTTP client for the market browse gateway (provider-neutral wire JSON).
 class MarketGatewayClient {
-  MarketGatewayClient({http.Client? client}) : _client = client ?? http.Client();
+  MarketGatewayClient({http.Client? client})
+    : _client = client ?? http.Client();
 
   final http.Client _client;
 

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'helpers/collection_fixtures.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 void main() {
   testWidgets('in-progress card shows progress bar and count', (tester) async {
@@ -27,10 +28,7 @@ void main() {
     );
     final states = {
       for (final f in series.figures.take(2))
-        f.id: TrackedFigure(
-          figureId: f.id,
-          state: FigureCollectionState.owned,
-        ),
+        f.id: TrackedFigure(figureId: f.id, state: FigureCollectionState.owned),
     };
 
     await tester.pumpWidget(
@@ -53,10 +51,12 @@ void main() {
     expect(find.text('2 / 4'), findsOneWidget);
     expect(find.byType(LinearProgressIndicator), findsOneWidget);
     expect(find.text(CollectionVocabulary.seriesCompleteBadge), findsNothing);
-    expect(find.byIcon(Icons.delete_outline_rounded), findsNothing);
+    expect(find.byIcon(Symbols.delete_outline_rounded), findsNothing);
   });
 
-  testWidgets('completed card reuses shell with Complete state', (tester) async {
+  testWidgets('completed card reuses shell with Complete state', (
+    tester,
+  ) async {
     final series = testShelfSeries(
       id: 's2',
       name: 'Hirono Done',
@@ -80,10 +80,7 @@ void main() {
     );
     final states = {
       for (final f in series.figures)
-        f.id: TrackedFigure(
-          figureId: f.id,
-          state: FigureCollectionState.owned,
-        ),
+        f.id: TrackedFigure(figureId: f.id, state: FigureCollectionState.owned),
     };
 
     await tester.pumpWidget(
@@ -126,10 +123,7 @@ void main() {
     );
     final states = {
       for (final f in series.figures.take(1))
-        f.id: TrackedFigure(
-          figureId: f.id,
-          state: FigureCollectionState.owned,
-        ),
+        f.id: TrackedFigure(figureId: f.id, state: FigureCollectionState.owned),
     };
 
     await tester.pumpWidget(
@@ -148,13 +142,15 @@ void main() {
     );
     await tester.pump();
 
-    final card = tester.getSize(find.byKey(const Key('collection_series_card')));
+    final card = tester.getSize(
+      find.byKey(const Key('collection_series_card')),
+    );
     expect(card.width, CollectionCardTokens.compactWidth);
     expect(card.height, CollectionCardTokens.compactMinRailHeight);
     expect(find.text('Mini Series'), findsOneWidget);
     expect(find.text('Hirono'), findsOneWidget);
     expect(find.text('1 / 4'), findsOneWidget);
-    expect(find.byIcon(Icons.delete_outline_rounded), findsNothing);
+    expect(find.byIcon(Symbols.delete_outline_rounded), findsNothing);
   });
 
   testWidgets('overlay builder can add card chrome without changing card tap', (
@@ -186,7 +182,7 @@ void main() {
                 child: IconButton(
                   tooltip: 'Overlay action',
                   onPressed: () => overlayTaps++,
-                  icon: const Icon(Icons.close_rounded),
+                  icon: const Icon(Symbols.close_rounded),
                 ),
               ),
             ),

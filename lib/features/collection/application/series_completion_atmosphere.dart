@@ -21,7 +21,8 @@ SeriesCompletionAtmosphere atmosphereForSeries(
 
   return SeriesCompletionAtmosphere(
     nearComplete: resolution.isNearComplete,
-    missingSecret: resolution.isCompleted &&
+    missingSecret:
+        resolution.isCompleted &&
         resolution.secretSlotCount > 0 &&
         !resolution.isMasterComplete,
     complete: resolution.isCompleted,

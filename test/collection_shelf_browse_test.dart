@@ -67,10 +67,7 @@ ShelfSeries _series({
 Map<String, TrackedFigure> _ownedAll(ShelfSeries series) {
   return {
     for (final f in series.figures)
-      f.id: TrackedFigure(
-        figureId: f.id,
-        state: FigureCollectionState.owned,
-      ),
+      f.id: TrackedFigure(figureId: f.id, state: FigureCollectionState.owned),
   };
 }
 
@@ -115,7 +112,10 @@ void main() {
     test('empty query returns same list reference', () {
       final series = [_series(id: 'a', name: 'Alpha')];
       expect(identical(filterShelfSeriesBySearch(series, ''), series), isTrue);
-      expect(identical(filterShelfSeriesBySearch(series, '   '), series), isTrue);
+      expect(
+        identical(filterShelfSeriesBySearch(series, '   '), series),
+        isTrue,
+      );
     });
 
     test('filters case-insensitively by name', () {
@@ -144,7 +144,11 @@ void main() {
           ipName: 'Nommi',
         ),
       ];
-      final filtered = filterShelfSeriesBySearch(series, 'labubu', catalog: catalog);
+      final filtered = filterShelfSeriesBySearch(
+        series,
+        'labubu',
+        catalog: catalog,
+      );
       expect(filtered.map((s) => s.id).toList(), ['a']);
     });
 
@@ -164,7 +168,11 @@ void main() {
           ipName: 'Nommi',
         ),
       ];
-      final filtered = filterShelfSeriesBySearch(series, 'nommi', catalog: catalog);
+      final filtered = filterShelfSeriesBySearch(
+        series,
+        'nommi',
+        catalog: catalog,
+      );
       expect(filtered.map((s) => s.id).toList(), ['b']);
     });
 
@@ -302,9 +310,18 @@ void main() {
         ),
       ];
 
-      for (final query in ['Hi Lumi', 'exciting macaron', 'labubu', 'pop mart']) {
+      for (final query in [
+        'Hi Lumi',
+        'exciting macaron',
+        'labubu',
+        'pop mart',
+      ]) {
         final expectedIds = svc.matchingSeriesIds(query);
-        final filtered = filterShelfSeriesBySearch(shelf, query, catalog: catalog);
+        final filtered = filterShelfSeriesBySearch(
+          shelf,
+          query,
+          catalog: catalog,
+        );
         expect(
           filtered.map((s) => s.catalogTemplateId).toSet(),
           expectedIds,
@@ -427,10 +444,7 @@ void main() {
     test('completion sorts by series ratio descending', () {
       final s1 = _series(id: 's1', name: 'One', figureCount: 4);
       final s2 = _series(id: 's2', name: 'Two', figureCount: 4);
-      final states = {
-        ..._ownedCount(s1, 3),
-        ..._ownedCount(s2, 1),
-      };
+      final states = {..._ownedCount(s1, 3), ..._ownedCount(s2, 1)};
       final sorted = sortShelfSeriesForDisplay(
         [s2, s1],
         CollectionShelfSort.completion,
@@ -582,7 +596,11 @@ void main() {
           ),
         ],
       );
-      final complete = _series(id: 'complete', name: 'Complete', figureCount: 3);
+      final complete = _series(
+        id: 'complete',
+        name: 'Complete',
+        figureCount: 3,
+      );
       final near = _series(id: 'near', name: 'Near', figureCount: 7);
       final low = _series(id: 'low', name: 'Low', figureCount: 4);
       final states = {
@@ -596,10 +614,12 @@ void main() {
         CollectionShelfSort.completion,
         states,
       );
-      expect(
-        sorted.map((s) => s.id).toList(),
-        ['master', 'complete', 'near', 'low'],
-      );
+      expect(sorted.map((s) => s.id).toList(), [
+        'master',
+        'complete',
+        'near',
+        'low',
+      ]);
     });
 
     test('completion sorts all series globally (ignores IP weighted ratio)', () {
@@ -646,10 +666,7 @@ void main() {
         ipId: 'nommi',
         count: 10,
       );
-      final states = {
-        ..._ownedAll(disneyDone),
-        ..._ownedCount(nommiAlmost, 9),
-      };
+      final states = {..._ownedAll(disneyDone), ..._ownedCount(nommiAlmost, 9)};
 
       final sorted = sortShelfSeriesForDisplay(
         [disneyDone, nommiAlmost, disneyOpen],
@@ -698,18 +715,8 @@ void main() {
     test('alphabetical does not group by equal IP labels', () {
       final sorted = sortShelfSeriesForDisplay(
         [
-          _ipSeries(
-            id: 's2',
-            name: 'Series B',
-            ipId: 'zeta',
-            ipLabel: 'Twin',
-          ),
-          _ipSeries(
-            id: 's1',
-            name: 'Series A',
-            ipId: 'alpha',
-            ipLabel: 'Twin',
-          ),
+          _ipSeries(id: 's2', name: 'Series B', ipId: 'zeta', ipLabel: 'Twin'),
+          _ipSeries(id: 's1', name: 'Series A', ipId: 'alpha', ipLabel: 'Twin'),
         ],
         CollectionShelfSort.alphabetical,
         states,
@@ -804,10 +811,7 @@ void main() {
         ipLabel: 'Solo',
         figureCount: 4,
       );
-      final owned = {
-        ..._ownedCount(a, 2),
-        ..._ownedCount(b, 2),
-      };
+      final owned = {..._ownedCount(a, 2), ..._ownedCount(b, 2)};
       final sorted = sortShelfSeriesForDisplay(
         [a, b],
         CollectionShelfSort.completion,
@@ -831,10 +835,7 @@ void main() {
         ipLabel: 'Solo',
         figureCount: 4,
       );
-      final owned = {
-        ..._ownedCount(z, 2),
-        ..._ownedCount(a, 2),
-      };
+      final owned = {..._ownedCount(z, 2), ..._ownedCount(a, 2)};
       final sorted = sortShelfSeriesForDisplay(
         [z, a],
         CollectionShelfSort.completion,
@@ -881,10 +882,7 @@ void main() {
         ipLabel: 'Zeta',
         figureCount: 4,
       );
-      final owned = {
-        ..._ownedCount(alpha, 2),
-        ..._ownedCount(zeta, 2),
-      };
+      final owned = {..._ownedCount(alpha, 2), ..._ownedCount(zeta, 2)};
       final sorted = sortShelfSeriesForDisplay(
         [zeta, alpha],
         CollectionShelfSort.completion,
@@ -896,10 +894,7 @@ void main() {
     test('empty input returns empty for every sort mode', () {
       const states = <String, TrackedFigure>{};
       for (final sort in CollectionShelfSort.values) {
-        expect(
-          sortShelfSeriesForDisplay(const [], sort, states),
-          isEmpty,
-        );
+        expect(sortShelfSeriesForDisplay(const [], sort, states), isEmpty);
       }
     });
   });
@@ -910,9 +905,19 @@ void main() {
     test('alphabetical interleaves series across IPs by name', () {
       final sorted = sortShelfSeriesForDisplay(
         [
-          _ipSeries(id: 'da', name: 'Disney A', ipId: 'disney', ipLabel: 'Disney'),
+          _ipSeries(
+            id: 'da',
+            name: 'Disney A',
+            ipId: 'disney',
+            ipLabel: 'Disney',
+          ),
           _ipSeries(id: 'na', name: 'Nommi A', ipId: 'nommi', ipLabel: 'Nommi'),
-          _ipSeries(id: 'db', name: 'Disney B', ipId: 'disney', ipLabel: 'Disney'),
+          _ipSeries(
+            id: 'db',
+            name: 'Disney B',
+            ipId: 'disney',
+            ipLabel: 'Disney',
+          ),
         ],
         CollectionShelfSort.alphabetical,
         states,
@@ -973,10 +978,7 @@ void main() {
         ipLabel: 'Nommi',
         figureCount: 10,
       );
-      final owned = {
-        ..._ownedAll(disneyDone),
-        ..._ownedCount(nommiAlmost, 9),
-      };
+      final owned = {..._ownedAll(disneyDone), ..._ownedCount(nommiAlmost, 9)};
       final sorted = sortShelfSeriesForDisplay(
         [disneyDone, nommiAlmost, disneyOpen],
         CollectionShelfSort.completion,
@@ -1119,15 +1121,12 @@ void main() {
     test('splits complete and in-progress series', () {
       final complete = _series(id: 'done', name: 'Done', figureCount: 2);
       final partial = _series(id: 'open', name: 'Open', figureCount: 3);
-      final states = {
-        ..._ownedAll(complete),
-        ..._ownedCount(partial, 1),
-      };
+      final states = {..._ownedAll(complete), ..._ownedCount(partial, 1)};
 
-      final (inProgress, completed) = partitionShelfSeries(
-        [complete, partial],
-        states,
-      );
+      final (inProgress, completed) = partitionShelfSeries([
+        complete,
+        partial,
+      ], states);
 
       expect(inProgress.map((s) => s.id), ['open']);
       expect(completed.map((s) => s.id), ['done']);
@@ -1136,20 +1135,14 @@ void main() {
 
   group('isShelfSeriesComplete', () {
     test('false when figure count is zero', () {
-      final empty = testShelfSeries(
-        id: 'empty',
-        figures: const [],
-      );
+      final empty = testShelfSeries(id: 'empty', figures: const []);
       expect(isShelfSeriesComplete(empty, const {}), isFalse);
     });
   });
 
   group('CollectionShelfSortLabels', () {
     test('alphabetical menu label is Alphabetical (A–Z)', () {
-      expect(
-        CollectionShelfSort.alphabetical.menuLabel,
-        'Alphabetical (A–Z)',
-      );
+      expect(CollectionShelfSort.alphabetical.menuLabel, 'Alphabetical (A–Z)');
     });
 
     test('completion menu label is Completion', () {
@@ -1161,11 +1154,7 @@ void main() {
     test('in-progress series shows owned/total and missing', () {
       final series = _series(id: 's', name: 'Series', figureCount: 12);
       final states = _ownedCount(series, 7);
-      const progress = SeriesProgressCounts(
-        owned: 7,
-        wishlist: 0,
-        missing: 5,
-      );
+      const progress = SeriesProgressCounts(owned: 7, wishlist: 0, missing: 5);
 
       expect(
         CollectionProgressVoice.seriesStatPrimaryLine(
@@ -1187,11 +1176,7 @@ void main() {
 
     test('complete series shows checkmark and full tally', () {
       final series = _series(id: 's', name: 'Series', figureCount: 12);
-      const progress = SeriesProgressCounts(
-        owned: 12,
-        wishlist: 0,
-        missing: 0,
-      );
+      const progress = SeriesProgressCounts(owned: 12, wishlist: 0, missing: 0);
       final states = _ownedAll(series);
 
       expect(
@@ -1241,11 +1226,7 @@ void main() {
             state: FigureCollectionState.owned,
           ),
       };
-      const progress = SeriesProgressCounts(
-        owned: 3,
-        wishlist: 0,
-        missing: 1,
-      );
+      const progress = SeriesProgressCounts(owned: 3, wishlist: 0, missing: 1);
 
       expect(
         CollectionProgressVoice.seriesStatPrimaryLine(
@@ -1296,11 +1277,7 @@ void main() {
           state: FigureCollectionState.owned,
         ),
       };
-      const progress = SeriesProgressCounts(
-        owned: 2,
-        wishlist: 0,
-        missing: 0,
-      );
+      const progress = SeriesProgressCounts(owned: 2, wishlist: 0, missing: 0);
 
       expect(
         CollectionProgressVoice.seriesStatPrimaryLine(
@@ -1387,10 +1364,11 @@ void main() {
         final (inProgress, _) = partitionShelfSeries(searched, states);
         final display = sortShelfSeriesForDisplay(inProgress, sort, states);
         if (sort == CollectionShelfSort.recentlyAdded) {
-          expect(
-            display.map((s) => s.id).toList(),
-            ['newest', 'middle', 'oldest'],
-          );
+          expect(display.map((s) => s.id).toList(), [
+            'newest',
+            'middle',
+            'oldest',
+          ]);
         }
       }
     });
@@ -1399,7 +1377,12 @@ void main() {
       const states = <String, TrackedFigure>{};
       final shelf = [
         _ipSeries(id: 'n2', name: 'Nommi B', ipId: 'nommi', ipLabel: 'Nommi'),
-        _ipSeries(id: 'd1', name: 'Disney A', ipId: 'disney', ipLabel: 'Disney'),
+        _ipSeries(
+          id: 'd1',
+          name: 'Disney A',
+          ipId: 'disney',
+          ipLabel: 'Disney',
+        ),
         _ipSeries(id: 'n1', name: 'Nommi A', ipId: 'nommi', ipLabel: 'Nommi'),
       ];
       final sorted = sortShelfSeriesForDisplay(

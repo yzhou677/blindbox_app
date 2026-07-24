@@ -1,4 +1,4 @@
-﻿import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
+import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/data/catalog_bundle_lookup.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_service.dart';
@@ -11,8 +11,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// Watched by [catalogBundleProvider] so dependents rebuild declaratively.
 final catalogBundleRevisionProvider =
     NotifierProvider<CatalogBundleRevisionNotifier, int>(
-  CatalogBundleRevisionNotifier.new,
-);
+      CatalogBundleRevisionNotifier.new,
+    );
 
 class CatalogBundleRevisionNotifier extends Notifier<int> {
   void Function()? _removeBundleListener;
@@ -22,10 +22,12 @@ class CatalogBundleRevisionNotifier extends Notifier<int> {
   int build() {
     _removeBundleListener?.call();
     _removeRefreshListener?.call();
-    _removeBundleListener =
-        CatalogBundleCache.addBundleReplacedListener(_bumpRevision);
-    _removeRefreshListener =
-        CatalogBundleCache.addRefreshStateListener(_bumpRevision);
+    _removeBundleListener = CatalogBundleCache.addBundleReplacedListener(
+      _bumpRevision,
+    );
+    _removeRefreshListener = CatalogBundleCache.addRefreshStateListener(
+      _bumpRevision,
+    );
     ref.onDispose(() {
       _removeBundleListener?.call();
       _removeRefreshListener?.call();
@@ -75,8 +77,10 @@ final catalogBundleLookupProvider = Provider<CatalogBundleLookup?>((ref) {
 });
 
 /// Sync series template for preview / add flows (no async gap before sheet open).
-final catalogSeriesTemplateProvider =
-    Provider.family<CatalogSeries?, String>((ref, seriesId) {
+final catalogSeriesTemplateProvider = Provider.family<CatalogSeries?, String>((
+  ref,
+  seriesId,
+) {
   return ref.watch(catalogBundleLookupProvider)?.seriesTemplate(seriesId);
 });
 

@@ -3,9 +3,7 @@
 /// Full [BrandTaxonomyRegistry] / [IpTaxonomyRegistry] entries remain for title
 /// resolution and listing taxonomy fields — do not remove from those registries.
 abstract final class MarketFilterVisibility {
-  static const Set<String> hiddenBrandIds = {
-    'finding_unicorn',
-  };
+  static const Set<String> hiddenBrandIds = {'finding_unicorn'};
 
   static const Set<String> hiddenIpIds = {
     'peach_riot',
@@ -24,9 +22,7 @@ abstract final class MarketFilterVisibility {
   };
 
   /// Brand rails that omit the “Any IP” chip (eBay aspect brand ≠ app label).
-  static const Set<String> hideAnyIpForBrandIds = {
-    'dpl',
-  };
+  static const Set<String> hideAnyIpForBrandIds = {'dpl'};
 
   /// When [hideAnyIpForBrandIds] applies, selecting the brand defaults to this IP.
   static const Map<String, String> defaultIpWhenBrandSelected = {

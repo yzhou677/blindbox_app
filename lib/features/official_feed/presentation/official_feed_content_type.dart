@@ -70,15 +70,12 @@ final List<_ContentTypeRule> _rules = [
     (_, _, hay) =>
         _containsAny(hay, ['restock', 'back in stock', 'available again']),
   ),
-  _ContentTypeRule(
-    'Collaboration',
-    (item, _, hay) {
-      final title = item.title.toLowerCase();
-      return title.contains('×') ||
-          title.contains(' x ') ||
-          _containsAny(hay, ['collaboration', 'collab', 'crossover']);
-    },
-  ),
+  _ContentTypeRule('Collaboration', (item, _, hay) {
+    final title = item.title.toLowerCase();
+    return title.contains('×') ||
+        title.contains(' x ') ||
+        _containsAny(hay, ['collaboration', 'collab', 'crossover']);
+  }),
   _ContentTypeRule(
     'Campaign',
     (_, _, hay) => _containsAny(hay, ['campaign', 'collaboration collection']),

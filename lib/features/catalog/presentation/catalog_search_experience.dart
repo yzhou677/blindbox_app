@@ -1,4 +1,5 @@
 import 'package:blindbox_app/core/search/search_placeholders.dart';
+import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_availability.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
@@ -20,6 +21,7 @@ import 'package:blindbox_app/shared/image/catalog_photo_acquisition.dart';
 import 'package:blindbox_app/shared/widgets/catalog_photo_verification_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Shared catalog search experience — field, history, results, availability.
 ///
@@ -167,7 +169,8 @@ class _CatalogSearchExperienceState
         return IconButton(
           tooltip: 'Clear',
           icon: Icon(
-            Icons.close_rounded,
+            Symbols.close_rounded,
+            size: AppIconSizes.clear,
             color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
           ),
           onPressed: _clearSearch,

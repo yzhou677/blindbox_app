@@ -18,10 +18,10 @@ final class CatalogBundleLookup {
     required Map<String, CatalogBrand> brandById,
     required Map<String, CatalogIp> ipById,
     required Map<String, List<CatalogFigure>> figuresBySeriesId,
-  })  : _seriesById = seriesById,
-        _brandById = brandById,
-        _ipById = ipById,
-        _figuresBySeriesId = figuresBySeriesId;
+  }) : _seriesById = seriesById,
+       _brandById = brandById,
+       _ipById = ipById,
+       _figuresBySeriesId = figuresBySeriesId;
 
   final CatalogSeedBundle bundle;
   final Map<String, CatalogSeries> _seriesById;
@@ -72,7 +72,8 @@ final class CatalogBundleLookup {
 
     final brandLine =
         _brandById[catalogSeries.brandId]?.displayName ?? catalogSeries.brandId;
-    final ipLine = _ipById[catalogSeries.ipId]?.displayName ?? catalogSeries.ipId;
+    final ipLine =
+        _ipById[catalogSeries.ipId]?.displayName ?? catalogSeries.ipId;
     final accent = _accents[seriesId.hashCode.abs() % _accents.length];
 
     final templateFigures = <domain.CatalogFigure>[];

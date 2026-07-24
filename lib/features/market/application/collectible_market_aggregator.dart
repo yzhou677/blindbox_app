@@ -50,7 +50,7 @@ List<CollectibleMarketSnapshot> buildCollectibleMarketSnapshots(
     final avgChange = deduped.isEmpty
         ? 0.0
         : deduped.map((e) => e.priceChangePercent).reduce((a, b) => a + b) /
-            deduped.length;
+              deduped.length;
 
     out.add(
       CollectibleMarketSnapshot(
@@ -74,8 +74,9 @@ List<CollectibleMarketSnapshot> buildCollectibleMarketSnapshots(
 
   if (preserveFeedOrder) {
     out.sort(
-      (a, b) => firstListingIndex[a.identity.snapshotId]!
-          .compareTo(firstListingIndex[b.identity.snapshotId]!),
+      (a, b) => firstListingIndex[a.identity.snapshotId]!.compareTo(
+        firstListingIndex[b.identity.snapshotId]!,
+      ),
     );
   } else {
     out.sort((a, b) => b.listingCount.compareTo(a.listingCount));
@@ -174,7 +175,10 @@ AggregationConfidence _aggregationConfidence(
     if (match == null || match.confidence == MarketMatchConfidence.none) {
       return AggregationConfidence.none;
     }
-    return _mapMatchConfidence(match.confidence, cap: AggregationConfidence.low);
+    return _mapMatchConfidence(
+      match.confidence,
+      cap: AggregationConfidence.low,
+    );
   }
 
   var minRank = MarketMatchConfidence.exact.rank;

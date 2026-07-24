@@ -37,19 +37,19 @@ const _emptyCatalog = CatalogSeedBundle(
 );
 
 CollectorTypeStats get _emptyStats => const CollectorTypeStats(
-      totalOwned: 0,
-      totalWishlist: 0,
-      trackedSeries: 0,
-      completedSeriesCount: 0,
-      masterCompleteSeriesCount: 0,
-      masterEligibleSeriesCount: 0,
-      completionPercent: 0,
-      secretOwned: 0,
-      secretSlots: 0,
-      brandBreakdown: {},
-      topSeries: [],
-      customSeriesRatio: 0,
-    );
+  totalOwned: 0,
+  totalWishlist: 0,
+  trackedSeries: 0,
+  completedSeriesCount: 0,
+  masterCompleteSeriesCount: 0,
+  masterEligibleSeriesCount: 0,
+  completionPercent: 0,
+  secretOwned: 0,
+  secretSlots: 0,
+  brandBreakdown: {},
+  topSeries: [],
+  customSeriesRatio: 0,
+);
 
 Future<void> _persistIdentity({
   required CollectorTypeArchetypeId archetypeId,
@@ -207,7 +207,9 @@ void main() {
 
       final container = ProviderContainer(
         overrides: [
-          collectionNotifierProvider.overrideWith(() => _SnapNotifier(nextSnap)),
+          collectionNotifierProvider.overrideWith(
+            () => _SnapNotifier(nextSnap),
+          ),
           catalogBundleProvider.overrideWith((ref) async => _emptyCatalog),
         ],
       );
@@ -216,10 +218,13 @@ void main() {
       container.read(collectorTypeViewModelProvider);
       expect(container.read(collectorTypeNeedsRevealProvider), isTrue);
 
-      await container.read(collectorTypeViewModelProvider.notifier).requestReveal();
+      await container
+          .read(collectorTypeViewModelProvider.notifier)
+          .requestReveal();
 
-      final revealed = container.read(collectorTypeViewModelProvider)
-          as CollectorTypeRevealRevealed;
+      final revealed =
+          container.read(collectorTypeViewModelProvider)
+              as CollectorTypeRevealRevealed;
       expect(revealed.identity.archetypeId, live.archetypeId);
       expect(
         CollectionMemoryStore.instance.cachedCollectorTypeIdentity!.archetypeId,
@@ -258,10 +263,13 @@ void main() {
       addTearDown(container.dispose);
 
       expect(container.read(collectorTypeNeedsRevealProvider), isTrue);
-      await container.read(collectorTypeViewModelProvider.notifier).requestReveal();
+      await container
+          .read(collectorTypeViewModelProvider.notifier)
+          .requestReveal();
 
-      final revealed = container.read(collectorTypeViewModelProvider)
-          as CollectorTypeRevealRevealed;
+      final revealed =
+          container.read(collectorTypeViewModelProvider)
+              as CollectorTypeRevealRevealed;
       expect(revealed.identity.archetypeId, live.archetypeId);
     },
   );
@@ -360,10 +368,13 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      await container.read(collectorTypeViewModelProvider.notifier).requestReveal();
+      await container
+          .read(collectorTypeViewModelProvider.notifier)
+          .requestReveal();
 
-      final revealed = container.read(collectorTypeViewModelProvider)
-          as CollectorTypeRevealRevealed;
+      final revealed =
+          container.read(collectorTypeViewModelProvider)
+              as CollectorTypeRevealRevealed;
       expect(revealed.identity.archetypeId, CollectorTypeArchetypeId.loyalist);
       expect(
         CollectionMemoryStore.instance.cached.revealedResolverVersion,
@@ -485,43 +496,53 @@ void main() {
 
       expect(container.read(collectorTypeNeedsRevealProvider), isFalse);
 
-      await container.read(collectorTypeViewModelProvider.notifier).requestReveal();
+      await container
+          .read(collectorTypeViewModelProvider.notifier)
+          .requestReveal();
 
-      final revealed = container.read(collectorTypeViewModelProvider)
-          as CollectorTypeRevealRevealed;
+      final revealed =
+          container.read(collectorTypeViewModelProvider)
+              as CollectorTypeRevealRevealed;
       // Unchanged shelf: sameSignature Still keeps wanderer (no churn to live).
       expect(revealed.identity.archetypeId, CollectorTypeArchetypeId.wanderer);
       expect(container.read(collectorTypeNeedsRevealProvider), isFalse);
     },
   );
 
-  test('5. reveal history still appends on needsReveal reinterpretation',
-      () async {
-    final snap = CollectionSnapshot(
-      shelfSeries: [testShelfSeries()],
-      figureStates: const {},
-    );
-    await _persistIdentity(
-      archetypeId: CollectorTypeArchetypeId.wanderer,
-      signatureHash: 'old',
-    );
-    final before =
-        CollectionMemoryStore.instance.cached.collectorTypeRevealHistory.length;
+  test(
+    '5. reveal history still appends on needsReveal reinterpretation',
+    () async {
+      final snap = CollectionSnapshot(
+        shelfSeries: [testShelfSeries()],
+        figureStates: const {},
+      );
+      await _persistIdentity(
+        archetypeId: CollectorTypeArchetypeId.wanderer,
+        signatureHash: 'old',
+      );
+      final before = CollectionMemoryStore
+          .instance
+          .cached
+          .collectorTypeRevealHistory
+          .length;
 
-    final container = ProviderContainer(
-      overrides: [
-        collectionNotifierProvider.overrideWith(() => _SnapNotifier(snap)),
-        catalogBundleProvider.overrideWith((ref) async => _emptyCatalog),
-      ],
-    );
-    addTearDown(container.dispose);
+      final container = ProviderContainer(
+        overrides: [
+          collectionNotifierProvider.overrideWith(() => _SnapNotifier(snap)),
+          catalogBundleProvider.overrideWith((ref) async => _emptyCatalog),
+        ],
+      );
+      addTearDown(container.dispose);
 
-    await container.read(collectorTypeViewModelProvider.notifier).requestReveal();
+      await container
+          .read(collectorTypeViewModelProvider.notifier)
+          .requestReveal();
 
-    final history =
-        CollectionMemoryStore.instance.cached.collectorTypeRevealHistory;
-    expect(history.length, before + 1);
-    expect(history.last.resolverVersion, kCollectorTypeResolverVersion);
-    expect(history.last.signatureHash, isNot('old'));
-  });
+      final history =
+          CollectionMemoryStore.instance.cached.collectorTypeRevealHistory;
+      expect(history.length, before + 1);
+      expect(history.last.resolverVersion, kCollectorTypeResolverVersion);
+      expect(history.last.signatureHash, isNot('old'));
+    },
+  );
 }

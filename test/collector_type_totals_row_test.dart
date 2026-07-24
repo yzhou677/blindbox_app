@@ -72,6 +72,46 @@ void main() {
     );
   });
 
+  testWidgets('at-a-glance metric tiles share equal widths', (tester) async {
+    const stats = CollectorTypeStats(
+      totalOwned: 41,
+      totalWishlist: 0,
+      trackedSeries: 5,
+      completedSeriesCount: 5,
+      masterCompleteSeriesCount: 2,
+      masterEligibleSeriesCount: 0,
+      completionPercent: 72,
+      secretOwned: 5,
+      secretSlots: 8,
+      brandBreakdown: {},
+      topSeries: [],
+      customSeriesRatio: 0,
+    );
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 360,
+            child: CollectorTypeTotalsRow(stats: stats),
+          ),
+        ),
+      ),
+    );
+
+    final tiles = find.descendant(
+      of: find.byType(CollectorTypeTotalsRow),
+      matching: find.byType(DecoratedBox),
+    );
+    expect(tiles, findsNWidgets(4));
+    final widths = [
+      for (var i = 0; i < 4; i++) tester.getSize(tiles.at(i)).width,
+    ];
+    expect(widths[0], closeTo(widths[1], 1));
+    expect(widths[0], closeTo(widths[2], 1));
+    expect(widths[0], closeTo(widths[3], 1));
+  });
+
   testWidgets('at-a-glance metric tooltips open', (tester) async {
     const stats = CollectorTypeStats(
       totalOwned: 41,

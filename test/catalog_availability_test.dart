@@ -11,21 +11,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 CatalogSeedBundle _bundle({String seriesId = 's1'}) => CatalogSeedBundle(
-      brands: const [CatalogBrand(id: 'b', displayName: 'B')],
-      ips: const [CatalogIp(id: 'ip', brandId: 'b', displayName: 'IP')],
-      series: [
-        CatalogSeries(
-          id: seriesId,
-          brandId: 'b',
-          ipId: 'ip',
-          displayName: seriesId,
-          releaseDate: '2026-05-10',
-          isBlindBox: true,
-          imageKey: seriesId,
-        ),
-      ],
-      figures: const [],
-    );
+  brands: const [CatalogBrand(id: 'b', displayName: 'B')],
+  ips: const [CatalogIp(id: 'ip', brandId: 'b', displayName: 'IP')],
+  series: [
+    CatalogSeries(
+      id: seriesId,
+      brandId: 'b',
+      ipId: 'ip',
+      displayName: seriesId,
+      releaseDate: '2026-05-10',
+      isBlindBox: true,
+      imageKey: seriesId,
+    ),
+  ],
+  figures: const [],
+);
 
 void main() {
   setUp(CatalogBundleCache.resetForTest);
@@ -54,12 +54,9 @@ void main() {
 
   test('resolved empty bundle resolves to offline first launch', () async {
     final container = _container();
-    CatalogBundleCache.prime(const CatalogSeedBundle(
-      brands: [],
-      ips: [],
-      series: [],
-      figures: [],
-    ));
+    CatalogBundleCache.prime(
+      const CatalogSeedBundle(brands: [], ips: [], series: [], figures: []),
+    );
     CatalogBundleCache.resetForTest();
     container.read(catalogBundleRevisionProvider);
 
@@ -87,35 +84,41 @@ void main() {
     expect(availability.isCatalogUsable, isTrue);
   });
 
-  test('in-flight refresh keeps catalog ready when bundle is already usable', () async {
-    final container = _container();
-    CatalogBundleCache.prime(_bundle());
-    await container.read(catalogBundleProvider.future);
+  test(
+    'in-flight refresh keeps catalog ready when bundle is already usable',
+    () async {
+      final container = _container();
+      CatalogBundleCache.prime(_bundle());
+      await container.read(catalogBundleProvider.future);
 
-    CatalogBundleCache.loadFirestoreOverride = () async {
-      await Future<void>.delayed(const Duration(milliseconds: 50));
-      return _bundle(seriesId: 'fresh');
-    };
-    unawaited(CatalogBundleCache.refreshFromFirestore(force: true));
+      CatalogBundleCache.loadFirestoreOverride = () async {
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        return _bundle(seriesId: 'fresh');
+      };
+      unawaited(CatalogBundleCache.refreshFromFirestore(force: true));
 
-    final availability = container.read(catalogAvailabilityProvider);
-    expect(availability.state, CatalogAvailabilityUiState.ready);
-    expect(availability.isCatalogUsable, isTrue);
-    expect(CatalogBundleCache.isRefreshInFlight, isTrue);
-  });
+      final availability = container.read(catalogAvailabilityProvider);
+      expect(availability.state, CatalogAvailabilityUiState.ready);
+      expect(availability.isCatalogUsable, isTrue);
+      expect(CatalogBundleCache.isRefreshInFlight, isTrue);
+    },
+  );
 
-  test('failed background refresh over persisted catalog stays ready', () async {
-    final container = _container();
-    CatalogBundleCache.prime(_bundle());
-    await container.read(catalogBundleProvider.future);
+  test(
+    'failed background refresh over persisted catalog stays ready',
+    () async {
+      final container = _container();
+      CatalogBundleCache.prime(_bundle());
+      await container.read(catalogBundleProvider.future);
 
-    CatalogBundleCache.loadFirestoreOverride = () async {
-      throw StateError('offline');
-    };
-    await CatalogBundleCache.refreshFromFirestore(force: true);
+      CatalogBundleCache.loadFirestoreOverride = () async {
+        throw StateError('offline');
+      };
+      await CatalogBundleCache.refreshFromFirestore(force: true);
 
-    final availability = container.read(catalogAvailabilityProvider);
-    expect(availability.state, CatalogAvailabilityUiState.ready);
-    expect(CatalogBundleCache.isRefreshInFlight, isFalse);
-  });
+      final availability = container.read(catalogAvailabilityProvider);
+      expect(availability.state, CatalogAvailabilityUiState.ready);
+      expect(CatalogBundleCache.isRefreshInFlight, isFalse);
+    },
+  );
 }

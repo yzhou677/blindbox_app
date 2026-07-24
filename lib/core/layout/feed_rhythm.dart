@@ -1,5 +1,3 @@
-import 'package:blindbox_app/core/theme/app_card_tokens.dart';
-
 /// Shared vertical rhythm for main-tab scroll feeds (Home / Market / Collection).
 /// Keeps compact headers aligned while giving the status-bar area a little air.
 abstract final class FeedRhythm {
@@ -8,14 +6,23 @@ abstract final class FeedRhythm {
   /// Padding below the compact [SliverAppBar] before first body copy or controls.
   static const double belowMainTabAppBar = 10;
 
-  /// Air between tab title ([SliverAppBar]) and [AppSearchField] on Discover / Market.
+  /// Air between tab title ([SliverAppBar]) and [AppSearchField] (default).
   static const double headerToSearchField = 14;
 
+  /// Compact title → search for Discover / Market / Collection main tabs.
+  static const double compactHeaderToSearchField = 10;
+
+  /// Discover alias for [compactHeaderToSearchField].
+  static const double homeHeaderToSearchField = compactHeaderToSearchField;
+
   /// Default gap between major Home feed sections (Latest drops ↔ Trending).
-  static const double homeMajorSectionGap = 32;
+  static const double homeMajorSectionGap = 24;
 
   /// Air between Discover search and the first feed section.
-  static const double homeSearchToFirstSection = 16;
+  static const double homeSearchToFirstSection = 12;
+
+  /// Compact block gap on Market / Collection (smaller than [blockGapMedium]).
+  static const double compactBlockGap = 12;
 
   /// Space from section title row to subtitle / deck copy.
   static const double sectionTitleToSubtitle = 8;
@@ -30,37 +37,52 @@ abstract final class FeedRhythm {
   static const double sectionHeaderToRail = 14;
 
   /// Space between Market Chasers block and Browse listings header.
-  static const double marketChasersToBrowseHeaderGap = 16;
+  static const double marketChasersToBrowseHeaderGap = 12;
 
   /// Bottom closure after the Chasers horizontal rail (before [marketChasersToBrowseHeaderGap]).
-  static const double marketChasersRailBottomClosure = 22;
+  static const double marketChasersRailBottomClosure = 14;
 
   /// @deprecated Use [marketChasersToBrowseHeaderGap].
-  static const double marketTrendingToBrowseHeaderGap = marketChasersToBrowseHeaderGap;
+  static const double marketTrendingToBrowseHeaderGap =
+      marketChasersToBrowseHeaderGap;
 
   /// @deprecated Use [marketChasersRailBottomClosure].
-  static const double marketTrendingRailBottomClosure = marketChasersRailBottomClosure;
+  static const double marketTrendingRailBottomClosure =
+      marketChasersRailBottomClosure;
 
   /// Space below the Browse listings section title before the first feed row.
-  static const double marketBrowseHeaderToFeedGap = 18;
+  static const double marketBrowseHeaderToFeedGap = 12;
 
   /// Vertical gap between Market browse feed rows (gallery pacing, not dense list).
-  static const double marketListingFeedCardVerticalGap = 18;
+  static const double marketListingFeedCardVerticalGap = 14;
 
   /// Showcase thumb for Market browse rows.
-  static const double marketListingThumbnailExtent = 96;
+  static const double marketListingThumbnailExtent = 88;
 
-  /// Chasers / For You compact rail height.
-  static const double marketChasersRailHeight = AppCardTokens.browseRailHeight;
+  /// Chasers rail height — slightly tighter than For You ([AppCardTokens.browseRailHeight]).
+  static const double marketChasersRailHeight = 180;
+
+  /// Horizontal gap between Market Chasers cards.
+  static const double marketChasersRailCardGap = 16;
 
   /// @deprecated Use [marketChasersRailHeight].
   static const double marketTrendingRailHeight = marketChasersRailHeight;
 
   /// Home series rails (Latest drops / Trending series).
-  static const double homeSeriesRailHeight = 448;
+  ///
+  /// Horizontal list children fill this cross-axis extent. Keep in sync with
+  /// [LatestDropCard] fixed height. Prefer `clipBehavior: Clip.none` on the
+  /// rail so product-shell shadows are not clipped.
+  static const double homeSeriesRailHeight = 368;
 
   /// Horizontal showcase card width on Home series rails.
-  static const double homeSeriesRailCardWidth = 272;
+  static const double homeSeriesRailCardWidth = 208;
+
+  /// Vertical mat padding around Home series rails (Latest / Trending).
+  static const double homeSeriesRailMatVertical = 12;
+
+  /// Horizontal gap between Home series showcase cards (tighter than Market rails).
+  static const double homeSeriesRailCardGap = 16;
 
   /// Compact official updates feed (stacked post tiles).
   static const double homeOfficialFeedThumbnailExtent = 72;
@@ -73,28 +95,28 @@ abstract final class FeedRhythm {
   static const double collectionSummaryMetricStripHeight = 52;
 
   /// Air between collection search field and summary block.
-  static const double collectionSearchToSummaryGap = 18;
+  static const double collectionSearchToSummaryGap = 12;
 
   /// Gap between the Summary header row and the summary metrics card.
-  static const double collectionSummaryHeaderToCard = 10;
+  static const double collectionSummaryHeaderToCard = 8;
 
   /// Air between the summary block and the Shelf / Insights segment.
-  static const double collectionSummaryToSegmentGap = 16;
+  static const double collectionSummaryToSegmentGap = 12;
 
   /// Internal Wishlist summary card padding: same total as the default
   /// symmetric 16 + 16 card inset, but weighted lower to visually center two
   /// lightweight metrics.
-  static const double collectionWishlistSummaryCardTopPadding = 20;
-  static const double collectionWishlistSummaryCardBottomPadding = 12;
+  static const double collectionWishlistSummaryCardTopPadding = 18;
+  static const double collectionWishlistSummaryCardBottomPadding = 14;
 
   /// Air below the segment before the shelf section header ("My collection").
-  static const double collectionSegmentToShelfHeader = 16;
+  static const double collectionSegmentToShelfHeader = 12;
 
   /// Vertical padding inside the collection summary metric card.
   static const double collectionSummaryCardVerticalPadding = 16;
 
   /// Gap between the two metric rows in the summary card.
-  static const double collectionSummaryMetricRowGap = 16;
+  static const double collectionSummaryMetricRowGap = 12;
 
   /// Separation between summary metric card and editorial mood line.
   static const double collectionSummaryToEditorial = 18;
@@ -109,7 +131,7 @@ abstract final class FeedRhythm {
   static const double collectionSummaryLabelHeight = 32;
 
   /// Air below summary block before the shelf section header.
-  static const double collectionSummaryToShelfHeader = 22;
+  static const double collectionSummaryToShelfHeader = 14;
 
   /// Vertical gap between full-width listing cards (shelf separation).
   static const double listingCardVerticalGap = 22;
@@ -139,22 +161,25 @@ abstract final class FeedRhythm {
   static const double collectionFilterSectionLabelToRail = 6;
 
   /// Air between brand filter block and IP filter block.
-  static const double collectionBrandToIpFilterSectionGap = 14;
+  static const double collectionBrandToIpFilterSectionGap = 10;
 
   /// Air between collection filter chips and the first shelf card.
-  static const double collectionFilterToFirstCard = 12;
+  static const double collectionFilterToFirstCard = 10;
 
-  /// Horizontal gap between cards in home/market rails.
+  /// Horizontal gap between cards in home/market rails (For You / legacy).
   static const double horizontalRailCardGap = 28;
+
+  /// Horizontal gap between Collection shelf series cards.
+  static const double collectionSeriesRailCardGap = 16;
 
   /// Vertical gap between stacked blocks inside a tab (e.g. search vs chips).
   static const double blockGapMedium = 18;
 
-  /// Insights editorial section gaps — intentionally uneven (not identical cards).
-  static const double insightsHeroToStats = 28;
-  static const double insightsStatsToProgress = 20;
-  static const double insightsProgressToBrand = 24;
-  static const double insightsDashboardToJourney = 30;
+  /// Insights editorial section gaps — compact but still uneven (not identical cards).
+  static const double insightsHeroToStats = 20;
+  static const double insightsStatsToProgress = 14;
+  static const double insightsProgressToBrand = 16;
+  static const double insightsDashboardToJourney = 20;
 
   /// Extra air below the last block inside main-tab scroll bodies.
   static const double tabScrollTailPadding = 36;

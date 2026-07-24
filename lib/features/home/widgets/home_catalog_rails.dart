@@ -41,12 +41,16 @@ class HomeCatalogRails extends ConsumerWidget {
         const CollectibleSectionHeader(
           title: LatestDropsCopy.sectionTitle,
           subtitle: LatestDropsCopy.sectionSubtitle,
+          dense: true,
         ),
         const SizedBox(height: FeedRhythm.sectionHeaderToRail),
         ColoredBox(
           color: HomeSectionZones.latestDropsMat(scheme, brightness),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 0),
+            padding: const EdgeInsets.symmetric(
+              vertical: FeedRhythm.homeSeriesRailMatVertical,
+              horizontal: 0,
+            ),
             child: CatalogAvailabilityCard(
               availability: availability,
               onRetry: availability.isOfflineFirstLaunch ? retry : null,
@@ -56,13 +60,16 @@ class HomeCatalogRails extends ConsumerWidget {
         const SizedBox(height: FeedRhythm.homeMajorSectionGap),
         const CollectibleSectionHeader(
           title: 'Trending series',
+          dense: true,
           padding: EdgeInsets.fromLTRB(20, 2, 20, 0),
         ),
         const SizedBox(height: FeedRhythm.sectionHeaderToRail),
         ColoredBox(
           color: HomeSectionZones.trendingSeriesMat(scheme, brightness),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 18),
+            padding: const EdgeInsets.symmetric(
+              vertical: FeedRhythm.homeSeriesRailMatVertical,
+            ),
             child: CatalogAvailabilityCard(
               availability: availability,
               onRetry: availability.isOfflineFirstLaunch ? retry : null,

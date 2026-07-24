@@ -31,19 +31,21 @@ class ChasersMarketSection extends StatelessWidget {
       children: [
         const CollectibleSectionHeader(
           title: 'Chasers',
-          padding: EdgeInsets.fromLTRB(20, 10, 20, 0),
+          dense: true,
+          padding: EdgeInsets.fromLTRB(20, 4, 20, 0),
         ),
         const SizedBox(height: FeedRhythm.sectionHeaderToRail),
         if (isLoading && entries.isEmpty)
           SizedBox(
             height: FeedRhythm.marketChasersRailHeight,
             child: ListView.separated(
+              clipBehavior: Clip.none,
               padding: const EdgeInsets.symmetric(horizontal: 20),
               scrollDirection: Axis.horizontal,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: 3,
               separatorBuilder: (_, _) =>
-                  SizedBox(width: FeedRhythm.horizontalRailCardGap),
+                  SizedBox(width: FeedRhythm.marketChasersRailCardGap),
               itemBuilder: (context, index) => const _ChasersSkeletonCard(),
             ),
           )
@@ -51,12 +53,13 @@ class ChasersMarketSection extends StatelessWidget {
           SizedBox(
             height: FeedRhythm.marketChasersRailHeight,
             child: ListView.separated(
+              clipBehavior: Clip.none,
               padding: const EdgeInsets.symmetric(horizontal: 20),
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),
               itemCount: entries.length,
               separatorBuilder: (context, index) =>
-                  SizedBox(width: FeedRhythm.horizontalRailCardGap),
+                  SizedBox(width: FeedRhythm.marketChasersRailCardGap),
               itemBuilder: (context, index) {
                 return _ChasersMiniCard(entry: entries[index]);
               },
@@ -78,6 +81,7 @@ class _ChasersSkeletonCard extends StatelessWidget {
 
     return SizedBox(
       width: AppCardTokens.browseRailWidth,
+      height: FeedRhythm.marketChasersRailHeight,
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: scheme.surface,
@@ -87,7 +91,7 @@ class _ChasersSkeletonCard extends StatelessWidget {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(10, 10, 10, 12),
+          padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -99,19 +103,31 @@ class _ChasersSkeletonCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 10),
-              Container(height: 12, decoration: BoxDecoration(color: fill, borderRadius: BorderRadius.circular(6))),
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
+              Container(
+                height: 12,
+                decoration: BoxDecoration(
+                  color: fill,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ),
+              const SizedBox(height: 4),
               Container(
                 width: 88,
                 height: 10,
-                decoration: BoxDecoration(color: fill, borderRadius: BorderRadius.circular(6)),
+                decoration: BoxDecoration(
+                  color: fill,
+                  borderRadius: BorderRadius.circular(6),
+                ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 6),
               Container(
                 width: 52,
                 height: 14,
-                decoration: BoxDecoration(color: fill, borderRadius: BorderRadius.circular(6)),
+                decoration: BoxDecoration(
+                  color: fill,
+                  borderRadius: BorderRadius.circular(6),
+                ),
               ),
             ],
           ),
@@ -135,10 +151,10 @@ class _ChasersMiniCard extends StatelessWidget {
     final subtitle = CollectibleMarketMoodCopy.chaserRailSubtitle(
       ipLabel: entry.ipLabel,
     );
-    final thumbExtent = AppCardTokens.browseRailThumbExtent();
 
     return SizedBox(
       width: AppCardTokens.browseRailWidth,
+      height: FeedRhythm.marketChasersRailHeight,
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: AppRadii.cardRadius,
@@ -150,50 +166,67 @@ class _ChasersMiniCard extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: AppRadii.cardRadius,
             side: BorderSide(
-              color: scheme.outlineVariant.withValues(alpha: isDark ? 0.32 : 0.38),
+              color: scheme.outlineVariant.withValues(
+                alpha: isDark ? 0.32 : 0.38,
+              ),
             ),
           ),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: () => context.push('/market/listing/${listing.id}'),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 14),
+              padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Expanded(
-                    child: Center(
-                      child: MarketListingShowcaseThumb(
-                        collectible: listing.collectible,
-                        extent: thumbExtent,
-                        heroTag: listing.marketHeroTag,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final side = constraints.biggest.shortestSide;
+                        return Center(
+                          child: MarketListingShowcaseThumb(
+                            collectible: listing.collectible,
+                            extent: side,
+                            heroTag: listing.marketHeroTag,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 36,
+                    child: Align(
+                      alignment: Alignment.topLeft,
+                      child: Text(
+                        entry.identityLabel,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: CollectibleTypography.catalogSeriesRowTitle(
+                          textTheme,
+                          scheme,
+                        ).copyWith(height: 1.15),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  Text(
-                    entry.identityLabel,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: CollectibleTypography.catalogSeriesRowTitle(
-                      textTheme,
-                      scheme,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  if (subtitle != null)
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 2),
                     Text(
                       subtitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: CollectibleTypography.figureMeta(textTheme, scheme),
+                      style: CollectibleTypography.figureMeta(
+                        textTheme,
+                        scheme,
+                      ),
                     ),
-                  const SizedBox(height: 8),
+                  ],
+                  const SizedBox(height: 6),
                   Text(
                     formatMarketUsd(listing.currentPriceUsd),
                     style: textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.1,
                       height: 1.1,
                     ),
                   ),

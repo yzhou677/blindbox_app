@@ -1,0 +1,17 @@
+---
+description: Point agents at Shelfy design_system.md for UI tokens
+alwaysApply: true
+---
+
+# Design system
+
+UI tokens and recipes live in [`.cursor/design_system.md`](../design_system.md).
+
+Before adding icons, buttons, radii, typography, or animation durations: read that doc and extend `ShelfySymbols` / `ShelfyButtonStyles` / `AppRadii` / `AppTypography` / `CollectibleMotion` — do not invent parallel one-offs.
+
+**Hard defaults for new UI**
+
+- Icons → Material Symbols Rounded via `ShelfySymbols`
+- Sticky / Share → `ShelfyButtonStyles`
+- Type → `AppTypography` / `CollectibleTypography` roles (no ad-hoc `copyWith` for shared jobs)
+- Everyday motion → `CollectibleMotion.fast` / `.medium` / `.sheet` (or a named specialized duration — never raw `Duration(milliseconds: 200)` sprawl)

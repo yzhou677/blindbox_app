@@ -4,8 +4,9 @@ import 'package:blindbox_app/features/recommendations/data/recommendation_reposi
 import 'package:blindbox_app/features/recommendations/domain/recommendation_result.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final recommendationsProvider =
-    FutureProvider<RecommendationResult>((ref) async {
+final recommendationsProvider = FutureProvider<RecommendationResult>((
+  ref,
+) async {
   try {
     final id = await ref.watch(anonymousInstallIdProvider.future);
     final bundle = await ref.watch(catalogBundleProvider.future);

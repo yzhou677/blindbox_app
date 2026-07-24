@@ -3,6 +3,7 @@ import 'package:blindbox_app/features/collection/presentation/collection_series_
 import 'package:blindbox_app/features/collection/widgets/collection_series_shelf_cta_trailing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 void main() {
   testWidgets('owned presentation shows In collection not Add', (tester) async {
@@ -26,8 +27,8 @@ void main() {
 
     expect(find.text('In collection'), findsOneWidget);
     expect(find.text('Add'), findsNothing);
-    expect(find.byIcon(Icons.check_rounded), findsOneWidget);
-    expect(find.byIcon(Icons.add_rounded), findsNothing);
+    expect(find.byIcon(Symbols.check_rounded), findsOneWidget);
+    expect(find.byIcon(Symbols.add_rounded), findsNothing);
   });
 
   testWidgets('disabled owned chip does not accept taps', (tester) async {

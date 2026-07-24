@@ -1,5 +1,6 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/search/search_placeholders.dart';
+import 'package:blindbox_app/core/theme/app_typography.dart';
 import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
 import 'package:blindbox_app/features/home/application/home_discover_refresh_controller.dart';
@@ -33,19 +34,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   void dispose() {
-    ShellTabReselectBus.instance.reselectedBranch.removeListener(_onTabReselected);
+    ShellTabReselectBus.instance.reselectedBranch.removeListener(
+      _onTabReselected,
+    );
     _scrollController.dispose();
     super.dispose();
   }
 
   void _onTabReselected() {
-    if (ShellTabReselectBus.instance.reselectedBranch.value != kHomeShellBranchIndex) {
+    if (ShellTabReselectBus.instance.reselectedBranch.value !=
+        kHomeShellBranchIndex) {
       return;
     }
     if (!_scrollController.hasClients) return;
     _scrollController.animateTo(
       0,
-      duration: CollectibleMotion.sheet,
+      duration: CollectibleMotion.sectionReveal,
       curve: CollectibleMotion.easeOut,
     );
   }
@@ -55,7 +59,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final feedAsync = ref.watch(homeFeedSnapshotProvider);
-    final feed = feedAsync.valueOrNull ??
+    final feed =
+        feedAsync.valueOrNull ??
         const HomeFeedSnapshot(latest: [], trending: []);
 
     return Scaffold(
@@ -69,62 +74,68 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             parent: BouncingScrollPhysics(),
           ),
           slivers: [
-          SliverAppBar(
-            pinned: false,
-            floating: false,
-            elevation: 0,
-            scrolledUnderElevation: 0,
-            toolbarHeight: FeedRhythm.mainTabAppBarToolbarHeight,
-            backgroundColor: scheme.surface,
-            centerTitle: false,
-            titleSpacing: 20,
-            title: Text('Discover', style: textTheme.titleLarge),
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.only(top: FeedRhythm.headerToSearchField),
-              child: AppSearchField(
-                readOnly: true,
-                onTap: () => context.push('/home/catalog'),
-                onImageSelected: (selection) => showCatalogPhotoVerification(
-                  context,
-                  selection,
-                  onCreateCustom: () {
-                    if (context.mounted) {
-                      openCustomSeriesCreateSheet(context, ref);
-                    }
-                  },
-                  onCandidateConfirmed: (candidate) {
-                    if (!context.mounted) return;
-                    openRecognitionCandidateSeries(
-                      context,
-                      ref,
-                      seriesId: candidate.seriesId,
-                      figureId: candidate.figureId,
-                    );
-                  },
+            SliverAppBar(
+              pinned: false,
+              floating: false,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              toolbarHeight: FeedRhythm.mainTabAppBarToolbarHeight,
+              backgroundColor: scheme.surface,
+              centerTitle: false,
+              titleSpacing: 20,
+              title: Text(
+                'Discover',
+                style: AppTypography.tabTitle(textTheme, scheme),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(
+                  top: FeedRhythm.homeHeaderToSearchField,
                 ),
-                hintText: SearchPlaceholders.discoverCatalog,
+                child: AppSearchField(
+                  compact: true,
+                  readOnly: true,
+                  onTap: () => context.push('/home/catalog'),
+                  onImageSelected: (selection) => showCatalogPhotoVerification(
+                    context,
+                    selection,
+                    onCreateCustom: () {
+                      if (context.mounted) {
+                        openCustomSeriesCreateSheet(context, ref);
+                      }
+                    },
+                    onCandidateConfirmed: (candidate) {
+                      if (!context.mounted) return;
+                      openRecognitionCandidateSeries(
+                        context,
+                        ref,
+                        seriesId: candidate.seriesId,
+                        figureId: candidate.figureId,
+                      );
+                    },
+                  ),
+                  hintText: SearchPlaceholders.discoverCatalog,
+                ),
               ),
             ),
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.only(
-                top: FeedRhythm.homeSearchToFirstSection,
-                bottom: FeedRhythm.tabScrollTailPadding,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const ForYouSection(),
-                  HomeCatalogRails(feed: feed),
-                  const SizedBox(height: FeedRhythm.homeMajorSectionGap),
-                  const OfficialFeedSection(),
-                ],
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(
+                  top: FeedRhythm.homeSearchToFirstSection,
+                  bottom: FeedRhythm.tabScrollTailPadding,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const ForYouSection(),
+                    HomeCatalogRails(feed: feed),
+                    const SizedBox(height: FeedRhythm.homeMajorSectionGap),
+                    const OfficialFeedSection(),
+                  ],
+                ),
               ),
             ),
-          ),
           ],
         ),
       ),

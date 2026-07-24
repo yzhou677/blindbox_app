@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/app_typography.dart';
 import 'package:blindbox_app/features/collection/insights/domain/collector_type_stats.dart';
@@ -24,7 +25,7 @@ class CollectorTypeTotalsRow extends StatelessWidget {
                 label: CollectorTypeCopy.atAGlanceOwnedFigures,
               ),
             ),
-            const SizedBox(width: AppSpacing.lg),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: _MetricTile(
                 value: '${stats.completedSeriesCount}',
@@ -34,7 +35,7 @@ class CollectorTypeTotalsRow extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: AppSpacing.lg),
+        const SizedBox(height: AppSpacing.md),
         Row(
           children: [
             Expanded(
@@ -44,7 +45,7 @@ class CollectorTypeTotalsRow extends StatelessWidget {
                 tooltip: CompletionMetricTooltips.masterComplete,
               ),
             ),
-            const SizedBox(width: AppSpacing.lg),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: _MetricTile(
                 value: '${stats.secretOwned}',
@@ -74,37 +75,27 @@ class _MetricTile extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: AppRadii.matRadius,
         color: scheme.surfaceContainerLow.withValues(
-          alpha: isDark ? 0.38 : 0.48,
+          alpha: isDark ? 0.34 : 0.42,
+        ),
+        border: Border.all(
+          color: scheme.outlineVariant.withValues(alpha: isDark ? 0.28 : 0.34),
         ),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.md,
-          vertical: AppSpacing.lg + 2,
+          vertical: AppSpacing.md + 2,
         ),
         child: Column(
           children: [
-            Text(
-              value,
-              style: AppTypography.insightsTotals(textTheme, scheme).copyWith(
-                fontSize: 26,
-                height: 1.02,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.4,
-                color: scheme.onSurface.withValues(alpha: 0.92),
-              ),
-            ),
-            const SizedBox(height: 6),
+            Text(value, style: AppTypography.insightsTotals(textTheme, scheme)),
+            const SizedBox(height: 5),
             _MetricLabel(
               label: label,
               tooltip: tooltip,
-              style: AppTypography.insightsCaption(textTheme, scheme).copyWith(
-                fontSize: 11.5,
-                letterSpacing: 0.15,
-                color: scheme.onSurfaceVariant.withValues(alpha: 0.62),
-              ),
+              style: AppTypography.insightsCaption(textTheme, scheme),
             ),
           ],
         ),
@@ -141,7 +132,7 @@ class _MetricLabel extends StatelessWidget {
         InfoTooltipIcon(
           message: tooltip!,
           size: 13,
-          color: scheme.onSurfaceVariant.withValues(alpha: 0.54),
+          color: scheme.onSurfaceVariant.withValues(alpha: 0.50),
         ),
       ],
     );

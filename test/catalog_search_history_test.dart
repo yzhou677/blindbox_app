@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 // ---------------------------------------------------------------------------
 // Codec
@@ -35,20 +36,25 @@ void main() {
     });
 
     test('filters non-string items silently', () {
-      expect(CatalogSearchHistoryCodec.tryDecode('[1, true, "Labubu"]'),
-          equals(['Labubu']));
+      expect(
+        CatalogSearchHistoryCodec.tryDecode('[1, true, "Labubu"]'),
+        equals(['Labubu']),
+      );
     });
 
     test('filters empty strings', () {
       expect(
-          CatalogSearchHistoryCodec.tryDecode('["Labubu", "", "Crybaby"]'),
-          equals(['Labubu', 'Crybaby']));
+        CatalogSearchHistoryCodec.tryDecode('["Labubu", "", "Crybaby"]'),
+        equals(['Labubu', 'Crybaby']),
+      );
     });
 
     test('decodes a valid list', () {
       const raw = '["Labubu","Crybaby","Nommi"]';
-      expect(CatalogSearchHistoryCodec.tryDecode(raw),
-          equals(['Labubu', 'Crybaby', 'Nommi']));
+      expect(
+        CatalogSearchHistoryCodec.tryDecode(raw),
+        equals(['Labubu', 'Crybaby', 'Nommi']),
+      );
     });
 
     test('round-trips encode → decode', () {
@@ -68,8 +74,7 @@ void main() {
     });
 
     test('collapses internal multiple spaces to one', () {
-      expect(
-          CatalogSearchHistoryRules.normalize('Labubu   v2'), 'labubu v2');
+      expect(CatalogSearchHistoryRules.normalize('Labubu   v2'), 'labubu v2');
     });
 
     test('collapses tabs and mixed whitespace', () {
@@ -102,20 +107,28 @@ void main() {
     });
 
     test('promotes existing query to top (deduplication)', () {
-      final result = CatalogSearchHistoryRules.add(
-          ['labubu', 'crybaby', 'nommi'], 'Crybaby');
+      final result = CatalogSearchHistoryRules.add([
+        'labubu',
+        'crybaby',
+        'nommi',
+      ], 'Crybaby');
       expect(result, equals(['crybaby', 'labubu', 'nommi']));
     });
 
     test('promotes to top even when already at front', () {
-      final result =
-          CatalogSearchHistoryRules.add(['labubu', 'crybaby'], 'Labubu');
+      final result = CatalogSearchHistoryRules.add([
+        'labubu',
+        'crybaby',
+      ], 'Labubu');
       expect(result, equals(['labubu', 'crybaby']));
     });
 
     test('no duplicates after promote-to-top', () {
-      final result = CatalogSearchHistoryRules.add(
-          ['Labubu', 'Crybaby', 'Nommi'], 'Nommi');
+      final result = CatalogSearchHistoryRules.add([
+        'Labubu',
+        'Crybaby',
+        'Nommi',
+      ], 'Nommi');
       expect(result.toSet().length, equals(result.length));
     });
 
@@ -142,8 +155,10 @@ void main() {
 
   group('CatalogSearchHistoryRules.remove', () {
     test('removes matching query', () {
-      final result =
-          CatalogSearchHistoryRules.remove(['labubu', 'crybaby'], 'Crybaby');
+      final result = CatalogSearchHistoryRules.remove([
+        'labubu',
+        'crybaby',
+      ], 'Crybaby');
       expect(result, equals(['labubu']));
     });
 
@@ -153,8 +168,11 @@ void main() {
     });
 
     test('removes only the first occurrence (should be unique)', () {
-      final result = CatalogSearchHistoryRules.remove(
-          ['A', 'B', 'A'], 'A'); // defensive
+      final result = CatalogSearchHistoryRules.remove([
+        'A',
+        'B',
+        'A',
+      ], 'A'); // defensive
       expect(result, equals(['B']));
     });
   });
@@ -231,8 +249,10 @@ void main() {
       final container = makeContainer();
       addTearDown(container.dispose);
       container.read(catalogSearchHistoryProvider.notifier).add('Labubu');
-      expect(container.read(catalogSearchHistoryProvider).first,
-          equals('labubu'));
+      expect(
+        container.read(catalogSearchHistoryProvider).first,
+        equals('labubu'),
+      );
     });
 
     test('add deduplicates and promotes to top', () {
@@ -299,15 +319,19 @@ void main() {
     testWidgets('loads persisted history on build', (tester) async {
       // Pre-seed prefs before creating the container.
       SharedPreferences.setMockInitialValues({
-        kCatalogSearchHistoryPrefsKey:
-            CatalogSearchHistoryCodec.encode(['Persisted']),
+        kCatalogSearchHistoryPrefsKey: CatalogSearchHistoryCodec.encode([
+          'Persisted',
+        ]),
       });
       final container = makeContainer();
       addTearDown(container.dispose);
       container.read(catalogSearchHistoryProvider); // trigger build
       // Build fires async load — pump until settled so all async ops complete.
       await tester.pumpAndSettle();
-      expect(container.read(catalogSearchHistoryProvider), contains('Persisted'));
+      expect(
+        container.read(catalogSearchHistoryProvider),
+        contains('Persisted'),
+      );
     });
   });
 
@@ -350,49 +374,47 @@ void main() {
 
     testWidgets('tapping row calls onQueryTap with the query', (tester) async {
       String? tapped;
-      await tester.pumpWidget(_wrap(
-        queries: const ['labubu'],
-        onQueryTap: (q) => tapped = q,
-      ));
+      await tester.pumpWidget(
+        _wrap(queries: const ['labubu'], onQueryTap: (q) => tapped = q),
+      );
       await tester.tap(find.text('labubu'));
       expect(tapped, equals('labubu'));
     });
 
     testWidgets('tapping × calls onRemove with the query', (tester) async {
       String? removed;
-      await tester.pumpWidget(_wrap(
-        queries: const ['labubu'],
-        onRemove: (q) => removed = q,
-      ));
-      await tester.tap(find.byIcon(Icons.close_rounded));
+      await tester.pumpWidget(
+        _wrap(queries: const ['labubu'], onRemove: (q) => removed = q),
+      );
+      await tester.tap(find.byIcon(Symbols.close_rounded));
       expect(removed, equals('labubu'));
     });
 
     testWidgets('tapping Clear All calls onClearAll', (tester) async {
       var cleared = false;
-      await tester.pumpWidget(_wrap(
-        queries: const ['labubu'],
-        onClearAll: () => cleared = true,
-      ));
+      await tester.pumpWidget(
+        _wrap(queries: const ['labubu'], onClearAll: () => cleared = true),
+      );
       await tester.tap(find.text('Clear All'));
       expect(cleared, isTrue);
     });
 
-    testWidgets('tapping Clear All row outside label still clears', (tester) async {
+    testWidgets('tapping Clear All row outside label still clears', (
+      tester,
+    ) async {
       var cleared = false;
-      await tester.pumpWidget(_wrap(
-        queries: const ['labubu'],
-        onClearAll: () => cleared = true,
-      ));
+      await tester.pumpWidget(
+        _wrap(queries: const ['labubu'], onClearAll: () => cleared = true),
+      );
 
       final labelRect = tester.getRect(find.text('Clear All'));
-      await tester.tapAt(
-        Offset(labelRect.right + 40, labelRect.center.dy),
-      );
+      await tester.tapAt(Offset(labelRect.right + 40, labelRect.center.dy));
       expect(cleared, isTrue);
     });
 
-    testWidgets('suggested mode hides delete buttons and Clear All', (tester) async {
+    testWidgets('suggested mode hides delete buttons and Clear All', (
+      tester,
+    ) async {
       final suggestions = pickDisplayedSuggestedSearches(Random(0));
       await tester.pumpWidget(
         MaterialApp(
@@ -412,7 +434,7 @@ void main() {
       for (final suggestion in suggestions) {
         expect(find.text(suggestion.displayLabel), findsOneWidget);
       }
-      expect(find.byIcon(Icons.close_rounded), findsNothing);
+      expect(find.byIcon(Symbols.close_rounded), findsNothing);
       expect(find.text('Clear All'), findsNothing);
     });
 
@@ -446,8 +468,9 @@ void main() {
       expect(text.overflow, TextOverflow.ellipsis);
     });
 
-    testWidgets('long query keeps delete button visible and tappable',
-        (tester) async {
+    testWidgets('long query keeps delete button visible and tappable', (
+      tester,
+    ) async {
       const longQuery =
           'Nommi Sweetheart Plan Series Mini Figures Surprise Bag Extra';
       String? removed;
@@ -467,8 +490,8 @@ void main() {
         ),
       );
 
-      expect(find.byIcon(Icons.close_rounded), findsOneWidget);
-      await tester.tap(find.byIcon(Icons.close_rounded));
+      expect(find.byIcon(Symbols.close_rounded), findsOneWidget);
+      await tester.tap(find.byIcon(Symbols.close_rounded));
       expect(removed, equals(longQuery));
     });
   });
@@ -508,8 +531,10 @@ void main() {
           .where((s) => find.text(s.displayLabel).evaluate().isNotEmpty)
           .toList();
       expect(displayed.length, kSuggestedSearchesDisplayCount);
-      expect(displayed.map((s) => s.query).toSet().length,
-          kSuggestedSearchesDisplayCount);
+      expect(
+        displayed.map((s) => s.query).toSet().length,
+        kSuggestedSearchesDisplayCount,
+      );
       for (final suggestion in displayed) {
         expect(poolQueries, contains(suggestion.query));
       }
@@ -525,10 +550,9 @@ void main() {
 
     testWidgets('suggested row tap calls onSuggestedTap', (tester) async {
       String? tapped;
-      await tester.pumpWidget(_wrapSection(
-        history: const [],
-        onSuggestedTap: (q) => tapped = q,
-      ));
+      await tester.pumpWidget(
+        _wrapSection(history: const [], onSuggestedTap: (q) => tapped = q),
+      );
       final suggestion = kSuggestedSearches
           .where((s) => find.text(s.displayLabel).evaluate().isNotEmpty)
           .first;
@@ -538,10 +562,12 @@ void main() {
 
     testWidgets('suggested rows have no delete button', (tester) async {
       await tester.pumpWidget(_wrapSection(history: const []));
-      expect(find.byIcon(Icons.close_rounded), findsNothing);
+      expect(find.byIcon(Symbols.close_rounded), findsNothing);
     });
 
-    testWidgets('suggested tap fills field and records history', (tester) async {
+    testWidgets('suggested tap fills field and records history', (
+      tester,
+    ) async {
       SharedPreferences.setMockInitialValues({});
       final container = ProviderContainer();
       addTearDown(container.dispose);
@@ -559,7 +585,10 @@ void main() {
                   final history = ref.watch(catalogSearchHistoryProvider);
                   return Column(
                     children: [
-                      TextField(controller: controller, key: const Key('field')),
+                      TextField(
+                        controller: controller,
+                        key: const Key('field'),
+                      ),
                       searchEmptyQuerySection(
                         history: history,
                         onHistoryTap: (q) => controller.text = q,
@@ -571,7 +600,9 @@ void main() {
                             .clearAll(),
                         onSuggestedTap: (q) {
                           controller.text = q;
-                          ref.read(catalogSearchHistoryProvider.notifier).add(q);
+                          ref
+                              .read(catalogSearchHistoryProvider.notifier)
+                              .add(q);
                         },
                       ),
                     ],
@@ -640,8 +671,10 @@ void main() {
     test('returns five unique items from the pool', () {
       final picked = pickDisplayedSuggestedSearches(Random(0));
       expect(picked.length, kSuggestedSearchesDisplayCount);
-      expect(picked.map((s) => s.query).toSet().length,
-          kSuggestedSearchesDisplayCount);
+      expect(
+        picked.map((s) => s.query).toSet().length,
+        kSuggestedSearchesDisplayCount,
+      );
       final poolQueries = kSuggestedSearches.map((s) => s.query).toSet();
       for (final suggestion in picked) {
         expect(poolQueries, contains(suggestion.query));
@@ -674,8 +707,11 @@ void main() {
       expect(widget, isA<CatalogSearchHistorySection>());
     });
 
-    test('Catalog and Market search share FeedSearchScreen history spacing', () {
-      expect(SearchHistorySectionSpacing.belowSearchField, AppSpacing.xs);
-    });
+    test(
+      'Catalog and Market search share FeedSearchScreen history spacing',
+      () {
+        expect(SearchHistorySectionSpacing.belowSearchField, AppSpacing.xs);
+      },
+    );
   });
 }

@@ -1,10 +1,10 @@
 /// eBay CDN image URL helpers — client-side fallback when gateway rows are stale.
-enum EbayImageSize {
-  browse,
-  detail,
-}
+enum EbayImageSize { browse, detail }
 
-String upgradeEbayImageUrl(String url, {EbayImageSize size = EbayImageSize.browse}) {
+String upgradeEbayImageUrl(
+  String url, {
+  EbayImageSize size = EbayImageSize.browse,
+}) {
   final trimmed = url.trim();
   if (trimmed.isEmpty) return trimmed;
 

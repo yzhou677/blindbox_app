@@ -11,7 +11,8 @@ CollectorTypeReasonKey canonicalReasonKeyForArchetype(
     CollectorTypeArchetypeId.hunter => CollectorTypeReasonKey.manySecrets,
     CollectorTypeArchetypeId.completionist =>
       CollectorTypeReasonKey.deepCompletion,
-    CollectorTypeArchetypeId.loyalist => CollectorTypeReasonKey.dominantUniverse,
+    CollectorTypeArchetypeId.loyalist =>
+      CollectorTypeReasonKey.dominantUniverse,
     CollectorTypeArchetypeId.curator =>
       CollectorTypeReasonKey.intentionalSpread,
     CollectorTypeArchetypeId.trendChaser => CollectorTypeReasonKey.freshDrops,

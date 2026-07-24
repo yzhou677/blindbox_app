@@ -43,9 +43,7 @@ void main() {
       await tester.pump();
       expect(find.byType(BottomSheet), findsOneWidget);
 
-      dismissMarketBranchModalOverlays(
-        tester.element(find.text('open')),
-      );
+      dismissMarketBranchModalOverlays(tester.element(find.text('open')));
       await tester.pump();
 
       expect(find.byType(BottomSheet), findsNothing);
@@ -63,7 +61,9 @@ void main() {
           .commitQuery('labubu');
       container.read(marketSearchOverlayOpenProvider.notifier).setOpen(true);
 
-      container.read(marketSearchBrowseNotifierProvider.notifier).clearSession();
+      container
+          .read(marketSearchBrowseNotifierProvider.notifier)
+          .clearSession();
       container.read(marketSearchOverlayOpenProvider.notifier).setOpen(false);
 
       final search = container.read(marketSearchBrowseNotifierProvider);

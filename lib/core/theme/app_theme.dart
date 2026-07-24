@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'collectible_shape.dart';
 import 'collectible_tokens.dart';
+import 'shelfy_symbols.dart';
 
 /// Pastel, cozy Material 3 — designer toy shelf / blind-box companion (not generic MD).
 abstract final class AppTheme {
@@ -63,6 +64,7 @@ abstract final class AppTheme {
   }
 
   static ThemeData light() {
+    ShelfySymbols.ensureInitialized();
     final raw = ColorScheme.fromSeed(
       seedColor: _seed,
       brightness: Brightness.light,
@@ -79,6 +81,7 @@ abstract final class AppTheme {
   }
 
   static ThemeData dark() {
+    ShelfySymbols.ensureInitialized();
     final raw = ColorScheme.fromSeed(
       seedColor: _seed,
       brightness: Brightness.dark,
@@ -188,22 +191,46 @@ abstract final class AppTheme {
       ],
       textTheme: t,
       primaryTextTheme: t,
+      iconTheme: IconThemeData(
+        size: AppIconSizes.navigation,
+        color: colorScheme.onSurfaceVariant,
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          minimumSize: AppIconPadding.buttonMin,
+          tapTargetSize: MaterialTapTargetSize.padded,
+        ),
+      ),
       splashFactory: InkRipple.splashFactory,
-      highlightColor: colorScheme.primary.withValues(alpha: isLight ? 0.07 : 0.055),
+      highlightColor: colorScheme.primary.withValues(
+        alpha: isLight ? 0.07 : 0.055,
+      ),
       appBarTheme: AppBarTheme(
         centerTitle: false,
         scrolledUnderElevation: 0,
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
         elevation: 0,
-        surfaceTintColor: colorScheme.primary.withValues(alpha: isLight ? 0.1 : 0.12),
+        surfaceTintColor: colorScheme.primary.withValues(
+          alpha: isLight ? 0.1 : 0.12,
+        ),
         titleTextStyle: t.titleLarge,
+        iconTheme: IconThemeData(
+          size: AppIconSizes.navigation,
+          color: colorScheme.onSurface,
+        ),
+        actionsIconTheme: IconThemeData(
+          size: AppIconSizes.navigation,
+          color: colorScheme.onSurfaceVariant,
+        ),
       ),
       navigationBarTheme: NavigationBarThemeData(
         elevation: 0,
         height: 64,
         backgroundColor: Colors.transparent,
-        surfaceTintColor: colorScheme.primary.withValues(alpha: isLight ? 0.1 : 0.11),
+        surfaceTintColor: colorScheme.primary.withValues(
+          alpha: isLight ? 0.1 : 0.11,
+        ),
         indicatorColor: Color.lerp(
           colorScheme.primaryContainer,
           colorScheme.primary,
@@ -267,7 +294,9 @@ abstract final class AppTheme {
           colorScheme.primary,
           isLight ? 0.12 : 0.14,
         )!.withValues(alpha: isLight ? 0.11 : 0.22),
-        surfaceTintColor: colorScheme.primary.withValues(alpha: isLight ? 0.085 : 0.1),
+        surfaceTintColor: colorScheme.primary.withValues(
+          alpha: isLight ? 0.085 : 0.1,
+        ),
         color: colorScheme.surface,
         shape: RoundedRectangleBorder(
           borderRadius: CollectibleShape.shellRadius,
@@ -284,7 +313,9 @@ abstract final class AppTheme {
       dialogTheme: DialogThemeData(
         elevation: 0,
         backgroundColor: colorScheme.surfaceContainerHigh,
-        surfaceTintColor: colorScheme.surfaceTint.withValues(alpha: isLight ? 0.2 : 0.16),
+        surfaceTintColor: colorScheme.surfaceTint.withValues(
+          alpha: isLight ? 0.2 : 0.16,
+        ),
         shape: RoundedRectangleBorder(
           borderRadius: CollectibleShape.shellRadius,
         ),
@@ -298,29 +329,47 @@ abstract final class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: isLight ? 0.5 : 0.38),
+        fillColor: colorScheme.surfaceContainerHighest.withValues(
+          alpha: isLight ? 0.5 : 0.38,
+        ),
         border: OutlineInputBorder(
           borderRadius: CollectibleShape.fieldRadius,
-          borderSide: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.4)),
+          borderSide: BorderSide(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.4),
+          ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: CollectibleShape.fieldRadius,
-          borderSide: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.32)),
+          borderSide: BorderSide(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.32),
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: CollectibleShape.fieldRadius,
-          borderSide: BorderSide(color: colorScheme.primary.withValues(alpha: 0.44), width: 1.35),
+          borderSide: BorderSide(
+            color: colorScheme.primary.withValues(alpha: 0.44),
+            width: 1.35,
+          ),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           elevation: isLight ? 1 : 0,
           shadowColor: isLight
-              ? Color.lerp(colorScheme.shadow, colorScheme.primary, 0.14)!
-                  .withValues(alpha: 0.14)
-              : Color.lerp(colorScheme.shadow, colorScheme.primary, 0.2)!
-                  .withValues(alpha: 0.2),
+              ? Color.lerp(
+                  colorScheme.shadow,
+                  colorScheme.primary,
+                  0.14,
+                )!.withValues(alpha: 0.14)
+              : Color.lerp(
+                  colorScheme.shadow,
+                  colorScheme.primary,
+                  0.2,
+                )!.withValues(alpha: 0.2),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(CollectibleShape.mat),

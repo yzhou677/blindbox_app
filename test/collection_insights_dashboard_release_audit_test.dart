@@ -13,7 +13,10 @@ const _goldenDir = 'goldens/collection_insights_dashboard';
 /// Offline-stable theme (no Google Fonts network fetch).
 ThemeData _auditTheme({double textScale = 1.0}) {
   const seed = Color(0xFFA892CC);
-  final raw = ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.light);
+  final raw = ColorScheme.fromSeed(
+    seedColor: seed,
+    brightness: Brightness.light,
+  );
   final scheme = raw.copyWith(
     primary: const Color(0xFF6652A5),
     onPrimary: const Color(0xFFFFFBFE),
@@ -200,7 +203,9 @@ Widget _dashboardColumn({
         slivers: [
           SliverToBoxAdapter(
             child: KeyedSubtree(
-              key: dashboardKey ?? const Key('collection_insights_dashboard_slot'),
+              key:
+                  dashboardKey ??
+                  const Key('collection_insights_dashboard_slot'),
               child: CollectionInsightsDashboard(
                 stats: scenario.stats,
                 shelfMoodLine: scenario.shelfMoodLine,
@@ -233,7 +238,9 @@ Future<void> _pumpScenario(
   await tester.pumpWidget(_dashboardColumn(scenario: scenario));
   await tester.pumpAndSettle();
   if (scenario.expand) {
-    await tester.tap(find.byKey(const Key('collection_insights_dashboard_toggle')));
+    await tester.tap(
+      find.byKey(const Key('collection_insights_dashboard_toggle')),
+    );
     await tester.pump();
     await tester.pump(CollectibleMotion.insightsDashboardTransition);
     await tester.pumpAndSettle();
@@ -241,7 +248,11 @@ Future<void> _pumpScenario(
 }
 
 void _expectNoLayoutExceptions(WidgetTester tester) {
-  expect(tester.takeException(), isNull, reason: 'RenderFlex overflow or layout error');
+  expect(
+    tester.takeException(),
+    isNull,
+    reason: 'RenderFlex overflow or layout error',
+  );
 }
 
 void _expectHeaderBelowDashboard(WidgetTester tester) {
@@ -305,7 +316,9 @@ void _expectNoExcessiveGapBelowContent(
 }
 
 Future<void> _toggleExpandCollapse(WidgetTester tester) async {
-  await tester.tap(find.byKey(const Key('collection_insights_dashboard_toggle')));
+  await tester.tap(
+    find.byKey(const Key('collection_insights_dashboard_toggle')),
+  );
   await tester.pump();
   await tester.pump(CollectibleMotion.insightsDashboardTransition);
   await tester.pumpAndSettle();
@@ -345,63 +358,62 @@ void main() {
     for (final size in _auditLogicalSizes) {
       for (final textScale in _auditTextScales) {
         for (final scenario in _scenarios) {
-          testWidgets(
-            '${size.$1}x${size.$2} @${textScale}x ${scenario.name}',
-            (tester) async {
-              await _pumpScenario(
-                tester,
-                scenario,
-                width: size.$1,
-                height: size.$2,
-                textScale: textScale,
-              );
-              _expectNoLayoutExceptions(tester);
-              expect(
-                find.byKey(const Key('collection_insights_dashboard_slot')),
-                findsOneWidget,
-                reason: 'dashboard slot must remain mounted',
-              );
-              _expectHeaderBelowDashboard(tester);
+          testWidgets('${size.$1}x${size.$2} @${textScale}x ${scenario.name}', (
+            tester,
+          ) async {
+            await _pumpScenario(
+              tester,
+              scenario,
+              width: size.$1,
+              height: size.$2,
+              textScale: textScale,
+            );
+            _expectNoLayoutExceptions(tester);
+            expect(
+              find.byKey(const Key('collection_insights_dashboard_slot')),
+              findsOneWidget,
+              reason: 'dashboard slot must remain mounted',
+            );
+            _expectHeaderBelowDashboard(tester);
 
-              if (scenario.expand) {
+            if (scenario.expand) {
+              _expectFinderContainedInSlot(
+                tester,
+                find.text(CollectionSummaryLabels.figures),
+              );
+              if (scenario.shelfMoodLine != null) {
                 _expectFinderContainedInSlot(
                   tester,
-                  find.text(CollectionSummaryLabels.figures),
-                );
-                if (scenario.shelfMoodLine != null) {
-                  _expectFinderContainedInSlot(
-                    tester,
-                    find.text(scenario.shelfMoodLine!),
-                  );
-                }
-                if (scenario.memoryWhisper != null) {
-                  _expectFinderContainedInSlot(
-                    tester,
-                    find.text(scenario.memoryWhisper!),
-                  );
-                }
-                if (scenario.collectorTypeName != null &&
-                    scenario.onInsightsTap != null) {
-                  _expectFinderContainedInSlot(
-                    tester,
-                    find.text(
-                      '${CollectorTypeCopy.entryRevealedPrefix}: ${scenario.collectorTypeName}',
-                    ),
-                  );
-                } else if (scenario.onInsightsTap != null) {
-                  _expectFinderContainedInSlot(
-                    tester,
-                    find.text(CollectorTypeCopy.entryCta),
-                  );
-                }
-              } else {
-                _expectFinderContainedInSlot(
-                  tester,
-                  find.byKey(const Key('collection_insights_compact_glance')),
+                  find.text(scenario.shelfMoodLine!),
                 );
               }
-            },
-          );
+              if (scenario.memoryWhisper != null) {
+                _expectFinderContainedInSlot(
+                  tester,
+                  find.text(scenario.memoryWhisper!),
+                );
+              }
+              if (scenario.collectorTypeName != null &&
+                  scenario.onInsightsTap != null) {
+                _expectFinderContainedInSlot(
+                  tester,
+                  find.text(
+                    '${CollectorTypeCopy.entryRevealedPrefix}: ${scenario.collectorTypeName}',
+                  ),
+                );
+              } else if (scenario.onInsightsTap != null) {
+                _expectFinderContainedInSlot(
+                  tester,
+                  find.text(CollectorTypeCopy.entryCta),
+                );
+              }
+            } else {
+              _expectFinderContainedInSlot(
+                tester,
+                find.byKey(const Key('collection_insights_compact_glance')),
+              );
+            }
+          });
         }
       }
     }
@@ -414,7 +426,10 @@ void main() {
       _configureSurface(tester, width: 393, height: 852);
       await tester.pumpWidget(
         _dashboardColumn(
-          scenario: const _DashboardScenario(name: 'minimal', stats: _typicalStats),
+          scenario: const _DashboardScenario(
+            name: 'minimal',
+            stats: _typicalStats,
+          ),
         ),
       );
       await tester.pumpAndSettle();
@@ -473,9 +488,9 @@ void main() {
       );
       await tester.pumpAndSettle();
       await _toggleExpandCollapse(tester);
-      final expandedBefore = tester.getSize(
-        find.byKey(const Key('collection_insights_dashboard_slot')),
-      ).height;
+      final expandedBefore = tester
+          .getSize(find.byKey(const Key('collection_insights_dashboard_slot')))
+          .height;
 
       await tester.pumpWidget(
         _dashboardColumn(
@@ -493,9 +508,9 @@ void main() {
 
       _expectNoLayoutExceptions(tester);
       expect(find.text('120'), findsWidgets);
-      final expandedAfter = tester.getSize(
-        find.byKey(const Key('collection_insights_dashboard_slot')),
-      ).height;
+      final expandedAfter = tester
+          .getSize(find.byKey(const Key('collection_insights_dashboard_slot')))
+          .height;
       expect(expandedAfter, greaterThanOrEqualTo(expandedBefore - 1));
       _expectHeaderBelowDashboard(tester);
     });
@@ -516,9 +531,9 @@ void main() {
       );
       await tester.pumpAndSettle();
       await _toggleExpandCollapse(tester);
-      final withoutCta = tester.getSize(
-        find.byKey(const Key('collection_insights_dashboard_slot')),
-      ).height;
+      final withoutCta = tester
+          .getSize(find.byKey(const Key('collection_insights_dashboard_slot')))
+          .height;
 
       await tester.pumpWidget(
         _dashboardColumn(
@@ -534,11 +549,14 @@ void main() {
       await tester.pump();
       await tester.pumpAndSettle();
 
-      final withCta = tester.getSize(
-        find.byKey(const Key('collection_insights_dashboard_slot')),
-      ).height;
+      final withCta = tester
+          .getSize(find.byKey(const Key('collection_insights_dashboard_slot')))
+          .height;
       expect(withCta, greaterThan(withoutCta));
-      _expectFinderContainedInSlot(tester, find.text(CollectorTypeCopy.entryCta));
+      _expectFinderContainedInSlot(
+        tester,
+        find.text(CollectorTypeCopy.entryCta),
+      );
       _expectHeaderBelowDashboard(tester);
     });
   });
@@ -609,7 +627,9 @@ void main() {
         await _toggleExpandCollapse(tester);
         expandedHeights.add(
           tester
-              .getSize(find.byKey(const Key('collection_insights_dashboard_slot')))
+              .getSize(
+                find.byKey(const Key('collection_insights_dashboard_slot')),
+              )
               .height,
         );
         _expectNoLayoutExceptions(tester);
@@ -618,7 +638,9 @@ void main() {
         await _toggleExpandCollapse(tester);
         collapsedHeights.add(
           tester
-              .getSize(find.byKey(const Key('collection_insights_dashboard_slot')))
+              .getSize(
+                find.byKey(const Key('collection_insights_dashboard_slot')),
+              )
               .height,
         );
         _expectNoLayoutExceptions(tester);
@@ -770,7 +792,10 @@ void main() {
       ),
       (
         file: 'collapsed_320',
-        scenario: const _DashboardScenario(name: 'collapsed', stats: _typicalStats),
+        scenario: const _DashboardScenario(
+          name: 'collapsed',
+          stats: _typicalStats,
+        ),
       ),
       (
         file: 'expanded_320',
@@ -784,7 +809,10 @@ void main() {
       ),
       (
         file: 'collapsed_600',
-        scenario: const _DashboardScenario(name: 'collapsed', stats: _typicalStats),
+        scenario: const _DashboardScenario(
+          name: 'collapsed',
+          stats: _typicalStats,
+        ),
       ),
       (
         file: 'expanded_600',
@@ -850,7 +878,9 @@ class _BurstInputsHarnessState extends State<_BurstInputsHarness> {
   }
 
   Future<void> expandDashboard(WidgetTester tester) async {
-    await tester.tap(find.byKey(const Key('collection_insights_dashboard_toggle')));
+    await tester.tap(
+      find.byKey(const Key('collection_insights_dashboard_toggle')),
+    );
     await tester.pump();
     await tester.pump(CollectibleMotion.insightsDashboardTransition);
     await tester.pumpAndSettle();
@@ -876,10 +906,7 @@ class _BurstInputsHarnessState extends State<_BurstInputsHarness> {
           ),
         ),
         SliverToBoxAdapter(
-          child: Text(
-            'My collection',
-            key: const Key('my_collection_header'),
-          ),
+          child: Text('My collection', key: const Key('my_collection_header')),
         ),
       ],
     );

@@ -48,7 +48,9 @@ void main() {
 
     final moments = buildCollectionMemoryMoments(prev);
     expect(
-      moments.any((m) => m.kind == CollectionMemoryMomentKind.longLovedUniverse),
+      moments.any(
+        (m) => m.kind == CollectionMemoryMomentKind.longLovedUniverse,
+      ),
       isTrue,
     );
   });

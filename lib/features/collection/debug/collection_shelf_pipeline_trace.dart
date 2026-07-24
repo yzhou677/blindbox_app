@@ -21,7 +21,7 @@ final class CollectionShelfPipelineTraceScope {
   const CollectionShelfPipelineTraceScope.noop() : _live = null;
 
   CollectionShelfPipelineTraceScope.live()
-      : _live = _LiveCollectionShelfPipelineTrace();
+    : _live = _LiveCollectionShelfPipelineTrace();
 
   final _LiveCollectionShelfPipelineTrace? _live;
 
@@ -130,7 +130,11 @@ final class _LiveCollectionShelfPipelineTrace {
     }
     for (final entry in _micros.entries) {
       if (_order.contains(entry.key)) continue;
-      _log(run, entry.key.toLowerCase(), AppPipelineLog.formatMicros(entry.value));
+      _log(
+        run,
+        entry.key.toLowerCase(),
+        AppPipelineLog.formatMicros(entry.value),
+      );
     }
 
     _emitSlowWarnings(run, totalMs);
@@ -156,7 +160,11 @@ final class _LiveCollectionShelfPipelineTrace {
     if (slowest == null) return;
     if (slowest.$1 == 'Search' && searchMs >= slowSearchMs) return;
     final tag = _stageTags[slowest.$1] ?? slowest.$1.toLowerCase();
-    _log(run, 'warn', 'slowest [$tag]: ${AppPipelineLog.formatMicros(slowest.$2)}');
+    _log(
+      run,
+      'warn',
+      'slowest [$tag]: ${AppPipelineLog.formatMicros(slowest.$2)}',
+    );
   }
 
   (String, int)? _slowestStage() {

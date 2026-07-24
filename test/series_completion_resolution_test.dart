@@ -40,10 +40,12 @@ Map<String, TrackedFigure> _ownedIds(List<String> ids) {
 void main() {
   group('resolveSeriesCompletion', () {
     test('regular complete with secret missing is completed not master', () {
-      final series = _seriesWithSecrets(id: 'a', regularCount: 12, secretCount: 1);
-      final states = _ownedIds([
-        for (var i = 0; i < 12; i++) 'a_reg_$i',
-      ]);
+      final series = _seriesWithSecrets(
+        id: 'a',
+        regularCount: 12,
+        secretCount: 1,
+      );
+      final states = _ownedIds([for (var i = 0; i < 12; i++) 'a_reg_$i']);
       final r = resolveSeriesCompletion(series, states);
       expect(r.isCompleted, isTrue);
       expect(r.isMasterComplete, isFalse);
@@ -51,7 +53,11 @@ void main() {
     });
 
     test('all regular and secret owned is master complete', () {
-      final series = _seriesWithSecrets(id: 'b', regularCount: 2, secretCount: 1);
+      final series = _seriesWithSecrets(
+        id: 'b',
+        regularCount: 2,
+        secretCount: 1,
+      );
       final states = _ownedIds(['b_reg_0', 'b_reg_1', 'b_sec_0']);
       final r = resolveSeriesCompletion(series, states);
       expect(r.isCompleted, isTrue);
@@ -59,7 +65,11 @@ void main() {
     });
 
     test('no secret series completes when all regular owned', () {
-      final series = _seriesWithSecrets(id: 'c', regularCount: 3, secretCount: 0);
+      final series = _seriesWithSecrets(
+        id: 'c',
+        regularCount: 3,
+        secretCount: 0,
+      );
       final states = _ownedIds(['c_reg_0', 'c_reg_1', 'c_reg_2']);
       final r = resolveSeriesCompletion(series, states);
       expect(r.isCompleted, isTrue);
@@ -67,7 +77,11 @@ void main() {
     });
 
     test('in progress uses regular denominator when secrets exist', () {
-      final series = _seriesWithSecrets(id: 'd', regularCount: 4, secretCount: 1);
+      final series = _seriesWithSecrets(
+        id: 'd',
+        regularCount: 4,
+        secretCount: 1,
+      );
       final states = _ownedIds(['d_reg_0', 'd_reg_1']);
       final r = resolveSeriesCompletion(series, states);
       expect(r.isCompleted, isFalse);
@@ -75,7 +89,11 @@ void main() {
     });
 
     test('secret owned but regular missing stays in progress', () {
-      final series = _seriesWithSecrets(id: 'e', regularCount: 2, secretCount: 1);
+      final series = _seriesWithSecrets(
+        id: 'e',
+        regularCount: 2,
+        secretCount: 1,
+      );
       final states = _ownedIds(['e_sec_0']);
       final r = resolveSeriesCompletion(series, states);
       expect(r.isCompleted, isFalse);
@@ -84,9 +102,21 @@ void main() {
 
   group('countShelfCompletionTiers', () {
     test('counts completed and master across shelf', () {
-      final regularOnly = _seriesWithSecrets(id: 'done', regularCount: 2, secretCount: 0);
-      final master = _seriesWithSecrets(id: 'master', regularCount: 1, secretCount: 1);
-      final open = _seriesWithSecrets(id: 'open', regularCount: 2, secretCount: 1);
+      final regularOnly = _seriesWithSecrets(
+        id: 'done',
+        regularCount: 2,
+        secretCount: 0,
+      );
+      final master = _seriesWithSecrets(
+        id: 'master',
+        regularCount: 1,
+        secretCount: 1,
+      );
+      final open = _seriesWithSecrets(
+        id: 'open',
+        regularCount: 2,
+        secretCount: 1,
+      );
       final snap = CollectionSnapshot(
         shelfSeries: [regularOnly, master, open],
         figureStates: {
@@ -103,7 +133,11 @@ void main() {
 
   group('aggregateShelfCompletion', () {
     test('8/8 Regular + 0/1 Secret contributes 100% Regular Completion', () {
-      final series = _seriesWithSecrets(id: 'a', regularCount: 8, secretCount: 1);
+      final series = _seriesWithSecrets(
+        id: 'a',
+        regularCount: 8,
+        secretCount: 1,
+      );
       final snap = CollectionSnapshot(
         shelfSeries: [series],
         figureStates: _ownedIds([for (var i = 0; i < 8; i++) 'a_reg_$i']),
@@ -121,7 +155,11 @@ void main() {
     });
 
     test('8/8 Regular + 1/1 Secret is Master Complete at 100%', () {
-      final series = _seriesWithSecrets(id: 'b', regularCount: 8, secretCount: 1);
+      final series = _seriesWithSecrets(
+        id: 'b',
+        regularCount: 8,
+        secretCount: 1,
+      );
       final snap = CollectionSnapshot(
         shelfSeries: [series],
         figureStates: _ownedIds([
@@ -182,7 +220,11 @@ void main() {
     });
 
     test('no Secret-bearing series: eligible 0, no divide-by-zero', () {
-      final series = _seriesWithSecrets(id: 'c', regularCount: 2, secretCount: 0);
+      final series = _seriesWithSecrets(
+        id: 'c',
+        regularCount: 2,
+        secretCount: 0,
+      );
       final snap = CollectionSnapshot(
         shelfSeries: [series],
         figureStates: _ownedIds(['c_reg_0', 'c_reg_1']),
@@ -204,13 +246,16 @@ void main() {
     });
 
     test('secret-only series follows resolveSeriesCompletion', () {
-      final series = _seriesWithSecrets(id: 'sec', regularCount: 0, secretCount: 2);
+      final series = _seriesWithSecrets(
+        id: 'sec',
+        regularCount: 0,
+        secretCount: 2,
+      );
       final partial = CollectionSnapshot(
         shelfSeries: [series],
         figureStates: _ownedIds(['sec_sec_0']),
       );
-      final rPartial =
-          resolveSeriesCompletion(series, partial.figureStates);
+      final rPartial = resolveSeriesCompletion(series, partial.figureStates);
       expect(rPartial.isCompleted, isFalse);
       expect(rPartial.isMasterComplete, isFalse);
       expect(rPartial.progressRatio, 0.5);
@@ -228,7 +273,11 @@ void main() {
     test('Near Complete with Secrets matches progressRatio definition', () {
       // 6/7 Regular, 0/1 Secret → progressRatio 6/7 ≈ 0.857 Near;
       // all-figure fill would be 6/8 = 0.75 (not Near).
-      final series = _seriesWithSecrets(id: 'n', regularCount: 7, secretCount: 1);
+      final series = _seriesWithSecrets(
+        id: 'n',
+        regularCount: 7,
+        secretCount: 1,
+      );
       final states = _ownedIds([for (var i = 0; i < 6; i++) 'n_reg_$i']);
       final r = resolveSeriesCompletion(series, states);
       expect(r.isCompleted, isFalse);
@@ -237,4 +286,3 @@ void main() {
     });
   });
 }
-

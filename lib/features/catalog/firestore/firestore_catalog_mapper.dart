@@ -8,7 +8,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// Normalizes one Firestore document into the JSON-shaped [Map] expected by
 /// catalog `fromJson` factories. Document id is the canonical id when `id` is
 /// missing or empty in fields.
-Map<String, dynamic> firestoreCatalogDocToJsonMap(String docId, Map<String, dynamic> data) {
+Map<String, dynamic> firestoreCatalogDocToJsonMap(
+  String docId,
+  Map<String, dynamic> data,
+) {
   final out = Map<String, dynamic>.from(data);
 
   final existingId = catalogReadString(out, 'id');
@@ -32,7 +35,8 @@ Map<String, dynamic> firestoreCatalogDocToJsonMap(String docId, Map<String, dyna
 
 bool _hasText(String? value) => value != null && value.trim().isNotEmpty;
 
-bool _isUsableBrand(CatalogBrand b) => _hasText(b.id) && _hasText(b.displayName);
+bool _isUsableBrand(CatalogBrand b) =>
+    _hasText(b.id) && _hasText(b.displayName);
 
 bool _isUsableIp(CatalogIp ip) =>
     _hasText(ip.id) && _hasText(ip.brandId) && _hasText(ip.displayName);
@@ -62,7 +66,9 @@ String _timestampToCatalogDate(Timestamp ts) {
 
 CatalogBrand? mapFirestoreBrand(String docId, Map<String, dynamic> data) {
   try {
-    final mapped = CatalogBrand.fromJson(firestoreCatalogDocToJsonMap(docId, data));
+    final mapped = CatalogBrand.fromJson(
+      firestoreCatalogDocToJsonMap(docId, data),
+    );
     if (!_isUsableBrand(mapped)) return null;
     return mapped;
   } on Object {
@@ -72,7 +78,9 @@ CatalogBrand? mapFirestoreBrand(String docId, Map<String, dynamic> data) {
 
 CatalogIp? mapFirestoreIp(String docId, Map<String, dynamic> data) {
   try {
-    final mapped = CatalogIp.fromJson(firestoreCatalogDocToJsonMap(docId, data));
+    final mapped = CatalogIp.fromJson(
+      firestoreCatalogDocToJsonMap(docId, data),
+    );
     if (!_isUsableIp(mapped)) return null;
     return mapped;
   } on Object {
@@ -82,7 +90,9 @@ CatalogIp? mapFirestoreIp(String docId, Map<String, dynamic> data) {
 
 CatalogSeries? mapFirestoreSeries(String docId, Map<String, dynamic> data) {
   try {
-    final mapped = CatalogSeries.fromJson(firestoreCatalogDocToJsonMap(docId, data));
+    final mapped = CatalogSeries.fromJson(
+      firestoreCatalogDocToJsonMap(docId, data),
+    );
     if (!_isUsableSeries(mapped)) return null;
     return mapped;
   } on Object {
@@ -92,7 +102,9 @@ CatalogSeries? mapFirestoreSeries(String docId, Map<String, dynamic> data) {
 
 CatalogFigure? mapFirestoreFigure(String docId, Map<String, dynamic> data) {
   try {
-    final mapped = CatalogFigure.fromJson(firestoreCatalogDocToJsonMap(docId, data));
+    final mapped = CatalogFigure.fromJson(
+      firestoreCatalogDocToJsonMap(docId, data),
+    );
     if (!_isUsableFigure(mapped)) return null;
     return mapped;
   } on Object {

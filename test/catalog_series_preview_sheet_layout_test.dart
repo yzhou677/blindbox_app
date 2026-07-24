@@ -75,20 +75,30 @@ void main() {
     layout: CollectionSeriesShelfCtaLayout.previewSticky,
   );
 
-  testWidgets('sticky CTA remains visible while content scrolls', (tester) async {
+  testWidgets('sticky CTA remains visible while content scrolls', (
+    tester,
+  ) async {
     await _pumpPreview(tester, series: _series(), shelfCta: addableCta);
 
-    expect(find.byKey(const ValueKey<String>('catalog-preview-add-cta')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('catalog-preview-add-cta')),
+      findsOneWidget,
+    );
     expect(find.text('Cry Me an Ocean Series'), findsOneWidget);
 
     await tester.drag(find.byType(CustomScrollView), const Offset(0, -520));
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const ValueKey<String>('catalog-preview-add-cta')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('catalog-preview-add-cta')),
+      findsOneWidget,
+    );
     expect(find.text('Cry Me an Ocean Series'), findsOneWidget);
   });
 
-  testWidgets('figure content remains accessible with sticky CTA', (tester) async {
+  testWidgets('figure content remains accessible with sticky CTA', (
+    tester,
+  ) async {
     await _pumpPreview(
       tester,
       series: _series(figureCount: 28),
@@ -103,7 +113,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Figure 27'), findsOneWidget);
-    expect(find.byKey(const ValueKey<String>('catalog-preview-add-cta')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('catalog-preview-add-cta')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('owned preview shows disabled In collection CTA', (tester) async {
@@ -139,8 +152,12 @@ void main() {
       bottomInset: 32,
     );
 
-    final host = tester.getRect(find.byKey(const ValueKey<String>('preview-host')));
-    final cta = tester.getRect(find.byKey(const ValueKey<String>('catalog-preview-add-cta')));
+    final host = tester.getRect(
+      find.byKey(const ValueKey<String>('preview-host')),
+    );
+    final cta = tester.getRect(
+      find.byKey(const ValueKey<String>('catalog-preview-add-cta')),
+    );
 
     expect(host.bottom - cta.bottom, greaterThanOrEqualTo(32));
   });

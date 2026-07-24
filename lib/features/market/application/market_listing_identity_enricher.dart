@@ -15,8 +15,7 @@ List<MarketListing> applyQueryTaxonomyHints(
   final brandHint = query.brandId != MarketTaxonomyIds.anyBrand
       ? query.brandId
       : null;
-  final ipHint =
-      query.ipId != MarketTaxonomyIds.anyIp ? query.ipId : null;
+  final ipHint = query.ipId != MarketTaxonomyIds.anyIp ? query.ipId : null;
   if (brandHint == null && ipHint == null) return listings;
 
   return [
@@ -66,9 +65,12 @@ MarketListing enrichListingIdentity(
     brandId = match.matchedBrandId ?? brandId;
     ipId = match.matchedIpId ?? ipId;
   } else {
-    final taxonomy = const TitleTaxonomyResolver().resolve(listing.collectible.name);
+    final taxonomy = const TitleTaxonomyResolver().resolve(
+      listing.collectible.name,
+    );
     if (taxonomy.brandId != null &&
-        taxonomy.confidence >= TitleTaxonomyResolver.minConfidenceForBrandOnly) {
+        taxonomy.confidence >=
+            TitleTaxonomyResolver.minConfidenceForBrandOnly) {
       brandId ??= taxonomy.brandId;
       ipId ??= taxonomy.ipId;
     }
@@ -95,7 +97,9 @@ MarketListing enrichListingIdentity(
 }
 
 MarketListing _enrichTaxonomyFromTitleOnly(MarketListing listing) {
-  final taxonomy = const TitleTaxonomyResolver().resolve(listing.collectible.name);
+  final taxonomy = const TitleTaxonomyResolver().resolve(
+    listing.collectible.name,
+  );
   if (taxonomy.brandId == null) return listing;
   return MarketListing(
     id: listing.id,

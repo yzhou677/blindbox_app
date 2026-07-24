@@ -49,7 +49,8 @@ abstract final class CollectionShelfUiPrefsCodec {
       final map = jsonDecode(raw);
       if (map is! Map<String, dynamic>) return const CollectionShelfUiPrefs();
 
-      final sort = CollectionShelfSortLabels.tryParse(map['sort'] as String?) ??
+      final sort =
+          CollectionShelfSortLabels.tryParse(map['sort'] as String?) ??
           CollectionShelfSort.recentlyAdded;
       final inProgressExpanded = map['inProgressSectionExpanded'] != false;
       final completedExpanded = map['completedSectionExpanded'] == true;
@@ -103,8 +104,8 @@ abstract final class CollectionShelfUiPrefsStorage {
 
 final collectionShelfUiPrefsProvider =
     NotifierProvider<CollectionShelfUiPrefsNotifier, CollectionShelfUiPrefs>(
-  CollectionShelfUiPrefsNotifier.new,
-);
+      CollectionShelfUiPrefsNotifier.new,
+    );
 
 class CollectionShelfUiPrefsNotifier extends Notifier<CollectionShelfUiPrefs> {
   @override

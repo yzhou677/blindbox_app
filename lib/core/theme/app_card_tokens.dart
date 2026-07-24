@@ -14,7 +14,12 @@ abstract final class AppCardTokens {
   static const double browseRailHeight = 196;
 
   /// Inner padding shared by compact browse-rail cards.
-  static const EdgeInsets browseRailPadding = EdgeInsets.fromLTRB(12, 12, 12, 14);
+  static const EdgeInsets browseRailPadding = EdgeInsets.fromLTRB(
+    12,
+    12,
+    12,
+    14,
+  );
 
   /// Gap from cover mat to title.
   static const double browseRailImageToTitleGap = 10;

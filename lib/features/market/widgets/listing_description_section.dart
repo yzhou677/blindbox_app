@@ -35,11 +35,12 @@ class ListingDescriptionSection extends StatelessWidget {
         children: [
           Text(
             sectionTitle,
-            style: CollectibleTypography.figureMeta(textTheme, scheme).copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            style: CollectibleTypography.figureMeta(
+              textTheme,
+              scheme,
+            ).copyWith(fontWeight: FontWeight.w600),
           ),
-        const SizedBox(height: 4),
+          const SizedBox(height: 4),
           ExpandableDescription(
             text: sanitized,
             style: bodyStyle ?? const TextStyle(height: 1.35),

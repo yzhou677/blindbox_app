@@ -8,7 +8,8 @@ abstract final class MarketGatewayConfig {
   /// Gateway function root, e.g. `https://…/market` or emulator `http://127.0.0.1:5001/…/market`.
   static const String gatewayBaseUrl = String.fromEnvironment(
     'MARKET_GATEWAY_BASE_URL',
-    defaultValue: 'https://us-central1-blindbox-collection.cloudfunctions.net/market',
+    defaultValue:
+        'https://us-central1-blindbox-collection.cloudfunctions.net/market',
   );
 
   /// @deprecated Use [gatewayBaseUrl].

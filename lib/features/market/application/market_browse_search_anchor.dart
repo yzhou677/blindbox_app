@@ -49,8 +49,7 @@ abstract final class MarketBrowseSearchAnchor {
     String search,
     String brandId,
     String ipId,
-  ) =>
-      _shouldAnchor(search, brandId, ipId);
+  ) => _shouldAnchor(search, brandId, ipId);
 
   static bool isCollectibleNativeSearch(String search) =>
       _isCollectibleNativeSearch(search);

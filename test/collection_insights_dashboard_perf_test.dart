@@ -56,7 +56,9 @@ void main() {
     final buildsBeforeToggle = shelfBuilds.count;
     shelfBuilds.reset();
 
-    await tester.tap(find.byKey(const Key('collection_insights_dashboard_toggle')));
+    await tester.tap(
+      find.byKey(const Key('collection_insights_dashboard_toggle')),
+    );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 240));
     await tester.pumpAndSettle();

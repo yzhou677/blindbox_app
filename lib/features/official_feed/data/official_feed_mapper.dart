@@ -66,7 +66,9 @@ DateTime? _readPublishedAt(Map<String, dynamic> data) {
 
 /// Maps a Firestore document to [OfficialFeedItem], or null when invalid.
 OfficialFeedItem? mapOfficialFeedItem(String docId, Map<String, dynamic> data) {
-  final id = _hasText(data['id'] as String?) ? (data['id'] as String).trim() : docId;
+  final id = _hasText(data['id'] as String?)
+      ? (data['id'] as String).trim()
+      : docId;
   final sourceId = (data['sourceId'] as String?)?.trim() ?? '';
   final sourceLabel = (data['sourceLabel'] as String?)?.trim() ?? '';
   final title = (data['title'] as String?)?.trim() ?? '';

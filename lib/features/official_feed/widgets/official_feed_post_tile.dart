@@ -7,6 +7,7 @@ import 'package:blindbox_app/features/official_feed/utils/open_official_feed_url
 import 'package:blindbox_app/features/official_feed/widgets/official_feed_content_type_label.dart';
 import 'package:blindbox_app/features/official_feed/widgets/official_feed_thumbnail.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Compact official update row — bulletin style, not hero marketing.
 class OfficialFeedPostTile extends StatelessWidget {
@@ -128,7 +129,7 @@ class OfficialFeedPostTile extends StatelessWidget {
                 Row(
                   children: [
                     Icon(
-                      Icons.open_in_new_rounded,
+                      Symbols.open_in_new_rounded,
                       size: 15,
                       color: scheme.onSurfaceVariant.withValues(alpha: 0.45),
                     ),
@@ -180,7 +181,7 @@ class _OfficialBadge extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.verified_rounded, size: 14, color: verifiedGreen),
+            Icon(Symbols.verified_rounded, size: 14, color: verifiedGreen),
             const SizedBox(width: 4),
             Text(
               'Official',

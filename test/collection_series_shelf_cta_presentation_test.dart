@@ -3,6 +3,7 @@ import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_series_shelf_cta_presentation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 void main() {
   group('CollectionSeriesShelfCtaPresentation', () {
@@ -19,7 +20,7 @@ void main() {
 
       expect(cta.visualState, OwnershipShelfCtaVisualState.owned);
       expect(cta.label, 'In collection');
-      expect(cta.icon, Icons.check_rounded);
+      expect(cta.icon, Symbols.check_rounded);
       expect(cta.enabled, isFalse);
       expect(cta.usePrimaryTint, isFalse);
       expect(cta.isAddable, isFalse);
@@ -34,7 +35,7 @@ void main() {
 
       expect(cta.visualState, OwnershipShelfCtaVisualState.addable);
       expect(cta.label, 'Add');
-      expect(cta.icon, Icons.add_rounded);
+      expect(cta.icon, Symbols.add_rounded);
       expect(cta.enabled, isTrue);
       expect(cta.usePrimaryTint, isTrue);
     });
@@ -57,8 +58,8 @@ void main() {
       expect(icon.isOwned, isTrue);
       expect(compact.usePrimaryTint, isFalse);
       expect(icon.usePrimaryTint, isFalse);
-      expect(icon.icon, isNot(Icons.add_rounded));
-      expect(icon.icon, isNot(Icons.add_circle_outline_rounded));
+      expect(icon.icon, isNot(Symbols.add_rounded));
+      expect(icon.icon, isNot(Symbols.add_circle_outline_rounded));
     });
 
     test('resolve uses shared ownership matcher for canonical shelf rows', () {
@@ -101,7 +102,7 @@ void main() {
       expect(cta.label, 'In collection');
       expect(cta.enabled, isFalse);
       expect(cta.isAddable, isFalse);
-      expect(cta.icon, Icons.check_rounded);
+      expect(cta.icon, Symbols.check_rounded);
     });
 
     test('previewSticky addable shows Add to shelf', () {

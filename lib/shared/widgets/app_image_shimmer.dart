@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 
 /// Soft pulsing placeholder while catalog art resolves or downloads.
 class AppImageShimmer extends StatefulWidget {
-  const AppImageShimmer({
-    super.key,
-    this.borderRadius = BorderRadius.zero,
-  });
+  const AppImageShimmer({super.key, this.borderRadius = BorderRadius.zero});
 
   final BorderRadius borderRadius;
 

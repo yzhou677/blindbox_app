@@ -12,8 +12,7 @@ List<ShelfSeries> newlyMasterCompleteSeries(
 ) {
   final result = <ShelfSeries>[];
   for (final series in next.shelfSeries) {
-    final existedBefore =
-        previous.shelfSeries.any((s) => s.id == series.id);
+    final existedBefore = previous.shelfSeries.any((s) => s.id == series.id);
     if (!existedBefore) continue;
 
     final wasMaster = resolveSeriesCompletion(
@@ -37,5 +36,8 @@ bool seriesNewlyMasterComplete({
   required CollectionSnapshot previous,
   required CollectionSnapshot next,
 }) {
-  return newlyMasterCompleteSeries(previous, next).any((s) => s.id == series.id);
+  return newlyMasterCompleteSeries(
+    previous,
+    next,
+  ).any((s) => s.id == series.id);
 }

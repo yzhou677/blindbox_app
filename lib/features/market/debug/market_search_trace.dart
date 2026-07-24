@@ -62,26 +62,24 @@ abstract final class MarketSearchTrace {
       _buildBurstCount = 1;
     }
 
-    final shouldLog = gap >= idleGapMs ||
+    final shouldLog =
+        gap >= idleGapMs ||
         gap >= slowGapMs ||
-        (inBurst && (_buildBurstCount == 1 || _buildBurstCount % sampleEvery == 0));
+        (inBurst &&
+            (_buildBurstCount == 1 || _buildBurstCount % sampleEvery == 0));
 
     if (!shouldLog) return;
 
     final tag = gap >= slowGapMs
         ? 'slow'
         : gap >= idleGapMs
-            ? 'idle'
-            : 'burst';
+        ? 'idle'
+        : 'burst';
     event('$message [$tag gap=${gap}ms n=$_buildBurstCount]');
   }
 
   /// Wraps synchronous UI-isolate work; always logs start/end and flags slow runs.
-  static T sync<T>(
-    String label,
-    T Function() action, {
-    int warnMs = 8,
-  }) {
+  static T sync<T>(String label, T Function() action, {int warnMs = 8}) {
     if (!kDebugMode) return action();
     event('$label START');
     final sw = Stopwatch()..start();
@@ -105,10 +103,7 @@ abstract final class MarketSearchTrace {
     final sw = Stopwatch()..start();
     final result = await action();
     final elapsed = sw.elapsedMilliseconds;
-    event(
-      '$label END ${elapsed}ms async',
-      gapWarnMs: gapWarnMs,
-    );
+    event('$label END ${elapsed}ms async', gapWarnMs: gapWarnMs);
     return result;
   }
 }

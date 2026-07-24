@@ -41,9 +41,7 @@ final class CollectionModalOverlayRegistry {
     final cb = _dismissBranchOverlays;
     if (cb == null) return Future<void>.value();
     final op = _runDismissAfterFrame(cb);
-    _inFlightDismiss = op
-        .then((_) => _holdDismissFrames())
-        .whenComplete(() {
+    _inFlightDismiss = op.then((_) => _holdDismissFrames()).whenComplete(() {
       _inFlightDismiss = null;
     });
     return _inFlightDismiss!;

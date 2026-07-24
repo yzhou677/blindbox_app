@@ -17,7 +17,8 @@ void main() {
             id: 'fig_a',
             seriesId: 'series_a',
             name: 'Soymilk',
-            imageUrl: 'assets/catalog/figures/the_monsters_exciting_macaron_soymilk.png',
+            imageUrl:
+                'assets/catalog/figures/the_monsters_exciting_macaron_soymilk.png',
             imageKey: 'the_monsters_exciting_macaron_soymilk',
             rarity: 'Regular',
             isSecret: false,
@@ -28,7 +29,10 @@ void main() {
 
       final items = catalogGalleryItemsFromShelfSeries(series);
       expect(items, hasLength(1));
-      expect(items.single.catalogImageKey, 'the_monsters_exciting_macaron_soymilk');
+      expect(
+        items.single.catalogImageKey,
+        'the_monsters_exciting_macaron_soymilk',
+      );
     });
 
     test('splits shelf rarity and odds for gallery meta', () {
@@ -53,10 +57,7 @@ void main() {
       final item = catalogGalleryItemsFromShelfSeries(series).single;
       expect(item.rarityLabel, 'Secret');
       expect(item.oddsLabel, '1:1152');
-      expect(
-        catalogFigureGalleryFigureMetaLine(item),
-        'Secret · 1:1152',
-      );
+      expect(catalogFigureGalleryFigureMetaLine(item), 'Secret · 1:1152');
     });
 
     test('passes series cover when figure has no local photo', () {

@@ -57,6 +57,7 @@ final class CollectorTypeCeremonyController
 }
 
 final collectorTypeCeremonyProvider =
-    NotifierProvider<CollectorTypeCeremonyController, CollectorTypeCeremonyEvent?>(
-  CollectorTypeCeremonyController.new,
-);
+    NotifierProvider<
+      CollectorTypeCeremonyController,
+      CollectorTypeCeremonyEvent?
+    >(CollectorTypeCeremonyController.new);

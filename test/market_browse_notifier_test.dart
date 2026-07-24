@@ -80,10 +80,7 @@ void main() {
 
       n.setBrand('pop_mart');
       n.setIp('pucky');
-      expect(
-        container.read(marketFeedBrowseNotifierProvider).ipId,
-        'pucky',
-      );
+      expect(container.read(marketFeedBrowseNotifierProvider).ipId, 'pucky');
 
       n.setBrand(MarketTaxonomyIds.anyBrand);
       final s = container.read(marketFeedBrowseNotifierProvider);
@@ -114,8 +111,9 @@ void main() {
       expect(reset.ipId, MarketTaxonomyIds.anyIp);
       expect(reset.signature, 'any_brand|any_ip||relevance');
 
-      final upstream =
-          MarketBrowseQueryComposer.composeUpstreamQ(reset).toLowerCase();
+      final upstream = MarketBrowseQueryComposer.composeUpstreamQ(
+        reset,
+      ).toLowerCase();
       expect(upstream, isNot(contains('pucky')));
     });
   });
@@ -151,49 +149,56 @@ void main() {
       final searchQuery = container.read(activeMarketBrowseQueryProvider);
       expect(searchQuery.signature, 'any_brand|any_ip|nommi|relevance');
 
-      final upstream =
-          MarketBrowseQueryComposer.composeUpstreamQ(searchQuery).toLowerCase();
+      final upstream = MarketBrowseQueryComposer.composeUpstreamQ(
+        searchQuery,
+      ).toLowerCase();
       expect(upstream, isNot(contains('pucky')));
       expect(upstream, contains('nommi'));
     });
 
-    test('committed search ignores feed taxonomy while preserving chip state',
-        () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
+    test(
+      'committed search ignores feed taxonomy while preserving chip state',
+      () {
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
 
-      final feed = container.read(marketFeedBrowseNotifierProvider.notifier);
-      final search = container.read(marketSearchBrowseNotifierProvider.notifier);
-      final overlay = container.read(marketSearchOverlayOpenProvider.notifier);
+        final feed = container.read(marketFeedBrowseNotifierProvider.notifier);
+        final search = container.read(
+          marketSearchBrowseNotifierProvider.notifier,
+        );
+        final overlay = container.read(
+          marketSearchOverlayOpenProvider.notifier,
+        );
 
-      feed.setBrand('pop_mart');
-      feed.setIp('pucky');
-      overlay.setOpen(true);
-      search.commitQuery('nommi');
+        feed.setBrand('pop_mart');
+        feed.setIp('pucky');
+        overlay.setOpen(true);
+        search.commitQuery('nommi');
 
-      final feedState = container.read(marketFeedBrowseNotifierProvider);
-      expect(feedState.brandId, 'pop_mart');
-      expect(feedState.ipId, 'pucky');
+        final feedState = container.read(marketFeedBrowseNotifierProvider);
+        expect(feedState.brandId, 'pop_mart');
+        expect(feedState.ipId, 'pucky');
 
-      final searchState = container.read(marketSearchBrowseNotifierProvider);
-      expect(searchState.isCommitted, isTrue);
+        final searchState = container.read(marketSearchBrowseNotifierProvider);
+        expect(searchState.isCommitted, isTrue);
 
-      final searchQuery = container.read(activeMarketBrowseQueryProvider);
-      expect(searchQuery.brandId, MarketTaxonomyIds.anyBrand);
-      expect(searchQuery.ipId, MarketTaxonomyIds.anyIp);
-      expect(searchQuery.searchText, 'nommi');
+        final searchQuery = container.read(activeMarketBrowseQueryProvider);
+        expect(searchQuery.brandId, MarketTaxonomyIds.anyBrand);
+        expect(searchQuery.ipId, MarketTaxonomyIds.anyIp);
+        expect(searchQuery.searchText, 'nommi');
 
-      search.clearSession();
-      overlay.setOpen(false);
+        search.clearSession();
+        overlay.setOpen(false);
 
-      final afterFeed = container.read(marketFeedBrowseNotifierProvider);
-      expect(afterFeed.brandId, 'pop_mart');
-      expect(afterFeed.ipId, 'pucky');
+        final afterFeed = container.read(marketFeedBrowseNotifierProvider);
+        expect(afterFeed.brandId, 'pop_mart');
+        expect(afterFeed.ipId, 'pucky');
 
-      final feedQuery = container.read(activeMarketBrowseQueryProvider);
-      expect(feedQuery.brandId, 'pop_mart');
-      expect(feedQuery.ipId, 'pucky');
-      expect(feedQuery.searchText, isEmpty);
-    });
+        final feedQuery = container.read(activeMarketBrowseQueryProvider);
+        expect(feedQuery.brandId, 'pop_mart');
+        expect(feedQuery.ipId, 'pucky');
+        expect(feedQuery.searchText, isEmpty);
+      },
+    );
   });
 }

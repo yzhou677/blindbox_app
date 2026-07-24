@@ -9,8 +9,18 @@ abstract final class HomeDropRailContext {
   static const String recentReleasesRailCaption = 'Recent releases';
 
   static const _monthsLong = <String>[
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
 
   static const _recentPastDays = 21;
@@ -20,7 +30,8 @@ abstract final class HomeDropRailContext {
   static DateTime _clock(DateTime? clock) => clock ?? DateTime.now();
 
   /// Disclosure paired with fuzzy labels (tooltips / a11y).
-  static const String retailTimingDisclosure = 'Retail dates vary by region and shop.';
+  static const String retailTimingDisclosure =
+      'Retail dates vary by region and shop.';
 
   /// Fuzzy window for one drop — month-based, no season names.
   static String homeReleaseWindowLabel(DateTime release, {DateTime? clock}) {
@@ -61,7 +72,10 @@ abstract final class HomeDropRailContext {
   }
 
   /// Latest-drop rail caption from the newest [releaseDate] in the list.
-  static String? latestDropsRailCaption(Iterable<Collectible> items, {DateTime? clock}) {
+  static String? latestDropsRailCaption(
+    Iterable<Collectible> items, {
+    DateTime? clock,
+  }) {
     if (items.isEmpty) return null;
     var latest = items.first.releaseDate;
     for (final c in items.skip(1)) {

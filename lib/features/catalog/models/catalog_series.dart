@@ -49,13 +49,13 @@ class CatalogSeries {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'brandId': brandId,
-        'ipId': ipId,
-        'displayName': displayName,
-        if (releaseDate != null) 'releaseDate': releaseDate,
-        'isBlindBox': isBlindBox,
-        'imageKey': imageKey,
-        if (aliases.isNotEmpty) 'aliases': aliases,
-      };
+    'id': id,
+    'brandId': brandId,
+    'ipId': ipId,
+    'displayName': displayName,
+    if (releaseDate != null) 'releaseDate': releaseDate,
+    'isBlindBox': isBlindBox,
+    'imageKey': imageKey,
+    if (aliases.isNotEmpty) 'aliases': aliases,
+  };
 }

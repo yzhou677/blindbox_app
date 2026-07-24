@@ -53,12 +53,19 @@ void main() {
     expect(svc.search('   '), isEmpty);
   });
 
-  test('series keyword macaron returns macaron figures sorted by sortOrder', () {
-    final svc = CatalogSearchService(bundle);
-    final r = svc.search('macaron');
-    expect(r, hasLength(3));
-    expect(r.map((e) => e.figureId).toList(), ['fig_soy', 'fig_lychee', 'fig_chase']);
-  });
+  test(
+    'series keyword macaron returns macaron figures sorted by sortOrder',
+    () {
+      final svc = CatalogSearchService(bundle);
+      final r = svc.search('macaron');
+      expect(r, hasLength(3));
+      expect(r.map((e) => e.figureId).toList(), [
+        'fig_soy',
+        'fig_lychee',
+        'fig_chase',
+      ]);
+    },
+  );
 
   test('figure name substring chestnut ranks via figure match', () {
     final svc = CatalogSearchService(bundle);
@@ -78,7 +85,11 @@ void main() {
   test('labubu matches via IP alias for monsters lineup', () {
     final svc = CatalogSearchService(bundle);
     final r = svc.search('labubu');
-    expect(r.map((e) => e.figureId).toSet(), {'fig_soy', 'fig_lychee', 'fig_chase'});
+    expect(r.map((e) => e.figureId).toSet(), {
+      'fig_soy',
+      'fig_lychee',
+      'fig_chase',
+    });
   });
 
   test('hirono matches IP display and boundary matches series title', () {

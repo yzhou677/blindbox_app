@@ -6,10 +6,8 @@ import 'package:blindbox_app/features/market/taxonomy/taxonomy_resolver.dart';
 
 /// Maps noisy marketplace listing titles into canonical catalog identity references.
 class MarketIdentityMatcher {
-  MarketIdentityMatcher(
-    this._index, {
-    TitleTaxonomyResolver? resolver,
-  }) : _resolver = resolver ?? const TitleTaxonomyResolver();
+  MarketIdentityMatcher(this._index, {TitleTaxonomyResolver? resolver})
+    : _resolver = resolver ?? const TitleTaxonomyResolver();
 
   final CatalogIdentityIndex _index;
   final TitleTaxonomyResolver _resolver;
@@ -27,7 +25,9 @@ class MarketIdentityMatcher {
     String? hintBrandId,
     String? hintIpId,
   }) {
-    final normalized = MarketListingTitleNormalizer.normalizeForMatching(rawTitle);
+    final normalized = MarketListingTitleNormalizer.normalizeForMatching(
+      rawTitle,
+    );
     final titleTokens = MarketListingTitleNormalizer.tokenize(normalized);
 
     if (normalized.isEmpty) {
@@ -76,7 +76,8 @@ class MarketIdentityMatcher {
     final taxonomy = _resolver.resolve(rawTitle);
     if (brandId == null &&
         taxonomy.brandId != null &&
-        taxonomy.confidence >= TitleTaxonomyResolver.minConfidenceForBrandOnly) {
+        taxonomy.confidence >=
+            TitleTaxonomyResolver.minConfidenceForBrandOnly) {
       brandId = taxonomy.brandId;
       ipId ??= taxonomy.ipId;
       source = source == 'wire_hint' ? 'wire_hint+registry' : 'registry';

@@ -8,6 +8,7 @@ import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
 import 'package:blindbox_app/shared/widgets/catalog_quick_action_button.dart';
 import 'package:blindbox_app/shared/widgets/collectible_browse_card.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Series-centric catalog search result row (shared by Home browse and Add Series).
 class CatalogSeriesSearchRowCard extends StatelessWidget {
@@ -69,7 +70,7 @@ class CatalogSeriesSearchRowCard extends StatelessWidget {
                       alpha: 0.5,
                     ),
                     child: Icon(
-                      Icons.photo_outlined,
+                      Symbols.photo_rounded,
                       color: scheme.onSurfaceVariant.withValues(alpha: 0.45),
                     ),
                   ),
@@ -123,10 +124,9 @@ class CatalogSeriesSearchRowCard extends StatelessWidget {
               semanticsLabel: isWishlisted
                   ? 'Remove series from wishlist'
                   : 'Add series to wishlist',
-              icon: isWishlisted
-                  ? Icons.favorite_rounded
-                  : Icons.favorite_border_rounded,
+              icon: Symbols.favorite_rounded,
               active: isWishlisted,
+              filled: isWishlisted,
               onPressed: wishlistPressed,
             ),
             const SizedBox(width: 2),

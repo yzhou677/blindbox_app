@@ -33,10 +33,8 @@ class CollectorTypeIdentity {
   /// Canonical reason for Because copy (heals legacy `stillUnfolding` mismatch).
   ///
   /// Single read API for Hero, Reveal ceremony, Personality Memory, Timeline.
-  CollectorTypeReasonKey get displayReasonKey => effectiveReasonKey(
-        archetypeId: archetypeId,
-        reasonKey: reasonKey,
-      );
+  CollectorTypeReasonKey get displayReasonKey =>
+      effectiveReasonKey(archetypeId: archetypeId, reasonKey: reasonKey);
 
   /// Returns this identity, or a copy with [displayReasonKey] if healing applied.
   CollectorTypeIdentity healed() {
@@ -52,13 +50,13 @@ class CollectorTypeIdentity {
   }
 
   Map<String, dynamic> toJson() => {
-        'v': 2,
-        'archetypeId': archetypeId.name,
-        'revealedAtMs': revealedAt.millisecondsSinceEpoch,
-        'signatureHash': signatureHash,
-        'stats': stats.toJson(),
-        'reasonKey': reasonKey.name,
-      };
+    'v': 2,
+    'archetypeId': archetypeId.name,
+    'revealedAtMs': revealedAt.millisecondsSinceEpoch,
+    'signatureHash': signatureHash,
+    'stats': stats.toJson(),
+    'reasonKey': reasonKey.name,
+  };
 
   factory CollectorTypeIdentity.fromJson(Map<String, dynamic> json) {
     final idName = json['archetypeId'] as String? ?? '';

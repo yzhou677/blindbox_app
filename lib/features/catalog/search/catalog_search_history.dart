@@ -64,7 +64,10 @@ abstract final class CatalogSearchHistoryRules {
   /// Returns a new list without [query] (normalises before comparing).
   static List<String> remove(List<String> current, String query) {
     final q = normalize(query);
-    return [for (final e in current) if (normalize(e) != q) e];
+    return [
+      for (final e in current)
+        if (normalize(e) != q) e,
+    ];
   }
 
   /// Returns an empty list.

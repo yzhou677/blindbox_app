@@ -9,7 +9,9 @@ final marketSourcesProvider = Provider<List<MarketSource>>((ref) {
   return productionMarketSources();
 });
 
-final marketListingsRepositoryProvider = Provider<MarketListingsRepository>((ref) {
+final marketListingsRepositoryProvider = Provider<MarketListingsRepository>((
+  ref,
+) {
   return MarketListingsRepository(ref.watch(marketSourcesProvider));
 });
 

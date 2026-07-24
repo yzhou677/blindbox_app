@@ -27,28 +27,31 @@ typedef CustomSeriesFormSubmit =
       String? notes,
     });
 
-typedef CustomSeriesMetadataSubmit = void Function({
-  required String seriesName,
-  String? brand,
-  String? ipDisplayName,
-  String? customCoverImageUri,
-  String? notes,
-});
+typedef CustomSeriesMetadataSubmit =
+    void Function({
+      required String seriesName,
+      String? brand,
+      String? ipDisplayName,
+      String? customCoverImageUri,
+      String? notes,
+    });
 
-typedef CustomSeriesFigureSubmit = void Function({
-  required String figureId,
-  required String name,
-  required bool isSecret,
-  String? rarityLabel,
-  String? localImageUri,
-});
+typedef CustomSeriesFigureSubmit =
+    void Function({
+      required String figureId,
+      required String name,
+      required bool isSecret,
+      String? rarityLabel,
+      String? localImageUri,
+    });
 
-typedef CustomSeriesFigureAddSubmit = void Function({
-  required String name,
-  required bool isSecret,
-  String? rarityLabel,
-  String? localImageUri,
-});
+typedef CustomSeriesFigureAddSubmit =
+    void Function({
+      required String name,
+      required bool isSecret,
+      String? rarityLabel,
+      String? localImageUri,
+    });
 
 enum CustomSeriesFormMode { create, edit }
 
@@ -67,13 +70,13 @@ class CustomSeriesFormSheet extends ConsumerStatefulWidget {
   const CustomSeriesFormSheet.create({
     super.key,
     required CustomSeriesFormSubmit onSubmit,
-  })  : mode = CustomSeriesFormMode.create,
-        initialSeries = null,
-        onCreateSubmit = onSubmit,
-        onEditSubmit = null,
-        onFigureSubmit = null,
-        onFigureAdd = null,
-        pickFigureImage = null;
+  }) : mode = CustomSeriesFormMode.create,
+       initialSeries = null,
+       onCreateSubmit = onSubmit,
+       onEditSubmit = null,
+       onFigureSubmit = null,
+       onFigureAdd = null,
+       pickFigureImage = null;
 
   const CustomSeriesFormSheet.edit({
     super.key,
@@ -82,12 +85,12 @@ class CustomSeriesFormSheet extends ConsumerStatefulWidget {
     required CustomSeriesFigureSubmit onFigureSubmit,
     required CustomSeriesFigureAddSubmit onFigureAdd,
     this.pickFigureImage,
-  })  : mode = CustomSeriesFormMode.edit,
-        initialSeries = initialSeries,
-        onCreateSubmit = null,
-        onEditSubmit = onSubmit,
-        onFigureSubmit = onFigureSubmit,
-        onFigureAdd = onFigureAdd;
+  }) : mode = CustomSeriesFormMode.edit,
+       initialSeries = initialSeries,
+       onCreateSubmit = null,
+       onEditSubmit = onSubmit,
+       onFigureSubmit = onFigureSubmit,
+       onFigureAdd = onFigureAdd;
 
   final CustomSeriesFormMode mode;
   final ShelfSeries? initialSeries;
@@ -249,9 +252,9 @@ class _CustomSeriesFormSheetState extends ConsumerState<CustomSeriesFormSheet> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_isCreate) {
       if (_figures.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Add a figure')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Add a figure')));
         return;
       }
       widget.onCreateSubmit!(
@@ -280,10 +283,7 @@ class _CustomSeriesFormSheetState extends ConsumerState<CustomSeriesFormSheet> {
       textInputAction: TextInputAction.next,
       maxLength: CollectionInputLimits.brandMaxLength,
       inputFormatters: CollectionInputFormatters.brand(),
-      decoration: quietCustomSeriesField(
-        scheme,
-        hintText: 'Brand',
-      ),
+      decoration: quietCustomSeriesField(scheme, hintText: 'Brand'),
     );
   }
 
@@ -293,17 +293,11 @@ class _CustomSeriesFormSheetState extends ConsumerState<CustomSeriesFormSheet> {
       textInputAction: TextInputAction.next,
       maxLength: CollectionInputLimits.ipMaxLength,
       inputFormatters: CollectionInputFormatters.ip(),
-      decoration: quietCustomSeriesField(
-        scheme,
-        hintText: 'Universe',
-      ),
+      decoration: quietCustomSeriesField(scheme, hintText: 'Universe'),
     );
   }
 
-  Widget _editAdvancedTaxonomySection(
-    ColorScheme scheme,
-    TextTheme textTheme,
-  ) {
+  Widget _editAdvancedTaxonomySection(ColorScheme scheme, TextTheme textTheme) {
     return Semantics(
       expanded: _advancedTaxonomyExpanded,
       child: ExpansionTile(
@@ -312,9 +306,10 @@ class _CustomSeriesFormSheetState extends ConsumerState<CustomSeriesFormSheet> {
         childrenPadding: const EdgeInsets.only(bottom: 4),
         title: Text(
           customSeriesEditAdvancedOptionsTitle,
-          style: CollectibleTypography.figureMeta(textTheme, scheme).copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+          style: CollectibleTypography.figureMeta(
+            textTheme,
+            scheme,
+          ).copyWith(fontWeight: FontWeight.w600),
         ),
         initiallyExpanded: false,
         onExpansionChanged: (expanded) {

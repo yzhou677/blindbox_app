@@ -3,13 +3,22 @@ import 'package:flutter/material.dart';
 
 /// Shelf-style depth for product shells — single source for card/listing shadows.
 abstract final class CollectibleShelfShadow {
-  static List<BoxShadow> productShell(BuildContext context, {required Color accent}) {
+  static List<BoxShadow> productShell(
+    BuildContext context, {
+    required Color accent,
+  }) {
     final scheme = Theme.of(context).colorScheme;
     final brightness = Theme.of(context).brightness;
     final tokens = CollectibleTokens.of(context);
     final isDark = brightness == Brightness.dark;
-    final alpha = isDark ? tokens.shellShadowDarkAlpha : tokens.shellShadowLightAlpha;
-    final core = Color.lerp(scheme.shadow, accent, tokens.shellShadowAccentMix)!;
+    final alpha = isDark
+        ? tokens.shellShadowDarkAlpha
+        : tokens.shellShadowLightAlpha;
+    final core = Color.lerp(
+      scheme.shadow,
+      accent,
+      tokens.shellShadowAccentMix,
+    )!;
     return [
       BoxShadow(
         color: core.withValues(alpha: alpha),
@@ -18,8 +27,11 @@ abstract final class CollectibleShelfShadow {
         spreadRadius: tokens.shellShadowSpread,
       ),
       BoxShadow(
-        color: Color.lerp(scheme.primary, scheme.surface, isDark ? 0.82 : 0.88)!
-            .withValues(alpha: isDark ? 0.055 : 0.032),
+        color: Color.lerp(
+          scheme.primary,
+          scheme.surface,
+          isDark ? 0.82 : 0.88,
+        )!.withValues(alpha: isDark ? 0.055 : 0.032),
         blurRadius: tokens.shellShadowBlur * 1.65,
         offset: Offset(0, tokens.shellShadowDy * 0.45),
         spreadRadius: 0,
@@ -28,13 +40,20 @@ abstract final class CollectibleShelfShadow {
   }
 
   /// Shelf list cards — flat in dark theme (border carries separation); one shadow in light.
-  static List<BoxShadow> shelfCard(BuildContext context, {required Color accent}) {
+  static List<BoxShadow> shelfCard(
+    BuildContext context, {
+    required Color accent,
+  }) {
     if (Theme.of(context).brightness == Brightness.dark) {
       return const [];
     }
     final scheme = Theme.of(context).colorScheme;
     final tokens = CollectibleTokens.of(context);
-    final core = Color.lerp(scheme.shadow, accent, tokens.shellShadowAccentMix)!;
+    final core = Color.lerp(
+      scheme.shadow,
+      accent,
+      tokens.shellShadowAccentMix,
+    )!;
     return [
       BoxShadow(
         color: core.withValues(alpha: tokens.shellShadowLightAlpha),
@@ -49,7 +68,8 @@ abstract final class CollectibleShelfShadow {
   /// [productShell] is not clipped. Uses the same [CollectibleTokens] fields as the shadow.
   static double horizontalRailShellBottomSlack(CollectibleTokens tokens) {
     final primaryReach = tokens.shellShadowDy + tokens.shellShadowBlur;
-    final ambientReach = tokens.shellShadowDy * 0.45 + tokens.shellShadowBlur * 1.65;
+    final ambientReach =
+        tokens.shellShadowDy * 0.45 + tokens.shellShadowBlur * 1.65;
     return primaryReach > ambientReach ? primaryReach : ambientReach;
   }
 }

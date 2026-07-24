@@ -15,8 +15,9 @@ void installSandboxMarketBrowse({
   MercariSandboxMarketSource? mercariSource,
 }) {
   final assetBase = assetRowsFromSession(sessionRows);
-  final mercariBatch =
-      MarketProviderBrowseCache.instance.batchFor(MarketProviderId.mercari);
+  final mercariBatch = MarketProviderBrowseCache.instance.batchFor(
+    MarketProviderId.mercari,
+  );
   final mercariRows = mercariBatch?.listings ?? const <MarketListing>[];
   final merged = mergeMarketBrowseListings(
     assetRows: assetBase,

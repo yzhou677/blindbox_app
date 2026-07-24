@@ -4,10 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('TaxonomyTitleNormalizer', () {
     test('trims and uppercases ASCII', () {
-      expect(
-        TaxonomyTitleNormalizer.normalize('  pop mart  '),
-        'POP MART',
-      );
+      expect(TaxonomyTitleNormalizer.normalize('  pop mart  '), 'POP MART');
     });
 
     test('collapses whitespace and normalizes separators', () {

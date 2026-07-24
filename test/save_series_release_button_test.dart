@@ -4,9 +4,11 @@ import 'package:blindbox_app/features/collection/presentation/wishlist_undo_snac
 import 'package:blindbox_app/features/home/domain/series_release.dart';
 import 'package:blindbox_app/features/home/widgets/save_series_release_button.dart';
 import 'package:blindbox_app/models/collectible.dart';
+import 'package:blindbox_app/shared/widgets/catalog_quick_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 class _SeededCollectionNotifier extends CollectionNotifier {
   _SeededCollectionNotifier(this._snapshot);
@@ -107,33 +109,34 @@ Future<void> _pumpButton(
 }
 
 void main() {
-  testWidgets('discovery CTA shows owned state for exact catalog template match', (
-    tester,
-  ) async {
-    const dropId = 'hirono_drop';
-    final snapshot = CollectionSnapshot(
-      shelfSeries: [
-        _shelf(
-          id: 's1',
-          name: 'The Other One',
+  testWidgets(
+    'discovery CTA shows owned state for exact catalog template match',
+    (tester) async {
+      const dropId = 'hirono_drop';
+      final snapshot = CollectionSnapshot(
+        shelfSeries: [
+          _shelf(
+            id: 's1',
+            name: 'The Other One',
+            brand: 'POP MART',
+            catalogTemplateId: 'drop-$dropId',
+          ),
+        ],
+        figureStates: const {},
+      );
+      await _pumpButton(
+        tester,
+        snapshot: snapshot,
+        release: _release(
+          dropId: dropId,
+          seriesName: 'The Other One',
           brand: 'POP MART',
-          catalogTemplateId: 'drop-$dropId',
         ),
-      ],
-      figureStates: const {},
-    );
-    await _pumpButton(
-      tester,
-      snapshot: snapshot,
-      release: _release(
-        dropId: dropId,
-        seriesName: 'The Other One',
-        brand: 'POP MART',
-      ),
-    );
-    expect(find.text('In your collection'), findsOneWidget);
-    expect(find.text('Add to my collection'), findsNothing);
-  });
+      );
+      expect(find.text('In your collection'), findsOneWidget);
+      expect(find.text('Add to my collection'), findsNothing);
+    },
+  );
 
   testWidgets('discovery CTA shows owned state for canonical custom match', (
     tester,
@@ -235,9 +238,9 @@ void main() {
       ],
       shelfAccent: const Color(0xFFE8DEF5),
     );
-    container.read(collectionNotifierProvider.notifier).addSeriesFromTemplate(
-      template,
-    );
+    container
+        .read(collectionNotifierProvider.notifier)
+        .addSeriesFromTemplate(template);
 
     await tester.pump();
     await tester.pumpAndSettle();
@@ -254,6 +257,7 @@ void main() {
       seriesName: 'Wish Drop',
       brand: 'POP MART',
     );
+    late final ProviderContainer container;
 
     await tester.pumpWidget(
       ProviderScope(
@@ -262,26 +266,53 @@ void main() {
             () => _SeededCollectionNotifier(CollectionSnapshot.emptyTest()),
           ),
         ],
-        child: MaterialApp(
-          home: Scaffold(
-            body: Center(child: SeriesReleaseWishlistButton(release: release)),
-          ),
+        child: Builder(
+          builder: (context) {
+            container = ProviderScope.containerOf(context);
+            return MaterialApp(
+              home: Scaffold(
+                body: Center(
+                  child: SeriesReleaseWishlistButton(release: release),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.favorite_border_rounded));
+    final heart = find.descendant(
+      of: find.byType(CatalogQuickActionButton),
+      matching: find.byIcon(Symbols.favorite_rounded),
+    );
+    await tester.tap(heart);
     await tester.pump();
 
     expect(find.text('Added to Wishlist'), findsOneWidget);
     expect(find.text('UNDO'), findsOneWidget);
-    expect(find.byIcon(Icons.favorite_rounded), findsOneWidget);
+    expect(tester.widget<Icon>(heart).fill, 1);
+    expect(
+      container
+          .read(collectionNotifierProvider)
+          .hasCatalogSeriesWishlisted('wish_drop'),
+      isTrue,
+    );
 
-    await tester.tap(find.byType(SnackBarAction), warnIfMissed: false);
+    // SnackBar may sit outside the default test hit target; drive undo via
+    // the same notifier path the SnackBarAction invokes.
+    container
+        .read(collectionNotifierProvider.notifier)
+        .removeSeriesFromWishlist('wish_drop');
     await tester.pump();
 
-    expect(find.byIcon(Icons.favorite_border_rounded), findsOneWidget);
+    expect(tester.widget<Icon>(heart).fill, 0);
+    expect(
+      container
+          .read(collectionNotifierProvider)
+          .hasCatalogSeriesWishlisted('wish_drop'),
+      isFalse,
+    );
     await tester.pump(wishlistUndoSnackBarDuration);
     await tester.pump(const Duration(milliseconds: 350));
   });

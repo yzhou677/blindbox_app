@@ -12,7 +12,8 @@ class CollectorTypeAnalyzingPanel extends StatefulWidget {
       _CollectorTypeAnalyzingPanelState();
 }
 
-class _CollectorTypeAnalyzingPanelState extends State<CollectorTypeAnalyzingPanel>
+class _CollectorTypeAnalyzingPanelState
+    extends State<CollectorTypeAnalyzingPanel>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   Animation<double>? _routeAnimation;
@@ -79,27 +80,27 @@ class _CollectorTypeAnalyzingPanelState extends State<CollectorTypeAnalyzingPane
           ],
         ),
         child: Padding(
-        // Compact panel: wider horizontal breathing room than standard cards,
-        // generous vertical to let the pulsing dots breathe.
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.xxl, // 24
-          vertical: 36,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _PulsingDots(animation: _controller, scheme: scheme),
-            const SizedBox(height: AppSpacing.lg),
-            Text(
-              CollectorTypeCopy.analyzingLine,
-              style: textTheme.bodyMedium?.copyWith(
-                color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
-                fontStyle: FontStyle.italic,
-                height: 1.4,
+          // Compact panel: wider horizontal breathing room than standard cards,
+          // generous vertical to let the pulsing dots breathe.
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xxl, // 24
+            vertical: 36,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _PulsingDots(animation: _controller, scheme: scheme),
+              const SizedBox(height: AppSpacing.lg),
+              Text(
+                CollectorTypeCopy.analyzingLine,
+                style: textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
+                  fontStyle: FontStyle.italic,
+                  height: 1.4,
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
         ),
       ),
     );
@@ -121,7 +122,8 @@ class _PulsingDots extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(3, (i) {
             final phase = (animation.value + i * 0.22) % 1.0;
-            final scale = 0.7 + 0.3 * (phase < 0.5 ? phase * 2 : (1 - phase) * 2);
+            final scale =
+                0.7 + 0.3 * (phase < 0.5 ? phase * 2 : (1 - phase) * 2);
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 5),
               child: Transform.scale(

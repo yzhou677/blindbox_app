@@ -28,7 +28,8 @@ List<CollectibleMarketSnapshot> _snapshotsForPrices(
   Map<String, double> idToPrice,
 ) {
   final listings = [
-    for (final entry in idToPrice.entries) _listing(entry.key, price: entry.value),
+    for (final entry in idToPrice.entries)
+      _listing(entry.key, price: entry.value),
   ];
   MarketBrowseListingsSession.instance.install(listings);
   return buildCollectibleMarketSnapshots(listings, preserveFeedOrder: true);
@@ -51,20 +52,20 @@ void main() {
   });
 
   test('preserveFeedOrder keeps pagination append order', () {
-    final pageOne = buildCollectibleMarketSnapshots(
-      [_listing('a', price: 30), _listing('b', price: 10)],
-      preserveFeedOrder: true,
-    );
-    final merged = buildCollectibleMarketSnapshots(
-      [
-        _listing('a', price: 30),
-        _listing('b', price: 10),
-        _listing('c', price: 5),
-      ],
-      preserveFeedOrder: true,
-    );
+    final pageOne = buildCollectibleMarketSnapshots([
+      _listing('a', price: 30),
+      _listing('b', price: 10),
+    ], preserveFeedOrder: true);
+    final merged = buildCollectibleMarketSnapshots([
+      _listing('a', price: 30),
+      _listing('b', price: 10),
+      _listing('c', price: 5),
+    ], preserveFeedOrder: true);
 
-    expect(pageOne.map((s) => s.identity.snapshotId), ['listing:a', 'listing:b']);
+    expect(pageOne.map((s) => s.identity.snapshotId), [
+      'listing:a',
+      'listing:b',
+    ]);
     expect(merged.last.identity.snapshotId, 'listing:c');
   });
 
@@ -94,10 +95,11 @@ void main() {
       previousBrowseSignature: signature,
     );
 
-    expect(
-      withMore.snapshots.map((s) => s.identity.snapshotId),
-      ['listing:a', 'listing:b', 'listing:c'],
-    );
+    expect(withMore.snapshots.map((s) => s.identity.snapshotId), [
+      'listing:a',
+      'listing:b',
+      'listing:c',
+    ]);
   });
 
   test('Price ↓ globally re-sorts after load-more', () {
@@ -176,58 +178,59 @@ void main() {
     expect(_repPrices(afterLoadMore.snapshots), [10, 15, 29, 130, 200, 239]);
   });
 
-  test('search relevance mode preserves gateway order across load-more pages', () {
-    const signature = 'any_brand|any_ip|labubu|relevance';
-    final pageOne = _snapshotsForPrices({'a': 239, 'b': 29, 'c': 15});
-    final initial = resolveCollectibleMarketDisplaySnapshots(
-      snapshots: pageOne,
-      browseSignature: signature,
-      priceSort: MarketPriceSort.lowToHigh,
-      stablePagination: true,
-      sortByPrice: false,
-      previousOrderIds: const [],
-      previousPriceSort: MarketPriceSort.lowToHigh,
-      previousBrowseSignature: null,
-    );
+  test(
+    'search relevance mode preserves gateway order across load-more pages',
+    () {
+      const signature = 'any_brand|any_ip|labubu|relevance';
+      final pageOne = _snapshotsForPrices({'a': 239, 'b': 29, 'c': 15});
+      final initial = resolveCollectibleMarketDisplaySnapshots(
+        snapshots: pageOne,
+        browseSignature: signature,
+        priceSort: MarketPriceSort.lowToHigh,
+        stablePagination: true,
+        sortByPrice: false,
+        previousOrderIds: const [],
+        previousPriceSort: MarketPriceSort.lowToHigh,
+        previousBrowseSignature: null,
+      );
 
-    expect(
-      initial.snapshots.map((s) => s.identity.snapshotId),
-      ['listing:a', 'listing:b', 'listing:c'],
-    );
-    expect(_repPrices(initial.snapshots), [239, 29, 15]);
+      expect(initial.snapshots.map((s) => s.identity.snapshotId), [
+        'listing:a',
+        'listing:b',
+        'listing:c',
+      ]);
+      expect(_repPrices(initial.snapshots), [239, 29, 15]);
 
-    final merged = _snapshotsForPrices({
-      'a': 239,
-      'b': 29,
-      'c': 15,
-      'd': 200,
-      'e': 130,
-      'f': 300,
-    });
-    final afterLoadMore = resolveCollectibleMarketDisplaySnapshots(
-      snapshots: merged,
-      browseSignature: signature,
-      priceSort: MarketPriceSort.lowToHigh,
-      stablePagination: true,
-      sortByPrice: false,
-      previousOrderIds: initial.orderIds,
-      previousPriceSort: MarketPriceSort.lowToHigh,
-      previousBrowseSignature: signature,
-    );
+      final merged = _snapshotsForPrices({
+        'a': 239,
+        'b': 29,
+        'c': 15,
+        'd': 200,
+        'e': 130,
+        'f': 300,
+      });
+      final afterLoadMore = resolveCollectibleMarketDisplaySnapshots(
+        snapshots: merged,
+        browseSignature: signature,
+        priceSort: MarketPriceSort.lowToHigh,
+        stablePagination: true,
+        sortByPrice: false,
+        previousOrderIds: initial.orderIds,
+        previousPriceSort: MarketPriceSort.lowToHigh,
+        previousBrowseSignature: signature,
+      );
 
-    expect(
-      afterLoadMore.snapshots.map((s) => s.identity.snapshotId),
-      [
+      expect(afterLoadMore.snapshots.map((s) => s.identity.snapshotId), [
         'listing:a',
         'listing:b',
         'listing:c',
         'listing:d',
         'listing:e',
         'listing:f',
-      ],
-    );
-    expect(_repPrices(afterLoadMore.snapshots), [239, 29, 15, 200, 130, 300]);
-  });
+      ]);
+      expect(_repPrices(afterLoadMore.snapshots), [239, 29, 15, 200, 130, 300]);
+    },
+  );
 
   test('displayOrderCacheNeedsUpdate compares order ids by value', () {
     const signature = 'sig';
@@ -277,39 +280,42 @@ void main() {
     );
   });
 
-  test('search with sortByPrice true would re-sort load-more (market feed only)', () {
-    const signature = 'any_brand|any_ip|labubu|relevance';
-    final pageOne = _snapshotsForPrices({'a': 239, 'b': 29, 'c': 15});
-    final initial = resolveCollectibleMarketDisplaySnapshots(
-      snapshots: pageOne,
-      browseSignature: signature,
-      priceSort: MarketPriceSort.highToLow,
-      stablePagination: true,
-      sortByPrice: true,
-      previousOrderIds: const [],
-      previousPriceSort: MarketPriceSort.lowToHigh,
-      previousBrowseSignature: null,
-    );
+  test(
+    'search with sortByPrice true would re-sort load-more (market feed only)',
+    () {
+      const signature = 'any_brand|any_ip|labubu|relevance';
+      final pageOne = _snapshotsForPrices({'a': 239, 'b': 29, 'c': 15});
+      final initial = resolveCollectibleMarketDisplaySnapshots(
+        snapshots: pageOne,
+        browseSignature: signature,
+        priceSort: MarketPriceSort.highToLow,
+        stablePagination: true,
+        sortByPrice: true,
+        previousOrderIds: const [],
+        previousPriceSort: MarketPriceSort.lowToHigh,
+        previousBrowseSignature: null,
+      );
 
-    final merged = _snapshotsForPrices({
-      'a': 239,
-      'b': 29,
-      'c': 15,
-      'd': 200,
-      'e': 130,
-      'f': 300,
-    });
-    final afterLoadMore = resolveCollectibleMarketDisplaySnapshots(
-      snapshots: merged,
-      browseSignature: signature,
-      priceSort: MarketPriceSort.highToLow,
-      stablePagination: true,
-      sortByPrice: true,
-      previousOrderIds: initial.orderIds,
-      previousPriceSort: MarketPriceSort.highToLow,
-      previousBrowseSignature: signature,
-    );
+      final merged = _snapshotsForPrices({
+        'a': 239,
+        'b': 29,
+        'c': 15,
+        'd': 200,
+        'e': 130,
+        'f': 300,
+      });
+      final afterLoadMore = resolveCollectibleMarketDisplaySnapshots(
+        snapshots: merged,
+        browseSignature: signature,
+        priceSort: MarketPriceSort.highToLow,
+        stablePagination: true,
+        sortByPrice: true,
+        previousOrderIds: initial.orderIds,
+        previousPriceSort: MarketPriceSort.highToLow,
+        previousBrowseSignature: signature,
+      );
 
-    expect(_repPrices(afterLoadMore.snapshots), [300, 239, 200, 130, 29, 15]);
-  });
+      expect(_repPrices(afterLoadMore.snapshots), [300, 239, 200, 130, 29, 15]);
+    },
+  );
 }

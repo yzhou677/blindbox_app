@@ -16,11 +16,7 @@ enum CatalogBundleLoadSource {
   empty,
 }
 
-enum CatalogFirestoreRefreshResult {
-  refreshed,
-  skippedWithinTtl,
-  failed,
-}
+enum CatalogFirestoreRefreshResult { refreshed, skippedWithinTtl, failed }
 
 /// In-memory provenance for [_bundle] inside [CatalogBundleCache].
 ///
@@ -79,7 +75,8 @@ abstract final class CatalogBundleCache {
   static const Duration catalogRefreshTtl = Duration(minutes: 5);
 
   static CatalogSeedBundle? _bundle;
-  static CatalogBundleMemoryOrigin _memoryOrigin = CatalogBundleMemoryOrigin.none;
+  static CatalogBundleMemoryOrigin _memoryOrigin =
+      CatalogBundleMemoryOrigin.none;
 
   static Future<CatalogSeedBundle>? _inFlight;
   static Future<CatalogFirestoreRefreshResult>? _refreshInFlight;
@@ -94,7 +91,8 @@ abstract final class CatalogBundleCache {
   static bool get hasValue => _bundle != null;
 
   /// Whether [_bundle] is safe to treat as a completed catalog load.
-  static bool get isCatalogReady => _memoryOrigin.isCatalogReady && _bundle != null;
+  static bool get isCatalogReady =>
+      _memoryOrigin.isCatalogReady && _bundle != null;
 
   /// Whether a background Firestore refresh is in flight (UI hint only).
   static bool get isRefreshInFlight => _refreshInFlight != null;
@@ -135,7 +133,10 @@ abstract final class CatalogBundleCache {
   /// Non-ready bootstrap slot without starting a background Firestore refresh.
   @visibleForTesting
   static void primeBootstrapPlaceholderForTest() {
-    _setMemoryBundle(_emptyBundle(), CatalogBundleMemoryOrigin.bootstrapPlaceholder);
+    _setMemoryBundle(
+      _emptyBundle(),
+      CatalogBundleMemoryOrigin.bootstrapPlaceholder,
+    );
   }
 
   static void _setMemoryBundle(
@@ -301,7 +302,8 @@ abstract final class CatalogBundleCache {
     }
   }
 
-  static Future<CatalogFirestoreRefreshResult> _refreshFromFirestoreImpl() async {
+  static Future<CatalogFirestoreRefreshResult>
+  _refreshFromFirestoreImpl() async {
     try {
       final fresh = await _loadFirestore().timeout(firestoreTimeout);
       await _commitFirestoreBundle(fresh, notifyListeners: true);
@@ -369,14 +371,13 @@ abstract final class CatalogBundleCache {
     }
   }
 
-  static CatalogSeedBundle _emptyBundle() => const CatalogSeedBundle(
-        brands: [],
-        ips: [],
-        series: [],
-        figures: [],
-      );
+  static CatalogSeedBundle _emptyBundle() =>
+      const CatalogSeedBundle(brands: [], ips: [], series: [], figures: []);
 
-  static void _logStartup(CatalogBundleLoadSource source, CatalogSeedBundle bundle) {
+  static void _logStartup(
+    CatalogBundleLoadSource source,
+    CatalogSeedBundle bundle,
+  ) {
     lastStartupSource = source;
     if (!kDebugMode) return;
     debugPrint(

@@ -16,14 +16,16 @@ Future<void> bootstrapMarketBrowseListings() async {
     return;
   }
 
-  final cachedSnapshots =
-      await CollectibleMarketSnapshotCache.instance.readStaleFromDisk();
+  final cachedSnapshots = await CollectibleMarketSnapshotCache.instance
+      .readStaleFromDisk();
   if (cachedSnapshots != null && cachedSnapshots.isNotEmpty) {
     CollectibleMarketSession.instance.install(cachedSnapshots);
   }
 
   final repo = MarketListingsRepository(productionMarketSources());
-  final listings = enrichBrowseListingsIdentity(await repo.loadBrowseListings());
+  final listings = enrichBrowseListingsIdentity(
+    await repo.loadBrowseListings(),
+  );
   // In product mode without gateway, productionMarketSources() is intentionally
   // empty so the Market tab renders its empty state instead of fixture data.
   installMarketBrowseIntelligence(listings);

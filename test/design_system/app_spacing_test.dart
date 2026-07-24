@@ -36,7 +36,10 @@ void main() {
     });
 
     test('emptyStateHorizontal is wider than pageHorizontal', () {
-      expect(AppSpacing.emptyStateHorizontal, greaterThan(AppSpacing.pageHorizontal));
+      expect(
+        AppSpacing.emptyStateHorizontal,
+        greaterThan(AppSpacing.pageHorizontal),
+      );
       expect(AppSpacing.emptyStateHorizontal, 28);
     });
 
@@ -51,10 +54,7 @@ void main() {
 
   group('AppSpacing card padding EdgeInsets', () {
     test('cardPadding horizontal equals 2 × pageHorizontal', () {
-      expect(
-        AppSpacing.cardPadding.horizontal,
-        AppSpacing.pageHorizontal * 2,
-      );
+      expect(AppSpacing.cardPadding.horizontal, AppSpacing.pageHorizontal * 2);
     });
 
     test('cardPadding vertical equals 2 × md', () {
@@ -109,7 +109,11 @@ void main() {
         AppSpacing.belowTabAppBar,
         AppSpacing.belowTabAppBarToSearch,
       ]) {
-        expect(v, greaterThan(0), reason: 'All spacing values must be positive');
+        expect(
+          v,
+          greaterThan(0),
+          reason: 'All spacing values must be positive',
+        );
       }
     });
 

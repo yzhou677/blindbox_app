@@ -6,10 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Opens the existing custom-series create sheet (shared entry for scan polish).
-Future<void> openCustomSeriesCreateSheet(
-  BuildContext context,
-  WidgetRef ref,
-) {
+Future<void> openCustomSeriesCreateSheet(BuildContext context, WidgetRef ref) {
   return showCollectionModalBottomSheet<void>(
     context: context,
     backgroundColor: Theme.of(context).colorScheme.surface,

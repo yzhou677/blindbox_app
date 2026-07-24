@@ -10,9 +10,7 @@ class MarketListingsRepository {
   Future<List<MarketListing>> loadBrowseListings() async {
     if (_sources.isEmpty) return const [];
 
-    final batches = await Future.wait(
-      _sources.map(_loadFromSource),
-    );
+    final batches = await Future.wait(_sources.map(_loadFromSource));
     final merged = <MarketListing>[];
     for (final batch in batches) {
       merged.addAll(batch);

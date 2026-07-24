@@ -117,67 +117,70 @@ void main() {
       expect(identical(display, frozen), isTrue);
     });
 
-    test('live-derives when version is outdated without rewriting identity', () {
-      final series = testShelfSeries(
-        id: 'm',
-        figures: const [
-          ShelfFigure(
-            id: 'r0',
-            seriesId: 'm',
-            name: 'R',
-            rarity: 'Regular',
-            isSecret: false,
-          ),
-          ShelfFigure(
-            id: 'sec',
-            seriesId: 'm',
-            name: 'S',
-            rarity: 'Secret',
-            isSecret: true,
-          ),
-        ],
-      );
-      final snap = CollectionSnapshot(
-        shelfSeries: [series],
-        figureStates: {
-          'r0': TrackedFigure(
-            figureId: 'r0',
-            state: FigureCollectionState.owned,
-          ),
-          'sec': TrackedFigure(
-            figureId: 'sec',
-            state: FigureCollectionState.owned,
-          ),
-        },
-      );
-      final profile = interpretShelf(snap);
-      final frozen = _stats(completionPercent: 40);
-      final identity = CollectorTypeIdentity(
-        archetypeId: CollectorTypeArchetypeId.hunter,
-        revealedAt: DateTime(2026, 1, 1),
-        signatureHash: 'sig',
-        stats: frozen,
-        reasonKey: CollectorTypeReasonKey.manySecrets,
-      );
-      final memory = CollectionMemoryData(
-        collectorTypeStatsJson: '{"completionPercent":40,"trackedSeries":1}',
-        collectorTypeStatsVersion: 1,
-      );
+    test(
+      'live-derives when version is outdated without rewriting identity',
+      () {
+        final series = testShelfSeries(
+          id: 'm',
+          figures: const [
+            ShelfFigure(
+              id: 'r0',
+              seriesId: 'm',
+              name: 'R',
+              rarity: 'Regular',
+              isSecret: false,
+            ),
+            ShelfFigure(
+              id: 'sec',
+              seriesId: 'm',
+              name: 'S',
+              rarity: 'Secret',
+              isSecret: true,
+            ),
+          ],
+        );
+        final snap = CollectionSnapshot(
+          shelfSeries: [series],
+          figureStates: {
+            'r0': TrackedFigure(
+              figureId: 'r0',
+              state: FigureCollectionState.owned,
+            ),
+            'sec': TrackedFigure(
+              figureId: 'sec',
+              state: FigureCollectionState.owned,
+            ),
+          },
+        );
+        final profile = interpretShelf(snap);
+        final frozen = _stats(completionPercent: 40);
+        final identity = CollectorTypeIdentity(
+          archetypeId: CollectorTypeArchetypeId.hunter,
+          revealedAt: DateTime(2026, 1, 1),
+          signatureHash: 'sig',
+          stats: frozen,
+          reasonKey: CollectorTypeReasonKey.manySecrets,
+        );
+        final memory = CollectionMemoryData(
+          collectorTypeStatsJson: '{"completionPercent":40,"trackedSeries":1}',
+          collectorTypeStatsVersion: 1,
+        );
 
-      final display = resolveCollectorTypeDisplayStats(
-        storedIdentity: identity,
-        memory: memory,
-        snapshot: snap,
-        profile: profile,
-      );
+        final display = resolveCollectorTypeDisplayStats(
+          storedIdentity: identity,
+          memory: memory,
+          snapshot: snap,
+          profile: profile,
+        );
 
-      expect(display.completedSeriesCount, 1);
-      expect(display.masterCompleteSeriesCount, 1);
-      expect(display.masterEligibleSeriesCount, 1);
-      expect(display.completionPercent, 100);
-      expect(identity.archetypeId, CollectorTypeArchetypeId.hunter);
-      expect(identity.stats.completionPercent, 40);
-    });
+        expect(display.completedSeriesCount, 1);
+        expect(display.masterCompleteSeriesCount, 1);
+        expect(display.masterEligibleSeriesCount, 1);
+        expect(display.completionPercent, 100);
+        expect(identity.archetypeId, CollectorTypeArchetypeId.hunter);
+        expect(identity.stats.completionPercent, 40);
+      },
+    );
   });
 
   group('needsReveal + stats schema', () {

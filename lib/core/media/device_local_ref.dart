@@ -7,11 +7,14 @@ abstract final class DeviceLocalImageRef {
     if (r.isEmpty) return false;
     if (r.startsWith('assets/')) return false;
     final lower = r.toLowerCase();
-    if (lower.startsWith('http://') || lower.startsWith('https://')) return false;
+    if (lower.startsWith('http://') || lower.startsWith('https://'))
+      return false;
     if (r.startsWith('file:')) return true;
     if (kIsWeb) return false;
     if (r.startsWith('/')) return true;
-    if (r.length > 2 && r.codeUnitAt(1) == 0x3A && _isAsciiLetter(r.codeUnitAt(0))) {
+    if (r.length > 2 &&
+        r.codeUnitAt(1) == 0x3A &&
+        _isAsciiLetter(r.codeUnitAt(0))) {
       return true;
     }
     return false;

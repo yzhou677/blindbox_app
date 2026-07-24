@@ -29,7 +29,12 @@ abstract final class CatalogSearchPipelineTrace {
     final micros = sw.elapsedMicroseconds;
     final totalMs = sw.elapsedMilliseconds;
 
-    AppPipelineLog.line(_prefix, run, 'total', AppPipelineLog.formatMicros(micros));
+    AppPipelineLog.line(
+      _prefix,
+      run,
+      'total',
+      AppPipelineLog.formatMicros(micros),
+    );
     AppPipelineLog.line(_prefix, run, 'query', _formatQuery(rawQuery));
     AppPipelineLog.line(
       _prefix,

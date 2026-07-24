@@ -3,16 +3,13 @@ import 'package:blindbox_app/features/collection/presentation/collection_vocabul
 import 'package:flutter/material.dart';
 
 /// Shelf stat-line completion tier — drives calm, at-a-glance atmosphere.
-enum SeriesCompletionStatLevel {
-  inProgress,
-  seriesComplete,
-  masterComplete,
-}
+enum SeriesCompletionStatLevel { inProgress, seriesComplete, masterComplete }
 
 SeriesCompletionStatLevel seriesCompletionStatLevel(
   SeriesCompletionResolution resolution,
 ) {
-  if (resolution.isMasterComplete) return SeriesCompletionStatLevel.masterComplete;
+  if (resolution.isMasterComplete)
+    return SeriesCompletionStatLevel.masterComplete;
   if (resolution.isCompleted) return SeriesCompletionStatLevel.seriesComplete;
   return SeriesCompletionStatLevel.inProgress;
 }
@@ -40,23 +37,23 @@ class SeriesCompletionStatSlot extends StatelessWidget {
   Widget build(BuildContext context) {
     return switch (level) {
       SeriesCompletionStatLevel.masterComplete => Semantics(
-          label: CollectionVocabulary.masterComplete,
-          child: ExcludeSemantics(
-            child: Text(
-              '👑 ${CollectionVocabulary.masterComplete}',
-              key: const Key('master_complete_stat_line'),
-              style: masterTextStyle,
-            ),
+        label: CollectionVocabulary.masterComplete,
+        child: ExcludeSemantics(
+          child: Text(
+            '👑 ${CollectionVocabulary.masterComplete}',
+            key: const Key('master_complete_stat_line'),
+            style: masterTextStyle,
           ),
         ),
+      ),
       SeriesCompletionStatLevel.seriesComplete => SeriesCompleteStatGlow(
-          colorScheme: colorScheme,
-          child: Text(statPrimary, style: completeTextStyle),
-        ),
+        colorScheme: colorScheme,
+        child: Text(statPrimary, style: completeTextStyle),
+      ),
       SeriesCompletionStatLevel.inProgress => Text(
-          statPrimary,
-          style: progressTextStyle,
-        ),
+        statPrimary,
+        style: progressTextStyle,
+      ),
     };
   }
 }
@@ -83,13 +80,7 @@ class SeriesCompleteStatGlow extends StatelessWidget {
         decoration: BoxDecoration(
           color: wash,
           borderRadius: BorderRadius.circular(8),
-          boxShadow: [
-            BoxShadow(
-              color: halo,
-              blurRadius: 16,
-              spreadRadius: -5,
-            ),
-          ],
+          boxShadow: [BoxShadow(color: halo, blurRadius: 16, spreadRadius: -5)],
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),

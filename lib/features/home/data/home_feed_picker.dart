@@ -1,4 +1,4 @@
-﻿import 'dart:math';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
@@ -7,10 +7,7 @@ import 'package:blindbox_app/features/catalog/models/catalog_series.dart';
 /// Result of [pickHomeFeedSeries] —catalog series ids before [SeriesRelease] build.
 @immutable
 class HomeFeedSeriesPick {
-  const HomeFeedSeriesPick({
-    required this.latest,
-    required this.trending,
-  });
+  const HomeFeedSeriesPick({required this.latest, required this.trending});
 
   final List<CatalogSeries> latest;
   final List<CatalogSeries> trending;
@@ -57,11 +54,16 @@ HomeFeedSeriesPick pickHomeFeedSeries(
   final trendingStart = now.subtract(homeTrendingWindowEnd);
   final trendingEnd = now.subtract(homeLatestDropsWindow);
 
-  final latest = dated
-      .where((e) => !e.date!.isBefore(latestCutoff))
-      .map((e) => e.series)
-      .toList(growable: false)
-    ..sort((a, b) => _parseReleaseDate(b.releaseDate)!.compareTo(_parseReleaseDate(a.releaseDate)!));
+  final latest =
+      dated
+          .where((e) => !e.date!.isBefore(latestCutoff))
+          .map((e) => e.series)
+          .toList(growable: false)
+        ..sort(
+          (a, b) => _parseReleaseDate(
+            b.releaseDate,
+          )!.compareTo(_parseReleaseDate(a.releaseDate)!),
+        );
 
   final latestIds = latest.map((s) => s.id).toSet();
 
@@ -100,14 +102,11 @@ List<CatalogSeries> _trendingOrderForSession(
   if (_sessionTrendingPoolIds != null &&
       setEquals(_sessionTrendingPoolIds!, poolIds) &&
       _sessionTrendingSeriesIds != null) {
-    return [
-      for (final id in _sessionTrendingSeriesIds!) byId[id]!,
-    ];
+    return [for (final id in _sessionTrendingSeriesIds!) byId[id]!];
   }
 
   final shuffled = _shuffleCopy(pool, _sessionTrendingRng!);
-  _sessionTrendingSeriesIds =
-      shuffled.map((s) => s.id).toList(growable: false);
+  _sessionTrendingSeriesIds = shuffled.map((s) => s.id).toList(growable: false);
   _sessionTrendingPoolIds = poolIds;
   return shuffled;
 }

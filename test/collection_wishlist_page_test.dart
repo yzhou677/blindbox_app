@@ -1,9 +1,12 @@
+import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_wishlist_browse.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_browse_card.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_wishlist_page.dart';
+import 'package:blindbox_app/shared/widgets/bling_heart_empty_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 void main() {
   testWidgets('remove icon removes only and does not open Series card', (
@@ -34,7 +37,7 @@ void main() {
       const ValueKey('wishlist_remove_series_saved-series'),
     );
 
-    expect(tester.getSize(target), const Size(44, 44));
+    expect(tester.getSize(target), const Size(40, 40));
     expect(find.byTooltip('Remove Series from Wishlist'), findsOneWidget);
   });
 
@@ -46,7 +49,13 @@ void main() {
     expect(find.byKey(const Key('wishlist_series_grid')), findsOneWidget);
     expect(find.byKey(const Key('wishlist_figures_grid')), findsOneWidget);
     expect(find.text('Saved Series With A Long Calm Name'), findsOneWidget);
-    expect(find.text('Molly'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('wishlist_series_grid')),
+        matching: find.text('Molly'),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets(
@@ -55,8 +64,17 @@ void main() {
       await _pumpWishlist(tester, snapshot: _figureOnlySnapshot());
 
       expect(find.text('DIMOO as Alien (Special Ver.)'), findsOneWidget);
-      expect(find.text('Parent Series'), findsOneWidget);
-      expect(find.text('POP MART'), findsOneWidget);
+      expect(
+        find.text('Parent Series With A Long Display Name'),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('wishlist_figures_grid')),
+          matching: find.text('POP MART'),
+        ),
+        findsOneWidget,
+      );
     },
   );
 
@@ -84,12 +102,64 @@ void main() {
   ) async {
     await _pumpWishlist(tester, snapshot: CollectionSnapshot.emptyTest());
 
+    expect(find.byKey(const Key('wishlist_whole_empty_state')), findsOneWidget);
+    expect(find.byKey(const Key('wishlist_empty_heart_icon')), findsOneWidget);
     expect(find.text('Your wishlist is empty.'), findsOneWidget);
     expect(
       find.text('Save catalog series to plan what to collect next.'),
       findsOneWidget,
     );
     expect(find.textContaining('Wishlist catalog series'), findsNothing);
+  });
+
+  testWidgets('empty state uses Material Symbols heart without container', (
+    tester,
+  ) async {
+    await _pumpWishlist(tester, snapshot: CollectionSnapshot.emptyTest());
+
+    final empty = find.byKey(const Key('wishlist_whole_empty_state'));
+    final heart = find.byKey(const Key('wishlist_empty_heart_icon'));
+    final title = find.descendant(
+      of: empty,
+      matching: find.text('Your wishlist is empty.'),
+    );
+    final body = find.descendant(
+      of: empty,
+      matching: find.text('Save catalog series to plan what to collect next.'),
+    );
+
+    expect(find.byType(BlingHeartEmptyState), findsOneWidget);
+    final icon = tester.widget<Icon>(heart);
+    expect(icon.icon, Symbols.favorite_rounded);
+    expect(icon.size, AppIconSizes.emptyHero);
+    expect(icon.fill, 0);
+    expect(icon.weight, 250);
+    expect(
+      find.ancestor(of: heart, matching: find.byType(ExcludeSemantics)),
+      findsOneWidget,
+    );
+    expect(
+      tester.getTopLeft(title).dy - tester.getBottomLeft(heart).dy,
+      closeTo(20, 1),
+    );
+    expect(
+      tester.getTopLeft(body).dy - tester.getBottomLeft(title).dy,
+      closeTo(8, 1),
+    );
+  });
+
+  testWidgets('search no-results does not show empty-heart icon', (
+    tester,
+  ) async {
+    await _pumpWishlist(
+      tester,
+      snapshot: _seriesOnlySnapshot(),
+      searchQuery: 'no match',
+    );
+
+    expect(find.text('No Wishlist results found.'), findsOneWidget);
+    expect(find.text('Your wishlist is empty.'), findsNothing);
+    expect(find.byKey(const Key('wishlist_empty_heart_icon')), findsNothing);
   });
 
   testWidgets('empty sections are hidden when the Wishlist is not empty', (
@@ -123,7 +193,7 @@ void main() {
     await _pumpWishlist(
       tester,
       snapshot: _mixedSnapshot(),
-      searchQuery: 'wish figure',
+      searchQuery: 'Alien',
     );
 
     expect(find.text('Series (0)'), findsNothing);
@@ -175,7 +245,7 @@ void main() {
         );
         expect(
           tester.getTopLeft(firstRemove).dy - tester.getTopLeft(cards.at(0)).dy,
-          10,
+          8,
         );
       },
     );

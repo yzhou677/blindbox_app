@@ -22,9 +22,9 @@ import '../helpers/collection_fixtures.dart';
 final class _InsightsLayoutTestNotifier extends CollectionNotifier {
   @override
   CollectionSnapshot build() => CollectionSnapshot(
-        shelfSeries: [testShelfSeries()],
-        figureStates: const {},
-      );
+    shelfSeries: [testShelfSeries()],
+    figureStates: const {},
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -35,7 +35,9 @@ Future<void> _pumpInsights(WidgetTester tester) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        collectionNotifierProvider.overrideWith(_InsightsLayoutTestNotifier.new),
+        collectionNotifierProvider.overrideWith(
+          _InsightsLayoutTestNotifier.new,
+        ),
         catalogBundleProvider.overrideWith(
           (ref) async => const CatalogSeedBundle(
             brands: [],
@@ -67,10 +69,14 @@ void main() {
   });
 
   group('CollectionInsightsScreen ??AppBar layout', () {
-    testWidgets('uses FeedRhythm.mainTabAppBarToolbarHeight (52)', (tester) async {
+    testWidgets('uses FeedRhythm.mainTabAppBarToolbarHeight (52)', (
+      tester,
+    ) async {
       await _pumpInsights(tester);
 
-      final sliverAppBar = tester.widget<SliverAppBar>(find.byType(SliverAppBar));
+      final sliverAppBar = tester.widget<SliverAppBar>(
+        find.byType(SliverAppBar),
+      );
       expect(
         sliverAppBar.toolbarHeight,
         FeedRhythm.mainTabAppBarToolbarHeight,
@@ -78,14 +84,19 @@ void main() {
       );
     });
 
-    testWidgets('title spacing equals AppSpacing.pageHorizontal', (tester) async {
+    testWidgets('title spacing equals AppSpacing.pageHorizontal', (
+      tester,
+    ) async {
       await _pumpInsights(tester);
 
-      final sliverAppBar = tester.widget<SliverAppBar>(find.byType(SliverAppBar));
+      final sliverAppBar = tester.widget<SliverAppBar>(
+        find.byType(SliverAppBar),
+      );
       expect(
         sliverAppBar.titleSpacing,
         AppSpacing.pageHorizontal,
-        reason: 'titleSpacing should equal the canonical page horizontal gutter (20)',
+        reason:
+            'titleSpacing should equal the canonical page horizontal gutter (20)',
       );
     });
 
@@ -94,19 +105,25 @@ void main() {
 
       // The leading icon is an arrow_back_rounded; confirm there is a leading
       // widget in the SliverAppBar so the screen reads as a sub-route.
-      final sliverAppBar = tester.widget<SliverAppBar>(find.byType(SliverAppBar));
+      final sliverAppBar = tester.widget<SliverAppBar>(
+        find.byType(SliverAppBar),
+      );
       expect(sliverAppBar.leading, isNotNull);
     });
   });
 
   group('CollectionInsightsScreen ??section header', () {
-    testWidgets('CollectibleSectionHeader is present in scroll view', (tester) async {
+    testWidgets('CollectibleSectionHeader is present in scroll view', (
+      tester,
+    ) async {
       await _pumpInsights(tester);
 
       expect(find.byType(CollectibleSectionHeader), findsOneWidget);
     });
 
-    testWidgets('below-AppBar gap equals AppSpacing.belowTabAppBar', (tester) async {
+    testWidgets('below-AppBar gap equals AppSpacing.belowTabAppBar', (
+      tester,
+    ) async {
       await _pumpInsights(tester);
 
       // Find all SizedBoxes that are SliverToBoxAdapter children.
@@ -114,38 +131,38 @@ void main() {
       final sliverToBoxAdapters = tester.widgetList<SliverToBoxAdapter>(
         find.byType(SliverToBoxAdapter),
       );
-      final gapBoxes = sliverToBoxAdapters
-          .where((s) {
-            final child = s.child;
-            return child is SizedBox && child.height == AppSpacing.belowTabAppBar;
-          })
-          .toList();
+      final gapBoxes = sliverToBoxAdapters.where((s) {
+        final child = s.child;
+        return child is SizedBox && child.height == AppSpacing.belowTabAppBar;
+      }).toList();
 
       expect(
         gapBoxes,
         isNotEmpty,
-        reason: 'A SizedBox with height=AppSpacing.belowTabAppBar should follow the SliverAppBar',
+        reason:
+            'A SizedBox with height=AppSpacing.belowTabAppBar should follow the SliverAppBar',
       );
     });
   });
 
-  group('CollectionInsightsScreen ??body horizontal gutter', () {
-    testWidgets('SliverPadding uses AppSpacing.pageHorizontal on left and right',
-        (tester) async {
+  group('CollectionInsightsScreen — body horizontal gutter', () {
+    testWidgets('Insights body uses AppSpacing.pageHorizontal', (tester) async {
       await _pumpInsights(tester);
 
-      final sliverPaddings = tester.widgetList<SliverPadding>(
-        find.byType(SliverPadding),
-      );
-      final contentPadding = sliverPaddings
-          .where((p) => p.padding.resolve(TextDirection.ltr).left ==
-              AppSpacing.pageHorizontal)
+      final bodyPadding = tester
+          .widgetList<Padding>(find.byType(Padding))
+          .where((p) {
+            final resolved = p.padding.resolve(TextDirection.ltr);
+            return resolved.left == AppSpacing.pageHorizontal &&
+                resolved.right == AppSpacing.pageHorizontal;
+          })
           .toList();
 
       expect(
-        contentPadding,
+        bodyPadding,
         isNotEmpty,
-        reason: 'Body SliverPadding should use AppSpacing.pageHorizontal (20) horizontally',
+        reason:
+            'Insights body should use AppSpacing.pageHorizontal (20) horizontally',
       );
     });
   });

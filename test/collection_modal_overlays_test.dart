@@ -12,9 +12,7 @@ Future<BuildContext> _pumpHostWithSheet(WidgetTester tester) async {
   await tester.pumpWidget(
     MaterialApp(
       theme: AppTheme.light(),
-      home: _HostScaffold(
-        onContext: (ctx) => hostContext = ctx,
-      ),
+      home: _HostScaffold(onContext: (ctx) => hostContext = ctx),
     ),
   );
   await tester.tap(find.text('Open'));
@@ -93,76 +91,73 @@ void main() {
     },
   );
 
-  testWidgets(
-    'dismissAll is a no-op after unregister (e.g. screen disposed)',
-    (tester) async {
-      await _pumpHostWithSheet(tester);
+  testWidgets('dismissAll is a no-op after unregister (e.g. screen disposed)', (
+    tester,
+  ) async {
+    await _pumpHostWithSheet(tester);
 
-      CollectionModalOverlayRegistry.instance.unregister();
-      unawaited(CollectionModalOverlayRegistry.instance.dismissAll());
+    CollectionModalOverlayRegistry.instance.unregister();
+    unawaited(CollectionModalOverlayRegistry.instance.dismissAll());
 
-      await tester.pumpAndSettle();
-      // Sheet stays open — no registered callback means no pop.
-      expect(find.text('Add a series'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    },
-  );
+    await tester.pumpAndSettle();
+    // Sheet stays open — no registered callback means no pop.
+    expect(find.text('Add a series'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 
-  testWidgets(
-    'dismissCollectionModalOverlays is a no-op when nothing to pop',
-    (tester) async {
-      late BuildContext hostContext;
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.light(),
-          home: Builder(
-            builder: (context) {
-              hostContext = context;
-              return const Scaffold(body: Center(child: Text('Empty')));
-            },
-          ),
+  testWidgets('dismissCollectionModalOverlays is a no-op when nothing to pop', (
+    tester,
+  ) async {
+    late BuildContext hostContext;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Builder(
+          builder: (context) {
+            hostContext = context;
+            return const Scaffold(body: Center(child: Text('Empty')));
+          },
         ),
-      );
+      ),
+    );
 
-      unawaited(dismissCollectionModalOverlays(hostContext));
-      unawaited(dismissCollectionModalOverlays(hostContext));
-      await tester.pumpAndSettle();
-      expect(tester.takeException(), isNull);
-    },
-  );
+    unawaited(dismissCollectionModalOverlays(hostContext));
+    unawaited(dismissCollectionModalOverlays(hostContext));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
 
-  testWidgets(
-    'rapid tab-switch simulation pops sheet exactly once',
-    (tester) async {
-      var dismissCallCount = 0;
-      await _pumpHostWithSheet(tester);
+  testWidgets('rapid tab-switch simulation pops sheet exactly once', (
+    tester,
+  ) async {
+    var dismissCallCount = 0;
+    await _pumpHostWithSheet(tester);
 
-      // Wrap the registered callback to count invocations.  In real code
-      // CollectionScreen registers `_dismissBranchOverlays` once; here we
-      // re-register a counting wrapper to observe how many times the guard
-      // actually lets the pop through.
-      final existing = _capturedCallback;
-      expect(existing, isNotNull);
-      CollectionModalOverlayRegistry.instance.register(() async {
-        dismissCallCount++;
-        await existing!();
-      });
+    // Wrap the registered callback to count invocations.  In real code
+    // CollectionScreen registers `_dismissBranchOverlays` once; here we
+    // re-register a counting wrapper to observe how many times the guard
+    // actually lets the pop through.
+    final existing = _capturedCallback;
+    expect(existing, isNotNull);
+    CollectionModalOverlayRegistry.instance.register(() async {
+      dismissCallCount++;
+      await existing!();
+    });
 
-      // Three rapid dismissAll() invocations in the same animation frame.
-      unawaited(CollectionModalOverlayRegistry.instance.dismissAll());
-      unawaited(CollectionModalOverlayRegistry.instance.dismissAll());
-      unawaited(CollectionModalOverlayRegistry.instance.dismissAll());
+    // Three rapid dismissAll() invocations in the same animation frame.
+    unawaited(CollectionModalOverlayRegistry.instance.dismissAll());
+    unawaited(CollectionModalOverlayRegistry.instance.dismissAll());
+    unawaited(CollectionModalOverlayRegistry.instance.dismissAll());
 
-      // Dismiss runs on next frame; pump once, then verify guard collapsed
-      // three requests into one callback invocation.
-      await tester.pump();
-      expect(dismissCallCount, 1);
+    // Dismiss runs on next frame; pump once, then verify guard collapsed
+    // three requests into one callback invocation.
+    await tester.pump();
+    expect(dismissCallCount, 1);
 
-      await tester.pumpAndSettle();
-      expect(find.text('Add a series'), findsNothing);
-      expect(tester.takeException(), isNull);
-    },
-  );
+    await tester.pumpAndSettle();
+    expect(find.text('Add a series'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 Future<void> Function()? _capturedCallback;

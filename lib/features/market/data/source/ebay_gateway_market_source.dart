@@ -19,8 +19,8 @@ class EbayGatewayMarketSource implements MarketSource {
   EbayGatewayMarketSource({
     MarketGatewayClient? gateway,
     MarketProviderBrowseCache? cache,
-  })  : _gateway = gateway ?? MarketGatewayClient(),
-        _cache = cache ?? MarketProviderBrowseCache.instance;
+  }) : _gateway = gateway ?? MarketGatewayClient(),
+       _cache = cache ?? MarketProviderBrowseCache.instance;
 
   final MarketGatewayClient _gateway;
   final MarketProviderBrowseCache _cache;
@@ -41,7 +41,9 @@ class EbayGatewayMarketSource implements MarketSource {
     if (uri == null) return MarketBrowsePageResult.empty;
 
     final pageQuery = query.copyWith(
-      limit: query.limit > 0 ? query.limit : MarketGatewayConfig.initialPageSize,
+      limit: query.limit > 0
+          ? query.limit
+          : MarketGatewayConfig.initialPageSize,
       clearCursor: true,
     );
 
@@ -72,10 +74,7 @@ class EbayGatewayMarketSource implements MarketSource {
   Future<MarketBrowsePageResult> fetchNextPage(MarketBrowseQuery query) async {
     if (!MarketGatewayConfig.isActive) return MarketBrowsePageResult.empty;
 
-    final batch = _cache.batchForQuery(
-      providerId,
-      query.signature,
-    );
+    final batch = _cache.batchForQuery(providerId, query.signature);
     if (batch == null) return MarketBrowsePageResult.empty;
 
     final cursor = batch.nextCursor;
@@ -128,7 +127,9 @@ class EbayGatewayMarketSource implements MarketSource {
       _cache.batchForQuery(providerId, query.signature);
 
   /// Memory batch first; on cold start hydrates per-query disk cache into memory.
-  Future<CachedBrowseBatch?> resolveCachedBatchFor(MarketBrowseQuery query) async {
+  Future<CachedBrowseBatch?> resolveCachedBatchFor(
+    MarketBrowseQuery query,
+  ) async {
     var batch = cachedBatchFor(query);
     if (batch != null) return batch;
 
@@ -171,9 +172,7 @@ class EbayGatewayMarketSource implements MarketSource {
     required bool replace,
   }) async {
     final pageListings = items
-        .map(
-          (e) => e.toMarketListing(providerId: MarketProviderId.ebay),
-        )
+        .map((e) => e.toMarketListing(providerId: MarketProviderId.ebay))
         .toList(growable: false);
 
     if (replace) {

@@ -26,10 +26,11 @@ void main() {
       taxonomyIpId: 'tnt_space',
     );
 
-    final brandFiltered = shelfSeriesVisibleForBrandFilter(
-      [popMonsters, popHirono, top],
-      'popmart',
-    );
+    final brandFiltered = shelfSeriesVisibleForBrandFilter([
+      popMonsters,
+      popHirono,
+      top,
+    ], 'popmart');
     final options = buildCollectionShelfIpFilterOptions(brandFiltered);
 
     expect(options.map((o) => o.id).toList(), [
@@ -37,7 +38,10 @@ void main() {
       'themonsters',
       'hirono',
     ]);
-    expect(options.firstWhere((o) => o.id == 'themonsters').label, 'THE MONSTERS');
+    expect(
+      options.firstWhere((o) => o.id == 'themonsters').label,
+      'THE MONSTERS',
+    );
     expect(options.firstWhere((o) => o.id == 'hirono').label, 'Hirono');
   });
 
@@ -98,36 +102,33 @@ void main() {
 
     final options = buildCollectionShelfIpFilterOptions([series]);
 
-    expect(
-      options,
-      [
-        (id: collectionAnyIpFilterId, label: 'All IPs'),
-        (id: 'moonbears', label: 'Moon Bears'),
-      ],
-    );
-  });
-
-  test('canonical custom IP uses registry display label with stable filter id', () {
-    final series = testShelfSeries(
-      id: 'custom_baby_three',
-      brand: 'DPL',
-      ipName: 'Baby Three',
-      taxonomyBrandId: 'dpl',
-      taxonomyIpId: 'baby_three',
-      catalogTemplateId: null,
-    );
-
-    final options = buildCollectionShelfIpFilterOptions([series]);
-
     expect(options, [
       (id: collectionAnyIpFilterId, label: 'All IPs'),
-      (id: 'babythree', label: 'Baby Three'),
+      (id: 'moonbears', label: 'Moon Bears'),
     ]);
-    expect(
-      shelfSeriesVisibleForIpFilter([series], 'babythree'),
-      [series],
-    );
   });
+
+  test(
+    'canonical custom IP uses registry display label with stable filter id',
+    () {
+      final series = testShelfSeries(
+        id: 'custom_baby_three',
+        brand: 'DPL',
+        ipName: 'Baby Three',
+        taxonomyBrandId: 'dpl',
+        taxonomyIpId: 'baby_three',
+        catalogTemplateId: null,
+      );
+
+      final options = buildCollectionShelfIpFilterOptions([series]);
+
+      expect(options, [
+        (id: collectionAnyIpFilterId, label: 'All IPs'),
+        (id: 'babythree', label: 'Baby Three'),
+      ]);
+      expect(shelfSeriesVisibleForIpFilter([series], 'babythree'), [series]);
+    },
+  );
 
   test('custom POP MART fan-art IP uses shelf label when registry misses', () {
     final series = testShelfSeries(
@@ -222,7 +223,10 @@ void main() {
       'hirono',
     );
 
-    final topOnly = shelfSeriesVisibleForBrandFilter([popHirono, top], 'toptoy');
+    final topOnly = shelfSeriesVisibleForBrandFilter([
+      popHirono,
+      top,
+    ], 'toptoy');
     final topIpOptions = buildCollectionShelfIpFilterOptions(topOnly);
     expect(
       resolveCollectionIpFilterSelection(
@@ -234,8 +238,16 @@ void main() {
   });
 
   test('IP filter preserves shelf order', () {
-    final a = testShelfSeries(id: 'a', ipName: 'Hirono', taxonomyIpId: 'hirono');
-    final b = testShelfSeries(id: 'b', ipName: 'Hirono', taxonomyIpId: 'hirono');
+    final a = testShelfSeries(
+      id: 'a',
+      ipName: 'Hirono',
+      taxonomyIpId: 'hirono',
+    );
+    final b = testShelfSeries(
+      id: 'b',
+      ipName: 'Hirono',
+      taxonomyIpId: 'hirono',
+    );
     final c = testShelfSeries(
       id: 'c',
       ipName: 'Skullpanda',

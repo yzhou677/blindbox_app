@@ -7,9 +7,9 @@ abstract final class CollectionInputFormatters {
       FilteringTextInputFormatter.deny(RegExp(r'[\n\r]'));
 
   static List<TextInputFormatter> singleLine(int maxLength) => [
-        denyLineBreaks,
-        LengthLimitingTextInputFormatter(maxLength),
-      ];
+    denyLineBreaks,
+    LengthLimitingTextInputFormatter(maxLength),
+  ];
 
   static List<TextInputFormatter> seriesName() =>
       singleLine(CollectionInputLimits.seriesNameMaxLength);
@@ -27,6 +27,6 @@ abstract final class CollectionInputFormatters {
       singleLine(CollectionInputLimits.rarityLabelMaxLength);
 
   static List<TextInputFormatter> notes() => [
-        LengthLimitingTextInputFormatter(CollectionInputLimits.notesMaxLength),
-      ];
+    LengthLimitingTextInputFormatter(CollectionInputLimits.notesMaxLength),
+  ];
 }

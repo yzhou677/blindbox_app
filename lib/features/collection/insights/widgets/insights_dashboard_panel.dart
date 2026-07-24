@@ -13,9 +13,9 @@ class InsightsDashboardPanel extends StatelessWidget {
     required this.child,
     this.padding = const EdgeInsets.fromLTRB(
       AppSpacing.pageHorizontal,
-      AppSpacing.xl,
+      AppSpacing.lg,
       AppSpacing.pageHorizontal,
-      AppSpacing.xl,
+      AppSpacing.lg,
     ),
     this.accentBorder,
   });
@@ -40,7 +40,8 @@ class InsightsDashboardPanel extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: AppRadii.cardRadius,
           side: BorderSide(
-            color: accentBorder ??
+            color:
+                accentBorder ??
                 scheme.outlineVariant.withValues(alpha: isDark ? 0.32 : 0.38),
           ),
         ),

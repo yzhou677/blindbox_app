@@ -57,38 +57,46 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  group('FeedSearchScreen (search overlay) ??intentional AppBar deviations', () {
-    testWidgets('uses toolbarHeight 72 (not 52)', (tester) async {
-      await _pumpMarketSearch(tester);
+  group(
+    'FeedSearchScreen (search overlay) ??intentional AppBar deviations',
+    () {
+      testWidgets('uses toolbarHeight 72 (not 52)', (tester) async {
+        await _pumpMarketSearch(tester);
 
-      final appBar = tester.widget<AppBar>(find.byType(AppBar));
-      expect(
-        appBar.toolbarHeight,
-        72,
-        reason:
-            'Search overlays intentionally use a taller AppBar (72) to '
-            'distinguish the focused search context from main tabs (52).',
-      );
-    });
+        final appBar = tester.widget<AppBar>(find.byType(AppBar));
+        expect(
+          appBar.toolbarHeight,
+          72,
+          reason:
+              'Search overlays intentionally use a taller AppBar (72) to '
+              'distinguish the focused search context from main tabs (52).',
+        );
+      });
 
-    testWidgets('uses AppSpacing.pageHorizontal for titleSpacing', (tester) async {
-      await _pumpMarketSearch(tester);
+      testWidgets('uses AppSpacing.pageHorizontal for titleSpacing', (
+        tester,
+      ) async {
+        await _pumpMarketSearch(tester);
 
-      final appBar = tester.widget<AppBar>(find.byType(AppBar));
-      expect(appBar.titleSpacing, AppSpacing.pageHorizontal);
-    });
+        final appBar = tester.widget<AppBar>(find.byType(AppBar));
+        expect(appBar.titleSpacing, AppSpacing.pageHorizontal);
+      });
 
-    testWidgets('is not the same height as a main-tab AppBar', (tester) async {
-      await _pumpMarketSearch(tester);
+      testWidgets('is not the same height as a main-tab AppBar', (
+        tester,
+      ) async {
+        await _pumpMarketSearch(tester);
 
-      final appBar = tester.widget<AppBar>(find.byType(AppBar));
-      expect(
-        appBar.toolbarHeight,
-        isNot(FeedRhythm.mainTabAppBarToolbarHeight),
-        reason: 'Search overlay AppBar height must differ from main-tab height',
-      );
-    });
-  });
+        final appBar = tester.widget<AppBar>(find.byType(AppBar));
+        expect(
+          appBar.toolbarHeight,
+          isNot(FeedRhythm.mainTabAppBarToolbarHeight),
+          reason:
+              'Search overlay AppBar height must differ from main-tab height',
+        );
+      });
+    },
+  );
 
   group('MarketBrowseSearchScreen ??results list spacing', () {
     testWidgets('FeedSearchScreen is rendered', (tester) async {
@@ -127,15 +135,15 @@ void main() {
     });
   });
 
-  group('FeedRhythm token guard ??market listing gap', () {
-    test('marketListingFeedCardVerticalGap is 18', () {
+  group('FeedRhythm token guard — market listing gap', () {
+    test('marketListingFeedCardVerticalGap is 14', () {
       // Regression guard: this value is referenced from the search list
       // separator. If the main market feed gap changes, the search screen
       // should be updated together to keep the two surfaces visually consistent.
-      expect(FeedRhythm.marketListingFeedCardVerticalGap, 18);
+      expect(FeedRhythm.marketListingFeedCardVerticalGap, 14);
     });
 
-    test('market search gap (18) equals main market feed gap', () {
+    test('market search gap equals main market feed gap', () {
       // The market browse search screen now uses the same separator height as
       // the main market feed. This test catches accidental divergence.
       const searchGap = FeedRhythm.marketListingFeedCardVerticalGap;

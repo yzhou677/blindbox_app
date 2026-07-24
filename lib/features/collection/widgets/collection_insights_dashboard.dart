@@ -4,9 +4,11 @@ import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/app_typography.dart';
 import 'package:blindbox_app/core/theme/collectible_motion.dart';
+import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_insights_compact_summary.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_summary_section.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Session-expandable Collection insights block — search stays outside.
 abstract final class CollectionInsightsDashboardCopy {
@@ -202,10 +204,11 @@ class _CollectionInsightsDashboardState
       color: scheme.onSurface.withValues(alpha: 0.97),
     );
     final labelStyle = AppTypography.deckText(textTheme, scheme).copyWith(
-      fontSize: 12,
-      fontWeight: FontWeight.w600,
+      fontSize: 11.5,
+      fontWeight: FontWeight.w500,
       height: 1.18,
-      color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
+      letterSpacing: 0.04,
+      color: scheme.onSurfaceVariant.withValues(alpha: 0.56),
     );
     final glyphColor = scheme.primary.withValues(alpha: 0.88);
 
@@ -490,8 +493,8 @@ class _SummaryHeaderRow extends StatelessWidget {
                   angle: chevronTurns * 3.141592653589793,
                   alignment: Alignment.center,
                   child: Icon(
-                    Icons.expand_more_rounded,
-                    size: 20,
+                    Symbols.expand_more_rounded,
+                    size: AppIconSizes.expand,
                     color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
                   ),
                 ),

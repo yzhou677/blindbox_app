@@ -8,31 +8,34 @@ import 'package:flutter_test/flutter_test.dart';
 import 'helpers/collection_fixtures.dart';
 
 void main() {
-  test('collectionAggregateStatsProvider recomputes only when snapshot changes', () {
-    var buildCount = 0;
-    final snap = CollectionSnapshot(
-      shelfSeries: [testShelfSeries()],
-      figureStates: const {},
-    );
+  test(
+    'collectionAggregateStatsProvider recomputes only when snapshot changes',
+    () {
+      var buildCount = 0;
+      final snap = CollectionSnapshot(
+        shelfSeries: [testShelfSeries()],
+        figureStates: const {},
+      );
 
-    final container = ProviderContainer(
-      overrides: [
-        collectionNotifierProvider.overrideWith(
-          () => _FixedCollectionNotifier(snap),
-        ),
-        collectionAggregateStatsProvider.overrideWith((ref) {
-          ref.watch(collectionNotifierProvider);
-          buildCount++;
-          return CollectionAggregateStats.fromSnapshot(snap);
-        }),
-      ],
-    );
-    addTearDown(container.dispose);
+      final container = ProviderContainer(
+        overrides: [
+          collectionNotifierProvider.overrideWith(
+            () => _FixedCollectionNotifier(snap),
+          ),
+          collectionAggregateStatsProvider.overrideWith((ref) {
+            ref.watch(collectionNotifierProvider);
+            buildCount++;
+            return CollectionAggregateStats.fromSnapshot(snap);
+          }),
+        ],
+      );
+      addTearDown(container.dispose);
 
-    container.read(collectionAggregateStatsProvider);
-    container.read(collectionAggregateStatsProvider);
-    expect(buildCount, 1);
-  });
+      container.read(collectionAggregateStatsProvider);
+      container.read(collectionAggregateStatsProvider);
+      expect(buildCount, 1);
+    },
+  );
 }
 
 class _FixedCollectionNotifier extends CollectionNotifier {

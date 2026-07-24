@@ -108,7 +108,10 @@ void main() {
 
       await Future<void>.delayed(const Duration(milliseconds: 30));
       expect(peakInFlight, lessThanOrEqualTo(2));
-      expect(CatalogImageResolver.activeStaleRefreshCount, lessThanOrEqualTo(2));
+      expect(
+        CatalogImageResolver.activeStaleRefreshCount,
+        lessThanOrEqualTo(2),
+      );
       expect(CatalogImageResolver.queuedStaleRefreshCount, greaterThan(0));
 
       gate.complete();

@@ -1,6 +1,6 @@
-import 'package:blindbox_app/core/theme/collectible_tokens.dart';
 import 'package:blindbox_app/features/market/data/gateway/market_gateway_config.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Quiet disclosure that Market browse is powered by eBay (or preview vs live).
 class MarketDataSourceNotice extends StatelessWidget {
@@ -10,7 +10,6 @@ class MarketDataSourceNotice extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final tokens = CollectibleTokens.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final liveEbay = MarketGatewayConfig.isActive;
 
@@ -25,28 +24,30 @@ class MarketDataSourceNotice extends StatelessWidget {
           color: Color.lerp(
             scheme.surface,
             scheme.primaryContainer,
-            isDark ? 0.12 : 0.18,
-          )!.withValues(alpha: isDark ? 0.55 : 0.72),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: scheme.outlineVariant.withValues(alpha: isDark ? 0.22 : 0.3),
-          ),
+            isDark ? 0.08 : 0.1,
+          )!.withValues(alpha: isDark ? 0.38 : 0.42),
+          borderRadius: BorderRadius.circular(10),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: const EdgeInsets.fromLTRB(10, 7, 10, 7),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Icon(
-                Icons.storefront_outlined,
-                size: 18,
-                color: scheme.onSurfaceVariant.withValues(alpha: 0.62),
+                Symbols.storefront_rounded,
+                size: 16,
+                color: scheme.onSurfaceVariant.withValues(alpha: 0.70),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   message,
-                  style: tokens.supportiveBody(textTheme, scheme),
+                  style: textTheme.bodySmall?.copyWith(
+                    fontSize: 13,
+                    height: 1.3,
+                    fontWeight: FontWeight.w400,
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.62),
+                  ),
                 ),
               ),
             ],

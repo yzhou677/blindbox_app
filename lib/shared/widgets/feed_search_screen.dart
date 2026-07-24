@@ -1,10 +1,12 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
+import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_history_section.dart';
 import 'package:blindbox_app/shared/widgets/app_search_field.dart';
 import 'package:blindbox_app/shared/image/catalog_photo_acquisition.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Full-screen search shell shared by Discover catalog browse and Market browse.
 ///
@@ -73,7 +75,10 @@ class FeedSearchScreen extends StatelessWidget {
         centerTitle: false,
         titleSpacing: AppSpacing.pageHorizontal,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: const Icon(
+            Symbols.arrow_back_rounded,
+            size: AppIconSizes.navigation,
+          ),
           onPressed: () {
             if (onBack != null) {
               onBack!();
@@ -84,10 +89,7 @@ class FeedSearchScreen extends StatelessWidget {
         ),
         title: Text(
           title,
-          style: CollectibleTypography.editorialScreenTitle(
-            textTheme,
-            scheme,
-          ),
+          style: CollectibleTypography.editorialScreenTitle(textTheme, scheme),
         ),
       ),
       body: Column(
@@ -113,7 +115,8 @@ class FeedSearchScreen extends StatelessWidget {
                   return IconButton(
                     tooltip: 'Clear',
                     icon: Icon(
-                      Icons.close_rounded,
+                      Symbols.close_rounded,
+                      size: AppIconSizes.clear,
                       color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
                     ),
                     onPressed: onClear,
@@ -153,32 +156,32 @@ class FeedSearchScreen extends StatelessWidget {
                       child: hasSearchText
                           ? results
                           : historySection != null
-                              ? SingleChildScrollView(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(
-                                      top: SearchHistorySectionSpacing
-                                          .belowSearchField,
+                          ? SingleChildScrollView(
+                              child: Padding(
+                                padding: const EdgeInsets.only(
+                                  top: SearchHistorySectionSpacing
+                                      .belowSearchField,
+                                ),
+                                child: historySection,
+                              ),
+                            )
+                          : Center(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.emptyStateHorizontal,
+                                ),
+                                child: Text(
+                                  emptyPrompt,
+                                  textAlign: TextAlign.center,
+                                  style: textTheme.bodyLarge?.copyWith(
+                                    color: scheme.onSurfaceVariant.withValues(
+                                      alpha: 0.82,
                                     ),
-                                    child: historySection,
-                                  ),
-                                )
-                              : Center(
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal:
-                                          AppSpacing.emptyStateHorizontal,
-                                    ),
-                                    child: Text(
-                                      emptyPrompt,
-                                      textAlign: TextAlign.center,
-                                      style: textTheme.bodyLarge?.copyWith(
-                                        color: scheme.onSurfaceVariant
-                                            .withValues(alpha: 0.82),
-                                        height: 1.4,
-                                      ),
-                                    ),
+                                    height: 1.4,
                                   ),
                                 ),
+                              ),
+                            ),
                     ),
                   ],
                 );

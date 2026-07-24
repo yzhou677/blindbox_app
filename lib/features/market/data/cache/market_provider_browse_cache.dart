@@ -36,7 +36,8 @@ final class CachedBrowseBatch {
 final class MarketProviderBrowseCache {
   MarketProviderBrowseCache._();
 
-  static final MarketProviderBrowseCache instance = MarketProviderBrowseCache._();
+  static final MarketProviderBrowseCache instance =
+      MarketProviderBrowseCache._();
 
   // Maximum number of distinct query-keyed entries kept in memory and on disk.
   // Prevents unbounded growth when users explore many brand/IP filter combos.
@@ -51,7 +52,8 @@ final class MarketProviderBrowseCache {
   static String _queryKey(MarketProviderId id, String signature) =>
       '${id.wireName}|$signature';
 
-  static String _prefsKey(MarketProviderId id) => 'market_browse_cache_${id.wireName}_v1';
+  static String _prefsKey(MarketProviderId id) =>
+      'market_browse_cache_${id.wireName}_v1';
 
   static String _prefsKeyForQuery(MarketProviderId id, String signature) =>
       'market_browse_cache_${id.wireName}_${signature.hashCode.abs()}_v2';
@@ -271,12 +273,12 @@ final class MarketProviderBrowseCache {
   }
 
   static Map<String, dynamic> _batchToJson(CachedBrowseBatch batch) => {
-        'fetchedAtMs': batch.fetchedAt.millisecondsSinceEpoch,
-        'wireJson': batch.wireJson,
-        'nextCursor': batch.nextCursor,
-        'hasMore': batch.hasMore,
-        'listings': [for (final l in batch.listings) _marketListingToJson(l)],
-      };
+    'fetchedAtMs': batch.fetchedAt.millisecondsSinceEpoch,
+    'wireJson': batch.wireJson,
+    'nextCursor': batch.nextCursor,
+    'hasMore': batch.hasMore,
+    'listings': [for (final l in batch.listings) _marketListingToJson(l)],
+  };
 
   static CachedBrowseBatch _batchFromJson(String raw) {
     final decoded = jsonDecode(raw) as Map<String, dynamic>;
@@ -358,7 +360,8 @@ final class MarketProviderBrowseCache {
     final id = json['id'] as String? ?? '';
     return MarketListing(
       id: id,
-      providerId: json['providerId'] as String? ?? MarketProviderId.mercari.wireName,
+      providerId:
+          json['providerId'] as String? ?? MarketProviderId.mercari.wireName,
       providerListingId: json['providerListingId'] as String?,
       externalListingUrl: json['externalListingUrl'] as String?,
       taxonomyBrandId: json['taxonomyBrandId'] as String?,

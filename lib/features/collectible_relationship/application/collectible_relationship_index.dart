@@ -1,5 +1,6 @@
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
-import 'package:blindbox_app/features/catalog/models/catalog_figure.dart' as seed_fig;
+import 'package:blindbox_app/features/catalog/models/catalog_figure.dart'
+    as seed_fig;
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:flutter/foundation.dart';
 
@@ -97,11 +98,9 @@ class CollectibleRelationshipIndex {
     );
   }
 
-  String? shelfSeriesName(String seriesId) =>
-      shelfSeriesById[seriesId]?.name;
+  String? shelfSeriesName(String seriesId) => shelfSeriesById[seriesId]?.name;
 
-  String? catalogSeriesName(String seriesId) =>
-      catalogSeriesNameById[seriesId];
+  String? catalogSeriesName(String seriesId) => catalogSeriesNameById[seriesId];
 
   String? ipDisplayName(String? ipId) {
     if (ipId == null || ipId.isEmpty) return null;

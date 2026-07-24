@@ -10,7 +10,9 @@ void main() {
   setUp(() async {
     MarketBrowseListingsSession.instance.reset();
     final repo = MarketListingsRepository([AssetMarketSource()]);
-    MarketBrowseListingsSession.instance.install(await repo.loadBrowseListings());
+    MarketBrowseListingsSession.instance.install(
+      await repo.loadBrowseListings(),
+    );
   });
 
   tearDown(() {
@@ -45,9 +47,6 @@ void main() {
 
   test('marketListingMatchesFreeText is false for unrelated query', () {
     final m = mockMarketListings.firstWhere((e) => e.id == 'mkt-luna');
-    expect(
-      marketListingMatchesFreeText(m, 'zzznope'),
-      false,
-    );
+    expect(marketListingMatchesFreeText(m, 'zzznope'), false);
   });
 }

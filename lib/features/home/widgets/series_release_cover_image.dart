@@ -16,7 +16,8 @@ class SeriesReleaseCoverImage extends StatelessWidget {
   final BorderRadius borderRadius;
   final String? heroTag;
 
-  static String heroTagFor(SeriesRelease release) => 'series-cover-${release.dropId}';
+  static String heroTagFor(SeriesRelease release) =>
+      'series-cover-${release.dropId}';
 
   @override
   Widget build(BuildContext context) {

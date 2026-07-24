@@ -6,31 +6,20 @@ import 'package:flutter/material.dart';
 
 import 'package:flutter_test/flutter_test.dart';
 
-
-
 void main() {
-
   group('CatalogImageResolveCoordinator', () {
-
     test('ignores stale async generations', () {
-
       final coordinator = CatalogImageResolveCoordinator();
 
       final first = coordinator.begin();
 
       final second = coordinator.begin();
 
-
-
       expect(coordinator.shouldApply(first), isFalse);
 
       expect(coordinator.shouldApply(second), isTrue);
-
     });
-
   });
-
-
 
   group('catalogImageResolveFrameWaits', () {
     test('batch 0 waits one frame', () {
@@ -77,5 +66,3 @@ void main() {
     });
   });
 }
-
-

@@ -11,11 +11,7 @@ void main() {
         brand: 'POP MART',
         taxonomyBrandId: 'pop_mart',
       ),
-      testShelfSeries(
-        id: 'top',
-        brand: 'TOP TOY',
-        taxonomyBrandId: 'toptoy',
-      ),
+      testShelfSeries(id: 'top', brand: 'TOP TOY', taxonomyBrandId: 'toptoy'),
       testShelfSeries(
         id: 'custom',
         brand: 'My Wife Brand',
@@ -25,15 +21,12 @@ void main() {
 
     final options = buildCollectionShelfBrandFilterOptions(series);
 
-    expect(
-      options,
-      [
-        (id: collectionAnyBrandFilterId, label: 'All Brands'),
-        (id: 'popmart', label: 'POP MART'),
-        (id: 'toptoy', label: 'TOP TOY'),
-        (id: 'mywifebrand', label: 'My Wife Brand'),
-      ],
-    );
+    expect(options, [
+      (id: collectionAnyBrandFilterId, label: 'All Brands'),
+      (id: 'popmart', label: 'POP MART'),
+      (id: 'toptoy', label: 'TOP TOY'),
+      (id: 'mywifebrand', label: 'My Wife Brand'),
+    ]);
   });
 
   test('POP MART aliases collapse to one POP MART chip', () {
@@ -86,13 +79,10 @@ void main() {
 
     final options = buildCollectionShelfBrandFilterOptions(series);
 
-    expect(
-      options,
-      [
-        (id: collectionAnyBrandFilterId, label: 'All Brands'),
-        (id: 'randomfigureclub', label: 'Random Figure Club'),
-      ],
-    );
+    expect(options, [
+      (id: collectionAnyBrandFilterId, label: 'All Brands'),
+      (id: 'randomfigureclub', label: 'Random Figure Club'),
+    ]);
   });
 
   test('stale selected chip resets to All', () {
@@ -109,25 +99,25 @@ void main() {
     expect(next, collectionAnyBrandFilterId);
   });
 
-  test('canonical custom brand uses registry display label with stable filter id', () {
-    final series = testShelfSeries(
-      id: 'custom_dpl',
-      brand: 'DPL',
-      taxonomyBrandId: 'dpl',
-      catalogTemplateId: null,
-    );
+  test(
+    'canonical custom brand uses registry display label with stable filter id',
+    () {
+      final series = testShelfSeries(
+        id: 'custom_dpl',
+        brand: 'DPL',
+        taxonomyBrandId: 'dpl',
+        catalogTemplateId: null,
+      );
 
-    final options = buildCollectionShelfBrandFilterOptions([series]);
+      final options = buildCollectionShelfBrandFilterOptions([series]);
 
-    expect(options, [
-      (id: collectionAnyBrandFilterId, label: 'All Brands'),
-      (id: 'dpl', label: 'DPL'),
-    ]);
-    expect(
-      shelfSeriesVisibleForBrandFilter([series], 'dpl'),
-      [series],
-    );
-  });
+      expect(options, [
+        (id: collectionAnyBrandFilterId, label: 'All Brands'),
+        (id: 'dpl', label: 'DPL'),
+      ]);
+      expect(shelfSeriesVisibleForBrandFilter([series], 'dpl'), [series]);
+    },
+  );
 
   test('filtering by normalized key returns grouped brand rows', () {
     final pop1 = testShelfSeries(
@@ -146,10 +136,11 @@ void main() {
       taxonomyBrandId: 'toptoy',
     );
 
-    final filtered = shelfSeriesVisibleForBrandFilter(
-      [pop1, pop2, top],
-      'popmart',
-    );
+    final filtered = shelfSeriesVisibleForBrandFilter([
+      pop1,
+      pop2,
+      top,
+    ], 'popmart');
 
     expect(filtered, [pop1, pop2]);
   });

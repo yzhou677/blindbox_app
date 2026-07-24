@@ -23,7 +23,8 @@ MarketListing _row(String id) {
   );
 }
 
-void main() {  test('resetForQuery bumps generation and hydrates stale rows', () {
+void main() {
+  test('resetForQuery bumps generation and hydrates stale rows', () {
     final session = MarketLiveBrowseSession();
     const query = MarketBrowseQuery(brandId: 'pop_mart');
 
@@ -91,10 +92,7 @@ void main() {  test('resetForQuery bumps generation and hydrates stale rows', ()
     session.resetForQuery(
       const MarketBrowseQuery(brandId: 'pop_mart', ipId: 'skullpanda'),
     );
-    session.hydrateStaleListings(
-      generation: gen,
-      listings: [_row('stale')],
-    );
+    session.hydrateStaleListings(generation: gen, listings: [_row('stale')]);
     expect(session.state.listings, isEmpty);
   });
 

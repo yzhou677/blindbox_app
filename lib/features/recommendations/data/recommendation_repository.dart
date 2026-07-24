@@ -13,7 +13,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-final recommendationRepositoryProvider = Provider<RecommendationRepository>((ref) {
+final recommendationRepositoryProvider = Provider<RecommendationRepository>((
+  ref,
+) {
   final snap = ref.watch(collectionNotifierProvider);
   return RecommendationRepository(
     collectionSnapshot: snap,
@@ -46,9 +48,9 @@ class RecommendationRepository {
     required CollectionSnapshot collectionSnapshot,
     RecommendationHttpClient? httpClient,
     SharedPreferences? preferences,
-  })  : _collectionSnapshot = collectionSnapshot,
-        _httpClient = httpClient ?? RecommendationHttpClient(),
-        _preferences = preferences;
+  }) : _collectionSnapshot = collectionSnapshot,
+       _httpClient = httpClient ?? RecommendationHttpClient(),
+       _preferences = preferences;
 
   final CollectionSnapshot _collectionSnapshot;
   final RecommendationHttpClient _httpClient;
@@ -109,8 +111,7 @@ class RecommendationRepository {
         );
         final bounded = _normalizeResult(remote);
         if (_acceptCloudResult(signals, bounded)) {
-          final normalized =
-              excludeTrackedCatalogSeries(bounded, signals);
+          final normalized = excludeTrackedCatalogSeries(bounded, signals);
           await _writeCache(installId, normalized);
           return _finalizeResult(
             installId: installId,
@@ -186,8 +187,10 @@ class RecommendationRepository {
     bool remember = true,
   }) {
     try {
-      final sanitized =
-          excludeTrackedCatalogSeries(_normalizeResult(result), signals);
+      final sanitized = excludeTrackedCatalogSeries(
+        _normalizeResult(result),
+        signals,
+      );
       if (remember) {
         _lastComputed = _ComputedRecommendationMemo(
           installId: installId,
@@ -229,9 +232,7 @@ class RecommendationRepository {
     RecommendationResult result,
   ) {
     final hash = result.profileHash?.trim();
-    return hash != null &&
-        hash.isNotEmpty &&
-        hash == signals.profileHash;
+    return hash != null && hash.isNotEmpty && hash == signals.profileHash;
   }
 
   bool _containsTrackedSeries(
@@ -250,14 +251,8 @@ class RecommendationRepository {
     CatalogSeedBundle bundle,
     PreferenceSignals signals,
   ) {
-    final items = computeLocalRecommendations(
-      signals: signals,
-      bundle: bundle,
-    );
-    return RecommendationResult(
-      items: items,
-      profileHash: signals.profileHash,
-    );
+    final items = computeLocalRecommendations(signals: signals, bundle: bundle);
+    return RecommendationResult(items: items, profileHash: signals.profileHash);
   }
 
   Future<RecommendationResult?> _readCache(
@@ -273,7 +268,8 @@ class RecommendationRepository {
       final decoded = jsonDecode(raw);
       if (decoded is! Map<String, dynamic>) return null;
       final schemaVersion = decoded['schemaVersion'];
-      if (schemaVersion != RecommendationGatewayConfig.recommendationCacheSchemaVersion) {
+      if (schemaVersion !=
+          RecommendationGatewayConfig.recommendationCacheSchemaVersion) {
         return null;
       }
       final cachedHash = decoded['profileHash'] as String?;
@@ -293,7 +289,10 @@ class RecommendationRepository {
     }
   }
 
-  Future<void> _writeCache(String installId, RecommendationResult result) async {
+  Future<void> _writeCache(
+    String installId,
+    RecommendationResult result,
+  ) async {
     try {
       final prefs = await _prefs();
       await prefs.setString(
@@ -349,8 +348,5 @@ RecommendationResult excludeTrackedCatalogSeries(
       .where((item) => !signals.trackedCatalogSeriesIds.contains(item.seriesId))
       .toList();
   if (filtered.length == result.items.length) return result;
-  return RecommendationResult(
-    items: filtered,
-    profileHash: result.profileHash,
-  );
+  return RecommendationResult(items: filtered, profileHash: result.profileHash);
 }

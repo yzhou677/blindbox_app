@@ -5,10 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'helpers/collection_fixtures.dart';
 
-ShelfSeries _series({
-  required int regular,
-  required int secrets,
-}) {
+ShelfSeries _series({required int regular, required int secrets}) {
   return testShelfSeries(
     id: 's',
     name: 'Series',
@@ -34,9 +31,9 @@ ShelfSeries _series({
 }
 
 Map<String, TrackedFigure> _own(List<String> ids) => {
-      for (final id in ids)
-        id: TrackedFigure(figureId: id, state: FigureCollectionState.owned),
-    };
+  for (final id in ids)
+    id: TrackedFigure(figureId: id, state: FigureCollectionState.owned),
+};
 
 void main() {
   group('seriesFiguresSheetProgressMeta', () {
@@ -71,10 +68,7 @@ void main() {
 
     test('master complete shows both lines full', () {
       final series = _series(regular: 8, secrets: 1);
-      final owned = [
-        for (var i = 0; i < 8; i++) 'r$i',
-        'sec0',
-      ];
+      final owned = [for (var i = 0; i < 8; i++) 'r$i', 'sec0'];
       final resolution = resolveSeriesCompletion(series, _own(owned));
       expect(resolution.isMasterComplete, isTrue);
       expect(
@@ -86,8 +80,10 @@ void main() {
 
     test('multiple secrets show once any owned', () {
       final series = _series(regular: 2, secrets: 3);
-      final resolution =
-          resolveSeriesCompletion(series, _own(['r0', 'r1', 'sec0', 'sec1']));
+      final resolution = resolveSeriesCompletion(
+        series,
+        _own(['r0', 'r1', 'sec0', 'sec1']),
+      );
       expect(
         CollectionProgressVoice.seriesFiguresSheetProgressMeta(resolution),
         'Regular Figures 2 of 2 Collected\n'
@@ -101,8 +97,9 @@ void main() {
         series,
         _own([for (var i = 0; i < 8; i++) 'r$i']),
       );
-      final meta =
-          CollectionProgressVoice.seriesFiguresSheetProgressMeta(resolution)!;
+      final meta = CollectionProgressVoice.seriesFiguresSheetProgressMeta(
+        resolution,
+      )!;
       expect(meta.contains('of 9'), isFalse);
       expect(meta.contains('Figures 8 of 9'), isFalse);
       expect(meta.contains('Secret'), isFalse);

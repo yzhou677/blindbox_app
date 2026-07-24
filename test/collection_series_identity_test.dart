@@ -185,27 +185,30 @@ void main() {
       expect(match.owned, isFalse);
     });
 
-    test('taxonomy-only shelf row does not mark unrelated catalog series owned', () {
-      final snap = _snapshotWithSeries([
-        _series(
-          id: 's1',
-          name: 'Unrelated shelf label',
-          brand: 'Other',
-          taxonomyBrandId: 'POP_MART',
-          taxonomyIpId: 'THE_MONSTERS',
-        ),
-      ]);
-      final match = resolveCollectionSeriesOwnership(
-        snapshot: snap,
-        catalogTemplateId: 'drop-other',
-        seriesName: 'Different Series Name',
-        brandName: 'Different Brand',
-        taxonomyBrandId: 'pop_mart',
-        taxonomyIpId: 'the_monsters',
-      );
-      expect(match.owned, isFalse);
-      expect(match.kind, isNull);
-    });
+    test(
+      'taxonomy-only shelf row does not mark unrelated catalog series owned',
+      () {
+        final snap = _snapshotWithSeries([
+          _series(
+            id: 's1',
+            name: 'Unrelated shelf label',
+            brand: 'Other',
+            taxonomyBrandId: 'POP_MART',
+            taxonomyIpId: 'THE_MONSTERS',
+          ),
+        ]);
+        final match = resolveCollectionSeriesOwnership(
+          snapshot: snap,
+          catalogTemplateId: 'drop-other',
+          seriesName: 'Different Series Name',
+          brandName: 'Different Brand',
+          taxonomyBrandId: 'pop_mart',
+          taxonomyIpId: 'the_monsters',
+        );
+        expect(match.owned, isFalse);
+        expect(match.kind, isNull);
+      },
+    );
   });
 
   group('exact series in same universe stays owned', () {
@@ -238,10 +241,16 @@ void main() {
     });
   });
 
-  test('canonicalization normalizes spaces/underscores/hyphens/punctuation', () {
-    expect(canonicalizeCollectionIdentity('POP MART'), 'popmart');
-    expect(canonicalizeCollectionIdentity('THE_MONSTERS'), 'themonsters');
-    expect(canonicalizeCollectionIdentity('Crybaby - Ocean'), 'crybabyocean');
-    expect(canonicalizeCollectionIdentity('  Crybaby/Ocean!  '), 'crybabyocean');
-  });
+  test(
+    'canonicalization normalizes spaces/underscores/hyphens/punctuation',
+    () {
+      expect(canonicalizeCollectionIdentity('POP MART'), 'popmart');
+      expect(canonicalizeCollectionIdentity('THE_MONSTERS'), 'themonsters');
+      expect(canonicalizeCollectionIdentity('Crybaby - Ocean'), 'crybabyocean');
+      expect(
+        canonicalizeCollectionIdentity('  Crybaby/Ocean!  '),
+        'crybabyocean',
+      );
+    },
+  );
 }

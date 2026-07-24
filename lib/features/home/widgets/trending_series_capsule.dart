@@ -33,7 +33,10 @@ class TrendingSeriesCapsule extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: radius,
-          boxShadow: CollectibleShelfShadow.productShell(context, accent: series.accent),
+          boxShadow: CollectibleShelfShadow.productShell(
+            context,
+            accent: series.accent,
+          ),
         ),
         child: Material(
           color: Colors.transparent,
@@ -53,7 +56,9 @@ class TrendingSeriesCapsule extends StatelessWidget {
                   end: Alignment.bottomRight,
                   colors: [
                     Color.lerp(series.accent, scheme.surface, 0.12)!,
-                    scheme.surfaceContainerLow.withValues(alpha: isDark ? 0.92 : 1),
+                    scheme.surfaceContainerLow.withValues(
+                      alpha: isDark ? 0.92 : 1,
+                    ),
                   ],
                 ),
                 border: Border.all(
@@ -78,8 +83,11 @@ class TrendingSeriesCapsule extends StatelessWidget {
                           end: Alignment.bottomCenter,
                           colors: [
                             series.accent.withValues(alpha: 0.95),
-                            Color.lerp(series.accent, scheme.primary, 0.15)!
-                                .withValues(alpha: 0.55),
+                            Color.lerp(
+                              series.accent,
+                              scheme.primary,
+                              0.15,
+                            )!.withValues(alpha: 0.55),
                           ],
                         ),
                       ),
@@ -92,9 +100,14 @@ class TrendingSeriesCapsule extends StatelessWidget {
                       children: [
                         if (series.brand != null)
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
-                              color: scheme.secondaryContainer.withValues(alpha: 0.42),
+                              color: scheme.secondaryContainer.withValues(
+                                alpha: 0.42,
+                              ),
                               borderRadius: BorderRadius.circular(999),
                             ),
                             child: Text(
@@ -102,7 +115,9 @@ class TrendingSeriesCapsule extends StatelessWidget {
                               style: textTheme.labelSmall?.copyWith(
                                 letterSpacing: 0.12,
                                 fontWeight: FontWeight.w600,
-                                color: scheme.onSecondaryContainer.withValues(alpha: 0.82),
+                                color: scheme.onSecondaryContainer.withValues(
+                                  alpha: 0.82,
+                                ),
                                 height: 1.12,
                               ),
                             ),
@@ -128,7 +143,9 @@ class TrendingSeriesCapsule extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: textTheme.labelSmall?.copyWith(
-                            color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
+                            color: scheme.onSurfaceVariant.withValues(
+                              alpha: 0.72,
+                            ),
                             fontWeight: FontWeight.w500,
                             letterSpacing: 0.04,
                           ),

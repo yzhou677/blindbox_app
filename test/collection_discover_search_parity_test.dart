@@ -101,9 +101,10 @@ List<ShelfSeries> _ownedCatalogShelf(CatalogSeedBundle catalog) {
 
 /// Discover browse rows — same series-id set as [CatalogSearchService.search].
 Set<String> _discoverSeriesIds(CatalogSeedBundle catalog, String query) {
-  return buildCatalogSeriesSearchRows(bundle: catalog, query: query)
-      .map((row) => row.seriesId)
-      .toSet();
+  return buildCatalogSeriesSearchRows(
+    bundle: catalog,
+    query: query,
+  ).map((row) => row.seriesId).toSet();
 }
 
 /// Catalog series ids represented by Collection rows after search filtering.

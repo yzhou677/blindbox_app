@@ -57,10 +57,7 @@ class AppImageFrame extends StatelessWidget {
       ),
       child: Padding(
         padding: AppSpacing.figureThumbInset,
-        child: ClipRRect(
-          borderRadius: inner,
-          child: child,
-        ),
+        child: ClipRRect(borderRadius: inner, child: child),
       ),
     );
 

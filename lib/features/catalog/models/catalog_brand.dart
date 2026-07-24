@@ -23,8 +23,8 @@ class CatalogBrand {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'displayName': displayName,
-        if (aliases.isNotEmpty) 'aliases': aliases,
-      };
+    'id': id,
+    'displayName': displayName,
+    if (aliases.isNotEmpty) 'aliases': aliases,
+  };
 }

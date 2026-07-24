@@ -12,10 +12,10 @@ class MasterCompleteCelebrationEvent {
 
 /// Queues and presents app-wide Master Complete achievement overlays.
 final masterCompleteCelebrationProvider =
-    NotifierProvider<MasterCompleteCelebrationNotifier,
-        MasterCompleteCelebrationEvent?>(
-  MasterCompleteCelebrationNotifier.new,
-);
+    NotifierProvider<
+      MasterCompleteCelebrationNotifier,
+      MasterCompleteCelebrationEvent?
+    >(MasterCompleteCelebrationNotifier.new);
 
 class MasterCompleteCelebrationNotifier
     extends Notifier<MasterCompleteCelebrationEvent?> {

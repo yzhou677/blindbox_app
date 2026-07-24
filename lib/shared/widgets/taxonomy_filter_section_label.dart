@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 
 /// Quiet one-word heading above taxonomy filter chip rails (Brand / IP).
@@ -20,14 +21,7 @@ class TaxonomyFilterSectionLabel extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
       child: Semantics(
         header: true,
-        child: Text(
-          text,
-          style: textTheme.labelSmall?.copyWith(
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.35,
-            color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
-          ),
-        ),
+        child: Text(text, style: AppTypography.sectionLabel(textTheme, scheme)),
       ),
     );
   }

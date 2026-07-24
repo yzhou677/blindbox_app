@@ -27,7 +27,5 @@ Map<String, int> aggregateBrandBreakdownByCanonicalKey(
       );
     }
   }
-  return {
-    for (final g in groups.values) g.displayLabel: g.count,
-  };
+  return {for (final g in groups.values) g.displayLabel: g.count};
 }

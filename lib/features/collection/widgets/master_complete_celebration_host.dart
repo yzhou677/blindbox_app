@@ -65,7 +65,9 @@ class _MasterCompleteCelebrationHostState
       return;
     }
 
-    ref.read(masterCompleteCelebrationProvider.notifier).onPresentationStarted();
+    ref
+        .read(masterCompleteCelebrationProvider.notifier)
+        .onPresentationStarted();
   }
 
   void _scheduleInsertRetry(
@@ -74,7 +76,9 @@ class _MasterCompleteCelebrationHostState
   }) {
     if (!mounted) return;
     if (attempt >= _maxInsertAttempts) {
-      ref.read(masterCompleteCelebrationProvider.notifier).onPresentationFailed();
+      ref
+          .read(masterCompleteCelebrationProvider.notifier)
+          .onPresentationFailed();
       return;
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {

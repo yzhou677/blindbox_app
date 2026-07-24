@@ -30,10 +30,7 @@ void main() {
       shelfSeries: [testShelfSeries()],
       figureStates: const {},
     );
-    expect(
-      interpretCollectionEvolution(snap: snap, priorEra: null),
-      isNull,
-    );
+    expect(interpretCollectionEvolution(snap: snap, priorEra: null), isNull);
   });
 
   test('wishlist-only changes do not create collection memory mood shift', () {

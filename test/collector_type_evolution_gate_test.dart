@@ -43,9 +43,7 @@ CollectorTypeResolution _challenger({
   required String signature,
   CollectorTypeArchetypeId previousType = CollectorTypeArchetypeId.loyalist,
 }) {
-  final scores = {
-    for (final a in CollectorTypeArchetypeId.values) a: 0.0,
-  };
+  final scores = {for (final a in CollectorTypeArchetypeId.values) a: 0.0};
   scores[previousType] = previousTypeScore;
   scores[id] = score;
   return CollectorTypeResolution(
@@ -179,58 +177,62 @@ void main() {
     );
   });
 
-  test('identical signature blocks evolution when resolverVersion unchanged',
-      () {
-    final previous = _identity(
-      id: CollectorTypeArchetypeId.loyalist,
-      signature: 'sig-same',
-      revealedAt: DateTime(2026, 1, 1),
-    );
-    final challenger = _challenger(
-      id: CollectorTypeArchetypeId.curator,
-      score: 94,
-      previousTypeScore: 80,
-      confidence: 0.9,
-      signature: 'sig-same',
-    );
-    expect(
-      shouldEvolve(
-        previous: previous,
-        challenger: challenger,
-        snapshot: emptySnap,
-        now: DateTime(2026, 6, 1),
-        previousResolverVersion: policy,
-      ),
-      isFalse,
-    );
-  });
+  test(
+    'identical signature blocks evolution when resolverVersion unchanged',
+    () {
+      final previous = _identity(
+        id: CollectorTypeArchetypeId.loyalist,
+        signature: 'sig-same',
+        revealedAt: DateTime(2026, 1, 1),
+      );
+      final challenger = _challenger(
+        id: CollectorTypeArchetypeId.curator,
+        score: 94,
+        previousTypeScore: 80,
+        confidence: 0.9,
+        signature: 'sig-same',
+      );
+      expect(
+        shouldEvolve(
+          previous: previous,
+          challenger: challenger,
+          snapshot: emptySnap,
+          now: DateTime(2026, 6, 1),
+          previousResolverVersion: policy,
+        ),
+        isFalse,
+      );
+    },
+  );
 
-  test('identical signature allows evolution when resolverVersion upgraded',
-      () {
-    final previous = _identity(
-      id: CollectorTypeArchetypeId.loyalist,
-      signature: 'sig-same',
-      revealedAt: DateTime(2026, 1, 1),
-    );
-    final challenger = _challenger(
-      id: CollectorTypeArchetypeId.curator,
-      score: 94,
-      previousTypeScore: 80,
-      confidence: 0.2,
-      signature: 'sig-same',
-    );
-    expect(
-      shouldEvolve(
-        previous: previous,
-        challenger: challenger,
-        snapshot: emptySnap,
-        now: DateTime(2026, 6, 1),
-        previousResolverVersion: '5.0',
-        currentResolverVersion: policy,
-      ),
-      isTrue,
-    );
-  });
+  test(
+    'identical signature allows evolution when resolverVersion upgraded',
+    () {
+      final previous = _identity(
+        id: CollectorTypeArchetypeId.loyalist,
+        signature: 'sig-same',
+        revealedAt: DateTime(2026, 1, 1),
+      );
+      final challenger = _challenger(
+        id: CollectorTypeArchetypeId.curator,
+        score: 94,
+        previousTypeScore: 80,
+        confidence: 0.2,
+        signature: 'sig-same',
+      );
+      expect(
+        shouldEvolve(
+          previous: previous,
+          challenger: challenger,
+          snapshot: emptySnap,
+          now: DateTime(2026, 6, 1),
+          previousResolverVersion: '5.0',
+          currentResolverVersion: policy,
+        ),
+        isTrue,
+      );
+    },
+  );
 
   test('soft cooldown requires larger margin', () {
     final previous = _identity(
@@ -280,9 +282,7 @@ void main() {
       signature: 'sig-same',
       revealedAt: DateTime(2026, 7, 11),
     );
-    final scores = {
-      for (final a in CollectorTypeArchetypeId.values) a: 0.0,
-    };
+    final scores = {for (final a in CollectorTypeArchetypeId.values) a: 0.0};
     scores[CollectorTypeArchetypeId.curator] = 64;
     scores[CollectorTypeArchetypeId.wanderer] = 51;
     final challenger = CollectorTypeResolution(

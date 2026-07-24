@@ -26,10 +26,7 @@ void main() {
       '2d ago',
     );
     expect(
-      formatOfficialFeedRelativeTime(
-        DateTime(2026, 3, 18),
-        clock: clock,
-      ),
+      formatOfficialFeedRelativeTime(DateTime(2026, 3, 18), clock: clock),
       'Mar 18',
     );
     expect(

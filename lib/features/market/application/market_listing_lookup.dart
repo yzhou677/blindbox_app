@@ -9,9 +9,10 @@ final marketListingByIdProvider = Provider.family<MarketListing?, String>(
   (ref, listingId) => findMarketListingById(ref, listingId),
 );
 
-final chaserEntryByListingIdProvider = Provider.family<ChasersHeatEntry?, String>(
-  (ref, listingId) => findChaserEntryByListingId(ref, listingId),
-);
+final chaserEntryByListingIdProvider =
+    Provider.family<ChasersHeatEntry?, String>(
+      (ref, listingId) => findChaserEntryByListingId(ref, listingId),
+    );
 
 ChasersHeatEntry? findChaserEntryByListingId(Ref ref, String listingId) {
   for (final entry in ref.watch(marketChasersControllerProvider).entries) {

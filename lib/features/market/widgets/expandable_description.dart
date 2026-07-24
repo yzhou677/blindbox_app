@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/features/market/utils/listing_description_text.dart';
 import 'package:flutter/material.dart';
 
@@ -9,7 +10,7 @@ class ExpandableDescription extends StatefulWidget {
     required this.style,
     this.collapsedMaxLines = 5,
     this.fadeHeight = 28,
-    this.animationDuration = const Duration(milliseconds: 280),
+    this.animationDuration = CollectibleMotion.medium,
     this.animationCurve = Curves.easeOutCubic,
     this.backgroundColor,
   });
@@ -77,10 +78,7 @@ class _ExpandableDescriptionState extends State<ExpandableDescription> {
                             gradient: LinearGradient(
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
-                              colors: [
-                                fadeBase.withValues(alpha: 0),
-                                fadeBase,
-                              ],
+                              colors: [fadeBase.withValues(alpha: 0), fadeBase],
                             ),
                           ),
                         ),
@@ -104,10 +102,7 @@ class _ExpandableDescriptionState extends State<ExpandableDescription> {
 }
 
 class _DescriptionToggle extends StatelessWidget {
-  const _DescriptionToggle({
-    required this.expanded,
-    required this.onPressed,
-  });
+  const _DescriptionToggle({required this.expanded, required this.onPressed});
 
   final bool expanded;
   final VoidCallback onPressed;

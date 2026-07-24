@@ -3,7 +3,8 @@ import 'package:blindbox_app/features/market/presentation/market_price_sort.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-export 'market_browse_root_navigation.dart' show isMarketBrowseRootPath, kMarketBrowseRootPath;
+export 'market_browse_root_navigation.dart'
+    show isMarketBrowseRootPath, kMarketBrowseRootPath;
 
 /// Market tab browse filters — independent from Search Market overlay state.
 @immutable
@@ -36,8 +37,8 @@ class MarketFeedBrowseState {
 
 final marketFeedBrowseNotifierProvider =
     NotifierProvider<MarketFeedBrowseNotifier, MarketFeedBrowseState>(
-  MarketFeedBrowseNotifier.new,
-);
+      MarketFeedBrowseNotifier.new,
+    );
 
 class MarketFeedBrowseNotifier extends Notifier<MarketFeedBrowseState> {
   @override
@@ -47,10 +48,7 @@ class MarketFeedBrowseNotifier extends Notifier<MarketFeedBrowseState> {
     final ipId = id == MarketTaxonomyIds.anyBrand
         ? MarketTaxonomyIds.anyIp
         : MarketTaxonomy.clampIpToBrand(id, state.ipId);
-    state = state.copyWith(
-      brandId: id,
-      ipId: ipId,
-    );
+    state = state.copyWith(brandId: id, ipId: ipId);
   }
 
   void setIp(String id) {

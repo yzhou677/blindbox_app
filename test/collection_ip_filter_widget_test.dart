@@ -73,9 +73,9 @@ void main() {
     final container = ProviderScope.containerOf(
       tester.element(find.byType(CollectionScreen)),
     );
-    container.read(collectionNotifierProvider.notifier).addSeriesFromTemplate(
-          nyotaTemplate,
-        );
+    container
+        .read(collectionNotifierProvider.notifier)
+        .addSeriesFromTemplate(nyotaTemplate);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 

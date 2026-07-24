@@ -26,25 +26,27 @@ class MarketDiscoveryChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
+      padding: const EdgeInsets.only(bottom: 2),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const TaxonomyFilterSectionLabel(text: 'Brand'),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           TaxonomyBrandChipRail(
             options: brandOptions,
             selectedId: brandId,
             onSelected: onBrandSelected,
+            compact: true,
           ),
           if (showIpRail) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
             const TaxonomyFilterSectionLabel(text: 'IP'),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             TaxonomyBrandChipRail(
               options: ipOptions,
               selectedId: ipId,
               onSelected: onIpSelected,
+              compact: true,
             ),
           ],
         ],

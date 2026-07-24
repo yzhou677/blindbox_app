@@ -49,7 +49,12 @@ void main() {
       ),
     );
 
-    final fig = container.read(collectionNotifierProvider).shelfSeries.single.figures.single;
+    final fig = container
+        .read(collectionNotifierProvider)
+        .shelfSeries
+        .single
+        .figures
+        .single;
     expect(fig.imageKey, imageKey);
     expect(fig.imageUrl, isNull);
   });
@@ -74,7 +79,10 @@ void main() {
     );
 
     expect(ShelfFigureMedia.figureDisplayRef(figure, series), isNull);
-    expect(ShelfFigureMedia.catalogFigureImageKey(figure), 'catalog_figure_key');
+    expect(
+      ShelfFigureMedia.catalogFigureImageKey(figure),
+      'catalog_figure_key',
+    );
   });
 
   test('addSeriesFromTemplate clones imageKey without imageUrl', () {
@@ -104,7 +112,10 @@ void main() {
     );
 
     n.addSeriesFromTemplate(template);
-    final cloned = container.read(collectionNotifierProvider).shelfSeries.single;
+    final cloned = container
+        .read(collectionNotifierProvider)
+        .shelfSeries
+        .single;
     expect(cloned.imageKey, 'series_cover');
     final fig = cloned.figures.single;
     expect(fig.imageKey, 'fig_key');

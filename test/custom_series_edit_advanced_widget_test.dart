@@ -203,14 +203,18 @@ Future<ProviderContainer> _pumpEditForm(
 }
 
 Finder _textFieldAt(int index) {
-  return find.descendant(
-    of: find.byType(CustomSeriesFormSheet),
-    matching: find.byType(TextFormField),
-  ).at(index);
+  return find
+      .descendant(
+        of: find.byType(CustomSeriesFormSheet),
+        matching: find.byType(TextFormField),
+      )
+      .at(index);
 }
 
 Future<void> _expandAdvanced(WidgetTester tester) async {
-  await tester.ensureVisible(find.byKey(const Key('custom-series-edit-advanced')));
+  await tester.ensureVisible(
+    find.byKey(const Key('custom-series-edit-advanced')),
+  );
   await tester.tap(find.text(customSeriesEditAdvancedOptionsTitle));
   await tester.pumpAndSettle();
 }
@@ -328,7 +332,10 @@ void main() {
       await tester.enterText(_textFieldAt(0), 'Renamed Only');
       await _save(tester);
 
-      final updated = container.read(collectionNotifierProvider).shelfSeries.single;
+      final updated = container
+          .read(collectionNotifierProvider)
+          .shelfSeries
+          .single;
       expect(updated.name, 'Renamed Only');
       expect(updated.brand, 'Cureplaneta');
       expect(updated.taxonomyBrandId, 'dpl');
@@ -340,60 +347,75 @@ void main() {
       }
     });
 
-    testWidgets('Test 5: advanced brand change canonicalizes and updates filters',
-        (tester) async {
-      tester.view.physicalSize = const Size(480, 1200);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
+    testWidgets(
+      'Test 5: advanced brand change canonicalizes and updates filters',
+      (tester) async {
+        tester.view.physicalSize = const Size(480, 1200);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
 
-      final series = _editableSeries();
-      final notifier = _EditAdvancedTestNotifier(
-        CollectionSnapshot(shelfSeries: [series], figureStates: const {}),
-      );
-      final container = await _pumpEditForm(
-        tester,
-        series: series,
-        notifier: notifier,
-      );
-      await _expandAdvanced(tester);
-      await tester.enterText(_textFieldAt(1), 'POP MART');
-      await _save(tester);
+        final series = _editableSeries();
+        final notifier = _EditAdvancedTestNotifier(
+          CollectionSnapshot(shelfSeries: [series], figureStates: const {}),
+        );
+        final container = await _pumpEditForm(
+          tester,
+          series: series,
+          notifier: notifier,
+        );
+        await _expandAdvanced(tester);
+        await tester.enterText(_textFieldAt(1), 'POP MART');
+        await _save(tester);
 
-      final updated = container.read(collectionNotifierProvider).shelfSeries.single;
-      expect(updated.brand, 'POP MART');
-      expect(updated.taxonomyBrandId, 'pop_mart');
-      expect(updated.ipName, 'Baby Three');
-      expect(updated.figures.every((f) => f.taxonomyBrandId == 'pop_mart'), isTrue);
-    });
+        final updated = container
+            .read(collectionNotifierProvider)
+            .shelfSeries
+            .single;
+        expect(updated.brand, 'POP MART');
+        expect(updated.taxonomyBrandId, 'pop_mart');
+        expect(updated.ipName, 'Baby Three');
+        expect(
+          updated.figures.every((f) => f.taxonomyBrandId == 'pop_mart'),
+          isTrue,
+        );
+      },
+    );
 
-    testWidgets('Test 6: advanced IP change canonicalizes and updates filters', (
-      tester,
-    ) async {
-      tester.view.physicalSize = const Size(480, 1200);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
+    testWidgets(
+      'Test 6: advanced IP change canonicalizes and updates filters',
+      (tester) async {
+        tester.view.physicalSize = const Size(480, 1200);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
 
-      final series = _editableSeries();
-      final notifier = _EditAdvancedTestNotifier(
-        CollectionSnapshot(shelfSeries: [series], figureStates: const {}),
-      );
-      final container = await _pumpEditForm(
-        tester,
-        series: series,
-        notifier: notifier,
-      );
-      await _expandAdvanced(tester);
-      await tester.enterText(_textFieldAt(2), 'the monsters');
-      await _save(tester);
+        final series = _editableSeries();
+        final notifier = _EditAdvancedTestNotifier(
+          CollectionSnapshot(shelfSeries: [series], figureStates: const {}),
+        );
+        final container = await _pumpEditForm(
+          tester,
+          series: series,
+          notifier: notifier,
+        );
+        await _expandAdvanced(tester);
+        await tester.enterText(_textFieldAt(2), 'the monsters');
+        await _save(tester);
 
-      final updated = container.read(collectionNotifierProvider).shelfSeries.single;
-      expect(updated.brand, 'Cureplaneta');
-      expect(updated.ipName, 'THE MONSTERS');
-      expect(updated.taxonomyIpId, 'the_monsters');
-      expect(updated.figures.every((f) => f.taxonomyIpId == 'the_monsters'), isTrue);
-    });
+        final updated = container
+            .read(collectionNotifierProvider)
+            .shelfSeries
+            .single;
+        expect(updated.brand, 'Cureplaneta');
+        expect(updated.ipName, 'THE MONSTERS');
+        expect(updated.taxonomyIpId, 'the_monsters');
+        expect(
+          updated.figures.every((f) => f.taxonomyIpId == 'the_monsters'),
+          isTrue,
+        );
+      },
+    );
 
     testWidgets('Test 7: advanced brand and IP change together', (
       tester,

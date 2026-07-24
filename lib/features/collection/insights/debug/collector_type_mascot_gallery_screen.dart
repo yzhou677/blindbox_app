@@ -4,6 +4,7 @@ import 'package:blindbox_app/features/collection/insights/domain/collector_type_
 import 'package:blindbox_app/features/collection/insights/widgets/collector_type_avatar.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Debug-only grid of all Collector Type mascots.
 ///
@@ -22,9 +23,7 @@ class CollectorTypeMascotGalleryScreen extends StatelessWidget {
     final types = CollectorTypeArchetypes.all;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Collector Type mascots'),
-      ),
+      appBar: AppBar(title: const Text('Collector Type mascots')),
       body: GridView.builder(
         padding: const EdgeInsets.fromLTRB(
           AppSpacing.pageHorizontal,
@@ -62,7 +61,7 @@ class CollectorTypeMascotGalleryScreen extends StatelessWidget {
                           .withValues(alpha: 0.18),
                     ),
                     child: Icon(
-                      archetype.icon ?? Icons.auto_awesome_outlined,
+                      archetype.icon ?? Symbols.auto_awesome_rounded,
                       size: 40,
                     ),
                   ),

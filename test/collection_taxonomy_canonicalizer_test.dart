@@ -6,7 +6,10 @@ void main() {
   setUp(CollectionTaxonomyCanonicalizer.resetIndexesForTest);
 
   test('registry indexes have no ambiguous brand or IP keys', () {
-    expect(CollectionTaxonomyCanonicalizer.ambiguousBrandKeysForTest(), isEmpty);
+    expect(
+      CollectionTaxonomyCanonicalizer.ambiguousBrandKeysForTest(),
+      isEmpty,
+    );
     expect(CollectionTaxonomyCanonicalizer.ambiguousIpKeysForTest(), isEmpty);
   });
 
@@ -17,8 +20,9 @@ void main() {
       required String taxonomyId,
       required bool matchedRegistry,
     }) {
-      final result =
-          CollectionTaxonomyCanonicalizer.resolveBrandFromUserInput(input);
+      final result = CollectionTaxonomyCanonicalizer.resolveBrandFromUserInput(
+        input,
+      );
       expect(result.displayLabel, displayLabel);
       expect(result.taxonomyId, taxonomyId);
       expect(result.matchedRegistry, matchedRegistry);
@@ -88,8 +92,9 @@ void main() {
     });
 
     test('empty brand resolves to Independent', () {
-      final result =
-          CollectionTaxonomyCanonicalizer.resolveBrandFromUserInput(null);
+      final result = CollectionTaxonomyCanonicalizer.resolveBrandFromUserInput(
+        null,
+      );
       expect(result.displayLabel, 'Independent');
       expect(result.taxonomyId, CustomSeriesConventions.independentBrandId);
       expect(result.matchedRegistry, isFalse);
@@ -103,8 +108,9 @@ void main() {
       required String taxonomyId,
       required bool matchedRegistry,
     }) {
-      final result =
-          CollectionTaxonomyCanonicalizer.resolveIpFromUserInput(input);
+      final result = CollectionTaxonomyCanonicalizer.resolveIpFromUserInput(
+        input,
+      );
       expect(result.displayLabel, displayLabel);
       expect(result.taxonomyId, taxonomyId);
       expect(result.matchedRegistry, matchedRegistry);

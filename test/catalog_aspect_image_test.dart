@@ -4,12 +4,8 @@ import 'package:flutter/material.dart';
 
 import 'package:flutter_test/flutter_test.dart';
 
-
-
 void main() {
-
   test('cover and contain preserve aspect; fill does not', () {
-
     expect(CatalogAspectImage.isAspectPreservingFit(BoxFit.cover), isTrue);
 
     expect(CatalogAspectImage.isAspectPreservingFit(BoxFit.contain), isTrue);
@@ -17,13 +13,9 @@ void main() {
     expect(CatalogAspectImage.isAspectPreservingFit(BoxFit.scaleDown), isTrue);
 
     expect(CatalogAspectImage.isAspectPreservingFit(BoxFit.fill), isFalse);
-
   });
 
-
-
   test('memCache height stays unused in display spec', () {
-
     const spec = CatalogImageDisplaySpec(
       presentationMode: CatalogImageMode.thumbnail,
       framing: CatalogImageFraming.coverFill,
@@ -40,13 +32,11 @@ void main() {
       contentPadding: EdgeInsets.zero,
 
       matOpacity: 0.5,
-
     );
 
-    expect(spec.memCacheHeightFor(const BoxConstraints(maxWidth: 100), 2.0), isNull);
-
+    expect(
+      spec.memCacheHeightFor(const BoxConstraints(maxWidth: 100), 2.0),
+      isNull,
+    );
   });
-
 }
-
-

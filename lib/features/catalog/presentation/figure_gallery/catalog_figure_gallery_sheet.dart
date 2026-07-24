@@ -3,12 +3,14 @@ import 'dart:ui' show ImageFilter;
 import 'package:blindbox_app/core/presentation/collectible_immersion.dart';
 import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
+import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
 import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_item.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_meta.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_page.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_precache.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Opens the shared fullscreen figure gallery (swipe, drag down, tap outside art to close).
 ///
@@ -118,11 +120,10 @@ class _CatalogFigureGallerySheetState extends State<CatalogFigureGallerySheet> {
   String? _captionSecondaryLine({
     required String? metaLine,
     required String? seriesTitle,
-  }) =>
-      catalogFigureGalleryCaptionSecondary(
-        metaLine: metaLine,
-        seriesTitle: seriesTitle,
-      );
+  }) => catalogFigureGalleryCaptionSecondary(
+    metaLine: metaLine,
+    seriesTitle: seriesTitle,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -146,9 +147,7 @@ class _CatalogFigureGallerySheetState extends State<CatalogFigureGallerySheet> {
               opacity: routeFade,
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
-                child: ColoredBox(
-                  color: CollectibleImmersion.galleryBarrier,
-                ),
+                child: ColoredBox(color: CollectibleImmersion.galleryBarrier),
               ),
             ),
             SafeArea(
@@ -173,7 +172,8 @@ class _CatalogFigureGallerySheetState extends State<CatalogFigureGallerySheet> {
                               tooltip: 'Close',
                               onPressed: _dismiss,
                               icon: const Icon(
-                                Icons.close_rounded,
+                                Symbols.close_rounded,
+                                size: AppIconSizes.navigation,
                                 color: _kGalleryForeground,
                               ),
                             ),
@@ -244,14 +244,15 @@ class _CatalogFigureGallerySheetState extends State<CatalogFigureGallerySheet> {
                                 Text(
                                   captionSecondary,
                                   textAlign: TextAlign.center,
-                                  style: CollectibleTypography.figureMeta(
-                                    textTheme,
-                                    Theme.of(context).colorScheme,
-                                  ).copyWith(
-                                    color: _kGalleryForeground.withValues(
-                                      alpha: 0.78,
-                                    ),
-                                  ),
+                                  style:
+                                      CollectibleTypography.figureMeta(
+                                        textTheme,
+                                        Theme.of(context).colorScheme,
+                                      ).copyWith(
+                                        color: _kGalleryForeground.withValues(
+                                          alpha: 0.78,
+                                        ),
+                                      ),
                                 ),
                               ],
                             ],
@@ -315,10 +316,7 @@ class _GalleryDragHandleState extends State<_GalleryDragHandle> {
 }
 
 class _GalleryPageIndicator extends StatelessWidget {
-  const _GalleryPageIndicator({
-    required this.count,
-    required this.index,
-  });
+  const _GalleryPageIndicator({required this.count, required this.index});
 
   final int count;
   final int index;

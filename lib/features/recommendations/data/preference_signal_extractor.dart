@@ -29,11 +29,14 @@ class PreferenceSignals {
   /// Catalog series with at least one owned figure — collection progress and
   /// confidence tiers only; not used by the recommendation pipeline.
   final Set<String> ownedCatalogSeriesIds;
+
   /// Wishlist progress inside tracked series — collection/Market only; not used
   /// by the recommendation pipeline.
   final Set<String> wishlistCatalogSeriesIds;
+
   /// Taxonomy IPs from tracked catalog series — IP affinity scoring at compute.
   final Set<String> trackedIpIds;
+
   /// Taxonomy IPs with wishlist figures — not used by recommendations.
   final Set<String> wishlistIpIds;
   final int trackedCatalogSeriesCount;
