@@ -3,10 +3,7 @@ import 'package:flutter/foundation.dart';
 
 @immutable
 class RecommendationResult {
-  const RecommendationResult({
-    required this.items,
-    this.profileHash,
-  });
+  const RecommendationResult({required this.items, this.profileHash});
 
   final List<RecommendationItem> items;
 
@@ -14,9 +11,9 @@ class RecommendationResult {
   final String? profileHash;
 
   Map<String, dynamic> toJson() => {
-        if (profileHash != null) 'profileHash': profileHash,
-        'items': [for (final item in items) item.toJson()],
-      };
+    if (profileHash != null) 'profileHash': profileHash,
+    'items': [for (final item in items) item.toJson()],
+  };
 
   factory RecommendationResult.fromJson(Map<String, dynamic> json) {
     final rawItems = json['items'];

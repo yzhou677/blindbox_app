@@ -22,14 +22,17 @@ void main() {
       );
     });
 
-    test('past earlier month same year → month releases (no seasonal label)', () {
-      final clock = DateTime(2026, 4, 15);
-      final r = DateTime(2026, 3, 10);
-      expect(
-        HomeDropRailContext.homeReleaseWindowLabel(r, clock: clock),
-        'March releases',
-      );
-    });
+    test(
+      'past earlier month same year → month releases (no seasonal label)',
+      () {
+        final clock = DateTime(2026, 4, 15);
+        final r = DateTime(2026, 3, 10);
+        expect(
+          HomeDropRailContext.homeReleaseWindowLabel(r, clock: clock),
+          'March releases',
+        );
+      },
+    );
 
     test('past different month same year → month releases', () {
       final clock = DateTime(2026, 4, 15);
@@ -69,10 +72,7 @@ void main() {
   });
 
   test('recentReleasesRailCaption is stable copy', () {
-    expect(
-      HomeDropRailContext.recentReleasesRailCaption,
-      'Recent releases',
-    );
+    expect(HomeDropRailContext.recentReleasesRailCaption, 'Recent releases');
   });
 
   group('HomeDropRailContext.latestDropsRailCaption', () {

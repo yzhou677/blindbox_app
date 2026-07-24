@@ -9,61 +9,70 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
 void main() {
-  test('RecommendationHttpClient parses for-you items with legacy reasonType', () async {
-    final client = RecommendationHttpClient(
-      client: MockClient((request) async {
-        expect(request.url.path, endsWith('/v1/for-you'));
-        return http.Response(
-          jsonEncode({
-            'items': [
-              {
-                'seriesId': 'dimoo_new',
-                'reasonType': RecommendationReasonType.trackedIp,
-                'reasonMeta': 'DIMOO',
-              },
-            ],
-          }),
-          200,
-        );
-      }),
-    );
+  test(
+    'RecommendationHttpClient parses for-you items with legacy reasonType',
+    () async {
+      final client = RecommendationHttpClient(
+        client: MockClient((request) async {
+          expect(request.url.path, endsWith('/v1/for-you'));
+          return http.Response(
+            jsonEncode({
+              'items': [
+                {
+                  'seriesId': 'dimoo_new',
+                  'reasonType': RecommendationReasonType.trackedIp,
+                  'reasonMeta': 'DIMOO',
+                },
+              ],
+            }),
+            200,
+          );
+        }),
+      );
 
-    final result = await client.fetchForYou(
-      baseUrl: Uri.parse(RecommendationGatewayConfig.gatewayBaseUrl),
-      installId: 'install-1',
-    );
+      final result = await client.fetchForYou(
+        baseUrl: Uri.parse(RecommendationGatewayConfig.gatewayBaseUrl),
+        installId: 'install-1',
+      );
 
-    expect(result.items, hasLength(1));
-    expect(result.items.first.seriesId, 'dimoo_new');
-    expect(result.items.first.primaryReasonType, RecommendationReasonType.trackedIp);
-    expect(result.items.first.reasonType, RecommendationReasonType.trackedIp);
-  });
+      expect(result.items, hasLength(1));
+      expect(result.items.first.seriesId, 'dimoo_new');
+      expect(
+        result.items.first.primaryReasonType,
+        RecommendationReasonType.trackedIp,
+      );
+      expect(result.items.first.reasonType, RecommendationReasonType.trackedIp);
+    },
+  );
 
-  test('RecommendationHttpClient parses profileHash on for-you responses', () async {
-    final client = RecommendationHttpClient(
-      client: MockClient((request) async {
-        return http.Response(
-          jsonEncode({
-            'profileHash': 'hash-abc',
-            'items': [
-              {
-                'seriesId': 'dimoo_new',
-                'reasonType': RecommendationReasonType.trackedIp,
-              },
-            ],
-          }),
-          200,
-        );
-      }),
-    );
+  test(
+    'RecommendationHttpClient parses profileHash on for-you responses',
+    () async {
+      final client = RecommendationHttpClient(
+        client: MockClient((request) async {
+          return http.Response(
+            jsonEncode({
+              'profileHash': 'hash-abc',
+              'items': [
+                {
+                  'seriesId': 'dimoo_new',
+                  'reasonType': RecommendationReasonType.trackedIp,
+                },
+              ],
+            }),
+            200,
+          );
+        }),
+      );
 
-    final result = await client.fetchForYou(
-      baseUrl: Uri.parse(RecommendationGatewayConfig.gatewayBaseUrl),
-      installId: 'install-1',
-    );
+      final result = await client.fetchForYou(
+        baseUrl: Uri.parse(RecommendationGatewayConfig.gatewayBaseUrl),
+        installId: 'install-1',
+      );
 
-    expect(result.profileHash, 'hash-abc');
-  });
+      expect(result.profileHash, 'hash-abc');
+    },
+  );
 
   test('RecommendationHttpClient parses dual-reason for-you items', () async {
     final client = RecommendationHttpClient(
@@ -88,8 +97,14 @@ void main() {
       baseUrl: Uri.parse(RecommendationGatewayConfig.gatewayBaseUrl),
       installId: 'install-1',
     );
-    expect(result.items.first.primaryReasonType, RecommendationReasonType.trackedIp);
-    expect(result.items.first.secondaryReasonType, RecommendationReasonType.recentRelease);
+    expect(
+      result.items.first.primaryReasonType,
+      RecommendationReasonType.trackedIp,
+    );
+    expect(
+      result.items.first.secondaryReasonType,
+      RecommendationReasonType.recentRelease,
+    );
     expect(result.items.first.primaryReasonMeta, 'DIMOO');
   });
 

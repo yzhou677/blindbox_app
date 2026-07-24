@@ -5,8 +5,7 @@ abstract final class ForYouCopy {
   static const sectionTitle = 'For You';
   static const sectionSubtitle = 'Picked from your collection taste';
   static const firstUnlockBadge = 'New';
-  static const firstUnlockSubtitle =
-      "We've learned your collection taste.";
+  static const firstUnlockSubtitle = "We've learned your collection taste.";
 }
 
 /// Deterministic display priority — lower index wins.

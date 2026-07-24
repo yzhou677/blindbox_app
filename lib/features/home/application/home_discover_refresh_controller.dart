@@ -7,8 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final homeDiscoverRefreshProvider =
     NotifierProvider<HomeDiscoverRefreshNotifier, bool>(
-  HomeDiscoverRefreshNotifier.new,
-);
+      HomeDiscoverRefreshNotifier.new,
+    );
 
 /// `true` while a manual Discover pull-to-refresh is in flight.
 class HomeDiscoverRefreshNotifier extends Notifier<bool> {

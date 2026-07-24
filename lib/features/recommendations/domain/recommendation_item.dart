@@ -26,9 +26,7 @@ class RecommendationItem {
   /// Legacy alias for [primaryReasonMeta].
   String? get reasonMeta => primaryReasonMeta;
 
-  RecommendationItem copyWith({
-    catalog.CatalogSeries? series,
-  }) {
+  RecommendationItem copyWith({catalog.CatalogSeries? series}) {
     return RecommendationItem(
       seriesId: seriesId,
       primaryReasonType: primaryReasonType,
@@ -40,21 +38,19 @@ class RecommendationItem {
   }
 
   Map<String, dynamic> toJson() => {
-        'seriesId': seriesId,
-        'primaryReasonType': primaryReasonType,
-        if (primaryReasonMeta != null) 'primaryReasonMeta': primaryReasonMeta,
-        if (secondaryReasonType != null)
-          'secondaryReasonType': secondaryReasonType,
-        if (secondaryReasonMeta != null)
-          'secondaryReasonMeta': secondaryReasonMeta,
-        // Legacy fields mirror primary for older clients and cached rows.
-        'reasonType': primaryReasonType,
-        if (primaryReasonMeta != null) 'reasonMeta': primaryReasonMeta,
-      };
+    'seriesId': seriesId,
+    'primaryReasonType': primaryReasonType,
+    if (primaryReasonMeta != null) 'primaryReasonMeta': primaryReasonMeta,
+    if (secondaryReasonType != null) 'secondaryReasonType': secondaryReasonType,
+    if (secondaryReasonMeta != null) 'secondaryReasonMeta': secondaryReasonMeta,
+    // Legacy fields mirror primary for older clients and cached rows.
+    'reasonType': primaryReasonType,
+    if (primaryReasonMeta != null) 'reasonMeta': primaryReasonMeta,
+  };
 
   factory RecommendationItem.fromJson(Map<String, dynamic> json) {
-    final primaryType = json['primaryReasonType'] as String? ??
-        json['reasonType'] as String?;
+    final primaryType =
+        json['primaryReasonType'] as String? ?? json['reasonType'] as String?;
     if (primaryType == null) {
       throw FormatException('Missing recommendation reason for series');
     }
@@ -62,8 +58,8 @@ class RecommendationItem {
     return RecommendationItem(
       seriesId: json['seriesId'] as String,
       primaryReasonType: primaryType,
-      primaryReasonMeta: json['primaryReasonMeta'] as String? ??
-          json['reasonMeta'] as String?,
+      primaryReasonMeta:
+          json['primaryReasonMeta'] as String? ?? json['reasonMeta'] as String?,
       secondaryReasonType: json['secondaryReasonType'] as String?,
       secondaryReasonMeta: json['secondaryReasonMeta'] as String?,
     );

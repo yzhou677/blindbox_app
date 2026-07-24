@@ -47,7 +47,8 @@ class _OfficialUpdatesFeed extends StatelessWidget {
         ),
         SizedBox(
           height:
-              FeedRhythm.sectionHeaderToRail - FeedRhythm.sectionTitleToSubtitle,
+              FeedRhythm.sectionHeaderToRail -
+              FeedRhythm.sectionTitleToSubtitle,
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),

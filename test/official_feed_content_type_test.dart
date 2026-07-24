@@ -30,7 +30,8 @@ void main() {
     expect(
       inferOfficialFeedContentTypeLabel(
         _item(
-          title: 'CRYBABY Cry Me an Ocean Series — Vinyl Plush Pendant Blind Box',
+          title:
+              'CRYBABY Cry Me an Ocean Series — Vinyl Plush Pendant Blind Box',
           summary: 'Vinyl plush pendants — online May 14, 7:00 PM PT',
           officialUrl:
               'https://www.popmart.com/us/products/6278/crybaby-cry-me-an-ocean-series-vinyl-plush-pendant-blind-box',
@@ -43,7 +44,8 @@ void main() {
     expect(
       inferOfficialFeedContentTypeLabel(
         _item(
-          title: 'CRYBABY Tears Launch Project Series — Plush Pendant Blind Box',
+          title:
+              'CRYBABY Tears Launch Project Series — Plush Pendant Blind Box',
           summary: 'Plush pendants — online Feb 19, 6:00 PM PT',
           officialUrl:
               'https://www.popmart.com/us/products/5820/crybaby-tears-launch-project-series-plush-pendant-blind-box',
@@ -57,7 +59,8 @@ void main() {
         _item(
           title: 'THE MONSTERS — Have a Seat Vinyl Plush Blind Box',
           summary: 'POP NOW vinyl plush blind box — \$27.99',
-          officialUrl: 'https://www.popmart.com/us/pop-now/set/50-10009838800350',
+          officialUrl:
+              'https://www.popmart.com/us/pop-now/set/50-10009838800350',
           releaseType: 'pop_now',
         ),
       ),

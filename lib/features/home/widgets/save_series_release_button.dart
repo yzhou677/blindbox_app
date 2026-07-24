@@ -1,3 +1,5 @@
+import 'package:blindbox_app/core/theme/app_radii.dart';
+import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/application/collection_series_identity.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
@@ -7,6 +9,7 @@ import 'package:blindbox_app/features/home/domain/series_release.dart';
 import 'package:blindbox_app/shared/widgets/catalog_quick_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// How [SaveSeriesReleaseButton] presents on Home (icon on cards vs filled CTA on detail).
 enum SeriesReleaseShelfCtaVariant {
@@ -66,8 +69,9 @@ class SeriesReleaseWishlistButton extends ConsumerWidget {
       semanticsLabel: wishlisted
           ? 'Remove series from wishlist'
           : 'Add series to wishlist',
-      icon: wishlisted ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+      icon: Symbols.favorite_rounded,
       active: wishlisted,
+      filled: wishlisted,
       onPressed: () {
         final notifier = ref.read(collectionNotifierProvider.notifier);
         final previousIndex = snap.seriesWishlist.indexWhere(
@@ -226,11 +230,11 @@ class _SaveSeriesReleaseButtonState
 
     if (widget.variant == SeriesReleaseShelfCtaVariant.filled) {
       final filledStyle = FilledButton.styleFrom(
-        minimumSize: const Size(0, 46),
-        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+        minimumSize: const Size(0, 48),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         elevation: 0,
         shadowColor: scheme.shadow.withValues(alpha: 0.14),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: AppRadii.matRadius),
         textStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
           fontWeight: FontWeight.w600,
           letterSpacing: -0.15,
@@ -252,7 +256,7 @@ class _SaveSeriesReleaseButtonState
               )
             : FilledButton.icon(
                 onPressed: () => _handleTap(match),
-                icon: Icon(cta.icon, size: 21),
+                icon: Icon(cta.icon, size: AppIconSizes.cta),
                 label: Text(cta.label),
                 style: filledStyle,
               ),
@@ -275,7 +279,7 @@ class _SaveSeriesReleaseButtonState
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
           onPressed: cta.enabled ? () => _handleTap(match) : null,
-          icon: Icon(cta.icon, size: 22, color: iconColor),
+          icon: Icon(cta.icon, size: AppIconSizes.cta, color: iconColor),
         ),
       ),
     );

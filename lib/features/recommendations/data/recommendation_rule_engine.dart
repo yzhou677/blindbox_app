@@ -35,9 +35,7 @@ List<RecommendationItem> computeLocalRecommendations({
   int limit = RecommendationGatewayConfig.forYouResultLimit,
 }) {
   final now = clock ?? DateTime.now();
-  final ipNameById = {
-    for (final ip in bundle.ips) ip.id: ip.displayName,
-  };
+  final ipNameById = {for (final ip in bundle.ips) ip.id: ip.displayName};
   final orderIndex = <String, int>{
     for (var i = 0; i < bundle.series.length; i++) bundle.series[i].id: i,
   };
@@ -254,11 +252,7 @@ List<_ScoredCandidate> _applyIpDiversity({
   return diversified;
 }
 
-bool _canAddSeriesForIp(
-  String ipId,
-  Map<String, int> ipCounts,
-  int maxPerIp,
-) {
+bool _canAddSeriesForIp(String ipId, Map<String, int> ipCounts, int maxPerIp) {
   return (ipCounts[ipId] ?? 0) < maxPerIp;
 }
 
@@ -282,7 +276,9 @@ List<RecommendationItem> _composeCuratedResults({
   if (ranked.isEmpty) return <RecommendationItem>[];
 
   final stableSlots = RecommendationGatewayConfig.forYouStableSlotCount(limit);
-  final exploreSlots = RecommendationGatewayConfig.forYouExplorationSlotCount(limit);
+  final exploreSlots = RecommendationGatewayConfig.forYouExplorationSlotCount(
+    limit,
+  );
   final stableCount = min(stableSlots, ranked.length);
   final stable = ranked.take(stableCount);
   final explorePool = ranked.skip(stableCount).toList();

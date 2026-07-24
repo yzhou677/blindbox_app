@@ -14,127 +14,151 @@ void main() {
     CatalogBundleCache.persistOverride = (_) async {};
   });
 
-  test('homeDiscoverRefreshProvider reloads official feed without awaiting catalog',
-      () async {
-    var catalogRefreshCount = 0;
-    var officialFeedLoadCount = 0;
+  test(
+    'homeDiscoverRefreshProvider reloads official feed without awaiting catalog',
+    () async {
+      var catalogRefreshCount = 0;
+      var officialFeedLoadCount = 0;
 
-    CatalogBundleCache.prime(
-      const CatalogSeedBundle(brands: [], ips: [], series: [], figures: []),
-    );
-    CatalogBundleCache.loadFirestoreOverride = () async {
-      catalogRefreshCount++;
-      await Future<void>.delayed(const Duration(milliseconds: 200));
-      return const CatalogSeedBundle(brands: [], ips: [], series: [], figures: []);
-    };
+      CatalogBundleCache.prime(
+        const CatalogSeedBundle(brands: [], ips: [], series: [], figures: []),
+      );
+      CatalogBundleCache.loadFirestoreOverride = () async {
+        catalogRefreshCount++;
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+        return const CatalogSeedBundle(
+          brands: [],
+          ips: [],
+          series: [],
+          figures: [],
+        );
+      };
 
-    final container = ProviderContainer(
-      overrides: [
-        officialFeedListProvider.overrideWith((ref) async {
-          officialFeedLoadCount++;
-          return const <OfficialFeedItem>[];
-        }),
-      ],
-    );
-    addTearDown(container.dispose);
+      final container = ProviderContainer(
+        overrides: [
+          officialFeedListProvider.overrideWith((ref) async {
+            officialFeedLoadCount++;
+            return const <OfficialFeedItem>[];
+          }),
+        ],
+      );
+      addTearDown(container.dispose);
 
-    final stopwatch = Stopwatch()..start();
-    await container.read(homeDiscoverRefreshProvider.notifier).refresh();
-    stopwatch.stop();
+      final stopwatch = Stopwatch()..start();
+      await container.read(homeDiscoverRefreshProvider.notifier).refresh();
+      stopwatch.stop();
 
-    expect(stopwatch.elapsed, lessThan(const Duration(milliseconds: 150)));
-    expect(officialFeedLoadCount, 1);
-    expect(container.read(homeDiscoverRefreshProvider), isFalse);
+      expect(stopwatch.elapsed, lessThan(const Duration(milliseconds: 150)));
+      expect(officialFeedLoadCount, 1);
+      expect(container.read(homeDiscoverRefreshProvider), isFalse);
 
-    await Future<void>.delayed(const Duration(milliseconds: 250));
-    expect(catalogRefreshCount, 1);
-  });
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+      expect(catalogRefreshCount, 1);
+    },
+  );
 
-  test('homeDiscoverRefreshProvider skips catalog within TTL but reloads official feed',
-      () async {
-    var catalogRefreshCount = 0;
-    var officialFeedLoadCount = 0;
+  test(
+    'homeDiscoverRefreshProvider skips catalog within TTL but reloads official feed',
+    () async {
+      var catalogRefreshCount = 0;
+      var officialFeedLoadCount = 0;
 
-    CatalogBundleCache.prime(
-      const CatalogSeedBundle(brands: [], ips: [], series: [], figures: []),
-    );
-    CatalogBundleCache.setLastFirestoreRefreshAtForTest(DateTime.now());
-    CatalogBundleCache.loadFirestoreOverride = () async {
-      catalogRefreshCount++;
-      return const CatalogSeedBundle(brands: [], ips: [], series: [], figures: []);
-    };
+      CatalogBundleCache.prime(
+        const CatalogSeedBundle(brands: [], ips: [], series: [], figures: []),
+      );
+      CatalogBundleCache.setLastFirestoreRefreshAtForTest(DateTime.now());
+      CatalogBundleCache.loadFirestoreOverride = () async {
+        catalogRefreshCount++;
+        return const CatalogSeedBundle(
+          brands: [],
+          ips: [],
+          series: [],
+          figures: [],
+        );
+      };
 
-    final container = ProviderContainer(
-      overrides: [
-        officialFeedListProvider.overrideWith((ref) async {
-          officialFeedLoadCount++;
-          return const <OfficialFeedItem>[];
-        }),
-      ],
-    );
-    addTearDown(container.dispose);
+      final container = ProviderContainer(
+        overrides: [
+          officialFeedListProvider.overrideWith((ref) async {
+            officialFeedLoadCount++;
+            return const <OfficialFeedItem>[];
+          }),
+        ],
+      );
+      addTearDown(container.dispose);
 
-    await container.read(homeDiscoverRefreshProvider.notifier).refresh();
+      await container.read(homeDiscoverRefreshProvider.notifier).refresh();
 
-    expect(catalogRefreshCount, 0);
-    expect(officialFeedLoadCount, 1);
-  });
+      expect(catalogRefreshCount, 0);
+      expect(officialFeedLoadCount, 1);
+    },
+  );
 
-  test('homeDiscoverRefreshProvider invalidates home feed only when catalog fails',
-      () async {
-    var homeFeedLoadCount = 0;
+  test(
+    'homeDiscoverRefreshProvider invalidates home feed only when catalog fails',
+    () async {
+      var homeFeedLoadCount = 0;
 
-    CatalogBundleCache.prime(
-      const CatalogSeedBundle(brands: [], ips: [], series: [], figures: []),
-    );
-    CatalogBundleCache.loadFirestoreOverride = () async {
-      throw StateError('network down');
-    };
+      CatalogBundleCache.prime(
+        const CatalogSeedBundle(brands: [], ips: [], series: [], figures: []),
+      );
+      CatalogBundleCache.loadFirestoreOverride = () async {
+        throw StateError('network down');
+      };
 
-    final container = ProviderContainer(
-      overrides: [
-        officialFeedListProvider.overrideWith((_) async => const []),
-        homeFeedSnapshotProvider.overrideWith((ref) async {
-          homeFeedLoadCount++;
-          return const HomeFeedSnapshot(latest: [], trending: []);
-        }),
-      ],
-    );
-    addTearDown(container.dispose);
+      final container = ProviderContainer(
+        overrides: [
+          officialFeedListProvider.overrideWith((_) async => const []),
+          homeFeedSnapshotProvider.overrideWith((ref) async {
+            homeFeedLoadCount++;
+            return const HomeFeedSnapshot(latest: [], trending: []);
+          }),
+        ],
+      );
+      addTearDown(container.dispose);
 
-    await container.read(homeDiscoverRefreshProvider.notifier).refresh();
-    await pumpEventQueue();
+      await container.read(homeDiscoverRefreshProvider.notifier).refresh();
+      await pumpEventQueue();
 
-    expect(homeFeedLoadCount, 1);
-  });
+      expect(homeFeedLoadCount, 1);
+    },
+  );
 
-  test('homeDiscoverRefreshProvider ignores overlapping refresh calls', () async {
-    var catalogRefreshCount = 0;
+  test(
+    'homeDiscoverRefreshProvider ignores overlapping refresh calls',
+    () async {
+      var catalogRefreshCount = 0;
 
-    CatalogBundleCache.prime(
-      const CatalogSeedBundle(brands: [], ips: [], series: [], figures: []),
-    );
-    CatalogBundleCache.loadFirestoreOverride = () async {
-      catalogRefreshCount++;
-      await Future<void>.delayed(const Duration(milliseconds: 50));
-      return const CatalogSeedBundle(brands: [], ips: [], series: [], figures: []);
-    };
+      CatalogBundleCache.prime(
+        const CatalogSeedBundle(brands: [], ips: [], series: [], figures: []),
+      );
+      CatalogBundleCache.loadFirestoreOverride = () async {
+        catalogRefreshCount++;
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        return const CatalogSeedBundle(
+          brands: [],
+          ips: [],
+          series: [],
+          figures: [],
+        );
+      };
 
-    final container = ProviderContainer(
-      overrides: [
-        officialFeedListProvider.overrideWith((_) async => const []),
-      ],
-    );
-    addTearDown(container.dispose);
+      final container = ProviderContainer(
+        overrides: [
+          officialFeedListProvider.overrideWith((_) async => const []),
+        ],
+      );
+      addTearDown(container.dispose);
 
-    final notifier = container.read(homeDiscoverRefreshProvider.notifier);
-    final first = notifier.refresh();
-    final second = notifier.refresh();
+      final notifier = container.read(homeDiscoverRefreshProvider.notifier);
+      final first = notifier.refresh();
+      final second = notifier.refresh();
 
-    await Future.wait([first, second]);
-    await pumpEventQueue();
+      await Future.wait([first, second]);
+      await pumpEventQueue();
 
-    expect(catalogRefreshCount, 1);
-    expect(container.read(homeDiscoverRefreshProvider), isFalse);
-  });
+      expect(catalogRefreshCount, 1);
+      expect(container.read(homeDiscoverRefreshProvider), isFalse);
+    },
+  );
 }

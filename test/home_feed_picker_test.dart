@@ -8,14 +8,18 @@ import 'package:blindbox_app/features/home/data/home_feed_picker.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 CatalogSeedBundle _bundle(List<CatalogSeries> series) => CatalogSeedBundle(
-      brands: const [CatalogBrand(id: 'popmart', displayName: 'POP MART')],
-      ips: const [
-        CatalogIp(id: 'skullpanda', brandId: 'popmart', displayName: 'Skullpanda'),
-        CatalogIp(id: 'the_monsters', brandId: 'popmart', displayName: 'THE MONSTERS'),
-      ],
-      series: series,
-      figures: const [],
-    );
+  brands: const [CatalogBrand(id: 'popmart', displayName: 'POP MART')],
+  ips: const [
+    CatalogIp(id: 'skullpanda', brandId: 'popmart', displayName: 'Skullpanda'),
+    CatalogIp(
+      id: 'the_monsters',
+      brandId: 'popmart',
+      displayName: 'THE MONSTERS',
+    ),
+  ],
+  series: series,
+  figures: const [],
+);
 
 CatalogSeries _series(String id, String date, {String ipId = 'skullpanda'}) =>
     CatalogSeries(
@@ -55,10 +59,9 @@ void main() {
     ]);
     final pick = pickHomeFeedSeries(bundle, clock: clock, random: Random(1));
     expect(pick.latest, hasLength(12));
-    expect(
-      pick.latest.map((s) => s.id),
-      [for (var i = 11; i >= 0; i--) 'drop_$i'],
-    );
+    expect(pick.latest.map((s) => s.id), [
+      for (var i = 11; i >= 0; i--) 'drop_$i',
+    ]);
   });
 
   test('trending uses 60-day to 120-day window and excludes latest', () {
@@ -154,10 +157,7 @@ void main() {
     ]);
     final first = pickHomeFeedSeries(bundle, clock: clock);
     final second = pickHomeFeedSeries(bundle, clock: clock);
-    expect(
-      second.trending.map((s) => s.id),
-      first.trending.map((s) => s.id),
-    );
+    expect(second.trending.map((s) => s.id), first.trending.map((s) => s.id));
     expect(first.latest.map((s) => s.id), second.latest.map((s) => s.id));
   });
 
@@ -169,13 +169,17 @@ void main() {
       _series('t2', '2026-02-10'),
       _series('t3', '2026-01-25'),
     ]);
-    final firstOrder =
-        pickHomeFeedSeries(bundle, clock: clock).trending.map((s) => s.id).toList();
+    final firstOrder = pickHomeFeedSeries(
+      bundle,
+      clock: clock,
+    ).trending.map((s) => s.id).toList();
 
     resetTrendingSessionOrderForTest();
     seedTrendingSessionRandomForTest(99);
-    final secondOrder =
-        pickHomeFeedSeries(bundle, clock: clock).trending.map((s) => s.id).toList();
+    final secondOrder = pickHomeFeedSeries(
+      bundle,
+      clock: clock,
+    ).trending.map((s) => s.id).toList();
 
     expect(secondOrder, isNot(firstOrder));
   });
@@ -188,10 +192,14 @@ void main() {
       _series('t2', '2026-02-10'),
       _series('t3', '2026-01-25'),
     ]);
-    final firstOrder =
-        pickHomeFeedSeries(bundle, clock: clock).trending.map((s) => s.id).toList();
-    final refreshedOrder =
-        pickHomeFeedSeries(bundle, clock: clock).trending.map((s) => s.id).toList();
+    final firstOrder = pickHomeFeedSeries(
+      bundle,
+      clock: clock,
+    ).trending.map((s) => s.id).toList();
+    final refreshedOrder = pickHomeFeedSeries(
+      bundle,
+      clock: clock,
+    ).trending.map((s) => s.id).toList();
 
     expect(refreshedOrder, firstOrder);
   });
@@ -204,26 +212,20 @@ void main() {
       _series('t2', '2026-02-10'),
       _series('t3', '2026-01-25'),
     ];
-    final firstOrder = pickHomeFeedSeries(_bundle(base), clock: clock)
-        .trending
-        .map((s) => s.id)
-        .toList();
+    final firstOrder = pickHomeFeedSeries(
+      _bundle(base),
+      clock: clock,
+    ).trending.map((s) => s.id).toList();
 
-    final withNew = [
-      ...base,
-      _series('t4', '2026-02-01'),
-    ];
-    final secondOrder = pickHomeFeedSeries(_bundle(withNew), clock: clock)
-        .trending
-        .map((s) => s.id)
-        .toList();
+    final withNew = [...base, _series('t4', '2026-02-01')];
+    final secondOrder = pickHomeFeedSeries(
+      _bundle(withNew),
+      clock: clock,
+    ).trending.map((s) => s.id).toList();
 
     expect(secondOrder, hasLength(4));
     expect(secondOrder.toSet(), containsAll(['t1', 't2', 't3', 't4']));
-    expect(
-      secondOrder.where(firstOrder.contains).toList(),
-      isNot(firstOrder),
-    );
+    expect(secondOrder.where(firstOrder.contains).toList(), isNot(firstOrder));
   });
 
   test('trending drops removed series when pool membership changes', () {
@@ -241,8 +243,10 @@ void main() {
       _series('t1', '2026-03-15'),
       _series('t2', '2026-02-10'),
     ];
-    final trending =
-        pickHomeFeedSeries(_bundle(reduced), clock: clock).trending;
+    final trending = pickHomeFeedSeries(
+      _bundle(reduced),
+      clock: clock,
+    ).trending;
 
     expect(trending, hasLength(2));
     expect(trending.map((s) => s.id), isNot(contains('t3')));

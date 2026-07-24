@@ -11,7 +11,6 @@ class TrendingSeriesSection extends StatelessWidget {
 
   final List<SeriesRelease> releases;
 
-
   @override
   Widget build(BuildContext context) {
     if (releases.isEmpty) return const SizedBox.shrink();
@@ -24,22 +23,26 @@ class TrendingSeriesSection extends StatelessWidget {
       children: [
         const CollectibleSectionHeader(
           title: 'Trending series',
+          dense: true,
           padding: EdgeInsets.fromLTRB(20, 2, 20, 0),
         ),
         const SizedBox(height: FeedRhythm.sectionHeaderToRail),
         ColoredBox(
           color: HomeSectionZones.trendingSeriesMat(scheme, brightness),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 18),
+            padding: const EdgeInsets.symmetric(
+              vertical: FeedRhythm.homeSeriesRailMatVertical,
+            ),
             child: SizedBox(
               height: FeedRhythm.homeSeriesRailHeight,
               child: ListView.separated(
+                clipBehavior: Clip.none,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
                 itemCount: releases.length,
                 separatorBuilder: (context, index) =>
-                    SizedBox(width: FeedRhythm.horizontalRailCardGap),
+                    SizedBox(width: FeedRhythm.homeSeriesRailCardGap),
                 itemBuilder: (context, index) =>
                     LatestDropCard(release: releases[index]),
               ),

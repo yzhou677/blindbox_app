@@ -10,10 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// Built Latest + Trending rails for Discover.
 @immutable
 class HomeFeedSnapshot {
-  const HomeFeedSnapshot({
-    required this.latest,
-    required this.trending,
-  });
+  const HomeFeedSnapshot({required this.latest, required this.trending});
 
   final List<SeriesRelease> latest;
   final List<SeriesRelease> trending;
@@ -29,26 +26,24 @@ class HomeFeedSnapshot {
   }
 }
 
-HomeFeedSnapshot _emptyHomeFeedSnapshot() => const HomeFeedSnapshot(
-      latest: [],
-      trending: [],
-    );
+HomeFeedSnapshot _emptyHomeFeedSnapshot() =>
+    const HomeFeedSnapshot(latest: [], trending: []);
 
 final homeFeedSnapshotProvider = FutureProvider<HomeFeedSnapshot>((ref) async {
   try {
     final bundle = await ref.watch(catalogBundleProvider.future);
     final pick = pickHomeFeedSeries(bundle);
     final latest = await buildSeriesReleasesFromCatalog(bundle, pick.latest);
-    final trending = await buildSeriesReleasesFromCatalog(bundle, pick.trending);
+    final trending = await buildSeriesReleasesFromCatalog(
+      bundle,
+      pick.trending,
+    );
 
     if (latest.isEmpty && trending.isEmpty) {
       return _emptyHomeFeedSnapshot();
     }
 
-    return HomeFeedSnapshot(
-      latest: latest,
-      trending: trending,
-    );
+    return HomeFeedSnapshot(latest: latest, trending: trending);
   } catch (_) {
     return _emptyHomeFeedSnapshot();
   }
@@ -57,5 +52,6 @@ final homeFeedSnapshotProvider = FutureProvider<HomeFeedSnapshot>((ref) async {
 /// Catalog-backed drops with mock fallback for legacy ids / tests.
 final homeSeriesReleaseLookupProvider = Provider<SeriesReleaseLookup>((ref) {
   final feed = ref.watch(homeFeedSnapshotProvider).valueOrNull;
-  return (dropId) => feed?.releaseByDropId(dropId) ?? mockSeriesReleaseByDropId(dropId);
+  return (dropId) =>
+      feed?.releaseByDropId(dropId) ?? mockSeriesReleaseByDropId(dropId);
 });

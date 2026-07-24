@@ -20,11 +20,13 @@ import 'package:blindbox_app/features/recommendations/domain/recommendation_reas
 import 'package:blindbox_app/features/recommendations/domain/recommendation_result.dart';
 import 'package:blindbox_app/features/recommendations/presentation/for_you_copy.dart';
 import 'package:blindbox_app/features/recommendations/widgets/for_you_section.dart';
+import 'package:blindbox_app/shared/widgets/catalog_quick_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'helpers/collection_fixtures.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 CatalogSeedBundle _testBundle() {
   return CatalogSeedBundle(
@@ -154,25 +156,28 @@ void main() {
       );
     });
 
-    test('visibleForYouResult drops tracked series from stale keep-previous rail', () {
-      final previous = resultWithItems();
-      final signals = PreferenceSignals(
-        trackedCatalogSeriesIds: {'dimoo_new'},
-        ownedCatalogSeriesIds: const {},
-        wishlistCatalogSeriesIds: const {},
-        trackedIpIds: const {},
-        wishlistIpIds: const {},
-        trackedCatalogSeriesCount: 1,
-        ownedCatalogSeriesCount: 0,
-        wishlistCatalogSeriesCount: 0,
-        profileHash: 'hash',
-      );
+    test(
+      'visibleForYouResult drops tracked series from stale keep-previous rail',
+      () {
+        final previous = resultWithItems();
+        final signals = PreferenceSignals(
+          trackedCatalogSeriesIds: {'dimoo_new'},
+          ownedCatalogSeriesIds: const {},
+          wishlistCatalogSeriesIds: const {},
+          trackedIpIds: const {},
+          wishlistIpIds: const {},
+          trackedCatalogSeriesCount: 1,
+          ownedCatalogSeriesCount: 0,
+          wishlistCatalogSeriesCount: 0,
+          profileHash: 'hash',
+        );
 
-      expect(
-        visibleForYouResult(displayResult: previous, signals: signals)?.items,
-        isEmpty,
-      );
-    });
+        expect(
+          visibleForYouResult(displayResult: previous, signals: signals)?.items,
+          isEmpty,
+        );
+      },
+    );
   });
 
   testWidgets('ForYouSection hidden when readiness is false', (tester) async {
@@ -209,7 +214,9 @@ void main() {
     expect(find.text(ForYouCopy.sectionTitle), findsNothing);
   });
 
-  testWidgets('ForYouSection reserves no vertical space when hidden', (tester) async {
+  testWidgets('ForYouSection reserves no vertical space when hidden', (
+    tester,
+  ) async {
     CollectionAppBootstrap.prime(CollectionSnapshot.emptyTest());
 
     await tester.pumpWidget(
@@ -251,7 +258,9 @@ void main() {
             () => _ReadyReadinessNotifier(),
           ),
           catalogBundleProvider.overrideWith((ref) async => _testBundle()),
-          anonymousInstallIdProvider.overrideWith((ref) async => 'test-install'),
+          anonymousInstallIdProvider.overrideWith(
+            (ref) async => 'test-install',
+          ),
           recommendationsProvider.overrideWith(
             (ref) async => RecommendationResult(
               items: [
@@ -299,7 +308,9 @@ void main() {
             () => _ReadyReadinessNotifier(),
           ),
           catalogBundleProvider.overrideWith((ref) async => _testBundle()),
-          anonymousInstallIdProvider.overrideWith((ref) async => 'test-install'),
+          anonymousInstallIdProvider.overrideWith(
+            (ref) async => 'test-install',
+          ),
           recommendationsProvider.overrideWith((ref) => completer.future),
         ],
         child: MaterialApp(
@@ -326,7 +337,9 @@ void main() {
             () => _ReadyReadinessNotifier(),
           ),
           catalogBundleProvider.overrideWith((ref) async => _testBundle()),
-          anonymousInstallIdProvider.overrideWith((ref) async => 'test-install'),
+          anonymousInstallIdProvider.overrideWith(
+            (ref) async => 'test-install',
+          ),
           recommendationsProvider.overrideWith(
             (ref) async => throw Exception('offline'),
           ),
@@ -344,8 +357,9 @@ void main() {
     expect(find.text(ForYouCopy.sectionTitle), findsNothing);
   });
 
-  testWidgets('ForYouSection hidden while catalog bundle is unavailable',
-      (tester) async {
+  testWidgets('ForYouSection hidden while catalog bundle is unavailable', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -380,8 +394,9 @@ void main() {
     expect(find.text(ForYouCopy.sectionTitle), findsNothing);
   });
 
-  testWidgets('ForYouSection shows reason line when ready and data present',
-      (tester) async {
+  testWidgets('ForYouSection shows reason line when ready and data present', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -389,7 +404,9 @@ void main() {
             () => _ReadyReadinessNotifier(),
           ),
           catalogBundleProvider.overrideWith((ref) async => _testBundle()),
-          anonymousInstallIdProvider.overrideWith((ref) async => 'test-install'),
+          anonymousInstallIdProvider.overrideWith(
+            (ref) async => 'test-install',
+          ),
           recommendationsProvider.overrideWith(
             (ref) async => RecommendationResult(
               items: [
@@ -418,14 +435,9 @@ void main() {
     expect(find.text(ForYouCopy.sectionTitle), findsOneWidget);
     expect(find.text('Collecting DIMOO'), findsOneWidget);
     expect(find.text('Dimoo New'), findsOneWidget);
-    expect(find.byIcon(Icons.auto_awesome_outlined), findsOneWidget);
-    expect(find.byIcon(Icons.favorite_border_rounded), findsOneWidget);
-
-    await tester.tap(find.byIcon(Icons.favorite_border_rounded));
-    await tester.pump();
-
-    expect(find.text('Added to Wishlist'), findsOneWidget);
-    expect(find.byIcon(Icons.favorite_rounded), findsOneWidget);
+    expect(find.byIcon(Symbols.auto_awesome_rounded), findsOneWidget);
+    expect(find.byIcon(Symbols.favorite_rounded), findsOneWidget);
+    expect(find.byType(CatalogQuickActionButton), findsOneWidget);
   });
 
   testWidgets('ForYouSection shows a single highest-priority reason', (
@@ -438,7 +450,9 @@ void main() {
             () => _ReadyReadinessNotifier(),
           ),
           catalogBundleProvider.overrideWith((ref) async => _testBundle()),
-          anonymousInstallIdProvider.overrideWith((ref) async => 'test-install'),
+          anonymousInstallIdProvider.overrideWith(
+            (ref) async => 'test-install',
+          ),
           recommendationsProvider.overrideWith(
             (ref) async => RecommendationResult(
               items: [
@@ -479,7 +493,9 @@ void main() {
             () => _ReadyReadinessNotifier(),
           ),
           catalogBundleProvider.overrideWith((ref) async => _testBundle()),
-          anonymousInstallIdProvider.overrideWith((ref) async => 'test-install'),
+          anonymousInstallIdProvider.overrideWith(
+            (ref) async => 'test-install',
+          ),
           recommendationsProvider.overrideWith(
             (ref) async => RecommendationResult(
               items: List.generate(
@@ -506,12 +522,12 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.byIcon(Icons.auto_awesome_outlined), findsOneWidget);
+    expect(find.byIcon(Symbols.auto_awesome_rounded), findsOneWidget);
 
     await tester.drag(find.byType(ListView), const Offset(-240, 0));
     await tester.pump();
 
-    expect(find.byIcon(Icons.auto_awesome_outlined), findsOneWidget);
+    expect(find.byIcon(Symbols.auto_awesome_rounded), findsOneWidget);
   });
 }
 

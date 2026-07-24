@@ -101,9 +101,7 @@ CollectionSnapshot _expandedCollectionSnapshot() {
 
 CatalogSeedBundle _testBundle() {
   return CatalogSeedBundle(
-    brands: const [
-      CatalogBrand(id: 'popmart', displayName: 'POP MART'),
-    ],
+    brands: const [CatalogBrand(id: 'popmart', displayName: 'POP MART')],
     ips: const [
       CatalogIp(id: 'dimoo', brandId: 'popmart', displayName: 'DIMOO'),
     ],
@@ -153,9 +151,7 @@ CollectionSnapshot _nommiHeavyCollectionSnapshot() {
 
 CatalogSeedBundle _nommiBundle() {
   return CatalogSeedBundle(
-    brands: const [
-      CatalogBrand(id: 'popmart', displayName: 'POP MART'),
-    ],
+    brands: const [CatalogBrand(id: 'popmart', displayName: 'POP MART')],
     ips: const [
       CatalogIp(id: 'nommi', brandId: 'popmart', displayName: 'NOMMI'),
       CatalogIp(id: 'labubu', brandId: 'popmart', displayName: 'LABUBU'),
@@ -269,11 +265,15 @@ void main() {
       expect(result.items, isNotEmpty);
       expect(result.items.map((item) => item.seriesId), contains('dimoo_new'));
       expect(
-        result.items.firstWhere((item) => item.seriesId == 'dimoo_new').primaryReasonType,
+        result.items
+            .firstWhere((item) => item.seriesId == 'dimoo_new')
+            .primaryReasonType,
         RecommendationReasonType.trackedIp,
       );
       expect(
-        result.items.firstWhere((item) => item.seriesId == 'dimoo_new').secondaryReasonType,
+        result.items
+            .firstWhere((item) => item.seriesId == 'dimoo_new')
+            .secondaryReasonType,
         RecommendationReasonType.recentRelease,
       );
       expect(result.profileHash, _ownedSignals().profileHash);
@@ -300,46 +300,52 @@ void main() {
       expect(items, isNotEmpty);
     });
 
-    test('returns session memo when profileHash unchanged without HTTP', () async {
-      final prefs = await SharedPreferences.getInstance();
-      var httpCalls = 0;
-      final repo = RecommendationRepository(
-        collectionSnapshot: _ownedCollectionSnapshot(),
-        httpClient: _httpClient(
-          forYouResponse: http.Response(
-            jsonEncode({
-              'items': [
-                {
-                  'seriesId': 'dimoo_new',
-                  'reasonType': RecommendationReasonType.trackedIp,
-                  'reasonMeta': 'DIMOO',
-                },
-              ],
-            }),
-            200,
+    test(
+      'returns session memo when profileHash unchanged without HTTP',
+      () async {
+        final prefs = await SharedPreferences.getInstance();
+        var httpCalls = 0;
+        final repo = RecommendationRepository(
+          collectionSnapshot: _ownedCollectionSnapshot(),
+          httpClient: _httpClient(
+            forYouResponse: http.Response(
+              jsonEncode({
+                'items': [
+                  {
+                    'seriesId': 'dimoo_new',
+                    'reasonType': RecommendationReasonType.trackedIp,
+                    'reasonMeta': 'DIMOO',
+                  },
+                ],
+              }),
+              200,
+            ),
+            onForYouGet: (_) => httpCalls++,
           ),
-          onForYouGet: (_) => httpCalls++,
-        ),
-        preferences: prefs,
-      );
+          preferences: prefs,
+        );
 
-      await repo.getRecommendations(_installId, _testBundle());
-      expect(httpCalls, 1);
+        await repo.getRecommendations(_installId, _testBundle());
+        expect(httpCalls, 1);
 
-      final secondPass = RecommendationRepository(
-        collectionSnapshot: _ownedCollectionSnapshot(),
-        httpClient: _httpClient(
-          forYouResponse: http.Response('should not be called', 500),
-          onForYouGet: (_) => httpCalls++,
-        ),
-        preferences: prefs,
-      );
+        final secondPass = RecommendationRepository(
+          collectionSnapshot: _ownedCollectionSnapshot(),
+          httpClient: _httpClient(
+            forYouResponse: http.Response('should not be called', 500),
+            onForYouGet: (_) => httpCalls++,
+          ),
+          preferences: prefs,
+        );
 
-      final result = await secondPass.getRecommendations(_installId, _testBundle());
+        final result = await secondPass.getRecommendations(
+          _installId,
+          _testBundle(),
+        );
 
-      expect(httpCalls, 1);
-      expect(result.items.single.seriesId, 'dimoo_new');
-    });
+        expect(httpCalls, 1);
+        expect(result.items.single.seriesId, 'dimoo_new');
+      },
+    );
 
     test('returns cache when profileHash matches without HTTP', () async {
       final prefs = await SharedPreferences.getInstance();
@@ -486,32 +492,38 @@ void main() {
       expect(filtered.items.map((item) => item.seriesId), ['dimoo_new']);
     });
 
-    test('stale cloud response recommending tracked series falls back to local', () async {
-      final prefs = await SharedPreferences.getInstance();
-      final repo = RecommendationRepository(
-        collectionSnapshot: _expandedCollectionSnapshot(),
-        httpClient: _httpClient(
-          forYouResponse: http.Response(
-            jsonEncode({
-              'items': [
-                {
-                  'seriesId': 'dimoo_new',
-                  'reasonType': RecommendationReasonType.trackedIp,
-                  'reasonMeta': 'DIMOO',
-                },
-              ],
-            }),
-            200,
+    test(
+      'stale cloud response recommending tracked series falls back to local',
+      () async {
+        final prefs = await SharedPreferences.getInstance();
+        final repo = RecommendationRepository(
+          collectionSnapshot: _expandedCollectionSnapshot(),
+          httpClient: _httpClient(
+            forYouResponse: http.Response(
+              jsonEncode({
+                'items': [
+                  {
+                    'seriesId': 'dimoo_new',
+                    'reasonType': RecommendationReasonType.trackedIp,
+                    'reasonMeta': 'DIMOO',
+                  },
+                ],
+              }),
+              200,
+            ),
           ),
-        ),
-        preferences: prefs,
-      );
+          preferences: prefs,
+        );
 
-      final result = await repo.getRecommendations(_installId, _testBundle());
+        final result = await repo.getRecommendations(_installId, _testBundle());
 
-      expect(result.items.map((item) => item.seriesId), isNot(contains('dimoo_new')));
-      expect(result.items, isEmpty);
-    });
+        expect(
+          result.items.map((item) => item.seriesId),
+          isNot(contains('dimoo_new')),
+        );
+        expect(result.items, isEmpty);
+      },
+    );
 
     test(
       'cloud response with matching profileHash but tracked series rejects whole payload',
@@ -540,7 +552,10 @@ void main() {
 
         final result = await repo.getRecommendations(_installId, _testBundle());
 
-        expect(result.items.map((item) => item.seriesId), isNot(contains('dimoo_new')));
+        expect(
+          result.items.map((item) => item.seriesId),
+          isNot(contains('dimoo_new')),
+        );
         expect(result.items, isEmpty);
       },
     );
@@ -586,60 +601,66 @@ void main() {
       },
     );
 
-    test('oversized stale cache is ignored and local fallback still runs', () async {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(
-        _cacheKey(),
-        jsonEncode({
-          'schemaVersion': 1,
-          'profileHash': _ownedSignals().profileHash,
-          'items': [
-            for (var i = 0; i < 20; i++)
-              {
-                'seriesId': 'dimoo_new',
-                'reasonType': RecommendationReasonType.trackedIp,
-                'reasonMeta': 'DIMOO',
-              },
-          ],
-        }),
-      );
+    test(
+      'oversized stale cache is ignored and local fallback still runs',
+      () async {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(
+          _cacheKey(),
+          jsonEncode({
+            'schemaVersion': 1,
+            'profileHash': _ownedSignals().profileHash,
+            'items': [
+              for (var i = 0; i < 20; i++)
+                {
+                  'seriesId': 'dimoo_new',
+                  'reasonType': RecommendationReasonType.trackedIp,
+                  'reasonMeta': 'DIMOO',
+                },
+            ],
+          }),
+        );
 
-      final repo = RecommendationRepository(
-        collectionSnapshot: _ownedCollectionSnapshot(),
-        httpClient: _httpClient(
-          forYouResponse: http.Response(jsonEncode({'items': []}), 200),
-        ),
-        preferences: prefs,
-      );
+        final repo = RecommendationRepository(
+          collectionSnapshot: _ownedCollectionSnapshot(),
+          httpClient: _httpClient(
+            forYouResponse: http.Response(jsonEncode({'items': []}), 200),
+          ),
+          preferences: prefs,
+        );
 
-      final result = await repo.getRecommendations(_installId, _testBundle());
+        final result = await repo.getRecommendations(_installId, _testBundle());
 
-      expect(result.items.length, lessThanOrEqualTo(10));
-    });
+        expect(result.items.length, lessThanOrEqualTo(10));
+      },
+    );
 
-    test('stale empty cache is ignored and local fallback still runs', () async {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(
-        _cacheKey(),
-        jsonEncode({
-          'schemaVersion': 1,
-          'profileHash': _ownedSignals().profileHash,
-          'items': [],
-        }),
-      );
+    test(
+      'stale empty cache is ignored and local fallback still runs',
+      () async {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(
+          _cacheKey(),
+          jsonEncode({
+            'schemaVersion': 1,
+            'profileHash': _ownedSignals().profileHash,
+            'items': [],
+          }),
+        );
 
-      final repo = RecommendationRepository(
-        collectionSnapshot: _ownedCollectionSnapshot(),
-        httpClient: _httpClient(
-          forYouResponse: http.Response(jsonEncode({'items': []}), 200),
-        ),
-        preferences: prefs,
-      );
+        final repo = RecommendationRepository(
+          collectionSnapshot: _ownedCollectionSnapshot(),
+          httpClient: _httpClient(
+            forYouResponse: http.Response(jsonEncode({'items': []}), 200),
+          ),
+          preferences: prefs,
+        );
 
-      final result = await repo.getRecommendations(_installId, _testBundle());
+        final result = await repo.getRecommendations(_installId, _testBundle());
 
-      expect(result.items, isNotEmpty);
-    });
+        expect(result.items, isNotEmpty);
+      },
+    );
 
     test('shelf-only tracked series never returned by repository', () async {
       final snap = CollectionSnapshot(
@@ -670,107 +691,138 @@ void main() {
       expect(result.items.map((item) => item.seriesId), contains('dimoo_new'));
     });
 
-    test('add catalog series to shelf excludes it from next repository fetch', () async {
-      CollectionAppBootstrap.prime(CollectionSnapshot.emptyTest());
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
+    test(
+      'add catalog series to shelf excludes it from next repository fetch',
+      () async {
+        CollectionAppBootstrap.prime(CollectionSnapshot.emptyTest());
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
 
-      final prefs = await SharedPreferences.getInstance();
-      final repoBefore = RecommendationRepository(
-        collectionSnapshot: container.read(collectionNotifierProvider),
-        httpClient: _httpClient(
-          forYouResponse: http.Response(jsonEncode({'items': []}), 200),
-        ),
-        preferences: prefs,
-      );
-      final before = await repoBefore.getRecommendations(_installId, _testBundle());
-      expect(before.items.map((item) => item.seriesId), contains('dimoo_owned'));
-
-      container.read(collectionNotifierProvider.notifier).addSeriesFromTemplate(
-            testCatalogTemplate(templateId: 'dimoo_owned'),
-          );
-      final snapAfter = container.read(collectionNotifierProvider);
-      expect(extractSignals(snapAfter).trackedCatalogSeriesIds, {'dimoo_owned'});
-      expect(extractSignals(snapAfter).ownedCatalogSeriesIds, isEmpty);
-
-      RecommendationRepository.resetComputedMemoForTest();
-      final repoAfter = RecommendationRepository(
-        collectionSnapshot: snapAfter,
-        httpClient: _httpClient(
-          forYouResponse: http.Response('should not hit', 500),
-        ),
-        preferences: prefs,
-      );
-      final after = await repoAfter.getRecommendations(_installId, _testBundle());
-
-      expect(after.items.map((item) => item.seriesId), isNot(contains('dimoo_owned')));
-    });
-
-    test('cloud response without profileHash uses local collection taste', () async {
-      final prefs = await SharedPreferences.getInstance();
-      final repo = RecommendationRepository(
-        collectionSnapshot: _nommiHeavyCollectionSnapshot(),
-        httpClient: _httpClient(
-          forYouResponse: http.Response(
-            jsonEncode({
-              'items': [
-                {
-                  'seriesId': 'labubu_other',
-                  'reasonType': RecommendationReasonType.newInCatalog,
-                },
-              ],
-            }),
-            200,
+        final prefs = await SharedPreferences.getInstance();
+        final repoBefore = RecommendationRepository(
+          collectionSnapshot: container.read(collectionNotifierProvider),
+          httpClient: _httpClient(
+            forYouResponse: http.Response(jsonEncode({'items': []}), 200),
           ),
-        ),
-        preferences: prefs,
-      );
+          preferences: prefs,
+        );
+        final before = await repoBefore.getRecommendations(
+          _installId,
+          _testBundle(),
+        );
+        expect(
+          before.items.map((item) => item.seriesId),
+          contains('dimoo_owned'),
+        );
 
-      final result = await repo.getRecommendations(_installId, _nommiBundle());
+        container
+            .read(collectionNotifierProvider.notifier)
+            .addSeriesFromTemplate(
+              testCatalogTemplate(templateId: 'dimoo_owned'),
+            );
+        final snapAfter = container.read(collectionNotifierProvider);
+        expect(extractSignals(snapAfter).trackedCatalogSeriesIds, {
+          'dimoo_owned',
+        });
+        expect(extractSignals(snapAfter).ownedCatalogSeriesIds, isEmpty);
 
-      expect(
-        result.items.map((item) => item.seriesId),
-        contains('nommi_reco'),
-      );
-      expect(
-        result.items
-            .where((item) => item.seriesId == 'nommi_reco')
-            .first
-            .primaryReasonType,
-        RecommendationReasonType.trackedIp,
-      );
-    });
-
-    test('cloud response with stale profileHash uses local collection taste', () async {
-      final prefs = await SharedPreferences.getInstance();
-      final signals = extractSignals(_nommiHeavyCollectionSnapshot());
-      final repo = RecommendationRepository(
-        collectionSnapshot: _nommiHeavyCollectionSnapshot(),
-        httpClient: _httpClient(
-          forYouResponse: http.Response(
-            jsonEncode({
-              'profileHash': 'stale-profile-hash',
-              'items': [
-                {
-                  'seriesId': 'labubu_other',
-                  'reasonType': RecommendationReasonType.newInCatalog,
-                },
-              ],
-            }),
-            200,
+        RecommendationRepository.resetComputedMemoForTest();
+        final repoAfter = RecommendationRepository(
+          collectionSnapshot: snapAfter,
+          httpClient: _httpClient(
+            forYouResponse: http.Response('should not hit', 500),
           ),
-        ),
-        preferences: prefs,
-      );
+          preferences: prefs,
+        );
+        final after = await repoAfter.getRecommendations(
+          _installId,
+          _testBundle(),
+        );
 
-      final result = await repo.getRecommendations(_installId, _nommiBundle());
+        expect(
+          after.items.map((item) => item.seriesId),
+          isNot(contains('dimoo_owned')),
+        );
+      },
+    );
 
-      expect(result.profileHash, signals.profileHash);
-      expect(
-        result.items.map((item) => item.seriesId),
-        contains('nommi_reco'),
-      );
-    });
+    test(
+      'cloud response without profileHash uses local collection taste',
+      () async {
+        final prefs = await SharedPreferences.getInstance();
+        final repo = RecommendationRepository(
+          collectionSnapshot: _nommiHeavyCollectionSnapshot(),
+          httpClient: _httpClient(
+            forYouResponse: http.Response(
+              jsonEncode({
+                'items': [
+                  {
+                    'seriesId': 'labubu_other',
+                    'reasonType': RecommendationReasonType.newInCatalog,
+                  },
+                ],
+              }),
+              200,
+            ),
+          ),
+          preferences: prefs,
+        );
+
+        final result = await repo.getRecommendations(
+          _installId,
+          _nommiBundle(),
+        );
+
+        expect(
+          result.items.map((item) => item.seriesId),
+          contains('nommi_reco'),
+        );
+        expect(
+          result.items
+              .where((item) => item.seriesId == 'nommi_reco')
+              .first
+              .primaryReasonType,
+          RecommendationReasonType.trackedIp,
+        );
+      },
+    );
+
+    test(
+      'cloud response with stale profileHash uses local collection taste',
+      () async {
+        final prefs = await SharedPreferences.getInstance();
+        final signals = extractSignals(_nommiHeavyCollectionSnapshot());
+        final repo = RecommendationRepository(
+          collectionSnapshot: _nommiHeavyCollectionSnapshot(),
+          httpClient: _httpClient(
+            forYouResponse: http.Response(
+              jsonEncode({
+                'profileHash': 'stale-profile-hash',
+                'items': [
+                  {
+                    'seriesId': 'labubu_other',
+                    'reasonType': RecommendationReasonType.newInCatalog,
+                  },
+                ],
+              }),
+              200,
+            ),
+          ),
+          preferences: prefs,
+        );
+
+        final result = await repo.getRecommendations(
+          _installId,
+          _nommiBundle(),
+        );
+
+        expect(result.profileHash, signals.profileHash);
+        expect(
+          result.items.map((item) => item.seriesId),
+          contains('nommi_reco'),
+        );
+      },
+    );
 
     test('cloud response with matching profileHash is accepted', () async {
       final prefs = await SharedPreferences.getInstance();
@@ -801,120 +853,138 @@ void main() {
       expect(result.profileHash, signals.profileHash);
     });
 
-    test('add series via template updates recommendations from local shelf', () async {
-      CollectionAppBootstrap.prime(CollectionSnapshot.emptyTest());
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
+    test(
+      'add series via template updates recommendations from local shelf',
+      () async {
+        CollectionAppBootstrap.prime(CollectionSnapshot.emptyTest());
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
 
-      final prefs = await SharedPreferences.getInstance();
-      final repoBefore = RecommendationRepository(
-        collectionSnapshot: container.read(collectionNotifierProvider),
-        httpClient: _httpClient(
-          forYouResponse: http.Response(jsonEncode({'items': []}), 200),
-        ),
-        preferences: prefs,
-      );
-      final before = await repoBefore.getRecommendations(_installId, _nommiBundle());
-      expect(
-        before.items.map((item) => item.seriesId),
-        isNot(contains('nommi_reco')),
-      );
-
-      container.read(collectionNotifierProvider.notifier).addSeriesFromTemplate(
-            testCatalogTemplate(
-              templateId: 'nommi_owned_1',
-              taxonomyIpId: 'nommi',
-              name: 'Nommi Owned 1',
-            ),
-          );
-      container.read(collectionNotifierProvider.notifier).addSeriesFromTemplate(
-            testCatalogTemplate(
-              templateId: 'nommi_owned_2',
-              taxonomyIpId: 'nommi',
-              name: 'Nommi Owned 2',
-            ),
-          );
-      container.read(collectionNotifierProvider.notifier).addSeriesFromTemplate(
-            testCatalogTemplate(
-              templateId: 'nommi_owned_3',
-              taxonomyIpId: 'nommi',
-              name: 'Nommi Owned 3',
-            ),
-          );
-
-      final snapAfter = container.read(collectionNotifierProvider);
-      final signals = extractSignals(snapAfter);
-      expect(signals.trackedIpIds, {'nommi'});
-      expect(signals.trackedCatalogSeriesIds.length, 3);
-
-      RecommendationRepository.resetComputedMemoForTest();
-      final repoAfter = RecommendationRepository(
-        collectionSnapshot: snapAfter,
-        httpClient: _httpClient(
-          forYouResponse: http.Response(
-            jsonEncode({
-              'profileHash': 'stale-profile-hash',
-              'items': [
-                {
-                  'seriesId': 'labubu_other',
-                  'reasonType': RecommendationReasonType.newInCatalog,
-                },
-              ],
-            }),
-            200,
+        final prefs = await SharedPreferences.getInstance();
+        final repoBefore = RecommendationRepository(
+          collectionSnapshot: container.read(collectionNotifierProvider),
+          httpClient: _httpClient(
+            forYouResponse: http.Response(jsonEncode({'items': []}), 200),
           ),
-        ),
-        preferences: prefs,
-      );
-      final after = await repoAfter.getRecommendations(_installId, _nommiBundle());
+          preferences: prefs,
+        );
+        final before = await repoBefore.getRecommendations(
+          _installId,
+          _nommiBundle(),
+        );
+        expect(
+          before.items.map((item) => item.seriesId),
+          isNot(contains('nommi_reco')),
+        );
 
-      expect(
-        after.items.map((item) => item.seriesId),
-        contains('nommi_reco'),
-      );
-      expect(
-        after.items
-            .where((item) => item.seriesId == 'nommi_reco')
-            .first
-            .primaryReasonType,
-        RecommendationReasonType.trackedIp,
-      );
-    });
+        container
+            .read(collectionNotifierProvider.notifier)
+            .addSeriesFromTemplate(
+              testCatalogTemplate(
+                templateId: 'nommi_owned_1',
+                taxonomyIpId: 'nommi',
+                name: 'Nommi Owned 1',
+              ),
+            );
+        container
+            .read(collectionNotifierProvider.notifier)
+            .addSeriesFromTemplate(
+              testCatalogTemplate(
+                templateId: 'nommi_owned_2',
+                taxonomyIpId: 'nommi',
+                name: 'Nommi Owned 2',
+              ),
+            );
+        container
+            .read(collectionNotifierProvider.notifier)
+            .addSeriesFromTemplate(
+              testCatalogTemplate(
+                templateId: 'nommi_owned_3',
+                taxonomyIpId: 'nommi',
+                name: 'Nommi Owned 3',
+              ),
+            );
+
+        final snapAfter = container.read(collectionNotifierProvider);
+        final signals = extractSignals(snapAfter);
+        expect(signals.trackedIpIds, {'nommi'});
+        expect(signals.trackedCatalogSeriesIds.length, 3);
+
+        RecommendationRepository.resetComputedMemoForTest();
+        final repoAfter = RecommendationRepository(
+          collectionSnapshot: snapAfter,
+          httpClient: _httpClient(
+            forYouResponse: http.Response(
+              jsonEncode({
+                'profileHash': 'stale-profile-hash',
+                'items': [
+                  {
+                    'seriesId': 'labubu_other',
+                    'reasonType': RecommendationReasonType.newInCatalog,
+                  },
+                ],
+              }),
+              200,
+            ),
+          ),
+          preferences: prefs,
+        );
+        final after = await repoAfter.getRecommendations(
+          _installId,
+          _nommiBundle(),
+        );
+
+        expect(
+          after.items.map((item) => item.seriesId),
+          contains('nommi_reco'),
+        );
+        expect(
+          after.items
+              .where((item) => item.seriesId == 'nommi_reco')
+              .first
+              .primaryReasonType,
+          RecommendationReasonType.trackedIp,
+        );
+      },
+    );
   });
 
   group('RecommendationRepository.updateProfile', () {
-    test('successful profile upload invalidates recommendation cache', () async {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(
-        _cacheKey(),
-        jsonEncode(
-          _cacheJson(
-            profileHash: _ownedSignals().profileHash,
-            items: [
-              {
-                'seriesId': 'dimoo_new',
-                'reasonType': RecommendationReasonType.trackedIp,
-                'reasonMeta': 'DIMOO',
-              },
-            ],
+    test(
+      'successful profile upload invalidates recommendation cache',
+      () async {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(
+          _cacheKey(),
+          jsonEncode(
+            _cacheJson(
+              profileHash: _ownedSignals().profileHash,
+              items: [
+                {
+                  'seriesId': 'dimoo_new',
+                  'reasonType': RecommendationReasonType.trackedIp,
+                  'reasonMeta': 'DIMOO',
+                },
+              ],
+            ),
           ),
-        ),
-      );
+        );
 
-      final repo = RecommendationRepository(
-        collectionSnapshot: _ownedCollectionSnapshot(),
-        httpClient: _httpClient(
-          forYouResponse: http.Response(jsonEncode({'items': []}), 200),
-          onProfilePost: (request) {
-            expect(request.url.path, endsWith('/v1/profile'));
-          },
-        ),
-        preferences: prefs,
-      );
+        final repo = RecommendationRepository(
+          collectionSnapshot: _ownedCollectionSnapshot(),
+          httpClient: _httpClient(
+            forYouResponse: http.Response(jsonEncode({'items': []}), 200),
+            onProfilePost: (request) {
+              expect(request.url.path, endsWith('/v1/profile'));
+            },
+          ),
+          preferences: prefs,
+        );
 
-      await repo.updateProfile(_installId, _ownedSignals());
+        await repo.updateProfile(_installId, _ownedSignals());
 
-      expect(prefs.getString(_cacheKey()), isNull);
-    });
+        expect(prefs.getString(_cacheKey()), isNull);
+      },
+    );
   });
 }

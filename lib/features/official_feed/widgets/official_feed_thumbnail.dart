@@ -4,6 +4,7 @@ import 'package:blindbox_app/features/catalog/presentation/catalog_aspect_image.
 import 'package:blindbox_app/features/official_feed/domain/official_feed_sources.dart';
 import 'package:blindbox_app/features/official_feed/presentation/official_feed_source_presenter.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Small square thumb for compact official update rows.
 class OfficialFeedThumbnail extends StatelessWidget {
@@ -45,13 +46,15 @@ class OfficialFeedThumbnail extends StatelessWidget {
 
   Widget _imageFallback(BuildContext context) {
     if (sourceId == OfficialFeedSources.popmartUs) {
-      return const Center(child: OfficialFeedSourceMark(sourceId: OfficialFeedSources.popmartUs));
+      return const Center(
+        child: OfficialFeedSourceMark(sourceId: OfficialFeedSources.popmartUs),
+      );
     }
     final scheme = Theme.of(context).colorScheme;
     return ColoredBox(
       color: scheme.surfaceContainerHigh,
       child: Icon(
-        Icons.image_outlined,
+        Symbols.image_rounded,
         size: 22,
         color: scheme.onSurfaceVariant.withValues(alpha: 0.35),
       ),

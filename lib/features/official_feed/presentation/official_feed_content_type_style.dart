@@ -1,6 +1,7 @@
 import 'package:blindbox_app/features/official_feed/domain/official_feed_item.dart';
 import 'package:blindbox_app/features/official_feed/presentation/official_feed_content_type.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Resolved tint + icon for one content-type deck label.
 @immutable
@@ -34,64 +35,64 @@ abstract final class OfficialFeedContentTypeStyles {
   static const _neutral = _AccentSpec(
     Color(0xFF8E9199),
     Color(0xFF9AA0A8),
-    icon: Icons.article_outlined,
+    icon: Symbols.article_rounded,
   );
 
   static const Map<String, _AccentSpec> _byLabel = {
     'Announcement': _AccentSpec(
       Color(0xFF6B8FC7),
       Color(0xFF8AA8D8),
-      icon: Icons.campaign_outlined,
+      icon: Symbols.campaign_rounded,
     ),
     'POP NOW': _AccentSpec(
       Color(0xFFE07A7A),
       Color(0xFFE89595),
-      icon: Icons.bolt_outlined,
+      icon: Symbols.bolt_rounded,
     ),
     'Collaboration': _AccentSpec(
       Color(0xFF9B7BB8),
       Color(0xFFB095CC),
-      icon: Icons.auto_awesome_outlined,
+      icon: Symbols.auto_awesome_rounded,
     ),
     'Product Spotlight': _AccentSpec(
       Color(0xFFC4A574),
       Color(0xFFD4B88A),
-      icon: Icons.star_outline_rounded,
+      icon: Symbols.star_outline_rounded,
     ),
     'Restock': _AccentSpec(
       Color(0xFFD49A6A),
       Color(0xFFE0AD82),
-      icon: Icons.inventory_2_outlined,
+      icon: Symbols.inventory_2_rounded,
     ),
     'Event': _AccentSpec(
       Color(0xFF6FA87A),
       Color(0xFF89BA92),
-      icon: Icons.event_outlined,
+      icon: Symbols.event_rounded,
     ),
     'Campaign': _AccentSpec(
       Color(0xFFB8889E),
       Color(0xFFC9A0B2),
-      icon: Icons.flag_outlined,
+      icon: Symbols.flag_rounded,
     ),
     'Launch Reminder': _AccentSpec(
       Color(0xFFC9A227),
       Color(0xFFD9B44A),
-      icon: Icons.notifications_none_outlined,
+      icon: Symbols.notifications_none_rounded,
     ),
     'Limited Release': _AccentSpec(
       Color(0xFFB89B7A),
       Color(0xFFC9AE8F),
-      icon: Icons.diamond_outlined,
+      icon: Symbols.diamond_rounded,
     ),
     'Giveaway': _AccentSpec(
       Color(0xFFD4849A),
       Color(0xFFE09AAD),
-      icon: Icons.card_giftcard_outlined,
+      icon: Symbols.card_giftcard_rounded,
     ),
     'Store Opening': _AccentSpec(
       Color(0xFF7A9E9E),
       Color(0xFF92B0B0),
-      icon: Icons.storefront_outlined,
+      icon: Symbols.storefront_rounded,
     ),
   };
 
@@ -102,7 +103,9 @@ abstract final class OfficialFeedContentTypeStyles {
   }) {
     final spec = _byLabel[label] ?? _neutral;
     final accent = isDark ? spec.dark : spec.light;
-    final base = isDark ? scheme.surfaceContainerHigh : scheme.surfaceContainerHighest;
+    final base = isDark
+        ? scheme.surfaceContainerHigh
+        : scheme.surfaceContainerHighest;
 
     return OfficialFeedContentTypeStyle(
       label: label,
@@ -124,6 +127,10 @@ abstract final class OfficialFeedContentTypeStyles {
     ColorScheme scheme, {
     required bool isDark,
   }) {
-    return resolve(inferOfficialFeedContentTypeLabel(item), scheme, isDark: isDark);
+    return resolve(
+      inferOfficialFeedContentTypeLabel(item),
+      scheme,
+      isDark: isDark,
+    );
   }
 }

@@ -12,8 +12,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final recommendationSyncProvider =
     NotifierProvider<RecommendationSyncNotifier, void>(
-  RecommendationSyncNotifier.new,
-);
+      RecommendationSyncNotifier.new,
+    );
 
 class RecommendationSyncNotifier extends Notifier<void> {
   Timer? _debounce;
@@ -24,7 +24,10 @@ class RecommendationSyncNotifier extends Notifier<void> {
     ref.keepAlive();
     // Taste-only: profileHash derives from tracked catalog series ids only.
     // Owned, wishlist, rename, and notes must not refresh For You.
-    ref.listen<CollectionSnapshot>(collectionNotifierProvider, (previous, next) {
+    ref.listen<CollectionSnapshot>(collectionNotifierProvider, (
+      previous,
+      next,
+    ) {
       final previousHash = previous == null
           ? null
           : extractSignals(previous).profileHash;
@@ -51,7 +54,9 @@ class RecommendationSyncNotifier extends Notifier<void> {
       if (signals.profileHash == _lastUploadedHash) return;
 
       final id = await ref.read(anonymousInstallIdProvider.future);
-      await ref.read(recommendationRepositoryProvider).updateProfile(id, signals);
+      await ref
+          .read(recommendationRepositoryProvider)
+          .updateProfile(id, signals);
       _lastUploadedHash = signals.profileHash;
       ref.invalidate(recommendationsProvider);
     } catch (_) {

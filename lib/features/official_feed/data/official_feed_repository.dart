@@ -5,7 +5,7 @@ import 'package:blindbox_app/features/official_feed/domain/official_feed_sources
 /// Read-only official feed — Firestore with in-memory stale fallback.
 class OfficialFeedRepository {
   OfficialFeedRepository({Duration timeout = const Duration(seconds: 12)})
-      : _timeout = timeout;
+    : _timeout = timeout;
 
   final Duration _timeout;
 

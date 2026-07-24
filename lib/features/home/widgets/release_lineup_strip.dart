@@ -4,6 +4,7 @@ import 'package:blindbox_app/features/catalog/presentation/catalog_image_display
 import 'package:blindbox_app/features/home/domain/series_release.dart';
 import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Horizontal, image-first lineup browse for a [SeriesRelease].
 class ReleaseLineupStrip extends StatelessWidget {
@@ -69,10 +70,7 @@ class _LineupCell extends StatelessWidget {
 
     final tile = ReleaseLineupStrip.slotUsesSecretPlaceholder(slot)
         ? _secretTile(r)
-        : ClipRRect(
-            borderRadius: r,
-            child: _figureArt(slot, r),
-          );
+        : ClipRRect(borderRadius: r, child: _figureArt(slot, r));
 
     final baseBorder = slot.isSecret
         ? accent.withValues(alpha: 0.38)
@@ -162,7 +160,7 @@ class _LineupCell extends StatelessWidget {
         ),
         child: Center(
           child: Icon(
-            Icons.blur_on_rounded,
+            Symbols.blur_on_rounded,
             size: 30,
             color: scheme.onSurfaceVariant.withValues(alpha: 0.38),
           ),

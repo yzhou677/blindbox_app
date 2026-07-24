@@ -8,6 +8,7 @@ import 'package:blindbox_app/features/recommendations/presentation/for_you_copy.
 import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
 import 'package:blindbox_app/shared/widgets/catalog_quick_action_button.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Compact image-first card — same footprint as Market Chasers mini cards.
 ///
@@ -133,10 +134,9 @@ class ForYouSeriesCard extends StatelessWidget {
                     semanticsLabel: isWishlisted
                         ? 'Remove series from wishlist'
                         : 'Add series to wishlist',
-                    icon: isWishlisted
-                        ? Icons.favorite_rounded
-                        : Icons.favorite_border_rounded,
+                    icon: Symbols.favorite_rounded,
                     active: isWishlisted,
+                    filled: isWishlisted,
                     onPressed: onWishlistPressed!,
                   ),
                 ),

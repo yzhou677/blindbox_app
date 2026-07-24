@@ -1,5 +1,6 @@
 import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
+import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_adapters.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_sheet.dart';
@@ -12,6 +13,7 @@ import 'package:blindbox_app/shared/widgets/series_hero_meta_block.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Series release detail — lineup strip opens the shared figure gallery.
 class DropDetailScreen extends ConsumerWidget {
@@ -31,7 +33,10 @@ class DropDetailScreen extends ConsumerWidget {
         appBar: AppBar(
           title: const Text('Release'),
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_rounded),
+            icon: const Icon(
+              Symbols.arrow_back_rounded,
+              size: AppIconSizes.navigation,
+            ),
             onPressed: () => context.pop(),
           ),
         ),
@@ -41,7 +46,9 @@ class DropDetailScreen extends ConsumerWidget {
             child: Text(
               'This release could not be found.',
               textAlign: TextAlign.center,
-              style: textTheme.bodyLarge?.copyWith(color: scheme.onSurfaceVariant),
+              style: textTheme.bodyLarge?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
             ),
           ),
         ),
@@ -72,15 +79,20 @@ class DropDetailScreen extends ConsumerWidget {
             backgroundColor: scheme.surface.withValues(alpha: 0.94),
             surfaceTintColor: scheme.surfaceTint.withValues(alpha: 0.45),
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_rounded),
+              icon: const Icon(
+                Symbols.arrow_back_rounded,
+                size: AppIconSizes.navigation,
+              ),
               onPressed: () => context.pop(),
             ),
             title: Text(
               release.seriesName,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: CollectibleTypography.seriesHeroTitle(textTheme, scheme)
-                  .copyWith(fontSize: 18),
+              style: CollectibleTypography.seriesHeroTitle(
+                textTheme,
+                scheme,
+              ).copyWith(fontSize: 18),
             ),
           ),
           SliverToBoxAdapter(
@@ -101,8 +113,8 @@ class DropDetailScreen extends ConsumerWidget {
                     trailingMeta: release.lineup.isEmpty
                         ? null
                         : release.lineup.length == 1
-                            ? '1 figure'
-                            : '${release.lineup.length} figures',
+                        ? '1 figure'
+                        : '${release.lineup.length} figures',
                   ),
                   if (release.lineup.isNotEmpty) ...[
                     const SizedBox(height: 20),
@@ -128,10 +140,7 @@ class DropDetailScreen extends ConsumerWidget {
 }
 
 class _DetailHero extends StatelessWidget {
-  const _DetailHero({
-    required this.release,
-    required this.accent,
-  });
+  const _DetailHero({required this.release, required this.accent});
 
   final SeriesRelease release;
   final Color accent;
@@ -147,8 +156,11 @@ class _DetailHero extends StatelessWidget {
         borderRadius: outerRadius,
         boxShadow: [
           BoxShadow(
-            color: Color.lerp(scheme.shadow, accent, 0.1)!
-                .withValues(alpha: brightness == Brightness.dark ? 0.42 : 0.1),
+            color: Color.lerp(
+              scheme.shadow,
+              accent,
+              0.1,
+            )!.withValues(alpha: brightness == Brightness.dark ? 0.42 : 0.1),
             blurRadius: 36,
             offset: const Offset(0, 18),
             spreadRadius: -8,
@@ -160,7 +172,9 @@ class _DetailHero extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: outerRadius,
           side: BorderSide(
-            color: accent.withValues(alpha: brightness == Brightness.dark ? 0.2 : 0.35),
+            color: accent.withValues(
+              alpha: brightness == Brightness.dark ? 0.2 : 0.35,
+            ),
           ),
         ),
         clipBehavior: Clip.antiAlias,
@@ -181,7 +195,8 @@ class _DetailHero extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(6),
               child: AspectRatio(
-                aspectRatio: CatalogImageDisplaySpec.aspectRatioFor(
+                aspectRatio:
+                    CatalogImageDisplaySpec.aspectRatioFor(
                       CatalogImageDisplayMode.seriesCoverHero,
                     ) ??
                     1.0,

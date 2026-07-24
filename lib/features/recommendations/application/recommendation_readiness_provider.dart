@@ -11,8 +11,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 final recommendationReadinessProvider =
     NotifierProvider<RecommendationReadinessNotifier, bool>(
-  RecommendationReadinessNotifier.new,
-);
+      RecommendationReadinessNotifier.new,
+    );
 
 final forYouFirstUnlockBadgeProvider = Provider<bool>((ref) {
   final ready = ref.watch(recommendationReadinessProvider);
@@ -22,8 +22,8 @@ final forYouFirstUnlockBadgeProvider = Provider<bool>((ref) {
 
 final _forYouFirstUnlockShownProvider =
     NotifierProvider<_ForYouFirstUnlockShownNotifier, bool>(
-  _ForYouFirstUnlockShownNotifier.new,
-);
+      _ForYouFirstUnlockShownNotifier.new,
+    );
 
 class RecommendationReadinessNotifier extends Notifier<bool> {
   bool _persistedUnlocked = false;
@@ -44,7 +44,7 @@ class RecommendationReadinessNotifier extends Notifier<bool> {
       final prefs = await SharedPreferences.getInstance();
       _persistedUnlocked =
           prefs.getBool(RecommendationGatewayConfig.readinessUnlockedKey) ??
-              false;
+          false;
     } catch (_) {
       _persistedUnlocked = false;
     } finally {
@@ -78,7 +78,10 @@ class RecommendationReadinessNotifier extends Notifier<bool> {
     _persistedUnlocked = true;
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(RecommendationGatewayConfig.readinessUnlockedKey, true);
+      await prefs.setBool(
+        RecommendationGatewayConfig.readinessUnlockedKey,
+        true,
+      );
     } catch (_) {
       // In-memory unlock still applies for this session.
     }
@@ -96,7 +99,8 @@ class _ForYouFirstUnlockShownNotifier extends Notifier<bool> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final shown =
-          prefs.getBool(RecommendationGatewayConfig.firstUnlockShownKey) ?? false;
+          prefs.getBool(RecommendationGatewayConfig.firstUnlockShownKey) ??
+          false;
       if (shown) {
         state = true;
       }
@@ -110,7 +114,10 @@ class _ForYouFirstUnlockShownNotifier extends Notifier<bool> {
     state = true;
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(RecommendationGatewayConfig.firstUnlockShownKey, true);
+      await prefs.setBool(
+        RecommendationGatewayConfig.firstUnlockShownKey,
+        true,
+      );
     } catch (_) {
       // Session-only dismissal is enough.
     }

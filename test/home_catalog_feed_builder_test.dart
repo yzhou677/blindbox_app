@@ -40,7 +40,10 @@ void main() {
       ],
     );
 
-    final releases = await buildSeriesReleasesFromCatalog(bundle, bundle.series);
+    final releases = await buildSeriesReleasesFromCatalog(
+      bundle,
+      bundle.series,
+    );
 
     expect(releases, hasLength(1));
     expect(releases.first.seriesImageKey, 'series_cover_key');
