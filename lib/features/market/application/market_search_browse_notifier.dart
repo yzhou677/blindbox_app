@@ -48,11 +48,15 @@ class MarketSearchBrowseNotifier extends Notifier<MarketSearchBrowseState> {
   /// Debounced commit from the search field.
   void commitQuery(String value) {
     final empty = value.trim().isEmpty;
+    final next = MarketSearchBrowseState(query: value, isCommitted: !empty);
+    if (state.query == next.query && state.isCommitted == next.isCommitted) {
+      return;
+    }
     MarketSearchTrace.event(
       'marketSearchBrowse.commitQuery committed=${!empty}',
       signature: value.trim().toLowerCase(),
     );
-    state = state.copyWith(query: value, isCommitted: !empty);
+    state = next;
   }
 
   void clearSession() {

@@ -36,6 +36,14 @@ class CollectionWishlistPage extends StatefulWidget {
   final ValueChanged<WishlistedCatalogSeries> onOpenSeries;
   final ValueChanged<WishlistedFigureRow> onOpenFigure;
 
+  /// Test-only: wishlist page rebuilds.
+  @visibleForTesting
+  static int debugBuildCount = 0;
+
+  /// Test-only: wishlist filter pipeline executions.
+  @visibleForTesting
+  static int debugFilterCount = 0;
+
   @override
   State<CollectionWishlistPage> createState() => _CollectionWishlistPageState();
 }
@@ -49,6 +57,14 @@ class _CollectionWishlistPageState extends State<CollectionWishlistPage> {
 
   @override
   Widget build(BuildContext context) {
+    assert(() {
+      CollectionWishlistPage.debugBuildCount++;
+      return true;
+    }());
+    assert(() {
+      CollectionWishlistPage.debugFilterCount++;
+      return true;
+    }());
     final allFigures = wishlistedFigureRows(widget.snapshot);
     final brandOptions = buildWishlistBrandFilterOptions(
       widget.snapshot.seriesWishlist,

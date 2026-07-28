@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:blindbox_app/core/search/search_commit_policy.dart';
 import 'package:blindbox_app/core/theme/app_theme.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
@@ -15,6 +16,9 @@ import 'package:blindbox_app/features/catalog/presentation/catalog_search_experi
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart'
     show CollectionSnapshot;
+import 'package:blindbox_app/shared/widgets/app_search_field.dart';
+import 'package:blindbox_app/shared/widgets/feed_search_screen.dart';
+import 'package:blindbox_app/shared/widgets/search_field_clear_suffix.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -76,6 +80,19 @@ Future<void> _pumpDiscoverSearch(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 200));
 }
 
+void _resetLiveInputCounters() {
+  CatalogSearchExperience.debugBuildCount = 0;
+  CatalogSearchExperience.debugSearchExecutionCount = 0;
+  CatalogSearchExperience.debugOnSearchChangedCount = 0;
+  CatalogSearchExperience.debugQueryActiveTrueCount = 0;
+  CatalogSearchExperience.debugQueryActiveFalseCount = 0;
+  CatalogSearchExperience.debugResultsPaneBuildCount = 0;
+  FeedSearchScreen.debugBuildCount = 0;
+  AppSearchField.debugBuildCount = 0;
+  SearchFieldClearSuffix.debugListenerFireCount = 0;
+  SearchFieldClearSuffix.debugVisibilityRebuildCount = 0;
+}
+
 Finder get _searchField => find.byType(TextField);
 
 void main() {
@@ -83,7 +100,7 @@ void main() {
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
-    CatalogSearchExperience.debugBuildCount = 0;
+    _resetLiveInputCounters();
     tempCacheRoot = await Directory.systemTemp.createTemp(
       'discover_search_test_',
     );
@@ -101,21 +118,161 @@ void main() {
     }
   });
 
-  testWidgets('single keystroke triggers exactly one screen rebuild', (
+  testWidgets('live text updates immediately without ancestor rebuilds', (
     tester,
   ) async {
     await _pumpDiscoverSearch(tester);
-    expect(find.byKey(const Key('catalog-photo-action')), findsOneWidget);
-    CatalogSearchExperience.debugBuildCount = 0;
+    _resetLiveInputCounters();
 
-    await tester.enterText(_searchField, 'w');
+    await tester.enterText(_searchField, 's');
     await tester.pump();
 
+    expect(find.text('s'), findsOneWidget);
+    expect(CatalogSearchExperience.debugBuildCount, 0);
+    expect(FeedSearchScreen.debugBuildCount, 0);
+    expect(AppSearchField.debugBuildCount, 0);
+    expect(CatalogSearchExperience.debugResultsPaneBuildCount, 0);
+    expect(CatalogSearchExperience.debugSearchExecutionCount, 0);
+  });
+
+  testWidgets('ten non-empty characters publish at most one queryActive=true', (
+    tester,
+  ) async {
+    await _pumpDiscoverSearch(tester);
+    _resetLiveInputCounters();
+
+    var typed = '';
+    for (final ch in 'skullpanda'.split('')) {
+      typed += ch;
+      await tester.enterText(_searchField, typed);
+      await tester.pump();
+    }
+
+    expect(find.text('skullpanda'), findsOneWidget);
+    expect(CatalogSearchExperience.debugOnSearchChangedCount, 10);
+    expect(CatalogSearchExperience.debugQueryActiveTrueCount, 1);
+    expect(CatalogSearchExperience.debugQueryActiveFalseCount, 0);
+    expect(CatalogSearchExperience.debugBuildCount, 0);
+    expect(FeedSearchScreen.debugBuildCount, 0);
+    expect(CatalogSearchExperience.debugResultsPaneBuildCount, 0);
+    expect(CatalogSearchExperience.debugSearchExecutionCount, 0);
+    // Clear suffix sees every controller tick but only rebuilds once (empty→text).
     expect(
-      CatalogSearchExperience.debugBuildCount,
-      1,
-      reason: 'live search should use a single onChanged setState path',
+      SearchFieldClearSuffix.debugListenerFireCount,
+      greaterThanOrEqualTo(10),
     );
+    expect(SearchFieldClearSuffix.debugVisibilityRebuildCount, 1);
+  });
+
+  testWidgets('non-empty to empty publishes one queryActive=false', (
+    tester,
+  ) async {
+    await _pumpDiscoverSearch(tester);
+    _resetLiveInputCounters();
+
+    await tester.enterText(_searchField, 'where');
+    await tester.pump();
+    expect(CatalogSearchExperience.debugQueryActiveTrueCount, 1);
+
+    await tester.tap(find.byTooltip('Clear'));
+    await tester.pump();
+
+    expect(CatalogSearchExperience.debugQueryActiveFalseCount, 1);
+    expect(find.text('Matches'), findsNothing);
+  });
+
+  testWidgets('Matches chrome and one search appear together after settle', (
+    tester,
+  ) async {
+    await _pumpDiscoverSearch(tester);
+    _resetLiveInputCounters();
+
+    await tester.enterText(_searchField, 'where');
+    await tester.pump();
+    expect(find.text('Matches'), findsNothing);
+    expect(CatalogSearchExperience.debugSearchExecutionCount, 0);
+
+    await tester.pump(const Duration(milliseconds: 249));
+    expect(CatalogSearchExperience.debugSearchExecutionCount, 0);
+    expect(find.text('Matches'), findsNothing);
+
+    await tester.pump(const Duration(milliseconds: 1));
+    await tester.pump();
+
+    expect(CatalogSearchExperience.debugSearchExecutionCount, 1);
+    expect(CatalogSearchExperience.debugBuildCount, 1);
+    expect(FeedSearchScreen.debugBuildCount, 1);
+    expect(CatalogSearchExperience.debugResultsPaneBuildCount, 1);
+    expect(find.text('Matches'), findsOneWidget);
+    expect(find.text('Where Moments Meet Series Plush Doll'), findsOneWidget);
+  });
+
+  testWidgets(
+    'rapid typing does not expose empty Matches or rebuild results early',
+    (tester) async {
+      await _pumpDiscoverSearch(tester);
+      _resetLiveInputCounters();
+
+      var typed = '';
+      for (final ch in 'where'.split('')) {
+        typed += ch;
+        await tester.enterText(_searchField, typed);
+        await tester.pump();
+        expect(find.text('Matches'), findsNothing);
+        expect(CatalogSearchExperience.debugResultsPaneBuildCount, 0);
+      }
+
+      await tester.pump(SearchCommitPolicy.localCatalog);
+      await tester.pump();
+
+      expect(CatalogSearchExperience.debugSearchExecutionCount, 1);
+      expect(find.text('Matches'), findsOneWidget);
+      expect(find.text('Where Moments Meet Series Plush Doll'), findsOneWidget);
+    },
+  );
+
+  testWidgets('clear removes Matches immediately', (tester) async {
+    await _pumpDiscoverSearch(tester);
+
+    await tester.enterText(_searchField, 'where');
+    await tester.pump(); // flush post-frame live schedule
+    await tester.pump(SearchCommitPolicy.localCatalog);
+    await tester.pump();
+    expect(find.text('Matches'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Clear'));
+    await tester.pump();
+
+    expect(find.text('Matches'), findsNothing);
+    expect(find.text('Where Moments Meet Series Plush Doll'), findsNothing);
+  });
+
+  testWidgets('previous committed results stay until next commit', (
+    tester,
+  ) async {
+    await _pumpDiscoverSearch(tester);
+
+    await tester.enterText(_searchField, 'where');
+    await tester.pump();
+    await tester.pump(SearchCommitPolicy.localCatalog);
+    await tester.pump();
+    expect(find.text('Where Moments Meet Series Plush Doll'), findsOneWidget);
+
+    final buildsBefore = CatalogSearchExperience.debugBuildCount;
+    final resultsBefore = CatalogSearchExperience.debugResultsPaneBuildCount;
+    final searchesBefore = CatalogSearchExperience.debugSearchExecutionCount;
+
+    await tester.enterText(_searchField, 'wherex');
+    await tester.pump();
+    expect(CatalogSearchExperience.debugBuildCount, buildsBefore);
+    expect(CatalogSearchExperience.debugResultsPaneBuildCount, resultsBefore);
+    expect(CatalogSearchExperience.debugSearchExecutionCount, searchesBefore);
+    expect(find.text('Matches'), findsOneWidget);
+    expect(find.text('Where Moments Meet Series Plush Doll'), findsOneWidget);
+
+    await tester.pump(SearchCommitPolicy.localCatalog);
+    await tester.pump();
+    expect(find.text('No matches for that search.'), findsOneWidget);
   });
 
   testWidgets('Discover camera entry uses shared pre-capture guidance', (
@@ -133,18 +290,6 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Open Camera'), findsOneWidget);
-  });
-
-  testWidgets('live search still updates results every keystroke', (
-    tester,
-  ) async {
-    await _pumpDiscoverSearch(tester);
-
-    await tester.enterText(_searchField, 'where');
-    await tester.pump();
-
-    expect(find.text('Where Moments Meet Series Plush Doll'), findsOneWidget);
-    expect(find.text('Matches'), findsOneWidget);
   });
 
   testWidgets('launch prefills initial query from Add Series handoff', (
@@ -167,22 +312,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
 
     expect(find.text('where'), findsOneWidget);
-    expect(find.text('Where Moments Meet Series Plush Doll'), findsOneWidget);
-  });
-
-  testWidgets('clear restores history chrome and drops matches', (
-    tester,
-  ) async {
-    await _pumpDiscoverSearch(tester);
-
-    await tester.enterText(_searchField, 'where');
-    await tester.pump();
     expect(find.text('Matches'), findsOneWidget);
-
-    await tester.tap(find.byTooltip('Clear'));
-    await tester.pump();
-
-    expect(find.text('Matches'), findsNothing);
-    expect(find.text('Where Moments Meet Series Plush Doll'), findsNothing);
+    expect(find.text('Where Moments Meet Series Plush Doll'), findsOneWidget);
   });
 }

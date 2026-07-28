@@ -18,16 +18,19 @@ final class CatalogBundleLookup {
     required Map<String, CatalogBrand> brandById,
     required Map<String, CatalogIp> ipById,
     required Map<String, List<CatalogFigure>> figuresBySeriesId,
+    required Map<String, String> seriesIdByFigureId,
   }) : _seriesById = seriesById,
        _brandById = brandById,
        _ipById = ipById,
-       _figuresBySeriesId = figuresBySeriesId;
+       _figuresBySeriesId = figuresBySeriesId,
+       _seriesIdByFigureId = seriesIdByFigureId;
 
   final CatalogSeedBundle bundle;
   final Map<String, CatalogSeries> _seriesById;
   final Map<String, CatalogBrand> _brandById;
   final Map<String, CatalogIp> _ipById;
   final Map<String, List<CatalogFigure>> _figuresBySeriesId;
+  final Map<String, String> _seriesIdByFigureId;
 
   static const _accents = <Color>[
     Color(0xFFE8E4F8),
@@ -40,8 +43,10 @@ final class CatalogBundleLookup {
 
   factory CatalogBundleLookup.fromBundle(CatalogSeedBundle bundle) {
     final figuresBySeriesId = <String, List<CatalogFigure>>{};
+    final seriesIdByFigureId = <String, String>{};
     for (final f in bundle.figures) {
       figuresBySeriesId.putIfAbsent(f.seriesId, () => []).add(f);
+      seriesIdByFigureId[f.id] = f.seriesId;
     }
     for (final entry in figuresBySeriesId.entries) {
       entry.value.sort((a, b) {
@@ -56,11 +61,25 @@ final class CatalogBundleLookup {
       brandById: {for (final b in bundle.brands) b.id: b},
       ipById: {for (final i in bundle.ips) i.id: i},
       figuresBySeriesId: figuresBySeriesId,
+      seriesIdByFigureId: seriesIdByFigureId,
     );
   }
 
   int figureCountInSeries(String seriesId) =>
       _figuresBySeriesId[seriesId]?.length ?? 0;
+
+  /// O(1) figure → series id — preferred over rescanning [bundle.figures].
+  String? seriesIdForFigure(String figureId) => _seriesIdByFigureId[figureId];
+
+  /// Stable figure→series index for shelf search — do not mutate.
+  Map<String, String> get figureSeriesIdIndex => _seriesIdByFigureId;
+
+  CatalogSeries? seriesById(String seriesId) => _seriesById[seriesId];
+
+  String brandDisplayName(String brandId) =>
+      _brandById[brandId]?.displayName ?? brandId;
+
+  String ipDisplayName(String ipId) => _ipById[ipId]?.displayName ?? ipId;
 
   /// Collection-domain template for add/preview flows — pure CPU, no I/O.
   domain.CatalogSeries? seriesTemplate(String seriesId) {

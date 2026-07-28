@@ -46,8 +46,16 @@ class AppSearchField extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final bool compact;
 
+  /// Test-only rebuild counter for live-input regression.
+  @visibleForTesting
+  static int debugBuildCount = 0;
+
   @override
   Widget build(BuildContext context) {
+    assert(() {
+      debugBuildCount++;
+      return true;
+    }());
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final contentOpacity = enabled ? 1.0 : 0.44;

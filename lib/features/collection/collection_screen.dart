@@ -27,6 +27,8 @@ import 'package:blindbox_app/features/collection/application/shelf_emotional_pro
 import 'package:blindbox_app/features/collection/presentation/shelf_editorial_voice.dart';
 import 'package:blindbox_app/features/collection/application/collection_shelf_ui_prefs_provider.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
+import 'package:blindbox_app/core/search/search_commit_policy.dart';
 import 'package:blindbox_app/core/search/search_placeholders.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_service.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_browse.dart';
@@ -54,6 +56,7 @@ import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
 import 'package:blindbox_app/shared/widgets/collectible_section_header.dart';
+import 'package:blindbox_app/shared/widgets/search_field_clear_suffix.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -62,13 +65,55 @@ import 'package:material_symbols_icons/symbols.dart';
 class CollectionScreen extends ConsumerStatefulWidget {
   const CollectionScreen({super.key});
 
+  /// Test-only: increments when either tab's committed search query changes.
+  @visibleForTesting
+  static int debugCommittedQueryCount = 0;
+
+  /// Test-only: Shelf committed-query publishes.
+  @visibleForTesting
+  static int debugShelfCommittedQueryCount = 0;
+
+  /// Test-only: Wishlist committed-query publishes.
+  @visibleForTesting
+  static int debugWishlistCommittedQueryCount = 0;
+
+  /// Test-only: last published Shelf committed query.
+  @visibleForTesting
+  static String debugShelfCommittedQuery = '';
+
+  /// Test-only: last published Wishlist committed query.
+  @visibleForTesting
+  static String debugWishlistCommittedQuery = '';
+
+  /// Test-only: [CollectionScreen] rebuilds.
+  @visibleForTesting
+  static int debugBuildCount = 0;
+
+  /// Test-only: live [onChanged] invocations.
+  @visibleForTesting
+  static int debugOnSearchChangedCount = 0;
+
+  /// Test-only: Brand taxonomy filter applications.
+  @visibleForTesting
+  static int debugBrandFilterCount = 0;
+
+  /// Test-only: IP taxonomy filter applications.
+  @visibleForTesting
+  static int debugIpFilterCount = 0;
+
+  /// Test-only: partition executions.
+  @visibleForTesting
+  static int debugPartitionCount = 0;
+
+  /// Test-only: sort executions (counts both buckets when both run).
+  @visibleForTesting
+  static int debugSortCount = 0;
+
   @override
   ConsumerState<CollectionScreen> createState() => _CollectionScreenState();
 }
 
 class _CollectionScreenState extends ConsumerState<CollectionScreen> {
-  static const _searchDebounce = Duration(milliseconds: 125);
-
   /// Presentation-only Collection shelf brand facet.
   String _brandFilterId = collectionAnyBrandFilterId;
 
@@ -78,19 +123,78 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
   /// Presentation-only Shelf / Insights section switch.
   CollectionPageSegment _pageSegment = CollectionPageSegment.shelf;
 
-  final TextEditingController _searchController = TextEditingController();
+  /// Last searchable segment — keeps Insights from wiping Shelf/Wishlist text.
+  CollectionPageSegment _lastSearchableSegment = CollectionPageSegment.shelf;
+
+  final TextEditingController _shelfSearchController = TextEditingController();
+  final TextEditingController _wishlistSearchController =
+      TextEditingController();
   final ScrollController _scrollController = ScrollController();
   VoidCallback? _routerListener;
-  Timer? _searchDebounceTimer;
+  late final SearchCommitScheduler _shelfSearchCommitScheduler;
+  late final SearchCommitScheduler _wishlistSearchCommitScheduler;
   ProviderSubscription<OnDisplayWidgetNavigationTarget?>? _widgetNavigation;
   String? _activeWidgetSeriesSheetId;
 
-  /// Debounced query for the browse pipeline — text field updates immediately.
-  String _debouncedSearchQuery = '';
+  /// Debounced Shelf browse query — field updates immediately.
+  String _shelfCommittedQuery = '';
+
+  /// Debounced Wishlist browse query — field updates immediately.
+  String _wishlistCommittedQuery = '';
+
+  /// Latest live values waiting for post-frame commit scheduling (per tab).
+  String? _shelfPendingLiveValue;
+  String? _wishlistPendingLiveValue;
+  bool _shelfPostFrameLiveWorkQueued = false;
+  bool _wishlistPostFrameLiveWorkQueued = false;
+
+  /// Text-search matches for the Shelf committed query — Brand/IP taps reuse.
+  final ShelfBrowseSearchMatchCache _searchMatchCache =
+      ShelfBrowseSearchMatchCache();
+
+  TextEditingController get _activeSearchController {
+    if (_pageSegment == CollectionPageSegment.wishlist) {
+      return _wishlistSearchController;
+    }
+    if (_pageSegment == CollectionPageSegment.insights) {
+      return _lastSearchableSegment == CollectionPageSegment.wishlist
+          ? _wishlistSearchController
+          : _shelfSearchController;
+    }
+    return _shelfSearchController;
+  }
 
   @override
   void initState() {
     super.initState();
+    _shelfSearchCommitScheduler = SearchCommitScheduler(
+      delay: SearchCommitPolicy.localCollection,
+      onCommit: (query) {
+        if (!mounted) return;
+        if (query == _shelfCommittedQuery) return;
+        assert(() {
+          CollectionScreen.debugCommittedQueryCount++;
+          CollectionScreen.debugShelfCommittedQueryCount++;
+          CollectionScreen.debugShelfCommittedQuery = query;
+          return true;
+        }());
+        setState(() => _shelfCommittedQuery = query);
+      },
+    );
+    _wishlistSearchCommitScheduler = SearchCommitScheduler(
+      delay: SearchCommitPolicy.localCollection,
+      onCommit: (query) {
+        if (!mounted) return;
+        if (query == _wishlistCommittedQuery) return;
+        assert(() {
+          CollectionScreen.debugCommittedQueryCount++;
+          CollectionScreen.debugWishlistCommittedQueryCount++;
+          CollectionScreen.debugWishlistCommittedQuery = query;
+          return true;
+        }());
+        setState(() => _wishlistCommittedQuery = query);
+      },
+    );
     CollectionModalOverlayRegistry.instance.register(_dismissBranchOverlays);
     ShellTabReselectBus.instance.reselectedBranch.addListener(_onTabReselected);
     _widgetNavigation = ref.listenManual(onDisplayWidgetNavigationProvider, (
@@ -137,20 +241,68 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     );
   }
 
+  /// Keep [onChanged] cheap: paint the glyph this frame; schedule commit work
+  /// after the frame so intermediate characters do not contend with layout.
   void _onSearchChanged(String value) {
-    _searchDebounceTimer?.cancel();
-    if (normalizeCatalogSearchQuery(value).isEmpty) {
-      if (_debouncedSearchQuery.isNotEmpty) {
-        setState(() => _debouncedSearchQuery = '');
-      }
+    assert(() {
+      CollectionScreen.debugOnSearchChangedCount++;
+      return true;
+    }());
+    if (_pageSegment == CollectionPageSegment.wishlist) {
+      _wishlistPendingLiveValue = value;
+      if (_wishlistPostFrameLiveWorkQueued) return;
+      _wishlistPostFrameLiveWorkQueued = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _wishlistPostFrameLiveWorkQueued = false;
+        if (!mounted) return;
+        final live = _wishlistPendingLiveValue;
+        if (live == null) return;
+        if (normalizeCatalogSearchQuery(live).isEmpty) {
+          _wishlistSearchCommitScheduler.commitNow('');
+          return;
+        }
+        _wishlistSearchCommitScheduler.schedule(live);
+      });
       return;
     }
-    _searchDebounceTimer = Timer(_searchDebounce, () {
+    if (_pageSegment != CollectionPageSegment.shelf) return;
+    _shelfPendingLiveValue = value;
+    if (_shelfPostFrameLiveWorkQueued) return;
+    _shelfPostFrameLiveWorkQueued = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _shelfPostFrameLiveWorkQueued = false;
       if (!mounted) return;
-      final next = _searchController.text;
-      if (next == _debouncedSearchQuery) return;
-      setState(() => _debouncedSearchQuery = next);
+      final live = _shelfPendingLiveValue;
+      if (live == null) return;
+      if (normalizeCatalogSearchQuery(live).isEmpty) {
+        _shelfSearchCommitScheduler.commitNow('');
+        return;
+      }
+      _shelfSearchCommitScheduler.schedule(live);
     });
+  }
+
+  void _clearSearch() {
+    if (_pageSegment == CollectionPageSegment.wishlist) {
+      _wishlistPendingLiveValue = null;
+      _wishlistSearchController.clear();
+      _wishlistSearchCommitScheduler.commitNow('');
+      return;
+    }
+    if (_pageSegment != CollectionPageSegment.shelf) return;
+    _shelfPendingLiveValue = null;
+    _shelfSearchController.clear();
+    _shelfSearchCommitScheduler.commitNow('');
+  }
+
+  void _onBrandFilterSelected(String id) {
+    if (id == _brandFilterId) return;
+    setState(() => _brandFilterId = id);
+  }
+
+  void _onIpFilterSelected(String id) {
+    if (id == _ipFilterId) return;
+    setState(() => _ipFilterId = id);
   }
 
   @override
@@ -180,12 +332,14 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
 
   @override
   void dispose() {
-    _searchDebounceTimer?.cancel();
+    _shelfSearchCommitScheduler.dispose();
+    _wishlistSearchCommitScheduler.dispose();
     _widgetNavigation?.close();
     ShellTabReselectBus.instance.reselectedBranch.removeListener(
       _onTabReselected,
     );
-    _searchController.dispose();
+    _shelfSearchController.dispose();
+    _wishlistSearchController.dispose();
     _scrollController.dispose();
     CollectionModalOverlayRegistry.instance.unregister();
     if (_routerListener != null) {
@@ -363,116 +517,28 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    assert(() {
+      CollectionScreen.debugBuildCount++;
+      return true;
+    }());
     final trace = CollectionShelfPipelineTrace.start();
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final snap = ref.watch(collectionNotifierProvider);
-
-    late final ShelfEmotionalProfile profile;
-    late final List<ShelfRelationshipInsight> insights;
-    late final String? sectionSubtitle;
-    trace.sectionVoid('Insights', () {
-      profile = ref.watch(shelfEmotionalProfileProvider);
-      insights = ref.watch(shelfRelationshipInsightsProvider);
-      sectionSubtitle = ShelfEditorialVoice.sectionSubtitle(profile, insights);
-    });
-
-    late final List<CollectionBrandFilterOption> brandFilterOptions;
-    late final String activeBrandFilterId;
-    late final List<ShelfSeries> brandFiltered;
-    late final List<CollectionIpFilterOption> ipFilterOptions;
-    late final String activeIpFilterId;
-    late final List<ShelfSeries> visible;
-    trace.sectionVoid('Filter', () {
-      brandFilterOptions = buildCollectionShelfBrandFilterOptions(
-        snap.shelfSeries,
-      );
-      activeBrandFilterId = resolveCollectionBrandFilterSelection(
-        selectedBrandFilterId: _brandFilterId,
-        options: brandFilterOptions,
-      );
-      brandFiltered = shelfSeriesVisibleForBrandFilter(
-        snap.shelfSeries,
-        activeBrandFilterId,
-      );
-      ipFilterOptions = buildCollectionShelfIpFilterOptions(brandFiltered);
-      activeIpFilterId = resolveCollectionIpFilterSelection(
-        selectedIpFilterId: _ipFilterId,
-        options: ipFilterOptions,
-      );
-      visible = shelfSeriesVisibleForIpFilter(brandFiltered, activeIpFilterId);
-    });
-    if (activeBrandFilterId != _brandFilterId) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        setState(() => _brandFilterId = activeBrandFilterId);
-      });
-    }
-    if (activeIpFilterId != _ipFilterId) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        setState(() => _ipFilterId = activeIpFilterId);
-      });
-    }
-
-    // Browse pipeline: brand → IP → search → partition → sort each bucket.
-    final shelfUiPrefs = ref.watch(collectionShelfUiPrefsProvider);
-    final catalog = resolveCatalogBundleForSearch(
-      providerBundle: ref.watch(catalogBundleProvider).valueOrNull,
-    );
-    final catalogSearch = ref.watch(catalogSearchServiceProvider);
-    final progressLookup = ShelfBrowseProgressLookup(snap.figureStates);
-    final searched = trace.section(
-      'Search',
-      () => filterShelfSeriesBySearch(
-        visible,
-        _debouncedSearchQuery,
-        catalog: catalog,
-        catalogSearch: catalogSearch,
-      ),
-    );
-    final (inProgressRaw, completedRaw) = trace.section(
-      'Partition',
-      () => partitionShelfSeries(
-        searched,
-        snap.figureStates,
-        progress: progressLookup,
-      ),
-    );
-    late final List<ShelfSeries> inProgress;
-    late final List<ShelfSeries> completed;
-    trace.sectionVoid('Sort', () {
-      inProgress = sortShelfSeriesForDisplay(
-        inProgressRaw,
-        shelfUiPrefs.sort,
-        snap.figureStates,
-        progress: progressLookup,
-      );
-      completed = sortShelfSeriesForDisplay(
-        completedRaw,
-        shelfUiPrefs.sort,
-        snap.figureStates,
-        progress: progressLookup,
-      );
-    });
-    final brandFilterExhausted = brandFiltered.isEmpty;
-    final ipFilterExhausted = !brandFilterExhausted && visible.isEmpty;
-    final searchExhausted =
-        !brandFilterExhausted && !ipFilterExhausted && searched.isEmpty;
-    final showInProgressSection = inProgress.isNotEmpty;
-    final showCompletedSection = completed.isNotEmpty;
-    final wishlistSummaryStats = _wishlistSummaryStats(snap);
     final hasShelfContent = snap.trackedSeriesCount > 0;
     final hasWishlistContent =
         snap.totalWishlistedSeries > 0 || snap.totalWishlistFigures > 0;
     final showCollectionChrome = hasShelfContent || hasWishlistContent;
+    final wishlistSummaryStats = _wishlistSummaryStats(snap);
+    final isShelfSegment = _pageSegment == CollectionPageSegment.shelf;
 
+    // Empty shelf: skip browse pipeline (Wishlist/Insights still usable).
     if (!hasShelfContent) {
       trace.finish(
         shelfSeries: 0,
         visibleSeries: 0,
-        catalogSeries: catalog?.series.length,
-        catalogFigures: catalog?.figures.length,
+        catalogSeries: null,
+        catalogFigures: null,
         note: 'empty shelf',
       );
       return Scaffold(
@@ -526,7 +592,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               SliverToBoxAdapter(
                 child: CollectionWishlistPage(
                   snapshot: snap,
-                  searchQuery: _debouncedSearchQuery,
+                  searchQuery: _wishlistCommittedQuery,
                   onRemoveSeries: (series) =>
                       _removeWishlistSeries(context, series),
                   onRemoveFigure: (row) => _removeWishlistFigure(context, row),
@@ -547,6 +613,155 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
         ),
       );
     }
+
+    late final ShelfEmotionalProfile profile;
+    late final List<ShelfRelationshipInsight> insights;
+    late final String? sectionSubtitle;
+    late final List<CollectionBrandFilterOption> brandFilterOptions;
+    late final String activeBrandFilterId;
+    late final List<ShelfSeries> brandFiltered;
+    late final List<CollectionIpFilterOption> ipFilterOptions;
+    late final String activeIpFilterId;
+    late final List<ShelfSeries> visible;
+    late final List<ShelfSeries> searched;
+    late final List<ShelfSeries> inProgress;
+    late final List<ShelfSeries> completed;
+    late final bool brandFilterExhausted;
+    late final bool ipFilterExhausted;
+    late final bool searchExhausted;
+    late final CollectionShelfUiPrefs shelfUiPrefs;
+    late final ShelfBrowseProgressLookup progressLookup;
+    CatalogSeedBundle? catalog;
+
+    if (isShelfSegment) {
+      trace.sectionVoid('Insights', () {
+        profile = ref.watch(shelfEmotionalProfileProvider);
+        insights = ref.watch(shelfRelationshipInsightsProvider);
+        sectionSubtitle = ShelfEditorialVoice.sectionSubtitle(
+          profile,
+          insights,
+        );
+      });
+
+      trace.sectionVoid('Filter', () {
+        brandFilterOptions = buildCollectionShelfBrandFilterOptions(
+          snap.shelfSeries,
+        );
+        activeBrandFilterId = resolveCollectionBrandFilterSelection(
+          selectedBrandFilterId: _brandFilterId,
+          options: brandFilterOptions,
+        );
+        assert(() {
+          CollectionScreen.debugBrandFilterCount++;
+          return true;
+        }());
+        brandFiltered = shelfSeriesVisibleForBrandFilter(
+          snap.shelfSeries,
+          activeBrandFilterId,
+        );
+        ipFilterOptions = buildCollectionShelfIpFilterOptions(brandFiltered);
+        activeIpFilterId = resolveCollectionIpFilterSelection(
+          selectedIpFilterId: _ipFilterId,
+          options: ipFilterOptions,
+        );
+        assert(() {
+          CollectionScreen.debugIpFilterCount++;
+          return true;
+        }());
+        visible = shelfSeriesVisibleForIpFilter(
+          brandFiltered,
+          activeIpFilterId,
+        );
+      });
+      if (activeBrandFilterId != _brandFilterId) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          setState(() => _brandFilterId = activeBrandFilterId);
+        });
+      }
+      if (activeIpFilterId != _ipFilterId) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          setState(() => _ipFilterId = activeIpFilterId);
+        });
+      }
+
+      // Browse pipeline: Brand/IP on shelf → intersect cached search matches →
+      // partition → sort. Text search runs only when the committed query /
+      // shelf / catalog service revision changes.
+      shelfUiPrefs = ref.watch(collectionShelfUiPrefsProvider);
+      catalog = resolveCatalogBundleForSearch(
+        providerBundle: ref.watch(catalogBundleProvider).valueOrNull,
+      );
+      final catalogSearch = ref.watch(catalogSearchServiceProvider);
+      final catalogLookup = ref.watch(catalogBundleLookupProvider);
+      progressLookup = ShelfBrowseProgressLookup(snap.figureStates);
+      final searchMatchedIds = _searchMatchCache.matchedIds(
+        shelf: snap.shelfSeries,
+        query: _shelfCommittedQuery,
+        catalog: catalog,
+        catalogSearch: catalogSearch,
+        figureSeriesIdByFigureId: catalogLookup?.figureSeriesIdIndex,
+      );
+      searched = trace.section(
+        'Search',
+        () => intersectShelfSeriesBySearchMatchIds(visible, searchMatchedIds),
+      );
+      final (inProgressRaw, completedRaw) = trace.section('Partition', () {
+        assert(() {
+          CollectionScreen.debugPartitionCount++;
+          return true;
+        }());
+        return partitionShelfSeries(
+          searched,
+          snap.figureStates,
+          progress: progressLookup,
+        );
+      });
+      trace.sectionVoid('Sort', () {
+        assert(() {
+          CollectionScreen.debugSortCount += 2;
+          return true;
+        }());
+        inProgress = sortShelfSeriesForDisplay(
+          inProgressRaw,
+          shelfUiPrefs.sort,
+          snap.figureStates,
+          progress: progressLookup,
+        );
+        completed = sortShelfSeriesForDisplay(
+          completedRaw,
+          shelfUiPrefs.sort,
+          snap.figureStates,
+          progress: progressLookup,
+        );
+      });
+      brandFilterExhausted = brandFiltered.isEmpty;
+      ipFilterExhausted = !brandFilterExhausted && visible.isEmpty;
+      searchExhausted =
+          !brandFilterExhausted && !ipFilterExhausted && searched.isEmpty;
+    } else {
+      // Wishlist / Insights: do not run shelf search or facet pipelines.
+      sectionSubtitle = null;
+      brandFilterOptions = const [];
+      activeBrandFilterId = collectionAnyBrandFilterId;
+      brandFiltered = const [];
+      ipFilterOptions = const [];
+      activeIpFilterId = collectionAnyIpFilterId;
+      visible = const [];
+      searched = const [];
+      inProgress = const [];
+      completed = const [];
+      brandFilterExhausted = false;
+      ipFilterExhausted = false;
+      searchExhausted = false;
+      shelfUiPrefs = ref.watch(collectionShelfUiPrefsProvider);
+      progressLookup = ShelfBrowseProgressLookup(snap.figureStates);
+      catalog = null;
+    }
+
+    final showInProgressSection = inProgress.isNotEmpty;
+    final showCompletedSection = completed.isNotEmpty;
 
     final scaffold = Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -606,7 +821,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
             SliverToBoxAdapter(
               child: CollectionWishlistPage(
                 snapshot: snap,
-                searchQuery: _debouncedSearchQuery,
+                searchQuery: _wishlistCommittedQuery,
                 onRemoveSeries: (series) =>
                     _removeWishlistSeries(context, series),
                 onRemoveFigure: (row) => _removeWishlistFigure(context, row),
@@ -641,8 +856,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                     CollectionBrandFilterRow(
                       options: brandFilterOptions,
                       selectedBrandId: activeBrandFilterId,
-                      onBrandSelected: (id) =>
-                          setState(() => _brandFilterId = id),
+                      onBrandSelected: _onBrandFilterSelected,
                     ),
                     const SizedBox(
                       height: FeedRhythm.collectionBrandToIpFilterSectionGap,
@@ -654,7 +868,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                     CollectionIpFilterRow(
                       options: ipFilterOptions,
                       selectedIpId: activeIpFilterId,
-                      onIpSelected: (id) => setState(() => _ipFilterId = id),
+                      onIpSelected: _onIpFilterSelected,
                     ),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(20, 4, 20, 2),
@@ -817,9 +1031,33 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
 
   void _onPageSegmentChanged(CollectionPageSegment next) {
     if (next == _pageSegment) return;
+
+    // Leaving a searchable tab: drop pending debounce so it cannot commit into
+    // the newly visible tab. Preserve that tab's last committed query as-is;
+    // live text stays on its own controller for restore on return.
+    if (_pageSegment == CollectionPageSegment.shelf) {
+      _shelfPendingLiveValue = null;
+      _shelfSearchCommitScheduler.cancel();
+      _lastSearchableSegment = CollectionPageSegment.shelf;
+    } else if (_pageSegment == CollectionPageSegment.wishlist) {
+      _wishlistPendingLiveValue = null;
+      _wishlistSearchCommitScheduler.cancel();
+      _lastSearchableSegment = CollectionPageSegment.wishlist;
+    }
+
     if (next == CollectionPageSegment.insights) {
       FocusScope.of(context).unfocus();
+    } else if (next == CollectionPageSegment.shelf ||
+        next == CollectionPageSegment.wishlist) {
+      _lastSearchableSegment = next;
+      // Ensure selection sits at end when the visible field swaps controllers.
+      final incoming = next == CollectionPageSegment.wishlist
+          ? _wishlistSearchController
+          : _shelfSearchController;
+      final text = incoming.text;
+      incoming.selection = TextSelection.collapsed(offset: text.length);
     }
+
     setState(() => _pageSegment = next);
     if (_scrollController.hasClients) {
       _scrollController.jumpTo(0);
@@ -831,40 +1069,30 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     final hintText = _pageSegment == CollectionPageSegment.wishlist
         ? 'Search your wishlist...'
         : SearchPlaceholders.collection;
+    final controller = _activeSearchController;
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.only(
           top: FeedRhythm.compactHeaderToSearchField,
         ),
         child: AppSearchField(
+          // Segment key avoids briefly painting the previous tab's controller.
+          key: ValueKey<CollectionPageSegment>(
+            _pageSegment == CollectionPageSegment.insights
+                ? _lastSearchableSegment
+                : _pageSegment,
+          ),
           compact: true,
-          controller: _searchController,
+          controller: controller,
           hintText: hintText,
           readOnly: searchDisabled,
           enabled: !searchDisabled,
           onChanged: searchDisabled ? null : _onSearchChanged,
           suffixIcon: searchDisabled
               ? null
-              : ValueListenableBuilder<TextEditingValue>(
-                  valueListenable: _searchController,
-                  builder: (context, value, _) {
-                    if (value.text.isEmpty) {
-                      return const SizedBox.shrink();
-                    }
-                    return IconButton(
-                      icon: const Icon(
-                        Symbols.close_rounded,
-                        size: AppIconSizes.clear,
-                      ),
-                      onPressed: () {
-                        _searchDebounceTimer?.cancel();
-                        _searchController.clear();
-                        if (_debouncedSearchQuery.isNotEmpty) {
-                          setState(() => _debouncedSearchQuery = '');
-                        }
-                      },
-                    );
-                  },
+              : SearchFieldClearSuffix(
+                  controller: controller,
+                  onClear: _clearSearch,
                 ),
         ),
       ),

@@ -4,6 +4,7 @@ import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_history_section.dart';
 import 'package:blindbox_app/shared/widgets/app_search_field.dart';
+import 'package:blindbox_app/shared/widgets/search_field_clear_suffix.dart';
 import 'package:blindbox_app/shared/image/catalog_photo_acquisition.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -38,6 +39,7 @@ class FeedSearchScreen extends StatelessWidget {
     this.onSubmitted,
     this.historySection,
     this.onImageSelected,
+    this.resultsSectionActive,
   });
 
   final String title;
@@ -55,18 +57,94 @@ class FeedSearchScreen extends StatelessWidget {
   final VoidCallback? onSubmitted;
   final ValueChanged<CatalogPhotoSelection>? onImageSelected;
 
-  /// Optional widget shown below the search field when the trimmed query is empty.
-  /// Typically a [CatalogSearchHistorySection]. Rendered instead of [emptyPrompt]
-  /// when provided and non-null; falls back to [emptyPrompt] when null.
+  /// Optional widget shown below the search field when the results section is
+  /// inactive. Typically a [CatalogSearchHistorySection]. Rendered instead of
+  /// [emptyPrompt] when provided and non-null; falls back to [emptyPrompt]
+  /// when null.
   final Widget? historySection;
+
+  /// When non-null, drives the Matches title, results pane, and history/empty
+  /// chrome from this flag instead of live controller text.
+  ///
+  /// Discover catalog search passes the **committed** query state so Matches
+  /// never appears during the debounce window. Market omits this (live text).
+  /// Clear suffix chrome always follows the controller.
+  final bool? resultsSectionActive;
+
+  /// Test-only rebuild counter for live-input regression.
+  @visibleForTesting
+  static int debugBuildCount = 0;
 
   static bool _trimmedHasQuery(TextEditingValue value) =>
       value.text.trim().isNotEmpty;
 
+  Widget _buildResultsColumn({
+    required BuildContext context,
+    required bool showResultsSection,
+    required ColorScheme scheme,
+    required TextTheme textTheme,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (showResultsSection)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.pageHorizontal,
+              AppSpacing.lg,
+              AppSpacing.pageHorizontal,
+              AppSpacing.sm,
+            ),
+            child: Text(
+              'Matches',
+              style: textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.12,
+                color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
+              ),
+            ),
+          ),
+        Expanded(
+          child: showResultsSection
+              ? results
+              : historySection != null
+              ? SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                      top: SearchHistorySectionSpacing.belowSearchField,
+                    ),
+                    child: historySection,
+                  ),
+                )
+              : Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.emptyStateHorizontal,
+                    ),
+                    child: Text(
+                      emptyPrompt,
+                      textAlign: TextAlign.center,
+                      style: textTheme.bodyLarge?.copyWith(
+                        color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    assert(() {
+      debugBuildCount++;
+      return true;
+    }());
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final committedResultsActive = resultsSectionActive;
 
     return Scaffold(
       backgroundColor: scheme.surfaceContainerLow,
@@ -106,87 +184,33 @@ class FeedSearchScreen extends StatelessWidget {
               onChanged: onChanged,
               onSubmitted: onSubmitted,
               onImageSelected: onImageSelected,
-              suffixIcon: ValueListenableBuilder<TextEditingValue>(
-                valueListenable: controller,
-                builder: (context, value, _) {
-                  if (!_trimmedHasQuery(value) || onClear == null) {
-                    return const SizedBox.shrink();
-                  }
-                  return IconButton(
-                    tooltip: 'Clear',
-                    icon: Icon(
-                      Symbols.close_rounded,
-                      size: AppIconSizes.clear,
-                      color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
+              suffixIcon: onClear == null
+                  ? null
+                  : SearchFieldClearSuffix(
+                      controller: controller,
+                      onClear: onClear!,
                     ),
-                    onPressed: onClear,
-                  );
-                },
-              ),
             ),
           ),
           Expanded(
-            child: ValueListenableBuilder<TextEditingValue>(
-              valueListenable: controller,
-              builder: (context, value, _) {
-                final hasSearchText = _trimmedHasQuery(value);
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (hasSearchText)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(
-                          AppSpacing.pageHorizontal,
-                          AppSpacing.lg,
-                          AppSpacing.pageHorizontal,
-                          AppSpacing.sm,
-                        ),
-                        child: Text(
-                          'Matches',
-                          style: textTheme.labelLarge?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.12,
-                            color: scheme.onSurfaceVariant.withValues(
-                              alpha: 0.88,
-                            ),
-                          ),
-                        ),
-                      ),
-                    Expanded(
-                      child: hasSearchText
-                          ? results
-                          : historySection != null
-                          ? SingleChildScrollView(
-                              child: Padding(
-                                padding: const EdgeInsets.only(
-                                  top: SearchHistorySectionSpacing
-                                      .belowSearchField,
-                                ),
-                                child: historySection,
-                              ),
-                            )
-                          : Center(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: AppSpacing.emptyStateHorizontal,
-                                ),
-                                child: Text(
-                                  emptyPrompt,
-                                  textAlign: TextAlign.center,
-                                  style: textTheme.bodyLarge?.copyWith(
-                                    color: scheme.onSurfaceVariant.withValues(
-                                      alpha: 0.82,
-                                    ),
-                                    height: 1.4,
-                                  ),
-                                ),
-                              ),
-                            ),
-                    ),
-                  ],
-                );
-              },
-            ),
+            child: committedResultsActive != null
+                ? _buildResultsColumn(
+                    context: context,
+                    showResultsSection: committedResultsActive,
+                    scheme: scheme,
+                    textTheme: textTheme,
+                  )
+                : ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: controller,
+                    builder: (context, value, _) {
+                      return _buildResultsColumn(
+                        context: context,
+                        showResultsSection: _trimmedHasQuery(value),
+                        scheme: scheme,
+                        textTheme: textTheme,
+                      );
+                    },
+                  ),
           ),
         ],
       ),

@@ -1,14 +1,16 @@
+import 'package:blindbox_app/core/search/search_commit_policy.dart';
 import 'package:blindbox_app/core/search/search_placeholders.dart';
-import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_availability.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
+import 'package:blindbox_app/features/catalog/data/catalog_bundle_lookup.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_availability_copy.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_search_host_actions.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_series_search_rows.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_history_provider.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_history_section.dart';
+import 'package:blindbox_app/features/catalog/search/catalog_search_service.dart';
 import 'package:blindbox_app/features/catalog/widgets/catalog_availability_card.dart';
 import 'package:blindbox_app/features/catalog/widgets/catalog_series_search_row_card.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
@@ -17,16 +19,19 @@ import 'package:blindbox_app/features/collection/presentation/open_custom_series
 import 'package:blindbox_app/features/collection/presentation/open_recognition_candidate_series.dart';
 import 'package:blindbox_app/shared/widgets/app_search_field.dart';
 import 'package:blindbox_app/shared/widgets/feed_search_screen.dart';
+import 'package:blindbox_app/shared/widgets/search_field_clear_suffix.dart';
 import 'package:blindbox_app/shared/image/catalog_photo_acquisition.dart';
 import 'package:blindbox_app/shared/widgets/catalog_photo_verification_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:material_symbols_icons/symbols.dart';
 
 /// Shared catalog search experience — field, history, results, availability.
 ///
 /// Hosts supply [CatalogSearchHostActions] for preview / add; this widget has no
 /// routing knowledge.
+///
+/// Typing updates the [TextEditingController] immediately. Expensive catalog
+/// scan runs only after [SearchCommitPolicy.localCatalog] (clear commits now).
 class CatalogSearchExperience extends ConsumerStatefulWidget {
   const CatalogSearchExperience({
     super.key,
@@ -53,6 +58,26 @@ class CatalogSearchExperience extends ConsumerStatefulWidget {
   @visibleForTesting
   static int debugBuildCount = 0;
 
+  /// Test-only: how many times series-row search was executed.
+  @visibleForTesting
+  static int debugSearchExecutionCount = 0;
+
+  /// Test-only: [onChanged] invocations (live keystrokes).
+  @visibleForTesting
+  static int debugOnSearchChangedCount = 0;
+
+  /// Test-only: [onActiveQueryChanged](true) publications.
+  @visibleForTesting
+  static int debugQueryActiveTrueCount = 0;
+
+  /// Test-only: [onActiveQueryChanged](false) publications.
+  @visibleForTesting
+  static int debugQueryActiveFalseCount = 0;
+
+  /// Test-only: discover/embedded result pane builds.
+  @visibleForTesting
+  static int debugResultsPaneBuildCount = 0;
+
   @override
   ConsumerState<CatalogSearchExperience> createState() =>
       _CatalogSearchExperienceState();
@@ -61,16 +86,29 @@ class CatalogSearchExperience extends ConsumerStatefulWidget {
 class _CatalogSearchExperienceState
     extends ConsumerState<CatalogSearchExperience> {
   final _search = TextEditingController();
+  late final SearchCommitScheduler _commitScheduler;
   bool _queryActive = false;
+
+  /// Committed query that drives [buildCatalogSeriesSearchRows] — not live text.
+  String _committedQuery = '';
+
+  /// Latest live value waiting for post-frame commit scheduling.
+  String? _pendingLiveValue;
+  bool _postFrameLiveWorkQueued = false;
 
   @override
   void initState() {
     super.initState();
+    _commitScheduler = SearchCommitScheduler(
+      delay: SearchCommitPolicy.localCatalog,
+      onCommit: _onQueryCommitted,
+    );
     final initialQuery = widget.initialQuery?.trim();
     if (initialQuery != null && initialQuery.isNotEmpty) {
       _search.text = initialQuery;
       _search.selection = TextSelection.collapsed(offset: initialQuery.length);
       _queryActive = true;
+      _committedQuery = initialQuery;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         widget.onActiveQueryChanged?.call(true);
       });
@@ -79,13 +117,14 @@ class _CatalogSearchExperienceState
 
   @override
   void dispose() {
+    _commitScheduler.dispose();
     _search.dispose();
     super.dispose();
   }
 
-  String get _trimmedQuery => _search.text.trim();
+  String get _liveTrimmedQuery => _search.text.trim();
 
-  bool get _hasSearchText => _trimmedQuery.isNotEmpty;
+  bool get _hasCommittedSearchText => _committedQuery.trim().isNotEmpty;
 
   String get _hintText => widget.hintText ?? SearchPlaceholders.discoverCatalog;
 
@@ -96,21 +135,51 @@ class _CatalogSearchExperienceState
   void _notifyQueryActiveChanged(bool active) {
     if (_queryActive == active) return;
     _queryActive = active;
+    assert(() {
+      if (active) {
+        CatalogSearchExperience.debugQueryActiveTrueCount++;
+      } else {
+        CatalogSearchExperience.debugQueryActiveFalseCount++;
+      }
+      return true;
+    }());
     widget.onActiveQueryChanged?.call(active);
   }
 
-  void _onSearchChanged(String _) {
-    _notifyQueryActiveChanged(_hasSearchText);
-    setState(() {});
+  void _onQueryCommitted(String query) {
+    if (!mounted) return;
+    final next = query.trim();
+    if (next == _committedQuery) return;
+    setState(() => _committedQuery = next);
+  }
+
+  /// Keep [onChanged] cheap: paint the glyph this frame, schedule search work
+  /// after the frame so intermediate characters do not contend with layout.
+  void _onSearchChanged(String value) {
+    assert(() {
+      CatalogSearchExperience.debugOnSearchChangedCount++;
+      return true;
+    }());
+    _pendingLiveValue = value;
+    if (_postFrameLiveWorkQueued) return;
+    _postFrameLiveWorkQueued = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _postFrameLiveWorkQueued = false;
+      if (!mounted) return;
+      final live = _pendingLiveValue;
+      if (live == null) return;
+      _notifyQueryActiveChanged(live.trim().isNotEmpty);
+      _commitScheduler.schedule(live);
+    });
   }
 
   void _clearSearch() {
     final hadText = _search.text.trim().isNotEmpty;
+    _pendingLiveValue = null;
     _search.clear();
-    if (hadText) {
-      _notifyQueryActiveChanged(false);
-      setState(() {});
-    }
+    if (!hadText && !_hasCommittedSearchText) return;
+    _notifyQueryActiveChanged(false);
+    _commitScheduler.commitNow('');
   }
 
   void _recordSearch(String query) {
@@ -150,10 +219,11 @@ class _CatalogSearchExperienceState
   }
 
   void _applyHistoryQuery(String query) {
+    _pendingLiveValue = null;
     _search.text = query;
     _search.selection = TextSelection.collapsed(offset: query.length);
-    _notifyQueryActiveChanged(_hasSearchText);
-    setState(() {});
+    _notifyQueryActiveChanged(query.trim().isNotEmpty);
+    _commitScheduler.commitNow(query);
   }
 
   void _applySuggestedQuery(String query) {
@@ -162,20 +232,10 @@ class _CatalogSearchExperienceState
   }
 
   Widget _buildClearSuffix(ColorScheme scheme) {
-    return ValueListenableBuilder<TextEditingValue>(
-      valueListenable: _search,
-      builder: (context, value, _) {
-        if (value.text.trim().isEmpty) return const SizedBox.shrink();
-        return IconButton(
-          tooltip: 'Clear',
-          icon: Icon(
-            Symbols.close_rounded,
-            size: AppIconSizes.clear,
-            color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
-          ),
-          onPressed: _clearSearch,
-        );
-      },
+    return SearchFieldClearSuffix(
+      controller: _search,
+      onClear: _clearSearch,
+      iconColor: scheme.onSurfaceVariant.withValues(alpha: 0.7),
     );
   }
 
@@ -214,31 +274,48 @@ class _CatalogSearchExperienceState
       shelfCta: shelfCta,
       isWishlisted: snap.hasCatalogSeriesWishlisted(row.seriesId),
       onOpenPreview: () {
-        _scheduleDeferredSearchRecord(_trimmedQuery);
+        _scheduleDeferredSearchRecord(_committedQuery);
         widget.actions.onOpenPreview(
           context,
           seriesId: row.seriesId,
-          searchQuery: _trimmedQuery,
+          searchQuery: _committedQuery,
         );
       },
       onShelfCtaPressed: () {
-        _scheduleDeferredSearchRecord(_trimmedQuery);
+        _scheduleDeferredSearchRecord(_committedQuery);
         widget.actions.onShelfCtaPressed(
           context,
           seriesId: row.seriesId,
-          searchQuery: _trimmedQuery,
+          searchQuery: _committedQuery,
         );
       },
       onWishlistPressed: widget.actions.onWishlistPressed == null
           ? null
           : () {
-              _scheduleDeferredSearchRecord(_trimmedQuery);
+              _scheduleDeferredSearchRecord(_committedQuery);
               widget.actions.onWishlistPressed!(
                 context,
                 seriesId: row.seriesId,
-                searchQuery: _trimmedQuery,
+                searchQuery: _committedQuery,
               );
             },
+    );
+  }
+
+  List<CatalogSeriesSearchRow> _runCommittedSearch({
+    required CatalogSeedBundle bundle,
+    required CatalogSearchService? searchService,
+    required CatalogBundleLookup? lookup,
+  }) {
+    assert(() {
+      CatalogSearchExperience.debugSearchExecutionCount++;
+      return true;
+    }());
+    return buildCatalogSeriesSearchRows(
+      bundle: bundle,
+      query: _committedQuery,
+      lookup: lookup,
+      searchService: searchService,
     );
   }
 
@@ -250,6 +327,10 @@ class _CatalogSearchExperienceState
     required CollectionSnapshot snap,
     required Future<void> Function() retry,
   }) {
+    assert(() {
+      CatalogSearchExperience.debugResultsPaneBuildCount++;
+      return true;
+    }());
     if (!availability.isCatalogUsable) {
       return CatalogAvailabilitySearchMessage(
         message: CatalogAvailabilityCopy.searchMessageFor(availability),
@@ -262,10 +343,15 @@ class _CatalogSearchExperienceState
       return const Center(child: CircularProgressIndicator());
     }
 
+    if (!_hasCommittedSearchText) {
+      return const SizedBox.shrink();
+    }
+
     final lookup = ref.watch(catalogBundleLookupProvider);
-    final matches = buildCatalogSeriesSearchRows(
+    final searchService = ref.watch(catalogSearchServiceProvider);
+    final matches = _runCommittedSearch(
       bundle: bundle,
-      query: _trimmedQuery,
+      searchService: searchService,
       lookup: lookup,
     );
     if (matches.isEmpty) {
@@ -316,10 +402,15 @@ class _CatalogSearchExperienceState
       ];
     }
 
+    if (!_hasCommittedSearchText) {
+      return const [];
+    }
+
     final lookup = ref.watch(catalogBundleLookupProvider);
-    final matches = buildCatalogSeriesSearchRows(
+    final searchService = ref.watch(catalogSearchServiceProvider);
+    final matches = _runCommittedSearch(
       bundle: bundle,
-      query: _trimmedQuery,
+      searchService: searchService,
       lookup: lookup,
     );
 
@@ -376,7 +467,7 @@ class _CatalogSearchExperienceState
     final Widget? historySection;
     if (!availability.isCatalogUsable) {
       final message = CatalogAvailabilityCopy.searchMessageFor(availability);
-      if (_hasSearchText) {
+      if (_hasCommittedSearchText) {
         historySection = null;
         results = CatalogAvailabilitySearchMessage(
           message: message,
@@ -391,7 +482,7 @@ class _CatalogSearchExperienceState
       }
     } else {
       historySection = _buildIdleHistorySection(history);
-      if (_hasSearchText) {
+      if (_hasCommittedSearchText) {
         results = _buildDiscoverResults(
           scheme: scheme,
           textTheme: textTheme,
@@ -411,9 +502,14 @@ class _CatalogSearchExperienceState
       emptyPrompt: 'Search by series, figure, or IP.',
       controller: _search,
       onChanged: _onSearchChanged,
-      onSubmitted: () => _recordSearch(_trimmedQuery),
+      onSubmitted: () {
+        _commitScheduler.commitNow(_search.text);
+        _recordSearch(_liveTrimmedQuery);
+      },
       onClear: _clearSearch,
       historySection: historySection,
+      // Matches chrome follows committed query — not live debounce text.
+      resultsSectionActive: _hasCommittedSearchText,
       results: results,
       onImageSelected: _onImageSelected,
     );
@@ -436,12 +532,15 @@ class _CatalogSearchExperienceState
           padding: widget.fieldPadding ?? EdgeInsets.zero,
           hintText: _hintText,
           onChanged: _onSearchChanged,
-          onSubmitted: () => _recordSearch(_trimmedQuery),
+          onSubmitted: () {
+            _commitScheduler.commitNow(_search.text);
+            _recordSearch(_liveTrimmedQuery);
+          },
           suffixIcon: _buildClearSuffix(scheme),
           onImageSelected: _onImageSelected,
         ),
       ),
-      if (_hasSearchText)
+      if (_hasCommittedSearchText)
         ..._buildEmbeddedResultSlivers(
           scheme: scheme,
           textTheme: textTheme,

@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/search/search_commit_policy.dart';
 import 'package:blindbox_app/core/theme/app_theme.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
@@ -46,7 +47,7 @@ void main() {
     MarketBrowseSearchScreen.debugBuildCount = 0;
   });
 
-  testWidgets('typing does not rebuild screen before 400ms debounce', (
+  testWidgets('typing does not rebuild screen before remote debounce', (
     tester,
   ) async {
     await _pumpMarketSearch(tester);
@@ -61,7 +62,7 @@ void main() {
       reason: 'chrome-only typing must not rebuild MarketBrowseSearchScreen',
     );
 
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(SearchCommitPolicy.remote);
     await tester.pump();
 
     expect(
@@ -71,19 +72,23 @@ void main() {
     );
   });
 
-  testWidgets('debounce remains 400ms before commitQuery', (tester) async {
+  testWidgets('debounce remains remote policy before commitQuery', (
+    tester,
+  ) async {
     await _pumpMarketSearch(tester);
 
     await tester.enterText(find.byType(TextField), 'molly');
     await tester.pump();
 
-    var container = ProviderScope.containerOf(
+    final container = ProviderScope.containerOf(
       tester.element(find.byType(MarketBrowseSearchScreen)),
     );
     var search = container.read(marketSearchBrowseNotifierProvider);
     expect(search.isCommitted, isFalse);
 
-    await tester.pump(const Duration(milliseconds: 399));
+    await tester.pump(
+      SearchCommitPolicy.remote - const Duration(milliseconds: 1),
+    );
     await tester.pump();
     search = container.read(marketSearchBrowseNotifierProvider);
     expect(search.isCommitted, isFalse);
@@ -93,5 +98,31 @@ void main() {
     search = container.read(marketSearchBrowseNotifierProvider);
     expect(search.isCommitted, isTrue);
     expect(search.query, 'molly');
+  });
+
+  testWidgets('rapid typing commits only the latest market query', (
+    tester,
+  ) async {
+    await _pumpMarketSearch(tester);
+
+    for (final step in ['l', 'la', 'lab', 'labubu']) {
+      await tester.enterText(find.byType(TextField), step);
+      await tester.pump();
+    }
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(MarketBrowseSearchScreen)),
+    );
+    expect(
+      container.read(marketSearchBrowseNotifierProvider).isCommitted,
+      isFalse,
+    );
+
+    await tester.pump(SearchCommitPolicy.remote);
+    await tester.pump();
+
+    final search = container.read(marketSearchBrowseNotifierProvider);
+    expect(search.isCommitted, isTrue);
+    expect(search.query, 'labubu');
   });
 }

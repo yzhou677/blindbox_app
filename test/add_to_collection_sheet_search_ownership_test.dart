@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:blindbox_app/core/search/search_commit_policy.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
 import 'package:blindbox_app/features/catalog/catalog_image_resolver.dart';
 import 'package:blindbox_app/features/catalog/data/catalog_image_disk_cache.dart';
@@ -147,9 +148,15 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(_searchField, 'Series 1');
+    await tester.pump(); // post-frame: queryActive → sheet hides Browse
     await tester.pump();
 
     expect(find.text(AddSeriesCatalogCopy.browseHeading), findsNothing);
+    expect(find.text('Matches'), findsNothing);
+
+    await tester.pump(SearchCommitPolicy.localCatalog);
+    await tester.pump();
+
     expect(find.text('Matches'), findsOneWidget);
     expect(
       find.widgetWithText(CollectibleBrowseCard, 'Series 1'),

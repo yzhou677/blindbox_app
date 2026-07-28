@@ -46,23 +46,34 @@ class _SeriesSearchAgg {
   bool hasAnySecret;
 }
 
-/// Builds series-centric search rows —same ranking/filter as Add Series sheet.
+/// Builds series-centric search rows — same ranking/filter as Add Series sheet.
+///
+/// Prefer [searchService] + [lookup] from providers so callers do not rebuild
+/// indexes on every keystroke / commit.
 List<CatalogSeriesSearchRow> buildCatalogSeriesSearchRows({
   required CatalogSeedBundle bundle,
   required String query,
   bool Function(String seriesId)? excludeSeriesId,
   CatalogBundleLookup? lookup,
+  CatalogSearchService? searchService,
 }) {
-  final svc = CatalogSearchService(bundle);
+  final svc = searchService ?? CatalogSearchService(bundle);
   final raw = svc.search(query);
-  final figureSeriesId = {for (final f in bundle.figures) f.id: f.seriesId};
-  final seriesById = {for (final s in bundle.series) s.id: s};
+
+  final figureSeriesIdFallback = lookup == null
+      ? {for (final f in bundle.figures) f.id: f.seriesId}
+      : null;
+  final seriesByIdFallback = lookup == null
+      ? {for (final s in bundle.series) s.id: s}
+      : null;
 
   final order = <String>[];
   final groups = <String, _SeriesSearchAgg>{};
 
   for (final r in raw) {
-    final sid = figureSeriesId[r.figureId];
+    final sid =
+        lookup?.seriesIdForFigure(r.figureId) ??
+        figureSeriesIdFallback?[r.figureId];
     if (sid == null) continue;
     if (excludeSeriesId != null && excludeSeriesId(sid)) continue;
 
@@ -83,7 +94,7 @@ List<CatalogSeriesSearchRow> buildCatalogSeriesSearchRows({
   return order
       .map((sid) {
         final agg = groups[sid]!;
-        final series = seriesById[sid];
+        final series = lookup?.seriesById(sid) ?? seriesByIdFallback?[sid];
         if (series == null) {
           throw StateError('Catalog seed missing series $sid');
         }
@@ -101,8 +112,12 @@ List<CatalogSeriesSearchRow> buildCatalogSeriesSearchRows({
           seriesTitle: series.displayName,
           coverImageKey: series.imageKey.trim(),
           summaryLine: summaryLine,
-          ipLine: _seriesIpLine(bundle, series),
-          brand: _seriesBrandLine(bundle, series),
+          ipLine:
+              lookup?.ipDisplayName(series.ipId) ??
+              _seriesIpLine(bundle, series),
+          brand:
+              lookup?.brandDisplayName(series.brandId) ??
+              _seriesBrandLine(bundle, series),
           taxonomyBrandId: series.brandId,
           taxonomyIpId: series.ipId,
           hasAnySecret: agg.hasAnySecret,

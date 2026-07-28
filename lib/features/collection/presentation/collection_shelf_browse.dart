@@ -5,6 +5,7 @@ import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_service.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/domain/series_completion_resolution.dart';
+import 'package:flutter/foundation.dart';
 
 /// Display-only sort modes for the Collection shelf browse pipeline.
 enum CollectionShelfSort {
@@ -39,11 +40,14 @@ extension CollectionShelfSortLabels on CollectionShelfSort {
 ///
 /// Prefer [catalogSearch] when the caller already holds a service for the
 /// current bundle —avoids reconstructing indexes on every rebuild.
+/// Prefer [figureSeriesIdByFigureId] (e.g. from [CatalogBundleLookup]) to avoid
+/// rebuilding the figure→series map on each call.
 List<ShelfSeries> filterShelfSeriesBySearch(
   List<ShelfSeries> series,
   String query, {
   CatalogSeedBundle? catalog,
   CatalogSearchService? catalogSearch,
+  Map<String, String>? figureSeriesIdByFigureId,
 }) {
   final tokens = SearchTokenizer.tokenize(query);
   if (tokens.isEmpty) return series;
@@ -54,9 +58,11 @@ List<ShelfSeries> filterShelfSeriesBySearch(
       ? CatalogSearchService(catalog).matchingSeriesIds(query)
       : const <String>{};
 
-  final figureSeriesLookup = catalog != null && catalogSeriesIds.isNotEmpty
-      ? _catalogFigureIdToSeriesId(catalog)
-      : null;
+  final figureSeriesLookup =
+      figureSeriesIdByFigureId ??
+      (catalog != null && catalogSeriesIds.isNotEmpty
+          ? _catalogFigureIdToSeriesId(catalog)
+          : null);
 
   return [
     for (final row in series)
@@ -68,6 +74,102 @@ List<ShelfSeries> filterShelfSeriesBySearch(
       ))
         row,
   ];
+}
+
+/// Keeps series that appear in [matchedIds], preserving [ordered] traversal.
+///
+/// When [matchedIds] is `null`, every row matches (empty committed query).
+List<ShelfSeries> intersectShelfSeriesBySearchMatchIds(
+  List<ShelfSeries> ordered,
+  Set<String>? matchedIds,
+) {
+  if (matchedIds == null) return ordered;
+  if (matchedIds.isEmpty) return const [];
+  return [
+    for (final row in ordered)
+      if (matchedIds.contains(row.id)) row,
+  ];
+}
+
+/// Revision-aware cache of text-search matches for Collection shelf browse.
+///
+/// Brand/IP chip taps must intersect this set instead of re-running
+/// [filterShelfSeriesBySearch] / [CatalogSearchService.matchingSeriesIds].
+final class ShelfBrowseSearchMatchCache {
+  List<ShelfSeries>? _shelf;
+  String _query = '';
+  CatalogSearchService? _catalogSearch;
+  CatalogSeedBundle? _catalog;
+  Map<String, String>? _figureSeriesIdByFigureId;
+
+  /// `null` means empty query (all series match).
+  Set<String>? _matchedIds;
+
+  /// Test-only: full text-search pipeline executions (cache misses).
+  @visibleForTesting
+  static int debugSearchExecutionCount = 0;
+
+  /// Test-only: cache hits that skipped text search.
+  @visibleForTesting
+  static int debugCacheHitCount = 0;
+
+  /// Returns matched shelf series ids for [query].
+  ///
+  /// `null` = empty query (treat as match-all). Non-null empty set = no matches.
+  Set<String>? matchedIds({
+    required List<ShelfSeries> shelf,
+    required String query,
+    CatalogSeedBundle? catalog,
+    CatalogSearchService? catalogSearch,
+    Map<String, String>? figureSeriesIdByFigureId,
+  }) {
+    if (identical(_shelf, shelf) &&
+        _query == query &&
+        identical(_catalogSearch, catalogSearch) &&
+        identical(_catalog, catalog) &&
+        identical(_figureSeriesIdByFigureId, figureSeriesIdByFigureId)) {
+      assert(() {
+        ShelfBrowseSearchMatchCache.debugCacheHitCount++;
+        return true;
+      }());
+      return _matchedIds;
+    }
+
+    _shelf = shelf;
+    _query = query;
+    _catalogSearch = catalogSearch;
+    _catalog = catalog;
+    _figureSeriesIdByFigureId = figureSeriesIdByFigureId;
+
+    final tokens = SearchTokenizer.tokenize(query);
+    if (tokens.isEmpty) {
+      _matchedIds = null;
+      return null;
+    }
+
+    assert(() {
+      ShelfBrowseSearchMatchCache.debugSearchExecutionCount++;
+      return true;
+    }());
+    final matched = filterShelfSeriesBySearch(
+      shelf,
+      query,
+      catalog: catalog,
+      catalogSearch: catalogSearch,
+      figureSeriesIdByFigureId: figureSeriesIdByFigureId,
+    );
+    _matchedIds = {for (final row in matched) row.id};
+    return _matchedIds;
+  }
+
+  void invalidate() {
+    _shelf = null;
+    _query = '';
+    _catalogSearch = null;
+    _catalog = null;
+    _figureSeriesIdByFigureId = null;
+    _matchedIds = null;
+  }
 }
 
 Map<String, String> _catalogFigureIdToSeriesId(CatalogSeedBundle catalog) {

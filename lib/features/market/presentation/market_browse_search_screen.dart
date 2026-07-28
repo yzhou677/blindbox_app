@@ -1,8 +1,7 @@
-import 'dart:async';
-
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
+import 'package:blindbox_app/core/search/search_commit_policy.dart';
 import 'package:blindbox_app/core/search/search_placeholders.dart';
 import 'package:blindbox_app/features/market/application/collectible_market_providers.dart';
 import 'package:blindbox_app/features/market/application/active_market_browse_query.dart';
@@ -38,13 +37,25 @@ class MarketBrowseSearchScreen extends ConsumerStatefulWidget {
 class _MarketBrowseSearchScreenState
     extends ConsumerState<MarketBrowseSearchScreen> {
   final _search = TextEditingController();
-  Timer? _debounce;
+  late final SearchCommitScheduler _commitScheduler;
   List<String> _displayOrderIds = const [];
   String? _displayOrderBrowseSignature;
 
   @override
   void initState() {
     super.initState();
+    _commitScheduler = SearchCommitScheduler(
+      delay: SearchCommitPolicy.remote,
+      onCommit: (query) {
+        if (!mounted) return;
+        MarketSearchTrace.event(
+          'debounce fired → commitQuery "${query.trim()}"',
+        );
+        ref
+            .read(marketSearchBrowseNotifierProvider.notifier)
+            .commitQuery(query);
+      },
+    );
     ShellTabReselectBus.instance.reselectedBranch.addListener(_onTabReselected);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -58,7 +69,7 @@ class _MarketBrowseSearchScreenState
     ShellTabReselectBus.instance.reselectedBranch.removeListener(
       _onTabReselected,
     );
-    _debounce?.cancel();
+    _commitScheduler.dispose();
     _search.dispose();
     super.dispose();
   }
@@ -78,8 +89,7 @@ class _MarketBrowseSearchScreenState
   void _applyHistoryQuery(String query) {
     _search.text = query;
     _search.selection = TextSelection.collapsed(offset: query.length);
-    _debounce?.cancel();
-    ref.read(marketSearchBrowseNotifierProvider.notifier).commitQuery(query);
+    _commitScheduler.commitNow(query);
   }
 
   void _applySuggestedQuery(String query) {
@@ -88,30 +98,24 @@ class _MarketBrowseSearchScreenState
   }
 
   void _onSearchSubmitted() {
-    _debounce?.cancel();
     final q = _trimmedQuery;
     if (q.isEmpty) return;
     _recordSearch(q);
-    ref.read(marketSearchBrowseNotifierProvider.notifier).commitQuery(q);
+    _commitScheduler.commitNow(q);
   }
 
   void _onSearchChanged(String value) {
     MarketSearchTrace.event('TextField.onChanged len=${value.length}');
-    _debounce?.cancel();
     if (value.trim().isEmpty) {
       _exitSearch(clearField: false);
       return;
     }
-    _debounce = Timer(const Duration(milliseconds: 400), () {
-      if (!mounted) return;
-      MarketSearchTrace.event('debounce fired → commitQuery "${value.trim()}"');
-      ref.read(marketSearchBrowseNotifierProvider.notifier).commitQuery(value);
-    });
+    _commitScheduler.schedule(value);
   }
 
   /// Restore Market feed and leave the search overlay route.
   void _exitSearch({bool clearField = true}) {
-    _debounce?.cancel();
+    _commitScheduler.cancel();
     if (clearField) _search.clear();
     clearMarketSearchOverlaySession(ref);
     if (!mounted) return;
