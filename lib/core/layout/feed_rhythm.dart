@@ -209,9 +209,28 @@ abstract final class FeedRhythm {
   static const double sheetHorizontal = 16;
   static const double sheetChromeTop = 10;
   static const double sheetHeaderAfterHandle = 16;
-  static const double sheetBodyBottomInset = 14;
-  static const double sheetEditorialBlockGap = 10;
-  static const double sheetSectionGap = 18;
+
+  /// Gap from sheet title block to the first body section.
+  static const double sheetTitleToBody = 20;
+
+  /// Bottom inset inside the scroll body (above a sticky footer, if any).
+  static const double sheetBodyBottomInset = 24;
+
+  /// Editorial subtitle / meta under a sheet title.
+  static const double sheetEditorialBlockGap = 8;
+
+  /// Major section breaks inside sheet bodies (Progress → Attributes → Metadata).
+  static const double sheetSectionGap = 24;
+
+  /// Section label → first control / chip row.
+  static const double sheetLabelToControl = 12;
+
+  /// Related controls / chip wrap gaps.
+  static const double sheetControlGap = 8;
+
+  /// Sticky sheet footer vertical padding (above safe area).
+  static const double sheetFooterVertical = 12;
+
   static const double sheetFigureRailGap = 14;
 
   // —— Detail / hero editorial rhythm (post–Phase 6 density pass) ——

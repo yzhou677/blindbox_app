@@ -1,6 +1,7 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_card_tokens.dart';
 import 'package:blindbox_app/core/theme/app_radii.dart';
+import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/collectible_elevation.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/market/domain/chasers_heat_entry.dart';
@@ -40,7 +41,9 @@ class ChasersMarketSection extends StatelessWidget {
             height: FeedRhythm.marketChasersRailHeight,
             child: ListView.separated(
               clipBehavior: Clip.none,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.pageHorizontal,
+              ),
               scrollDirection: Axis.horizontal,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: 3,
@@ -54,7 +57,9 @@ class ChasersMarketSection extends StatelessWidget {
             height: FeedRhythm.marketChasersRailHeight,
             child: ListView.separated(
               clipBehavior: Clip.none,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.pageHorizontal,
+              ),
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),
               itemCount: entries.length,

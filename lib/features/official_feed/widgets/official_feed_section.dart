@@ -1,4 +1,5 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/features/official_feed/application/official_feed_providers.dart';
 import 'package:blindbox_app/features/official_feed/domain/official_feed_item.dart';
 import 'package:blindbox_app/features/official_feed/presentation/official_feed_copy.dart';
@@ -42,7 +43,7 @@ class _OfficialUpdatesFeed extends StatelessWidget {
         ),
         const SizedBox(height: FeedRhythm.sectionTitleToSubtitle),
         const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20),
+          padding: EdgeInsets.symmetric(horizontal: AppSpacing.pageHorizontal),
           child: OfficialFeedReleaseDateNote(),
         ),
         SizedBox(

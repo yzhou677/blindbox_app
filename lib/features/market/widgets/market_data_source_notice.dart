@@ -1,3 +1,4 @@
+import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/features/market/data/gateway/market_gateway_config.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -18,7 +19,9 @@ class MarketDataSourceNotice extends StatelessWidget {
         : 'Preview listings for layout. Live Market data comes from eBay.';
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.pageHorizontal,
+      ),
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: Color.lerp(

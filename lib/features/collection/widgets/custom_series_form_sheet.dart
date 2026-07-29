@@ -1,5 +1,6 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_radii.dart';
+import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/collection/data/collection_input_formatters.dart';
 import 'package:blindbox_app/features/collection/data/collection_input_limits.dart';
@@ -417,18 +418,20 @@ class _CustomSeriesFormSheetState extends ConsumerState<CustomSeriesFormSheet> {
                       onAddSubmitted: _addShelfFigureFromField,
                     ),
                   ],
-                  const SizedBox(height: 22),
+                  const SizedBox(height: AppSpacing.xxl),
                   FilledButton(
                     onPressed: _save,
                     style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppSpacing.md,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: AppRadii.fieldRadius,
                       ),
                     ),
                     child: Text(_isCreate ? 'Add to shelf' : 'Save changes'),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.sm),
                 ],
               ),
             ),

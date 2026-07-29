@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 
 /// Drag pill + optional series/editorial header for bottom sheets.
 ///
+/// Horizontal inset is owned by [CollectibleSheetInsets] (or an equivalent
+/// parent). This chrome only owns vertical rhythm under the drag handle.
+///
 /// Intentionally no nested [Material] — lives in [CollectibleSheetScrollView.header].
 class CollectibleSheetChrome extends StatelessWidget {
   const CollectibleSheetChrome({
@@ -44,7 +47,7 @@ class CollectibleSheetChrome extends StatelessWidget {
               style: CollectibleTypography.seriesHeroTitle(textTheme, scheme),
             ),
             if (editorialSubtitle != null) ...[
-              const SizedBox(height: 6),
+              SizedBox(height: FeedRhythm.sheetEditorialBlockGap),
               Text(
                 editorialSubtitle!,
                 style: CollectibleTypography.seriesBrandLine(textTheme, scheme),
@@ -67,7 +70,7 @@ class CollectibleSheetChrome extends StatelessWidget {
               )
             else if (trailingMeta != null &&
                 trailingMeta!.trim().isNotEmpty) ...[
-              const SizedBox(height: 8),
+              SizedBox(height: FeedRhythm.sheetControlGap),
               Text(
                 trailingMeta!.trim(),
                 style: CollectibleTypography.figureMeta(textTheme, scheme),

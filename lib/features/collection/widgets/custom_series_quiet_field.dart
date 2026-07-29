@@ -1,4 +1,5 @@
 import 'package:blindbox_app/core/theme/app_radii.dart';
+import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
 
 /// Soft filled fields for custom series surfaces ([AppRadii.field] only).
@@ -15,7 +16,10 @@ InputDecoration quietCustomSeriesField(
     hintStyle: TextStyle(color: hintColor, fontWeight: FontWeight.w400),
     filled: true,
     fillColor: fill,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
+    contentPadding: const EdgeInsets.symmetric(
+      horizontal: AppSpacing.lg,
+      vertical: AppSpacing.md,
+    ),
     border: OutlineInputBorder(
       borderRadius: AppRadii.fieldRadius,
       borderSide: BorderSide(color: idleBorder),
