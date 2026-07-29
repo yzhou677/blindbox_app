@@ -27,8 +27,6 @@ class TaxonomyBrandChipRail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
     final railHeight = compact ? 36.0 : height;
 
     return SizedBox(
@@ -42,12 +40,10 @@ class TaxonomyBrandChipRail extends StatelessWidget {
         itemBuilder: (context, i) {
           final o = options[i];
           final selected = selectedId == o.id;
-          return _TaxonomyBrandPillChip(
+          return TaxonomyFilterPillChip(
             label: o.label,
             selected: selected,
             compact: compact,
-            scheme: scheme,
-            textTheme: textTheme,
             onTap: () => onSelected(o.id),
           );
         },
@@ -56,25 +52,27 @@ class TaxonomyBrandChipRail extends StatelessWidget {
   }
 }
 
-class _TaxonomyBrandPillChip extends StatelessWidget {
-  const _TaxonomyBrandPillChip({
+/// Single Collection / Market filter pill — selected and unselected treatments.
+///
+/// Use for boolean filters (e.g. Has Duplicates) so they match Brand/IP chips.
+class TaxonomyFilterPillChip extends StatelessWidget {
+  const TaxonomyFilterPillChip({
+    super.key,
     required this.label,
     required this.selected,
-    required this.compact,
-    required this.scheme,
-    required this.textTheme,
     required this.onTap,
+    this.compact = false,
   });
 
   final String label;
   final bool selected;
-  final bool compact;
-  final ColorScheme scheme;
-  final TextTheme textTheme;
   final VoidCallback onTap;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     final fill = selected
         ? scheme.primaryContainer.withValues(alpha: compact ? 0.72 : 0.62)
         : scheme.surfaceContainerHighest.withValues(
@@ -87,42 +85,47 @@ class _TaxonomyBrandPillChip extends StatelessWidget {
         ? scheme.onPrimaryContainer.withValues(alpha: 0.92)
         : scheme.onSurfaceVariant.withValues(alpha: 0.88);
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(999),
-        child: AnimatedContainer(
-          duration: CollectibleMotion.fast,
-          curve: Curves.easeOutCubic,
-          padding: EdgeInsets.symmetric(
-            horizontal: compact ? 12 : 14,
-            vertical: compact ? 6 : 8,
-          ),
-          decoration: BoxDecoration(
-            color: fill,
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: border, width: selected ? 1.15 : 1),
-            boxShadow: selected && !compact
-                ? [
-                    BoxShadow(
-                      color: scheme.primary.withValues(alpha: 0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 3),
-                    ),
-                  ]
-                : null,
-          ),
-          child: AnimatedDefaultTextStyle(
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(999),
+          child: AnimatedContainer(
             duration: CollectibleMotion.fast,
             curve: Curves.easeOutCubic,
-            style: textTheme.labelLarge!.copyWith(
-              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-              letterSpacing: selected ? 0.02 : 0.1,
-              color: fg,
-              height: compact ? 1.1 : null,
+            padding: EdgeInsets.symmetric(
+              horizontal: compact ? 12 : 14,
+              vertical: compact ? 6 : 8,
             ),
-            child: Text(label),
+            decoration: BoxDecoration(
+              color: fill,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: border, width: selected ? 1.15 : 1),
+              boxShadow: selected && !compact
+                  ? [
+                      BoxShadow(
+                        color: scheme.primary.withValues(alpha: 0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: AnimatedDefaultTextStyle(
+              duration: CollectibleMotion.fast,
+              curve: Curves.easeOutCubic,
+              style: textTheme.labelLarge!.copyWith(
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                letterSpacing: selected ? 0.02 : 0.1,
+                color: fg,
+                height: compact ? 1.1 : null,
+              ),
+              child: Text(label),
+            ),
           ),
         ),
       ),
