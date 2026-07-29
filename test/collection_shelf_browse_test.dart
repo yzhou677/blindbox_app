@@ -1,6 +1,9 @@
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
+import 'package:blindbox_app/features/catalog/models/catalog_series.dart'
+    as catalog;
 import 'package:blindbox_app/features/catalog/search/catalog_search_service.dart';
 import 'package:blindbox_app/features/collection/application/collection_shelf_ui_prefs_provider.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_shelf_layout.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_browse.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_brand_facets.dart';
@@ -346,6 +349,44 @@ void main() {
         states,
       );
       expect(sorted.map((s) => s.id).toList(), ['c', 'a', 'b']);
+    });
+
+    test('recentlyReleased sorts by catalog release date newest first', () {
+      final older = testShelfSeries(id: 'old', catalogTemplateId: 'cat_old');
+      final newer = testShelfSeries(id: 'new', catalogTemplateId: 'cat_new');
+      final undated = testShelfSeries(id: 'undated', catalogTemplateId: null);
+      final bundle = CatalogSeedBundle(
+        brands: const [],
+        ips: const [],
+        series: [
+          catalog.CatalogSeries(
+            id: 'cat_old',
+            brandId: 'pop_mart',
+            ipId: 'hirono',
+            displayName: 'Old',
+            releaseDate: '2024-01-01',
+            isBlindBox: true,
+            imageKey: 'cat_old',
+          ),
+          catalog.CatalogSeries(
+            id: 'cat_new',
+            brandId: 'pop_mart',
+            ipId: 'hirono',
+            displayName: 'New',
+            releaseDate: '2026-06-01',
+            isBlindBox: true,
+            imageKey: 'cat_new',
+          ),
+        ],
+        figures: const [],
+      );
+      final sorted = sortShelfSeriesForDisplay(
+        [older, undated, newer],
+        CollectionShelfSort.recentlyReleased,
+        const {},
+        catalog: bundle,
+      );
+      expect(sorted.map((s) => s.id).toList(), ['new', 'old', 'undated']);
     });
 
     test('alphabetical sorts all series by name globally (ignores IP)', () {
@@ -1032,6 +1073,7 @@ void main() {
         id: 'other',
         name: 'Other Brand',
         brand: 'Other Co',
+        taxonomyBrandId: 'other_co',
         taxonomyIpId: 'nommi',
         ipName: 'Nommi',
         figures: [
@@ -1428,25 +1470,31 @@ void main() {
     test('load returns defaults when empty', () async {
       final prefs = await CollectionShelfUiPrefsStorage.load();
       expect(prefs.sort, CollectionShelfSort.recentlyAdded);
+      expect(prefs.layout, CollectionShelfLayout.grid);
       expect(prefs.inProgressSectionExpanded, isTrue);
       expect(prefs.completedSectionExpanded, isFalse);
       expect(prefs.collapsedIpSectionKeys, isEmpty);
     });
 
-    test('save then load round-trips sort and collapse keys', () async {
-      await CollectionShelfUiPrefsStorage.save(
-        const CollectionShelfUiPrefs(
-          sort: CollectionShelfSort.alphabetical,
-          inProgressSectionExpanded: false,
-          completedSectionExpanded: true,
-          collapsedIpSectionKeys: {'ip:labubu'},
-        ),
-      );
-      final prefs = await CollectionShelfUiPrefsStorage.load();
-      expect(prefs.sort, CollectionShelfSort.alphabetical);
-      expect(prefs.inProgressSectionExpanded, isFalse);
-      expect(prefs.completedSectionExpanded, isTrue);
-      expect(prefs.collapsedIpSectionKeys, {'ip:labubu'});
-    });
+    test(
+      'save then load round-trips sort, layout, and collapse keys',
+      () async {
+        await CollectionShelfUiPrefsStorage.save(
+          const CollectionShelfUiPrefs(
+            sort: CollectionShelfSort.alphabetical,
+            layout: CollectionShelfLayout.compactGrid,
+            inProgressSectionExpanded: false,
+            completedSectionExpanded: true,
+            collapsedIpSectionKeys: {'ip:labubu'},
+          ),
+        );
+        final prefs = await CollectionShelfUiPrefsStorage.load();
+        expect(prefs.sort, CollectionShelfSort.alphabetical);
+        expect(prefs.layout, CollectionShelfLayout.compactGrid);
+        expect(prefs.inProgressSectionExpanded, isFalse);
+        expect(prefs.completedSectionExpanded, isTrue);
+        expect(prefs.collapsedIpSectionKeys, {'ip:labubu'});
+      },
+    );
   });
 }
