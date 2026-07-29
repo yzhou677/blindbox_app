@@ -314,45 +314,134 @@ class ShelfFigure {
 enum FigureCollectionState { none, wishlist, owned }
 
 /// Runtime ownership for one shelf figure id ([ShelfFigure.id] instance key).
+///
+/// [ownedQuantity] is the source of truth for how many physical copies the
+/// collector currently holds for this figure slot:
+/// - `0` — not owned (wishlist or missing)
+/// - `1` — one copy (no duplicates)
+/// - `2+` — multiple copies
+///
+/// Duplicate extras are always derived: [duplicateCount] =
+/// `max(ownedQuantity - 1, 0)`. Do not treat [ownedQuantity] itself as a
+/// duplicate count. Future Trade/Sell may attach per-copy metadata alongside
+/// this aggregate quantity without replacing it.
 @immutable
 class TrackedFigure {
   const TrackedFigure({
     required this.figureId,
     required this.state,
     this.updatedAtMicros,
-  });
+    int? ownedQuantity,
+  }) : _ownedQuantity = ownedQuantity;
 
   final String figureId;
   final FigureCollectionState state;
   final int? updatedAtMicros;
 
+  /// Wire / constructor raw quantity. Prefer [ownedQuantity] everywhere else.
+  final int? _ownedQuantity;
+
   bool get owned => state == FigureCollectionState.owned;
   bool get wishlist => state == FigureCollectionState.wishlist;
 
-  TrackedFigure copyWith({FigureCollectionState? state, int? updatedAtMicros}) {
+  /// Copies currently owned for this figure slot (never negative).
+  int get ownedQuantity => normalizeOwnedQuantity(state, _ownedQuantity);
+
+  /// Extra copies beyond the first. Derived — never persisted independently.
+  int get duplicateCount => ownedQuantity > 1 ? ownedQuantity - 1 : 0;
+
+  bool get hasDuplicates => ownedQuantity >= 2;
+
+  /// Normalize quantity against ownership state and reject negatives / junk.
+  ///
+  /// Legacy owned records without a quantity behave as `1`.
+  static int normalizeOwnedQuantity(FigureCollectionState state, int? raw) {
+    if (state != FigureCollectionState.owned) return 0;
+    if (raw == null) return 1;
+    if (raw < 1) return 1;
+    return raw;
+  }
+
+  /// Parse wire / UI values safely (null, bool, String, num, negative).
+  static int? tryParseOwnedQuantity(dynamic raw) {
+    if (raw == null) return null;
+    if (raw is bool) return null;
+    if (raw is int) return raw;
+    if (raw is num) return raw.toInt();
+    if (raw is String) {
+      final t = raw.trim();
+      if (t.isEmpty) return null;
+      return int.tryParse(t);
+    }
+    return null;
+  }
+
+  TrackedFigure copyWith({
+    FigureCollectionState? state,
+    int? updatedAtMicros,
+    int? ownedQuantity,
+    bool clearOwnedQuantity = false,
+  }) {
     return TrackedFigure(
       figureId: figureId,
       state: state ?? this.state,
       updatedAtMicros: updatedAtMicros ?? this.updatedAtMicros,
+      ownedQuantity: clearOwnedQuantity
+          ? null
+          : (ownedQuantity ?? _ownedQuantity),
     );
   }
+
+  @override
+  bool operator ==(Object other) {
+    return other is TrackedFigure &&
+        other.figureId == figureId &&
+        other.state == state &&
+        other.updatedAtMicros == updatedAtMicros &&
+        other.ownedQuantity == ownedQuantity;
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(figureId, state, updatedAtMicros, ownedQuantity);
 }
 
 /// Progress for one series from [figureStates].
+///
+/// [owned] counts unique owned figures (completion numerator input).
+/// [duplicateCount] is the series-level sum of extra copies.
 @immutable
 class SeriesProgressCounts {
   const SeriesProgressCounts({
     required this.owned,
     required this.wishlist,
     required this.missing,
+    this.duplicateCount = 0,
   });
 
   final int owned;
   final int wishlist;
   final int missing;
 
+  /// `sum(max(ownedQuantity - 1, 0))` across figures in the series.
+  final int duplicateCount;
+
+  bool get hasDuplicates => duplicateCount > 0;
+
   double completion(int total) =>
       total <= 0 ? 0 : (owned / total).clamp(0.0, 1.0);
+}
+
+/// Series-level duplicate extras derived from [TrackedFigure.ownedQuantity].
+int seriesDuplicateCount(
+  ShelfSeries series,
+  Map<String, TrackedFigure> states,
+) {
+  var d = 0;
+  for (final f in series.figures) {
+    d += states[f.id]?.duplicateCount ?? 0;
+  }
+  return d;
 }
 
 SeriesProgressCounts progressForSeries(
@@ -362,17 +451,24 @@ SeriesProgressCounts progressForSeries(
   var o = 0;
   var w = 0;
   var m = 0;
+  var d = 0;
   for (final f in series.figures) {
     final t = states[f.id];
     if (t?.state == FigureCollectionState.owned) {
       o++;
+      d += t!.duplicateCount;
     } else if (t?.state == FigureCollectionState.wishlist) {
       w++;
     } else {
       m++;
     }
   }
-  return SeriesProgressCounts(owned: o, wishlist: w, missing: m);
+  return SeriesProgressCounts(
+    owned: o,
+    wishlist: w,
+    missing: m,
+    duplicateCount: d,
+  );
 }
 
 /// A series is Started only after at least one figure is owned.

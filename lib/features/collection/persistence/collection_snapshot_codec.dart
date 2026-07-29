@@ -259,10 +259,15 @@ abstract final class CollectionSnapshotCodec {
     return {
       'state': t.state.name,
       if (t.updatedAtMicros != null) 'updatedAtMicros': t.updatedAtMicros,
+      // Persist effective quantity for owned rows (source of truth for duplicates).
+      if (t.state == FigureCollectionState.owned)
+        'ownedQuantity': t.ownedQuantity,
     };
   }
 
   /// Supports enum name string (v1) or legacy `{ "owned": bool, "wishlist": bool }`.
+  ///
+  /// Missing / null / invalid [ownedQuantity] on owned rows behaves as `1`.
   static TrackedFigure? _trackedFromJson(String figureId, dynamic raw) {
     if (raw is String) {
       try {
@@ -275,13 +280,18 @@ abstract final class CollectionSnapshotCodec {
     if (raw is Map) {
       final stateName = raw['state'];
       final updatedAtMicros = raw['updatedAtMicros'];
+      final ownedQuantity = TrackedFigure.tryParseOwnedQuantity(
+        raw['ownedQuantity'],
+      );
+      final updatedAt = updatedAtMicros is int ? updatedAtMicros : null;
       if (stateName is String) {
         try {
           final st = FigureCollectionState.values.byName(stateName);
           return TrackedFigure(
             figureId: figureId,
             state: st,
-            updatedAtMicros: updatedAtMicros is int ? updatedAtMicros : null,
+            updatedAtMicros: updatedAt,
+            ownedQuantity: ownedQuantity,
           );
         } catch (_) {
           return null;
@@ -293,18 +303,23 @@ abstract final class CollectionSnapshotCodec {
         return TrackedFigure(
           figureId: figureId,
           state: FigureCollectionState.owned,
+          updatedAtMicros: updatedAt,
+          ownedQuantity: ownedQuantity,
         );
       }
       if (o) {
         return TrackedFigure(
           figureId: figureId,
           state: FigureCollectionState.owned,
+          updatedAtMicros: updatedAt,
+          ownedQuantity: ownedQuantity,
         );
       }
       if (w) {
         return TrackedFigure(
           figureId: figureId,
           state: FigureCollectionState.wishlist,
+          updatedAtMicros: updatedAt,
         );
       }
       return TrackedFigure(

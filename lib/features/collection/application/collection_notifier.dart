@@ -125,6 +125,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
         figureId: figureId,
         state: nextState,
         updatedAtMicros: DateTime.now().microsecondsSinceEpoch,
+        ownedQuantity: nextState == FigureCollectionState.owned ? 1 : null,
       );
     }
     _commit(state.copyWith(figureStates: m));
@@ -169,12 +170,46 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
         figureId: figureId,
         state: FigureCollectionState.owned,
         updatedAtMicros: DateTime.now().microsecondsSinceEpoch,
+        ownedQuantity: 1,
       );
     } else {
       if (!current.owned) return;
       next.remove(figureId);
     }
     _commit(state.copyWith(figureStates: next));
+  }
+
+  /// Sets how many copies are owned for [figureId].
+  ///
+  /// - `quantity <= 0` clears ownership (same as remove-from-owned).
+  /// - `quantity >= 1` marks owned with that quantity (minimum 1 when owned).
+  /// Quantity never goes negative.
+  void setFigureOwnedQuantity(String figureId, int quantity) {
+    if (!_figureOnShelf(figureId)) return;
+    final q = quantity < 0 ? 0 : quantity;
+    final current = state.trackedOrDefault(figureId);
+    final next = Map<String, TrackedFigure>.from(state.figureStates);
+    if (q == 0) {
+      if (!current.owned) return;
+      next.remove(figureId);
+      _commit(state.copyWith(figureStates: next));
+      return;
+    }
+    if (current.owned && current.ownedQuantity == q) return;
+    next[figureId] = TrackedFigure(
+      figureId: figureId,
+      state: FigureCollectionState.owned,
+      updatedAtMicros: DateTime.now().microsecondsSinceEpoch,
+      ownedQuantity: q,
+    );
+    _commit(state.copyWith(figureStates: next));
+  }
+
+  /// Increments/decrements owned quantity by [delta] (clamped at 0).
+  void adjustFigureOwnedQuantity(String figureId, int delta) {
+    if (delta == 0 || !_figureOnShelf(figureId)) return;
+    final current = state.trackedOrDefault(figureId).ownedQuantity;
+    setFigureOwnedQuantity(figureId, current + delta);
   }
 
   void addSeriesToWishlist(CatalogSeries template, {int? addedAtMicros}) {
