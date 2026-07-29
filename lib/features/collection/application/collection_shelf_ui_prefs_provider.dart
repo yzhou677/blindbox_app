@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_browse.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_shelf_layout.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,24 +12,30 @@ const String kCollectionShelfUiPrefsKey = 'collection_shelf_ui_prefs_v1';
 class CollectionShelfUiPrefs {
   const CollectionShelfUiPrefs({
     this.sort = CollectionShelfSort.recentlyAdded,
+    this.layout = CollectionShelfLayout.grid,
     this.inProgressSectionExpanded = true,
     this.completedSectionExpanded = false,
     this.collapsedIpSectionKeys = const {},
   });
 
   final CollectionShelfSort sort;
+
+  /// Visual arrangement — defaults to [CollectionShelfLayout.grid] for existing users.
+  final CollectionShelfLayout layout;
   final bool inProgressSectionExpanded;
   final bool completedSectionExpanded;
   final Set<String> collapsedIpSectionKeys;
 
   CollectionShelfUiPrefs copyWith({
     CollectionShelfSort? sort,
+    CollectionShelfLayout? layout,
     bool? inProgressSectionExpanded,
     bool? completedSectionExpanded,
     Set<String>? collapsedIpSectionKeys,
   }) {
     return CollectionShelfUiPrefs(
       sort: sort ?? this.sort,
+      layout: layout ?? this.layout,
       inProgressSectionExpanded:
           inProgressSectionExpanded ?? this.inProgressSectionExpanded,
       completedSectionExpanded:
@@ -52,6 +59,9 @@ abstract final class CollectionShelfUiPrefsCodec {
       final sort =
           CollectionShelfSortLabels.tryParse(map['sort'] as String?) ??
           CollectionShelfSort.recentlyAdded;
+      final layout =
+          CollectionShelfLayoutLabels.tryParse(map['layout'] as String?) ??
+          CollectionShelfLayout.grid;
       final inProgressExpanded = map['inProgressSectionExpanded'] != false;
       final completedExpanded = map['completedSectionExpanded'] == true;
       final collapsedRaw = map['collapsedIpSectionKeys'];
@@ -61,6 +71,7 @@ abstract final class CollectionShelfUiPrefsCodec {
 
       return CollectionShelfUiPrefs(
         sort: sort,
+        layout: layout,
         inProgressSectionExpanded: inProgressExpanded,
         completedSectionExpanded: completedExpanded,
         collapsedIpSectionKeys: collapsed,
@@ -73,6 +84,7 @@ abstract final class CollectionShelfUiPrefsCodec {
   static String encode(CollectionShelfUiPrefs prefs) {
     return jsonEncode({
       'sort': prefs.sort.name,
+      'layout': prefs.layout.name,
       'inProgressSectionExpanded': prefs.inProgressSectionExpanded,
       'completedSectionExpanded': prefs.completedSectionExpanded,
       'collapsedIpSectionKeys': prefs.collapsedIpSectionKeys.toList()..sort(),
@@ -124,6 +136,12 @@ class CollectionShelfUiPrefsNotifier extends Notifier<CollectionShelfUiPrefs> {
   void setSort(CollectionShelfSort sort) {
     if (state.sort == sort) return;
     state = state.copyWith(sort: sort);
+    _persist();
+  }
+
+  void setLayout(CollectionShelfLayout layout) {
+    if (state.layout == layout) return;
+    state = state.copyWith(layout: layout);
     _persist();
   }
 

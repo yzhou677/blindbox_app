@@ -8,9 +8,11 @@ typedef CollectionIpFilterOption = ({String id, String label});
 const String collectionAnyIpFilterId = 'any_ip';
 
 String _seriesIpRawKey(ShelfSeries series) {
+  final taxonomyId = series.taxonomyIpId?.trim() ?? '';
+  if (taxonomyId.isNotEmpty) return taxonomyId;
   final ip = shelfSeriesIpLabel(series).trim();
   if (ip.isNotEmpty) return ip;
-  return series.taxonomyIpId?.trim() ?? '';
+  return '';
 }
 
 /// Canonical collection IP filter key for a shelf series.

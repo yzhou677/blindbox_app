@@ -25,9 +25,9 @@ String normalizeCollectionFacetFilterKey(String input) {
 }
 
 String _seriesBrandRawKey(ShelfSeries series) {
-  final brand = series.brand.trim();
-  if (brand.isNotEmpty) return brand;
-  return series.taxonomyBrandId?.trim() ?? '';
+  final taxonomyId = series.taxonomyBrandId?.trim() ?? '';
+  if (taxonomyId.isNotEmpty) return taxonomyId;
+  return series.brand.trim();
 }
 
 /// Canonical collection filter key for a shelf series.
