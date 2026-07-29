@@ -3,6 +3,7 @@ import 'package:blindbox_app/features/catalog/presentation/catalog_browse_launch
 import 'package:blindbox_app/features/catalog/presentation/catalog_browse_screen.dart';
 import 'package:blindbox_app/features/collection/collection_screen.dart';
 import 'package:blindbox_app/features/collection/insights/debug/collector_type_mascot_gallery_screen.dart';
+import 'package:blindbox_app/features/collection/insights/debug/companion/collector_companion_playground.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collection_insights_screen.dart';
 import 'package:blindbox_app/features/home/drop_detail_screen.dart';
 import 'package:blindbox_app/features/home/home_screen.dart';
@@ -19,7 +20,9 @@ final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final GoRouter appRouter = GoRouter(
   navigatorKey: rootNavigatorKey,
-  initialLocation: '/collection',
+  initialLocation: kDebugMode && CollectorCompanionPlayground.launchViaDefine
+      ? CollectorCompanionPlayground.routePath
+      : '/collection',
   routes: [
     GoRoute(path: '/', redirect: (context, state) => '/collection'),
     // Branch order matches bottom nav: Collection (0), Home/Discover (1), Market (2).
@@ -207,11 +210,17 @@ final GoRouter appRouter = GoRouter(
         ),
       ],
     ),
-    if (kDebugMode)
+    if (kDebugMode) ...[
       GoRoute(
         path: CollectorTypeMascotGalleryScreen.routePath,
         parentNavigatorKey: rootNavigatorKey,
         builder: (context, state) => const CollectorTypeMascotGalleryScreen(),
       ),
+      GoRoute(
+        path: CollectorCompanionPlayground.routePath,
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) => const CollectorCompanionPlayground(),
+      ),
+    ],
   ],
 );

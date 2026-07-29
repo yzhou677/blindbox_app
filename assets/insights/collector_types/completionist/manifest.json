@@ -1,0 +1,62 @@
+{
+  "canvas": {
+    "width": 1024,
+    "height": 1024
+  },
+  "pose": {
+    "style": "fixed_hug_illustration",
+    "notes": "arms + trophy split from arms_trophy.png; same canvas/coordinates."
+  },
+  "stack_order": [
+    "body",
+    "head",
+    "trophy",
+    "arms",
+    "crown"
+  ],
+  "legacy": {
+    "arms_trophy": {
+      "file": "arms_trophy.png",
+      "anchor": "center",
+      "notes": "Original combined layer; kept as source of truth. Prefer arms+trophy."
+    }
+  },
+  "body": {
+    "file": "body.png",
+    "anchor": "center_bottom"
+  },
+  "head": {
+    "file": "head.png",
+    "anchor": "center_bottom"
+  },
+  "crown": {
+    "file": "crown.png",
+    "anchor": "center_bottom"
+  },
+  "trophy": {
+    "file": "trophy.png",
+    "anchor": "center",
+    "scale": 1.0,
+    "rest_offset_y_at_size_300": 54,
+    "notes": "original size; translated down alone so face stays clear; arms stay put"
+  },
+  "arms": {
+    "file": "arms.png",
+    "anchor": "center",
+    "rest_offset_y_at_size_300": 10,
+    "notes": "sleeves + hands; position unchanged; paints above trophy"
+  },
+  "decorations": {
+    "file": "decorations.png",
+    "anchor": "center",
+    "optional": true
+  },
+  "animation_hints": {
+    "idle_breathing": "scale body gently around center_bottom",
+    "head_bob": "soft random wander + occasional nod",
+    "crown_bounce": "lags head slightly",
+    "trophy_scale": "scale trophy.png alone; arms stay put or follow lightly",
+    "celebrate": "translate/scale trophy upward; optional slight arms follow",
+    "sparkle": "CustomPainter particles; no decorations.png"
+  }
+}

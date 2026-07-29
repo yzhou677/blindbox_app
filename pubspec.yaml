@@ -84,6 +84,7 @@ flutter:
     - assets/catalog/figures/
     - assets/catalog/series/
     - assets/insights/collector_types/
+    - assets/insights/collector_types/completionist/
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 
