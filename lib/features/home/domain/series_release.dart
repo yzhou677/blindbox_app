@@ -52,6 +52,11 @@ class SeriesRelease {
   final String seriesImageKey;
   final String brand;
   final String? ipLine;
+
+  /// Official **U.S.** release day (date-only; time ignored).
+  ///
+  /// Parsed from catalog series `releaseDate` (ISO date-only JSON key).
+  /// Same U.S. calendar value used by Collection “Recently Released” sort.
   final DateTime releaseDate;
   final Collectible heroCollectible;
   final List<ReleaseLineupSlot> lineup;

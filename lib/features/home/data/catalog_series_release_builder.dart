@@ -96,6 +96,7 @@ CatalogFigure? _pickHeroFigure(List<CatalogFigure> figures) {
 }
 
 DateTime? _parseReleaseDate(String? iso) {
+  // Catalog `releaseDate` is the official U.S. release day (ISO date-only).
   if (iso == null || iso.isEmpty) return null;
   try {
     final d = DateTime.parse(iso);

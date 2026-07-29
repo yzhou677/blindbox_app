@@ -1,3 +1,5 @@
+import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/collectible_relationship/application/collectible_relationship_providers.dart';
 import 'package:blindbox_app/features/collection/application/collection_series_identity.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
@@ -38,6 +40,14 @@ Future<void> _pumpPreview(
     ProviderScope(
       overrides: [
         relationshipHintForCatalogSeriesProvider.overrideWith((ref, _) => null),
+        catalogBundleProvider.overrideWith(
+          (ref) async => const CatalogSeedBundle(
+            brands: [],
+            ips: [],
+            series: [],
+            figures: [],
+          ),
+        ),
       ],
       child: MaterialApp(
         home: MediaQuery(
@@ -66,7 +76,8 @@ Future<void> _pumpPreview(
       ),
     ),
   );
-  await tester.pumpAndSettle();
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 50));
 }
 
 void main() {

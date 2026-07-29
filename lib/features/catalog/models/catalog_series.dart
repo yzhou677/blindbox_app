@@ -20,7 +20,12 @@ class CatalogSeries {
   final String ipId;
   final String displayName;
 
-  /// ISO-style date (`2023-10-27`), or **null** when unknown / filler-cleared upstream.
+  /// Official **U.S.** release date from the U.S. storefront / website.
+  ///
+  /// Stored as an ISO date-only string (`YYYY-MM-DD`), or **null** when unknown
+  /// / cleared upstream. Serialized key remains `releaseDate` (no migration).
+  /// This is not a worldwide, China, Japan, or EU launch date — regional
+  /// calendars may differ. Do not invent dates from names or market listings.
   final String? releaseDate;
   final bool isBlindBox;
 

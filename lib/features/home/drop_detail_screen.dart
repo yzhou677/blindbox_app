@@ -9,6 +9,7 @@ import 'package:blindbox_app/features/home/domain/series_release.dart';
 import 'package:blindbox_app/features/home/widgets/release_lineup_strip.dart';
 import 'package:blindbox_app/features/home/widgets/save_series_release_button.dart';
 import 'package:blindbox_app/features/home/widgets/series_release_cover_image.dart';
+import 'package:blindbox_app/features/catalog/presentation/us_release_date_line.dart';
 import 'package:blindbox_app/shared/widgets/series_hero_meta_block.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -115,6 +116,10 @@ class DropDetailScreen extends ConsumerWidget {
                         : release.lineup.length == 1
                         ? '1 figure'
                         : '${release.lineup.length} figures',
+                  ),
+                  UsReleaseDateLine(
+                    key: const Key('drop_detail_us_release_date'),
+                    releaseDate: release.releaseDate,
                   ),
                   if (release.lineup.isNotEmpty) ...[
                     const SizedBox(height: 20),

@@ -6,9 +6,12 @@ import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_adapters.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_sheet.dart';
+import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
+import 'package:blindbox_app/features/catalog/presentation/us_release_date_line.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_series_shelf_cta_presentation.dart';
 import 'package:blindbox_app/features/collection/presentation/catalog_search_row_summary.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_shelf_browse.dart';
 import 'package:blindbox_app/features/collection/presentation/figure_secret_rarity_style.dart';
 import 'package:blindbox_app/features/collection/widgets/catalog_series_preview_warm.dart';
 import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
@@ -105,6 +108,12 @@ class _CatalogSeriesPreviewSheetState
     );
     final scroll = CollectibleSheetScope.scrollControllerOf(context);
     final galleryItems = catalogGalleryItemsFromCatalogSeries(series);
+    final usReleaseDate = parseCatalogReleaseDate(
+      ref
+          .watch(catalogBundleLookupProvider)
+          ?.seriesById(series.templateId)
+          ?.releaseDate,
+    );
 
     return CollectibleSheetInsets(
       extraBottom: 0,
@@ -121,6 +130,9 @@ class _CatalogSeriesPreviewSheetState
                 trailingMeta: figureLine,
               ),
               slivers: [
+                SliverToBoxAdapter(
+                  child: UsReleaseDateLine(releaseDate: usReleaseDate),
+                ),
                 SliverToBoxAdapter(
                   child: _DeferredPreviewRelationshipLine(
                     templateId: series.templateId,
