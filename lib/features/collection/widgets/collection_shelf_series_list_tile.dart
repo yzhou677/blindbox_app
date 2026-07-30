@@ -1,6 +1,8 @@
+import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
+import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/domain/series_completion_resolution.dart';
@@ -30,12 +32,34 @@ class CollectionShelfSeriesListTile extends StatelessWidget {
   /// Matches [AppRadii.inset] (14–16dp range).
   static const double outlineRadius = AppRadii.inset;
 
-  static const EdgeInsets contentPadding = EdgeInsets.all(11);
+  /// ~12dp card padding (Shelfy [AppSpacing.md]).
+  static const EdgeInsets contentPadding = EdgeInsets.symmetric(
+    horizontal: AppSpacing.md,
+    vertical: AppSpacing.md,
+  );
 
   /// Vertical gap below each outlined card.
   static const double cardGap = 9;
 
-  static const double thumbExtent = 64;
+  /// Square Series artwork (~76–80dp); pairs with [contentPadding] for ~104dp.
+  static const double thumbExtent = 80;
+
+  /// Overall content height target: 12 + 80 + 12 = 104.
+  static const double minCardHeight = thumbExtent + AppSpacing.md * 2;
+
+  /// ~6dp title → metadata (FeedRhythm collection micro-gap).
+  static const double titleToMetaGap =
+      FeedRhythm.collectionFilterSectionLabelToRail;
+
+  /// ~8dp metadata → progress bar.
+  static const double metaToProgressGap = AppSpacing.sm;
+
+  /// ~6dp progress bar → progress count.
+  static const double progressToCountGap =
+      FeedRhythm.collectionFilterSectionLabelToRail;
+
+  /// Artwork → text column.
+  static const double artworkToTextGap = AppSpacing.md;
 
   final ShelfSeries series;
   final SeriesProgressCounts progress;
@@ -79,6 +103,7 @@ class CollectionShelfSeriesListTile extends StatelessWidget {
           )!.withValues(alpha: isMasterComplete ? 0.92 : 0.78)
         : scheme.primary.withValues(alpha: 0.55);
 
+    // Same family as [CollectionBrowseCard] default border.
     final borderColor = scheme.outlineVariant.withValues(
       alpha: isDark ? 0.32 : 0.38,
     );
@@ -108,73 +133,83 @@ class CollectionShelfSeriesListTile extends StatelessWidget {
                   await onLongPress!();
                 },
           borderRadius: radius,
-          child: Padding(
-            padding: contentPadding,
-            child: Row(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: CollectionSeriesThumbnail(
-                    series: series,
-                    extent: thumbExtent,
+          child: SizedBox(
+            height: minCardHeight,
+            child: Padding(
+              padding: contentPadding,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: CollectionSeriesThumbnail(
+                      series: series,
+                      extent: thumbExtent,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        series.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: CollectibleTypography.catalogSeriesRowTitle(
-                          textTheme,
-                          scheme,
-                        ),
-                      ),
-                      if (lines.isNotEmpty) ...[
-                        const SizedBox(height: AppSpacing.xs),
-                        CollectionSeriesCardContentMeta(
-                          lines: lines,
-                          horizontal: true,
-                        ),
-                      ],
-                      const SizedBox(height: AppSpacing.xs),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(999),
-                        child: LinearProgressIndicator(
-                          key: const Key('collection_series_list_progress_bar'),
-                          value: ratio,
-                          minHeight: CollectionCardTokens.progressBarHeight,
-                          backgroundColor: scheme.surfaceContainerHighest
-                              .withValues(alpha: isDark ? 1 : 0.45),
-                          color: barColor,
-                        ),
-                      ),
-                      if (progressLabel.isNotEmpty) ...[
-                        const SizedBox(
-                          height: CollectionCardTokens.progressToLabelGap,
-                        ),
+                  const SizedBox(width: artworkToTextGap),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
                         Text(
-                          progressLabel,
+                          series.name,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: CollectibleTypography.shelfProgressLine(
+                          style: CollectibleTypography.catalogSeriesRowTitle(
                             textTheme,
                             scheme,
                           ),
                         ),
+                        if (lines.isNotEmpty) ...[
+                          const SizedBox(height: titleToMetaGap),
+                          CollectionSeriesCardContentMeta(
+                            key: const Key('collection_series_list_meta'),
+                            lines: lines,
+                            horizontal: true,
+                          ),
+                        ],
+                        SizedBox(
+                          height: lines.isNotEmpty
+                              ? metaToProgressGap
+                              : titleToMetaGap,
+                        ),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(999),
+                          child: LinearProgressIndicator(
+                            key: const Key(
+                              'collection_series_list_progress_bar',
+                            ),
+                            value: ratio,
+                            minHeight: CollectionCardTokens.progressBarHeight,
+                            backgroundColor: scheme.surfaceContainerHighest
+                                .withValues(alpha: isDark ? 1 : 0.45),
+                            color: barColor,
+                          ),
+                        ),
+                        if (progressLabel.isNotEmpty) ...[
+                          const SizedBox(height: progressToCountGap),
+                          Text(
+                            progressLabel,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: CollectibleTypography.shelfProgressLine(
+                              textTheme,
+                              scheme,
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
-                ),
-                Icon(
-                  Symbols.chevron_right_rounded,
-                  color: scheme.onSurfaceVariant.withValues(alpha: 0.55),
-                ),
-              ],
+                  Icon(
+                    Symbols.chevron_right_rounded,
+                    size: AppIconSizes.metadata,
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.55),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
