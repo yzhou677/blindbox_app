@@ -507,7 +507,7 @@ void main() {
     await tester.tap(find.text('open'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    expect(find.text('Show 1 Series'), findsOneWidget);
+    expect(find.text('Show results (1)'), findsOneWidget);
 
     await tester.ensureVisible(
       find.byKey(const Key('filters_sheet_has_wishlist')),
@@ -516,11 +516,11 @@ void main() {
     await tester.tap(find.byKey(const Key('filters_sheet_has_wishlist')));
     await tester.pump();
     // Duplicates AND wishlist → 0 matches.
-    expect(find.text('Show 0 Series'), findsOneWidget);
+    expect(find.text('Show results (0)'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('filters_sheet_clear_all')));
     await tester.pump();
-    expect(find.text('Show 6 Series'), findsOneWidget);
+    expect(find.text('Show results (6)'), findsOneWidget);
 
     await tester.ensureVisible(
       find.byKey(const Key('filters_sheet_custom_series')),
@@ -528,7 +528,7 @@ void main() {
     await tester.pump();
     await tester.tap(find.byKey(const Key('filters_sheet_custom_series')));
     await tester.pump();
-    expect(find.text('Show 1 Series'), findsOneWidget);
+    expect(find.text('Show results (1)'), findsOneWidget);
 
     Navigator.of(tester.element(find.text('Filters').first)).pop();
     await tester.pump();

@@ -67,8 +67,8 @@ abstract final class CollectionVocabulary {
   /// Filters sheet primary action base (legacy; prefer [showFilterSeriesCount]).
   static const showFilterResults = 'Show results';
 
-  /// Filters sheet primary action — series count after draft filters + search.
-  static String showFilterSeriesCount(int count) => 'Show $count Series';
+  /// Filters sheet primary action — `Show results (N)`.
+  static String showFilterSeriesCount(int count) => 'Show results ($count)';
 
   /// Filters sheet — Sort section (separate from filter chips).
   static const filterSectionSortBy = 'Sort by';

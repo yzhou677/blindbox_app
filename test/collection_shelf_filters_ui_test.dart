@@ -347,7 +347,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     await _tapSheetKey(tester, const Key('filters_sheet_has_duplicates'));
-    expect(find.text('Show 1 Series'), findsOneWidget);
+    expect(find.text('Show results (1)'), findsOneWidget);
     await tester.tap(find.byKey(const Key('filters_sheet_show_results')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));

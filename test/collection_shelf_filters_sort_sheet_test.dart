@@ -398,7 +398,7 @@ void main() {
     await tester.pump();
     await tester.tap(find.byKey(const Key('filters_sheet_has_duplicates')));
     await tester.pump();
-    expect(find.text('Show 1 Series'), findsOneWidget);
+    expect(find.text('Show results (1)'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('filters_sheet_show_results')));
     await tester.pump();
@@ -423,11 +423,11 @@ void main() {
     );
     await _open(tester);
 
-    expect(find.text('Show 1 Series'), findsOneWidget);
+    expect(find.text('Show results (1)'), findsOneWidget);
     expect(find.text(CollectionShelfSort.completion.menuLabel), findsOneWidget);
     await tester.tap(find.byKey(const Key('filters_sheet_clear_all')));
     await tester.pump();
-    expect(find.text('Show 2 Series'), findsOneWidget);
+    expect(find.text('Show results (2)'), findsOneWidget);
     expect(find.text(CollectionShelfSort.completion.menuLabel), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('filters_sheet_show_results')));
@@ -444,21 +444,21 @@ void main() {
     await _pumpSheet(tester, snap: snap);
     await _open(tester);
 
-    expect(find.text('Show 2 Series'), findsOneWidget);
+    expect(find.text('Show results (2)'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('filters_sheet_preview_ids_alpha|bravo')),
       findsOneWidget,
     );
 
     await pickSort(tester, CollectionShelfSort.alphabetical);
-    expect(find.text('Show 2 Series'), findsOneWidget);
+    expect(find.text('Show results (2)'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('filters_sheet_preview_ids_alpha|bravo')),
       findsOneWidget,
     );
 
     await pickSort(tester, CollectionShelfSort.figureCount);
-    expect(find.text('Show 2 Series'), findsOneWidget);
+    expect(find.text('Show results (2)'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('filters_sheet_preview_ids_alpha|bravo')),
       findsOneWidget,
@@ -547,7 +547,7 @@ void main() {
     await tester.pump();
     expect(find.byKey(const Key('filters_sheet_brand_popmart')), findsNothing);
     expect(find.text('POP MART'), findsOneWidget); // summary
-    expect(find.text('Show 1 Series'), findsOneWidget);
+    expect(find.text('Show results (1)'), findsOneWidget);
   });
 
   testWidgets('single Brand expands without search field', (tester) async {
@@ -602,12 +602,12 @@ void main() {
     await tester.pump();
     await tester.tap(find.byKey(const Key('filters_sheet_ip_hirono')));
     await tester.pump();
-    expect(find.text('Show 1 Series'), findsOneWidget);
+    expect(find.text('Show results (1)'), findsOneWidget);
     await tester.tap(find.byKey(const Key('filters_sheet_ip_section')));
     await tester.pump();
     expect(find.byKey(const Key('filters_sheet_ip_hirono')), findsNothing);
     expect(find.text('Hirono'), findsOneWidget);
-    expect(find.text('Show 1 Series'), findsOneWidget);
+    expect(find.text('Show results (1)'), findsOneWidget);
   });
 
   testWidgets('bottom actions respect safe area and keyboard inset', (

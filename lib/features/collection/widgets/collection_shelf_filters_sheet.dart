@@ -27,6 +27,9 @@ abstract final class _FiltersSheetDensity {
   static const double labelToControl = 12;
   static const double settingsRowHeight = 56;
   static const double afterDivider = 16;
+
+  /// Space above/below the Brand ↔ IP hairline so the line isn’t flush to rows.
+  static const double settingsDividerInset = 10;
 }
 
 /// Result of applying the combined Filters sheet (filters + sort stay separate).
@@ -421,7 +424,13 @@ class _CollectionShelfFiltersSheetState
                             ],
                           ),
                         ],
+                        const SizedBox(
+                          height: _FiltersSheetDensity.settingsDividerInset,
+                        ),
                         _filtersHairline(scheme),
+                        const SizedBox(
+                          height: _FiltersSheetDensity.settingsDividerInset,
+                        ),
                         _FiltersSettingsRow(
                           key: const Key('filters_sheet_ip_section'),
                           title: CollectionVocabulary.filterIp,
