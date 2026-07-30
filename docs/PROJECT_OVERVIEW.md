@@ -42,7 +42,7 @@ Each release-style catalog row includes:
 - brand
 - release date
 
-**Official feeds** (Firestore `official_feed_items`) show curated brand announcements for **POP MART**, **TNT SPACE**, and **TOP TOY** (chips when two or more sources have displayable items). Dates are Instagram announcement times (`via IG`); taps open a validated product page or Instagram post. See [`lib/features/official_feed/FIRESTORE_OFFICIAL_FEED_SCHEMA.md`](../lib/features/official_feed/FIRESTORE_OFFICIAL_FEED_SCHEMA.md).
+**Official feeds** (Firestore `official_feed_items`) show curated brand announcements for **POP MART**, **TNT SPACE**, **TOP TOY**, and **Sonny Angel** (chips when two or more sources have displayable items). Dates are Instagram announcement times (`via IG`); taps open a validated product page or Instagram post. See [`lib/features/official_feed/FIRESTORE_OFFICIAL_FEED_SCHEMA.md`](../lib/features/official_feed/FIRESTORE_OFFICIAL_FEED_SCHEMA.md).
 
 UI style:
 - large image cards

@@ -301,11 +301,11 @@ Implementation: [`IpProfileCachePolicy`](../lib/features/ip_profile/domain/ip_pr
 
 ### Official feeds (`official_feed_items`)
 
-Discover **Official feeds** are editorial links (not catalog Latest drops). Curated sources in fixed order: **POP MART → TNT SPACE → TOP TOY**. Home loads all three in parallel; chips appear only when **two or more** sources currently have displayable items (fresh success or non-empty last-good). Selection is session-only.
+Discover **Official feeds** are editorial links (not catalog Latest drops). Curated sources in fixed order: **POP MART → TNT SPACE → TOP TOY → Sonny Angel**. Home loads all curated sources in parallel; chips appear only when **two or more** sources currently have displayable items (fresh success or non-empty last-good). Selection is session-only.
 
 Per-source last-good: successful empty **clears** cache; request failure **preserves** and returns last-good; generation tokens block stale overlapping writes. Pull-to-refresh and connectivity recovery both go through [`HomeDiscoverRefreshNotifier`](../lib/features/home/application/home_discover_refresh_controller.dart) (reloads `officialFeedCatalogProvider`).
 
-`publishedAt` is the Instagram announcement instant; card copy uses `{sourceLabel} · via IG` plus local month/day. `officialUrl` may still open a product page. Deck tags are **automatic** (1–2 pills from title/summary/URL/`pop_now` — no curator tag field). Full rules: [`lib/features/official_feed/FIRESTORE_OFFICIAL_FEED_SCHEMA.md`](../lib/features/official_feed/FIRESTORE_OFFICIAL_FEED_SCHEMA.md), maintainer seeds [`tools/official_feed/README.md`](../tools/official_feed/README.md).
+`publishedAt` is the Instagram announcement instant; card copy uses `{sourceLabel} · via IG` plus local month/day. Optional `instagramUrl` makes `via IG` open that post; the card body opens `officialUrl` (product page or Instagram). Deck tags are **automatic** (1–2 pills from title/summary/URL/`pop_now` — no curator tag field). Full rules: [`lib/features/official_feed/FIRESTORE_OFFICIAL_FEED_SCHEMA.md`](../lib/features/official_feed/FIRESTORE_OFFICIAL_FEED_SCHEMA.md), maintainer seeds [`tools/official_feed/README.md`](../tools/official_feed/README.md).
 
 ### Offline → online recovery
 

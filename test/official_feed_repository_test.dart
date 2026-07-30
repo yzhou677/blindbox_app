@@ -54,12 +54,14 @@ void main() {
       final catalog = await repo.loadCuratedHomeCatalog();
       expect(catalog.itemsFor(OfficialFeedSources.popmartUs), hasLength(1));
       expect(catalog.itemsFor(OfficialFeedSources.toptoyUs), hasLength(1));
+      expect(catalog.itemsFor(OfficialFeedSources.sonnyangelUs), hasLength(1));
       expect(catalog.itemsFor(OfficialFeedSources.tntspaceUs), isEmpty);
       expect(catalog.hasAnyItems, isTrue);
       expect(catalog.showBrandFilters, isTrue);
       expect(catalog.availableSources, [
         OfficialFeedSources.popmartUs,
         OfficialFeedSources.toptoyUs,
+        OfficialFeedSources.sonnyangelUs,
       ]);
     });
 

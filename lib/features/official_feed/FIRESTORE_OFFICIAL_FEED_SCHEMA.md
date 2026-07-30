@@ -15,11 +15,12 @@ Maintainer seeds / push: [`tools/official_feed/README.md`](../../tools/official_
 | Field | Type | Required | Notes |
 |-------|------|----------|-------|
 | `id` | string | yes | Same as document id |
-| `sourceId` | string | yes | Stable source key: `popmart_us`, `tntspace_us`, `toptoy_us` |
+| `sourceId` | string | yes | Stable source key: `popmart_us`, `tntspace_us`, `toptoy_us`, `sonnyangel_us` |
 | `sourceLabel` | string | yes | UI label, e.g. `POP MART` |
 | `title` | string | yes | Headline |
 | `imageUrl` | string | yes | HTTPS image URL (official CDN or hosted mirror) |
-| `officialUrl` | string | yes | HTTPS link opened in system browser |
+| `officialUrl` | string | yes | Preferred card tap destination (product/storefront, or Instagram when no page) |
+| `instagramUrl` | string | no | Exact official Instagram `/p` `/reel` `/tv` post for `via IG` provenance link |
 | `publishedAt` | Timestamp | yes | Instagram announcement instant (UTC); also feed sort key |
 | `ingestedAt` | Timestamp | yes | Set on write (ingestion / push script) |
 | `status` | string | yes | `active` \| `archived` |
@@ -37,6 +38,7 @@ UTC). The schema does not model non-Instagram announcement times.
 1. `popmart_us` → **POP MART**
 2. `tntspace_us` → **TNT SPACE**
 3. `toptoy_us` → **TOP TOY**
+4. `sonnyangel_us` → **Sonny Angel**
 
 Catalog map order and chip order always follow this list — never request
 completion order (`OfficialFeedSources.curatedHomeSources`,
@@ -152,8 +154,9 @@ Implementation: `inferOfficialFeedContentTypeLabels` in
 | `publishedAt` | Instant of the corresponding official Instagram announcement (UTC, full ISO — not midnight truncation) |
 | Card metadata | Two lines: `{sourceLabel} · via IG` then local `{Mon D}` (`OfficialFeedCopy.announcedOnInstagramPhrase`) |
 | Deck tags | 1–2 automatic pills (see above); not a seed/Firestore field |
-| `officialUrl` | Most useful validated destination: prefer official product / storefront page; else the Instagram post |
-| Destination ≠ provenance | Whether the card opens a product page or Instagram does **not** change what `publishedAt` means |
+| `officialUrl` | Preferred card body destination: product / storefront when available; else the Instagram post |
+| `instagramUrl` | Optional exact Instagram announcement post for provenance |
+| Destination ≠ provenance | Card body opens `officialUrl`. `via IG` opens `instagramUrl` only when `officialUrl` is a product/storefront (not IG); when the body already opens IG, `via IG` is visible but not tappable |
 | Release / sale time | Belongs in `summary` only; must not replace `publishedAt` |
 
 Fallback copy `{sourceLabel} · Announced · {date}` is **not** implemented: curation

@@ -49,7 +49,7 @@ bool _isPopMartUsItemPath(Uri uri) {
 }
 
 /// Official Instagram post (`/p/`, `/reel/`, `/tv/`).
-bool _isOfficialInstagramPostPath(Uri uri) {
+bool isOfficialInstagramPostUrl(Uri uri) {
   if (!_hostMatches(uri, 'instagram.com')) return false;
   final path = uri.path.replaceAll(RegExp(r'/+$'), '');
   return RegExp(r'^/(p|reel|tv)/[^/]+').hasMatch(path);
@@ -76,19 +76,37 @@ bool _isTntSpaceItemPath(Uri uri) =>
 bool _isTopToyItemPath(Uri uri) =>
     _isBrandStorefrontItemPath(uri, const ['gotoptoy.com', 'toptoyglobal.com']);
 
+bool _isSonnyAngelItemPath(Uri uri) => _isBrandStorefrontItemPath(uri, const [
+  'sonnyangel.com',
+  'sonnyangelstore.com',
+]);
+
 /// Destination rules keyed by curated [sourceId] (Instagram allowed for all
 /// **known** brands only).
 bool isValidOfficialFeedDestination(Uri uri, String sourceId) {
   if (!OfficialFeedSources.curatedHomeSources.contains(sourceId)) {
     return false;
   }
-  if (_isOfficialInstagramPostPath(uri)) return true;
+  if (isOfficialInstagramPostUrl(uri)) return true;
   return switch (sourceId) {
     OfficialFeedSources.popmartUs => _isPopMartUsItemPath(uri),
     OfficialFeedSources.tntspaceUs => _isTntSpaceItemPath(uri),
     OfficialFeedSources.toptoyUs => _isTopToyItemPath(uri),
+    OfficialFeedSources.sonnyangelUs => _isSonnyAngelItemPath(uri),
     _ => false,
   };
+}
+
+/// Valid optional provenance Instagram URL, or null when absent/invalid.
+String? parseOfficialFeedInstagramUrl(String? raw) {
+  if (!_hasText(raw)) return null;
+  final uri = Uri.tryParse(raw!.trim());
+  if (uri == null ||
+      uri.scheme != 'https' ||
+      !isOfficialInstagramPostUrl(uri)) {
+    return null;
+  }
+  return uri.toString();
 }
 
 DateTime? _readPublishedAt(Map<String, dynamic> data) {
@@ -148,6 +166,9 @@ OfficialFeedItem? mapOfficialFeedItem(String docId, Map<String, dynamic> data) {
   final locale = (data['locale'] as String?)?.trim();
   final summary = (data['summary'] as String?)?.trim();
   final releaseType = (data['releaseType'] as String?)?.trim();
+  final instagramUrl = parseOfficialFeedInstagramUrl(
+    data['instagramUrl'] as String?,
+  );
 
   return OfficialFeedItem(
     id: id,
@@ -161,5 +182,6 @@ OfficialFeedItem? mapOfficialFeedItem(String docId, Map<String, dynamic> data) {
     summary: summary?.isNotEmpty == true ? summary : null,
     locale: locale?.isNotEmpty == true ? locale : null,
     releaseType: releaseType?.isNotEmpty == true ? releaseType : null,
+    instagramUrl: instagramUrl,
   );
 }

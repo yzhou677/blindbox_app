@@ -7,12 +7,14 @@ abstract final class OfficialFeedSources {
   static const String popmartUs = 'popmart_us';
   static const String tntspaceUs = 'tntspace_us';
   static const String toptoyUs = 'toptoy_us';
+  static const String sonnyangelUs = 'sonnyangel_us';
 
   /// Home Official feeds brands, left-to-right chip order.
   static const List<String> curatedHomeSources = [
     popmartUs,
     tntspaceUs,
     toptoyUs,
+    sonnyangelUs,
   ];
 
   /// Chip / section label for a curated [sourceId].
@@ -21,6 +23,7 @@ abstract final class OfficialFeedSources {
       popmartUs => 'POP MART',
       tntspaceUs => 'TNT SPACE',
       toptoyUs => 'TOP TOY',
+      sonnyangelUs => 'Sonny Angel',
       _ => sourceId,
     };
   }

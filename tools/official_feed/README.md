@@ -18,6 +18,7 @@ see [`lib/features/official_feed/FIRESTORE_OFFICIAL_FEED_SCHEMA.md`](../../lib/f
 | `popmart_us` | POP MART | `popmart_us.seed.json` |
 | `tntspace_us` | TNT SPACE | `tntspace_us.seed.json` |
 | `toptoy_us` | TOP TOY | `toptoy_us.seed.json` |
+| `sonnyangel_us` | Sonny Angel | `sonnyangel_us.seed.json` |
 
 Push one seed file at a time, e.g.
 `node tools/official_feed/push_official_feed.mjs tools/official_feed/tntspace_us.seed.json`.
@@ -30,6 +31,7 @@ prefer a validated official **product / storefront** URL when one exists:
 1. **POP MART** — `popmart.com/us` product / POP NOW / collection, or `@popmart_us` / `@popmart` IG
 2. **TNT SPACE** — `tntspace.com` US product paths, or official IG
 3. **TOP TOY** — `gotoptoy.com` / `toptoyglobal.com` product paths, or official IG
+4. **Sonny Angel** — `sonnyangel.com` / `sonnyangelstore.com` paths, or official IG
 
 `productId` is **optional** — include it when you have a verified product id in
 the official URL; skip it for Instagram-only announcements.
@@ -54,6 +56,8 @@ announcement times. Before every push:
 4. **Copy from the live page or post**
    - `officialUrl` — brand product path **or**
      `https://www.instagram.com/p/{shortcode}/`
+   - `instagramUrl` — optional exact IG announcement post (required for clickable
+     `via IG` when `officialUrl` is a product page)
    - `productId` — optional; from the product URL when verified
    - `imageUrl` — single-product art (official CDN, store CDN, or mirrored Storage)
    - `summary` — see **Summary policy** below
@@ -150,7 +154,8 @@ Optional: `node tools/official_feed/check_url.mjs "<officialUrl>"` — shows
 
 | Field | Rule |
 | --- | --- |
-| `officialUrl` | Brand-allowed product/storefront path **or** official Instagram post URL. |
+| `officialUrl` | Brand-allowed product/storefront path **or** official Instagram post URL. Card body opens this. |
+| `instagramUrl` | Optional. Exact Instagram `/p` `/reel` `/tv` announcement for clickable `via IG`. When `officialUrl` is already that post, copy it here. |
 | `imageUrl` | Per-item product art. No reseller hosts unless `curationOverride: "reseller_image_ok"`. No `A_`/`B_`/`C_` carousel filenames. |
 | `productId` | Optional. When set, must match `officialUrl` and (for POP MART) `id` suffix `…_{productId}`. |
 | `productIdConfirmed` | Seed only. `true` after copying id from a hydrated browser session. |

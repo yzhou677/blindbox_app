@@ -94,16 +94,21 @@ void main() {
         'TOP TOY',
       );
       expect(
+        OfficialFeedSources.displayLabel(OfficialFeedSources.sonnyangelUs),
+        'Sonny Angel',
+      );
+      expect(
         OfficialFeedSources.displayLabel('unknown_brand'),
         'unknown_brand',
       );
     });
 
-    test('curatedHomeSources order is POP MART → TNT → TOP TOY', () {
+    test('curatedHomeSources order is POP MART → TNT → TOP TOY → Sonny Angel', () {
       expect(OfficialFeedSources.curatedHomeSources, [
         OfficialFeedSources.popmartUs,
         OfficialFeedSources.tntspaceUs,
         OfficialFeedSources.toptoyUs,
+        OfficialFeedSources.sonnyangelUs,
       ]);
     });
 
@@ -276,7 +281,7 @@ void main() {
   });
 
   group('officialFeedSourceLogoAsset', () {
-    test('all three curated brands have bundled logos', () {
+    test('all curated brands have bundled logos', () {
       expect(
         officialFeedSourceLogoAsset(OfficialFeedSources.popmartUs),
         'assets/official_feed/popmart_logo.png',
@@ -288,6 +293,10 @@ void main() {
       expect(
         officialFeedSourceLogoAsset(OfficialFeedSources.toptoyUs),
         'assets/official_feed/toptoy_logo.png',
+      );
+      expect(
+        officialFeedSourceLogoAsset(OfficialFeedSources.sonnyangelUs),
+        'assets/official_feed/sonnyangel_logo.png',
       );
       expect(officialFeedSourceLogoAsset('other'), isNull);
     });

@@ -30,7 +30,7 @@ OfficialFeedItem _item({
 }
 
 void main() {
-  test('all three curated brands use bundled logos', () {
+  test('all curated brands use bundled logos', () {
     expect(
       officialFeedSourceLogoAsset(OfficialFeedSources.popmartUs),
       'assets/official_feed/popmart_logo.png',
@@ -42,6 +42,10 @@ void main() {
     expect(
       officialFeedSourceLogoAsset(OfficialFeedSources.toptoyUs),
       'assets/official_feed/toptoy_logo.png',
+    );
+    expect(
+      officialFeedSourceLogoAsset(OfficialFeedSources.sonnyangelUs),
+      'assets/official_feed/sonnyangel_logo.png',
     );
   });
 
@@ -272,6 +276,11 @@ void main() {
         OfficialFeedSources.toptoyUs,
         'TOP TOY',
         'https://www.gotoptoy.com/products/1',
+      ),
+      (
+        OfficialFeedSources.sonnyangelUs,
+        'Sonny Angel',
+        'https://www.sonnyangel.com/en/products/1',
       ),
     ]) {
       test('${brand.$2} product path → Product Spotlight', () {

@@ -15,6 +15,7 @@ class OfficialFeedItem {
     this.summary,
     this.locale,
     this.releaseType,
+    this.instagramUrl,
   });
 
   final String id;
@@ -22,7 +23,16 @@ class OfficialFeedItem {
   final String sourceLabel;
   final String title;
   final String imageUrl;
+
+  /// Preferred tap destination (product/storefront, or Instagram when no page).
   final String officialUrl;
+
+  /// Optional Instagram announcement post for provenance.
+  ///
+  /// Used by clickable `via IG` only when [officialUrl] is not already
+  /// Instagram (product/storefront cards).
+  final String? instagramUrl;
+
   final DateTime publishedAt;
   final String contentHash;
 

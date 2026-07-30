@@ -14,7 +14,8 @@ class OfficialFeedCatalog {
 
   static const empty = OfficialFeedCatalog({});
 
-  /// Available source ids in configured order (POP MART → TNT → TOP TOY).
+  /// Available source ids in configured order
+  /// (POP MART → TNT → TOP TOY → Sonny Angel).
   List<String> get availableSources =>
       OfficialFeedSources.orderedAvailableSources({
         for (final e in bySource.entries)

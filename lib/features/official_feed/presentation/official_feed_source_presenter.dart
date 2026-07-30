@@ -14,6 +14,8 @@ String? officialFeedSourceLogoAsset(String sourceId) {
     OfficialFeedSources.popmartUs => 'assets/official_feed/popmart_logo.png',
     OfficialFeedSources.tntspaceUs => 'assets/official_feed/tntspace_logo.png',
     OfficialFeedSources.toptoyUs => 'assets/official_feed/toptoy_logo.png',
+    OfficialFeedSources.sonnyangelUs =>
+      'assets/official_feed/sonnyangel_logo.png',
     _ => null,
   };
 }
@@ -28,6 +30,7 @@ class OfficialFeedSourceMark extends StatelessWidget {
   static const Color _tntspaceInk = Color(0xFF1A1A1A);
   static const Color _toptoyBlue = Color(0xFF2F6FED);
   static const Color _toptoyYellow = Color(0xFFFFE100);
+  static const Color _sonnyangelPink = Color(0xFFE86A9A);
   static const double _size = 28;
 
   /// True when the asset already fills a colored mark (no inset padding).
@@ -100,6 +103,10 @@ class _LetterMark extends StatelessWidget {
       OfficialFeedSources.toptoyUs => (
         OfficialFeedSourceMark._toptoyBlue,
         'TT',
+      ),
+      OfficialFeedSources.sonnyangelUs => (
+        OfficialFeedSourceMark._sonnyangelPink,
+        'SA',
       ),
       _ => (Theme.of(context).colorScheme.primary, '?'),
     };

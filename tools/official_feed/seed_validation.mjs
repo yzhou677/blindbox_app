@@ -262,10 +262,18 @@ export function isTopToyItemUrl(url) {
   return isBrandStorefrontItemUrl(url, ['gotoptoy.com', 'toptoyglobal.com']);
 }
 
+export function isSonnyAngelItemUrl(url) {
+  return isBrandStorefrontItemUrl(url, [
+    'sonnyangel.com',
+    'sonnyangelstore.com',
+  ]);
+}
+
 const KNOWN_OFFICIAL_FEED_SOURCES = new Set([
   'popmart_us',
   'tntspace_us',
   'toptoy_us',
+  'sonnyangel_us',
 ]);
 
 /**
@@ -281,6 +289,8 @@ export function isValidOfficialFeedDestinationUrl(url, sourceId = 'popmart_us') 
       return isTntSpaceItemUrl(url);
     case 'toptoy_us':
       return isTopToyItemUrl(url);
+    case 'sonnyangel_us':
+      return isSonnyAngelItemUrl(url);
     case 'popmart_us':
       return isPopMartUsItemUrl(url);
     default:
@@ -331,7 +341,7 @@ export function validateOfficialFeedSeed(seed) {
   if (!sourceId) errors.push('Missing sourceId.');
   if (sourceId && !KNOWN_OFFICIAL_FEED_SOURCES.has(sourceId)) {
     errors.push(
-      `Unknown sourceId "${sourceId}" (expected popmart_us | tntspace_us | toptoy_us).`,
+      `Unknown sourceId "${sourceId}" (expected popmart_us | tntspace_us | toptoy_us | sonnyangel_us).`,
     );
   }
 
@@ -450,6 +460,19 @@ export function validateOfficialFeedSeed(seed) {
       if (seenOfficial.has(officialUrl)) {
         errors.push(`${label}: duplicate officialUrl across items.`);
       } else seenOfficial.add(officialUrl);
+    }
+
+    const instagramUrlRaw = item?.instagramUrl;
+    if (instagramUrlRaw != null && String(instagramUrlRaw).trim() !== '') {
+      const instagramUrl = String(instagramUrlRaw).trim();
+      const igParsed = parseHttpsUrl(instagramUrl);
+      if (!igParsed) {
+        errors.push(`${label}: instagramUrl must be a valid https URL.`);
+      } else if (!isOfficialInstagramPostUrl(igParsed)) {
+        errors.push(
+          `${label}: instagramUrl must be an official Instagram /p|/reel|/tv post (${instagramUrl}).`,
+        );
+      }
     }
 
     if (!publishedAt || Number.isNaN(Date.parse(publishedAt))) {

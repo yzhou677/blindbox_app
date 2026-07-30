@@ -83,7 +83,7 @@ We do **not** use Firebase to store your private shelf state in the current vers
 
 ### Official feeds
 
-Home may show curated **Official feeds** items loaded from Firestore (`official_feed_items`) for brands such as POP MART, TNT SPACE, and TOP TOY. These are editorial links and product references (Instagram announcements and/or official product pages). They are **not** your personal collection.
+Home may show curated **Official feeds** items loaded from Firestore (`official_feed_items`) for brands such as POP MART, TNT SPACE, TOP TOY, and Sonny Angel. These are editorial links and product references (Instagram announcements and/or official product pages). They are **not** your personal collection.
 
 Official feed cards may load preview images from **Firebase Storage**, a **brand’s official CDN**, or similar HTTPS hosts when you browse the feed. Tapping an item opens the **official destination** (product page or Instagram post) in your system browser or the relevant app.
 

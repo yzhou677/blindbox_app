@@ -1,0 +1,65 @@
+{
+  "sourceId": "sonnyangel_us",
+  "sourceLabel": "Sonny Angel",
+  "locale": "us",
+  "retiredItemIds": [
+    "sonnyangel_us_cuddly_bear_pink_ig_DYUkMyDNBbF"
+  ],
+  "items": [
+    {
+      "id": "sonnyangel_us_summer_vacation_sun_kissed_style",
+      "releaseType": "announcement",
+      "title": "Sonny Angel Summer Vacation Series: Sun Kissed Style",
+      "summary": "Sun-kissed summer figures (6 regular + 2 secrets). Release June 25, 2026.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Fsonnyangel_us%2Fsummer_vacation_sun_kissed_style.png?alt=media&token=734cfa3c-fc30-4313-8b10-2a39babf7f43",
+      "officialUrl": "https://www.sonnyangel.com/en/2026/06/11/sonny-angel-summer-vacation-series-sun-kissed-style/",
+      "publishedAt": "2026-06-11T03:00:40.534Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DZbgOr-kcJO/"
+    },
+    {
+      "id": "sonnyangel_us_cuddly_bear_pink_ig_DYV_s76BUkQ",
+      "releaseType": "announcement",
+      "title": "Sonny Angel Plush Collection — Cuddly Bear Pink",
+      "summary": "Birthday Cuddly Bear Pink plush announcement. Official Instagram post.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Fsonnyangel_us%2Fcuddly_bear_pink.png?alt=media&token=4bbe9aff-a851-425f-8b5e-63619b66d12f",
+      "officialUrl": "https://www.instagram.com/p/DYV-s76BUkQ/",
+      "publishedAt": "2026-05-15T03:00:06.733Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DYV-s76BUkQ/"
+    },
+    {
+      "id": "sonnyangel_us_flower_gift_ig_DYPjemzRgS1",
+      "releaseType": "announcement",
+      "title": "Sonny Angel Mini Figure Flower Gift",
+      "summary": "Flower Gift series blind box. Official Instagram post.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Fsonnyangel_us%2Fig_DYPjemzRgS1.jpg?alt=media&token=1440184e-8a51-4341-b508-ee91be7a8ca2",
+      "officialUrl": "https://www.instagram.com/p/DYPjemzRgS1/",
+      "publishedAt": "2026-05-12T15:06:46.975Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DYPjemzRgS1/"
+    },
+    {
+      "id": "sonnyangel_us_snack_series_ig_DXrjZK_DarP",
+      "releaseType": "announcement",
+      "title": "Sonny Angel Mini Figure Snack Series",
+      "summary": "Snack Series figures on display. Official Instagram post.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Fsonnyangel_us%2Fig_DXrjZK-DarP.jpg?alt=media&token=506ff199-a6bb-42cf-9e08-920f662e5ed7",
+      "officialUrl": "https://www.instagram.com/p/DXrjZK-DarP/",
+      "publishedAt": "2026-04-28T15:33:22.901Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DXrjZK-DarP/"
+    },
+    {
+      "id": "sonnyangel_us_hippers_cherry_blossom_ig_DVtLTSgjcwF",
+      "releaseType": "announcement",
+      "title": "Sonny Angel HIPPERS Cherry Blossom Series",
+      "summary": "HIPPERS Cherry Blossom Series presale schedule. Official Instagram post.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Fsonnyangel_us%2Fig_DVtLTSgjcwF.jpg?alt=media&token=33ea5980-14c1-44dc-883c-5067052ba2f5",
+      "officialUrl": "https://www.instagram.com/p/DVtLTSgjcwF/",
+      "publishedAt": "2026-03-10T13:38:33.370Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DVtLTSgjcwF/"
+    }
+  ]
+}
