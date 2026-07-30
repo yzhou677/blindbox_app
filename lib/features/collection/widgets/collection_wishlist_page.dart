@@ -288,7 +288,7 @@ class _SeriesGrid extends StatelessWidget {
         crossAxisCount: 2,
         mainAxisSpacing: 10,
         crossAxisSpacing: 10,
-        mainAxisExtent: CollectionCardTokens.minRailHeight,
+        mainAxisExtent: CollectionCardTokens.maxPackedMinRailHeight,
       ),
       itemCount: series.length,
       itemBuilder: (context, index) {

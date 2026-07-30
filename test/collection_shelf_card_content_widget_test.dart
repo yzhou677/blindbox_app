@@ -321,12 +321,13 @@ void main() {
                   .dy,
           closeTo(CollectionCardTokens.metaToProgressGap, 1.5),
         );
-        expect(CollectionCardTokens.metaToProgressGap, AppSpacing.sm);
+        expect(CollectionCardTokens.metaToProgressGap, AppSpacing.lg);
 
         final browse = tester.widget<CollectionBrowseCard>(
           find.byType(CollectionBrowseCard),
         );
-        expect(browse.expandBeforeMeta, isTrue);
+        expect(browse.expandBeforeMeta, isFalse);
+        expect(browse.expandBeforeFooter, isFalse);
 
         // Empty selection → no meta widget / no reserved blank row.
         await tester.pumpWidget(

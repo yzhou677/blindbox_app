@@ -149,7 +149,13 @@ void main() {
       find.byKey(const Key('collection_series_card')),
     );
     expect(card.width, CollectionCardTokens.compactWidth);
-    expect(card.height, CollectionCardTokens.compactMinRailHeight);
+    expect(
+      card.height,
+      CollectionCardTokens.compactMinRailHeightFor(
+        TextScaler.noScaling,
+        metaLineCount: 1,
+      ),
+    );
     expect(find.text('Mini Series'), findsOneWidget);
     expect(find.text('Hirono'), findsOneWidget);
     expect(find.text('1 / 4'), findsOneWidget);

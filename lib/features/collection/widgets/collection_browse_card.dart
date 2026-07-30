@@ -27,6 +27,7 @@ class CollectionBrowseCard extends StatelessWidget {
     this.titleToMetaGap = CollectionCardTokens.titleToMetaGap,
     this.metaToFooterGap = CollectionCardTokens.metaToProgressGap,
     this.expandBeforeMeta = true,
+    this.expandBeforeFooter = true,
     this.titleMaxLines = 2,
     this.reserveTwoTitleLines = false,
     this.subtitleMaxLines = 1,
@@ -59,6 +60,11 @@ class CollectionBrowseCard extends StatelessWidget {
   /// metadata so meta groups with the progress footer. Wishlist figure cards
   /// set false to keep the series subtitle under the figure title.
   final bool expandBeforeMeta;
+
+  /// When true (default), a [Spacer] consumes leftover card height above the
+  /// footer. Collection Series cards set false so title → meta → progress pack
+  /// with fixed token gaps instead of a tall empty mid-card region.
+  final bool expandBeforeFooter;
   final int titleMaxLines;
   final bool reserveTwoTitleLines;
   final int subtitleMaxLines;
@@ -131,7 +137,7 @@ class CollectionBrowseCard extends StatelessWidget {
                       else
                         titleWidget,
                       if (!expandBeforeMeta) ..._metaOrSubtitle(context),
-                      const Spacer(),
+                      if (expandBeforeFooter) const Spacer(),
                       if (expandBeforeMeta) ..._metaOrSubtitle(context),
                       if (footer != null) ...[
                         SizedBox(height: metaToFooterGap),
@@ -162,8 +168,8 @@ class CollectionBrowseCard extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     if (meta != null) {
-      // When floating to the footer, skip title→meta gap — Spacer already
-      // separates the title. When pinned under the title, keep titleToMetaGap.
+      // When meta floats above the footer via Spacer, skip title→meta gap.
+      // When pinned under the title, keep the deliberate token gap.
       return [if (!expandBeforeMeta) SizedBox(height: titleToMetaGap), meta!];
     }
     if (subtitle != null && subtitle!.trim().isNotEmpty) {

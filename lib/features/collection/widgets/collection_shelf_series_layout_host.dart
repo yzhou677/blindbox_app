@@ -108,7 +108,14 @@ class _CompactGrid extends StatelessWidget {
             0.85,
             1.15,
           );
-          final cardHeight = CollectionCardTokens.compactMinRailHeight * scale;
+          final textScaler = MediaQuery.textScalerOf(context);
+          final metaLineCount = cardContent.ordered.length.clamp(0, 2);
+          final cardHeight =
+              CollectionCardTokens.compactMinRailHeightFor(
+                textScaler,
+                metaLineCount: metaLineCount,
+              ) *
+              scale;
 
           return Wrap(
             key: const Key('collection_shelf_compact_grid'),

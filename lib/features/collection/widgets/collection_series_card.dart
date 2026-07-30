@@ -74,13 +74,35 @@ class CollectionSeriesCard extends StatefulWidget {
   static double get railExtent =>
       railExtentFor(CollectionSeriesCardDensity.standard);
 
-  static double railExtentFor(CollectionSeriesCardDensity density) {
+  static double railExtentFor(
+    CollectionSeriesCardDensity density, {
+    TextScaler textScaler = TextScaler.noScaling,
+    int metaLineCount = 0,
+  }) {
     return switch (density) {
       CollectionSeriesCardDensity.standard =>
-        CollectionCardTokens.minRailHeight,
+        CollectionCardTokens.minRailHeightFor(
+          textScaler,
+          metaLineCount: metaLineCount,
+        ),
       CollectionSeriesCardDensity.compact =>
-        CollectionCardTokens.compactMinRailHeight,
+        CollectionCardTokens.compactMinRailHeightFor(
+          textScaler,
+          metaLineCount: metaLineCount,
+        ),
     };
+  }
+
+  static double railExtentOf(
+    BuildContext context, {
+    CollectionSeriesCardDensity density = CollectionSeriesCardDensity.standard,
+    int metaLineCount = 0,
+  }) {
+    return railExtentFor(
+      density,
+      textScaler: MediaQuery.textScalerOf(context),
+      metaLineCount: metaLineCount,
+    );
   }
 
   @override
@@ -143,9 +165,17 @@ class _CollectionSeriesCardState extends State<CollectionSeriesCard> {
     final width = _compact
         ? CollectionCardTokens.compactWidth
         : CollectionCardTokens.width;
+    final textScaler = MediaQuery.textScalerOf(context);
+    final metaLineCount = widget.cardContent.ordered.length.clamp(0, 2);
     final height = _compact
-        ? CollectionCardTokens.compactMinRailHeight
-        : CollectionCardTokens.minRailHeight;
+        ? CollectionCardTokens.compactMinRailHeightFor(
+            textScaler,
+            metaLineCount: metaLineCount,
+          )
+        : CollectionCardTokens.minRailHeightFor(
+            textScaler,
+            metaLineCount: metaLineCount,
+          );
     final padding = _compact
         ? CollectionCardTokens.compactPadding
         : CollectionCardTokens.padding;
@@ -228,6 +258,8 @@ class _CollectionSeriesCardState extends State<CollectionSeriesCard> {
         imageToTitleGap: imageToTitleGap,
         titleToMetaGap: titleToMetaGap,
         metaToFooterGap: metaToProgressGap,
+        expandBeforeMeta: false,
+        expandBeforeFooter: false,
         borderColor: borderColor,
         showPressedOverlay: _managing,
       ),

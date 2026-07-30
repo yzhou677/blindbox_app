@@ -37,7 +37,10 @@ class CollectionShelfSeriesRail extends StatelessWidget {
     if (series.isEmpty) return const SizedBox.shrink();
 
     return SizedBox(
-      height: CollectionSeriesCard.railExtent,
+      height: CollectionSeriesCard.railExtentOf(
+        context,
+        metaLineCount: cardContent.ordered.length.clamp(0, 2),
+      ),
       child: ListView.separated(
         key: const Key('collection_shelf_series_rail'),
         padding: const EdgeInsets.symmetric(
