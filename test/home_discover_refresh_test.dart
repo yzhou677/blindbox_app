@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/home/application/home_discover_refresh_controller.dart';
@@ -8,7 +6,7 @@ import 'package:blindbox_app/features/ip_profile/application/ip_profile_provider
 import 'package:blindbox_app/features/ip_profile/data/ip_profile_repository.dart';
 import 'package:blindbox_app/features/ip_profile/domain/ip_introduction_profile.dart';
 import 'package:blindbox_app/features/official_feed/application/official_feed_providers.dart';
-import 'package:blindbox_app/features/official_feed/domain/official_feed_item.dart';
+import 'package:blindbox_app/features/official_feed/domain/official_feed_catalog.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -41,9 +39,9 @@ void main() {
 
       final container = ProviderContainer(
         overrides: [
-          officialFeedListProvider.overrideWith((ref) async {
+          officialFeedCatalogProvider.overrideWith((ref) async {
             officialFeedLoadCount++;
-            return const <OfficialFeedItem>[];
+            return OfficialFeedCatalog.empty;
           }),
           ipProfileRepositoryProvider.overrideWithValue(
             MemoryIpProfileRepository(),
@@ -87,9 +85,9 @@ void main() {
 
       final container = ProviderContainer(
         overrides: [
-          officialFeedListProvider.overrideWith((ref) async {
+          officialFeedCatalogProvider.overrideWith((ref) async {
             officialFeedLoadCount++;
-            return const <OfficialFeedItem>[];
+            return OfficialFeedCatalog.empty;
           }),
           ipProfileRepositoryProvider.overrideWithValue(
             MemoryIpProfileRepository(),
@@ -119,7 +117,9 @@ void main() {
 
       final container = ProviderContainer(
         overrides: [
-          officialFeedListProvider.overrideWith((_) async => const []),
+          officialFeedCatalogProvider.overrideWith(
+            (_) async => OfficialFeedCatalog.empty,
+          ),
           homeFeedSnapshotProvider.overrideWith((ref) async {
             homeFeedLoadCount++;
             return const HomeFeedSnapshot(latest: [], trending: []);
@@ -159,7 +159,9 @@ void main() {
 
       final container = ProviderContainer(
         overrides: [
-          officialFeedListProvider.overrideWith((_) async => const []),
+          officialFeedCatalogProvider.overrideWith(
+            (_) async => OfficialFeedCatalog.empty,
+          ),
           ipProfileRepositoryProvider.overrideWithValue(
             MemoryIpProfileRepository(),
           ),
@@ -205,7 +207,9 @@ void main() {
 
       final container = ProviderContainer(
         overrides: [
-          officialFeedListProvider.overrideWith((_) async => const []),
+          officialFeedCatalogProvider.overrideWith(
+            (_) async => OfficialFeedCatalog.empty,
+          ),
           ipProfileRepositoryProvider.overrideWithValue(repo),
         ],
       );

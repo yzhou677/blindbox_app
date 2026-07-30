@@ -15,6 +15,7 @@ import 'package:blindbox_app/features/market/market_detail_screen.dart';
 import 'package:blindbox_app/features/market/presentation/market_browse_search_screen.dart';
 import 'package:blindbox_app/features/market/widgets/collectible_market_card.dart';
 import 'package:blindbox_app/features/official_feed/application/official_feed_providers.dart';
+import 'package:blindbox_app/features/official_feed/domain/official_feed_catalog.dart';
 import 'package:blindbox_app/main.dart';
 import 'package:blindbox_app/models/collectible.dart';
 import 'package:blindbox_app/models/market_listing.dart';
@@ -35,7 +36,9 @@ List<Override> _marketNavTestOverrides() => [
       trending: mockSeriesReleases.skip(1).take(4).toList(growable: false),
     ),
   ),
-  officialFeedListProvider.overrideWith((_) async => const []),
+  officialFeedCatalogProvider.overrideWith(
+    (_) async => OfficialFeedCatalog.empty,
+  ),
   seriesReleaseLookupProvider.overrideWithValue(mockSeriesReleaseByDropId),
 ];
 

@@ -9,6 +9,7 @@ import 'package:blindbox_app/features/ip_profile/data/ip_profile_document_source
 import 'package:blindbox_app/features/ip_profile/data/ip_profile_repository.dart';
 import 'package:blindbox_app/features/ip_profile/domain/ip_introduction_profile.dart';
 import 'package:blindbox_app/features/official_feed/application/official_feed_providers.dart';
+import 'package:blindbox_app/features/official_feed/domain/official_feed_catalog.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -51,7 +52,9 @@ class _CountingSource implements IpProfileDocumentSource {
 
 List<Override> _discoverOverrides(IpProfileRepository repo) => [
   ipProfileRepositoryProvider.overrideWithValue(repo),
-  officialFeedListProvider.overrideWith((_) async => const []),
+  officialFeedCatalogProvider.overrideWith(
+    (_) async => OfficialFeedCatalog.empty,
+  ),
 ];
 
 void main() {

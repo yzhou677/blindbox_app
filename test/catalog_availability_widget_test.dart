@@ -16,7 +16,9 @@ import 'package:blindbox_app/features/home/domain/series_release.dart';
 import 'package:blindbox_app/features/home/home_screen.dart';
 import 'package:blindbox_app/features/home/presentation/latest_drops_copy.dart';
 import 'package:blindbox_app/features/official_feed/application/official_feed_providers.dart';
+import 'package:blindbox_app/features/official_feed/domain/official_feed_catalog.dart';
 import 'package:blindbox_app/features/official_feed/domain/official_feed_item.dart';
+import 'package:blindbox_app/features/official_feed/domain/official_feed_sources.dart';
 import 'package:blindbox_app/features/official_feed/presentation/official_feed_copy.dart';
 import 'package:blindbox_app/models/collectible.dart';
 import 'package:flutter/material.dart';
@@ -70,15 +72,20 @@ SeriesRelease _homeRelease({String seriesName = 'Home Series'}) =>
 final _officialFeedSample = [
   OfficialFeedItem(
     id: 'official_1',
-    sourceId: 'pm',
+    sourceId: OfficialFeedSources.popmartUs,
     sourceLabel: 'POP MART',
     title: 'Spring drop preview',
-    imageUrl: 'https://example.com/feed.png',
-    officialUrl: 'https://example.com/post',
+    imageUrl: 'https://cdn-global.popmart.com/nas/images/content/example.png',
+    officialUrl:
+        'https://www.popmart.com/us/products/6278/crybaby-cry-me-an-ocean-series',
     publishedAt: DateTime(2026, 3, 1),
     contentHash: 'hash_1',
   ),
 ];
+
+final _officialFeedCatalogSample = OfficialFeedCatalog({
+  OfficialFeedSources.popmartUs: _officialFeedSample,
+});
 
 Widget _homeHarness(ProviderContainer container) {
   return UncontrolledProviderScope(
@@ -116,8 +123,8 @@ void main() {
     final bundleGate = Completer<CatalogSeedBundle>();
     final container = ProviderContainer(
       overrides: [
-        officialFeedListProvider.overrideWith(
-          (ref) async => _officialFeedSample,
+        officialFeedCatalogProvider.overrideWith(
+          (ref) async => _officialFeedCatalogSample,
         ),
         homeFeedSnapshotProvider.overrideWith((ref) async {
           return const HomeFeedSnapshot(latest: [], trending: []);
@@ -145,8 +152,8 @@ void main() {
   ) async {
     final container = ProviderContainer(
       overrides: [
-        officialFeedListProvider.overrideWith(
-          (ref) async => _officialFeedSample,
+        officialFeedCatalogProvider.overrideWith(
+          (ref) async => _officialFeedCatalogSample,
         ),
         homeFeedSnapshotProvider.overrideWith((ref) async {
           return const HomeFeedSnapshot(latest: [], trending: []);
@@ -176,7 +183,9 @@ void main() {
   testWidgets('Discover shows catalog rails when ready', (tester) async {
     final container = ProviderContainer(
       overrides: [
-        officialFeedListProvider.overrideWith((ref) async => []),
+        officialFeedCatalogProvider.overrideWith(
+          (ref) async => OfficialFeedCatalog.empty,
+        ),
         homeFeedSnapshotProvider.overrideWith((ref) async {
           return HomeFeedSnapshot(latest: [_homeRelease()], trending: const []);
         }),
@@ -235,7 +244,9 @@ void main() {
       final refreshGate = Completer<CatalogSeedBundle>();
       final container = ProviderContainer(
         overrides: [
-          officialFeedListProvider.overrideWith((ref) async => []),
+          officialFeedCatalogProvider.overrideWith(
+            (ref) async => OfficialFeedCatalog.empty,
+          ),
           homeFeedSnapshotProvider.overrideWith((ref) async {
             return HomeFeedSnapshot(
               latest: [_homeRelease()],
