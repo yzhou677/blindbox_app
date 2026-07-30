@@ -3,6 +3,8 @@ import 'package:blindbox_app/features/official_feed/presentation/official_feed_c
 import 'package:flutter/material.dart';
 
 /// Soft tinted pill(s) for per-card content-type deck lines (1–2 tags).
+///
+/// Always a single horizontal row — pills shrink with ellipsis instead of wrapping.
 class OfficialFeedContentTypeLabel extends StatelessWidget {
   const OfficialFeedContentTypeLabel({super.key, required this.item});
 
@@ -10,6 +12,7 @@ class OfficialFeedContentTypeLabel extends StatelessWidget {
 
   static const double _iconSize = 11;
   static const double _pillGap = 4;
+  static const tagsRowKey = Key('official_feed_tags_row');
 
   @override
   Widget build(BuildContext context) {
@@ -22,32 +25,18 @@ class OfficialFeedContentTypeLabel extends StatelessWidget {
       isDark: isDark,
     );
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final maxWidth = constraints.hasBoundedWidth
-            ? constraints.maxWidth
-            : double.infinity;
-        final pillMax = styles.length <= 1
-            ? maxWidth
-            : maxWidth.isFinite
-            ? (maxWidth - _pillGap) / 2
-            : double.infinity;
-
-        return Align(
-          alignment: Alignment.centerLeft,
-          child: Wrap(
-            spacing: _pillGap,
-            runSpacing: _pillGap,
-            children: [
-              for (final style in styles)
-                ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: pillMax),
-                  child: _TagPill(style: style, theme: theme),
-                ),
-            ],
-          ),
-        );
-      },
+    return KeyedSubtree(
+      key: tagsRowKey,
+      child: Row(
+        children: [
+          for (var i = 0; i < styles.length; i++) ...[
+            if (i > 0) const SizedBox(width: _pillGap),
+            Flexible(
+              child: _TagPill(style: styles[i], theme: theme),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

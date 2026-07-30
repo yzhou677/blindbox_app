@@ -161,8 +161,15 @@ void main() {
         publishedAt: publishedAt,
       );
       await pumpTile(tester, item);
-      expect(find.text('TOP TOY · via IG'), findsOneWidget);
+      expect(find.textContaining('TOP TOY'), findsWidgets);
+      expect(
+        find.text(OfficialFeedCopy.announcedOnInstagramPhrase),
+        findsOneWidget,
+      );
       expect(find.text(date), findsOneWidget);
+      expect(find.text(OfficialFeedCopy.viewProductAction), findsOneWidget);
+      expect(find.text('gotoptoy.com'), findsNothing);
+      expect(find.text('Official'), findsNothing);
     });
 
     testWidgets('Instagram destination shows the same metadata pattern', (
@@ -176,8 +183,13 @@ void main() {
         publishedAt: publishedAt,
       );
       await pumpTile(tester, item);
-      expect(find.text('POP MART · via IG'), findsOneWidget);
+      expect(find.textContaining('POP MART'), findsWidgets);
+      expect(
+        find.text(OfficialFeedCopy.announcedOnInstagramPhrase),
+        findsOneWidget,
+      );
       expect(find.text(date), findsOneWidget);
+      expect(find.text(OfficialFeedCopy.viewPostAction), findsOneWidget);
     });
 
     testWidgets('TNT SPACE sourceLabel is preserved in metadata', (
@@ -191,7 +203,11 @@ void main() {
         publishedAt: publishedAt,
       );
       await pumpTile(tester, item);
-      expect(find.text('TNT SPACE · via IG'), findsOneWidget);
+      expect(find.textContaining('TNT SPACE'), findsWidgets);
+      expect(
+        find.text(OfficialFeedCopy.announcedOnInstagramPhrase),
+        findsOneWidget,
+      );
       expect(find.text(date), findsOneWidget);
       expect(find.textContaining('POP MART'), findsNothing);
     });
@@ -207,7 +223,7 @@ void main() {
       );
       await pumpTile(tester, item, width: 320);
       expect(tester.takeException(), isNull);
-      expect(find.text('POP MART · via IG'), findsOneWidget);
+      expect(find.textContaining('POP MART'), findsWidgets);
       expect(find.text(date), findsOneWidget);
     });
 

@@ -86,7 +86,20 @@ abstract final class FeedRhythm {
 
   /// Compact official updates feed (stacked post tiles).
   static const double homeOfficialFeedThumbnailExtent = 72;
-  static const double homeOfficialFeedPostGap = 10;
+  static const double homeOfficialFeedPostGap = 12;
+
+  /// Card inset — slightly airier than the prior 11/10 stack.
+  static const double homeOfficialFeedCardPaddingH = 14;
+  static const double homeOfficialFeedCardPaddingV = 14;
+
+  /// Vertical gaps inside an Official feed card (metadata → tags → body → CTA).
+  static const double homeOfficialFeedCardSectionGap = 10;
+  static const double homeOfficialFeedCardMetaToTagsGap = 8;
+  static const double homeOfficialFeedCardTitleToSummaryGap = 5;
+
+  /// Extra air after the last Official feed card before tab scroll tail /
+  /// bottom navigation so the final card never feels clipped.
+  static const double homeOfficialFeedListBottomPadding = 24;
 
   /// Square series thumb on shelf cards (browse / recognition).
   static const double collectionShelfThumbnailExtent = 88;

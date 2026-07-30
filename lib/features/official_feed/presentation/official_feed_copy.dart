@@ -19,21 +19,54 @@ abstract final class OfficialFeedCopy {
       'Release dates may vary by region.';
 
   /// Provenance phrase for [publishedAt] (always Instagram by curation policy).
-  /// Short form so the card header fits beside the Official badge.
+  /// Short form so the card header fits on one metadata row.
   static const String announcedOnInstagramPhrase = 'via IG';
 
   /// Per-card deck when heuristics do not match a content type.
   static const String fallbackDeckLine = 'Official Update';
+
+  /// Footer CTA when [OfficialFeedItem.officialUrl] is a storefront/product page.
+  static const String viewProductAction = 'View product ↗';
+
+  /// Footer CTA when the only destination is an Instagram post.
+  static const String viewPostAction = 'View post ↗';
+
+  /// Concise destination label for the card footer (no raw host line).
+  static String destinationActionLabel(String officialUrl) {
+    if (officialFeedDestinationIsInstagram(officialUrl)) {
+      return viewPostAction;
+    }
+    return viewProductAction;
+  }
 }
 
-/// Card header metadata: provenance of [publishedAt], not click destination.
+/// True when the card body destination is already an Instagram URL.
+bool officialFeedDestinationIsInstagram(String officialUrl) {
+  final host = (Uri.tryParse(officialUrl.trim())?.host ?? '').toLowerCase();
+  return host == 'instagram.com' || host.endsWith('.instagram.com');
+}
+
+/// `via IG` is tappable only when the card opens a non-IG destination and a
+/// separate provenance [instagramUrl] is available.
+bool officialFeedViaIgIsTappable({
+  required String officialUrl,
+  required String? instagramUrl,
+}) {
+  final ig = instagramUrl?.trim();
+  if (ig == null || ig.isEmpty) return false;
+  return !officialFeedDestinationIsInstagram(officialUrl);
+}
+
+/// Card header metadata: provenance of [publishedAt].
 ///
 /// Curation policy: every Official feed [publishedAt] is the corresponding
 /// official Instagram announcement instant, so the Instagram phrase is always
-/// used. Destination ([officialUrl]) may still be a product page.
+/// shown. When [officialFeedViaIgIsTappable] is true, `via IG` opens
+/// [OfficialFeedItem.instagramUrl]; the card body still opens
+/// [OfficialFeedItem.officialUrl]. When the body already opens Instagram,
+/// `via IG` stays visible but not tappable.
 ///
-/// UI shows this as two lines (provenance, then date) so the date is never
-/// clipped by the Official badge.
+/// UI shows provenance and date on one metadata row.
 String formatOfficialFeedAnnouncementMeta({
   required String sourceLabel,
   required DateTime publishedAt,

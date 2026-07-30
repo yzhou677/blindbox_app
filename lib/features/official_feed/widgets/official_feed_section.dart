@@ -94,7 +94,12 @@ class _OfficialFeedsBody extends StatelessWidget {
               FeedRhythm.sectionTitleToSubtitle,
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.fromLTRB(
+            16,
+            0,
+            16,
+            FeedRhythm.homeOfficialFeedListBottomPadding,
+          ),
           child: Column(
             children: [
               for (var i = 0; i < items.length; i++) ...[
