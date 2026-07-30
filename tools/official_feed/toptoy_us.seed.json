@@ -12,7 +12,8 @@
       "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2FScreenshot%202026-07-30%20134017.png?alt=media&token=42891dee-0265-4a17-b652-9544639db93b",
       "officialUrl": "https://www.instagram.com/p/DbYEJVrj03N/",
       "publishedAt": "2026-07-29T12:00:20.656Z",
-      "status": "active"
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DbYEJVrj03N/"
     },
     {
       "id": "toptoy_us_heymi_witchs_game_plush_doll",
@@ -22,7 +23,8 @@
       "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fheymi_witchs_game_plush_doll.jpg?alt=media&token=8289d849-60b1-48b2-8b8a-020bad677c6d",
       "officialUrl": "https://gotoptoy.com/products/heymi-witchs-game-series-plush-doll-blind-box?variant=46506637983894",
       "publishedAt": "2026-07-29T03:00:09.988Z",
-      "status": "active"
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DbXGU9VjXSy/"
     },
     {
       "id": "toptoy_us_hello_kitty_classic_revival_figure",
@@ -32,7 +34,8 @@
       "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fhello_kitty_classic_revival_figure.jpg?alt=media&token=4491c2a8-b2f2-42c3-bdd2-6cbba3e6de1c",
       "officialUrl": "https://gotoptoy.com/products/hello-kitty-classic-revival-series-figure-blind-box?variant=46418085314710",
       "publishedAt": "2026-07-28T09:54:46.118Z",
-      "status": "active"
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DbVQ-uGzZQv/"
     },
     {
       "id": "toptoy_us_hello_kitty_swimsuit_party_surprise_bag",
@@ -42,7 +45,8 @@
       "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fhello_kitty_swimsuit_party_surprise_bag.jpg?alt=media&token=951deaf5-88b4-4d57-ae84-d88559c26ee6",
       "officialUrl": "https://gotoptoy.com/products/hello-kitty-swimsuit-party-series-figures-surprise-bag?variant=46430765383830",
       "publishedAt": "2026-07-27T03:32:24.932Z",
-      "status": "active"
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DbSAbaFlFvD/"
     },
     {
       "id": "toptoy_us_basaka_love_what_you_do_be_happy_plush",
@@ -52,7 +56,8 @@
       "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fbasaka_love_what_you_do_be_happy_plush.jpg?alt=media&token=e2bffcc1-e3ae-468c-998d-d05d20bae363",
       "officialUrl": "https://gotoptoy.com/products/basaka-love-what-you-do-be-happy-series-plush-blind-box",
       "publishedAt": "2026-07-26T02:00:20.806Z",
-      "status": "active"
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DbPRGM2gdfc/"
     },
     {
       "id": "toptoy_us_sanrio_ice_cream_cone_stacking_plush",
@@ -62,7 +67,8 @@
       "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fsanrio_ice_cream_cone_stacking_plush.jpg?alt=media&token=71d84266-0434-4e31-8602-81626ce43bdb",
       "officialUrl": "https://gotoptoy.com/products/sanrio-characters-ice-cream-cone-stacking-series-plush-pendant-blind-box?variant=46450901319830",
       "publishedAt": "2026-07-14T06:22:58.612Z",
-      "status": "active"
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/Daw1nQtlHQD/"
     },
     {
       "id": "toptoy_us_toy_story_my_friends_forever",
@@ -72,7 +78,8 @@
       "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2FScreenshot%202026-07-30%20133757.png?alt=media&token=ba1fab38-50c8-42bb-97d8-eab622fb59c7",
       "officialUrl": "https://www.instagram.com/p/DZ66UuWxgHj/",
       "publishedAt": "2026-06-23T07:45:08.870Z",
-      "status": "active"
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DZ66UuWxgHj/"
     }
   ]
 }
