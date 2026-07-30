@@ -124,7 +124,7 @@ Market (separate data path — not catalog bodies)
 
 ```
 lib/
-  core/           # router, theme, FeedRhythm, Firebase init, device_local_ref
+  core/           # router, theme, FeedRhythm, Firebase init, network recovery, device_local_ref
   features/       # feature slices (primary organization)
     catalog/      # read-only universe (no tab)
     collection/   # user shelf
@@ -145,7 +145,7 @@ Per feature (when applicable):
 
 ### `lib/models/` (grandfathered — expansion frozen)
 
-Holds **legacy shared presentation** types only: `Collectible`, `MarketListing`, `ToySeriesHighlight`.
+Holds **legacy shared presentation** types only: `Collectible`, `MarketListing`.
 
 - **Frozen:** Do **not** add new files, classes, DTOs, enums, or transport types under `lib/models/`.
 - **Allowed:** Import and extend existing grandfathered types only when a task truly requires touching them.
@@ -246,6 +246,10 @@ Firebase is for the **catalog universe only** in the current roadmap. Collection
 - Reintroducing `labubu` as a Firestore IP document id.
 
 Security rules live in the Firebase console or your infra repo — catalog read public (or auth-read); no user shelf paths until a future sync project.
+
+### IP introduction profiles (Discover)
+
+Firestore `ip_profiles/{ipId}` is **catalog-adjacent marketing copy**, not the catalog bundle and not shelf state. Load on demand by stable `ipId` only. Process-local cache: ~7-day success TTL, short confirmed-missing TTL, three-attempt transient retry, Discover PTR / offline→online soft revalidation via [`AppNetworkRecoveryHost`](../lib/core/network/app_network_recovery.dart) → Discover refresh. See [`docs/ARCHITECTURE_NOTES.md`](../docs/ARCHITECTURE_NOTES.md) § IP introduction profiles.
 
 ---
 

@@ -15,7 +15,7 @@ Operational decisions and future assumptions captured so we do not re-investigat
 
 ## Firebase (release scope)
 
-**Used in production client:** Firebase Core, Cloud Firestore (catalog + `official_feed_items`), Cloud Storage (`catalog/series/*`, `catalog/figures/*`). Market tab calls the **market** HTTPS Cloud Function via `http` — not the `firebase_functions` Flutter SDK.
+**Used in production client:** Firebase Core, Cloud Firestore (catalog + `official_feed_items` + `ip_profiles`), Cloud Storage (`catalog/series/*`, `catalog/figures/*`). Market tab calls the **market** HTTPS Cloud Function via `http` — not the `firebase_functions` Flutter SDK.
 
 **Not used:** Firebase Authentication, Google Sign-In, Phone Authentication, Analytics, Crashlytics, FCM, Remote Config, Dynamic Links.
 
@@ -282,6 +282,26 @@ Firestore
 ```
 
 Collection shelf rows come from **`CollectionNotifier`** (SharedPreferences codec) — not Firestore. Filtering, sorting, grouping, and feed construction operate on in-memory shelf + catalog objects only. Network I/O is limited to catalog refresh TTL / user-initiated retry, not per-scroll or per-filter.
+
+### IP introduction profiles (`ip_profiles`)
+
+Rich Discover IP sheets are **not** part of the catalog bundle. They load on demand from Firestore `ip_profiles/{ipId}` (stable taxonomy id only — never display names).
+
+| Concern | Policy |
+|---|---|
+| Success TTL | ~7 days (descriptions change rarely) |
+| Confirmed missing | ~10 minutes negative cache; server-confirmed only (`Source.server` / non-cache miss) |
+| Malformed doc | Bounded ~30 minutes; last valid profile kept when possible |
+| Transient failure | Up to **3** attempts (0 / ~500ms / ~1.5s); **not** cached as missing |
+| Concurrency | Per-`ipId` in-flight coalesce |
+| Refresh | Discover pull-to-refresh soft-revalidates; active watchers refetch; inactive stay lazy |
+| Stale fallback | Failed revalidation keeps the last valid profile (info icon stays) |
+
+Implementation: [`IpProfileCachePolicy`](../lib/features/ip_profile/domain/ip_profile_cache_policy.dart), [`FirestoreIpProfileRepository`](../lib/features/ip_profile/data/ip_profile_repository.dart), [`ipIntroductionProfileProvider`](../lib/features/ip_profile/application/ip_profile_providers.dart).
+
+### Offline → online recovery
+
+Shelfy observes link changes via **`connectivity_plus`** ([`AppNetworkRecoveryHost`](../lib/core/network/app_network_recovery.dart)). A single subscription + app-resume observer debounces offline→online (and resume-after-offline) into the existing [`HomeDiscoverRefreshNotifier`](../lib/features/home/application/home_discover_refresh_controller.dart) — catalog refresh, official feed, and IP soft-revalidation. Connectivity is a **retry signal**, not proof of internet; Firestore still uses its own bounded retries. There is no second global refresh bus and no eager load of every `ip_profiles` document.
 
 ### Growth assumptions
 

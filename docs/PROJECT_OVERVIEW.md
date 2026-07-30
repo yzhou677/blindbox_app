@@ -160,10 +160,14 @@ SharedPreferences (collection snapshot codec)
 Firebase Firestore + Storage for read-only catalog metadata and art resolution — not shelf sync
 
 ## Networking
-`http` package — eBay gateway client in `features/market/data/`; Firebase Functions for market gateway
+`http` package — eBay gateway client in `features/market/data/`; Firebase Functions for market gateway  
+`connectivity_plus` — single app-scoped offline→online / resume recovery (`lib/core/network/`) that reuses Discover refresh (catalog + official feed + IP soft-revalidation)
 
 ## Image Caching
 cached_network_image; catalog art via `CatalogImageResolver` (`imageKey` only in UI)
+
+## IP introduction cache
+Process-local structured cache for Firestore `ip_profiles/{ipId}` (7-day success TTL, short confirmed-missing TTL, 3-attempt transient retry). See [`ARCHITECTURE_NOTES.md`](./ARCHITECTURE_NOTES.md) § IP introduction profiles.
 
 ---
 
@@ -173,8 +177,8 @@ Current folder structure:
 
 ```text
 lib/
-  core/           # router, theme, layout, Firebase init
-  features/       # catalog, collection, home, market (primary slices)
+  core/           # router, theme, layout, Firebase init, network recovery
+  features/       # catalog, collection, home, market, ip_profile, …
   models/         # legacy shared presentation models (frozen)
   shared/widgets/ # cross-feature UI only
 ```
