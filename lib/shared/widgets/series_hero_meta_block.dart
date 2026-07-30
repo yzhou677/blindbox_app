@@ -84,18 +84,27 @@ class SeriesHeroMetaBlock extends StatelessWidget {
           if (ipNameTrailing == null)
             Text(ipLabel, style: ipStyle)
           else
+            // Keep the trailing control beside the glyphs — a lone Flexible Text
+            // expands and parks the icon at the row's trailing edge.
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Flexible(
-                  child: Text(
-                    ipLabel,
-                    style: ipStyle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          ipLabel,
+                          style: ipStyle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      ipNameTrailing!,
+                    ],
                   ),
                 ),
-                ipNameTrailing!,
               ],
             ),
         ],

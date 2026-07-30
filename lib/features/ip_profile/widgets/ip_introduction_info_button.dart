@@ -1,4 +1,3 @@
-import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/features/home/domain/series_release.dart';
 import 'package:blindbox_app/features/ip_profile/application/ip_profile_providers.dart';
 import 'package:blindbox_app/features/ip_profile/domain/ip_introduction_profile.dart';
@@ -22,16 +21,16 @@ class IpIntroductionInfoButton extends ConsumerWidget {
   final String ipDisplayName;
 
   /// Visible glyph — quiet metadata, not a primary action.
-  static const double visualIconSize = 16;
+  static const double visualIconSize = 14;
 
   /// Layout slot so the invisible 48dp hit area does not inflate row height.
-  static const double layoutSlot = 18;
+  static const double layoutSlot = 16;
 
   /// Accessible tap target (expands via [OverflowBox] without shifting layout).
   static const double tapTarget = 48;
 
   /// Gap from the IP name text to the glyph.
-  static const double nameGap = AppSpacing.xs;
+  static const double nameGap = 2;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

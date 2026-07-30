@@ -309,9 +309,9 @@ void main() {
       find.descendant(of: button, matching: find.byIcon(Symbols.info_rounded)),
     );
     expect(icon.size, IpIntroductionInfoButton.visualIconSize);
-    expect(IpIntroductionInfoButton.visualIconSize, inInclusiveRange(16, 18));
+    expect(IpIntroductionInfoButton.visualIconSize, inInclusiveRange(14, 16));
     expect(IpIntroductionInfoButton.tapTarget, greaterThanOrEqualTo(44));
-    expect(IpIntroductionInfoButton.nameGap, 4);
+    expect(IpIntroductionInfoButton.nameGap, 2);
 
     final slot = tester.widget<SizedBox>(
       find.ancestor(of: button, matching: find.byType(SizedBox)).first,
