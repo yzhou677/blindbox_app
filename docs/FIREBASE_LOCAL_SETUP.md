@@ -11,7 +11,7 @@ Client config files are **gitignored** so API keys are not pushed to GitHub. Eac
 | Service | Used? | Role |
 |---------|-------|------|
 | **Firebase Core** | Yes | `ensureFirebaseInitialized()` in `main.dart` |
-| **Cloud Firestore** | Yes | Catalog (`brands`, `ips`, `series`, `figures`); Discover official feed (`official_feed_items`); IP introductions (`ip_profiles`) |
+| **Cloud Firestore** | Yes | Catalog (`brands`, `ips`, `series`, `figures`); Discover Official feeds (`official_feed_items` — POP MART / TNT SPACE / TOP TOY); IP introductions (`ip_profiles`) |
 | **Cloud Storage** | Yes | Catalog art at `catalog/series/*`, `catalog/figures/*` via `getDownloadURL()` |
 | **Cloud Functions (market)** | Yes (HTTPS) | Client calls `GET …/market/v1/browse` via `http` — **not** `firebase_functions` SDK |
 | Firebase Authentication | No | — |
@@ -173,7 +173,7 @@ npx --prefix functions firebase deploy --only functions:market:subjectLocatorV1 
 ### Post-deploy smoke (device or staging build)
 
 - [ ] Cold launch online: catalog loads or persisted cache + background refresh (`CatalogBundleCache: refresh source=firestore`)
-- [ ] Discover official feed: loads or empty gracefully (no `permission-denied`; index missing shows as empty feed, not crash)
+- [ ] Discover Official feeds: loads curated brands or empty gracefully (no `permission-denied`; missing index shows as empty feed, not crash)
 - [ ] Catalog images: Storage objects resolve or placeholder after bundled/disk miss
 - [ ] Market tab (if gateway enabled): listings load or empty state with gateway errors only in logs
 

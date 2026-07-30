@@ -299,9 +299,17 @@ Rich Discover IP sheets are **not** part of the catalog bundle. They load on dem
 
 Implementation: [`IpProfileCachePolicy`](../lib/features/ip_profile/domain/ip_profile_cache_policy.dart), [`FirestoreIpProfileRepository`](../lib/features/ip_profile/data/ip_profile_repository.dart), [`ipIntroductionProfileProvider`](../lib/features/ip_profile/application/ip_profile_providers.dart).
 
+### Official feeds (`official_feed_items`)
+
+Discover **Official feeds** are editorial links (not catalog Latest drops). Curated sources in fixed order: **POP MART → TNT SPACE → TOP TOY**. Home loads all three in parallel; chips appear only when **two or more** sources currently have displayable items (fresh success or non-empty last-good). Selection is session-only.
+
+Per-source last-good: successful empty **clears** cache; request failure **preserves** and returns last-good; generation tokens block stale overlapping writes. Pull-to-refresh and connectivity recovery both go through [`HomeDiscoverRefreshNotifier`](../lib/features/home/application/home_discover_refresh_controller.dart) (reloads `officialFeedCatalogProvider`).
+
+`publishedAt` is the Instagram announcement instant; card copy uses `{sourceLabel} · via IG` plus local month/day. `officialUrl` may still open a product page. Deck tags are **automatic** (1–2 pills from title/summary/URL/`pop_now` — no curator tag field). Full rules: [`lib/features/official_feed/FIRESTORE_OFFICIAL_FEED_SCHEMA.md`](../lib/features/official_feed/FIRESTORE_OFFICIAL_FEED_SCHEMA.md), maintainer seeds [`tools/official_feed/README.md`](../tools/official_feed/README.md).
+
 ### Offline → online recovery
 
-Shelfy observes link changes via **`connectivity_plus`** ([`AppNetworkRecoveryHost`](../lib/core/network/app_network_recovery.dart)). A single subscription + app-resume observer debounces offline→online (and resume-after-offline) into the existing [`HomeDiscoverRefreshNotifier`](../lib/features/home/application/home_discover_refresh_controller.dart) — catalog refresh, official feed, and IP soft-revalidation. Connectivity is a **retry signal**, not proof of internet; Firestore still uses its own bounded retries. There is no second global refresh bus and no eager load of every `ip_profiles` document.
+Shelfy observes link changes via **`connectivity_plus`** ([`AppNetworkRecoveryHost`](../lib/core/network/app_network_recovery.dart)). A single subscription + app-resume observer debounces offline→online (and resume-after-offline) into the existing [`HomeDiscoverRefreshNotifier`](../lib/features/home/application/home_discover_refresh_controller.dart) — catalog refresh, official feed catalog reload, and IP soft-revalidation. Connectivity is a **retry signal**, not proof of internet; Firestore still uses its own bounded retries. There is no second global refresh bus and no eager load of every `ip_profiles` document.
 
 ### Growth assumptions
 

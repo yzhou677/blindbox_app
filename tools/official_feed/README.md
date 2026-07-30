@@ -1,26 +1,42 @@
-# Official feed — curated ingestion (Phase 1)
+# Official feed — curated ingestion
 
-Manual **POP MART US** posts for the Home **Official updates** section (news /
-campaign / link layer — **not** the catalog **Latest drops** release rail). No
-scraper, no multi-brand engine.
+Manual posts for the Home **Official feeds** section (news / campaign / link
+layer — **not** the catalog **Latest drops** release rail). No scraper.
 
 **Maintainer tooling only** — nothing under `tools/official_feed/` ships in the
 APK. `productIdConfirmed` and `curationOverride` are **seed-only** and are
 **not** written to Firestore. Changing validation rules does **not** change app
 code paths; only the quality of what you push to `official_feed_items`.
 
+**App runtime behavior** (availability, chips, last-good, refresh, card dates):
+see [`lib/features/official_feed/FIRESTORE_OFFICIAL_FEED_SCHEMA.md`](../../lib/features/official_feed/FIRESTORE_OFFICIAL_FEED_SCHEMA.md).
+
+## Curated brands (fixed order)
+
+| `sourceId` | Label | Seed |
+|---|---|---|
+| `popmart_us` | POP MART | `popmart_us.seed.json` |
+| `tntspace_us` | TNT SPACE | `tntspace_us.seed.json` |
+| `toptoy_us` | TOP TOY | `toptoy_us.seed.json` |
+
+Push one seed file at a time, e.g.
+`node tools/official_feed/push_official_feed.mjs tools/official_feed/tntspace_us.seed.json`.
+
 ## Data sources (allowed)
 
-1. **POP MART US official website** — `popmart.com/us` product and POP NOW pages
-   (when a numeric product URL exists, include it)
-2. **POP MART official Instagram** — `@popmart_us` or global `@popmart` posts
+Per brand, discover announcements on that brand’s **official Instagram**, then
+prefer a validated official **product / storefront** URL when one exists:
 
-**`officialUrl` destinations:** POP MART US product / POP NOW / collection pages
-**or** an official Instagram post URL (`instagram.com/p/…`, `/reel/…`) when no
-product or campaign page exists (e.g. FIFA collabs announced on IG only).
+1. **POP MART** — `popmart.com/us` product / POP NOW / collection, or `@popmart_us` / `@popmart` IG
+2. **TNT SPACE** — `tntspace.com` US product paths, or official IG
+3. **TOP TOY** — `gotoptoy.com` / `toptoyglobal.com` product paths, or official IG
 
-`productId` is **optional** — include it when you have a verified
-`/us/products/{id}/` link; skip it for Instagram-only announcements.
+`productId` is **optional** — include it when you have a verified product id in
+the official URL; skip it for Instagram-only announcements.
+
+**Do not set deck tags in the seed.** The app infers 1–2 pills automatically from
+`releaseType` (only `pop_now` is an explicit signal), title, summary, and URL
+path. There is no `contentType` / tag field in Firestore.
 
 **Do not use Facebook** (or Dealmoon, Reddit, reseller sites) to discover
 products, product IDs, release dates, summaries, or `publishedAt`.
@@ -30,27 +46,29 @@ products, product IDs, release dates, summaries, or `publishedAt`.
 Scripts **cannot** discover drops, read hydrated product pages, or verify
 announcement times. Before every push:
 
-1. **Discover** — scan `@popmart_us` for US announcements; skip restocks /
-   non-US.
-2. **Match each candidate** to an `officialUrl` — POP MART US product/POP NOW when
+1. **Discover** — scan the brand’s official Instagram for US announcements; skip restocks /
+   non-US noise when curating for the US feed.
+2. **Match each candidate** to an `officialUrl` — official product/storefront when
    available, otherwise the official Instagram post link.
 3. **Open product links in a browser** when present — wait for the page to hydrate.
 4. **Copy from the live page or post**
-   - `officialUrl` — `/us/products/{id}/{slug}`, `/us/pop-now/set/…`, or
+   - `officialUrl` — brand product path **or**
      `https://www.instagram.com/p/{shortcode}/`
-   - `productId` — optional; the `{id}` in a product URL when you have one
-   - `imageUrl` — single-product art (official CDN, Shopify store, or IG post art)
+   - `productId` — optional; from the product URL when verified
+   - `imageUrl` — single-product art (official CDN, store CDN, or mirrored Storage)
    - `summary` — see **Summary policy** below
    - `publishedAt` — see **publishedAt policy** below
 5. **Set** `productIdConfirmed: true` on product rows when you copied the id from a
-   hydrated browser session (skip for Instagram-only rows).
-6. **Edit** `popmart_us.seed.json`; retire old ids via `retiredItemIds` (required when
-   correcting `productId` — the document `id` changes, so the old id must be
-   listed or push will auto-archive stale actives).
-7. **Run** `node tools/official_feed/curate_check.mjs` — fix ERRORS.
-8. **Push** `node tools/official_feed/push_official_feed.mjs`.
+   hydrated browser session (skip for Instagram-only rows; POP MART convention).
+6. **Edit** the brand’s `*.seed.json`; retire old ids via `retiredItemIds` when
+   correcting an `id` (document id changes).
+7. **Run** `node tools/official_feed/curate_check.mjs tools/official_feed/<seed>.json` — fix ERRORS.
+8. **Push** `node tools/official_feed/push_official_feed.mjs tools/official_feed/<seed>.json`.
 
 **Prefer skipping an item** over publishing a wrong product ID or invented date.
+
+Optional image mirror:
+`node tools/official_feed/upload_official_feed_image.mjs <httpsImageUrl> official_feed/<sourceId>/<file>`.
 
 ## publishedAt policy
 
@@ -67,7 +85,7 @@ item. Official feeds are curated from brand Instagram announcements.
 - **Do not** use product-page create/update time, release/sale start, Firestore
   create time, seed import time, or PT→UTC release conversions for
   `publishedAt`.
-- Card metadata shows two lines so the date stays fully visible:
+- Card metadata (app) shows two lines so the date stays fully visible:
   `{sourceLabel} · via IG` then `{local month+day}` — this
   describes date provenance, not whether `officialUrl` opens Instagram or a
   product page.
@@ -122,8 +140,8 @@ scripts do not cross-check them.
 
 | Step | Command |
 | --- | --- |
-| Curate check | `node tools/official_feed/curate_check.mjs` |
-| Push | `node tools/official_feed/push_official_feed.mjs` |
+| Curate check | `node tools/official_feed/curate_check.mjs tools/official_feed/<seed>.json` |
+| Push | `node tools/official_feed/push_official_feed.mjs tools/official_feed/<seed>.json` |
 
 Optional: `node tools/official_feed/check_url.mjs "<officialUrl>"` — shows
 `spaShell` / `phantomAccepted` (do not treat HTTP 200 as proof).
@@ -132,9 +150,9 @@ Optional: `node tools/official_feed/check_url.mjs "<officialUrl>"` — shows
 
 | Field | Rule |
 | --- | --- |
-| `officialUrl` | POP MART US product/POP NOW/collection **or** official Instagram post URL. |
+| `officialUrl` | Brand-allowed product/storefront path **or** official Instagram post URL. |
 | `imageUrl` | Per-item product art. No reseller hosts unless `curationOverride: "reseller_image_ok"`. No `A_`/`B_`/`C_` carousel filenames. |
-| `productId` | Optional. When set, must match `officialUrl` and `id` suffix `…_{productId}`. |
+| `productId` | Optional. When set, must match `officialUrl` and (for POP MART) `id` suffix `…_{productId}`. |
 | `productIdConfirmed` | Seed only. `true` after copying id from a hydrated browser session. |
 | `summary` | ≤ ~80 chars. Descriptive only, or `… Online June 4, 7:00 PM PT.` when copied from official product page Online Release block. |
 | `publishedAt` | ISO-8601 UTC — full Instagram post instant from shortcode `utc` field. |

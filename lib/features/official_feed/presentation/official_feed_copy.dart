@@ -23,7 +23,7 @@ abstract final class OfficialFeedCopy {
   static const String announcedOnInstagramPhrase = 'via IG';
 
   /// Per-card deck when heuristics do not match a content type.
-  static const String fallbackDeckLine = 'Official update';
+  static const String fallbackDeckLine = 'Official Update';
 }
 
 /// Card header metadata: provenance of [publishedAt], not click destination.

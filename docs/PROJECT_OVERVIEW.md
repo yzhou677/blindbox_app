@@ -33,21 +33,23 @@ The goal is to help users:
 
 ## 1. Discover (Home)
 
-A visual discovery surface built on the **read-only catalog universe** (Firestore `brands` / `ips` / `series` / `figures`).
+A visual discovery surface built on the **read-only catalog universe** (Firestore `brands` / `ips` / `series` / `figures`), plus a separate **Official feeds** rail.
 
-Each release-style row includes:
+Each release-style catalog row includes:
 - image (`imageKey` → resolver)
 - name
 - series
 - brand
 - release date
 
+**Official feeds** (Firestore `official_feed_items`) show curated brand announcements for **POP MART**, **TNT SPACE**, and **TOP TOY** (chips when two or more sources have displayable items). Dates are Instagram announcement times (`via IG`); taps open a validated product page or Instagram post. See [`lib/features/official_feed/FIRESTORE_OFFICIAL_FEED_SCHEMA.md`](../lib/features/official_feed/FIRESTORE_OFFICIAL_FEED_SCHEMA.md).
+
 UI style:
 - large image cards
 - rounded corners
 - soft shadows
 - modern minimal spacing
-- horizontal scrolling sections (latest releases, official drops, trending)
+- horizontal scrolling sections (latest releases, trending) plus the Official feeds list
 
 Catalog runtime:
 - Firestore is authoritative at runtime; a persisted disk cache provides offline baseline after first successful sync

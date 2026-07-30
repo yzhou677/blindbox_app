@@ -186,7 +186,7 @@ catalogBundleRevisionProvider  (state++)
 | Feature | Providers | Notes |
 |---------|-----------|-------|
 | **Search** | `catalogBundleProvider` → `catalogSearchServiceProvider` | Catalog browse, Add Series search, shelf catalog leg |
-| **Discover** | `homeFeedSnapshotProvider`, `catalogAvailabilityProvider` | Rails from bundle; Official Feed independent |
+| **Discover** | `homeFeedSnapshotProvider`, `catalogAvailabilityProvider`, `officialFeedCatalogProvider` | Catalog rails from bundle; **Official feeds** independent (multi-brand Firestore + last-good) |
 | **Collection** | `catalogSearchServiceProvider` + `collectionNotifierProvider` | Shelf works offline; catalog search degrades gracefully |
 | **Market** | `MarketCatalogIdentityCache` (re-installed on revision) | Browse listings separate; identity enrichment optional by gateway path |
 | **Add Series** | `addSeriesCatalogRecommendationsProvider`, `catalogAvailabilityProvider` | Recommendations + search |
