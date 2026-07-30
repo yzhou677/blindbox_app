@@ -26,6 +26,21 @@ OfficialFeedItem _item({
 }
 
 void main() {
+  test('all three curated brands use bundled logos', () {
+    expect(
+      officialFeedSourceLogoAsset(OfficialFeedSources.popmartUs),
+      'assets/official_feed/popmart_logo.png',
+    );
+    expect(
+      officialFeedSourceLogoAsset(OfficialFeedSources.tntspaceUs),
+      'assets/official_feed/tntspace_logo.png',
+    );
+    expect(
+      officialFeedSourceLogoAsset(OfficialFeedSources.toptoyUs),
+      'assets/official_feed/toptoy_logo.png',
+    );
+  });
+
   test('infer labels for curated seed scenarios', () {
     expect(
       inferOfficialFeedContentTypeLabel(
@@ -115,5 +130,19 @@ void main() {
     final deck = officialFeedDeckLine(item);
     expect(deck, isNot(contains('New Releases')));
     expect(deck, 'Announcement');
+  });
+
+  test('officialFeedDeckLine uses sourceLabel for non-POP MART brands', () {
+    final item = OfficialFeedItem(
+      id: 'tnt',
+      sourceId: OfficialFeedSources.tntspaceUs,
+      sourceLabel: 'TNT SPACE',
+      title: 'Mowdo teaser',
+      imageUrl: 'https://cdn.example.com/a.png',
+      officialUrl: 'https://www.instagram.com/p/DbSjwQwihMe/',
+      publishedAt: DateTime.utc(2026, 7, 27),
+      contentHash: 'x',
+    );
+    expect(officialFeedDeckLine(item), 'TNT SPACE');
   });
 }

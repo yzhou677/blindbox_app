@@ -32,9 +32,12 @@ class HomeDiscoverRefreshNotifier extends Notifier<bool> {
           }
         }),
       );
-      final _ = await ref.refresh(officialFeedListProvider.future);
+      final _ = await ref.refresh(officialFeedCatalogProvider.future);
     } finally {
-      state = false;
+      // Discover may dispose mid-await; never write after teardown.
+      try {
+        state = false;
+      } catch (_) {}
     }
   }
 }

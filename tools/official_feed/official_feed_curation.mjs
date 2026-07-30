@@ -348,7 +348,7 @@ export async function probeImageReachability(url) {
  * @param {number} index
  * @param {Awaited<ReturnType<typeof probeOfficialPage>>} pageProbe
  * @param {{ ok: boolean, status?: number, error?: string }} imageProbe
- * @param {{ acceptsPhantomProductId?: boolean }} [options]
+ * @param {{ acceptsPhantomProductId?: boolean, sourceId?: string }} [options]
  * @returns {CurationIssue[]}
  */
 export function collectAsyncCurationIssues(item, index, pageProbe, imageProbe, options = {}) {
@@ -361,6 +361,8 @@ export function collectAsyncCurationIssues(item, index, pageProbe, imageProbe, o
   const title = item.title?.trim() ?? '';
   const override = hasResellerImageOverride(item);
   const tier = imageHostTier(imageUrl);
+  const sourceId = options.sourceId?.trim() || 'popmart_us';
+  const isPopMart = sourceId === 'popmart_us';
 
   if (pageProbe.error) {
     issues.push({
@@ -381,7 +383,7 @@ export function collectAsyncCurationIssues(item, index, pageProbe, imageProbe, o
 
   if (pageProbe.unavailableCopy) {
     issues.push({
-      level: 'error',
+      level: isPopMart ? 'error' : 'warning',
       message: `${label}: officialUrl page contains unavailable/error copy`,
       itemId,
     });
@@ -390,13 +392,17 @@ export function collectAsyncCurationIssues(item, index, pageProbe, imageProbe, o
   const finalParsed = pageProbe.finalParsed;
   const isInstagramPost =
     finalParsed != null && isOfficialInstagramPostUrl(finalParsed);
-  if (!finalParsed || !isValidOfficialFeedDestinationUrl(finalParsed)) {
+  if (
+    !finalParsed ||
+    !isValidOfficialFeedDestinationUrl(finalParsed, sourceId)
+  ) {
     issues.push({
       level: 'error',
-      message: `${label}: final URL is not a POP MART US item page or official Instagram post (${pageProbe.finalUrl})`,
+      message: `${label}: final URL is not a valid destination for sourceId "${sourceId}" (${pageProbe.finalUrl})`,
       itemId,
     });
   } else if (
+    isPopMart &&
     finalParsed.pathname.startsWith('/us/products/') &&
     productId
   ) {
@@ -475,8 +481,10 @@ export function collectAsyncCurationIssues(item, index, pageProbe, imageProbe, o
         itemId,
       });
     } else if (!override && tier !== 'official') {
+      // Firebase Storage mirrors (and non-POP MART CDN art) are allowed for
+      // multi-brand curation; keep POP MART strict.
       issues.push({
-        level: 'error',
+        level: isPopMart ? 'error' : 'warning',
         message: `${label}: imageUrl does not match any image extracted from officialUrl`,
         itemId,
       });
@@ -541,6 +549,8 @@ export async function validateOfficialFeedCuration(seed, options = {}) {
   const { strict = false } = options;
   const allIssues = [];
   const items = seed?.items ?? [];
+  const sourceId = seed?.sourceId?.trim() || 'popmart_us';
+  const isPopMart = sourceId === 'popmart_us';
 
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
@@ -553,7 +563,8 @@ export async function validateOfficialFeedCuration(seed, options = {}) {
 
     const parsed = parseHttpsUrl(officialUrl);
     const slug = productSlugFromOfficialUrl(officialUrl);
-    const isProduct = parsed?.pathname.startsWith('/us/products/') ?? false;
+    const isProduct =
+      isPopMart && (parsed?.pathname.startsWith('/us/products/') ?? false);
     const isInstagram = parsed != null && isOfficialInstagramPostUrl(parsed);
 
     const [pageProbe, imageProbe, acceptsPhantomProductId] = await Promise.all([
@@ -567,6 +578,7 @@ export async function validateOfficialFeedCuration(seed, options = {}) {
     allIssues.push(
       ...collectAsyncCurationIssues(item, i, pageProbe, imageProbe, {
         acceptsPhantomProductId,
+        sourceId,
       }),
     );
   }

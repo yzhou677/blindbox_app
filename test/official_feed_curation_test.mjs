@@ -20,6 +20,8 @@ import {
   productIdFromOfficialUrl,
   summaryPublishedAtDateDriftDays,
   validateOfficialFeedSeed,
+  validateOfficialFeedSeedsNoDuplicateIds,
+  isValidOfficialFeedDestinationUrl,
 } from '../tools/official_feed/seed_validation.mjs';
 
 describe('seed_validation curation sync rules', () => {
@@ -269,5 +271,161 @@ describe('official_feed_curation helpers', () => {
       titleAppearsInBody('Twinkle Twinkle Create Your Taste Series Figures — A', body),
       true,
     );
+  });
+});
+
+describe('multi-brand seed destination gates', () => {
+  it('rejects unknown sourceId as an error', () => {
+    const result = validateOfficialFeedSeed({
+      sourceId: 'unknown_brand',
+      items: [
+        {
+          id: 'x_1',
+          title: 'X',
+          imageUrl: 'https://cdn.example.com/a.png',
+          officialUrl: 'https://www.instagram.com/p/Abc123def/',
+          publishedAt: '2026-07-01T00:00:00Z',
+          status: 'active',
+        },
+      ],
+    });
+    assert.equal(result.ok, false);
+    assert.ok(result.errors.some((e) => e.includes('Unknown sourceId')));
+  });
+
+  it('rejects unknown brand destinations and unsupported IG paths', () => {
+    assert.equal(
+      isValidOfficialFeedDestinationUrl(
+        new URL('https://www.instagram.com/p/Abc123def/'),
+        'unknown_brand',
+      ),
+      false,
+    );
+    assert.equal(
+      isValidOfficialFeedDestinationUrl(
+        new URL('https://www.instagram.com/stories/user/1'),
+        'tntspace_us',
+      ),
+      false,
+    );
+    assert.equal(
+      isValidOfficialFeedDestinationUrl(
+        new URL('https://gotoptoy.com/us'),
+        'toptoy_us',
+      ),
+      false,
+    );
+    assert.equal(
+      isValidOfficialFeedDestinationUrl(
+        new URL('https://www.tntspace.com/us/products/a'),
+        'tntspace_us',
+      ),
+      true,
+    );
+  });
+
+  it('rejects duplicate ids across curated brand seeds', () => {
+    const result = validateOfficialFeedSeedsNoDuplicateIds([
+      {
+        path: 'tntspace_us.seed.json',
+        seed: {
+          sourceId: 'tntspace_us',
+          items: [{ id: 'shared_id', title: 'A' }],
+        },
+      },
+      {
+        path: 'toptoy_us.seed.json',
+        seed: {
+          sourceId: 'toptoy_us',
+          items: [{ id: 'shared_id', title: 'B' }],
+        },
+      },
+    ]);
+    assert.equal(result.ok, false);
+    assert.ok(result.errors.some((e) => e.includes('shared_id')));
+  });
+
+  it('accepts current curated seeds without cross-seed id collisions', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { dirname, join } = await import('node:path');
+    const { fileURLToPath } = await import('node:url');
+    const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+    const seeds = ['popmart_us', 'tntspace_us', 'toptoy_us'].map((id) => {
+      const path = join(root, 'tools/official_feed', `${id}.seed.json`);
+      return { path, seed: JSON.parse(readFileSync(path, 'utf8')) };
+    });
+    for (const entry of seeds) {
+      const one = validateOfficialFeedSeed(entry.seed);
+      assert.equal(one.ok, true, `${entry.path}: ${one.errors.join('; ')}`);
+    }
+    const cross = validateOfficialFeedSeedsNoDuplicateIds(seeds);
+    assert.equal(cross.ok, true, cross.errors.join('; '));
+  });
+
+  it('rejects blank ids, invalid dates, duplicate images and destinations', () => {
+    const base = {
+      id: 'popmart_us_ok_1',
+      title: 'Ok',
+      imageUrl: 'https://cdn-global.popmart.com/nas/images/content/a.png',
+      officialUrl: 'https://www.popmart.com/us/products/1/a',
+      publishedAt: '2026-07-01T00:00:00Z',
+      status: 'active',
+      productId: '1',
+      productIdConfirmed: true,
+    };
+
+    let result = validateOfficialFeedSeed({
+      sourceId: 'popmart_us',
+      items: [{ ...base, id: '   ' }],
+    });
+    assert.equal(result.ok, false);
+    assert.ok(result.errors.some((e) => e.includes('missing id')));
+
+    result = validateOfficialFeedSeed({
+      sourceId: 'popmart_us',
+      items: [{ ...base, publishedAt: 'not-a-date' }],
+    });
+    assert.equal(result.ok, false);
+    assert.ok(result.errors.some((e) => e.includes('publishedAt')));
+
+    result = validateOfficialFeedSeed({
+      sourceId: 'popmart_us',
+      items: [
+        base,
+        {
+          ...base,
+          id: 'popmart_us_item_2',
+          productId: '2',
+          officialUrl: 'https://www.popmart.com/us/products/2/b',
+          imageUrl: base.imageUrl,
+        },
+      ],
+    });
+    assert.equal(result.ok, false);
+    assert.ok(result.errors.some((e) => e.includes('duplicate imageUrl')));
+
+    result = validateOfficialFeedSeed({
+      sourceId: 'toptoy_us',
+      items: [
+        {
+          id: 'tt_a',
+          title: 'A',
+          imageUrl: 'https://cdn.example.com/a.png',
+          officialUrl: 'https://gotoptoy.com/products/a',
+          publishedAt: '2026-07-01T00:00:00Z',
+          status: 'active',
+        },
+        {
+          id: 'tt_b',
+          title: 'B',
+          imageUrl: 'https://cdn.example.com/b.png',
+          officialUrl: 'https://gotoptoy.com/products/a',
+          publishedAt: '2026-07-02T00:00:00Z',
+          status: 'active',
+        },
+      ],
+    });
+    assert.equal(result.ok, false);
+    assert.ok(result.errors.some((e) => e.includes('duplicate officialUrl')));
   });
 });

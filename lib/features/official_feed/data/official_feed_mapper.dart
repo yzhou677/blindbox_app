@@ -1,4 +1,5 @@
 import 'package:blindbox_app/features/official_feed/domain/official_feed_item.dart';
+import 'package:blindbox_app/features/official_feed/domain/official_feed_sources.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 bool _hasText(String? value) => value != null && value.trim().isNotEmpty;
@@ -11,9 +12,14 @@ bool _isPopMartPlaceholderImage(String imageUrl) {
       lower.contains('/images/logo');
 }
 
+bool _hostMatches(Uri uri, String rootHost) {
+  final host = uri.host.toLowerCase();
+  return host == rootHost || host.endsWith('.$rootHost');
+}
+
 /// Rejects storefront home (`/us`) when a product link exists in seed.
 bool _isPopMartUsHomepage(Uri uri) {
-  if (!uri.host.endsWith('popmart.com')) return false;
+  if (!_hostMatches(uri, 'popmart.com')) return false;
   final path = uri.path.replaceAll(RegExp(r'/+$'), '');
   return path.isEmpty || path == '/us';
 }
@@ -27,6 +33,7 @@ bool _isPopMartUsNumericProductPath(Uri uri) {
 
 /// Product, POP NOW set, or numbered collection — not the US landing page.
 bool _isPopMartUsItemPath(Uri uri) {
+  if (!_hostMatches(uri, 'popmart.com')) return false;
   final path = uri.path;
   if (path.startsWith('/us/products/')) {
     return _isPopMartUsNumericProductPath(uri);
@@ -41,16 +48,47 @@ bool _isPopMartUsItemPath(Uri uri) {
   return false;
 }
 
-/// Official POP MART Instagram post (`/p/`, `/reel/`, `/tv/`).
+/// Official Instagram post (`/p/`, `/reel/`, `/tv/`).
 bool _isOfficialInstagramPostPath(Uri uri) {
-  if (!uri.host.endsWith('instagram.com')) return false;
+  if (!_hostMatches(uri, 'instagram.com')) return false;
   final path = uri.path.replaceAll(RegExp(r'/+$'), '');
   return RegExp(r'^/(p|reel|tv)/[^/]+').hasMatch(path);
 }
 
-/// POP MART US item page or official Instagram announcement link.
-bool _isValidOfficialFeedDestination(Uri uri) {
-  return _isPopMartUsItemPath(uri) || _isOfficialInstagramPostPath(uri);
+/// Non-homepage HTTPS path on an allowed brand storefront host.
+bool _isBrandStorefrontItemPath(Uri uri, List<String> rootHosts) {
+  if (!rootHosts.any((h) => _hostMatches(uri, h))) return false;
+  final path = uri.path.replaceAll(RegExp(r'/+$'), '');
+  if (path.isEmpty) return false;
+  // Bare locale / region roots are discovery hubs, not feed destinations.
+  if (RegExp(
+    r'^/(us|en|zh|sg|my|jp|hk|tw)?$',
+    caseSensitive: false,
+  ).hasMatch(path)) {
+    return false;
+  }
+  return true;
+}
+
+bool _isTntSpaceItemPath(Uri uri) =>
+    _isBrandStorefrontItemPath(uri, const ['tntspace.com']);
+
+bool _isTopToyItemPath(Uri uri) =>
+    _isBrandStorefrontItemPath(uri, const ['gotoptoy.com', 'toptoyglobal.com']);
+
+/// Destination rules keyed by curated [sourceId] (Instagram allowed for all
+/// **known** brands only).
+bool isValidOfficialFeedDestination(Uri uri, String sourceId) {
+  if (!OfficialFeedSources.curatedHomeSources.contains(sourceId)) {
+    return false;
+  }
+  if (_isOfficialInstagramPostPath(uri)) return true;
+  return switch (sourceId) {
+    OfficialFeedSources.popmartUs => _isPopMartUsItemPath(uri),
+    OfficialFeedSources.tntspaceUs => _isTntSpaceItemPath(uri),
+    OfficialFeedSources.toptoyUs => _isTopToyItemPath(uri),
+    _ => false,
+  };
 }
 
 DateTime? _readPublishedAt(Map<String, dynamic> data) {
@@ -103,7 +141,7 @@ OfficialFeedItem? mapOfficialFeedItem(String docId, Map<String, dynamic> data) {
 
   if (_isPopMartPlaceholderImage(imageUrl) ||
       _isPopMartUsHomepage(uri) ||
-      !_isValidOfficialFeedDestination(uri)) {
+      !isValidOfficialFeedDestination(uri, sourceId)) {
     return null;
   }
 

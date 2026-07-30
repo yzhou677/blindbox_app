@@ -17,7 +17,7 @@ Editorial official posts (news, campaigns, storefront links) — **not** the Hom
 | `title` | string | yes | Headline |
 | `imageUrl` | string | yes | HTTPS image URL (official CDN or hosted mirror) |
 | `officialUrl` | string | yes | HTTPS link opened in system browser |
-| `publishedAt` | Timestamp | yes | Official announcement day (UTC); also feed sort key |
+| `publishedAt` | Timestamp | yes | Instagram announcement instant (UTC); also feed sort key |
 | `ingestedAt` | Timestamp | yes | Set on write (ingestion / push script) |
 | `status` | string | yes | `active` \| `archived` |
 | `contentHash` | string | yes | Dedup key (`sourceId` + `officialUrl` recommended) |
@@ -27,13 +27,20 @@ Editorial official posts (news, campaigns, storefront links) — **not** the Hom
 
 ## Query (app)
 
+Per curated brand (`popmart_us`, `tntspace_us`, `toptoy_us`):
+
 ```text
 official_feed_items
-  .where('sourceId', ==, 'popmart_us')
+  .where('sourceId', ==, '<sourceId>')
   .where('status', ==, 'active')
   .orderBy('publishedAt', descending: true)
   .limit(12)
 ```
+
+Home loads all three in parallel. Brand filter chips appear when **two or more**
+sources currently have displayable items (active load or non-empty last-good);
+chips list only those available sources in curated order. A single available
+source shows without chips.
 
 **Composite index:** `sourceId` ASC, `status` ASC, `publishedAt` DESC.
 
