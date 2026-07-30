@@ -5,11 +5,13 @@ import 'package:blindbox_app/features/catalog/presentation/catalog_image_display
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_adapters.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_sheet.dart';
 import 'package:blindbox_app/features/collection/data/series_release_lookup.dart';
+import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/home/domain/series_release.dart';
 import 'package:blindbox_app/features/home/widgets/release_lineup_strip.dart';
 import 'package:blindbox_app/features/home/widgets/save_series_release_button.dart';
 import 'package:blindbox_app/features/home/widgets/series_release_cover_image.dart';
 import 'package:blindbox_app/features/catalog/presentation/us_release_date_line.dart';
+import 'package:blindbox_app/features/ip_profile/widgets/ip_introduction_info_button.dart';
 import 'package:blindbox_app/shared/widgets/series_hero_meta_block.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -59,6 +61,10 @@ class DropDetailScreen extends ConsumerWidget {
     final hero = release.heroCollectible;
     final accent = hero.shelfAccent ?? scheme.tertiaryContainer;
     final galleryItems = catalogGalleryItemsFromSeriesRelease(release);
+    final ipLabel = shelfIpLabelFromBrandLine(
+      brand: release.brand,
+      line: release.ipLine?.trim() ?? '',
+    );
 
     void openGallery(int index) {
       showCatalogFigureGallery(
@@ -116,6 +122,12 @@ class DropDetailScreen extends ConsumerWidget {
                         : release.lineup.length == 1
                         ? '1 figure'
                         : '${release.lineup.length} figures',
+                    ipNameTrailing: ipLabel.isEmpty
+                        ? null
+                        : IpIntroductionInfoButton(
+                            release: release,
+                            ipDisplayName: ipLabel,
+                          ),
                   ),
                   UsReleaseDateLine(
                     key: const Key('drop_detail_us_release_date'),

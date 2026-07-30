@@ -118,5 +118,17 @@ void main() {
     );
     expect(sheet.height, lessThan(tester.view.physicalSize.height * 0.4));
     expect(sheet.height, lessThanOrEqualTo(80 + 1));
+
+    // Route Material must size to content — not fill the screen (which leaves
+    // the drag handle floating mid-viewport above empty sheet surface).
+    final material = tester.getSize(
+      find
+          .ancestor(
+            of: find.text('Short sheet'),
+            matching: find.byType(Material),
+          )
+          .first,
+    );
+    expect(material.height, lessThan(tester.view.physicalSize.height * 0.5));
   });
 }

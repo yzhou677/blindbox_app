@@ -200,14 +200,13 @@ Future<T?> showCollectibleBottomSheet<T>({
       if (wrapContentHeight) {
         final maxHeight =
             screenHeight * contentMaxHeightFraction.clamp(0.2, 0.98);
-        // Align passes loose height constraints so the sheet sizes to its
-        // child instead of expanding into [maxHeight] empty space.
-        host = Align(
-          alignment: Alignment.bottomCenter,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: maxHeight),
-            child: _CollectibleSheetHost(child: builder),
-          ),
+        // Do not wrap in [Align]: Align expands to the modal's full-screen
+        // constraints and paints a full-height Material, leaving the handle
+        // floating mid-screen. ConstrainedBox alone keeps the route surface
+        // sized to the child (capped by [maxHeight]).
+        host = ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: maxHeight),
+          child: _CollectibleSheetHost(child: builder),
         );
       } else {
         host = _CollectibleSheetHost(

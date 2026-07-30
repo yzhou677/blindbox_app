@@ -31,6 +31,12 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Discover IP introduction (editorial; keyed by catalog ipId, not display name)
+    match /ip_profiles/{ipId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // Anonymous recommendation profiles + cached results (Admin SDK only).
     match /recommendation_profiles/{installId} {
       allow read: if false;
