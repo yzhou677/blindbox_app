@@ -8,6 +8,7 @@ import 'package:blindbox_app/features/collection/application/collection_notifier
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_brand_facets.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_shelf_browse.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_filter_matching.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_filters.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_ip_facets.dart';
@@ -19,28 +20,90 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
-/// Opens the Collection filters sheet with draft state.
+/// Local Filters-sheet density — tighter than generic [FeedRhythm] sheet gaps.
+abstract final class _FiltersSheetDensity {
+  static const double titleToBody = 14;
+  static const double sectionGap = 28;
+  static const double labelToControl = 12;
+  static const double settingsRowHeight = 56;
+  static const double afterDivider = 16;
+}
+
+/// Result of applying the combined Filters sheet (filters + sort stay separate).
+@immutable
+class CollectionShelfFiltersSheetResult {
+  const CollectionShelfFiltersSheetResult({
+    required this.filters,
+    required this.sort,
+  });
+
+  final CollectionShelfFilters filters;
+  final CollectionShelfSort sort;
+
+  @override
+  bool operator ==(Object other) {
+    return other is CollectionShelfFiltersSheetResult &&
+        other.filters == filters &&
+        other.sort == sort;
+  }
+
+  @override
+  int get hashCode => Object.hash(filters, sort);
+}
+
+/// Collapsed Brand summary for the Filters sheet.
+String collectionShelfBrandFilterSummary({
+  required Set<String> selectedIds,
+  required List<CollectionBrandFilterOption> options,
+}) {
+  if (selectedIds.isEmpty) return CollectionVocabulary.filterAllBrandsSummary;
+  if (selectedIds.length == 1) {
+    final id = selectedIds.first;
+    for (final o in options) {
+      if (o.id == id) return o.label;
+    }
+    return CollectionVocabulary.filterSelectedCountSummary(1);
+  }
+  return CollectionVocabulary.filterSelectedCountSummary(selectedIds.length);
+}
+
+/// Collapsed IP summary for the Filters sheet.
+String collectionShelfIpFilterSummary({
+  required Set<String> selectedIds,
+  required List<CollectionIpFilterOption> options,
+}) {
+  if (selectedIds.isEmpty) return CollectionVocabulary.filterAllIpsSummary;
+  if (selectedIds.length == 1) {
+    final id = selectedIds.first;
+    for (final o in options) {
+      if (o.id == id) return o.label;
+    }
+    return CollectionVocabulary.filterSelectedCountSummary(1);
+  }
+  return CollectionVocabulary.filterSelectedCountSummary(selectedIds.length);
+}
+
+/// Opens the Collection filters sheet with draft Filters and draft Sort.
 ///
-/// Returns the applied [CollectionShelfFilters], or `null` if dismissed without
-/// applying. Preview counts use [previewCollectionShelfFilterResults] — the same
-/// shared path as the Collection shelf.
-///
-/// When [shelfSeries] / [figureStates] are omitted, the sheet watches
-/// [collectionNotifierProvider] so counts stay aligned with live shelf data.
-Future<CollectionShelfFilters?> showCollectionShelfFiltersSheet({
+/// Returns [CollectionShelfFiltersSheetResult] when the user taps Show, or
+/// `null` if dismissed without applying. Preview counts use
+/// [previewCollectionShelfFilterResults] — Sort does not affect the count.
+Future<CollectionShelfFiltersSheetResult?> showCollectionShelfFiltersSheet({
   required BuildContext context,
   required CollectionShelfFilters initial,
+  CollectionShelfSort initialSort = CollectionShelfSort.recentlyAdded,
   String searchQuery = '',
   List<ShelfSeries>? shelfSeries,
   Map<String, TrackedFigure>? figureStates,
   CatalogBundleLookup? catalogLookup,
 }) {
-  return showCollectionModalBottomSheet<CollectionShelfFilters>(
+  return showCollectionModalBottomSheet<CollectionShelfFiltersSheetResult>(
     context: context,
     heightFraction: FeedRhythm.sheetOpenScreenFraction,
     builder: (context, scrollController) {
       return _CollectionShelfFiltersSheet(
         initial: initial,
+        initialSort: initialSort,
         scrollController: scrollController,
         searchQuery: searchQuery,
         shelfSeriesOverride: shelfSeries,
@@ -54,6 +117,7 @@ Future<CollectionShelfFilters?> showCollectionShelfFiltersSheet({
 class _CollectionShelfFiltersSheet extends ConsumerStatefulWidget {
   const _CollectionShelfFiltersSheet({
     required this.initial,
+    required this.initialSort,
     required this.scrollController,
     required this.searchQuery,
     this.shelfSeriesOverride,
@@ -62,6 +126,7 @@ class _CollectionShelfFiltersSheet extends ConsumerStatefulWidget {
   });
 
   final CollectionShelfFilters initial;
+  final CollectionShelfSort initialSort;
   final ScrollController scrollController;
   final String searchQuery;
   final List<ShelfSeries>? shelfSeriesOverride;
@@ -76,17 +141,24 @@ class _CollectionShelfFiltersSheet extends ConsumerStatefulWidget {
 class _CollectionShelfFiltersSheetState
     extends ConsumerState<_CollectionShelfFiltersSheet> {
   late CollectionShelfFilters _draft;
+  late CollectionShelfSort _draftSort;
   String _brandQuery = '';
   String _ipQuery = '';
+  var _brandExpanded = false;
+  var _ipExpanded = false;
 
   @override
   void initState() {
     super.initState();
     _draft = widget.initial;
+    _draftSort = widget.initialSort;
   }
 
-  void _apply() => Navigator.of(context).pop(_draft);
+  void _apply() => Navigator.of(
+    context,
+  ).pop(CollectionShelfFiltersSheetResult(filters: _draft, sort: _draftSort));
 
+  /// Clears draft Filters only — draft Sort is preserved.
   void _clearAll() => setState(() {
     _draft = CollectionShelfFilters.empty;
     _brandQuery = '';
@@ -99,10 +171,19 @@ class _CollectionShelfFiltersSheetState
     });
   }
 
-  List<CollectionBrandFilterOption> _brandOptions(List<ShelfSeries> shelf) {
-    final all = buildCollectionShelfBrandFilterOptions(
+  void _setDraftSort(CollectionShelfSort sort) {
+    if (sort == _draftSort) return;
+    setState(() => _draftSort = sort);
+  }
+
+  List<CollectionBrandFilterOption> _allBrandOptions(List<ShelfSeries> shelf) {
+    return buildCollectionShelfBrandFilterOptions(
       shelf,
     ).where((o) => o.id != collectionAnyBrandFilterId).toList();
+  }
+
+  List<CollectionBrandFilterOption> _brandOptions(List<ShelfSeries> shelf) {
+    final all = _allBrandOptions(shelf);
     final q = _brandQuery.trim().toLowerCase();
     if (q.isEmpty) return all;
     return [
@@ -111,7 +192,7 @@ class _CollectionShelfFiltersSheetState
     ];
   }
 
-  List<CollectionIpFilterOption> _ipOptions(List<ShelfSeries> shelf) {
+  List<CollectionIpFilterOption> _allIpOptions(List<ShelfSeries> shelf) {
     final brandScoped = _draft.brandIds.isEmpty
         ? shelf
         : [
@@ -121,15 +202,34 @@ class _CollectionShelfFiltersSheetState
               ))
                 s,
           ];
-    final all = buildCollectionShelfIpFilterOptions(
+    return buildCollectionShelfIpFilterOptions(
       brandScoped,
     ).where((o) => o.id != collectionAnyIpFilterId).toList();
+  }
+
+  List<CollectionIpFilterOption> _ipOptions(List<ShelfSeries> shelf) {
+    final all = _allIpOptions(shelf);
     final q = _ipQuery.trim().toLowerCase();
     if (q.isEmpty) return all;
     return [
       for (final o in all)
         if (o.label.toLowerCase().contains(q) || o.id.contains(q)) o,
     ];
+  }
+
+  Future<void> _openSortChooser() async {
+    final selected = await showCollectionModalBottomSheet<CollectionShelfSort>(
+      context: context,
+      wrapContentHeight: true,
+      builder: (context, scrollController) {
+        return _SortChooserSheet(
+          selected: _draftSort,
+          scrollController: scrollController,
+        );
+      },
+    );
+    if (!mounted || selected == null) return;
+    _setDraftSort(selected);
   }
 
   @override
@@ -157,8 +257,28 @@ class _CollectionShelfFiltersSheetState
       catalogSearch: catalogSearch,
     );
 
-    // Shared [CollectibleSheetInsets] owns horizontal + safe bottom so the
-    // title, body, and sticky actions share one left edge.
+    final orderedPreviewIds = preview.waitingOnCatalog
+        ? const <String>[]
+        : sortShelfSeriesForDisplay(
+            preview.series,
+            _draftSort,
+            figureStates,
+            catalog: catalogBundle,
+          ).map((s) => s.id).toList(growable: false);
+
+    final allBrands = _allBrandOptions(shelfSeries);
+    final brandOptions = _brandOptions(shelfSeries);
+    final allIps = _allIpOptions(shelfSeries);
+    final ipOptions = _ipOptions(shelfSeries);
+    final brandSummary = collectionShelfBrandFilterSummary(
+      selectedIds: _draft.brandIds,
+      options: allBrands,
+    );
+    final ipSummary = collectionShelfIpFilterSummary(
+      selectedIds: _draft.ipIds,
+      options: allIps,
+    );
+
     return CollectibleSheetInsets(
       extraBottom: 0,
       child: Column(
@@ -174,18 +294,46 @@ class _CollectionShelfFiltersSheetState
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.only(
-                      top: FeedRhythm.sheetTitleToBody,
+                      top: _FiltersSheetDensity.titleToBody,
                       bottom: FeedRhythm.sheetBodyBottomInset,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        KeyedSubtree(
+                          key: ValueKey(
+                            'filters_sheet_preview_ids_${orderedPreviewIds.join('|')}',
+                          ),
+                          child: const SizedBox.shrink(),
+                        ),
+                        _FiltersSettingsRow(
+                          key: const Key('filters_sheet_sort_row'),
+                          title: CollectionVocabulary.filterSectionSortBy,
+                          value: _draftSort.menuLabel,
+                          valueKey: const Key('filters_sheet_sort_row_value'),
+                          trailing: Icon(
+                            Symbols.chevron_right_rounded,
+                            size: AppIconSizes.metadata,
+                            color: scheme.onSurfaceVariant.withValues(
+                              alpha: 0.55,
+                            ),
+                          ),
+                          semanticsLabel:
+                              '${CollectionVocabulary.filterSectionSortBy}, ${_draftSort.semanticLabel}',
+                          scheme: scheme,
+                          textTheme: textTheme,
+                          onTap: _openSortChooser,
+                        ),
+                        _filtersHairline(scheme),
+                        SizedBox(height: _FiltersSheetDensity.afterDivider),
                         _sectionLabel(
                           CollectionVocabulary.filterSectionProgress,
                           textTheme,
                           scheme,
                         ),
-                        const SizedBox(height: FeedRhythm.sheetLabelToControl),
+                        const SizedBox(
+                          height: _FiltersSheetDensity.labelToControl,
+                        ),
                         Wrap(
                           spacing: FeedRhythm.sheetControlGap,
                           runSpacing: FeedRhythm.sheetControlGap,
@@ -210,6 +358,8 @@ class _CollectionShelfFiltersSheetState
                                 },
                                 selected: _draft.progress == option,
                                 compact: true,
+                                emphasized: true,
+                                horizontalPadding: 8,
                                 onTap: () => _setDraft(
                                   _draft.toggleProgress(option),
                                   shelfSeries,
@@ -217,14 +367,124 @@ class _CollectionShelfFiltersSheetState
                               ),
                           ],
                         ),
-                        const SizedBox(height: FeedRhythm.sheetSectionGap),
+                        const SizedBox(height: _FiltersSheetDensity.sectionGap),
+                        _FiltersSettingsRow(
+                          key: const Key('filters_sheet_brand_section'),
+                          title: CollectionVocabulary.filterBrand,
+                          value: brandSummary,
+                          trailing: Icon(
+                            _brandExpanded
+                                ? Symbols.expand_less_rounded
+                                : Symbols.expand_more_rounded,
+                            size: AppIconSizes.expand,
+                            color: scheme.onSurfaceVariant.withValues(
+                              alpha: 0.55,
+                            ),
+                          ),
+                          semanticsLabel:
+                              '${CollectionVocabulary.filterBrand}, $brandSummary',
+                          semanticsExpanded: _brandExpanded,
+                          scheme: scheme,
+                          textTheme: textTheme,
+                          onTap: () =>
+                              setState(() => _brandExpanded = !_brandExpanded),
+                        ),
+                        if (_brandExpanded) ...[
+                          const SizedBox(
+                            height: _FiltersSheetDensity.labelToControl,
+                          ),
+                          if (allBrands.length > 1) ...[
+                            _FacetSearchField(
+                              hint: CollectionVocabulary.filterSearchBrandsHint,
+                              onChanged: (v) => setState(() => _brandQuery = v),
+                            ),
+                            const SizedBox(
+                              height: _FiltersSheetDensity.labelToControl,
+                            ),
+                          ],
+                          Wrap(
+                            spacing: FeedRhythm.sheetControlGap,
+                            runSpacing: FeedRhythm.sheetControlGap,
+                            children: [
+                              for (final option in brandOptions)
+                                TaxonomyFilterPillChip(
+                                  key: Key('filters_sheet_brand_${option.id}'),
+                                  label: option.label,
+                                  selected: _draft.brandIds.contains(option.id),
+                                  compact: true,
+                                  emphasized: true,
+                                  onTap: () => _setDraft(
+                                    _draft.toggleBrandId(option.id),
+                                    shelfSeries,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
+                        _filtersHairline(scheme),
+                        _FiltersSettingsRow(
+                          key: const Key('filters_sheet_ip_section'),
+                          title: CollectionVocabulary.filterIp,
+                          value: ipSummary,
+                          trailing: Icon(
+                            _ipExpanded
+                                ? Symbols.expand_less_rounded
+                                : Symbols.expand_more_rounded,
+                            size: AppIconSizes.expand,
+                            color: scheme.onSurfaceVariant.withValues(
+                              alpha: 0.55,
+                            ),
+                          ),
+                          semanticsLabel:
+                              '${CollectionVocabulary.filterIp}, $ipSummary',
+                          semanticsExpanded: _ipExpanded,
+                          scheme: scheme,
+                          textTheme: textTheme,
+                          onTap: () =>
+                              setState(() => _ipExpanded = !_ipExpanded),
+                        ),
+                        if (_ipExpanded) ...[
+                          const SizedBox(
+                            height: _FiltersSheetDensity.labelToControl,
+                          ),
+                          if (allIps.length > 1) ...[
+                            _FacetSearchField(
+                              hint: CollectionVocabulary.filterSearchIpsHint,
+                              onChanged: (v) => setState(() => _ipQuery = v),
+                            ),
+                            const SizedBox(
+                              height: _FiltersSheetDensity.labelToControl,
+                            ),
+                          ],
+                          Wrap(
+                            spacing: FeedRhythm.sheetControlGap,
+                            runSpacing: FeedRhythm.sheetControlGap,
+                            children: [
+                              for (final option in ipOptions)
+                                TaxonomyFilterPillChip(
+                                  key: Key('filters_sheet_ip_${option.id}'),
+                                  label: option.label,
+                                  selected: _draft.ipIds.contains(option.id),
+                                  compact: true,
+                                  emphasized: true,
+                                  onTap: () => _setDraft(
+                                    _draft.toggleIpId(option.id),
+                                    shelfSeries,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
+                        const SizedBox(height: _FiltersSheetDensity.sectionGap),
                         _sectionLabel(
                           CollectionVocabulary
                               .filterSectionCollectionAttributes,
                           textTheme,
                           scheme,
                         ),
-                        const SizedBox(height: FeedRhythm.sheetLabelToControl),
+                        const SizedBox(
+                          height: _FiltersSheetDensity.labelToControl,
+                        ),
                         Wrap(
                           spacing: FeedRhythm.sheetControlGap,
                           runSpacing: FeedRhythm.sheetControlGap,
@@ -287,80 +547,17 @@ class _CollectionShelfFiltersSheetState
                             ),
                           ],
                         ),
-                        const SizedBox(height: FeedRhythm.sheetSectionGap),
-                        _sectionLabel(
-                          CollectionVocabulary.filterSectionMetadata,
-                          textTheme,
-                          scheme,
-                        ),
-                        const SizedBox(height: FeedRhythm.sheetLabelToControl),
-                        Text(
-                          CollectionVocabulary.filterBrand,
-                          style: textTheme.labelLarge?.copyWith(
-                            color: scheme.onSurfaceVariant,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: FeedRhythm.sheetControlGap),
-                        _FacetSearchField(
-                          hint: CollectionVocabulary.filterSearchBrandsHint,
-                          onChanged: (v) => setState(() => _brandQuery = v),
-                        ),
-                        const SizedBox(height: FeedRhythm.sheetLabelToControl),
-                        Wrap(
-                          spacing: FeedRhythm.sheetControlGap,
-                          runSpacing: FeedRhythm.sheetControlGap,
-                          children: [
-                            for (final option in _brandOptions(shelfSeries))
-                              TaxonomyFilterPillChip(
-                                key: Key('filters_sheet_brand_${option.id}'),
-                                label: option.label,
-                                selected: _draft.brandIds.contains(option.id),
-                                compact: true,
-                                onTap: () => _setDraft(
-                                  _draft.toggleBrandId(option.id),
-                                  shelfSeries,
-                                ),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: FeedRhythm.sheetSectionGap),
-                        Text(
-                          CollectionVocabulary.filterIp,
-                          style: textTheme.labelLarge?.copyWith(
-                            color: scheme.onSurfaceVariant,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: FeedRhythm.sheetControlGap),
-                        _FacetSearchField(
-                          hint: CollectionVocabulary.filterSearchIpsHint,
-                          onChanged: (v) => setState(() => _ipQuery = v),
-                        ),
-                        const SizedBox(height: FeedRhythm.sheetLabelToControl),
-                        Wrap(
-                          spacing: FeedRhythm.sheetControlGap,
-                          runSpacing: FeedRhythm.sheetControlGap,
-                          children: [
-                            for (final option in _ipOptions(shelfSeries))
-                              TaxonomyFilterPillChip(
-                                key: Key('filters_sheet_ip_${option.id}'),
-                                label: option.label,
-                                selected: _draft.ipIds.contains(option.id),
-                                compact: true,
-                                onTap: () => _setDraft(
-                                  _draft.toggleIpId(option.id),
-                                  shelfSeries,
-                                ),
-                              ),
-                          ],
-                        ),
                       ],
                     ),
                   ),
                 ),
               ],
             ),
+          ),
+          Divider(
+            height: 1,
+            thickness: 1,
+            color: scheme.outlineVariant.withValues(alpha: 0.35),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(
@@ -370,6 +567,12 @@ class _CollectionShelfFiltersSheetState
               children: [
                 TextButton(
                   key: const Key('filters_sheet_clear_all'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: scheme.onSurfaceVariant,
+                    disabledForegroundColor: scheme.onSurface.withValues(
+                      alpha: 0.42,
+                    ),
+                  ),
                   onPressed: _draft.hasActive ? _clearAll : null,
                   child: const Text(CollectionVocabulary.clearAllFilters),
                 ),
@@ -384,8 +587,10 @@ class _CollectionShelfFiltersSheetState
                           ? Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Text(
-                                  CollectionVocabulary.showFilterResults,
+                                Text(
+                                  CollectionVocabulary.showFilterSeriesCount(
+                                    preview.count,
+                                  ),
                                 ),
                                 const SizedBox(width: AppSpacing.sm),
                                 SizedBox(
@@ -402,9 +607,9 @@ class _CollectionShelfFiltersSheetState
                               ],
                             )
                           : Text(
-                              _draft.hasActive
-                                  ? '${CollectionVocabulary.showFilterResults} (${preview.count})'
-                                  : CollectionVocabulary.showFilterResults,
+                              CollectionVocabulary.showFilterSeriesCount(
+                                preview.count,
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -429,6 +634,14 @@ class _CollectionShelfFiltersSheetState
     );
   }
 
+  Widget _filtersHairline(ColorScheme scheme) {
+    return Divider(
+      height: 1,
+      thickness: 1,
+      color: scheme.outlineVariant.withValues(alpha: 0.28),
+    );
+  }
+
   Widget _attrChip({
     required Key key,
     required String label,
@@ -440,7 +653,202 @@ class _CollectionShelfFiltersSheetState
       label: label,
       selected: selected,
       compact: true,
+      emphasized: true,
       onTap: onTap,
+    );
+  }
+}
+
+/// Unified 56dp settings row for Sort / Brand / IP.
+class _FiltersSettingsRow extends StatelessWidget {
+  const _FiltersSettingsRow({
+    super.key,
+    required this.title,
+    required this.value,
+    required this.trailing,
+    required this.semanticsLabel,
+    required this.scheme,
+    required this.textTheme,
+    required this.onTap,
+    this.valueKey,
+    this.semanticsExpanded,
+  });
+
+  final String title;
+  final String value;
+  final Key? valueKey;
+  final Widget trailing;
+  final String semanticsLabel;
+  final bool? semanticsExpanded;
+  final ColorScheme scheme;
+  final TextTheme textTheme;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      expanded: semanticsExpanded,
+      label: semanticsLabel,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          child: SizedBox(
+            height: _FiltersSheetDensity.settingsRowHeight,
+            child: Row(
+              children: [
+                Text(
+                  title,
+                  style: CollectibleTypography.shelfFigureSheetSectionLabel(
+                    textTheme,
+                    scheme,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Text(
+                    value,
+                    key: valueKey,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end,
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                trailing,
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Nested Sort chooser — selecting an option pops immediately (draft only).
+///
+/// Sized to content (see [showCollectionModalBottomSheet.wrapContentHeight]);
+/// shrink-wrapped list scrolls only when large text / short screens overflow.
+class _SortChooserSheet extends StatelessWidget {
+  const _SortChooserSheet({
+    required this.selected,
+    required this.scrollController,
+  });
+
+  final CollectionShelfSort selected;
+  final ScrollController scrollController;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return CollectibleSheetInsets(
+      key: const Key('filters_sheet_sort_chooser'),
+      extraBottom: 0,
+      child: CustomScrollView(
+        controller: scrollController,
+        shrinkWrap: true,
+        // Avoid AlwaysScrollable — it expands the viewport to the max height.
+        physics: const ClampingScrollPhysics(),
+        slivers: [
+          const SliverToBoxAdapter(
+            child: CollectibleSheetChrome(
+              editorialTitle: CollectionVocabulary.filterSectionSortBy,
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(
+                top: FeedRhythm.sheetTitleToBody,
+                bottom: FeedRhythm.sheetBodyBottomInset,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final sort in CollectionShelfSort.values)
+                    _SortChooserOptionRow(
+                      sort: sort,
+                      selected: sort == selected,
+                      scheme: scheme,
+                      textTheme: textTheme,
+                      onTap: () => Navigator.of(context).pop(sort),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SortChooserOptionRow extends StatelessWidget {
+  const _SortChooserOptionRow({
+    required this.sort,
+    required this.selected,
+    required this.scheme,
+    required this.textTheme,
+    required this.onTap,
+  });
+
+  final CollectionShelfSort sort;
+  final bool selected;
+  final ColorScheme scheme;
+  final TextTheme textTheme;
+  final VoidCallback onTap;
+
+  static const double _rowMinHeight = 48;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      selected: selected,
+      button: true,
+      label: sort.semanticLabel,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          key: Key('filters_sheet_sort_${sort.name}'),
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppSpacing.md),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: _rowMinHeight),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      sort.menuLabel,
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontWeight: selected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        color: selected ? scheme.primary : scheme.onSurface,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    selected
+                        ? Symbols.radio_button_checked_rounded
+                        : Symbols.radio_button_unchecked_rounded,
+                    color: selected
+                        ? scheme.primary
+                        : scheme.onSurfaceVariant.withValues(alpha: 0.55),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

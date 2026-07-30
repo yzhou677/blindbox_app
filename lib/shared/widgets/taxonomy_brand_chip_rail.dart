@@ -62,6 +62,8 @@ class TaxonomyFilterPillChip extends StatelessWidget {
     required this.selected,
     required this.onTap,
     this.compact = false,
+    this.emphasized = false,
+    this.horizontalPadding,
   });
 
   final String label;
@@ -69,21 +71,37 @@ class TaxonomyFilterPillChip extends StatelessWidget {
   final VoidCallback onTap;
   final bool compact;
 
+  /// Slightly stronger fill/border — used by Collection Filters sheet chips.
+  final bool emphasized;
+
+  /// Overrides default horizontal inset (compact 12 / regular 14).
+  final double? horizontalPadding;
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final unselectedFill = emphasized
+        ? (compact ? 0.58 : 0.55)
+        : (compact ? 0.42 : 0.48);
+    final selectedFill = emphasized
+        ? (compact ? 0.88 : 0.78)
+        : (compact ? 0.72 : 0.62);
+    final unselectedBorder = emphasized
+        ? (compact ? 0.45 : 0.42)
+        : (compact ? 0.28 : 0.35);
+    final selectedBorder = emphasized
+        ? (compact ? 0.48 : 0.42)
+        : (compact ? 0.32 : 0.38);
     final fill = selected
-        ? scheme.primaryContainer.withValues(alpha: compact ? 0.72 : 0.62)
-        : scheme.surfaceContainerHighest.withValues(
-            alpha: compact ? 0.42 : 0.48,
-          );
+        ? scheme.primaryContainer.withValues(alpha: selectedFill)
+        : scheme.surfaceContainerHighest.withValues(alpha: unselectedFill);
     final border = selected
-        ? scheme.primary.withValues(alpha: compact ? 0.32 : 0.38)
-        : scheme.outlineVariant.withValues(alpha: compact ? 0.28 : 0.35);
+        ? scheme.primary.withValues(alpha: selectedBorder)
+        : scheme.outlineVariant.withValues(alpha: unselectedBorder);
     final fg = selected
-        ? scheme.onPrimaryContainer.withValues(alpha: 0.92)
-        : scheme.onSurfaceVariant.withValues(alpha: 0.88);
+        ? scheme.onPrimaryContainer.withValues(alpha: 0.95)
+        : scheme.onSurfaceVariant.withValues(alpha: emphasized ? 0.92 : 0.88);
 
     return Semantics(
       button: true,
@@ -98,7 +116,7 @@ class TaxonomyFilterPillChip extends StatelessWidget {
             duration: CollectibleMotion.fast,
             curve: Curves.easeOutCubic,
             padding: EdgeInsets.symmetric(
-              horizontal: compact ? 12 : 14,
+              horizontal: horizontalPadding ?? (compact ? 12 : 14),
               vertical: compact ? 6 : 8,
             ),
             decoration: BoxDecoration(

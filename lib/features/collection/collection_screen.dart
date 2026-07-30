@@ -304,13 +304,16 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
   }
 
   Future<void> _openShelfFiltersSheet() async {
-    final applied = await showCollectionShelfFiltersSheet(
+    final appliedSort = ref.read(collectionShelfUiPrefsProvider).sort;
+    final result = await showCollectionShelfFiltersSheet(
       context: context,
       initial: _shelfFilters,
+      initialSort: appliedSort,
       searchQuery: _shelfCommittedQuery,
     );
-    if (!mounted || applied == null) return;
-    _onShelfFiltersChanged(applied);
+    if (!mounted || result == null) return;
+    _onShelfFiltersChanged(result.filters);
+    ref.read(collectionShelfUiPrefsProvider.notifier).setSort(result.sort);
   }
 
   Future<void> _openShelfLayoutSheet() async {
@@ -859,49 +862,12 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                       onPressed: _openShelfFiltersSheet,
                     ),
                     Expanded(
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          const layoutExtent =
-                              CollectionShelfLayoutControl.minTapExtent;
-                          // Sort then Layout as a compact trailing group
-                          // (~12dp shared-token gap; Layout is rightmost).
-                          const sortLayoutGap = AppSpacing.md;
-                          final sortMaxWidth =
-                              (constraints.maxWidth -
-                                      layoutExtent -
-                                      sortLayoutGap)
-                                  .clamp(0.0, constraints.maxWidth);
-                          return Align(
-                            alignment: Alignment.centerRight,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                ConstrainedBox(
-                                  constraints: BoxConstraints(
-                                    maxWidth: sortMaxWidth,
-                                    minHeight: 48,
-                                    minWidth: 48,
-                                  ),
-                                  child: _CollectionShelfSortMenu(
-                                    selected: shelfUiPrefs.sort,
-                                    onSelected: (sort) => ref
-                                        .read(
-                                          collectionShelfUiPrefsProvider
-                                              .notifier,
-                                        )
-                                        .setSort(sort),
-                                  ),
-                                ),
-                                const SizedBox(width: sortLayoutGap),
-                                CollectionShelfLayoutControl(
-                                  layout: shelfUiPrefs.layout,
-                                  onPressed: _openShelfLayoutSheet,
-                                ),
-                              ],
-                            ),
-                          );
-                        },
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: CollectionShelfLayoutControl(
+                          layout: shelfUiPrefs.layout,
+                          onPressed: _openShelfLayoutSheet,
+                        ),
                       ),
                     ),
                   ],
@@ -1445,122 +1411,6 @@ class _CollectionShelfFiltersControl extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _CollectionShelfSortMenu extends StatelessWidget {
-  const _CollectionShelfSortMenu({
-    required this.selected,
-    required this.onSelected,
-  });
-
-  final CollectionShelfSort selected;
-  final ValueChanged<CollectionShelfSort> onSelected;
-
-  static const double _minTapExtent = 48;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final maxWidth = constraints.maxWidth.isFinite
-            ? constraints.maxWidth
-            : double.infinity;
-
-        return PopupMenuButton<CollectionShelfSort>(
-          key: const Key('collection_shelf_sort_menu'),
-          initialValue: selected,
-          tooltip: 'Sort shelf',
-          onSelected: onSelected,
-          padding: EdgeInsets.zero,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: _minTapExtent,
-              maxWidth: maxWidth,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Symbols.sort_rounded,
-                    size: AppIconSizes.metadata,
-                    color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Flexible(
-                    child: Text(
-                      selected.menuLabel,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: textTheme.labelMedium?.copyWith(
-                        color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  Icon(
-                    Symbols.expand_more_rounded,
-                    size: AppIconSizes.metadata,
-                    color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          itemBuilder: (context) => [
-            PopupMenuItem<CollectionShelfSort>(
-              enabled: false,
-              height: 40,
-              child: Text(
-                'Sort by',
-                style: textTheme.titleSmall?.copyWith(
-                  color: scheme.onSurface,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: -0.2,
-                ),
-              ),
-            ),
-            for (final sort in CollectionShelfSort.values)
-              PopupMenuItem<CollectionShelfSort>(
-                value: sort,
-                child: Semantics(
-                  label: sort.semanticLabel,
-                  excludeSemantics: true,
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 28,
-                        child: sort == selected
-                            ? Icon(
-                                Symbols.check_rounded,
-                                size: 20,
-                                color: scheme.primary,
-                              )
-                            : null,
-                      ),
-                      Expanded(
-                        child: Text(
-                          sort.menuLabel,
-                          style: textTheme.bodyLarge?.copyWith(
-                            fontWeight: sort == selected
-                                ? FontWeight.w600
-                                : FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-          ],
-        );
-      },
     );
   }
 }

@@ -64,8 +64,23 @@ abstract final class CollectionVocabulary {
   static const filterSearchBrandsHint = 'Search brands';
   static const filterSearchIpsHint = 'Search IPs';
 
-  /// Filters sheet primary action.
+  /// Filters sheet primary action base (legacy; prefer [showFilterSeriesCount]).
   static const showFilterResults = 'Show results';
+
+  /// Filters sheet primary action — series count after draft filters + search.
+  static String showFilterSeriesCount(int count) => 'Show $count Series';
+
+  /// Filters sheet — Sort section (separate from filter chips).
+  static const filterSectionSortBy = 'Sort by';
+
+  /// Collapsed Brand summary when nothing is selected.
+  static const filterAllBrandsSummary = 'All brands';
+
+  /// Collapsed IP summary when nothing is selected.
+  static const filterAllIpsSummary = 'All IPs';
+
+  /// Collapsed Brand/IP summary for multiple selections.
+  static String filterSelectedCountSummary(int count) => '$count selected';
 
   /// Filters sheet reset action.
   static const clearAllFilters = 'Clear all';
