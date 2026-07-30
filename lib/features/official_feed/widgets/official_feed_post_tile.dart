@@ -1,6 +1,7 @@
 import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/official_feed/domain/official_feed_item.dart';
+import 'package:blindbox_app/features/official_feed/presentation/official_feed_copy.dart';
 import 'package:blindbox_app/features/official_feed/presentation/official_feed_post_date.dart';
 import 'package:blindbox_app/features/official_feed/presentation/official_feed_source_presenter.dart';
 import 'package:blindbox_app/features/official_feed/utils/open_official_feed_url.dart';
@@ -22,7 +23,6 @@ class OfficialFeedPostTile extends StatelessWidget {
     final textTheme = theme.textTheme;
     final isDark = theme.brightness == Brightness.dark;
     final host = officialFeedHostLabel(item.officialUrl);
-    final postDate = formatOfficialFeedPostDate(item.publishedAt);
 
     return Material(
       color: scheme.surface,
@@ -51,33 +51,38 @@ class OfficialFeedPostTile extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Row(
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  item.sourceLabel,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: textTheme.labelLarge?.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                    color: scheme.onSurface,
-                                  ),
-                                ),
+                          Text(
+                            formatOfficialFeedAnnouncementProvenance(
+                              sourceLabel: item.sourceLabel,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: textTheme.labelMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: scheme.onSurfaceVariant.withValues(
+                                alpha: 0.72,
                               ),
-                              Text(
-                                ' · $postDate',
-                                style: textTheme.labelMedium?.copyWith(
-                                  color: scheme.onSurfaceVariant.withValues(
-                                    alpha: 0.55,
-                                  ),
-                                ),
+                            ),
+                          ),
+                          const SizedBox(height: 1),
+                          Text(
+                            formatOfficialFeedPostDate(item.publishedAt),
+                            maxLines: 1,
+                            overflow: TextOverflow.clip,
+                            style: textTheme.labelMedium?.copyWith(
+                              fontWeight: FontWeight.w500,
+                              color: scheme.onSurfaceVariant.withValues(
+                                alpha: 0.55,
                               ),
-                            ],
+                            ),
                           ),
                           const SizedBox(height: 3),
-                          OfficialFeedContentTypeLabel(item: item),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: OfficialFeedContentTypeLabel(item: item),
+                          ),
                         ],
                       ),
                     ),

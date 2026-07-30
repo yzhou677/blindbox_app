@@ -54,17 +54,23 @@ announcement times. Before every push:
 
 ## publishedAt policy
 
-`publishedAt` = **official Instagram post instant** (or official POP MART
-announcement time when no IG post exists).
+`publishedAt` = **official Instagram post instant** for every Official feed
+item. Official feeds are curated from brand Instagram announcements.
 
-- For Instagram posts, copy the full UTC timestamp from the post shortcode:
+- Copy the full UTC timestamp from the post shortcode:
   `node tools/official_feed/_ig_shortcode_date.mjs DZbgLVcDIDW` → use the `utc`
   field (e.g. `2026-07-03T08:52:21.758Z`). **Do not** truncate to
   `T00:00:00Z` — midnight UTC becomes the previous calendar evening in US
   timezones and the app will show the wrong day.
 - Product rows announced in the same IG carousel share that post's `utc`
   timestamp.
-- **Do not** use release-day sort buckets or PT→UTC release conversions
+- **Do not** use product-page create/update time, release/sale start, Firestore
+  create time, seed import time, or PT→UTC release conversions for
+  `publishedAt`.
+- Card metadata shows two lines so the date stays fully visible:
+  `{sourceLabel} · via IG` then `{local month+day}` — this
+  describes date provenance, not whether `officialUrl` opens Instagram or a
+  product page.
 
 The app shows the **local** month+day from `publishedAt` in the card header
 (`Jul 3`). It is not the product release time.

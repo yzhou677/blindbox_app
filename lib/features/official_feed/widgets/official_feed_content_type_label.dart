@@ -21,35 +21,50 @@ class OfficialFeedContentTypeLabel extends StatelessWidget {
       isDark: isDark,
     );
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: style.background,
-        borderRadius: BorderRadius.circular(5),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (style.icon case final icon?) ...[
-              Icon(icon, size: _iconSize, color: style.foreground),
-              const SizedBox(width: 3),
-            ],
-            Text(
-              style.label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.labelSmall?.copyWith(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.02,
-                height: 1.2,
-                color: style.foreground,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bounded = constraints.hasBoundedWidth;
+        return Align(
+          alignment: Alignment.centerLeft,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: bounded ? constraints.maxWidth : double.infinity,
+            ),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: style.background,
+                borderRadius: BorderRadius.circular(5),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (style.icon case final icon?) ...[
+                      Icon(icon, size: _iconSize, color: style.foreground),
+                      const SizedBox(width: 3),
+                    ],
+                    Flexible(
+                      child: Text(
+                        style.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.02,
+                          height: 1.2,
+                          color: style.foreground,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
