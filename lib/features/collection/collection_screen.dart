@@ -863,25 +863,25 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                         builder: (context, constraints) {
                           const layoutExtent =
                               CollectionShelfLayoutControl.minTapExtent;
+                          // Sort then Layout as a compact trailing group
+                          // (~12dp shared-token gap; Layout is rightmost).
+                          const sortLayoutGap = AppSpacing.md;
                           final sortMaxWidth =
-                              (constraints.maxWidth - layoutExtent).clamp(
-                                0.0,
-                                constraints.maxWidth,
-                              );
+                              (constraints.maxWidth -
+                                      layoutExtent -
+                                      sortLayoutGap)
+                                  .clamp(0.0, constraints.maxWidth);
                           return Align(
                             alignment: Alignment.centerRight,
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                CollectionShelfLayoutControl(
-                                  layout: shelfUiPrefs.layout,
-                                  onPressed: _openShelfLayoutSheet,
-                                ),
                                 ConstrainedBox(
                                   constraints: BoxConstraints(
                                     maxWidth: sortMaxWidth,
                                     minHeight: 48,
+                                    minWidth: 48,
                                   ),
                                   child: _CollectionShelfSortMenu(
                                     selected: shelfUiPrefs.sort,
@@ -892,6 +892,11 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                                         )
                                         .setSort(sort),
                                   ),
+                                ),
+                                const SizedBox(width: sortLayoutGap),
+                                CollectionShelfLayoutControl(
+                                  layout: shelfUiPrefs.layout,
+                                  onPressed: _openShelfLayoutSheet,
                                 ),
                               ],
                             ),

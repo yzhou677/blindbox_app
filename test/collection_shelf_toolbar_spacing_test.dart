@@ -94,7 +94,7 @@ void main() {
   });
 
   testWidgets(
-    'toolbar keeps Filters left and Layout+Sort right-aligned without overlap',
+    'toolbar order is Filters → Sort → Layout with Layout rightmost',
     (tester) async {
       await _pumpCollection(tester);
 
@@ -111,28 +111,29 @@ void main() {
       final layoutBox = tester.getRect(layout);
       final screenWidth = tester.getSize(find.byType(CollectionScreen)).width;
 
-      // Filters left; Layout then Sort as a right-aligned group.
-      expect(filtersBox.left, lessThan(layoutBox.left));
-      expect(layoutBox.left, lessThan(sortBox.left));
-      expect(sortBox.right, greaterThan(layoutBox.right));
-      // Flexible space sits between Filters and the Layout/Sort group.
-      expect(layoutBox.left - filtersBox.right, greaterThan(AppSpacing.sm));
+      // Filters left; Sort then Layout as a right-aligned group.
+      expect(filtersBox.left, lessThan(sortBox.left));
+      expect(sortBox.left, lessThan(layoutBox.left));
+      expect(layoutBox.right, greaterThan(sortBox.right));
+      // Flexible space sits between Filters and the Sort/Layout group.
+      expect(sortBox.left - filtersBox.right, greaterThan(AppSpacing.sm));
 
-      // Layout and Sort sit flush as one trailing pair (48dp targets abut).
-      expect(sortBox.left - layoutBox.right, inInclusiveRange(0, 1));
+      // ~12dp shared-token gap between Sort and Layout hit targets.
+      expect(layoutBox.left - sortBox.right, closeTo(AppSpacing.md, 0.5));
 
-      // Right group aligns to the standard page trailing inset.
+      // Layout aligns to the standard page trailing inset.
       expect(
-        (screenWidth - AppSpacing.pageHorizontal) - sortBox.right,
+        (screenWidth - AppSpacing.pageHorizontal) - layoutBox.right,
         inInclusiveRange(0, 1),
       );
 
       // Tap targets do not overlap.
-      expect(filtersBox.overlaps(layoutBox), isFalse);
-      expect(layoutBox.overlaps(sortBox), isFalse);
+      expect(filtersBox.overlaps(sortBox), isFalse);
+      expect(sortBox.overlaps(layoutBox), isFalse);
 
-      // Accessible heights.
+      // Accessible targets.
       expect(sortBox.height, greaterThanOrEqualTo(48));
+      expect(sortBox.width, greaterThanOrEqualTo(48));
       expect(layoutBox.width, greaterThanOrEqualTo(48));
       expect(layoutBox.height, greaterThanOrEqualTo(48));
 
@@ -176,13 +177,41 @@ void main() {
     final layoutBox = tester.getRect(layout);
     final filtersBox = tester.getRect(filters);
 
-    expect(filtersBox.left, lessThan(layoutBox.left));
-    expect(layoutBox.left, lessThan(sortBox.left));
-    expect(filtersBox.overlaps(layoutBox), isFalse);
-    expect(layoutBox.overlaps(sortBox), isFalse);
+    expect(filtersBox.left, lessThan(sortBox.left));
+    expect(sortBox.left, lessThan(layoutBox.left));
+    expect(filtersBox.overlaps(sortBox), isFalse);
+    expect(sortBox.overlaps(layoutBox), isFalse);
     expect(layoutBox.width, greaterThanOrEqualTo(48));
     expect(layoutBox.height, greaterThanOrEqualTo(48));
     expect(sortBox.height, greaterThanOrEqualTo(48));
-    expect(sortBox.left - layoutBox.right, inInclusiveRange(0, 1));
+    expect(sortBox.width, greaterThanOrEqualTo(48));
+    expect(layoutBox.left - sortBox.right, closeTo(AppSpacing.md, 0.5));
+    // Layout stays rightmost and keeps its full tap target.
+    expect(layoutBox.width, CollectionShelfLayoutControl.minTapExtent);
   });
+
+  testWidgets(
+    'toolbar does not equal-width expand Sort and Layout across the row',
+    (tester) async {
+      await _pumpCollection(tester);
+
+      final filters = find.byKey(const Key('collection_shelf_filters_control'));
+      final layout = find.byKey(const Key('collection_shelf_layout_control'));
+      final sort = find.byKey(const Key('collection_shelf_sort_menu'));
+
+      final filtersBox = tester.getRect(filters);
+      final layoutBox = tester.getRect(layout);
+      final sortBox = tester.getRect(sort);
+      final screenWidth = tester.getSize(find.byType(CollectionScreen)).width;
+
+      // Right-side group stays compact — not three evenly spaced slots.
+      final gapFiltersToSort = sortBox.left - filtersBox.right;
+      final gapSortToLayout = layoutBox.left - sortBox.right;
+      expect(gapFiltersToSort, greaterThan(gapSortToLayout * 3));
+
+      // Layout remains a fixed 48×48 control, not a stretched Expanded child.
+      expect(layoutBox.width, CollectionShelfLayoutControl.minTapExtent);
+      expect(layoutBox.width + sortBox.width, lessThan(screenWidth * 0.55));
+    },
+  );
 }
