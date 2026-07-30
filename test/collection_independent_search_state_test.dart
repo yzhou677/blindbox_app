@@ -360,6 +360,10 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('Collection Attributes'), findsOneWidget);
+    await tester.ensureVisible(
+      find.byKey(const Key('filters_sheet_has_duplicates')),
+    );
+    await tester.pump();
     await tester.tap(find.byKey(const Key('filters_sheet_has_duplicates')));
     await tester.pump();
     await tester.tap(find.byKey(const Key('filters_sheet_show_results')));

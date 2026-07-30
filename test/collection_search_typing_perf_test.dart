@@ -312,87 +312,86 @@ void main() {
     expect(SearchCommitPolicy.remote, const Duration(milliseconds: 400));
   });
 
-  testWidgets(
-    'Filter after committed search does not rerun text search',
-    (tester) async {
-      final snap = CollectionSnapshot(
-        shelfSeries: [
-          testShelfSeries(
-            id: 'a',
-            name: 'Alpha Series',
-            brand: 'POP MART',
-            taxonomyBrandId: 'pop_mart',
-            ipName: 'Hirono',
-            taxonomyIpId: 'hirono',
-          ),
-          testShelfSeries(
-            id: 'b',
-            name: 'Bravo Series',
-            brand: 'TOP TOY',
-            taxonomyBrandId: 'toptoy',
-            ipName: 'Hirono',
-            taxonomyIpId: 'hirono',
-          ),
-        ],
-        figureStates: const {},
-      );
-      await _pumpCollectionScreen(tester, snap: snap);
+  testWidgets('Filter after committed search does not rerun text search', (
+    tester,
+  ) async {
+    final snap = CollectionSnapshot(
+      shelfSeries: [
+        testShelfSeries(
+          id: 'a',
+          name: 'Alpha Series',
+          brand: 'POP MART',
+          taxonomyBrandId: 'pop_mart',
+          ipName: 'Hirono',
+          taxonomyIpId: 'hirono',
+        ),
+        testShelfSeries(
+          id: 'b',
+          name: 'Bravo Series',
+          brand: 'TOP TOY',
+          taxonomyBrandId: 'toptoy',
+          ipName: 'Hirono',
+          taxonomyIpId: 'hirono',
+        ),
+      ],
+      figureStates: const {},
+    );
+    await _pumpCollectionScreen(tester, snap: snap);
 
-      await tester.enterText(_searchField, 'Alpha');
-      await tester.pump();
-      await tester.pump(SearchCommitPolicy.localCollection);
-      await tester.pump();
-      expect(CollectionScreen.debugCommittedQueryCount, greaterThan(0));
-      expect(
-        ShelfBrowseSearchMatchCache.debugSearchExecutionCount,
-        greaterThan(0),
-      );
+    await tester.enterText(_searchField, 'Alpha');
+    await tester.pump();
+    await tester.pump(SearchCommitPolicy.localCollection);
+    await tester.pump();
+    expect(CollectionScreen.debugCommittedQueryCount, greaterThan(0));
+    expect(
+      ShelfBrowseSearchMatchCache.debugSearchExecutionCount,
+      greaterThan(0),
+    );
 
-      final searchesAfterCommit =
-          ShelfBrowseSearchMatchCache.debugSearchExecutionCount;
-      CollectionScreen.debugBrandFilterCount = 0;
-      CollectionScreen.debugBuildCount = 0;
-      ShelfBrowseSearchMatchCache.debugCacheHitCount = 0;
+    final searchesAfterCommit =
+        ShelfBrowseSearchMatchCache.debugSearchExecutionCount;
+    CollectionScreen.debugBrandFilterCount = 0;
+    CollectionScreen.debugBuildCount = 0;
+    ShelfBrowseSearchMatchCache.debugCacheHitCount = 0;
 
-      await tester.tap(
-        find.byKey(const Key('collection_shelf_filters_control')),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
-      expect(find.text('Collection Attributes'), findsOneWidget);
-      await tester.tap(find.byKey(const Key('filters_sheet_has_duplicates')));
-      await tester.pump();
-      await tester.tap(find.byKey(const Key('filters_sheet_show_results')));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(find.byKey(const Key('collection_shelf_filters_control')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('Collection Attributes'), findsOneWidget);
+    await tester.ensureVisible(
+      find.byKey(const Key('filters_sheet_has_duplicates')),
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('filters_sheet_has_duplicates')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('filters_sheet_show_results')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
 
-      expect(
-        ShelfBrowseSearchMatchCache.debugSearchExecutionCount,
-        searchesAfterCommit,
-      );
-      expect(CollectionScreen.debugBrandFilterCount, greaterThan(0));
-      expect(ShelfBrowseSearchMatchCache.debugCacheHitCount, greaterThan(0));
-      // No owned duplicates in this fixture → filters hide all series.
-      expect(find.text('No series match these filters'), findsOneWidget);
+    expect(
+      ShelfBrowseSearchMatchCache.debugSearchExecutionCount,
+      searchesAfterCommit,
+    );
+    expect(CollectionScreen.debugBrandFilterCount, greaterThan(0));
+    expect(ShelfBrowseSearchMatchCache.debugCacheHitCount, greaterThan(0));
+    // No owned duplicates in this fixture → filters hide all series.
+    expect(find.text('No series match these filters'), findsOneWidget);
 
-      final brandsBeforeReselect = CollectionScreen.debugBrandFilterCount;
-      final buildsBeforeReselect = CollectionScreen.debugBuildCount;
-      await tester.tap(
-        find.byKey(const Key('collection_shelf_filters_control')),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
-      await tester.tap(find.byKey(const Key('filters_sheet_show_results')));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
-      expect(CollectionScreen.debugBrandFilterCount, brandsBeforeReselect);
-      expect(CollectionScreen.debugBuildCount, buildsBeforeReselect);
-      expect(
-        ShelfBrowseSearchMatchCache.debugSearchExecutionCount,
-        searchesAfterCommit,
-      );
-    },
-  );
+    final brandsBeforeReselect = CollectionScreen.debugBrandFilterCount;
+    final buildsBeforeReselect = CollectionScreen.debugBuildCount;
+    await tester.tap(find.byKey(const Key('collection_shelf_filters_control')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(find.byKey(const Key('filters_sheet_show_results')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(CollectionScreen.debugBrandFilterCount, brandsBeforeReselect);
+    expect(CollectionScreen.debugBuildCount, buildsBeforeReselect);
+    expect(
+      ShelfBrowseSearchMatchCache.debugSearchExecutionCount,
+      searchesAfterCommit,
+    );
+  });
 
   testWidgets('segment control remains reachable while typing', (tester) async {
     await _pumpCollectionScreen(tester, snap: _shelfSnap());

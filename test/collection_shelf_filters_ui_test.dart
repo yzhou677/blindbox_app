@@ -122,7 +122,8 @@ Future<void> _pumpFiltersSheetHost(
   WidgetTester tester,
   CollectionSnapshot snap, {
   CollectionShelfFilters initial = CollectionShelfFilters.empty,
-  void Function(CollectionShelfFilters?)? onClosed,
+  CollectionShelfSort initialSort = CollectionShelfSort.recentlyAdded,
+  void Function(CollectionShelfFiltersSheetResult?)? onClosed,
 }) async {
   SharedPreferences.setMockInitialValues({});
   await tester.pumpWidget(
@@ -156,6 +157,7 @@ Future<void> _pumpFiltersSheetHost(
                   final applied = await showCollectionShelfFiltersSheet(
                     context: context,
                     initial: initial,
+                    initialSort: initialSort,
                     shelfSeries: snap.shelfSeries,
                     figureStates: snap.figureStates,
                   );
@@ -169,6 +171,14 @@ Future<void> _pumpFiltersSheetHost(
       ),
     ),
   );
+}
+
+Future<void> _tapSheetKey(WidgetTester tester, Key key) async {
+  final finder = find.byKey(key);
+  await tester.ensureVisible(finder);
+  await tester.pump();
+  await tester.tap(finder);
+  await tester.pump();
 }
 
 Future<void> _openFiltersSheet(WidgetTester tester) async {
@@ -236,8 +246,11 @@ void main() {
         findsOneWidget,
       );
 
-      await tester.tap(find.byKey(const Key('filters_sheet_has_duplicates')));
+      await tester.ensureVisible(
+        find.text(CollectionVocabulary.filterSectionCollectionAttributes),
+      );
       await tester.pump();
+      await _tapSheetKey(tester, const Key('filters_sheet_has_duplicates'));
       await _applyFiltersSheet(tester);
 
       expect(find.text('Filters · 1'), findsOneWidget);
@@ -252,8 +265,7 @@ void main() {
     await _pumpCollection(tester, _shelfWithDuplicates());
 
     await _openFiltersSheet(tester);
-    await tester.tap(find.byKey(const Key('filters_sheet_has_duplicates')));
-    await tester.pump();
+    await _tapSheetKey(tester, const Key('filters_sheet_has_duplicates'));
     await _applyFiltersSheet(tester);
     expect(find.text('Filters · 1'), findsOneWidget);
 
@@ -328,26 +340,26 @@ void main() {
   });
 
   testWidgets('filters sheet Apply returns draft state', (tester) async {
-    CollectionShelfFilters? applied;
+    CollectionShelfFiltersSheetResult? applied;
     final snap = _shelfWithDuplicates();
     await _pumpFiltersSheetHost(tester, snap, onClosed: (v) => applied = v);
     await tester.tap(find.text('open'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    await tester.tap(find.byKey(const Key('filters_sheet_has_duplicates')));
-    await tester.pump();
-    expect(find.text('Show results (1)'), findsOneWidget);
+    await _tapSheetKey(tester, const Key('filters_sheet_has_duplicates'));
+    expect(find.text('Show 1 Series'), findsOneWidget);
     await tester.tap(find.byKey(const Key('filters_sheet_show_results')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    expect(applied?.hasDuplicates, isTrue);
-    expect(applied?.activeCount, 1);
+    expect(applied?.filters.hasDuplicates, isTrue);
+    expect(applied?.filters.activeCount, 1);
+    expect(applied?.sort, CollectionShelfSort.recentlyAdded);
   });
 
   testWidgets('Dismiss without Apply preserves previous filters', (
     tester,
   ) async {
-    CollectionShelfFilters? applied;
+    CollectionShelfFiltersSheetResult? applied;
     final snap = _shelfWithDuplicates();
     await _pumpFiltersSheetHost(
       tester,
@@ -358,8 +370,7 @@ void main() {
     await tester.tap(find.text('open'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    await tester.tap(find.byKey(const Key('filters_sheet_has_duplicates')));
-    await tester.pump();
+    await _tapSheetKey(tester, const Key('filters_sheet_has_duplicates'));
     Navigator.of(tester.element(find.text('Filters').first)).pop();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
@@ -367,7 +378,7 @@ void main() {
   });
 
   testWidgets('Clear all removes every draft filter', (tester) async {
-    CollectionShelfFilters? applied;
+    CollectionShelfFiltersSheetResult? applied;
     final snap = _shelfWithDuplicates();
     await _pumpFiltersSheetHost(
       tester,
@@ -386,20 +397,34 @@ void main() {
     await tester.tap(find.byKey(const Key('filters_sheet_show_results')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    expect(applied, CollectionShelfFilters.empty);
+    expect(applied?.filters, CollectionShelfFilters.empty);
   });
 
-  testWidgets('Filters sheet has no Time section', (tester) async {
+  testWidgets('Filters sheet Sort by precedes Progress; no Time section', (
+    tester,
+  ) async {
     final snap = _shelfWithDuplicates();
     await _pumpFiltersSheetHost(tester, snap);
     await tester.tap(find.text('open'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('Time'), findsNothing);
-    expect(find.text('Recently Added'), findsNothing);
-    expect(find.text('Recently Released'), findsNothing);
+    expect(find.byKey(const Key('filters_sheet_sort_row')), findsOneWidget);
+    expect(find.text('Recently Added'), findsOneWidget);
+    expect(
+      find.byKey(const Key('filters_sheet_sort_alphabetical')),
+      findsNothing,
+    );
     expect(find.text('Collection Attributes'), findsOneWidget);
-    expect(find.text('Metadata'), findsOneWidget);
+    expect(find.text('Metadata'), findsNothing);
+
+    final sortTop = tester
+        .getTopLeft(find.byKey(const Key('filters_sheet_sort_row')))
+        .dy;
+    final progressTop = tester
+        .getTopLeft(find.text(CollectionVocabulary.filterSectionProgress))
+        .dy;
+    expect(sortTop, lessThan(progressTop));
   });
 
   testWidgets('filters sheet exposes Brand chips from shelf data', (
@@ -425,7 +450,13 @@ void main() {
     await tester.tap(find.text('open'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    expect(find.text('Metadata'), findsOneWidget);
+    expect(find.text('Brand'), findsWidgets);
+    expect(
+      find.text(CollectionVocabulary.filterAllBrandsSummary),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const Key('filters_sheet_brand_section')));
+    await tester.pump();
     expect(
       find.byKey(const Key('filters_sheet_brand_popmart')),
       findsOneWidget,
