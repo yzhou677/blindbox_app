@@ -1,10 +1,15 @@
 import 'package:blindbox_app/core/theme/app_radii.dart';
+import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/domain/series_completion_resolution.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_card_tokens.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_series_thumbnail.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_shelf_card_content.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_progress_voice.dart';
+import 'package:blindbox_app/features/collection/widgets/collection_series_card_content_meta.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -18,6 +23,8 @@ class CollectionShelfSeriesListTile extends StatelessWidget {
     required this.figureStates,
     required this.onTap,
     this.onLongPress,
+    this.cardContent = CollectionShelfCardContentSelection.empty,
+    this.catalog,
   });
 
   /// Matches [AppRadii.inset] (14–16dp range).
@@ -35,26 +42,43 @@ class CollectionShelfSeriesListTile extends StatelessWidget {
   final Map<String, TrackedFigure> figureStates;
   final VoidCallback onTap;
   final Future<void> Function()? onLongPress;
+  final CollectionShelfCardContentSelection cardContent;
+  final CatalogSeedBundle? catalog;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Same completion semantics as Grid — no List-specific progress math.
     final resolution = resolveSeriesCompletion(series, figureStates);
-    final ip = shelfSeriesIpLabel(series).trim();
-    final brand = series.brand.trim();
-    final contextLine = [
-      if (ip.isNotEmpty) ip,
-      if (brand.isNotEmpty && brand.toLowerCase() != ip.toLowerCase()) brand,
-    ].join(' · ');
+    final ratio = resolution.progressRatio.clamp(0.0, 1.0);
+    final isComplete = resolution.isCompleted;
+    final isMasterComplete = resolution.isMasterComplete;
+    final lines = resolveCardContentLines(
+      cardContent,
+      series,
+      figureStates,
+      catalog: catalog,
+      progress: progress,
+    );
     final completion = CollectionProgressVoice.seriesStatPrimaryLine(
       series: series,
       progress: progress,
       figureStates: figureStates,
     );
+    final progressLabel = isMasterComplete
+        ? CollectionVocabulary.masterComplete
+        : completion;
 
-    // Same family as [CollectionBrowseCard] default border.
+    final barColor = isComplete
+        ? Color.lerp(
+            scheme.primary,
+            const Color(0xFFE8C547),
+            isMasterComplete ? 0.72 : 0.38,
+          )!.withValues(alpha: isMasterComplete ? 0.92 : 0.78)
+        : scheme.primary.withValues(alpha: 0.55);
+
     final borderColor = scheme.outlineVariant.withValues(
       alpha: isDark ? 0.32 : 0.38,
     );
@@ -110,24 +134,31 @@ class CollectionShelfSeriesListTile extends StatelessWidget {
                           scheme,
                         ),
                       ),
-                      if (contextLine.isNotEmpty) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          contextLine,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: CollectibleTypography.seriesIpLine(
-                            textTheme,
-                            scheme,
-                          ),
+                      if (lines.isNotEmpty) ...[
+                        const SizedBox(height: AppSpacing.xs),
+                        CollectionSeriesCardContentMeta(
+                          lines: lines,
+                          horizontal: true,
                         ),
                       ],
-                      if (completion.isNotEmpty) ...[
-                        const SizedBox(height: 4),
+                      const SizedBox(height: AppSpacing.xs),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(999),
+                        child: LinearProgressIndicator(
+                          key: const Key('collection_series_list_progress_bar'),
+                          value: ratio,
+                          minHeight: CollectionCardTokens.progressBarHeight,
+                          backgroundColor: scheme.surfaceContainerHighest
+                              .withValues(alpha: isDark ? 1 : 0.45),
+                          color: barColor,
+                        ),
+                      ),
+                      if (progressLabel.isNotEmpty) ...[
+                        const SizedBox(
+                          height: CollectionCardTokens.progressToLabelGap,
+                        ),
                         Text(
-                          resolution.isMasterComplete
-                              ? CollectionVocabulary.masterComplete
-                              : completion,
+                          progressLabel,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: CollectibleTypography.shelfProgressLine(

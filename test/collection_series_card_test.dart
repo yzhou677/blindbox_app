@@ -1,13 +1,14 @@
 import 'package:blindbox_app/core/theme/app_theme.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_card_tokens.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_shelf_card_content.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_series_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import 'helpers/collection_fixtures.dart';
-import 'package:material_symbols_icons/symbols.dart';
 
 void main() {
   testWidgets('in-progress card shows progress bar and count', (tester) async {
@@ -47,7 +48,6 @@ void main() {
     await tester.pump();
 
     expect(find.text('Dimoo World'), findsOneWidget);
-    expect(find.text('Dimoo'), findsOneWidget);
     expect(find.text('2 / 4'), findsOneWidget);
     expect(find.byType(LinearProgressIndicator), findsOneWidget);
     expect(find.text(CollectionVocabulary.seriesCompleteBadge), findsNothing);
@@ -135,6 +135,9 @@ void main() {
             progress: progressForSeries(series, states),
             figureStates: states,
             density: CollectionSeriesCardDensity.compact,
+            cardContent: const CollectionShelfCardContentSelection([
+              CollectionShelfCardContentField.ip,
+            ]),
             onTap: () {},
           ),
         ),

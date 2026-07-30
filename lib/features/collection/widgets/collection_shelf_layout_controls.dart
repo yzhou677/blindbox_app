@@ -2,47 +2,92 @@ import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
+import 'package:blindbox_app/features/collection/application/collection_shelf_ui_prefs_provider.dart';
+import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_shelf_card_content.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_layout.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
-/// Opens a compact layout picker; returns the selected layout or `null`.
-Future<CollectionShelfLayout?> showCollectionShelfLayoutSheet({
+/// Opens the Collection Layout sheet (layout + Card Content). Prefs apply live.
+Future<void> showCollectionShelfLayoutSheet({
   required BuildContext context,
-  required CollectionShelfLayout selected,
+  required WidgetRef ref,
+  required List<ShelfSeries> shelfSeries,
+  required Map<String, TrackedFigure> figureStates,
+  CatalogSeedBundle? catalog,
+  ShelfBrowseProgressLookup? progress,
 }) {
-  return showCollectionModalBottomSheet<CollectionShelfLayout>(
+  final available = availableCollectionShelfCardContentFields(
+    shelfSeries: shelfSeries,
+    figureStates: figureStates,
+    catalog: catalog,
+    progress: progress,
+  );
+
+  return showCollectionModalBottomSheet<void>(
     context: context,
-    // Compact host — content is short; avoid a tall empty sheet.
-    heightFraction: 0.38,
+    // Layout rows + Card Content section.
+    heightFraction: 0.72,
     builder: (context, scrollController) {
-      return _CollectionShelfLayoutSheet(
-        selected: selected,
-        scrollController: scrollController,
+      return Consumer(
+        builder: (context, sheetRef, _) {
+          final prefs = sheetRef.watch(collectionShelfUiPrefsProvider);
+          final selectedLayout = prefs.layout;
+          final selection = prefs.cardContentSelection
+              .sanitizePreservingUnavailable(available);
+          return CollectionShelfLayoutSheet(
+            scrollController: scrollController,
+            selectedLayout: selectedLayout,
+            selection: selection,
+            available: available,
+            onLayoutSelected: (layout) {
+              sheetRef
+                  .read(collectionShelfUiPrefsProvider.notifier)
+                  .setLayout(layout);
+            },
+            onToggleCardContent: (field) {
+              sheetRef
+                  .read(collectionShelfUiPrefsProvider.notifier)
+                  .toggleCardContentField(field, available: available);
+            },
+          );
+        },
       );
     },
   );
 }
 
-class _CollectionShelfLayoutSheet extends StatelessWidget {
-  const _CollectionShelfLayoutSheet({
-    required this.selected,
+class CollectionShelfLayoutSheet extends StatelessWidget {
+  const CollectionShelfLayoutSheet({
+    super.key,
     required this.scrollController,
+    required this.selectedLayout,
+    required this.selection,
+    required this.available,
+    required this.onLayoutSelected,
+    required this.onToggleCardContent,
   });
 
-  final CollectionShelfLayout selected;
   final ScrollController scrollController;
+  final CollectionShelfLayout selectedLayout;
+  final CollectionShelfCardContentSelection selection;
+  final Set<CollectionShelfCardContentField> available;
+  final ValueChanged<CollectionShelfLayout> onLayoutSelected;
+  final ValueChanged<CollectionShelfCardContentField> onToggleCardContent;
 
   @override
   Widget build(BuildContext context) {
+    final selectedCount = selection.availableSelectedCount(available);
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    // Horizontal + safe bottom from insets; body owns title→content gap only.
     return CollectibleSheetInsets(
       extraBottom: 0,
       child: CollectibleSheetScrollView(
@@ -58,15 +103,60 @@ class _CollectionShelfLayoutSheet extends StatelessWidget {
                 bottom: FeedRhythm.sheetBodyBottomInset,
               ),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   for (final layout in CollectionShelfLayout.values)
                     _LayoutOptionRow(
                       layout: layout,
-                      selected: layout == selected,
+                      selected: layout == selectedLayout,
                       scheme: scheme,
                       textTheme: textTheme,
-                      onTap: () => Navigator.of(context).pop(layout),
+                      onTap: () => onLayoutSelected(layout),
                     ),
+                  if (available.isNotEmpty) ...[
+                    const SizedBox(height: FeedRhythm.sheetSectionGap),
+                    Text(
+                      CollectionVocabulary.cardContentSectionTitle,
+                      style: textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: scheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: FeedRhythm.sheetLabelToControl / 2),
+                    Text(
+                      CollectionVocabulary.cardContentSectionSubtitle,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
+                        height: 1.3,
+                      ),
+                    ),
+                    const SizedBox(height: FeedRhythm.sheetLabelToControl),
+                    for (final field in CollectionShelfCardContentField.values)
+                      if (available.contains(field))
+                        _CardContentOptionRow(
+                          field: field,
+                          selected: selection.contains(field),
+                          enabled:
+                              selection.contains(field) ||
+                              selectedCount <
+                                  kMaxCollectionShelfCardContentSelections,
+                          scheme: scheme,
+                          textTheme: textTheme,
+                          onTap: () => onToggleCardContent(field),
+                        ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      CollectionVocabulary.cardContentSelectionCount(
+                        selectedCount,
+                        kMaxCollectionShelfCardContentSelections,
+                      ),
+                      key: const Key('card_content_selection_count'),
+                      style: textTheme.labelMedium?.copyWith(
+                        color: scheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -124,9 +214,95 @@ class _LayoutOptionRow extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (selected)
-                  Icon(Symbols.check_rounded, color: scheme.primary),
+                Icon(
+                  selected
+                      ? Symbols.radio_button_checked_rounded
+                      : Symbols.radio_button_unchecked_rounded,
+                  color: selected
+                      ? scheme.primary
+                      : scheme.onSurfaceVariant.withValues(alpha: 0.55),
+                ),
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CardContentOptionRow extends StatelessWidget {
+  const _CardContentOptionRow({
+    required this.field,
+    required this.selected,
+    required this.enabled,
+    required this.scheme,
+    required this.textTheme,
+    required this.onTap,
+  });
+
+  final CollectionShelfCardContentField field;
+  final bool selected;
+  final bool enabled;
+  final ColorScheme scheme;
+  final TextTheme textTheme;
+  final VoidCallback onTap;
+
+  static const double _rowMinHeight = 48;
+
+  @override
+  Widget build(BuildContext context) {
+    final dimmed = !enabled && !selected;
+    final iconColor = selected
+        ? scheme.primary
+        : scheme.onSurfaceVariant.withValues(alpha: dimmed ? 0.42 : 0.88);
+    final labelColor = selected
+        ? scheme.primary
+        : scheme.onSurface.withValues(alpha: dimmed ? 0.45 : 1);
+
+    return Semantics(
+      checked: selected,
+      enabled: enabled || selected,
+      label: field.sheetLabel,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          key: Key('card_content_option_${field.id}'),
+          onTap: (enabled || selected) ? onTap : null,
+          borderRadius: BorderRadius.circular(AppSpacing.md),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: _rowMinHeight),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+              child: Row(
+                children: [
+                  Icon(
+                    field.sheetIcon,
+                    size: AppIconSizes.metadata,
+                    color: iconColor,
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Text(
+                      field.sheetLabel,
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontWeight: selected
+                            ? FontWeight.w600
+                            : FontWeight.w500,
+                        color: labelColor,
+                      ),
+                    ),
+                  ),
+                  IgnorePointer(
+                    child: Checkbox(
+                      value: selected,
+                      onChanged: (enabled || selected) ? (_) {} : null,
+                      visualDensity: VisualDensity.compact,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -165,9 +341,10 @@ class CollectionShelfLayoutControl extends StatelessWidget {
           child: SizedBox(
             width: minTapExtent,
             height: minTapExtent,
-            // Glyph sits on the trailing edge so Layout reads next to Sort.
+            // Glyph centered in the 48×48 target; spacing to Sort is owned by
+            // the toolbar Row (AppSpacing.sm), not icon edge-alignment.
             child: Align(
-              alignment: Alignment.centerRight,
+              alignment: Alignment.center,
               child: Icon(
                 layout.icon,
                 size: AppIconSizes.metadata,

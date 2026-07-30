@@ -1,7 +1,9 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_card_tokens.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_shelf_card_content.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_layout.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_series_card.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_shelf_series_list_tile.dart';
@@ -20,6 +22,8 @@ class CollectionShelfSeriesLayoutHost extends StatelessWidget {
     required this.progress,
     required this.onOpen,
     this.onManage,
+    this.cardContent = CollectionShelfCardContentSelection.empty,
+    this.catalog,
   });
 
   final CollectionShelfLayout layout;
@@ -28,6 +32,8 @@ class CollectionShelfSeriesLayoutHost extends StatelessWidget {
   final ShelfBrowseProgressLookup progress;
   final void Function(ShelfSeries series) onOpen;
   final Future<void> Function(ShelfSeries series)? onManage;
+  final CollectionShelfCardContentSelection cardContent;
+  final CatalogSeedBundle? catalog;
 
   @override
   Widget build(BuildContext context) {
@@ -40,6 +46,8 @@ class CollectionShelfSeriesLayoutHost extends StatelessWidget {
         progress: progress,
         onOpen: onOpen,
         onManage: onManage,
+        cardContent: cardContent,
+        catalog: catalog,
       ),
       CollectionShelfLayout.compactGrid => _CompactGrid(
         series: series,
@@ -47,6 +55,8 @@ class CollectionShelfSeriesLayoutHost extends StatelessWidget {
         progress: progress,
         onOpen: onOpen,
         onManage: onManage,
+        cardContent: cardContent,
+        catalog: catalog,
       ),
       CollectionShelfLayout.list => _SeriesList(
         series: series,
@@ -54,6 +64,8 @@ class CollectionShelfSeriesLayoutHost extends StatelessWidget {
         progress: progress,
         onOpen: onOpen,
         onManage: onManage,
+        cardContent: cardContent,
+        catalog: catalog,
       ),
     };
   }
@@ -66,6 +78,8 @@ class _CompactGrid extends StatelessWidget {
     required this.progress,
     required this.onOpen,
     required this.onManage,
+    required this.cardContent,
+    required this.catalog,
   });
 
   final List<ShelfSeries> series;
@@ -73,6 +87,8 @@ class _CompactGrid extends StatelessWidget {
   final ShelfBrowseProgressLookup progress;
   final void Function(ShelfSeries series) onOpen;
   final Future<void> Function(ShelfSeries series)? onManage;
+  final CollectionShelfCardContentSelection cardContent;
+  final CatalogSeedBundle? catalog;
 
   @override
   Widget build(BuildContext context) {
@@ -112,6 +128,8 @@ class _CompactGrid extends StatelessWidget {
                       progress: progress.forSeries(row),
                       figureStates: figureStates,
                       density: CollectionSeriesCardDensity.compact,
+                      cardContent: cardContent,
+                      catalog: catalog,
                       onTap: () => onOpen(row),
                       onLongPress: onManage == null
                           ? null
@@ -134,6 +152,8 @@ class _SeriesList extends StatelessWidget {
     required this.progress,
     required this.onOpen,
     required this.onManage,
+    required this.cardContent,
+    required this.catalog,
   });
 
   final List<ShelfSeries> series;
@@ -141,6 +161,8 @@ class _SeriesList extends StatelessWidget {
   final ShelfBrowseProgressLookup progress;
   final void Function(ShelfSeries series) onOpen;
   final Future<void> Function(ShelfSeries series)? onManage;
+  final CollectionShelfCardContentSelection cardContent;
+  final CatalogSeedBundle? catalog;
 
   @override
   Widget build(BuildContext context) {
@@ -157,6 +179,8 @@ class _SeriesList extends StatelessWidget {
               series: row,
               progress: progress.forSeries(row),
               figureStates: figureStates,
+              cardContent: cardContent,
+              catalog: catalog,
               onTap: () => onOpen(row),
               onLongPress: onManage == null ? null : () => onManage!(row),
             ),

@@ -1,6 +1,9 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_theme.dart';
+import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_shelf_card_content.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_filters.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_layout.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
@@ -9,9 +12,21 @@ import 'package:blindbox_app/features/collection/widgets/collection_shelf_layout
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'helpers/collection_fixtures.dart';
+
+final _catalogOverrides = <Override>[
+  catalogBundleProvider.overrideWith(
+    (ref) async => const CatalogSeedBundle(
+      brands: [],
+      ips: [],
+      series: [],
+      figures: [],
+    ),
+  ),
+];
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -24,32 +39,34 @@ void main() {
       figureStates: const {},
     );
     await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.light(),
-        builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context).copyWith(disableAnimations: true),
-          child: child!,
-        ),
-        home: Builder(
-          builder: (context) => Scaffold(
-            body: TextButton(
-              onPressed: () {
-                showCollectionShelfFiltersSheet(
-                  context: context,
-                  initial: CollectionShelfFilters.empty,
-                  shelfSeries: snap.shelfSeries,
-                  figureStates: snap.figureStates,
-                );
-              },
-              child: const Text('open'),
+      ProviderScope(
+        overrides: _catalogOverrides,
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(disableAnimations: true),
+            child: child!,
+          ),
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                onPressed: () {
+                  showCollectionShelfFiltersSheet(
+                    context: context,
+                    initial: CollectionShelfFilters.empty,
+                    shelfSeries: snap.shelfSeries,
+                    figureStates: snap.figureStates,
+                  );
+                },
+                child: const Text('open'),
+              ),
             ),
           ),
         ),
       ),
     );
     await tester.tap(find.text('open'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
 
     expect(find.byType(CollectibleSheetInsets), findsOneWidget);
     final title = tester.getTopLeft(
@@ -58,8 +75,6 @@ void main() {
     final section = tester.getTopLeft(
       find.text(CollectionVocabulary.filterSectionProgress),
     );
-    // Title and body share one left edge (not flush to the physical screen
-    // edge — on wide test surfaces Material may also inset the sheet host).
     expect(title.dx, section.dx);
     expect(title.dx, greaterThan(0));
 
@@ -89,24 +104,19 @@ void main() {
           data: MediaQuery.of(context).copyWith(disableAnimations: true),
           child: child!,
         ),
-        home: Builder(
-          builder: (context) => Scaffold(
-            body: TextButton(
-              onPressed: () {
-                showCollectionShelfLayoutSheet(
-                  context: context,
-                  selected: CollectionShelfLayout.grid,
-                );
-              },
-              child: const Text('open'),
-            ),
+        home: Scaffold(
+          body: CollectionShelfLayoutSheet(
+            scrollController: ScrollController(),
+            selectedLayout: CollectionShelfLayout.grid,
+            selection: CollectionShelfCardContentSelection.empty,
+            available: const {},
+            onLayoutSelected: (_) {},
+            onToggleCardContent: (_) {},
           ),
         ),
       ),
     );
-    await tester.tap(find.text('open'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
 
     expect(find.byType(CollectibleSheetInsets), findsOneWidget);
     final title = tester.getTopLeft(
@@ -135,32 +145,34 @@ void main() {
       figureStates: const {},
     );
     await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.light(),
-        builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context).copyWith(disableAnimations: true),
-          child: child!,
-        ),
-        home: Builder(
-          builder: (context) => Scaffold(
-            body: TextButton(
-              onPressed: () {
-                showCollectionShelfFiltersSheet(
-                  context: context,
-                  initial: CollectionShelfFilters.empty,
-                  shelfSeries: snap.shelfSeries,
-                  figureStates: snap.figureStates,
-                );
-              },
-              child: const Text('open'),
+      ProviderScope(
+        overrides: _catalogOverrides,
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(disableAnimations: true),
+            child: child!,
+          ),
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                onPressed: () {
+                  showCollectionShelfFiltersSheet(
+                    context: context,
+                    initial: CollectionShelfFilters.empty,
+                    shelfSeries: snap.shelfSeries,
+                    figureStates: snap.figureStates,
+                  );
+                },
+                child: const Text('open'),
+              ),
             ),
           ),
         ),
       ),
     );
     await tester.tap(find.text('open'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
     expect(find.byType(CollectibleSheetChrome), findsOneWidget);

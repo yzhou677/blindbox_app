@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_browse.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_shelf_card_content.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_layout.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,6 +14,7 @@ class CollectionShelfUiPrefs {
   const CollectionShelfUiPrefs({
     this.sort = CollectionShelfSort.recentlyAdded,
     this.layout = CollectionShelfLayout.grid,
+    this.cardContent = CollectionShelfCardContentPrefs.empty,
     this.inProgressSectionExpanded = true,
     this.completedSectionExpanded = false,
     this.collapsedIpSectionKeys = const {},
@@ -22,13 +24,21 @@ class CollectionShelfUiPrefs {
 
   /// Visual arrangement — defaults to [CollectionShelfLayout.grid] for existing users.
   final CollectionShelfLayout layout;
+
+  /// Shared optional Series Card metadata for **all** layouts.
+  final CollectionShelfCardContentPrefs cardContent;
+
   final bool inProgressSectionExpanded;
   final bool completedSectionExpanded;
   final Set<String> collapsedIpSectionKeys;
 
+  CollectionShelfCardContentSelection get cardContentSelection =>
+      cardContent.selection;
+
   CollectionShelfUiPrefs copyWith({
     CollectionShelfSort? sort,
     CollectionShelfLayout? layout,
+    CollectionShelfCardContentPrefs? cardContent,
     bool? inProgressSectionExpanded,
     bool? completedSectionExpanded,
     Set<String>? collapsedIpSectionKeys,
@@ -36,6 +46,7 @@ class CollectionShelfUiPrefs {
     return CollectionShelfUiPrefs(
       sort: sort ?? this.sort,
       layout: layout ?? this.layout,
+      cardContent: cardContent ?? this.cardContent,
       inProgressSectionExpanded:
           inProgressSectionExpanded ?? this.inProgressSectionExpanded,
       completedSectionExpanded:
@@ -47,6 +58,27 @@ class CollectionShelfUiPrefs {
 
   bool isIpSectionExpanded(String sectionKey) =>
       !collapsedIpSectionKeys.contains(sectionKey);
+
+  @override
+  bool operator ==(Object other) {
+    return other is CollectionShelfUiPrefs &&
+        other.sort == sort &&
+        other.layout == layout &&
+        other.cardContent == cardContent &&
+        other.inProgressSectionExpanded == inProgressSectionExpanded &&
+        other.completedSectionExpanded == completedSectionExpanded &&
+        setEquals(other.collapsedIpSectionKeys, collapsedIpSectionKeys);
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    sort,
+    layout,
+    cardContent,
+    inProgressSectionExpanded,
+    completedSectionExpanded,
+    Object.hashAllUnordered(collapsedIpSectionKeys),
+  );
 }
 
 abstract final class CollectionShelfUiPrefsCodec {
@@ -68,10 +100,16 @@ abstract final class CollectionShelfUiPrefsCodec {
       final collapsed = collapsedRaw is List
           ? collapsedRaw.whereType<String>().toSet()
           : const <String>{};
+      // Prefer the stored layout's legacy entry when normalizing old maps.
+      final cardContent = CollectionShelfCardContentPrefs.decode(
+        map['cardContent'],
+        preferredLayout: layout,
+      );
 
       return CollectionShelfUiPrefs(
         sort: sort,
         layout: layout,
+        cardContent: cardContent,
         inProgressSectionExpanded: inProgressExpanded,
         completedSectionExpanded: completedExpanded,
         collapsedIpSectionKeys: collapsed,
@@ -85,6 +123,7 @@ abstract final class CollectionShelfUiPrefsCodec {
     return jsonEncode({
       'sort': prefs.sort.name,
       'layout': prefs.layout.name,
+      'cardContent': prefs.cardContent.toJson(),
       'inProgressSectionExpanded': prefs.inProgressSectionExpanded,
       'completedSectionExpanded': prefs.completedSectionExpanded,
       'collapsedIpSectionKeys': prefs.collapsedIpSectionKeys.toList()..sort(),
@@ -128,6 +167,9 @@ class CollectionShelfUiPrefsNotifier extends Notifier<CollectionShelfUiPrefs> {
 
   Future<void> _loadFromStorage() async {
     final loaded = await CollectionShelfUiPrefsStorage.load();
+    // After await, [state] is initialized. Skip disk hydration if the
+    // collector already mutated prefs away from the build() default.
+    if (state != const CollectionShelfUiPrefs()) return;
     if (loaded != state) {
       state = loaded;
     }
@@ -141,8 +183,27 @@ class CollectionShelfUiPrefsNotifier extends Notifier<CollectionShelfUiPrefs> {
 
   void setLayout(CollectionShelfLayout layout) {
     if (state.layout == layout) return;
+    // Layout-only write — Card Content is intentionally unchanged.
     state = state.copyWith(layout: layout);
     _persist();
+  }
+
+  void setCardContent(CollectionShelfCardContentSelection selection) {
+    final next = CollectionShelfCardContentPrefs(selection);
+    if (next == state.cardContent) return;
+    state = state.copyWith(cardContent: next);
+    _persist();
+  }
+
+  void toggleCardContentField(
+    CollectionShelfCardContentField field, {
+    required Set<CollectionShelfCardContentField> available,
+  }) {
+    final current = state.cardContentSelection;
+    final toggled = current.toggle(field, available: available);
+    final sanitized = toggled.sanitizePreservingUnavailable(available);
+    if (sanitized == current) return;
+    setCardContent(sanitized);
   }
 
   void toggleInProgressSection() {

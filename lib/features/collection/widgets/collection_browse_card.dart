@@ -26,17 +26,22 @@ class CollectionBrowseCard extends StatelessWidget {
     this.imageToTitleGap = CollectionCardTokens.imageToTitleGap,
     this.titleToMetaGap = CollectionCardTokens.titleToMetaGap,
     this.metaToFooterGap = CollectionCardTokens.metaToProgressGap,
+    this.expandBeforeMeta = true,
     this.titleMaxLines = 2,
     this.reserveTwoTitleLines = false,
     this.subtitleMaxLines = 1,
     this.titleStyle,
     this.subtitleStyle,
+    this.meta,
     this.borderColor,
     this.showPressedOverlay = false,
   });
 
   final String title;
   final String? subtitle;
+
+  /// Optional rich metadata below the title (replaces [subtitle] when non-null).
+  final Widget? meta;
   final Widget image;
   final Widget? footer;
   final VoidCallback? onTap;
@@ -49,6 +54,11 @@ class CollectionBrowseCard extends StatelessWidget {
   final double imageToTitleGap;
   final double titleToMetaGap;
   final double metaToFooterGap;
+
+  /// When true (default), flexible space sits between the title and optional
+  /// metadata so meta groups with the progress footer. Wishlist figure cards
+  /// set false to keep the series subtitle under the figure title.
+  final bool expandBeforeMeta;
   final int titleMaxLines;
   final bool reserveTwoTitleLines;
   final int subtitleMaxLines;
@@ -120,21 +130,9 @@ class CollectionBrowseCard extends StatelessWidget {
                         )
                       else
                         titleWidget,
-                      if (subtitle != null && subtitle!.trim().isNotEmpty) ...[
-                        SizedBox(height: titleToMetaGap),
-                        Text(
-                          subtitle!,
-                          maxLines: subtitleMaxLines,
-                          overflow: TextOverflow.ellipsis,
-                          style:
-                              subtitleStyle ??
-                              CollectibleTypography.seriesIpLine(
-                                textTheme,
-                                scheme,
-                              ),
-                        ),
-                      ],
+                      if (!expandBeforeMeta) ..._metaOrSubtitle(context),
                       const Spacer(),
+                      if (expandBeforeMeta) ..._metaOrSubtitle(context),
                       if (footer != null) ...[
                         SizedBox(height: metaToFooterGap),
                         footer!,
@@ -158,6 +156,30 @@ class CollectionBrowseCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  List<Widget> _metaOrSubtitle(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    if (meta != null) {
+      // When floating to the footer, skip title→meta gap — Spacer already
+      // separates the title. When pinned under the title, keep titleToMetaGap.
+      return [if (!expandBeforeMeta) SizedBox(height: titleToMetaGap), meta!];
+    }
+    if (subtitle != null && subtitle!.trim().isNotEmpty) {
+      return [
+        if (!expandBeforeMeta) SizedBox(height: titleToMetaGap),
+        Text(
+          subtitle!,
+          maxLines: subtitleMaxLines,
+          overflow: TextOverflow.ellipsis,
+          style:
+              subtitleStyle ??
+              CollectibleTypography.seriesIpLine(textTheme, scheme),
+        ),
+      ];
+    }
+    return const [];
   }
 
   double _lineHeight(BuildContext context, TextStyle style) {

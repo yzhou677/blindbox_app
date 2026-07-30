@@ -407,6 +407,8 @@ class _WishlistCard extends StatelessWidget {
         imageToTitleGap: CollectionCardTokens.imageToTitleGap,
         titleToMetaGap: CollectionCardTokens.titleToMetaGap,
         metaToFooterGap: CollectionCardTokens.metaToProgressGap,
+        // Keep series subtitle under the figure title (not floated to footer).
+        expandBeforeMeta: false,
         titleStyle: CollectibleTypography.catalogSeriesRowTitle(
           textTheme,
           scheme,

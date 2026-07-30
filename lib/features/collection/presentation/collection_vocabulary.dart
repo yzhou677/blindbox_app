@@ -74,6 +74,13 @@ abstract final class CollectionVocabulary {
   static const filteredEmptyAction = 'Clear filters';
   static const layoutMenuTitle = 'Layout';
 
+  /// Layout sheet — optional Series Card metadata.
+  static const cardContentSectionTitle = 'Card Content';
+  static const cardContentSectionSubtitle = 'Choose up to 2 details to show';
+
+  static String cardContentSelectionCount(int selected, int max) =>
+      '$selected of $max selected';
+
   /// Compact figure-card quantity badge prefix (e.g. `×2`).
   static String ownedQuantityBadge(int quantity) => '×$quantity';
 

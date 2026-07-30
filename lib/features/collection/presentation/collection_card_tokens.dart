@@ -1,4 +1,5 @@
 import 'package:blindbox_app/core/theme/app_card_tokens.dart';
+import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
 
 /// Layout tokens for [CollectionSeriesCard] and Collection series rails.
@@ -19,13 +20,16 @@ abstract final class CollectionCardTokens {
 
   static const double imageToTitleGap = 8;
 
-  static const double titleToMetaGap = 3;
+  /// Used when metadata is pinned under the title ([CollectionBrowseCard]
+  /// `expandBeforeMeta: false`). Grid Card Content floats meta to the footer
+  /// via a [Spacer] instead of this gap.
+  static const double titleToMetaGap = AppSpacing.xs;
 
   /// Full square cover — do not shrink below this for text/footer.
   static double get coverExtent => AppCardTokens.browseRailThumbExtent(width);
 
-  /// Gap from IP meta to progress footer.
-  static const double metaToProgressGap = 6;
+  /// Compact gap from optional Card Content meta to the progress footer.
+  static const double metaToProgressGap = AppSpacing.sm;
 
   static const double progressBarHeight = 4;
 
@@ -34,7 +38,8 @@ abstract final class CollectionCardTokens {
   /// Minimum rail / card height — sized so [coverExtent] stays full-bleed.
   ///
   /// The card owns this height; rails use [CollectionSeriesCard.railExtent].
-  static const double minRailHeight = 268;
+  /// Includes room for up to two optional Card Content metadata lines.
+  static const double minRailHeight = 282;
 
   /// Wishlist Figure cards reserve two lines each for figure and series names,
   /// plus a persistent brand footer. The base adds only the 12dp required by
@@ -59,10 +64,11 @@ abstract final class CollectionCardTokens {
 
   static const double compactImageToTitleGap = 8;
 
-  static const double compactTitleToMetaGap = 3;
+  static const double compactTitleToMetaGap = AppSpacing.xs;
 
-  static const double compactMetaToProgressGap = 6;
+  static const double compactMetaToProgressGap = AppSpacing.sm;
 
-  /// Image-first mini card height for dashboard rails.
-  static const double compactMinRailHeight = 228;
+  /// Image-first mini card height for dashboard rails / Compact Grid.
+  /// Includes room for up to two compact Card Content lines.
+  static const double compactMinRailHeight = 242;
 }

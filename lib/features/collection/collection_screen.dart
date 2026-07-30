@@ -314,13 +314,16 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
   }
 
   Future<void> _openShelfLayoutSheet() async {
-    final current = ref.read(collectionShelfUiPrefsProvider).layout;
-    final selected = await showCollectionShelfLayoutSheet(
+    final snap = ref.read(collectionNotifierProvider);
+    final catalog = ref.read(catalogBundleProvider).valueOrNull;
+    await showCollectionShelfLayoutSheet(
       context: context,
-      selected: current,
+      ref: ref,
+      shelfSeries: snap.shelfSeries,
+      figureStates: snap.figureStates,
+      catalog: catalog,
+      progress: ShelfBrowseProgressLookup(snap.figureStates),
     );
-    if (!mounted || selected == null) return;
-    ref.read(collectionShelfUiPrefsProvider.notifier).setLayout(selected);
   }
 
   @override
@@ -975,6 +978,8 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                       series: inProgress,
                       figureStates: snap.figureStates,
                       progress: progressLookup,
+                      cardContent: shelfUiPrefs.cardContentSelection,
+                      catalog: catalog,
                       onOpen: (s) => _openFiguresSheet(context, s.id),
                       onManage: (s) => _manageSeries(context, s),
                     ),
@@ -1014,6 +1019,8 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                       series: completed,
                       figureStates: snap.figureStates,
                       progress: progressLookup,
+                      cardContent: shelfUiPrefs.cardContentSelection,
+                      catalog: catalog,
                       onOpen: (s) => _openFiguresSheet(context, s.id),
                       onManage: (s) => _manageSeries(context, s),
                     ),
