@@ -152,7 +152,10 @@ class CollectibleSheetInsets extends StatelessWidget {
 
 /// Presents a collectible bottom sheet as one physical surface.
 ///
-/// One route [Material] + native [enableDrag]; fixed height via [_CollectibleSheetHost].
+/// One route [Material] + native [enableDrag]. By default uses a fixed screen
+/// fraction via [_CollectibleSheetHost]. Set [wrapContentHeight] for short
+/// choosers that should size to their content (capped by
+/// [contentMaxHeightFraction]) and scroll only when needed.
 Future<T?> showCollectibleBottomSheet<T>({
   required BuildContext context,
   required CollectibleSheetWidgetBuilder builder,
@@ -160,6 +163,8 @@ Future<T?> showCollectibleBottomSheet<T>({
   double heightFraction = FeedRhythm.sheetOpenScreenFraction,
   double? minHeightFraction,
   double? maxHeightFraction,
+  bool wrapContentHeight = false,
+  double contentMaxHeightFraction = FeedRhythm.sheetMaxChildSize,
   Color? backgroundColor,
 }) {
   final scheme = Theme.of(context).colorScheme;
@@ -189,11 +194,31 @@ Future<T?> showCollectibleBottomSheet<T>({
     clipBehavior: Clip.antiAlias,
     builder: (ctx) {
       final viewInsets = MediaQuery.viewInsetsOf(ctx);
-      final sheetHeight = MediaQuery.sizeOf(ctx).height * openFraction;
+      final screenHeight = MediaQuery.sizeOf(ctx).height;
+
+      final Widget host;
+      if (wrapContentHeight) {
+        final maxHeight =
+            screenHeight * contentMaxHeightFraction.clamp(0.2, 0.98);
+        // Align passes loose height constraints so the sheet sizes to its
+        // child instead of expanding into [maxHeight] empty space.
+        host = Align(
+          alignment: Alignment.bottomCenter,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: maxHeight),
+            child: _CollectibleSheetHost(child: builder),
+          ),
+        );
+      } else {
+        host = _CollectibleSheetHost(
+          height: screenHeight * openFraction,
+          child: builder,
+        );
+      }
 
       return Padding(
         padding: EdgeInsets.only(bottom: viewInsets.bottom),
-        child: _CollectibleSheetHost(height: sheetHeight, child: builder),
+        child: host,
       );
     },
   );
@@ -201,9 +226,10 @@ Future<T?> showCollectibleBottomSheet<T>({
 
 /// Owns a [ScrollController] for the sheet body for the lifetime of the modal.
 class _CollectibleSheetHost extends StatefulWidget {
-  const _CollectibleSheetHost({required this.height, required this.child});
+  const _CollectibleSheetHost({this.height, required this.child});
 
-  final double height;
+  /// When null, the host sizes to its child (content-wrap sheets).
+  final double? height;
   final CollectibleSheetWidgetBuilder child;
 
   @override
@@ -221,12 +247,12 @@ class _CollectibleSheetHostState extends State<_CollectibleSheetHost> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: widget.height,
-      child: CollectibleSheetScope(
-        scrollController: _scrollController,
-        child: widget.child(context, _scrollController),
-      ),
+    final body = CollectibleSheetScope(
+      scrollController: _scrollController,
+      child: widget.child(context, _scrollController),
     );
+    final height = widget.height;
+    if (height == null) return body;
+    return SizedBox(height: height, child: body);
   }
 }
