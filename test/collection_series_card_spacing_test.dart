@@ -11,10 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'helpers/collection_fixtures.dart';
 
-ShelfSeries _series({
-  String name = 'Exciting Macaron',
-  int figureCount = 12,
-}) {
+ShelfSeries _series({String name = 'Exciting Macaron', int figureCount = 12}) {
   return testShelfSeries(
     id: 'spacing',
     name: name,
@@ -373,6 +370,56 @@ void main() {
       ),
     );
   });
+
+  testWidgets(
+    'completed card with two meta lines including duplicates does not overflow',
+    (tester) async {
+      final series = _series(figureCount: 4);
+      final states = {
+        for (final f in series.figures)
+          f.id: TrackedFigure(
+            figureId: f.id,
+            state: FigureCollectionState.owned,
+            ownedQuantity: f.id == series.figures.first.id ? 5 : 1,
+          ),
+      };
+      FlutterErrorDetails? overflow;
+      final oldHandler = FlutterError.onError;
+      FlutterError.onError = (details) {
+        if (details.toString().contains('overflowed')) {
+          overflow = details;
+        }
+        oldHandler?.call(details);
+      };
+      addTearDown(() => FlutterError.onError = oldHandler);
+
+      await _pumpCard(
+        tester,
+        series: series,
+        states: states,
+        cardContent: const CollectionShelfCardContentSelection([
+          CollectionShelfCardContentField.brand,
+          CollectionShelfCardContentField.duplicateCount,
+        ]),
+      );
+
+      expect(find.textContaining('Complete'), findsOneWidget);
+      expect(find.textContaining('duplicates'), findsOneWidget);
+      expect(overflow, isNull);
+      expect(tester.takeException(), isNull);
+
+      final browse = tester.widget<CollectionBrowseCard>(
+        find.byType(CollectionBrowseCard),
+      );
+      expect(
+        browse.height,
+        CollectionCardTokens.minRailHeightFor(
+          TextScaler.noScaling,
+          metaLineCount: 2,
+        ),
+      );
+    },
+  );
 
   testWidgets('long titles truncate without overflowing the packed card', (
     tester,
