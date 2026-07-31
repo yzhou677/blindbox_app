@@ -35,10 +35,18 @@ TrackedFigure _wish(String id) =>
 
 void main() {
   group('Progress filters', () {
-    test('In Progress matches started incomplete series', () {
+    test('In Progress matches incomplete series including zero-owned', () {
       final series = testShelfSeries(
         id: 'ip',
         figures: [_fig('a', 'ip'), _fig('b', 'ip')],
+      );
+      expect(
+        shelfSeriesMatchesProgressFilter(
+          series,
+          const {},
+          CollectionShelfProgressFilter.inProgress,
+        ),
+        isTrue,
       );
       final states = {'a': _owned('a')};
       expect(

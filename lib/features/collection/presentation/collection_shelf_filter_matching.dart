@@ -184,7 +184,9 @@ bool shelfSeriesMatchesProgressFilter(
   );
   switch (filter) {
     case CollectionShelfProgressFilter.inProgress:
-      return isStartedSeries(series, states) && !resolution.isCompleted;
+      // Align with [partitionShelfSeries]: any incomplete shelf row, including
+      // zero-owned. Do not require [isStartedSeries] (Collector Type concept).
+      return !resolution.isCompleted;
     case CollectionShelfProgressFilter.completed:
       return resolution.isCompleted;
     case CollectionShelfProgressFilter.masterComplete:

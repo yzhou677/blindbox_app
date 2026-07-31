@@ -6,7 +6,8 @@ import 'package:flutter/foundation.dart';
 /// [completed] ⊆ all finished series (including Master);
 /// [masterComplete] is Master-only and does not broaden to regular Completed.
 enum CollectionShelfProgressFilter {
-  /// Owns ≥1 unique figure and is not [SeriesCompletionResolution.isCompleted].
+  /// On the shelf and not [SeriesCompletionResolution.isCompleted]
+  /// (includes zero-owned rows — same as the In Progress rail partition).
   inProgress,
 
   /// Any completed series — includes Master Complete.

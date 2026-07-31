@@ -15,7 +15,7 @@ import 'helpers/collection_shelf_logic_fixtures.dart';
 void main() {
   group('Progress filter vs rail partition', () {
     test(
-      'zero-owned rows fail Progress inProgress but stay in In Progress bucket',
+      'zero-owned rows match Progress inProgress and stay in In Progress bucket',
       () {
         final series = [
           testShelfSeries(
@@ -66,7 +66,7 @@ void main() {
             progress: CollectionShelfProgressFilter.inProgress,
           ),
         );
-        expect(filtered.map((s) => s.id), ['started']);
+        expect(filtered.map((s) => s.id).toSet(), {'zero', 'started'});
 
         final (inProgress, completed) = partitionShelfSeries(series, states);
         expect(inProgress.map((s) => s.id).toList(), ['zero', 'started']);
@@ -234,7 +234,7 @@ void main() {
       );
     });
 
-    test('removing the last owned figure drops Progress inProgress match', () {
+    test('removing the last owned figure still matches Progress inProgress', () {
       final series = [
         testShelfSeries(
           id: 'row',
@@ -270,7 +270,7 @@ void main() {
       expect(applyCollectionShelfFilters(series, states, filters), isNotEmpty);
 
       states = {};
-      expect(applyCollectionShelfFilters(series, states, filters), isEmpty);
+      expect(applyCollectionShelfFilters(series, states, filters), isNotEmpty);
     });
   });
 
