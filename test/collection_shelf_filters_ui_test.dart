@@ -452,11 +452,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('Brand'), findsWidgets);
     expect(
-      find.text(CollectionVocabulary.filterAllBrandsSummary),
-      findsOneWidget,
+      find.text(CollectionVocabulary.filterFacetAllSummary),
+      findsWidgets,
     );
-    await tester.tap(find.byKey(const Key('filters_sheet_brand_section')));
-    await tester.pump();
     expect(
       find.byKey(const Key('filters_sheet_brand_popmart')),
       findsOneWidget,

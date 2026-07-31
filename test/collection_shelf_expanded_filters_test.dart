@@ -87,7 +87,8 @@ void main() {
       );
     });
 
-    test('Master Complete and Completed remain distinct', () {
+    test('Completed includes Master; Master does not broaden to Completed-only',
+        () {
       final series = testShelfSeries(
         id: 'm',
         figures: [_fig('r1', 'm'), _fig('s1', 'm', secret: true)],
@@ -101,11 +102,38 @@ void main() {
         ),
         isTrue,
       );
+      // Completed is the broader set — Master series also match Completed.
       expect(
         shelfSeriesMatchesProgressFilter(
           series,
           masterStates,
           CollectionShelfProgressFilter.completed,
+        ),
+        isTrue,
+      );
+
+      final regularComplete = testShelfSeries(
+        id: 'c',
+        figures: [
+          _fig('r1', 'c'),
+          _fig('r2', 'c'),
+          _fig('s1', 'c', secret: true),
+        ],
+      );
+      final regularStates = {'r1': _owned('r1'), 'r2': _owned('r2')};
+      expect(
+        shelfSeriesMatchesProgressFilter(
+          regularComplete,
+          regularStates,
+          CollectionShelfProgressFilter.completed,
+        ),
+        isTrue,
+      );
+      expect(
+        shelfSeriesMatchesProgressFilter(
+          regularComplete,
+          regularStates,
+          CollectionShelfProgressFilter.masterComplete,
         ),
         isFalse,
       );
@@ -230,22 +258,22 @@ void main() {
     );
     final states = {'p1': _owned('p1', qty: 2), 't1': _owned('t1')};
 
-    test('multiple Brands use OR', () {
+    test('Brand is single-select (legacy multi ids collapse to first)', () {
       final filtered = applyCollectionShelfFilters(
         [pop, top],
         states,
         CollectionShelfFilters(brandIds: {'popmart', 'toptoy'}),
       );
-      expect(filtered.map((s) => s.id).toSet(), {'pop', 'top'});
+      expect(filtered.map((s) => s.id).toSet(), {'pop'});
     });
 
-    test('multiple IPs use OR', () {
+    test('IP is single-select (legacy multi ids collapse to first)', () {
       final filtered = applyCollectionShelfFilters(
         [pop, top],
         states,
         CollectionShelfFilters(ipIds: {'hirono', 'skullpanda'}),
       );
-      expect(filtered.map((s) => s.id).toSet(), {'pop', 'top'});
+      expect(filtered.map((s) => s.id).toSet(), {'pop'});
     });
 
     test('multiple attributes use AND', () {
@@ -290,14 +318,16 @@ void main() {
   });
 
   group('Filter model', () {
-    test('activeCount excludes Time options', () {
+    test('activeCount counts Brand/IP once each (single-select)', () {
       const filters = CollectionShelfFilters(
         progress: CollectionShelfProgressFilter.inProgress,
         hasDuplicates: true,
         brandIds: {'popmart', 'toptoy'},
         ipIds: {'hirono'},
       );
-      expect(filters.activeCount, 5);
+      // progress + hasDuplicates + brand(1 after normalize in activeCount?) 
+      // activeCount on raw model: brandIds.length was 2 before; now brandIds counts as 1 if non-empty
+      expect(filters.activeCount, 4);
     });
 
     test('cleared removes every filter', () {

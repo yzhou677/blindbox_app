@@ -200,7 +200,7 @@ void main() {
     ];
     expect(
       collectionShelfBrandFilterSummary(selectedIds: {}, options: brands),
-      CollectionVocabulary.filterAllBrandsSummary,
+      CollectionVocabulary.filterFacetAllSummary,
     );
     expect(
       collectionShelfBrandFilterSummary(
@@ -214,7 +214,7 @@ void main() {
         selectedIds: {'popmart', 'toptoy'},
         options: brands,
       ),
-      '2 selected',
+      'POP MART',
     );
 
     const ips = <CollectionIpFilterOption>[
@@ -223,7 +223,7 @@ void main() {
     ];
     expect(
       collectionShelfIpFilterSummary(selectedIds: {}, options: ips),
-      CollectionVocabulary.filterAllIpsSummary,
+      CollectionVocabulary.filterFacetAllSummary,
     );
     expect(
       collectionShelfIpFilterSummary(selectedIds: {'hirono'}, options: ips),
@@ -234,7 +234,7 @@ void main() {
         selectedIds: {'hirono', 'dimoo'},
         options: ips,
       ),
-      '2 selected',
+      'Hirono',
     );
   });
 
@@ -484,9 +484,7 @@ void main() {
     expect(applied?.sort, CollectionShelfSort.recentlyReleased);
   });
 
-  testWidgets('Brand and IP collapsed by default; expand reveals chips', (
-    tester,
-  ) async {
+  testWidgets('Brand and IP chips are visible with All header', (tester) async {
     final snap = CollectionSnapshot(
       shelfSeries: [
         testShelfSeries(
@@ -511,26 +509,18 @@ void main() {
     await _open(tester);
 
     expect(
-      find.text(CollectionVocabulary.filterAllBrandsSummary),
-      findsOneWidget,
+      find.text(CollectionVocabulary.filterFacetAllSummary),
+      findsWidgets,
     );
-    expect(find.text(CollectionVocabulary.filterAllIpsSummary), findsOneWidget);
-    expect(find.byKey(const Key('filters_sheet_brand_popmart')), findsNothing);
-    expect(
-      find.text(CollectionVocabulary.filterSearchBrandsHint),
-      findsNothing,
-    );
-
-    await tester.tap(find.byKey(const Key('filters_sheet_brand_section')));
-    await tester.pump();
     expect(
       find.byKey(const Key('filters_sheet_brand_popmart')),
       findsOneWidget,
     );
     expect(
       find.text(CollectionVocabulary.filterSearchBrandsHint),
-      findsOneWidget,
+      findsNothing,
     );
+
     await tester.ensureVisible(
       find.byKey(const Key('filters_sheet_brand_popmart')),
     );
@@ -538,24 +528,13 @@ void main() {
     await tester.tap(find.byKey(const Key('filters_sheet_brand_popmart')));
     await tester.pump();
     expect(find.text('POP MART'), findsWidgets);
-
-    await tester.ensureVisible(
-      find.byKey(const Key('filters_sheet_brand_section')),
-    );
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('filters_sheet_brand_section')));
-    await tester.pump();
-    expect(find.byKey(const Key('filters_sheet_brand_popmart')), findsNothing);
-    expect(find.text('POP MART'), findsOneWidget); // summary
     expect(find.text('Show results (1)'), findsOneWidget);
   });
 
-  testWidgets('single Brand expands without search field', (tester) async {
+  testWidgets('single Brand shows without search field', (tester) async {
     final snap = _twoSeriesSnap(); // both POP MART
     await _pumpSheet(tester, snap: snap);
     await _open(tester);
-    await tester.tap(find.byKey(const Key('filters_sheet_brand_section')));
-    await tester.pump();
     expect(
       find.text(CollectionVocabulary.filterSearchBrandsHint),
       findsNothing,
@@ -566,7 +545,7 @@ void main() {
     );
   });
 
-  testWidgets('IP expand/collapse preserves draft selection and summary', (
+  testWidgets('IP selection updates draft summary and preview count', (
     tester,
   ) async {
     final snap = CollectionSnapshot(
@@ -592,10 +571,7 @@ void main() {
     await _pumpSheet(tester, snap: snap);
     await _open(tester);
 
-    expect(find.byKey(const Key('filters_sheet_ip_hirono')), findsNothing);
-    await tester.tap(find.byKey(const Key('filters_sheet_ip_section')));
-    await tester.pump();
-    expect(find.text(CollectionVocabulary.filterSearchIpsHint), findsOneWidget);
+    expect(find.byKey(const Key('filters_sheet_ip_hirono')), findsOneWidget);
     await tester.ensureVisible(
       find.byKey(const Key('filters_sheet_ip_hirono')),
     );
@@ -603,11 +579,7 @@ void main() {
     await tester.tap(find.byKey(const Key('filters_sheet_ip_hirono')));
     await tester.pump();
     expect(find.text('Show results (1)'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('filters_sheet_ip_section')));
-    await tester.pump();
-    expect(find.byKey(const Key('filters_sheet_ip_hirono')), findsNothing);
-    expect(find.text('Hirono'), findsOneWidget);
-    expect(find.text('Show results (1)'), findsOneWidget);
+    expect(find.text('Hirono'), findsWidgets);
   });
 
   testWidgets('bottom actions respect safe area and keyboard inset', (

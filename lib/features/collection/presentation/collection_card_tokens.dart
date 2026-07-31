@@ -54,7 +54,7 @@ abstract final class CollectionCardTokens {
   static const double metaSecondLineExtent = 18.5;
 
   /// Tallest packed Series height (two meta lines) — grids that cannot pass a
-  /// per-card meta count (e.g. wishlist) use this extent.
+  /// per-card meta count use this extent.
   static const double maxPackedMinRailHeight =
       minRailHeight + metaFirstLineExtent + metaSecondLineExtent;
 
@@ -75,18 +75,50 @@ abstract final class CollectionCardTokens {
     return h + (extra * 88);
   }
 
-  /// Wishlist Figure cards reserve two lines each for figure and series names,
-  /// plus a persistent brand footer. The base adds only the 12dp required by
-  /// the fixed two-line title slot; larger text receives one
-  /// shared grid-wide allowance so neighboring cards remain aligned.
-  ///
-  /// Uses the tallest Series packed height (two meta lines) so wishlist tiles
-  /// stay aligned with Series cards in mixed contexts.
-  static const double wishlistFigureBaseHeight = maxPackedMinRailHeight + 12;
+  // —— Wishlist Figure (family-specific; not Series browse height) ——
 
-  static double wishlistFigureHeight(TextScaler textScaler) {
-    final extraScale = (textScaler.scale(1) - 1).clamp(0.0, double.infinity);
-    return wishlistFigureBaseHeight + (extraScale * 96);
+  /// Figure name budget on Wishlist Figure cards.
+  static const int wishlistFigureTitleMaxLines = 2;
+
+  /// Parent series name budget on Wishlist Figure cards.
+  static const int wishlistFigureSeriesMaxLines = 2;
+
+  /// Brand / studio footer budget on Wishlist Figure cards.
+  static const int wishlistFigureBrandMaxLines = 1;
+
+  /// One title line under AppTheme light [CollectibleTypography.catalogSeriesRowTitle].
+  static const double wishlistFigureTitleLineExtent = 22;
+
+  /// One body/meta line under series-IP / brand footer typography (~12–14sp).
+  static const double wishlistFigureBodyLineExtent = 18;
+
+  /// Subpixel + font-metric slack so packed footers do not overflow.
+  static const double wishlistFigurePackSlack = 4;
+
+  /// Explicit packed height for Wishlist Figure cards:
+  /// square cover + 2-line title + 2-line series + 1-line brand + token gaps.
+  ///
+  /// Independent of [minRailHeight] / [maxPackedMinRailHeight] — do not derive
+  /// Figure extent from Series progress-card calibration.
+  static double wishlistFigureHeight([
+    TextScaler textScaler = TextScaler.noScaling,
+  ]) {
+    final scale = textScaler.scale(1).clamp(1.0, 3.0);
+    final titleBlock =
+        wishlistFigureTitleLineExtent * wishlistFigureTitleMaxLines * scale;
+    final seriesBlock =
+        wishlistFigureBodyLineExtent * wishlistFigureSeriesMaxLines * scale;
+    final brandBlock =
+        wishlistFigureBodyLineExtent * wishlistFigureBrandMaxLines * scale;
+    return padding.vertical +
+        coverExtent +
+        imageToTitleGap +
+        titleBlock +
+        titleToMetaGap +
+        seriesBlock +
+        metaToProgressGap +
+        brandBlock +
+        wishlistFigurePackSlack;
   }
 
   // —— Compact (Insights dashboard / mini shelf rail) ——

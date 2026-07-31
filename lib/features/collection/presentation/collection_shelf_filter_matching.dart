@@ -42,13 +42,14 @@ List<ShelfSeries> applyCollectionShelfFilters(
   ShelfBrowseProgressLookup? progress,
   CatalogBundleLookup? catalog,
 }) {
-  if (!filters.hasActive) return series;
+  final normalized = normalizeCollectionShelfFilters(filters);
+  if (!normalized.hasActive) return series;
   return [
     for (final row in series)
       if (shelfSeriesMatchesFilters(
         row,
         states,
-        filters,
+        normalized,
         progress: progress,
         catalog: catalog,
       ))
@@ -70,7 +71,8 @@ CollectionShelfFilterPreview previewCollectionShelfFilterResults({
   CatalogSeedBundle? catalogBundle,
   CatalogSearchService? catalogSearch,
 }) {
-  final needsCatalog = filters.secretOwned || filters.secretMissing;
+  final normalized = normalizeCollectionShelfFilters(filters);
+  final needsCatalog = normalized.secretOwned || normalized.secretMissing;
   final waitingOnCatalog =
       needsCatalog &&
       catalog == null &&
@@ -86,7 +88,7 @@ CollectionShelfFilterPreview previewCollectionShelfFilterResults({
   final filtered = applyCollectionShelfFilters(
     shelfSeries,
     figureStates,
-    filters,
+    normalized,
     progress: progress,
     catalog: catalog,
   );
@@ -164,7 +166,11 @@ bool shelfSeriesMatchesFilters(
   return true;
 }
 
-/// Progress options are mutually exclusive — Completed never overlaps Master.
+/// Progress filter matching.
+///
+/// UI selection remains single-choice, but matching sets nest:
+/// [CollectionShelfProgressFilter.completed] includes Master Complete series;
+/// [CollectionShelfProgressFilter.masterComplete] is Master-only.
 bool shelfSeriesMatchesProgressFilter(
   ShelfSeries series,
   Map<String, TrackedFigure> states,
@@ -180,7 +186,7 @@ bool shelfSeriesMatchesProgressFilter(
     case CollectionShelfProgressFilter.inProgress:
       return isStartedSeries(series, states) && !resolution.isCompleted;
     case CollectionShelfProgressFilter.completed:
-      return resolution.isCompleted && !resolution.isMasterComplete;
+      return resolution.isCompleted;
     case CollectionShelfProgressFilter.masterComplete:
       return resolution.isMasterComplete;
   }
@@ -253,25 +259,27 @@ bool _seriesMayNeedCatalogSecrets(ShelfSeries series) {
   return false;
 }
 
-/// Prunes brand/IP keys that no longer exist on the shelf (session hygiene).
+/// Prunes brand/IP keys that no longer exist on the shelf (session hygiene)
+/// and normalizes single-choice groups.
 CollectionShelfFilters pruneCollectionShelfFiltersToShelf(
   CollectionShelfFilters filters,
   List<ShelfSeries> shelfSeries,
 ) {
-  if (filters.brandIds.isEmpty && filters.ipIds.isEmpty) return filters;
+  final normalized = normalizeCollectionShelfFilters(filters);
+  if (normalized.brandIds.isEmpty && normalized.ipIds.isEmpty) {
+    return normalized;
+  }
   final brands = <String>{
     for (final s in shelfSeries) collectionBrandFilterKeyForSeries(s),
   }..removeWhere((k) => k.isEmpty);
   final ips = <String>{
     for (final s in shelfSeries) collectionIpFilterKeyForSeries(s),
   }..removeWhere((k) => k.isEmpty);
-  final nextBrands = filters.brandIds.intersection(brands);
-  final nextIps = filters.ipIds.intersection(ips);
-  if (setEquals(nextBrands, filters.brandIds) &&
-      setEquals(nextIps, filters.ipIds)) {
-    return filters;
-  }
-  return filters.copyWith(brandIds: nextBrands, ipIds: nextIps);
+  final nextBrands = normalized.brandIds.intersection(brands);
+  final nextIps = normalized.ipIds.intersection(ips);
+  final pruned = normalized.copyWith(brandIds: nextBrands, ipIds: nextIps);
+  if (pruned == normalized) return normalized;
+  return pruneCollectionShelfIpIdsToBrandScope(pruned, shelfSeries);
 }
 
 /// Drops selected IP keys that are not present under the current brand scope.
@@ -279,18 +287,21 @@ CollectionShelfFilters pruneCollectionShelfIpIdsToBrandScope(
   CollectionShelfFilters filters,
   List<ShelfSeries> shelfSeries,
 ) {
-  if (filters.ipIds.isEmpty) return filters;
-  final brandScoped = filters.brandIds.isEmpty
+  final normalized = normalizeCollectionShelfFilters(filters);
+  if (normalized.ipIds.isEmpty) return normalized;
+  final brandScoped = normalized.brandIds.isEmpty
       ? shelfSeries
       : [
           for (final s in shelfSeries)
-            if (filters.brandIds.contains(collectionBrandFilterKeyForSeries(s)))
+            if (normalized.brandIds.contains(
+              collectionBrandFilterKeyForSeries(s),
+            ))
               s,
         ];
   final allowed = <String>{
     for (final s in brandScoped) collectionIpFilterKeyForSeries(s),
   }..removeWhere((k) => k.isEmpty);
-  final nextIps = filters.ipIds.intersection(allowed);
-  if (setEquals(nextIps, filters.ipIds)) return filters;
-  return filters.copyWith(ipIds: nextIps);
+  final nextIps = normalized.ipIds.intersection(allowed);
+  if (setEquals(nextIps, normalized.ipIds)) return normalized;
+  return normalized.copyWith(ipIds: nextIps);
 }

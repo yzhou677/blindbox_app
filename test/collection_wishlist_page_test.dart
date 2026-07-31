@@ -234,6 +234,17 @@ void main() {
         expect(title.maxLines, 2);
         expect(title.overflow, TextOverflow.ellipsis);
 
+        final seriesSubtitle = tester.widget<Text>(
+          find
+              .descendant(
+                of: cards.at(0),
+                matching: find.text('Parent Series With A Long Display Name'),
+              )
+              .first,
+        );
+        expect(seriesSubtitle.maxLines, 2);
+        expect(seriesSubtitle.overflow, TextOverflow.ellipsis);
+
         expect(tester.getSize(cards.at(0)), tester.getSize(cards.at(1)));
         expect(
           tester.getTopLeft(cards.at(0)).dy,

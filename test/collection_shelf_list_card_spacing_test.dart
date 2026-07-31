@@ -104,17 +104,12 @@ void main() {
       expect(find.textContaining('/'), findsOneWidget);
       expect(find.byIcon(Symbols.chevron_right_rounded), findsOneWidget);
 
-      final material = tester.getSize(
-        find
-            .descendant(
-              of: find.byType(CollectionShelfSeriesListTile),
-              matching: find.byType(Material),
-            )
-            .first,
+      final tile = tester.getSize(
+        find.byKey(const Key('collection_series_list_tile')),
       );
       expect(
-        material.height,
-        closeTo(CollectionShelfSeriesListTile.minCardHeight, 0.5),
+        tile.height,
+        closeTo(CollectionShelfSeriesListTile.minCardHeight, 1.0),
       );
       expect(CollectionShelfSeriesListTile.minCardHeight, 104);
       expect(CollectionShelfSeriesListTile.thumbExtent, 80);
@@ -203,6 +198,7 @@ void main() {
   test('List spacing tokens match the spacious card recipe', () {
     expect(CollectionShelfSeriesListTile.thumbExtent, 80);
     expect(CollectionShelfSeriesListTile.minCardHeight, 104);
+    expect(CollectionShelfSeriesListTile.chevronSlotWidth, greaterThan(0));
     expect(CollectionShelfSeriesListTile.titleToMetaGap, 6);
     expect(CollectionShelfSeriesListTile.metaToProgressGap, AppSpacing.sm);
     expect(CollectionShelfSeriesListTile.progressToCountGap, 6);

@@ -12,6 +12,7 @@ import 'package:blindbox_app/features/collection/presentation/collection_wishlis
 import 'package:blindbox_app/features/collection/widgets/collection_brand_filter_row.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_browse_card.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_ip_filter_row.dart';
+import 'package:blindbox_app/features/collection/widgets/collection_series_card.dart';
 import 'package:blindbox_app/shared/widgets/bling_heart_empty_state.dart';
 import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
 import 'package:blindbox_app/shared/widgets/catalog_quick_action_button.dart';
@@ -277,6 +278,13 @@ class _SeriesGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Match Collection Grid series cards: one meta line (IP) + footer slot
+    // (Brand), packed like [CollectionSeriesCard] — not the taller Figure
+    // Wishlist extent.
+    final cardHeight = CollectionSeriesCard.railExtentOf(
+      context,
+      metaLineCount: 1,
+    );
     return GridView.builder(
       key: const Key('wishlist_series_grid'),
       padding: const EdgeInsets.symmetric(
@@ -284,21 +292,27 @@ class _SeriesGrid extends StatelessWidget {
       ),
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         mainAxisSpacing: 10,
         crossAxisSpacing: 10,
-        mainAxisExtent: CollectionCardTokens.maxPackedMinRailHeight,
+        mainAxisExtent: cardHeight,
       ),
       itemCount: series.length,
       itemBuilder: (context, index) {
         final item = series[index];
         return _WishlistCard(
+          key: ValueKey('wishlist_series_card_${item.catalogSeriesId}'),
           title: item.name,
           subtitle: item.ipName,
           meta: item.brand,
           imageKey: item.imageKey,
           imageMode: CatalogImageDisplayMode.seriesCoverThumb,
+          height: cardHeight,
+          // Same title/meta ellipsis rhythm as Collection series Grid cards.
+          reserveTwoTitleLines: false,
+          subtitleMaxLines: 1,
+          expandBeforeFooter: false,
           removeSemanticsLabel: 'Remove Series from Wishlist',
           removeTargetKey: ValueKey(
             'wishlist_remove_series_${item.catalogSeriesId}',
@@ -352,7 +366,10 @@ class _FigureGrid extends StatelessWidget {
           imageKey: row.figure.imageKey ?? row.figure.id,
           imageMode: CatalogImageDisplayMode.figureWishlistCard,
           height: cardHeight,
+          // Equal title-block start so series names align across the Figure grid.
           reserveTwoTitleLines: true,
+          subtitleMaxLines: CollectionCardTokens.wishlistFigureSeriesMaxLines,
+          expandBeforeFooter: false,
           removeSemanticsLabel: 'Remove Figure from Wishlist',
           removeTargetKey: ValueKey('wishlist_remove_figure_${row.figure.id}'),
           onRemove: () => onRemove(row),
@@ -365,6 +382,7 @@ class _FigureGrid extends StatelessWidget {
 
 class _WishlistCard extends StatelessWidget {
   const _WishlistCard({
+    super.key,
     required this.title,
     required this.subtitle,
     required this.meta,
@@ -375,6 +393,8 @@ class _WishlistCard extends StatelessWidget {
     required this.onRemove,
     this.height = CollectionCardTokens.minRailHeight,
     this.reserveTwoTitleLines = false,
+    this.subtitleMaxLines = 2,
+    this.expandBeforeFooter = true,
     this.onTap,
   });
 
@@ -389,26 +409,34 @@ class _WishlistCard extends StatelessWidget {
   final VoidCallback? onTap;
   final double height;
   final bool reserveTwoTitleLines;
+  final int subtitleMaxLines;
+
+  /// Figure cards keep a Spacer above the brand footer; Series cards pack like
+  /// [CollectionSeriesCard] (`false`) so height matches Collection Grid.
+  final bool expandBeforeFooter;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brand = meta.trim();
     return Center(
       child: CollectionBrowseCard(
         onTap: onTap,
         title: title,
         subtitle: subtitle,
-        subtitleMaxLines: 2,
+        subtitleMaxLines: subtitleMaxLines,
+        titleMaxLines: 2,
         reserveTwoTitleLines: reserveTwoTitleLines,
         height: height,
         padding: CollectionCardTokens.padding,
         imageToTitleGap: CollectionCardTokens.imageToTitleGap,
         titleToMetaGap: CollectionCardTokens.titleToMetaGap,
         metaToFooterGap: CollectionCardTokens.metaToProgressGap,
-        // Keep series subtitle under the figure title (not floated to footer).
+        // Keep series/IP subtitle under the title (not floated to footer).
         expandBeforeMeta: false,
+        expandBeforeFooter: expandBeforeFooter,
         titleStyle: CollectibleTypography.catalogSeriesRowTitle(
           textTheme,
           scheme,
@@ -421,15 +449,19 @@ class _WishlistCard extends StatelessWidget {
           displayMode: imageMode,
           borderRadius: BorderRadius.zero,
         ),
-        footer: Text(
-          meta,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: CollectibleTypography.catalogSeriesRowMeta(
-            textTheme,
-            scheme,
-          ).copyWith(color: scheme.onSurfaceVariant.withValues(alpha: 0.62)),
-        ),
+        footer: brand.isEmpty
+            ? null
+            : Text(
+                brand,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: CollectibleTypography.catalogSeriesRowMeta(
+                  textTheme,
+                  scheme,
+                ).copyWith(
+                  color: scheme.onSurfaceVariant.withValues(alpha: 0.62),
+                ),
+              ),
         borderColor: scheme.outlineVariant.withValues(
           alpha: isDark ? 0.32 : 0.38,
         ),

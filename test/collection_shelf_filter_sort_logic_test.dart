@@ -111,7 +111,7 @@ void main() {
       expect(preview.count, isNot(figureTotal));
     });
 
-    test('activeCount counts each Brand, IP, and attribute once', () {
+    test('activeCount counts Brand/IP once each; Secret is exclusive', () {
       const filters = CollectionShelfFilters(
         progress: CollectionShelfProgressFilter.inProgress,
         hasDuplicates: true,
@@ -122,7 +122,14 @@ void main() {
         brandIds: {'popmart', 'toptoy'},
         ipIds: {'hirono', 'molly', 'skullpanda'},
       );
-      expect(filters.activeCount, 1 + 5 + 2 + 3);
+      // progress + 3 attrs (dups, wish, custom) + both secret flags still on
+      // the raw model (normalize happens at apply) + brand + ip = 1+3+2+1+1
+      // But activeCount now counts brand/ip as 1 each regardless of set size.
+      expect(filters.activeCount, 1 + 3 + 2 + 1 + 1);
+      expect(
+        normalizeCollectionShelfFilters(filters).activeCount,
+        1 + 3 + 1 + 1 + 1,
+      );
       expect(filters.hasActive, isTrue);
     });
 
@@ -257,7 +264,7 @@ void main() {
       );
     });
 
-    test('13/14. Brand filtering; multiple Brands use OR', () {
+    test('13/14. Brand filtering; single-select collapses legacy multi', () {
       expect(
         _ids(_filter(m, CollectionShelfFilters(brandIds: {'toptoy'}))).toSet(),
         {'charlie_wish', 'delta_secret_owned'},
@@ -266,11 +273,11 @@ void main() {
         _ids(
           _filter(m, CollectionShelfFilters(brandIds: {'toptoy', 'rolife'})),
         ).toSet(),
-        {'charlie_wish', 'delta_secret_owned', 'kilo_many'},
+        {'charlie_wish', 'delta_secret_owned'},
       );
     });
 
-    test('15/16. IP filtering; multiple IPs use OR', () {
+    test('15/16. IP filtering; single-select collapses legacy multi', () {
       expect(_ids(_filter(m, CollectionShelfFilters(ipIds: {'molly'}))), [
         'kilo_many',
       ]);
@@ -278,7 +285,7 @@ void main() {
         _ids(
           _filter(m, CollectionShelfFilters(ipIds: {'molly', 'skullpanda'})),
         ).toSet(),
-        {'charlie_wish', 'delta_secret_owned', 'kilo_many'},
+        {'kilo_many'},
       );
     });
 
@@ -316,7 +323,9 @@ void main() {
             ),
           ),
         ),
-        ['echo_secret_missing'],
+        _ids(
+          _filter(m, const CollectionShelfFilters(secretOwned: true)),
+        ),
       );
     });
 
@@ -389,7 +398,7 @@ void main() {
           brandIds: {'a', 'b'},
           ipIds: {'x'},
         ).activeCount,
-        4,
+        3,
       );
       expect(
         CollectionShelfFilters.empty.runtimeType.toString(),
@@ -612,7 +621,7 @@ void main() {
       },
     );
 
-    test('4. Brand/IP OR still ANDs with attributes', () {
+    test('4. Brand single-select still ANDs with attributes', () {
       expect(
         _ids(
           _pipeline(

@@ -75,7 +75,7 @@ void main() {
     );
 
     test(
-      'Master Complete is in Completed bucket but Progress completed excludes it',
+      'Progress Completed includes Master; Master filter is Master-only',
       () {
         final m = CollectionShelfLogicFixtures.build();
         final series = m.shelfSeries
@@ -93,7 +93,10 @@ void main() {
           ),
           catalog: m.catalogLookup,
         );
-        expect(completedFilter.map((s) => s.id), ['golf_complete']);
+        expect(completedFilter.map((s) => s.id).toSet(), {
+          'delta_secret_owned',
+          'golf_complete',
+        });
 
         final masterFilter = applyCollectionShelfFilters(
           series,

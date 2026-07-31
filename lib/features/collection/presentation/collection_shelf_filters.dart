@@ -1,27 +1,29 @@
 import 'package:flutter/foundation.dart';
 
-/// Progress bucket for Collection advanced filters (single-select).
+/// Progress bucket for Collection advanced filters (single-select UI).
 ///
-/// Mutually exclusive by design — a series matches at most one option.
+/// Only one Progress option may be selected at a time. Matching sets nest:
+/// [completed] ⊆ all finished series (including Master);
+/// [masterComplete] is Master-only and does not broaden to regular Completed.
 enum CollectionShelfProgressFilter {
   /// Owns ≥1 unique figure and is not [SeriesCompletionResolution.isCompleted].
   inProgress,
 
-  /// Regular set complete, but not Master Complete.
+  /// Any completed series — includes Master Complete.
   completed,
 
-  /// Satisfies [SeriesCompletionResolution.isMasterComplete].
+  /// Satisfies [SeriesCompletionResolution.isMasterComplete] only.
   masterComplete,
 }
 
-/// Unified Collection shelf filter state (Progress / Attributes / Brand / IP).
+/// Unified Collection shelf filter state.
 ///
 /// ## Combination semantics
 ///
-/// - Progress: single-select (OR within the group by exclusivity)
-/// - Brands: OR across selected brand keys; empty = any brand
-/// - IPs: OR across selected IP keys; empty = any IP
-/// - Collection Attributes: AND across enabled flags
+/// - **Progress**: single-select; tap selected again to clear
+/// - **Secret Status**: single-select (`secretOwned` XOR `secretMissing`)
+/// - **Collection Attributes**: independent flags AND together
+/// - **Brand** / **IP**: single-select each; empty = all; AND across groups
 /// - Sections combine with AND
 /// - Search (outside this model) remains AND with the applied filters
 ///
@@ -29,7 +31,8 @@ enum CollectionShelfProgressFilter {
 /// [CollectionShelfSort], not here.
 ///
 /// Filtering must run through [applyCollectionShelfFilters] — widgets only
-/// edit this state.
+/// edit this state. Prefer [normalizeCollectionShelfFilters] when restoring
+/// draft / committed state so legacy multi-select payloads collapse safely.
 @immutable
 class CollectionShelfFilters {
   const CollectionShelfFilters({
@@ -48,19 +51,31 @@ class CollectionShelfFilters {
 
   final bool hasDuplicates;
   final bool hasWishlistItems;
+
+  /// Secret Status — mutually exclusive with [secretMissing].
   final bool secretOwned;
+
+  /// Secret Status — mutually exclusive with [secretOwned].
   final bool secretMissing;
+
   final bool customSeries;
 
-  /// Normalized brand facet keys ([normalizeCollectionFacetFilterKey]).
+  /// At most one normalized brand facet key (empty = all brands).
   final Set<String> brandIds;
 
-  /// Normalized IP facet keys.
+  /// At most one normalized IP facet key (empty = all IPs).
   final Set<String> ipIds;
 
   static const empty = CollectionShelfFilters();
 
-  /// Count of discrete active controls (each brand/IP selection counts as one).
+  /// Selected brand id when exactly one is set.
+  String? get selectedBrandId =>
+      brandIds.isEmpty ? null : brandIds.first;
+
+  /// Selected IP id when exactly one is set.
+  String? get selectedIpId => ipIds.isEmpty ? null : ipIds.first;
+
+  /// Count of discrete active controls. Empty Brand/IP ("All") do not count.
   int get activeCount {
     var n = 0;
     if (progress != null) n++;
@@ -69,8 +84,8 @@ class CollectionShelfFilters {
     if (secretOwned) n++;
     if (secretMissing) n++;
     if (customSeries) n++;
-    n += brandIds.length;
-    n += ipIds.length;
+    if (brandIds.isNotEmpty) n++;
+    if (ipIds.isNotEmpty) n++;
     return n;
   }
 
@@ -106,16 +121,32 @@ class CollectionShelfFilters {
     return copyWith(progress: value);
   }
 
-  CollectionShelfFilters toggleBrandId(String id) {
-    final next = Set<String>.from(brandIds);
-    if (!next.add(id)) next.remove(id);
-    return copyWith(brandIds: next);
+  /// Secret Owned — clears Secret Missing when selecting.
+  CollectionShelfFilters toggleSecretOwned() {
+    if (secretOwned) return copyWith(secretOwned: false);
+    return copyWith(secretOwned: true, secretMissing: false);
   }
 
+  /// Secret Missing — clears Secret Owned when selecting.
+  CollectionShelfFilters toggleSecretMissing() {
+    if (secretMissing) return copyWith(secretMissing: false);
+    return copyWith(secretMissing: true, secretOwned: false);
+  }
+
+  /// Brand single-select: tap selected again clears (All).
+  CollectionShelfFilters toggleBrandId(String id) {
+    if (brandIds.length == 1 && brandIds.contains(id)) {
+      return copyWith(brandIds: const {});
+    }
+    return copyWith(brandIds: {id});
+  }
+
+  /// IP single-select: tap selected again clears (All).
   CollectionShelfFilters toggleIpId(String id) {
-    final next = Set<String>.from(ipIds);
-    if (!next.add(id)) next.remove(id);
-    return copyWith(ipIds: next);
+    if (ipIds.length == 1 && ipIds.contains(id)) {
+      return copyWith(ipIds: const {});
+    }
+    return copyWith(ipIds: {id});
   }
 
   @override
@@ -141,5 +172,40 @@ class CollectionShelfFilters {
     customSeries,
     Object.hashAllUnordered(brandIds),
     Object.hashAllUnordered(ipIds),
+  );
+}
+
+/// Collapses legacy / invalid payloads to current single-choice group rules.
+///
+/// - Secret Owned + Secret Missing → keep Owned, clear Missing
+/// - Multiple brand/IP ids → keep the first insertion-order id only
+CollectionShelfFilters normalizeCollectionShelfFilters(
+  CollectionShelfFilters filters,
+) {
+  var secretOwned = filters.secretOwned;
+  var secretMissing = filters.secretMissing;
+  if (secretOwned && secretMissing) {
+    secretMissing = false;
+  }
+
+  final brands = filters.brandIds;
+  final ips = filters.ipIds;
+  final nextBrands = brands.length <= 1
+      ? brands
+      : <String>{brands.first};
+  final nextIps = ips.length <= 1 ? ips : <String>{ips.first};
+
+  if (secretOwned == filters.secretOwned &&
+      secretMissing == filters.secretMissing &&
+      setEquals(nextBrands, brands) &&
+      setEquals(nextIps, ips)) {
+    return filters;
+  }
+
+  return filters.copyWith(
+    secretOwned: secretOwned,
+    secretMissing: secretMissing,
+    brandIds: nextBrands,
+    ipIds: nextIps,
   );
 }

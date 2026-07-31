@@ -44,8 +44,12 @@ class CollectionShelfSeriesListTile extends StatelessWidget {
   /// Square Series artwork (~76–80dp); pairs with [contentPadding] for ~104dp.
   static const double thumbExtent = 80;
 
-  /// Overall content height target: 12 + 80 + 12 = 104.
+  /// Overall content height target without a duplicate meta row:
+  /// 12 + 80 + 12 = 104. Grows only when a second meta row is present.
   static const double minCardHeight = thumbExtent + AppSpacing.md * 2;
+
+  /// Fixed trailing slot for the chevron so metadata can use full content width.
+  static const double chevronSlotWidth = AppIconSizes.metadata + AppSpacing.xs;
 
   /// ~6dp title → metadata (FeedRhythm collection micro-gap).
   static const double titleToMetaGap =
@@ -133,24 +137,29 @@ class CollectionShelfSeriesListTile extends StatelessWidget {
                   await onLongPress!();
                 },
           borderRadius: radius,
-          child: SizedBox(
-            height: minCardHeight,
-            child: Padding(
-              padding: contentPadding,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  ClipRRect(
+          child: Padding(
+            padding: contentPadding,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: thumbExtent,
+                  height: thumbExtent,
+                  child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: CollectionSeriesThumbnail(
                       series: series,
                       extent: thumbExtent,
                     ),
                   ),
-                  const SizedBox(width: artworkToTextGap),
-                  Expanded(
+                ),
+                const SizedBox(width: artworkToTextGap),
+                Expanded(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: thumbExtent),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisSize: MainAxisSize.min,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
@@ -203,13 +212,20 @@ class CollectionShelfSeriesListTile extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Icon(
-                    Symbols.chevron_right_rounded,
-                    size: AppIconSizes.metadata,
-                    color: scheme.onSurfaceVariant.withValues(alpha: 0.55),
+                ),
+                SizedBox(
+                  key: const Key('collection_series_list_chevron_slot'),
+                  width: chevronSlotWidth,
+                  height: thumbExtent,
+                  child: Center(
+                    child: Icon(
+                      Symbols.chevron_right_rounded,
+                      size: AppIconSizes.metadata,
+                      color: scheme.onSurfaceVariant.withValues(alpha: 0.55),
+                    ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

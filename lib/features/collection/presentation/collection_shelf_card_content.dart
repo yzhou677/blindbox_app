@@ -268,7 +268,7 @@ class CollectionShelfCardContentLine {
   final IconData icon;
 }
 
-/// Short English months for compact card copy (`U.S. · Jul 30, 2026`).
+/// Short English months for compact card copy (`U.S. Jul 30, 2026`).
 const _cardUsReleaseMonths = <String>[
   'Jan',
   'Feb',
@@ -292,7 +292,7 @@ String? formatUsReleaseDateCardLine(DateTime? date) {
   final day = date.day;
   if (month < 1 || month > 12 || day < 1 || day > 31) return null;
   if (year < 1990 || year > 2100) return null;
-  return 'U.S. · ${_cardUsReleaseMonths[month - 1]} $day, $year';
+  return 'U.S. ${_cardUsReleaseMonths[month - 1]} $day, $year';
 }
 
 String? _brandDisplay(ShelfSeries series) {

@@ -16,7 +16,8 @@ class CollectionSeriesCardContentMeta extends StatelessWidget {
   final List<CollectionShelfCardContentLine> lines;
   final bool compact;
 
-  /// List layout: single horizontal run with middots when space allows.
+  /// List layout: each selected Card Content field gets its own full-width row
+  /// (no middot compression). Duplicate copy may wrap up to 2 lines.
   final bool horizontal;
 
   @override
@@ -32,32 +33,12 @@ class CollectionSeriesCardContentMeta extends StatelessWidget {
     final gap = compact ? 2.0 : 3.0;
 
     if (horizontal) {
-      return Text.rich(
-        TextSpan(
-          style: style,
-          children: [
-            for (var i = 0; i < lines.length; i++) ...[
-              if (i > 0)
-                TextSpan(
-                  text: '  ·  ',
-                  style: style.copyWith(
-                    color: scheme.onSurfaceVariant.withValues(alpha: 0.55),
-                  ),
-                ),
-              WidgetSpan(
-                alignment: PlaceholderAlignment.middle,
-                child: Icon(
-                  lines[i].icon,
-                  size: iconSize,
-                  color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
-                ),
-              ),
-              TextSpan(text: ' ${lines[i].text}'),
-            ],
-          ],
-        ),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
+      return _ListStackedMeta(
+        lines: lines,
+        style: style,
+        iconSize: iconSize,
+        rowGap: gap,
+        scheme: scheme,
       );
     }
 
@@ -85,6 +66,91 @@ class CollectionSeriesCardContentMeta extends StatelessWidget {
             ],
           ),
         ],
+      ],
+    );
+  }
+}
+
+/// List-only: stack every Card Content line on its own row at full width.
+/// Omits empty rows when fewer than two fields have values.
+class _ListStackedMeta extends StatelessWidget {
+  const _ListStackedMeta({
+    required this.lines,
+    required this.style,
+    required this.iconSize,
+    required this.rowGap,
+    required this.scheme,
+  });
+
+  final List<CollectionShelfCardContentLine> lines;
+  final TextStyle style;
+  final double iconSize;
+  final double rowGap;
+  final ColorScheme scheme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 0; i < lines.length; i++) ...[
+          if (i > 0) SizedBox(height: rowGap),
+          _ListMetaRow(
+            key: Key('collection_series_list_meta_line_$i'),
+            line: lines[i],
+            style: style,
+            iconSize: iconSize,
+            scheme: scheme,
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _ListMetaRow extends StatelessWidget {
+  const _ListMetaRow({
+    super.key,
+    required this.line,
+    required this.style,
+    required this.iconSize,
+    required this.scheme,
+  });
+
+  final CollectionShelfCardContentLine line;
+  final TextStyle style;
+  final double iconSize;
+  final ColorScheme scheme;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDuplicate =
+        line.field == CollectionShelfCardContentField.duplicateCount;
+    return Row(
+      key: isDuplicate
+          ? const Key('collection_series_list_meta_duplicate')
+          : null,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 1),
+          child: Icon(
+            line.icon,
+            size: iconSize,
+            color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.xs),
+        Expanded(
+          child: Text(
+            line.text,
+            maxLines: isDuplicate ? 2 : 1,
+            softWrap: isDuplicate,
+            overflow: TextOverflow.ellipsis,
+            style: style,
+          ),
+        ),
       ],
     );
   }

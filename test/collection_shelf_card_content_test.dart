@@ -527,7 +527,7 @@ void main() {
         catalog: catalog,
       );
       expect(monsters.map((l) => l.text).toList(), [
-        'U.S. · May 24, 2024',
+        'U.S. May 24, 2024',
         'POP MART',
       ]);
 
@@ -554,7 +554,7 @@ void main() {
     test('24. U.S. release wording stays explicit', () {
       expect(
         formatUsReleaseDateCardLine(DateTime(2026, 7, 30)),
-        'U.S. · Jul 30, 2026',
+        'U.S. Jul 30, 2026',
       );
       expect(formatUsReleaseDateCardLine(null), isNull);
     });

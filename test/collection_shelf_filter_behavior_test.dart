@@ -213,25 +213,25 @@ void main() {
       ]);
     });
 
-    test('8. Multiple Brands use OR', () {
+    test('8. Brand is single-select (legacy multi collapses)', () {
       expect(
         _ids(
           series,
           states,
           CollectionShelfFilters(brandIds: {'toptoy', 'independent'}),
         ).toSet(),
-        {'sec_own', 'sec_miss', 'custom'},
+        {'sec_own', 'sec_miss'},
       );
     });
 
-    test('9. Multiple IPs use OR', () {
+    test('9. IP is single-select (legacy multi collapses)', () {
       expect(
         _ids(
           series,
           states,
           CollectionShelfFilters(ipIds: {'hirono', 'labubu'}),
         ).toSet(),
-        {'dups', 'wish', 'plain'},
+        {'dups', 'wish'},
       );
     });
 

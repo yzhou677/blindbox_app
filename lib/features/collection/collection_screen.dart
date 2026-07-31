@@ -295,8 +295,9 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
   }
 
   void _onShelfFiltersChanged(CollectionShelfFilters filters) {
-    if (filters == _shelfFilters) return;
-    setState(() => _shelfFilters = filters);
+    final next = normalizeCollectionShelfFilters(filters);
+    if (next == _shelfFilters) return;
+    setState(() => _shelfFilters = next);
   }
 
   void _clearShelfFilters() {

@@ -42,6 +42,7 @@ abstract final class CollectionVocabulary {
   static const filters = 'Filters';
 
   static const filterSectionProgress = 'Progress';
+  static const filterSectionSecretStatus = 'Secret Status';
   static const filterSectionCollectionAttributes = 'Collection Attributes';
   static const filterSectionMetadata = 'Metadata';
 
@@ -64,6 +65,9 @@ abstract final class CollectionVocabulary {
   static const filterSearchBrandsHint = 'Search brands';
   static const filterSearchIpsHint = 'Search IPs';
 
+  /// Non-interactive Brand/IP header when nothing is selected.
+  static const filterFacetAllSummary = 'All';
+
   /// Filters sheet primary action base (legacy; prefer [showFilterSeriesCount]).
   static const showFilterResults = 'Show results';
 
@@ -74,13 +78,21 @@ abstract final class CollectionVocabulary {
   static const filterSectionSortBy = 'Sort by';
 
   /// Collapsed Brand summary when nothing is selected.
+  /// Prefer [filterFacetAllSummary] for Filters sheet headers.
   static const filterAllBrandsSummary = 'All brands';
 
   /// Collapsed IP summary when nothing is selected.
+  /// Prefer [filterFacetAllSummary] for Filters sheet headers.
   static const filterAllIpsSummary = 'All IPs';
 
-  /// Collapsed Brand/IP summary for multiple selections.
+  /// Collapsed Brand/IP summary for multiple selections (legacy).
   static String filterSelectedCountSummary(int count) => '$count selected';
+
+  /// Brand/IP chip rail — reveal remaining options.
+  static String filterShowMore(int hiddenCount) => 'Show more ($hiddenCount)';
+
+  /// Brand/IP chip rail — collapse back to two rows.
+  static const filterShowLess = 'Show less';
 
   /// Filters sheet reset action.
   static const clearAllFilters = 'Clear all';
