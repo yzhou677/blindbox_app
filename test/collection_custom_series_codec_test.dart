@@ -49,6 +49,7 @@ void main() {
     expect(series.name, 'Picnic Pals');
     expect(series.taxonomyBrandId, 'independent');
     expect(series.imageKey, 'custom-99');
+    expect(series.releaseDate, isNull);
     final fig = series.figures.single;
     expect(fig.isSecret, isTrue);
     expect(fig.rarityLabel, '1:144');
@@ -116,5 +117,40 @@ void main() {
     )!.shelfSeries.single.figures.single;
     expect(fig.rarityLabel, '1:72');
     expect(fig.isSecret, isTrue);
+  });
+
+  test('round-trips optional custom series releaseDate', () {
+    const accent = Color(0xFFE4F2EA);
+    final snap = CollectionSnapshot(
+      shelfSeries: [
+        ShelfSeries(
+          id: 'custom-date',
+          name: 'Dated Set',
+          brand: 'Independent',
+          ipName: 'Dated Set',
+          taxonomyBrandId: 'independent',
+          taxonomyIpId: 'dated_set',
+          imageKey: 'custom-date',
+          releaseDate: '2026-07-30',
+          figures: const [
+            ShelfFigure(
+              id: 'custom-date-f-0',
+              seriesId: 'custom-date',
+              name: 'One',
+              rarity: 'Regular',
+              isSecret: false,
+            ),
+          ],
+          shelfAccent: accent,
+        ),
+      ],
+      figureStates: const {},
+    );
+
+    final json = CollectionSnapshotCodec.encode(snap);
+    expect(json, contains('"releaseDate":"2026-07-30"'));
+
+    final back = CollectionSnapshotCodec.tryDecode(json)!;
+    expect(back.shelfSeries.single.releaseDate, '2026-07-30');
   });
 }

@@ -259,6 +259,7 @@ void openEditCustomSeriesSheet(
             String? ipDisplayName,
             String? customCoverImageUri,
             String? notes,
+            String? releaseDate,
           }) {
             ref
                 .read(collectionNotifierProvider.notifier)
@@ -269,6 +270,7 @@ void openEditCustomSeriesSheet(
                   ipDisplayName: ipDisplayName,
                   customCoverImageUri: customCoverImageUri,
                   notes: notes,
+                  releaseDate: releaseDate,
                 );
           },
       onFigureSubmit:

@@ -402,13 +402,14 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       builder: (_, scroll) => CustomSeriesFormSheet.create(
         onSubmit:
             ({
-              required String seriesName,
-              String? brand,
-              String? ipDisplayName,
-              required List<CustomFigureDraft> figures,
-              String? customCoverImageUri,
-              String? notes,
-            }) {
+            required String seriesName,
+            String? brand,
+            String? ipDisplayName,
+            required List<CustomFigureDraft> figures,
+            String? customCoverImageUri,
+            String? notes,
+            String? releaseDate,
+          }) {
               ref
                   .read(collectionNotifierProvider.notifier)
                   .addCustomSeries(
@@ -418,6 +419,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                     figures: figures,
                     customCoverImageUri: customCoverImageUri,
                     notes: notes,
+                    releaseDate: releaseDate,
                   );
             },
       ),

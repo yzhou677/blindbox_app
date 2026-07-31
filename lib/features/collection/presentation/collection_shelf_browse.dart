@@ -317,8 +317,8 @@ double _seriesCompletionRatio(
 /// [CollectionShelfSort.recentlyAdded] preserves shelf traversal order within
 /// the bucket.
 ///
-/// [CollectionShelfSort.recentlyReleased] orders by catalog **U.S.** release
-/// date (newest first). Series without a parseable U.S. release date sort last.
+/// [CollectionShelfSort.recentlyReleased] orders by shelf or catalog release
+/// date (newest first). Series without a parseable release date sort last.
 ///
 /// See `docs/COLLECTION_ARCHITECTURE_NOTES.md` → Collection sorting.
 List<ShelfSeries> sortShelfSeriesForDisplay(
@@ -382,11 +382,14 @@ List<ShelfSeries> sortShelfSeriesForDisplay(
   }
 }
 
-/// Official catalog **U.S.** release date for a shelf series, when joinable.
+/// Release date for a shelf series: user-authored [ShelfSeries.releaseDate]
+/// first, else official catalog **U.S.** date when joinable.
 DateTime? catalogReleaseDateForShelfSeries(
   ShelfSeries series, {
   Map<String, catalog.CatalogSeries>? catalogSeriesById,
 }) {
+  final local = parseCatalogReleaseDate(series.releaseDate);
+  if (local != null) return local;
   if (catalogSeriesById == null || catalogSeriesById.isEmpty) return null;
   for (final candidate in shelfCatalogSeriesIdCandidates(series)) {
     final row = catalogSeriesById[candidate];
@@ -396,12 +399,20 @@ DateTime? catalogReleaseDateForShelfSeries(
   return null;
 }
 
-/// Parses catalog `releaseDate` (`YYYY-MM-DD` or ISO datetime) as a date-only
-/// **U.S.** release day. Returns null for missing or malformed values.
+/// Parses catalog/shelf `releaseDate` (`YYYY-MM-DD` or ISO datetime) as a
+/// date-only day. Returns null for missing or malformed values.
 DateTime? parseCatalogReleaseDate(String? raw) {
   final trimmed = raw?.trim();
   if (trimmed == null || trimmed.isEmpty) return null;
   final parsed = DateTime.tryParse(trimmed);
   if (parsed == null) return null;
   return DateTime(parsed.year, parsed.month, parsed.day);
+}
+
+/// Encodes a calendar day as `YYYY-MM-DD` for shelf/catalog release fields.
+String formatIsoDateOnly(DateTime date) {
+  final y = date.year.toString().padLeft(4, '0');
+  final m = date.month.toString().padLeft(2, '0');
+  final d = date.day.toString().padLeft(2, '0');
+  return '$y-$m-$d';
 }

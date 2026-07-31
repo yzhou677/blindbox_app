@@ -177,6 +177,30 @@ void main() {
       expect(find.textContaining('Unknown'), findsNothing);
       expect(find.textContaining('N/A'), findsNothing);
     });
+
+    testWidgets('custom series copy omits U.S. label and disclosure', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light(),
+          locale: const Locale('en', 'US'),
+          home: Scaffold(
+            body: UsReleaseDateLine(
+              releaseDate: DateTime(2026, 7, 30),
+              officialUs: false,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.byKey(const Key('us_release_date_line')), findsOneWidget);
+      expect(find.textContaining('Release Date ·'), findsOneWidget);
+      expect(find.textContaining('U.S. Release Date'), findsNothing);
+      expect(find.byKey(const Key('us_release_date_info')), findsNothing);
+      expect(find.textContaining('2026'), findsOneWidget);
+    });
   });
 
   group('DropDetailScreen', () {

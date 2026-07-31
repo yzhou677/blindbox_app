@@ -137,6 +137,7 @@ abstract final class CollectionSnapshotCodec {
       'taxonomyBrandId': brandId,
       'taxonomyIpId': ipId,
       'customCoverImageUri': s.customCoverImageUri,
+      'releaseDate': s.releaseDate,
       'shelfAccentArgb': _colorToArgb(s.shelfAccent),
       'figures': [for (final f in s.figures) _figureToJson(f)],
     };
@@ -180,6 +181,7 @@ abstract final class CollectionSnapshotCodec {
       taxonomyIpId: ipId,
       imageKey: imageKey,
       customCoverImageUri: m['customCoverImageUri'] as String?,
+      releaseDate: m['releaseDate'] as String?,
     );
   }
 

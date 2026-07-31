@@ -118,14 +118,14 @@ class _SeriesFiguresSheetState extends ConsumerState<SeriesFiguresSheet> {
         : null;
     final matchedId = widget.matchedFigureId?.trim();
     final lookup = ref.watch(catalogBundleLookupProvider);
-    DateTime? usReleaseDate;
-    if (lookup != null) {
+    DateTime? releaseDate = parseCatalogReleaseDate(series.releaseDate);
+    if (releaseDate == null && lookup != null) {
       for (final candidate in shelfCatalogSeriesIdCandidates(series)) {
         final parsed = parseCatalogReleaseDate(
           lookup.seriesById(candidate)?.releaseDate,
         );
         if (parsed != null) {
-          usReleaseDate = parsed;
+          releaseDate = parsed;
           break;
         }
       }
@@ -142,7 +142,10 @@ class _SeriesFiguresSheetState extends ConsumerState<SeriesFiguresSheet> {
         ),
         slivers: [
           SliverToBoxAdapter(
-            child: UsReleaseDateLine(releaseDate: usReleaseDate),
+            child: UsReleaseDateLine(
+              releaseDate: releaseDate,
+              officialUs: !series.isCustomLocal,
+            ),
           ),
           if (seriesNote != null && seriesNote.isNotEmpty)
             SliverToBoxAdapter(
@@ -191,7 +194,7 @@ class _SeriesFiguresSheetState extends ConsumerState<SeriesFiguresSheet> {
               // Without it: default chrome → figures air (no empty date gap).
               top: isComplete
                   ? 14
-                  : usReleaseDate != null
+                  : releaseDate != null
                   ? AppSpacing.lg
                   : FeedRhythm.sheetFigureRailGap,
               bottom: AppSpacing.lg,

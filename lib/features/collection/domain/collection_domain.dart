@@ -169,6 +169,7 @@ class ShelfSeries {
     this.taxonomyIpId,
     this.imageKey,
     this.customCoverImageUri,
+    this.releaseDate,
   });
 
   /// Unique shelf instance id (per user after persistence).
@@ -195,6 +196,10 @@ class ShelfSeries {
   /// Local device path or `file:` URI for a user-authored series cover only.
   /// Catalog-backed rows should leave this null.
   final String? customCoverImageUri;
+
+  /// Optional user-authored release day for custom series (`YYYY-MM-DD`).
+  /// Catalog-backed rows leave this null and join catalog `releaseDate` instead.
+  final String? releaseDate;
 
   int get figureCount => figures.length;
 

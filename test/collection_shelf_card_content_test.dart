@@ -558,5 +558,38 @@ void main() {
       );
       expect(formatUsReleaseDateCardLine(null), isNull);
     });
+
+    test('custom shelf releaseDate feeds Card Content without catalog', () {
+      final custom = testShelfSeries(
+        id: 'custom-dated',
+        catalogTemplateId: null,
+        brand: 'Independent',
+        ipName: 'Picnic',
+        releaseDate: '2026-07-30',
+      );
+      expect(
+        seriesHasCardContentValue(
+          CollectionShelfCardContentField.usReleaseDate,
+          custom,
+          const {},
+        ),
+        isTrue,
+      );
+      expect(
+        resolveCardContentText(
+          CollectionShelfCardContentField.usReleaseDate,
+          custom,
+          const {},
+        ),
+        'U.S. Jul 30, 2026',
+      );
+      expect(
+        availableCollectionShelfCardContentFields(
+          shelfSeries: [custom],
+          figureStates: const {},
+        ),
+        contains(CollectionShelfCardContentField.usReleaseDate),
+      );
+    });
   });
 }

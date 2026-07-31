@@ -389,6 +389,46 @@ void main() {
       expect(sorted.map((s) => s.id).toList(), ['new', 'old', 'undated']);
     });
 
+    test('recentlyReleased uses custom shelf releaseDate', () {
+      final customDated = testShelfSeries(
+        id: 'custom-dated',
+        catalogTemplateId: null,
+        name: 'Custom Dated',
+        releaseDate: '2026-07-30',
+      );
+      final catalogOlder = testShelfSeries(
+        id: 'catalog-old',
+        catalogTemplateId: 'cat_old',
+      );
+      final bundle = CatalogSeedBundle(
+        brands: const [],
+        ips: const [],
+        series: [
+          catalog.CatalogSeries(
+            id: 'cat_old',
+            brandId: 'pop_mart',
+            ipId: 'hirono',
+            displayName: 'Old',
+            releaseDate: '2024-01-01',
+            isBlindBox: true,
+            imageKey: 'cat_old',
+          ),
+        ],
+        figures: const [],
+      );
+      final sorted = sortShelfSeriesForDisplay(
+        [catalogOlder, customDated],
+        CollectionShelfSort.recentlyReleased,
+        const {},
+        catalog: bundle,
+      );
+      expect(sorted.map((s) => s.id).toList(), ['custom-dated', 'catalog-old']);
+      expect(
+        catalogReleaseDateForShelfSeries(customDated),
+        DateTime(2026, 7, 30),
+      );
+    });
+
     test('alphabetical sorts all series by name globally (ignores IP)', () {
       final series = [
         testShelfSeries(
