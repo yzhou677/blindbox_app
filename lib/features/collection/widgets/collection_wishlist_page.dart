@@ -72,19 +72,21 @@ class _CollectionWishlistPageState extends State<CollectionWishlistPage> {
       widget.snapshot.seriesWishlist,
       allFigures,
     );
+    final activeBrand = resolveWishlistFacetSelection(
+      selectedId: _brandFilterId,
+      optionIds: brandOptions.map((o) => o.id),
+      anyId: collectionAnyBrandFilterId,
+    );
+    // IP chips come from Wishlist source under Brand only (not final results).
     final ipOptions = buildWishlistIpFilterOptions(
       widget.snapshot.seriesWishlist,
       allFigures,
+      brandFilterId: activeBrand,
     );
-    final activeBrand = _resolveSelection(
-      _brandFilterId,
-      brandOptions.map((o) => o.id),
-      collectionAnyBrandFilterId,
-    );
-    final activeIp = _resolveSelection(
-      _ipFilterId,
-      ipOptions.map((o) => o.id),
-      collectionAnyIpFilterId,
+    final activeIp = resolveWishlistFacetSelection(
+      selectedId: _ipFilterId,
+      optionIds: ipOptions.map((o) => o.id),
+      anyId: collectionAnyIpFilterId,
     );
     if (activeBrand != _brandFilterId || activeIp != _ipFilterId) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -208,14 +210,6 @@ class _CollectionWishlistPageState extends State<CollectionWishlistPage> {
       ),
     );
   }
-}
-
-String _resolveSelection(
-  String selected,
-  Iterable<String> optionIds,
-  String fallback,
-) {
-  return optionIds.contains(selected) ? selected : fallback;
 }
 
 class _WishlistSectionHeader extends StatelessWidget {

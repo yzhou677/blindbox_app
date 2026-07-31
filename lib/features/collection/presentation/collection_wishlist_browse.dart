@@ -65,10 +65,15 @@ List<WishlistBrandFilterOption> buildWishlistBrandFilterOptions(
   return options;
 }
 
+/// IP chips for Wishlist, scoped by [brandFilterId].
+///
+/// Options are derived from Wishlist source rows **after** applying the Brand
+/// constraint only — never from the Brand+IP-filtered result set.
 List<WishlistIpFilterOption> buildWishlistIpFilterOptions(
   List<WishlistedCatalogSeries> series,
-  List<WishlistedFigureRow> figures,
-) {
+  List<WishlistedFigureRow> figures, {
+  String brandFilterId = collectionAnyBrandFilterId,
+}) {
   final options = <WishlistIpFilterOption>[
     (id: collectionAnyIpFilterId, label: 'All IPs'),
   ];
@@ -81,12 +86,35 @@ List<WishlistIpFilterOption> buildWishlistIpFilterOptions(
   }
 
   for (final item in series) {
+    if (!_matchesFacet(
+      brandFilterId,
+      item.brand,
+      collectionAnyBrandFilterId,
+    )) {
+      continue;
+    }
     add(item.ipName, item.ipName);
   }
   for (final row in figures) {
+    if (!_matchesFacet(
+      brandFilterId,
+      row.series.brand,
+      collectionAnyBrandFilterId,
+    )) {
+      continue;
+    }
     add(shelfSeriesIpLabel(row.series), shelfSeriesIpLabel(row.series));
   }
   return options;
+}
+
+/// Keeps [selectedId] when still present in [optionIds]; otherwise [anyId].
+String resolveWishlistFacetSelection({
+  required String selectedId,
+  required Iterable<String> optionIds,
+  required String anyId,
+}) {
+  return optionIds.contains(selectedId) ? selectedId : anyId;
 }
 
 List<WishlistedCatalogSeries> filterWishlistSeries({
