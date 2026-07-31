@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/navigation/shell_tab_reselect_bus.dart';
+import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/app_typography.dart';
 import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
@@ -15,23 +16,22 @@ import 'package:blindbox_app/features/collection/application/catalog_series_shel
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/application/share_payload_builders/shelf_share_payload_builder.dart';
 import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
-import 'package:blindbox_app/features/collection/presentation/collection_shelf_brand_facets.dart';
-import 'package:blindbox_app/features/collection/presentation/collection_shelf_ip_facets.dart';
 import 'package:blindbox_app/features/collection/presentation/wishlist_undo_snackbar.dart';
 import 'package:blindbox_app/features/collection/presentation/wishlist_figure_details_metadata.dart';
 import 'package:blindbox_app/features/collection/widgets/custom_series_form_sheet.dart';
 import 'package:blindbox_app/features/collection/widgets/add_to_collection_sheet.dart';
-import 'package:blindbox_app/features/collection/widgets/collection_brand_filter_row.dart';
-import 'package:blindbox_app/features/collection/widgets/collection_ip_filter_row.dart';
 import 'package:blindbox_app/features/collection/application/shelf_emotional_providers.dart';
 import 'package:blindbox_app/features/collection/presentation/shelf_editorial_voice.dart';
 import 'package:blindbox_app/features/collection/application/collection_shelf_ui_prefs_provider.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_shelf_filter_matching.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/core/search/search_commit_policy.dart';
 import 'package:blindbox_app/core/search/search_placeholders.dart';
 import 'package:blindbox_app/features/catalog/search/catalog_search_service.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_browse.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_shelf_filters.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_wishlist_browse.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_series_shelf_cta_presentation.dart';
@@ -42,7 +42,9 @@ import 'package:blindbox_app/features/collection/insights/presentation/collector
 import 'package:blindbox_app/features/collection/widgets/collection_empty_state.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_insights_dashboard_host.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_page_segment_control.dart';
-import 'package:blindbox_app/features/collection/widgets/collection_shelf_series_rail.dart';
+import 'package:blindbox_app/features/collection/widgets/collection_shelf_filters_sheet.dart';
+import 'package:blindbox_app/features/collection/widgets/collection_shelf_layout_controls.dart';
+import 'package:blindbox_app/features/collection/widgets/collection_shelf_series_layout_host.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_summary_section.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_warm_start_banner.dart';
 import 'package:blindbox_app/features/collection/widgets/catalog_series_preview_sheet.dart';
@@ -114,11 +116,8 @@ class CollectionScreen extends ConsumerStatefulWidget {
 }
 
 class _CollectionScreenState extends ConsumerState<CollectionScreen> {
-  /// Presentation-only Collection shelf brand facet.
-  String _brandFilterId = collectionAnyBrandFilterId;
-
-  /// Presentation-only Collection shelf IP facet (scoped to brand-filtered series).
-  String _ipFilterId = collectionAnyIpFilterId;
+  /// Unified shelf filters (Progress / Attributes / Time / Brand / IP).
+  CollectionShelfFilters _shelfFilters = CollectionShelfFilters.empty;
 
   /// Presentation-only Shelf / Insights section switch.
   CollectionPageSegment _pageSegment = CollectionPageSegment.shelf;
@@ -295,14 +294,40 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     _shelfSearchCommitScheduler.commitNow('');
   }
 
-  void _onBrandFilterSelected(String id) {
-    if (id == _brandFilterId) return;
-    setState(() => _brandFilterId = id);
+  void _onShelfFiltersChanged(CollectionShelfFilters filters) {
+    final next = normalizeCollectionShelfFilters(filters);
+    if (next == _shelfFilters) return;
+    setState(() => _shelfFilters = next);
   }
 
-  void _onIpFilterSelected(String id) {
-    if (id == _ipFilterId) return;
-    setState(() => _ipFilterId = id);
+  void _clearShelfFilters() {
+    _onShelfFiltersChanged(CollectionShelfFilters.empty);
+  }
+
+  Future<void> _openShelfFiltersSheet() async {
+    final appliedSort = ref.read(collectionShelfUiPrefsProvider).sort;
+    final result = await showCollectionShelfFiltersSheet(
+      context: context,
+      initial: _shelfFilters,
+      initialSort: appliedSort,
+      searchQuery: _shelfCommittedQuery,
+    );
+    if (!mounted || result == null) return;
+    _onShelfFiltersChanged(result.filters);
+    ref.read(collectionShelfUiPrefsProvider.notifier).setSort(result.sort);
+  }
+
+  Future<void> _openShelfLayoutSheet() async {
+    final snap = ref.read(collectionNotifierProvider);
+    final catalog = ref.read(catalogBundleProvider).valueOrNull;
+    await showCollectionShelfLayoutSheet(
+      context: context,
+      ref: ref,
+      shelfSeries: snap.shelfSeries,
+      figureStates: snap.figureStates,
+      catalog: catalog,
+      progress: ShelfBrowseProgressLookup(snap.figureStates),
+    );
   }
 
   @override
@@ -377,13 +402,14 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       builder: (_, scroll) => CustomSeriesFormSheet.create(
         onSubmit:
             ({
-              required String seriesName,
-              String? brand,
-              String? ipDisplayName,
-              required List<CustomFigureDraft> figures,
-              String? customCoverImageUri,
-              String? notes,
-            }) {
+            required String seriesName,
+            String? brand,
+            String? ipDisplayName,
+            required List<CustomFigureDraft> figures,
+            String? customCoverImageUri,
+            String? notes,
+            String? releaseDate,
+          }) {
               ref
                   .read(collectionNotifierProvider.notifier)
                   .addCustomSeries(
@@ -393,6 +419,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                     figures: figures,
                     customCoverImageUri: customCoverImageUri,
                     notes: notes,
+                    releaseDate: releaseDate,
                   );
             },
       ),
@@ -617,17 +644,11 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     late final ShelfEmotionalProfile profile;
     late final List<ShelfRelationshipInsight> insights;
     late final String? sectionSubtitle;
-    late final List<CollectionBrandFilterOption> brandFilterOptions;
-    late final String activeBrandFilterId;
-    late final List<ShelfSeries> brandFiltered;
-    late final List<CollectionIpFilterOption> ipFilterOptions;
-    late final String activeIpFilterId;
     late final List<ShelfSeries> visible;
     late final List<ShelfSeries> searched;
     late final List<ShelfSeries> inProgress;
     late final List<ShelfSeries> completed;
-    late final bool brandFilterExhausted;
-    late final bool ipFilterExhausted;
+    late final bool filtersExhausted;
     late final bool searchExhausted;
     late final CollectionShelfUiPrefs shelfUiPrefs;
     late final ShelfBrowseProgressLookup progressLookup;
@@ -643,59 +664,47 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
         );
       });
 
-      trace.sectionVoid('Filter', () {
-        brandFilterOptions = buildCollectionShelfBrandFilterOptions(
-          snap.shelfSeries,
-        );
-        activeBrandFilterId = resolveCollectionBrandFilterSelection(
-          selectedBrandFilterId: _brandFilterId,
-          options: brandFilterOptions,
-        );
-        assert(() {
-          CollectionScreen.debugBrandFilterCount++;
-          return true;
-        }());
-        brandFiltered = shelfSeriesVisibleForBrandFilter(
-          snap.shelfSeries,
-          activeBrandFilterId,
-        );
-        ipFilterOptions = buildCollectionShelfIpFilterOptions(brandFiltered);
-        activeIpFilterId = resolveCollectionIpFilterSelection(
-          selectedIpFilterId: _ipFilterId,
-          options: ipFilterOptions,
-        );
-        assert(() {
-          CollectionScreen.debugIpFilterCount++;
-          return true;
-        }());
-        visible = shelfSeriesVisibleForIpFilter(
-          brandFiltered,
-          activeIpFilterId,
-        );
-      });
-      if (activeBrandFilterId != _brandFilterId) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          setState(() => _brandFilterId = activeBrandFilterId);
-        });
-      }
-      if (activeIpFilterId != _ipFilterId) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          setState(() => _ipFilterId = activeIpFilterId);
-        });
-      }
-
-      // Browse pipeline: Brand/IP on shelf → intersect cached search matches →
-      // partition → sort. Text search runs only when the committed query /
-      // shelf / catalog service revision changes.
       shelfUiPrefs = ref.watch(collectionShelfUiPrefsProvider);
       catalog = resolveCatalogBundleForSearch(
         providerBundle: ref.watch(catalogBundleProvider).valueOrNull,
       );
-      final catalogSearch = ref.watch(catalogSearchServiceProvider);
-      final catalogLookup = ref.watch(catalogBundleLookupProvider);
       progressLookup = ShelfBrowseProgressLookup(snap.figureStates);
+      final catalogLookup = ref.watch(catalogBundleLookupProvider);
+
+      var prunedFilters = pruneCollectionShelfFiltersToShelf(
+        _shelfFilters,
+        snap.shelfSeries,
+      );
+      prunedFilters = pruneCollectionShelfIpIdsToBrandScope(
+        prunedFilters,
+        snap.shelfSeries,
+      );
+      if (prunedFilters != _shelfFilters) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          _onShelfFiltersChanged(prunedFilters);
+        });
+      }
+
+      trace.sectionVoid('Filter', () {
+        assert(() {
+          CollectionScreen.debugBrandFilterCount++;
+          CollectionScreen.debugIpFilterCount++;
+          return true;
+        }());
+        visible = applyCollectionShelfFilters(
+          snap.shelfSeries,
+          snap.figureStates,
+          prunedFilters,
+          progress: progressLookup,
+          catalog: catalogLookup,
+        );
+      });
+
+      // Browse pipeline: filters → intersect cached search matches →
+      // partition → sort. Text search runs only when the committed query /
+      // shelf / catalog service revision changes.
+      final catalogSearch = ref.watch(catalogSearchServiceProvider);
       final searchMatchedIds = _searchMatchCache.matchedIds(
         shelf: snap.shelfSeries,
         query: _shelfCommittedQuery,
@@ -728,32 +737,29 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
           shelfUiPrefs.sort,
           snap.figureStates,
           progress: progressLookup,
+          catalog: catalog,
         );
         completed = sortShelfSeriesForDisplay(
           completedRaw,
           shelfUiPrefs.sort,
           snap.figureStates,
           progress: progressLookup,
+          catalog: catalog,
         );
       });
-      brandFilterExhausted = brandFiltered.isEmpty;
-      ipFilterExhausted = !brandFilterExhausted && visible.isEmpty;
+      filtersExhausted = prunedFilters.hasActive && visible.isEmpty;
       searchExhausted =
-          !brandFilterExhausted && !ipFilterExhausted && searched.isEmpty;
+          !filtersExhausted &&
+          _shelfCommittedQuery.trim().isNotEmpty &&
+          searched.isEmpty;
     } else {
       // Wishlist / Insights: do not run shelf search or facet pipelines.
       sectionSubtitle = null;
-      brandFilterOptions = const [];
-      activeBrandFilterId = collectionAnyBrandFilterId;
-      brandFiltered = const [];
-      ipFilterOptions = const [];
-      activeIpFilterId = collectionAnyIpFilterId;
       visible = const [];
       searched = const [];
       inProgress = const [];
       completed = const [];
-      brandFilterExhausted = false;
-      ipFilterExhausted = false;
+      filtersExhausted = false;
       searchExhausted = false;
       shelfUiPrefs = ref.watch(collectionShelfUiPrefsProvider);
       progressLookup = ShelfBrowseProgressLookup(snap.figureStates);
@@ -845,40 +851,25 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
             ),
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.pageHorizontal,
+                  0,
+                  AppSpacing.pageHorizontal,
+                  AppSpacing.xs,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    _CollectionBrowseFilterLabel(text: 'Brand'),
-                    const SizedBox(
-                      height: FeedRhythm.collectionFilterSectionLabelToRail,
+                    _CollectionShelfFiltersControl(
+                      activeCount: _shelfFilters.activeCount,
+                      onPressed: _openShelfFiltersSheet,
                     ),
-                    CollectionBrandFilterRow(
-                      options: brandFilterOptions,
-                      selectedBrandId: activeBrandFilterId,
-                      onBrandSelected: _onBrandFilterSelected,
-                    ),
-                    const SizedBox(
-                      height: FeedRhythm.collectionBrandToIpFilterSectionGap,
-                    ),
-                    _CollectionBrowseFilterLabel(text: 'IP'),
-                    const SizedBox(
-                      height: FeedRhythm.collectionFilterSectionLabelToRail,
-                    ),
-                    CollectionIpFilterRow(
-                      options: ipFilterOptions,
-                      selectedIpId: activeIpFilterId,
-                      onIpSelected: _onIpFilterSelected,
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 2),
+                    Expanded(
                       child: Align(
                         alignment: Alignment.centerRight,
-                        child: _CollectionShelfSortMenu(
-                          selected: shelfUiPrefs.sort,
-                          onSelected: (sort) => ref
-                              .read(collectionShelfUiPrefsProvider.notifier)
-                              .setSort(sort),
+                        child: CollectionShelfLayoutControl(
+                          layout: shelfUiPrefs.layout,
+                          onPressed: _openShelfLayoutSheet,
                         ),
                       ),
                     ),
@@ -886,31 +877,44 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                 ),
               ),
             ),
-            if (brandFilterExhausted || ipFilterExhausted)
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-                sliver: SliverToBoxAdapter(
-                  child: Text(
-                    brandFilterExhausted
-                        ? 'Nothing on your shelf for this brand yet.'
-                        : 'Nothing on your shelf for this IP yet.',
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
-                      height: 1.4,
-                    ),
-                  ),
+            if (filtersExhausted)
+              SliverToBoxAdapter(
+                child: CollectionShelfFilteredEmptyState(
+                  onClearFilters: _clearShelfFilters,
                 ),
               )
             else if (searchExhausted)
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.pageHorizontal,
+                  AppSpacing.md,
+                  AppSpacing.pageHorizontal,
+                  AppSpacing.xxl,
+                ),
                 sliver: SliverToBoxAdapter(
-                  child: Text(
-                    'No series match your search.',
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
-                      height: 1.4,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'No series match your search.',
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: scheme.onSurfaceVariant.withValues(
+                            alpha: 0.78,
+                          ),
+                          height: 1.4,
+                        ),
+                      ),
+                      if (_shelfFilters.hasActive) ...[
+                        const SizedBox(height: AppSpacing.sm),
+                        TextButton(
+                          key: const Key('collection_clear_filters_cta'),
+                          onPressed: _clearShelfFilters,
+                          child: const Text(
+                            CollectionVocabulary.filteredEmptyAction,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               )
@@ -943,10 +947,13 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                           ? 8
                           : FeedRhythm.tabScrollTailPadding,
                     ),
-                    child: CollectionShelfSeriesRail(
+                    child: CollectionShelfSeriesLayoutHost(
+                      layout: shelfUiPrefs.layout,
                       series: inProgress,
                       figureStates: snap.figureStates,
                       progress: progressLookup,
+                      cardContent: shelfUiPrefs.cardContentSelection,
+                      catalog: catalog,
                       onOpen: (s) => _openFiguresSheet(context, s.id),
                       onManage: (s) => _manageSeries(context, s),
                     ),
@@ -981,10 +988,13 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                     padding: const EdgeInsets.only(
                       bottom: FeedRhythm.tabScrollTailPadding,
                     ),
-                    child: CollectionShelfSeriesRail(
+                    child: CollectionShelfSeriesLayoutHost(
+                      layout: shelfUiPrefs.layout,
                       series: completed,
                       figureStates: snap.figureStates,
                       progress: progressLookup,
+                      cardContent: shelfUiPrefs.cardContentSelection,
+                      catalog: catalog,
                       onOpen: (s) => _openFiguresSheet(context, s.id),
                       onManage: (s) => _manageSeries(context, s),
                     ),
@@ -1123,33 +1133,6 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
         ],
       ),
     ];
-  }
-}
-
-class _CollectionBrowseFilterLabel extends StatelessWidget {
-  const _CollectionBrowseFilterLabel({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Semantics(
-        header: true,
-        child: Text(
-          text,
-          style: textTheme.labelSmall?.copyWith(
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.32,
-            color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
-          ),
-        ),
-      ),
-    );
   }
 }
 
@@ -1378,89 +1361,58 @@ class _CollectionHeaderActions extends StatelessWidget {
   }
 }
 
-class _CollectionShelfSortMenu extends StatelessWidget {
-  const _CollectionShelfSortMenu({
-    required this.selected,
-    required this.onSelected,
+class _CollectionShelfFiltersControl extends StatelessWidget {
+  const _CollectionShelfFiltersControl({
+    required this.activeCount,
+    required this.onPressed,
   });
 
-  final CollectionShelfSort selected;
-  final ValueChanged<CollectionShelfSort> onSelected;
+  final int activeCount;
+  final VoidCallback onPressed;
+
+  static const double _minTapExtent = 48;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final active = activeCount > 0;
+    final label = CollectionVocabulary.filtersControlLabel(activeCount);
 
-    return PopupMenuButton<CollectionShelfSort>(
-      key: const Key('collection_shelf_sort_menu'),
-      initialValue: selected,
-      tooltip: 'Sort shelf',
-      onSelected: onSelected,
-      itemBuilder: (context) => [
-        PopupMenuItem<CollectionShelfSort>(
-          enabled: false,
-          height: 40,
-          child: Text(
-            'Sort by',
-            style: textTheme.titleSmall?.copyWith(
-              color: scheme.onSurface,
-              fontWeight: FontWeight.w600,
-              letterSpacing: -0.2,
-            ),
-          ),
-        ),
-        for (final sort in CollectionShelfSort.values)
-          PopupMenuItem<CollectionShelfSort>(
-            value: sort,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        key: const Key('collection_shelf_filters_control'),
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(999),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: _minTapExtent),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                SizedBox(
-                  width: 28,
-                  child: sort == selected
-                      ? Icon(
-                          Symbols.check_rounded,
-                          size: 20,
-                          color: scheme.primary,
-                        )
-                      : null,
+                Icon(
+                  Symbols.tune_rounded,
+                  size: AppIconSizes.metadata,
+                  color: active
+                      ? scheme.primary.withValues(alpha: 0.9)
+                      : scheme.onSurfaceVariant.withValues(alpha: 0.78),
                 ),
-                Expanded(
-                  child: Text(
-                    sort.menuLabel,
-                    style: textTheme.bodyLarge?.copyWith(
-                      fontWeight: sort == selected
-                          ? FontWeight.w600
-                          : FontWeight.w500,
-                    ),
+                const SizedBox(width: AppSpacing.sm),
+                Text(
+                  label,
+                  style: textTheme.labelMedium?.copyWith(
+                    color: active
+                        ? scheme.primary.withValues(alpha: 0.95)
+                        : scheme.onSurfaceVariant.withValues(alpha: 0.9),
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
             ),
           ),
-      ],
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Symbols.sort_rounded,
-            size: AppIconSizes.metadata,
-            color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            selected.menuLabel,
-            style: textTheme.labelMedium?.copyWith(
-              color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          Icon(
-            Symbols.expand_more_rounded,
-            size: AppIconSizes.metadata,
-            color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
-          ),
-        ],
+        ),
       ),
     );
   }

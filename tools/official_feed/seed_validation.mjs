@@ -233,20 +233,69 @@ export function imageHostTier(imageUrl) {
   return 'other';
 }
 
-/** Official POP MART Instagram post (global or @popmart_us). */
+/** Official Instagram post (`/p/`, `/reel/`, `/tv/`). */
 export function isOfficialInstagramPostUrl(url) {
   if (!url.hostname.endsWith('instagram.com')) return false;
   const path = url.pathname.replace(/\/+$/, '');
   return /^\/(p|reel|tv)\/[^/]+/.test(path);
 }
 
+function hostMatches(url, rootHost) {
+  const host = url.hostname.toLowerCase();
+  return host === rootHost || host.endsWith(`.${rootHost}`);
+}
+
+/** Non-homepage HTTPS path on an allowed brand storefront host. */
+export function isBrandStorefrontItemUrl(url, rootHosts) {
+  if (!rootHosts.some((h) => hostMatches(url, h))) return false;
+  const path = url.pathname.replace(/\/+$/, '');
+  if (!path) return false;
+  if (/^\/(us|en|zh|sg|my|jp|hk|tw)?$/i.test(path)) return false;
+  return true;
+}
+
+export function isTntSpaceItemUrl(url) {
+  return isBrandStorefrontItemUrl(url, ['tntspace.com']);
+}
+
+export function isTopToyItemUrl(url) {
+  return isBrandStorefrontItemUrl(url, ['gotoptoy.com', 'toptoyglobal.com']);
+}
+
+export function isSonnyAngelItemUrl(url) {
+  return isBrandStorefrontItemUrl(url, [
+    'sonnyangel.com',
+    'sonnyangelstore.com',
+  ]);
+}
+
+const KNOWN_OFFICIAL_FEED_SOURCES = new Set([
+  'popmart_us',
+  'tntspace_us',
+  'toptoy_us',
+  'sonnyangel_us',
+]);
+
 /**
  * Valid tap-through destination for an official feed card.
- * POP MART US pages when available; otherwise official Instagram posts.
  * @param {URL} url
+ * @param {string} [sourceId]
  */
-export function isValidOfficialFeedDestinationUrl(url) {
-  return isPopMartUsItemUrl(url) || isOfficialInstagramPostUrl(url);
+export function isValidOfficialFeedDestinationUrl(url, sourceId = 'popmart_us') {
+  if (!KNOWN_OFFICIAL_FEED_SOURCES.has(sourceId)) return false;
+  if (isOfficialInstagramPostUrl(url)) return true;
+  switch (sourceId) {
+    case 'tntspace_us':
+      return isTntSpaceItemUrl(url);
+    case 'toptoy_us':
+      return isTopToyItemUrl(url);
+    case 'sonnyangel_us':
+      return isSonnyAngelItemUrl(url);
+    case 'popmart_us':
+      return isPopMartUsItemUrl(url);
+    default:
+      return false;
+  }
 }
 
 /** First segment after `/us/products/` must be numeric spuId (not a title slug). */
@@ -290,8 +339,10 @@ export function validateOfficialFeedSeed(seed) {
 
   const sourceId = seed?.sourceId?.trim();
   if (!sourceId) errors.push('Missing sourceId.');
-  if (sourceId && sourceId !== 'popmart_us') {
-    warnings.push(`Unexpected sourceId "${sourceId}" (Phase 1 expects popmart_us).`);
+  if (sourceId && !KNOWN_OFFICIAL_FEED_SOURCES.has(sourceId)) {
+    errors.push(
+      `Unknown sourceId "${sourceId}" (expected popmart_us | tntspace_us | toptoy_us | sonnyangel_us).`,
+    );
   }
 
   const items = seed?.items;
@@ -377,20 +428,24 @@ export function validateOfficialFeedSeed(seed) {
     if (!officialParsed) {
       errors.push(`${label}: officialUrl must be a valid https URL.`);
     } else {
-      if (!isValidOfficialFeedDestinationUrl(officialParsed)) {
+      if (!isValidOfficialFeedDestinationUrl(officialParsed, sourceId)) {
         const slugOnly =
+          sourceId === 'popmart_us' &&
           officialParsed.pathname.startsWith('/us/products/') &&
           !isPopMartUsNumericProductUrl(officialParsed);
         errors.push(
           slugOnly
             ? `${label}: officialUrl must use a numeric POP MART product id (/us/products/{id}/slug) — do not invent slug-only paths (${officialUrl}).`
-            : `${label}: officialUrl must be a POP MART US product/POP NOW/collection page or an official Instagram post — not the homepage (${officialUrl}).`,
+            : `${label}: officialUrl must be a valid destination for sourceId "${sourceId}" (${officialUrl}).`,
         );
       }
       const productId = item?.productId?.trim();
       const urlProductId = productIdFromOfficialUrl(officialUrl);
 
-      if (officialParsed?.pathname.startsWith('/us/products/')) {
+      if (
+        sourceId === 'popmart_us' &&
+        officialParsed?.pathname.startsWith('/us/products/')
+      ) {
         if (productId && urlProductId && productId !== urlProductId) {
           errors.push(
             `${label}: productId "${productId}" does not match officialUrl id "${urlProductId}".`,
@@ -407,6 +462,19 @@ export function validateOfficialFeedSeed(seed) {
       } else seenOfficial.add(officialUrl);
     }
 
+    const instagramUrlRaw = item?.instagramUrl;
+    if (instagramUrlRaw != null && String(instagramUrlRaw).trim() !== '') {
+      const instagramUrl = String(instagramUrlRaw).trim();
+      const igParsed = parseHttpsUrl(instagramUrl);
+      if (!igParsed) {
+        errors.push(`${label}: instagramUrl must be a valid https URL.`);
+      } else if (!isOfficialInstagramPostUrl(igParsed)) {
+        errors.push(
+          `${label}: instagramUrl must be an official Instagram /p|/reel|/tv post (${instagramUrl}).`,
+        );
+      }
+    }
+
     if (!publishedAt || Number.isNaN(Date.parse(publishedAt))) {
       errors.push(`${label}: publishedAt must be ISO-8601 UTC.`);
     }
@@ -417,4 +485,31 @@ export function validateOfficialFeedSeed(seed) {
   }
 
   return { ok: errors.length === 0, errors, warnings };
+}
+
+/**
+ * Rejects the same feed `id` appearing in more than one curated seed.
+ * @param {Array<{ path?: string, seed: unknown }>} seeds
+ * @returns {{ ok: boolean, errors: string[] }}
+ */
+export function validateOfficialFeedSeedsNoDuplicateIds(seeds) {
+  const errors = [];
+  const seen = new Map();
+  for (const entry of seeds) {
+    const label = entry.path ?? entry.seed?.sourceId ?? 'seed';
+    const items = entry.seed?.items;
+    if (!Array.isArray(items)) continue;
+    for (const item of items) {
+      const id = item?.id?.trim();
+      if (!id) continue;
+      if (seen.has(id)) {
+        errors.push(
+          `duplicate feed id "${id}" across seeds (${seen.get(id)} and ${label})`,
+        );
+      } else {
+        seen.set(id, label);
+      }
+    }
+  }
+  return { ok: errors.length === 0, errors };
 }

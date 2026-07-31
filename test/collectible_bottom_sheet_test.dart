@@ -73,4 +73,62 @@ void main() {
       expect(find.text('Sheet body'), findsNothing);
     },
   );
+
+  testWidgets('showCollectibleBottomSheet wrapContentHeight sizes to child', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Builder(
+          builder: (context) {
+            return Scaffold(
+              body: Center(
+                child: FilledButton(
+                  onPressed: () {
+                    showCollectibleBottomSheet<void>(
+                      context: context,
+                      wrapContentHeight: true,
+                      builder: (ctx, scroll) => ListView(
+                        controller: scroll,
+                        shrinkWrap: true,
+                        children: const [
+                          SizedBox(height: 80, child: Text('Short sheet')),
+                        ],
+                      ),
+                    );
+                  },
+                  child: const Text('Open'),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    expect(find.text('Short sheet'), findsOneWidget);
+    final sheet = tester.getSize(
+      find.ancestor(
+        of: find.text('Short sheet'),
+        matching: find.byType(ListView),
+      ),
+    );
+    expect(sheet.height, lessThan(tester.view.physicalSize.height * 0.4));
+    expect(sheet.height, lessThanOrEqualTo(80 + 1));
+
+    // Route Material must size to content — not fill the screen (which leaves
+    // the drag handle floating mid-viewport above empty sheet surface).
+    final material = tester.getSize(
+      find
+          .ancestor(
+            of: find.text('Short sheet'),
+            matching: find.byType(Material),
+          )
+          .first,
+    );
+    expect(material.height, lessThan(tester.view.physicalSize.height * 0.5));
+  });
 }

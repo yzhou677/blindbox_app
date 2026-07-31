@@ -1,5 +1,6 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_radii.dart';
+import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
@@ -312,7 +313,9 @@ class _ForYouLoadedRail extends StatelessWidget {
           SizedBox(
             height: FeedRhythm.marketChasersRailHeight,
             child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.pageHorizontal,
+              ),
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),
               itemCount: items.length,
@@ -397,7 +400,9 @@ class _ForYouLoadingRail extends StatelessWidget {
         SizedBox(
           height: FeedRhythm.marketChasersRailHeight,
           child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.pageHorizontal,
+            ),
             scrollDirection: Axis.horizontal,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: 3,

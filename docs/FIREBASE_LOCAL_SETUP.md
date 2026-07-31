@@ -11,7 +11,7 @@ Client config files are **gitignored** so API keys are not pushed to GitHub. Eac
 | Service | Used? | Role |
 |---------|-------|------|
 | **Firebase Core** | Yes | `ensureFirebaseInitialized()` in `main.dart` |
-| **Cloud Firestore** | Yes | Catalog (`brands`, `ips`, `series`, `figures`); Discover official feed (`official_feed_items`) |
+| **Cloud Firestore** | Yes | Catalog (`brands`, `ips`, `series`, `figures`); Discover Official feeds (`official_feed_items` — POP MART / TNT SPACE / TOP TOY); IP introductions (`ip_profiles`) |
 | **Cloud Storage** | Yes | Catalog art at `catalog/series/*`, `catalog/figures/*` via `getDownloadURL()` |
 | **Cloud Functions (market)** | Yes (HTTPS) | Client calls `GET …/market/v1/browse` via `http` — **not** `firebase_functions` SDK |
 | Firebase Authentication | No | — |
@@ -127,7 +127,7 @@ Never commit `*-firebase-adminsdk-*.json` or service account keys — patterns a
 
 Baseline rules live at repo root: `firestore.rules`, `storage.rules` (wired via `firebase.json.example` → local `firebase.json`).
 
-- **Client:** read-only `brands` / `ips` / `series` / `figures` / `official_feed_items`; read-only `catalog/**` Storage; no client writes.
+- **Client:** read-only `brands` / `ips` / `series` / `figures` / `official_feed_items` / `ip_profiles`; read-only `catalog/**` Storage; no client writes.
 - **Ingestion:** `tools/official_feed/push_official_feed.mjs` and external catalog pipelines must use **Admin SDK** or service account (bypass client rules).
 
 Deploy only after staging validation (from repo root; local `firebase.json` required — see above):
@@ -156,7 +156,7 @@ Use this before tagging a production Android release. **Do not treat generic Fir
 
 Confirm live in Firebase Console / deploy logs — **not** merely present in git:
 
-- [ ] **Firestore rules** deployed (`firestore.rules` — public read on catalog + `official_feed_items`)
+- [ ] **Firestore rules** deployed (`firestore.rules` — public read on catalog + `official_feed_items` + `ip_profiles`)
 - [ ] **Storage rules** deployed (`storage.rules` — public read on `catalog/**`)
 - [ ] **Firestore indexes** deployed (`firestore.indexes.json` — composite index for `official_feed_items` query)
 - [ ] **Market Cloud Function** deployed (`functions:market`) with live eBay credentials if Market tab should show live listings — see [`EBAY_GATEWAY.md`](EBAY_GATEWAY.md)
@@ -173,7 +173,7 @@ npx --prefix functions firebase deploy --only functions:market:subjectLocatorV1 
 ### Post-deploy smoke (device or staging build)
 
 - [ ] Cold launch online: catalog loads or persisted cache + background refresh (`CatalogBundleCache: refresh source=firestore`)
-- [ ] Discover official feed: loads or empty gracefully (no `permission-denied`; index missing shows as empty feed, not crash)
+- [ ] Discover Official feeds: loads curated brands or empty gracefully (no `permission-denied`; missing index shows as empty feed, not crash)
 - [ ] Catalog images: Storage objects resolve or placeholder after bundled/disk miss
 - [ ] Market tab (if gateway enabled): listings load or empty state with gateway errors only in logs
 

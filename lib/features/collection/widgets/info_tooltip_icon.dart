@@ -10,11 +10,24 @@ class InfoTooltipIcon extends StatefulWidget {
     required this.message,
     required this.color,
     this.size = 14,
+    this.semanticLabel = 'More information',
+    this.minTapExtent,
+    this.tapAlignment = Alignment.center,
   });
 
   final String message;
   final Color color;
   final double size;
+
+  /// Accessibility label for the info control (distinct from [message]).
+  final String semanticLabel;
+
+  /// When set, expands the hit target to at least this square extent.
+  final double? minTapExtent;
+
+  /// Where the glyph sits inside [minTapExtent] (e.g. [Alignment.centerLeft]
+  /// to sit flush beside a label while the tap area extends outward).
+  final AlignmentGeometry tapAlignment;
 
   @override
   State<InfoTooltipIcon> createState() => _InfoTooltipIconState();
@@ -96,18 +109,37 @@ class _InfoTooltipIconState extends State<InfoTooltipIcon> {
     final textScale = MediaQuery.textScalerOf(context);
     final screenSize = media.size;
     const margin = 16.0;
+    const bubblePadH = 15.0 * 2;
+    const bubblePadV = 13.0 * 2;
+    const arrowExtent = 10.0;
     final availableWidth = math.max(0.0, screenSize.width - margin * 2);
-    final width = availableWidth < 240
+    final maxBubbleWidth = availableWidth < 240
         ? availableWidth
-        : math.min(300.0, availableWidth);
+        : math.min(280.0, availableWidth);
+
+    final messageStyle =
+        Theme.of(context).textTheme.bodySmall?.copyWith(
+          fontSize: 13,
+          height: 1.38,
+          fontWeight: FontWeight.w400,
+        ) ??
+        const TextStyle(fontSize: 13, height: 1.38);
+    final painter = TextPainter(
+      text: TextSpan(text: widget.message, style: messageStyle),
+      textDirection: Directionality.of(context),
+      textScaler: textScale,
+    )..layout(maxWidth: math.max(0.0, maxBubbleWidth - bubblePadH));
+
+    // Size the overlay to the message — avoid a large empty bubble.
+    final width = (painter.width + bubblePadH)
+        .clamp(math.min(160.0, maxBubbleWidth), maxBubbleWidth)
+        .toDouble();
     final left = (iconRect.center.dx - width / 2)
         .clamp(margin, screenSize.width - width - margin)
         .toDouble();
     const gap = 9.0;
     final bottomLimit = screenSize.height - media.padding.bottom - 24;
-    final estimatedHeight = (112.0 * textScale.scale(1))
-        .clamp(98.0, 184.0)
-        .toDouble();
+    final estimatedHeight = painter.height + bubblePadV + arrowExtent + gap;
     final topBelow = iconRect.bottom + gap;
     final placeAbove = topBelow + estimatedHeight > bottomLimit;
     final top = placeAbove
@@ -165,23 +197,65 @@ class _InfoTooltipIconState extends State<InfoTooltipIcon> {
 
   @override
   Widget build(BuildContext context) {
+    final minExtent = widget.minTapExtent;
+    final icon = Padding(
+      padding: const EdgeInsets.all(3),
+      child: Icon(Symbols.info_rounded, size: widget.size, color: widget.color),
+    );
+
     return Semantics(
       key: ValueKey<String>('info-tooltip-${widget.message}'),
       button: true,
       tooltip: widget.message,
-      label: 'More information',
+      label: widget.semanticLabel,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: _toggle,
-        child: Padding(
-          padding: const EdgeInsets.all(3),
-          child: Icon(
-            Symbols.info_rounded,
-            size: widget.size,
-            color: widget.color,
-          ),
-        ),
+        child: minExtent == null
+            ? icon
+            : _MinTapTarget(
+                minExtent: minExtent,
+                alignment: widget.tapAlignment,
+                child: icon,
+              ),
       ),
+    );
+  }
+}
+
+/// Ensures a [minExtent] hit width/height when needed.
+///
+/// Horizontal-biased alignments ([Alignment.centerLeft] / [Alignment.centerRight])
+/// only force width so dense meta rows are not padded by empty vertical tap
+/// chrome; the glyph height remains the layout height.
+class _MinTapTarget extends StatelessWidget {
+  const _MinTapTarget({
+    required this.minExtent,
+    required this.alignment,
+    required this.child,
+  });
+
+  final double minExtent;
+  final AlignmentGeometry alignment;
+  final Widget child;
+
+  bool get _layoutFollowsGlyph {
+    final resolved = alignment.resolve(null);
+    return resolved.x.abs() > 0.01 && resolved.y.abs() < 0.01;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_layoutFollowsGlyph) {
+      return SizedBox(
+        width: minExtent,
+        child: Align(alignment: alignment, child: child),
+      );
+    }
+    return SizedBox(
+      width: minExtent,
+      height: minExtent,
+      child: Align(alignment: alignment, child: child),
     );
   }
 }

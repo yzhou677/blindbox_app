@@ -154,6 +154,7 @@ Future<_FigureEditTestNotifier> _pumpEditForm(
                         String? ipDisplayName,
                         String? customCoverImageUri,
                         String? notes,
+                        String? releaseDate,
                       }) {},
                   onFigureSubmit:
                       ({

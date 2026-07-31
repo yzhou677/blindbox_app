@@ -1,6 +1,8 @@
 import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_shelf_card_content.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_series_card.dart';
 import 'package:flutter/material.dart';
 
@@ -16,6 +18,8 @@ class CollectionShelfSeriesRail extends StatelessWidget {
     required this.progress,
     required this.onOpen,
     this.onManage,
+    this.cardContent = CollectionShelfCardContentSelection.empty,
+    this.catalog,
   });
 
   final List<ShelfSeries> series;
@@ -25,13 +29,18 @@ class CollectionShelfSeriesRail extends StatelessWidget {
 
   /// Long-press management (edit/remove). Omit on read-only rails.
   final Future<void> Function(ShelfSeries series)? onManage;
+  final CollectionShelfCardContentSelection cardContent;
+  final CatalogSeedBundle? catalog;
 
   @override
   Widget build(BuildContext context) {
     if (series.isEmpty) return const SizedBox.shrink();
 
     return SizedBox(
-      height: CollectionSeriesCard.railExtent,
+      height: CollectionSeriesCard.railExtentOf(
+        context,
+        metaLineCount: cardContent.ordered.length.clamp(0, 2),
+      ),
       child: ListView.separated(
         key: const Key('collection_shelf_series_rail'),
         padding: const EdgeInsets.symmetric(
@@ -49,6 +58,8 @@ class CollectionShelfSeriesRail extends StatelessWidget {
             series: row,
             progress: progress.forSeries(row),
             figureStates: figureStates,
+            cardContent: cardContent,
+            catalog: catalog,
             onTap: () => onOpen(row),
             onLongPress: onManage == null ? null : () => onManage!(row),
           );

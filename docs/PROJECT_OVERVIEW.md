@@ -33,21 +33,23 @@ The goal is to help users:
 
 ## 1. Discover (Home)
 
-A visual discovery surface built on the **read-only catalog universe** (Firestore `brands` / `ips` / `series` / `figures`).
+A visual discovery surface built on the **read-only catalog universe** (Firestore `brands` / `ips` / `series` / `figures`), plus a separate **Official feeds** rail.
 
-Each release-style row includes:
+Each release-style catalog row includes:
 - image (`imageKey` → resolver)
 - name
 - series
 - brand
 - release date
 
+**Official feeds** (Firestore `official_feed_items`) show curated brand announcements for **POP MART**, **TNT SPACE**, **TOP TOY**, and **Sonny Angel** (chips when two or more sources have displayable items). Dates are Instagram announcement times (`via IG`); taps open a validated product page or Instagram post. See [`lib/features/official_feed/FIRESTORE_OFFICIAL_FEED_SCHEMA.md`](../lib/features/official_feed/FIRESTORE_OFFICIAL_FEED_SCHEMA.md).
+
 UI style:
 - large image cards
 - rounded corners
 - soft shadows
 - modern minimal spacing
-- horizontal scrolling sections (latest releases, official drops, trending)
+- horizontal scrolling sections (latest releases, trending) plus the Official feeds list
 
 Catalog runtime:
 - Firestore is authoritative at runtime; a persisted disk cache provides offline baseline after first successful sync
@@ -160,10 +162,14 @@ SharedPreferences (collection snapshot codec)
 Firebase Firestore + Storage for read-only catalog metadata and art resolution — not shelf sync
 
 ## Networking
-`http` package — eBay gateway client in `features/market/data/`; Firebase Functions for market gateway
+`http` package — eBay gateway client in `features/market/data/`; Firebase Functions for market gateway  
+`connectivity_plus` — single app-scoped offline→online / resume recovery (`lib/core/network/`) that reuses Discover refresh (catalog + official feed + IP soft-revalidation)
 
 ## Image Caching
 cached_network_image; catalog art via `CatalogImageResolver` (`imageKey` only in UI)
+
+## IP introduction cache
+Process-local structured cache for Firestore `ip_profiles/{ipId}` (7-day success TTL, short confirmed-missing TTL, 3-attempt transient retry). See [`ARCHITECTURE_NOTES.md`](./ARCHITECTURE_NOTES.md) § IP introduction profiles.
 
 ---
 
@@ -173,8 +179,8 @@ Current folder structure:
 
 ```text
 lib/
-  core/           # router, theme, layout, Firebase init
-  features/       # catalog, collection, home, market (primary slices)
+  core/           # router, theme, layout, Firebase init, network recovery
+  features/       # catalog, collection, home, market, ip_profile, …
   models/         # legacy shared presentation models (frozen)
   shared/widgets/ # cross-feature UI only
 ```

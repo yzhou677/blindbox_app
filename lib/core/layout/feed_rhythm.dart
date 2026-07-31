@@ -86,7 +86,20 @@ abstract final class FeedRhythm {
 
   /// Compact official updates feed (stacked post tiles).
   static const double homeOfficialFeedThumbnailExtent = 72;
-  static const double homeOfficialFeedPostGap = 10;
+  static const double homeOfficialFeedPostGap = 12;
+
+  /// Card inset — slightly airier than the prior 11/10 stack.
+  static const double homeOfficialFeedCardPaddingH = 14;
+  static const double homeOfficialFeedCardPaddingV = 14;
+
+  /// Vertical gaps inside an Official feed card (metadata → tags → body → CTA).
+  static const double homeOfficialFeedCardSectionGap = 10;
+  static const double homeOfficialFeedCardMetaToTagsGap = 8;
+  static const double homeOfficialFeedCardTitleToSummaryGap = 5;
+
+  /// Extra air after the last Official feed card before tab scroll tail /
+  /// bottom navigation so the final card never feels clipped.
+  static const double homeOfficialFeedListBottomPadding = 24;
 
   /// Square series thumb on shelf cards (browse / recognition).
   static const double collectionShelfThumbnailExtent = 88;
@@ -209,9 +222,28 @@ abstract final class FeedRhythm {
   static const double sheetHorizontal = 16;
   static const double sheetChromeTop = 10;
   static const double sheetHeaderAfterHandle = 16;
-  static const double sheetBodyBottomInset = 14;
-  static const double sheetEditorialBlockGap = 10;
-  static const double sheetSectionGap = 18;
+
+  /// Gap from sheet title block to the first body section.
+  static const double sheetTitleToBody = 20;
+
+  /// Bottom inset inside the scroll body (above a sticky footer, if any).
+  static const double sheetBodyBottomInset = 24;
+
+  /// Editorial subtitle / meta under a sheet title.
+  static const double sheetEditorialBlockGap = 8;
+
+  /// Major section breaks inside sheet bodies (Progress → Attributes → Metadata).
+  static const double sheetSectionGap = 24;
+
+  /// Section label → first control / chip row.
+  static const double sheetLabelToControl = 12;
+
+  /// Related controls / chip wrap gaps.
+  static const double sheetControlGap = 8;
+
+  /// Sticky sheet footer vertical padding (above safe area).
+  static const double sheetFooterVertical = 12;
+
   static const double sheetFigureRailGap = 14;
 
   // —— Detail / hero editorial rhythm (post–Phase 6 density pass) ——

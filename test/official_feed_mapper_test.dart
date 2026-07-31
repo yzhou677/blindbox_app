@@ -127,4 +127,72 @@ void main() {
       isNull,
     );
   });
+
+  test(
+    'mapOfficialFeedItem rejects unknown brands even with Instagram urls',
+    () {
+      expect(
+        mapOfficialFeedItem('x', {
+          'id': 'evil_1',
+          'sourceId': 'unknown_brand',
+          'sourceLabel': 'Evil Co',
+          'title': 'Spoof',
+          'imageUrl': 'https://cdn.example.com/a.png',
+          'officialUrl': 'https://www.instagram.com/p/DZbgLVcDIDW/',
+          'publishedAt': Timestamp.fromDate(DateTime.utc(2026, 5, 18, 10)),
+          'status': 'active',
+          'contentHash': 'abc',
+        }),
+        isNull,
+      );
+      expect(
+        isValidOfficialFeedDestination(
+          Uri.parse('https://www.instagram.com/p/DZbgLVcDIDW/'),
+          'unknown_brand',
+        ),
+        isFalse,
+      );
+    },
+  );
+
+  test('mapOfficialFeedItem rejects unsupported Instagram paths', () {
+    expect(
+      mapOfficialFeedItem(
+        'x',
+        _activeDoc(
+          imageUrl: 'https://cdn.example.com/a.png',
+          officialUrl: 'https://www.instagram.com/stories/popmart/123',
+        ),
+      ),
+      isNull,
+    );
+    expect(
+      mapOfficialFeedItem(
+        'x',
+        _activeDoc(
+          imageUrl: 'https://cdn.example.com/a.png',
+          officialUrl: 'https://www.instagram.com/popmart/',
+        ),
+      ),
+      isNull,
+    );
+  });
+
+  test('mapOfficialFeedItem keeps sourceLabel from the document', () {
+    final item = mapOfficialFeedItem('tnt', {
+      'id': 'tnt_1',
+      'sourceId': 'tntspace_us',
+      'sourceLabel': 'TNT SPACE',
+      'title': 'Mowdo',
+      'imageUrl': 'https://cdn.example.com/a.png',
+      'officialUrl': 'https://www.instagram.com/p/DbSjwQwihMe/',
+      'publishedAt': Timestamp.fromDate(DateTime.utc(2026, 7, 27)),
+      'status': 'active',
+      'contentHash': 'h',
+    });
+    expect(item, isNotNull);
+    expect(item!.sourceId, 'tntspace_us');
+    expect(item.sourceLabel, 'TNT SPACE');
+    expect(item.sourceLabel, isNot(contains('POP MART')));
+  });
 }

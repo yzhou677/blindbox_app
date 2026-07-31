@@ -1,13 +1,16 @@
 import 'dart:async';
 
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
+import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/domain/series_completion_resolution.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_card_tokens.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_series_thumbnail.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_shelf_card_content.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_browse_card.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_progress_voice.dart';
+import 'package:blindbox_app/features/collection/widgets/collection_series_card_content_meta.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -47,6 +50,8 @@ class CollectionSeriesCard extends StatefulWidget {
     this.onLongPress,
     this.density = CollectionSeriesCardDensity.standard,
     this.overlayBuilder,
+    this.cardContent = CollectionShelfCardContentSelection.empty,
+    this.catalog,
   });
 
   final ShelfSeries series;
@@ -59,17 +64,45 @@ class CollectionSeriesCard extends StatefulWidget {
   final CollectionSeriesCardDensity density;
   final WidgetBuilder? overlayBuilder;
 
+  /// Optional Card Content prefs shared by every layout (default: none).
+  final CollectionShelfCardContentSelection cardContent;
+
+  /// Catalog bundle for U.S. release-date resolution.
+  final CatalogSeedBundle? catalog;
+
   /// Cross-axis extent for horizontal rails — sized by the card tokens.
   static double get railExtent =>
       railExtentFor(CollectionSeriesCardDensity.standard);
 
-  static double railExtentFor(CollectionSeriesCardDensity density) {
+  static double railExtentFor(
+    CollectionSeriesCardDensity density, {
+    TextScaler textScaler = TextScaler.noScaling,
+    int metaLineCount = 0,
+  }) {
     return switch (density) {
       CollectionSeriesCardDensity.standard =>
-        CollectionCardTokens.minRailHeight,
+        CollectionCardTokens.minRailHeightFor(
+          textScaler,
+          metaLineCount: metaLineCount,
+        ),
       CollectionSeriesCardDensity.compact =>
-        CollectionCardTokens.compactMinRailHeight,
+        CollectionCardTokens.compactMinRailHeightFor(
+          textScaler,
+          metaLineCount: metaLineCount,
+        ),
     };
+  }
+
+  static double railExtentOf(
+    BuildContext context, {
+    CollectionSeriesCardDensity density = CollectionSeriesCardDensity.standard,
+    int metaLineCount = 0,
+  }) {
+    return railExtentFor(
+      density,
+      textScaler: MediaQuery.textScalerOf(context),
+      metaLineCount: metaLineCount,
+    );
   }
 
   @override
@@ -116,10 +149,13 @@ class _CollectionSeriesCardState extends State<CollectionSeriesCard> {
     final isComplete = resolution.isCompleted;
     final isMasterComplete = resolution.isMasterComplete;
     final ratio = resolution.progressRatio.clamp(0.0, 1.0);
-    final ip = shelfSeriesIpLabel(series).trim();
-    final meta = ip.isNotEmpty
-        ? ip
-        : (series.brand.trim().isNotEmpty ? series.brand.trim() : '');
+    final lines = resolveCardContentLines(
+      widget.cardContent,
+      series,
+      figureStates,
+      catalog: widget.catalog,
+      progress: progress,
+    );
     final progressLabel = CollectionProgressVoice.seriesStatPrimaryLine(
       series: series,
       progress: progress,
@@ -129,9 +165,17 @@ class _CollectionSeriesCardState extends State<CollectionSeriesCard> {
     final width = _compact
         ? CollectionCardTokens.compactWidth
         : CollectionCardTokens.width;
+    final textScaler = MediaQuery.textScalerOf(context);
+    final metaLineCount = widget.cardContent.ordered.length.clamp(0, 2);
     final height = _compact
-        ? CollectionCardTokens.compactMinRailHeight
-        : CollectionCardTokens.minRailHeight;
+        ? CollectionCardTokens.compactMinRailHeightFor(
+            textScaler,
+            metaLineCount: metaLineCount,
+          )
+        : CollectionCardTokens.minRailHeightFor(
+            textScaler,
+            metaLineCount: metaLineCount,
+          );
     final padding = _compact
         ? CollectionCardTokens.compactPadding
         : CollectionCardTokens.padding;
@@ -173,7 +217,9 @@ class _CollectionSeriesCardState extends State<CollectionSeriesCard> {
       child: CollectionBrowseCard(
         key: const Key('collection_series_card'),
         title: series.name,
-        subtitle: meta,
+        meta: lines.isEmpty
+            ? null
+            : CollectionSeriesCardContentMeta(lines: lines, compact: _compact),
         titleMaxLines: _compact ? 1 : 2,
         titleStyle:
             CollectibleTypography.catalogSeriesRowTitle(
@@ -183,10 +229,6 @@ class _CollectionSeriesCardState extends State<CollectionSeriesCard> {
               fontSize: _compact ? 13 : null,
               height: _compact ? 1.2 : null,
             ),
-        subtitleStyle: CollectibleTypography.seriesIpLine(
-          textTheme,
-          scheme,
-        ).copyWith(fontSize: _compact ? 11 : null),
         image: CollectionSeriesThumbnail(series: series, extent: coverExtent),
         footer: isComplete
             ? _CompletedFooter(
@@ -216,6 +258,8 @@ class _CollectionSeriesCardState extends State<CollectionSeriesCard> {
         imageToTitleGap: imageToTitleGap,
         titleToMetaGap: titleToMetaGap,
         metaToFooterGap: metaToProgressGap,
+        expandBeforeMeta: false,
+        expandBeforeFooter: false,
         borderColor: borderColor,
         showPressedOverlay: _managing,
       ),

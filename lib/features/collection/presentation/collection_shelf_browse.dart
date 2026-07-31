@@ -2,6 +2,8 @@ import 'package:blindbox_app/core/search/search_matcher.dart';
 import 'package:blindbox_app/core/search/search_normalizer.dart';
 import 'package:blindbox_app/core/search/search_tokenizer.dart';
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
+import 'package:blindbox_app/features/catalog/models/catalog_series.dart'
+    as catalog;
 import 'package:blindbox_app/features/catalog/search/catalog_search_service.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/domain/series_completion_resolution.dart';
@@ -10,6 +12,7 @@ import 'package:flutter/foundation.dart';
 /// Display-only sort modes for the Collection shelf browse pipeline.
 enum CollectionShelfSort {
   recentlyAdded,
+  recentlyReleased,
   alphabetical,
   figureCount,
   completion,
@@ -18,9 +21,17 @@ enum CollectionShelfSort {
 extension CollectionShelfSortLabels on CollectionShelfSort {
   String get menuLabel => switch (this) {
     CollectionShelfSort.recentlyAdded => 'Recently Added',
+    CollectionShelfSort.recentlyReleased => 'Recently Released',
     CollectionShelfSort.alphabetical => 'Alphabetical (A–Z)',
     CollectionShelfSort.figureCount => 'Figure Count',
     CollectionShelfSort.completion => 'Completion',
+  };
+
+  /// Spoken / accessibility label — keeps the visible menu short.
+  String get semanticLabel => switch (this) {
+    CollectionShelfSort.recentlyReleased =>
+      'Recently Released, by U.S. release date',
+    _ => menuLabel,
   };
 
   static CollectionShelfSort? tryParse(String? raw) {
@@ -229,6 +240,25 @@ bool isShelfSeriesComplete(
   return resolveSeriesCompletion(series, states).isCompleted;
 }
 
+/// When [hasDuplicatesOnly] is true, keep series with at least one extra copy.
+///
+/// A series matches when [seriesDuplicateCount] > 0. Combines with brand/IP/
+/// search by applying after those facets (AND semantics).
+List<ShelfSeries> shelfSeriesVisibleForDuplicatesFilter(
+  List<ShelfSeries> series,
+  Map<String, TrackedFigure> states, {
+  required bool hasDuplicatesOnly,
+  ShelfBrowseProgressLookup? progress,
+}) {
+  if (!hasDuplicatesOnly) return series;
+  return [
+    for (final row in series)
+      if ((progress?.forSeries(row) ?? progressForSeries(row, states))
+          .hasDuplicates)
+        row,
+  ];
+}
+
 /// Single-pass split into in-progress and completed buckets.
 (List<ShelfSeries> inProgress, List<ShelfSeries> completed)
 partitionShelfSeries(
@@ -287,16 +317,44 @@ double _seriesCompletionRatio(
 /// [CollectionShelfSort.recentlyAdded] preserves shelf traversal order within
 /// the bucket.
 ///
+/// [CollectionShelfSort.recentlyReleased] orders by shelf or catalog release
+/// date (newest first). Series without a parseable release date sort last.
+///
 /// See `docs/COLLECTION_ARCHITECTURE_NOTES.md` → Collection sorting.
 List<ShelfSeries> sortShelfSeriesForDisplay(
   List<ShelfSeries> series,
   CollectionShelfSort sort,
   Map<String, TrackedFigure> states, {
   ShelfBrowseProgressLookup? progress,
+  CatalogSeedBundle? catalog,
+  Map<String, catalog.CatalogSeries>? catalogSeriesById,
 }) {
   switch (sort) {
     case CollectionShelfSort.recentlyAdded:
       return series;
+    case CollectionShelfSort.recentlyReleased:
+      final lookup =
+          catalogSeriesById ??
+          (catalog == null ? null : {for (final s in catalog.series) s.id: s});
+      return List<ShelfSeries>.from(series)..sort((a, b) {
+        final da = catalogReleaseDateForShelfSeries(
+          a,
+          catalogSeriesById: lookup,
+        );
+        final db = catalogReleaseDateForShelfSeries(
+          b,
+          catalogSeriesById: lookup,
+        );
+        if (da != null && db != null) {
+          final byDate = db.compareTo(da);
+          if (byDate != 0) return byDate;
+        } else if (da != null) {
+          return -1;
+        } else if (db != null) {
+          return 1;
+        }
+        return _compareShelfSeriesByNameThenId(a, b);
+      });
     case CollectionShelfSort.alphabetical:
       return List<ShelfSeries>.from(series)
         ..sort(_compareShelfSeriesByNameThenId);
@@ -322,4 +380,39 @@ List<ShelfSeries> sortShelfSeriesForDisplay(
         return _compareShelfSeriesByNameThenId(a, b);
       });
   }
+}
+
+/// Release date for a shelf series: user-authored [ShelfSeries.releaseDate]
+/// first, else official catalog **U.S.** date when joinable.
+DateTime? catalogReleaseDateForShelfSeries(
+  ShelfSeries series, {
+  Map<String, catalog.CatalogSeries>? catalogSeriesById,
+}) {
+  final local = parseCatalogReleaseDate(series.releaseDate);
+  if (local != null) return local;
+  if (catalogSeriesById == null || catalogSeriesById.isEmpty) return null;
+  for (final candidate in shelfCatalogSeriesIdCandidates(series)) {
+    final row = catalogSeriesById[candidate];
+    final parsed = parseCatalogReleaseDate(row?.releaseDate);
+    if (parsed != null) return parsed;
+  }
+  return null;
+}
+
+/// Parses catalog/shelf `releaseDate` (`YYYY-MM-DD` or ISO datetime) as a
+/// date-only day. Returns null for missing or malformed values.
+DateTime? parseCatalogReleaseDate(String? raw) {
+  final trimmed = raw?.trim();
+  if (trimmed == null || trimmed.isEmpty) return null;
+  final parsed = DateTime.tryParse(trimmed);
+  if (parsed == null) return null;
+  return DateTime(parsed.year, parsed.month, parsed.day);
+}
+
+/// Encodes a calendar day as `YYYY-MM-DD` for shelf/catalog release fields.
+String formatIsoDateOnly(DateTime date) {
+  final y = date.year.toString().padLeft(4, '0');
+  final m = date.month.toString().padLeft(2, '0');
+  final d = date.day.toString().padLeft(2, '0');
+  return '$y-$m-$d';
 }

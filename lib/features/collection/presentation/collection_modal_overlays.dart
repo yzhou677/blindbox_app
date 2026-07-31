@@ -115,12 +115,16 @@ Future<T?> showCollectionModalBottomSheet<T>({
   required BuildContext context,
   required CollectibleSheetWidgetBuilder builder,
   double heightFraction = FeedRhythm.sheetAddSeriesOpenScreenFraction,
+  bool wrapContentHeight = false,
+  double contentMaxHeightFraction = FeedRhythm.sheetMaxChildSize,
   Color? backgroundColor,
 }) {
   return showCollectibleBottomSheet<T>(
     context: context,
     useRootNavigator: false,
     heightFraction: heightFraction,
+    wrapContentHeight: wrapContentHeight,
+    contentMaxHeightFraction: contentMaxHeightFraction,
     backgroundColor: backgroundColor,
     builder: builder,
   );

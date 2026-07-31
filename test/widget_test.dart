@@ -10,6 +10,7 @@ import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/home/application/home_feed_provider.dart';
 import 'package:blindbox_app/features/home/data/mock_latest_drops.dart';
 import 'package:blindbox_app/features/official_feed/application/official_feed_providers.dart';
+import 'package:blindbox_app/features/official_feed/domain/official_feed_catalog.dart';
 import 'package:blindbox_app/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,7 +29,9 @@ List<Override> _blindboxTestOverrides() => [
       trending: mockSeriesReleases.skip(1).take(4).toList(growable: false),
     ),
   ),
-  officialFeedListProvider.overrideWith((_) async => const []),
+  officialFeedCatalogProvider.overrideWith(
+    (_) async => OfficialFeedCatalog.empty,
+  ),
   seriesReleaseLookupProvider.overrideWithValue(mockSeriesReleaseByDropId),
 ];
 
@@ -207,7 +210,7 @@ void main() {
     expect(find.text('All Brands'), findsOneWidget);
     expect(find.text('All IPs'), findsOneWidget);
 
-    // Completed series are collapsed by default — expand before asserting card text.
+    // Completed series are collapsed by default ??expand before asserting card text.
     for (var i = 0; i < 4; i++) {
       await tester.drag(
         find.byType(CustomScrollView).first,

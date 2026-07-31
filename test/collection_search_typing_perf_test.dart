@@ -7,7 +7,6 @@ import 'package:blindbox_app/features/collection/application/collection_shelf_ui
 import 'package:blindbox_app/features/collection/collection_screen.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_shelf_browse.dart';
-import 'package:blindbox_app/features/collection/widgets/collection_brand_filter_row.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_page_segment_control.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_wishlist_page.dart';
 import 'package:blindbox_app/shared/widgets/app_search_field.dart';
@@ -313,7 +312,7 @@ void main() {
     expect(SearchCommitPolicy.remote, const Duration(milliseconds: 400));
   });
 
-  testWidgets('Brand chip after committed search does not rerun text search', (
+  testWidgets('Filter after committed search does not rerun text search', (
     tester,
   ) async {
     final snap = CollectionSnapshot(
@@ -355,14 +354,19 @@ void main() {
     CollectionScreen.debugBuildCount = 0;
     ShelfBrowseSearchMatchCache.debugCacheHitCount = 0;
 
-    final topToyChip = find.descendant(
-      of: find.byType(CollectionBrandFilterRow),
-      matching: find.text('TOP TOY'),
-    );
-    expect(topToyChip, findsOneWidget);
-    await tester.ensureVisible(topToyChip);
-    await tester.tap(topToyChip);
+    await tester.tap(find.byKey(const Key('collection_shelf_filters_control')));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('Collection Attributes'), findsOneWidget);
+    await tester.ensureVisible(
+      find.byKey(const Key('filters_sheet_has_duplicates')),
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('filters_sheet_has_duplicates')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('filters_sheet_show_results')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
 
     expect(
       ShelfBrowseSearchMatchCache.debugSearchExecutionCount,
@@ -370,13 +374,17 @@ void main() {
     );
     expect(CollectionScreen.debugBrandFilterCount, greaterThan(0));
     expect(ShelfBrowseSearchMatchCache.debugCacheHitCount, greaterThan(0));
-    // Alpha is POP MART-only; TOP TOY + Alpha search → no results.
-    expect(find.text('No series match your search.'), findsOneWidget);
+    // No owned duplicates in this fixture → filters hide all series.
+    expect(find.text('No series match these filters'), findsOneWidget);
 
     final brandsBeforeReselect = CollectionScreen.debugBrandFilterCount;
     final buildsBeforeReselect = CollectionScreen.debugBuildCount;
-    await tester.tap(topToyChip);
+    await tester.tap(find.byKey(const Key('collection_shelf_filters_control')));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(find.byKey(const Key('filters_sheet_show_results')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
     expect(CollectionScreen.debugBrandFilterCount, brandsBeforeReselect);
     expect(CollectionScreen.debugBuildCount, buildsBeforeReselect);
     expect(

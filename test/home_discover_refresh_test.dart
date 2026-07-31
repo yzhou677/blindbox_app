@@ -2,8 +2,11 @@ import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.d
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/home/application/home_discover_refresh_controller.dart';
 import 'package:blindbox_app/features/home/application/home_feed_provider.dart';
+import 'package:blindbox_app/features/ip_profile/application/ip_profile_providers.dart';
+import 'package:blindbox_app/features/ip_profile/data/ip_profile_repository.dart';
+import 'package:blindbox_app/features/ip_profile/domain/ip_introduction_profile.dart';
 import 'package:blindbox_app/features/official_feed/application/official_feed_providers.dart';
-import 'package:blindbox_app/features/official_feed/domain/official_feed_item.dart';
+import 'package:blindbox_app/features/official_feed/domain/official_feed_catalog.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -36,10 +39,13 @@ void main() {
 
       final container = ProviderContainer(
         overrides: [
-          officialFeedListProvider.overrideWith((ref) async {
+          officialFeedCatalogProvider.overrideWith((ref) async {
             officialFeedLoadCount++;
-            return const <OfficialFeedItem>[];
+            return OfficialFeedCatalog.empty;
           }),
+          ipProfileRepositoryProvider.overrideWithValue(
+            MemoryIpProfileRepository(),
+          ),
         ],
       );
       addTearDown(container.dispose);
@@ -79,10 +85,13 @@ void main() {
 
       final container = ProviderContainer(
         overrides: [
-          officialFeedListProvider.overrideWith((ref) async {
+          officialFeedCatalogProvider.overrideWith((ref) async {
             officialFeedLoadCount++;
-            return const <OfficialFeedItem>[];
+            return OfficialFeedCatalog.empty;
           }),
+          ipProfileRepositoryProvider.overrideWithValue(
+            MemoryIpProfileRepository(),
+          ),
         ],
       );
       addTearDown(container.dispose);
@@ -108,11 +117,16 @@ void main() {
 
       final container = ProviderContainer(
         overrides: [
-          officialFeedListProvider.overrideWith((_) async => const []),
+          officialFeedCatalogProvider.overrideWith(
+            (_) async => OfficialFeedCatalog.empty,
+          ),
           homeFeedSnapshotProvider.overrideWith((ref) async {
             homeFeedLoadCount++;
             return const HomeFeedSnapshot(latest: [], trending: []);
           }),
+          ipProfileRepositoryProvider.overrideWithValue(
+            MemoryIpProfileRepository(),
+          ),
         ],
       );
       addTearDown(container.dispose);
@@ -145,7 +159,12 @@ void main() {
 
       final container = ProviderContainer(
         overrides: [
-          officialFeedListProvider.overrideWith((_) async => const []),
+          officialFeedCatalogProvider.overrideWith(
+            (_) async => OfficialFeedCatalog.empty,
+          ),
+          ipProfileRepositoryProvider.overrideWithValue(
+            MemoryIpProfileRepository(),
+          ),
         ],
       );
       addTearDown(container.dispose);
@@ -159,6 +178,50 @@ void main() {
 
       expect(catalogRefreshCount, 1);
       expect(container.read(homeDiscoverRefreshProvider), isFalse);
+    },
+  );
+
+  test(
+    'Discover pull-to-refresh prepares IP revalidation without eager fetches',
+    () async {
+      final repo = MemoryIpProfileRepository({
+        'molly': const IpIntroductionProfile(
+          ipId: 'molly',
+          displayName: 'MOLLY',
+          shortDescription: 'Desc',
+          styleTags: ['A', 'B', 'C'],
+        ),
+        'hirono': const IpIntroductionProfile(
+          ipId: 'hirono',
+          displayName: 'Hirono',
+          shortDescription: 'Desc',
+          styleTags: ['A', 'B', 'C'],
+        ),
+      });
+
+      CatalogBundleCache.prime(
+        const CatalogSeedBundle(brands: [], ips: [], series: [], figures: []),
+      );
+      CatalogBundleCache.loadFirestoreOverride = () async =>
+          const CatalogSeedBundle(brands: [], ips: [], series: [], figures: []);
+
+      final container = ProviderContainer(
+        overrides: [
+          officialFeedCatalogProvider.overrideWith(
+            (_) async => OfficialFeedCatalog.empty,
+          ),
+          ipProfileRepositoryProvider.overrideWithValue(repo),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final before = container.read(ipProfileRevalidationEpochProvider);
+      await container.read(homeDiscoverRefreshProvider.notifier).refresh();
+
+      expect(repo.debugRevalidatePending, isTrue);
+      expect(container.read(ipProfileRevalidationEpochProvider), before + 1);
+      // Memory repo is not auto-fetched for every cached IP.
+      expect(repo.requestedIds, isEmpty);
     },
   );
 }

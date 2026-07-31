@@ -125,6 +125,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
         figureId: figureId,
         state: nextState,
         updatedAtMicros: DateTime.now().microsecondsSinceEpoch,
+        ownedQuantity: nextState == FigureCollectionState.owned ? 1 : null,
       );
     }
     _commit(state.copyWith(figureStates: m));
@@ -169,12 +170,46 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
         figureId: figureId,
         state: FigureCollectionState.owned,
         updatedAtMicros: DateTime.now().microsecondsSinceEpoch,
+        ownedQuantity: 1,
       );
     } else {
       if (!current.owned) return;
       next.remove(figureId);
     }
     _commit(state.copyWith(figureStates: next));
+  }
+
+  /// Sets how many copies are owned for [figureId].
+  ///
+  /// - `quantity <= 0` clears ownership (same as remove-from-owned).
+  /// - `quantity >= 1` marks owned with that quantity (minimum 1 when owned).
+  /// Quantity never goes negative.
+  void setFigureOwnedQuantity(String figureId, int quantity) {
+    if (!_figureOnShelf(figureId)) return;
+    final q = quantity < 0 ? 0 : quantity;
+    final current = state.trackedOrDefault(figureId);
+    final next = Map<String, TrackedFigure>.from(state.figureStates);
+    if (q == 0) {
+      if (!current.owned) return;
+      next.remove(figureId);
+      _commit(state.copyWith(figureStates: next));
+      return;
+    }
+    if (current.owned && current.ownedQuantity == q) return;
+    next[figureId] = TrackedFigure(
+      figureId: figureId,
+      state: FigureCollectionState.owned,
+      updatedAtMicros: DateTime.now().microsecondsSinceEpoch,
+      ownedQuantity: q,
+    );
+    _commit(state.copyWith(figureStates: next));
+  }
+
+  /// Increments/decrements owned quantity by [delta] (clamped at 0).
+  void adjustFigureOwnedQuantity(String figureId, int delta) {
+    if (delta == 0 || !_figureOnShelf(figureId)) return;
+    final current = state.trackedOrDefault(figureId).ownedQuantity;
+    setFigureOwnedQuantity(figureId, current + delta);
   }
 
   void addSeriesToWishlist(CatalogSeries template, {int? addedAtMicros}) {
@@ -411,6 +446,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
     required List<CustomFigureDraft> figures,
     String? customCoverImageUri,
     String? notes,
+    String? releaseDate,
   }) {
     final seriesId = 'custom-${DateTime.now().microsecondsSinceEpoch}';
     const accents = <Color>[
@@ -489,6 +525,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       customCoverImageUri: (trimmedCover != null && trimmedCover.isNotEmpty)
           ? trimmedCover
           : null,
+      releaseDate: _normalizeReleaseDate(releaseDate),
     );
     _commit(state.copyWith(shelfSeries: [series, ...state.shelfSeries]));
   }
@@ -500,6 +537,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
     String? ipDisplayName,
     String? customCoverImageUri,
     String? notes,
+    String? releaseDate,
   }) {
     final existing = _findSeries(seriesId);
     if (existing == null || !existing.isCustomLocal) return;
@@ -554,6 +592,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       customCoverImageUri: (trimmedCover != null && trimmedCover.isNotEmpty)
           ? trimmedCover
           : null,
+      releaseDate: _normalizeReleaseDate(releaseDate),
     );
 
     _commit(
@@ -621,6 +660,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       taxonomyIpId: existing.taxonomyIpId,
       imageKey: existing.imageKey,
       customCoverImageUri: existing.customCoverImageUri,
+      releaseDate: existing.releaseDate,
     );
 
     _commit(
@@ -695,6 +735,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       taxonomyIpId: existing.taxonomyIpId,
       imageKey: existing.imageKey,
       customCoverImageUri: existing.customCoverImageUri,
+      releaseDate: existing.releaseDate,
     );
 
     _commit(
@@ -720,6 +761,18 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       ipDisplayName: CollectionInputSanitizer.ip(ipDisplayName),
       notes: CollectionInputSanitizer.notes(notes),
     );
+  }
+
+  /// Date-only `YYYY-MM-DD`, or null when missing/invalid.
+  static String? _normalizeReleaseDate(String? raw) {
+    final trimmed = raw?.trim();
+    if (trimmed == null || trimmed.isEmpty) return null;
+    final parsed = DateTime.tryParse(trimmed);
+    if (parsed == null) return null;
+    final y = parsed.year.toString().padLeft(4, '0');
+    final m = parsed.month.toString().padLeft(2, '0');
+    final d = parsed.day.toString().padLeft(2, '0');
+    return '$y-$m-$d';
   }
 
   ({String brandLine, String brandId, String ipName, String ipId})

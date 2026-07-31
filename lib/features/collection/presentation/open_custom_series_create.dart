@@ -19,6 +19,7 @@ Future<void> openCustomSeriesCreateSheet(BuildContext context, WidgetRef ref) {
             required List<CustomFigureDraft> figures,
             String? customCoverImageUri,
             String? notes,
+            String? releaseDate,
           }) {
             ref
                 .read(collectionNotifierProvider.notifier)
@@ -29,6 +30,7 @@ Future<void> openCustomSeriesCreateSheet(BuildContext context, WidgetRef ref) {
                   figures: figures,
                   customCoverImageUri: customCoverImageUri,
                   notes: notes,
+                  releaseDate: releaseDate,
                 );
           },
     ),

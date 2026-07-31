@@ -1,11 +1,13 @@
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_radii.dart';
+import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
 import 'package:blindbox_app/features/collection/data/collection_input_formatters.dart';
 import 'package:blindbox_app/features/collection/data/collection_input_limits.dart';
 import 'package:blindbox_app/features/collection/data/custom_series_conventions.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_shelf_browse.dart';
 import 'package:blindbox_app/features/collection/widgets/custom_series_cover_slot.dart';
 import 'package:blindbox_app/features/collection/widgets/custom_series_edit_figures_section.dart';
 import 'package:blindbox_app/features/collection/widgets/custom_series_quiet_field.dart';
@@ -25,6 +27,7 @@ typedef CustomSeriesFormSubmit =
       required List<CustomFigureDraft> figures,
       String? customCoverImageUri,
       String? notes,
+      String? releaseDate,
     });
 
 typedef CustomSeriesMetadataSubmit =
@@ -34,7 +37,31 @@ typedef CustomSeriesMetadataSubmit =
       String? ipDisplayName,
       String? customCoverImageUri,
       String? notes,
+      String? releaseDate,
     });
+
+const String customSeriesReleaseDateFieldHint = 'Release date';
+
+const _releaseDateFieldMonths = <String>[
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
+
+String? _formatReleaseDateFieldLabel(DateTime? date) {
+  if (date == null) return null;
+  if (date.month < 1 || date.month > 12) return null;
+  return '${_releaseDateFieldMonths[date.month - 1]} ${date.day}, ${date.year}';
+}
 
 typedef CustomSeriesFigureSubmit =
     void Function({
@@ -116,6 +143,7 @@ class _CustomSeriesFormSheetState extends ConsumerState<CustomSeriesFormSheet> {
 
   final List<CustomFigureDraft> _figures = [];
   String? _coverUri;
+  DateTime? _releaseDate;
   bool _advancedTaxonomyExpanded = false;
 
   bool get _isCreate => widget.mode == CustomSeriesFormMode.create;
@@ -130,6 +158,7 @@ class _CustomSeriesFormSheetState extends ConsumerState<CustomSeriesFormSheet> {
       _ip.text = series.ipName;
       _notes.text = series.notes ?? '';
       _coverUri = series.customCoverImageUri;
+      _releaseDate = parseCatalogReleaseDate(series.releaseDate);
     }
   }
 
@@ -182,6 +211,24 @@ class _CustomSeriesFormSheetState extends ConsumerState<CustomSeriesFormSheet> {
   }
 
   void _clearCover() => setState(() => _coverUri = null);
+
+  Future<void> _pickReleaseDate() async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final now = DateTime.now();
+    final initial = _releaseDate ?? DateTime(now.year, now.month, now.day);
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(1990),
+      lastDate: DateTime(2100),
+    );
+    if (!mounted || picked == null) return;
+    setState(() {
+      _releaseDate = DateTime(picked.year, picked.month, picked.day);
+    });
+  }
+
+  void _clearReleaseDate() => setState(() => _releaseDate = null);
 
   Future<void> _pickFigurePhoto(int i) async {
     final path = await pickShelfGalleryImage(context);
@@ -257,6 +304,9 @@ class _CustomSeriesFormSheetState extends ConsumerState<CustomSeriesFormSheet> {
         ).showSnackBar(const SnackBar(content: Text('Add a figure')));
         return;
       }
+      final releaseIso = _releaseDate == null
+          ? null
+          : formatIsoDateOnly(_releaseDate!);
       widget.onCreateSubmit!(
         seriesName: _seriesName.text.trim(),
         brand: _brand.text.trim().isEmpty ? null : _brand.text.trim(),
@@ -264,14 +314,19 @@ class _CustomSeriesFormSheetState extends ConsumerState<CustomSeriesFormSheet> {
         figures: List<CustomFigureDraft>.from(_figures),
         customCoverImageUri: _coverUri,
         notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
+        releaseDate: releaseIso,
       );
     } else {
+      final releaseIso = _releaseDate == null
+          ? null
+          : formatIsoDateOnly(_releaseDate!);
       widget.onEditSubmit!(
         seriesName: _seriesName.text.trim(),
         brand: _brand.text.trim().isEmpty ? null : _brand.text.trim(),
         ipDisplayName: _ip.text.trim().isEmpty ? null : _ip.text.trim(),
         customCoverImageUri: _coverUri,
         notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
+        releaseDate: releaseIso,
       );
     }
     Navigator.of(context).pop();
@@ -294,6 +349,46 @@ class _CustomSeriesFormSheetState extends ConsumerState<CustomSeriesFormSheet> {
       maxLength: CollectionInputLimits.ipMaxLength,
       inputFormatters: CollectionInputFormatters.ip(),
       decoration: quietCustomSeriesField(scheme, hintText: 'Universe'),
+    );
+  }
+
+  Widget _releaseDateField(ColorScheme scheme) {
+    final label = _formatReleaseDateFieldLabel(_releaseDate);
+    final hintColor = scheme.onSurfaceVariant.withValues(alpha: 0.42);
+    return InkWell(
+      key: const Key('custom-series-release-date'),
+      borderRadius: AppRadii.fieldRadius,
+      onTap: _pickReleaseDate,
+      child: InputDecorator(
+        isEmpty: label == null,
+        decoration: quietCustomSeriesField(
+          scheme,
+          hintText: customSeriesReleaseDateFieldHint,
+        ).copyWith(
+          suffixIcon: _releaseDate == null
+              ? Icon(
+                  Icons.calendar_today_outlined,
+                  size: 18,
+                  color: hintColor,
+                )
+              : IconButton(
+                  key: const Key('custom-series-release-date-clear'),
+                  tooltip: 'Clear',
+                  onPressed: _clearReleaseDate,
+                  icon: Icon(
+                    Icons.close,
+                    size: 18,
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.62),
+                  ),
+                ),
+        ),
+        child: Text(
+          label ?? '',
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+      ),
     );
   }
 
@@ -383,6 +478,8 @@ class _CustomSeriesFormSheetState extends ConsumerState<CustomSeriesFormSheet> {
                     const SizedBox(height: FeedRhythm.sheetSectionGap),
                     _editAdvancedTaxonomySection(scheme, textTheme),
                   ],
+                  const SizedBox(height: 12),
+                  _releaseDateField(scheme),
                   if (_isCreate) ...[
                     const SizedBox(height: FeedRhythm.sheetSectionGap + 8),
                     FigureNameChipsEditor(
@@ -417,18 +514,20 @@ class _CustomSeriesFormSheetState extends ConsumerState<CustomSeriesFormSheet> {
                       onAddSubmitted: _addShelfFigureFromField,
                     ),
                   ],
-                  const SizedBox(height: 22),
+                  const SizedBox(height: AppSpacing.xxl),
                   FilledButton(
                     onPressed: _save,
                     style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppSpacing.md,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: AppRadii.fieldRadius,
                       ),
                     ),
                     child: Text(_isCreate ? 'Add to shelf' : 'Save changes'),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.sm),
                 ],
               ),
             ),

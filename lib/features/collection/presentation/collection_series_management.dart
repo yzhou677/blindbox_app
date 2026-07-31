@@ -220,7 +220,10 @@ class _ManagementActionButton extends StatelessWidget {
         onTap: onPressed,
         borderRadius: AppRadii.fieldRadius,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
+          padding: const EdgeInsets.symmetric(
+            vertical: AppSpacing.lg,
+            horizontal: AppSpacing.lg,
+          ),
           child: Text(
             label,
             textAlign: TextAlign.center,
@@ -256,6 +259,7 @@ void openEditCustomSeriesSheet(
             String? ipDisplayName,
             String? customCoverImageUri,
             String? notes,
+            String? releaseDate,
           }) {
             ref
                 .read(collectionNotifierProvider.notifier)
@@ -266,6 +270,7 @@ void openEditCustomSeriesSheet(
                   ipDisplayName: ipDisplayName,
                   customCoverImageUri: customCoverImageUri,
                   notes: notes,
+                  releaseDate: releaseDate,
                 );
           },
       onFigureSubmit:

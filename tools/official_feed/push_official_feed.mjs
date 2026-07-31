@@ -223,8 +223,10 @@ async function main() {
     if (summary) doc.summary = summary;
     const releaseType = item.releaseType?.trim();
     const productId = item.productId?.trim();
+    const instagramUrl = item.instagramUrl?.trim();
     if (releaseType) doc.releaseType = releaseType;
     if (productId) doc.productId = productId;
+    if (instagramUrl) doc.instagramUrl = instagramUrl;
 
     batch.set(ref, doc, { merge: true });
   }

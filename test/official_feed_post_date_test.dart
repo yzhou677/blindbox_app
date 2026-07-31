@@ -1,3 +1,4 @@
+import 'package:blindbox_app/features/official_feed/presentation/official_feed_copy.dart';
 import 'package:blindbox_app/features/official_feed/presentation/official_feed_post_date.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -6,6 +7,13 @@ void main() {
     // IG post 2026-07-03T08:52:21Z ≈ Jul 3 early morning US — not Jul 2.
     final localPostTime = DateTime.utc(2026, 7, 3, 8, 52, 21).toLocal();
     expect(formatOfficialFeedPostDate(localPostTime), 'Jul 3');
+    expect(
+      formatOfficialFeedAnnouncementMeta(
+        sourceLabel: 'POP MART',
+        publishedAt: localPostTime,
+      ),
+      'POP MART · via IG · Jul 3',
+    );
   });
 
   test('midnight UTC alone would show wrong US day without full post time', () {

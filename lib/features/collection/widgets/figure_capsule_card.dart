@@ -20,6 +20,10 @@ class FigureCapsuleCard extends StatefulWidget {
     this.onBrowseFigure,
   });
 
+  /// Inset of the `×N` quantity badge from the artwork left/bottom edges.
+  @visibleForTesting
+  static const double quantityBadgeInset = 7;
+
   final ShelfSeries series;
   final ShelfFigure figure;
   final TrackedFigure tracked;
@@ -223,39 +227,57 @@ class _FigureCapsuleCardState extends State<FigureCapsuleCard>
                                 : HitTestBehavior.deferToChild,
                             child: AspectRatio(
                               aspectRatio: 1,
-                              child: AnimatedSwitcher(
-                                duration: CollectibleMotion.crossfade,
-                                switchInCurve: CollectibleMotion.easeOut,
-                                switchOutCurve: CollectibleMotion.easeIn,
-                                transitionBuilder: (child, anim) {
-                                  return FadeTransition(
-                                    opacity: anim,
-                                    child: ScaleTransition(
-                                      scale:
-                                          Tween(
-                                            begin: CollectibleMotion
-                                                .galleryEnterScale,
-                                            end: 1.0,
-                                          ).animate(
-                                            CurvedAnimation(
-                                              parent: anim,
-                                              curve: CollectibleMotion.easeOut,
-                                            ),
-                                          ),
-                                      child: child,
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  AnimatedSwitcher(
+                                    duration: CollectibleMotion.crossfade,
+                                    switchInCurve: CollectibleMotion.easeOut,
+                                    switchOutCurve: CollectibleMotion.easeIn,
+                                    transitionBuilder: (child, anim) {
+                                      return FadeTransition(
+                                        opacity: anim,
+                                        child: ScaleTransition(
+                                          scale:
+                                              Tween(
+                                                begin: CollectibleMotion
+                                                    .galleryEnterScale,
+                                                end: 1.0,
+                                              ).animate(
+                                                CurvedAnimation(
+                                                  parent: anim,
+                                                  curve:
+                                                      CollectibleMotion.easeOut,
+                                                ),
+                                              ),
+                                          child: child,
+                                        ),
+                                      );
+                                    },
+                                    child: _ArtWindow(
+                                      key: ValueKey<String>(
+                                        '${widget.figure.id}-${owned}_${wish}_$missing',
+                                      ),
+                                      missing: missing,
+                                      scheme: scheme,
+                                      series: widget.series,
+                                      figure: widget.figure,
+                                      secretLook: secretLook,
                                     ),
-                                  );
-                                },
-                                child: _ArtWindow(
-                                  key: ValueKey<String>(
-                                    '${widget.figure.id}-${owned}_${wish}_$missing',
                                   ),
-                                  missing: missing,
-                                  scheme: scheme,
-                                  series: widget.series,
-                                  figure: widget.figure,
-                                  secretLook: secretLook,
-                                ),
+                                  if (owned && widget.tracked.hasDuplicates)
+                                    Positioned(
+                                      left:
+                                          FigureCapsuleCard.quantityBadgeInset,
+                                      bottom:
+                                          FigureCapsuleCard.quantityBadgeInset,
+                                      child: _QuantityBadge(
+                                        quantity: widget.tracked.ownedQuantity,
+                                        scheme: scheme,
+                                        textTheme: textTheme,
+                                      ),
+                                    ),
+                                ],
                               ),
                             ),
                           ),
@@ -620,6 +642,54 @@ class _OwnedSeal extends StatelessWidget {
           Symbols.workspace_premium_rounded,
           size: 17,
           color: scheme.onTertiaryContainer,
+        ),
+      ),
+    );
+  }
+}
+
+class _QuantityBadge extends StatelessWidget {
+  const _QuantityBadge({
+    required this.quantity,
+    required this.scheme,
+    required this.textTheme,
+  });
+
+  final int quantity;
+  final ColorScheme scheme;
+  final TextTheme textTheme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'Owned quantity $quantity',
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: scheme.surface.withValues(alpha: 0.92),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: scheme.outlineVariant.withValues(alpha: 0.55),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: scheme.shadow.withValues(alpha: 0.08),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+          child: Text(
+            CollectionVocabulary.ownedQuantityBadge(quantity),
+            style: textTheme.labelSmall?.copyWith(
+              color: scheme.onSurface.withValues(alpha: 0.78),
+              fontWeight: FontWeight.w800,
+              fontSize: 10,
+              letterSpacing: 0.1,
+              height: 1,
+            ),
+          ),
         ),
       ),
     );

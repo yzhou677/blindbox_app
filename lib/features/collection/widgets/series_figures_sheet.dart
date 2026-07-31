@@ -3,16 +3,20 @@ import 'dart:async';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/collectible_motion.dart';
 import 'package:blindbox_app/core/theme/collectible_typography.dart';
+import 'package:blindbox_app/features/catalog/application/catalog_bundle_provider.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_adapters.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_sheet.dart';
+import 'package:blindbox_app/features/catalog/presentation/us_release_date_line.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/application/share_payload_builders/master_complete_share_payload_builder.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/domain/series_completion_resolution.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_shelf_browse.dart';
 import 'package:blindbox_app/features/collection/presentation/shelf_editorial_voice.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_progress_voice.dart';
 import 'package:blindbox_app/features/collection/widgets/figure_capsule_card.dart';
+import 'package:blindbox_app/features/collection/widgets/figure_owned_quantity_stepper.dart';
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/features/sharing/presentation/share_card_preview.dart';
 import 'package:blindbox_app/features/sharing/presentation/widgets/shelfy_collector_cards.dart';
@@ -113,6 +117,19 @@ class _SeriesFiguresSheetState extends ConsumerState<SeriesFiguresSheet> {
           )
         : null;
     final matchedId = widget.matchedFigureId?.trim();
+    final lookup = ref.watch(catalogBundleLookupProvider);
+    DateTime? releaseDate = parseCatalogReleaseDate(series.releaseDate);
+    if (releaseDate == null && lookup != null) {
+      for (final candidate in shelfCatalogSeriesIdCandidates(series)) {
+        final parsed = parseCatalogReleaseDate(
+          lookup.seriesById(candidate)?.releaseDate,
+        );
+        if (parsed != null) {
+          releaseDate = parsed;
+          break;
+        }
+      }
+    }
 
     return CollectibleSheetInsets(
       child: CollectibleSheetScrollView(
@@ -124,6 +141,12 @@ class _SeriesFiguresSheetState extends ConsumerState<SeriesFiguresSheet> {
           trailingMeta: trailingMeta,
         ),
         slivers: [
+          SliverToBoxAdapter(
+            child: UsReleaseDateLine(
+              releaseDate: releaseDate,
+              officialUs: !series.isCustomLocal,
+            ),
+          ),
           if (seriesNote != null && seriesNote.isNotEmpty)
             SliverToBoxAdapter(
               child: _SeriesNoteText(note: seriesNote, topPadding: 16),
@@ -167,7 +190,13 @@ class _SeriesFiguresSheetState extends ConsumerState<SeriesFiguresSheet> {
             ),
           SliverPadding(
             padding: EdgeInsets.only(
-              top: isComplete ? 14 : FeedRhythm.sheetFigureRailGap,
+              // With a U.S. release-date row: ~16–20 to the section rule.
+              // Without it: default chrome → figures air (no empty date gap).
+              top: isComplete
+                  ? 14
+                  : releaseDate != null
+                  ? AppSpacing.lg
+                  : FeedRhythm.sheetFigureRailGap,
               bottom: AppSpacing.lg,
             ),
             sliver: SliverToBoxAdapter(
@@ -176,6 +205,7 @@ class _SeriesFiguresSheetState extends ConsumerState<SeriesFiguresSheet> {
                 snap: snap,
                 resolution: resolution,
                 onCycleFigure: notifier.cycleFigure,
+                onOwnedQuantityChanged: notifier.setFigureOwnedQuantity,
                 matchedFigureId: matchedId,
                 matchHighlightVisible: _matchHighlightVisible,
                 figureKeys: _figureKeys,
@@ -231,6 +261,7 @@ class _SeriesFigureGrid extends StatelessWidget {
     required this.snap,
     required this.resolution,
     required this.onCycleFigure,
+    required this.onOwnedQuantityChanged,
     this.matchedFigureId,
     this.matchHighlightVisible = false,
     this.figureKeys = const {},
@@ -240,6 +271,7 @@ class _SeriesFigureGrid extends StatelessWidget {
   final CollectionSnapshot snap;
   final SeriesCompletionResolution resolution;
   final void Function(String figureId) onCycleFigure;
+  final void Function(String figureId, int quantity) onOwnedQuantityChanged;
   final String? matchedFigureId;
   final bool matchHighlightVisible;
   final Map<String, GlobalKey> figureKeys;
@@ -259,6 +291,7 @@ class _SeriesFigureGrid extends StatelessWidget {
         figures: series.figures,
         snap: snap,
         onCycleFigure: onCycleFigure,
+        onOwnedQuantityChanged: onOwnedQuantityChanged,
         matchedFigureId: matchedFigureId,
         matchHighlightVisible: matchHighlightVisible,
         figureKeys: figureKeys,
@@ -270,7 +303,7 @@ class _SeriesFigureGrid extends StatelessWidget {
       children: [
         if (regularFigures.isNotEmpty) ...[
           const _FigureSheetSectionRule(),
-          const SizedBox(height: 16),
+          const SizedBox(height: FeedRhythm.sheetSectionGap),
           _FigureSheetSectionHeader(
             label: CollectionVocabulary.regularFigures,
             owned: resolution.regularOwnedCount,
@@ -282,6 +315,7 @@ class _SeriesFigureGrid extends StatelessWidget {
             figures: regularFigures,
             snap: snap,
             onCycleFigure: onCycleFigure,
+            onOwnedQuantityChanged: onOwnedQuantityChanged,
             matchedFigureId: matchedFigureId,
             matchHighlightVisible: matchHighlightVisible,
             figureKeys: figureKeys,
@@ -289,7 +323,7 @@ class _SeriesFigureGrid extends StatelessWidget {
         ],
         const SizedBox(height: 28),
         const _FigureSheetSectionRule(),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.lg),
         _FigureSheetSectionHeader(
           label: CollectionVocabulary.secretFigures,
           owned: resolution.secretOwnedCount,
@@ -297,12 +331,13 @@ class _SeriesFigureGrid extends StatelessWidget {
           showCrown: true,
           accent: true,
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.xxl),
         _FigureCapsuleWrap(
           series: series,
           figures: secretFigures,
           snap: snap,
           onCycleFigure: onCycleFigure,
+          onOwnedQuantityChanged: onOwnedQuantityChanged,
           matchedFigureId: matchedFigureId,
           matchHighlightVisible: matchHighlightVisible,
           figureKeys: figureKeys,
@@ -380,6 +415,7 @@ class _FigureCapsuleWrap extends StatelessWidget {
     required this.figures,
     required this.snap,
     required this.onCycleFigure,
+    required this.onOwnedQuantityChanged,
     this.matchedFigureId,
     this.matchHighlightVisible = false,
     this.figureKeys = const {},
@@ -389,6 +425,7 @@ class _FigureCapsuleWrap extends StatelessWidget {
   final List<ShelfFigure> figures;
   final CollectionSnapshot snap;
   final void Function(String figureId) onCycleFigure;
+  final void Function(String figureId, int quantity) onOwnedQuantityChanged;
   final String? matchedFigureId;
   final bool matchHighlightVisible;
   final Map<String, GlobalKey> figureKeys;
@@ -406,6 +443,7 @@ class _FigureCapsuleWrap extends StatelessWidget {
           for (final f in figures)
             Builder(
               builder: (context) {
+                final tracked = snap.trackedOrDefault(f.id);
                 final isMatched =
                     matchedFigureId != null &&
                     matchedFigureId!.isNotEmpty &&
@@ -416,7 +454,7 @@ class _FigureCapsuleWrap extends StatelessWidget {
                       : ValueKey<String>(f.id),
                   series: series,
                   figure: f,
-                  tracked: snap.trackedOrDefault(f.id),
+                  tracked: tracked,
                   onTap: () => onCycleFigure(f.id),
                   onBrowseFigure: () {
                     final index = series.figures.indexWhere(
@@ -430,27 +468,42 @@ class _FigureCapsuleWrap extends StatelessWidget {
                     );
                   },
                 );
-                if (!isMatched || !matchHighlightVisible) return capsule;
-                return AnimatedContainer(
-                  duration: CollectibleMotion.crossfade,
-                  curve: CollectibleMotion.easeOut,
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: scheme.primary.withValues(alpha: 0.42),
-                      width: 1.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: scheme.primary.withValues(alpha: 0.12),
-                        blurRadius: 10,
-                        offset: const Offset(0, 2),
+                final card = Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (!isMatched || !matchHighlightVisible)
+                      capsule
+                    else
+                      AnimatedContainer(
+                        duration: CollectibleMotion.crossfade,
+                        curve: CollectibleMotion.easeOut,
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: scheme.primary.withValues(alpha: 0.42),
+                            width: 1.5,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: scheme.primary.withValues(alpha: 0.12),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: capsule,
+                      ),
+                    if (tracked.owned) ...[
+                      const SizedBox(height: 2),
+                      FigureOwnedQuantityStepper(
+                        quantity: tracked.ownedQuantity,
+                        onChanged: (q) => onOwnedQuantityChanged(f.id, q),
                       ),
                     ],
-                  ),
-                  child: capsule,
+                  ],
                 );
+                return card;
               },
             ),
         ],

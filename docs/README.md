@@ -37,6 +37,10 @@ product philosophy without naming which role they serve.
   Recognition product + architecture guide (pipeline, policy, UX, navigation)
 - [`CATALOG_ARCHITECTURE.md`](CATALOG_ARCHITECTURE.md) - catalog runtime, cache,
   providers, Search V2, availability UX
+- [`lib/features/official_feed/FIRESTORE_OFFICIAL_FEED_SCHEMA.md`](../lib/features/official_feed/FIRESTORE_OFFICIAL_FEED_SCHEMA.md) -
+  Official feeds sources, chips, last-good cache, refresh, dates vs destinations
+- [`tools/official_feed/README.md`](../tools/official_feed/README.md) -
+  Official feeds seed curation and push
 - [`SEARCH_ARCHITECTURE.md`](SEARCH_ARCHITECTURE.md) - search normalization,
   token AND, haystack, ranking
 - [`COLLECTION_ARCHITECTURE_NOTES.md`](COLLECTION_ARCHITECTURE_NOTES.md) -

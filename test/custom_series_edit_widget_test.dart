@@ -42,6 +42,7 @@ final class _CustomSeriesEditTestNotifier extends CollectionNotifier {
     String? ipDisplayName,
     String? customCoverImageUri,
     String? notes,
+    String? releaseDate,
   }) {
     super.updateCustomSeries(
       seriesId: seriesId,
@@ -50,6 +51,7 @@ final class _CustomSeriesEditTestNotifier extends CollectionNotifier {
       ipDisplayName: ipDisplayName,
       customCoverImageUri: customCoverImageUri,
       notes: notes,
+      releaseDate: releaseDate,
     );
     _snap = state;
   }
@@ -75,7 +77,7 @@ final class _CustomSeriesEditTestNotifier extends CollectionNotifier {
   }
 }
 
-ShelfSeries _customSeries() {
+ShelfSeries _customSeries({String? releaseDate}) {
   const seriesId = 'custom_widget_test';
   return ShelfSeries(
     id: seriesId,
@@ -86,6 +88,7 @@ ShelfSeries _customSeries() {
     taxonomyIpId: 'baby_three',
     catalogTemplateId: null,
     imageKey: seriesId,
+    releaseDate: releaseDate,
     figures: const [
       ShelfFigure(
         id: 'custom_widget_test-f-0',
@@ -215,6 +218,7 @@ void main() {
                         String? ipDisplayName,
                         String? customCoverImageUri,
                         String? notes,
+                        String? releaseDate,
                       }) {
                         ProviderScope.containerOf(ctx)
                             .read(collectionNotifierProvider.notifier)
@@ -225,6 +229,7 @@ void main() {
                               ipDisplayName: ipDisplayName,
                               customCoverImageUri: customCoverImageUri,
                               notes: notes,
+                              releaseDate: releaseDate,
                             );
                       },
                   onFigureSubmit:
@@ -339,5 +344,182 @@ void main() {
     expect(find.text('THE MONSTERS'), findsOneWidget);
     expect(find.text('DPL'), findsNothing);
     expect(find.byType(TaxonomyBrandChipRail), findsNWidgets(2));
+  });
+
+  testWidgets('custom series figures sheet shows quiet Release Date line', (
+    tester,
+  ) async {
+    final series = _customSeries(releaseDate: '2026-07-30');
+    await _pumpFiguresSheet(
+      tester,
+      series: series,
+      notifierFactory: () => _CustomSeriesEditTestNotifier(
+        CollectionSnapshot(shelfSeries: [series], figureStates: const {}),
+      ),
+    );
+
+    expect(find.byKey(const Key('us_release_date_line')), findsOneWidget);
+    expect(find.textContaining('Release Date ·'), findsOneWidget);
+    expect(find.textContaining('U.S. Release Date'), findsNothing);
+    expect(find.byKey(const Key('us_release_date_info')), findsNothing);
+  });
+
+  testWidgets('edit form release date picker saves ISO date', (tester) async {
+    final series = _customSeries(releaseDate: '2026-01-15');
+    String? submittedReleaseDate;
+
+    await tester.binding.setSurfaceSize(const Size(800, 1400));
+    addTearDown(() async {
+      await tester.binding.setSurfaceSize(null);
+    });
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          collectionNotifierProvider.overrideWith(
+            () => _CustomSeriesEditTestNotifier(
+              CollectionSnapshot(
+                shelfSeries: [series],
+                figureStates: const {},
+              ),
+            ),
+          ),
+          catalogBundleProvider.overrideWith((ref) async => _emptyCatalog),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: Scaffold(
+            body: CollectibleSheetScope(
+              scrollController: ScrollController(),
+              child: CustomSeriesFormSheet.edit(
+                initialSeries: series,
+                onSubmit:
+                    ({
+                      required String seriesName,
+                      String? brand,
+                      String? ipDisplayName,
+                      String? customCoverImageUri,
+                      String? notes,
+                      String? releaseDate,
+                    }) {
+                      submittedReleaseDate = releaseDate;
+                    },
+                onFigureSubmit:
+                    ({
+                      required String figureId,
+                      required String name,
+                      required bool isSecret,
+                      String? rarityLabel,
+                      String? localImageUri,
+                    }) {},
+                onFigureAdd:
+                    ({
+                      required String name,
+                      required bool isSecret,
+                      String? rarityLabel,
+                      String? localImageUri,
+                    }) {},
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Jan 15, 2026'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('custom-series-release-date')));
+    await tester.pumpAndSettle();
+    expect(find.byType(DatePickerDialog), findsOneWidget);
+
+    final inputMode = find.byIcon(Icons.edit_outlined);
+    expect(inputMode, findsOneWidget);
+    await tester.tap(inputMode);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).last, '1/30/2026');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Jan 30, 2026'), findsOneWidget);
+
+    await tester.tap(find.text('Save changes'));
+    await tester.pump();
+
+    expect(submittedReleaseDate, '2026-01-30');
+  });
+
+  testWidgets('edit form can clear release date', (tester) async {
+    final series = _customSeries(releaseDate: '2026-01-15');
+    String? submittedReleaseDate = 'sentinel';
+
+    await tester.binding.setSurfaceSize(const Size(800, 1400));
+    addTearDown(() async {
+      await tester.binding.setSurfaceSize(null);
+    });
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          collectionNotifierProvider.overrideWith(
+            () => _CustomSeriesEditTestNotifier(
+              CollectionSnapshot(
+                shelfSeries: [series],
+                figureStates: const {},
+              ),
+            ),
+          ),
+          catalogBundleProvider.overrideWith((ref) async => _emptyCatalog),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: Scaffold(
+            body: CollectibleSheetScope(
+              scrollController: ScrollController(),
+              child: CustomSeriesFormSheet.edit(
+                initialSeries: series,
+                onSubmit:
+                    ({
+                      required String seriesName,
+                      String? brand,
+                      String? ipDisplayName,
+                      String? customCoverImageUri,
+                      String? notes,
+                      String? releaseDate,
+                    }) {
+                      submittedReleaseDate = releaseDate;
+                    },
+                onFigureSubmit:
+                    ({
+                      required String figureId,
+                      required String name,
+                      required bool isSecret,
+                      String? rarityLabel,
+                      String? localImageUri,
+                    }) {},
+                onFigureAdd:
+                    ({
+                      required String name,
+                      required bool isSecret,
+                      String? rarityLabel,
+                      String? localImageUri,
+                    }) {},
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byKey(const Key('custom-series-release-date-clear')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('custom-series-release-date-clear')));
+    await tester.pump();
+    expect(find.text('Jan 15, 2026'), findsNothing);
+
+    await tester.tap(find.text('Save changes'));
+    await tester.pump();
+
+    expect(submittedReleaseDate, isNull);
   });
 }

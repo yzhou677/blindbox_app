@@ -12,6 +12,7 @@ ShelfSeries testShelfSeries({
   String? taxonomyBrandId = 'pop_mart',
   String? taxonomyIpId = 'the_monsters',
   String? notes,
+  String? releaseDate,
   List<ShelfFigure>? figures,
 }) {
   return ShelfSeries(
@@ -37,6 +38,7 @@ ShelfSeries testShelfSeries({
     taxonomyBrandId: taxonomyBrandId,
     taxonomyIpId: taxonomyIpId,
     notes: notes,
+    releaseDate: releaseDate,
   );
 }
 

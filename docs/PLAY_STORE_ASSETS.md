@@ -99,7 +99,7 @@ Track blind boxes & designer toys. Browse drops, build your shelf, explore marke
 Shelfy is a collectible collection and marketplace companion.
 
 • My collection — track series, figures, owned & wishlist; works offline
-• Discover — latest catalog drops, trending series, official POP MART updates
+• Discover — latest catalog drops, trending series, official brand feeds (POP MART, TNT SPACE, TOP TOY)
 • Market — browse listings and search when live gateway is enabled
 
 Image-first, calm UI built for collectors. Your shelf stays on your device.

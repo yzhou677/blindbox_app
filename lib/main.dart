@@ -1,5 +1,6 @@
 import 'package:blindbox_app/core/firebase/ensure_firebase_initialized.dart';
 import 'package:blindbox_app/core/firebase/activate_firebase_app_check.dart';
+import 'package:blindbox_app/core/network/app_network_recovery.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
 import 'package:blindbox_app/core/router/app_router.dart';
 import 'package:blindbox_app/core/theme/app_theme.dart';
@@ -72,9 +73,11 @@ class BlindboxApp extends ConsumerWidget {
       darkTheme: AppTheme.dark(),
       routerConfig: appRouter,
       builder: (context, child) {
-        return OnDisplayWidgetSyncHost(
-          child: MasterCompleteCelebrationHost(
-            child: child ?? const SizedBox.shrink(),
+        return AppNetworkRecoveryHost(
+          child: OnDisplayWidgetSyncHost(
+            child: MasterCompleteCelebrationHost(
+              child: child ?? const SizedBox.shrink(),
+            ),
           ),
         );
       },

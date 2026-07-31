@@ -39,60 +39,60 @@ abstract final class OfficialFeedContentTypeStyles {
   );
 
   static const Map<String, _AccentSpec> _byLabel = {
-    'Announcement': _AccentSpec(
+    OfficialFeedContentTags.announcement: _AccentSpec(
       Color(0xFF6B8FC7),
       Color(0xFF8AA8D8),
       icon: Symbols.campaign_rounded,
     ),
-    'POP NOW': _AccentSpec(
+    OfficialFeedContentTags.popNow: _AccentSpec(
       Color(0xFFE07A7A),
       Color(0xFFE89595),
       icon: Symbols.bolt_rounded,
     ),
-    'Collaboration': _AccentSpec(
+    OfficialFeedContentTags.collaboration: _AccentSpec(
       Color(0xFF9B7BB8),
       Color(0xFFB095CC),
       icon: Symbols.auto_awesome_rounded,
     ),
-    'Product Spotlight': _AccentSpec(
+    OfficialFeedContentTags.productSpotlight: _AccentSpec(
       Color(0xFFC4A574),
       Color(0xFFD4B88A),
       icon: Symbols.star_outline_rounded,
     ),
-    'Restock': _AccentSpec(
+    OfficialFeedContentTags.restock: _AccentSpec(
       Color(0xFFD49A6A),
       Color(0xFFE0AD82),
       icon: Symbols.inventory_2_rounded,
     ),
-    'Event': _AccentSpec(
+    OfficialFeedContentTags.event: _AccentSpec(
       Color(0xFF6FA87A),
       Color(0xFF89BA92),
       icon: Symbols.event_rounded,
     ),
-    'Campaign': _AccentSpec(
-      Color(0xFFB8889E),
-      Color(0xFFC9A0B2),
-      icon: Symbols.flag_rounded,
-    ),
-    'Launch Reminder': _AccentSpec(
+    OfficialFeedContentTags.comingSoon: _AccentSpec(
       Color(0xFFC9A227),
       Color(0xFFD9B44A),
       icon: Symbols.notifications_none_rounded,
     ),
-    'Limited Release': _AccentSpec(
+    OfficialFeedContentTags.limitedRelease: _AccentSpec(
       Color(0xFFB89B7A),
       Color(0xFFC9AE8F),
       icon: Symbols.diamond_rounded,
     ),
-    'Giveaway': _AccentSpec(
+    OfficialFeedContentTags.giveaway: _AccentSpec(
       Color(0xFFD4849A),
       Color(0xFFE09AAD),
       icon: Symbols.card_giftcard_rounded,
     ),
-    'Store Opening': _AccentSpec(
+    OfficialFeedContentTags.storeOpening: _AccentSpec(
       Color(0xFF7A9E9E),
       Color(0xFF92B0B0),
       icon: Symbols.storefront_rounded,
+    ),
+    OfficialFeedContentTags.officialUpdate: _AccentSpec(
+      Color(0xFF8E9199),
+      Color(0xFF9AA0A8),
+      icon: Symbols.article_rounded,
     ),
   };
 
@@ -122,15 +122,14 @@ abstract final class OfficialFeedContentTypeStyles {
     );
   }
 
-  static OfficialFeedContentTypeStyle forItem(
+  static List<OfficialFeedContentTypeStyle> forItem(
     OfficialFeedItem item,
     ColorScheme scheme, {
     required bool isDark,
   }) {
-    return resolve(
-      inferOfficialFeedContentTypeLabel(item),
-      scheme,
-      isDark: isDark,
-    );
+    return [
+      for (final label in inferOfficialFeedContentTypeLabels(item))
+        resolve(label, scheme, isDark: isDark),
+    ];
   }
 }

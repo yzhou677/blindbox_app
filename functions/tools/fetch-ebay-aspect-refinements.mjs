@@ -214,7 +214,7 @@ async function main() {
   }
 
   const aspectNames = [...merged.keys()].sort();
-  const outPath = path.join(__dirname, 'ebay-aspect-refinements-19007.json');
+  const outPath = path.join(__dirname, 'ebay-aspect-refinements-261068.json');
   const exportData = {
     fetchedAt: new Date().toISOString(),
     categoryId: CATEGORY_ID,

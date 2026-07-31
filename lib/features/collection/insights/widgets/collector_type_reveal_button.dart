@@ -1,4 +1,5 @@
 import 'package:blindbox_app/core/theme/app_radii.dart';
+import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/collectible_elevation.dart';
 import 'package:blindbox_app/features/collection/insights/presentation/collector_type_copy.dart';
 import 'package:flutter/material.dart';
@@ -37,7 +38,10 @@ class CollectorTypeRevealButton extends StatelessWidget {
         child: InkWell(
           onTap: onPressed,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.pageHorizontal,
+              vertical: AppSpacing.xl,
+            ),
             child: Center(
               child: Text(
                 label ?? CollectorTypeCopy.revealButton,

@@ -19,11 +19,13 @@ final class CatalogBundleLookup {
     required Map<String, CatalogIp> ipById,
     required Map<String, List<CatalogFigure>> figuresBySeriesId,
     required Map<String, String> seriesIdByFigureId,
+    required Map<String, CatalogFigure> figureById,
   }) : _seriesById = seriesById,
        _brandById = brandById,
        _ipById = ipById,
        _figuresBySeriesId = figuresBySeriesId,
-       _seriesIdByFigureId = seriesIdByFigureId;
+       _seriesIdByFigureId = seriesIdByFigureId,
+       _figureById = figureById;
 
   final CatalogSeedBundle bundle;
   final Map<String, CatalogSeries> _seriesById;
@@ -31,6 +33,7 @@ final class CatalogBundleLookup {
   final Map<String, CatalogIp> _ipById;
   final Map<String, List<CatalogFigure>> _figuresBySeriesId;
   final Map<String, String> _seriesIdByFigureId;
+  final Map<String, CatalogFigure> _figureById;
 
   static const _accents = <Color>[
     Color(0xFFE8E4F8),
@@ -44,9 +47,11 @@ final class CatalogBundleLookup {
   factory CatalogBundleLookup.fromBundle(CatalogSeedBundle bundle) {
     final figuresBySeriesId = <String, List<CatalogFigure>>{};
     final seriesIdByFigureId = <String, String>{};
+    final figureById = <String, CatalogFigure>{};
     for (final f in bundle.figures) {
       figuresBySeriesId.putIfAbsent(f.seriesId, () => []).add(f);
       seriesIdByFigureId[f.id] = f.seriesId;
+      figureById[f.id] = f;
     }
     for (final entry in figuresBySeriesId.entries) {
       entry.value.sort((a, b) {
@@ -62,6 +67,7 @@ final class CatalogBundleLookup {
       ipById: {for (final i in bundle.ips) i.id: i},
       figuresBySeriesId: figuresBySeriesId,
       seriesIdByFigureId: seriesIdByFigureId,
+      figureById: figureById,
     );
   }
 
@@ -70,6 +76,9 @@ final class CatalogBundleLookup {
 
   /// O(1) figure → series id — preferred over rescanning [bundle.figures].
   String? seriesIdForFigure(String figureId) => _seriesIdByFigureId[figureId];
+
+  /// O(1) catalog figure by id (template figure id).
+  CatalogFigure? figureById(String figureId) => _figureById[figureId];
 
   /// Stable figure→series index for shelf search — do not mutate.
   Map<String, String> get figureSeriesIdIndex => _seriesIdByFigureId;

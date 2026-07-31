@@ -45,10 +45,9 @@ class OfficialFeedThumbnail extends StatelessWidget {
   }
 
   Widget _imageFallback(BuildContext context) {
-    if (sourceId == OfficialFeedSources.popmartUs) {
-      return const Center(
-        child: OfficialFeedSourceMark(sourceId: OfficialFeedSources.popmartUs),
-      );
+    if (sourceId != null &&
+        OfficialFeedSources.curatedHomeSources.contains(sourceId)) {
+      return Center(child: OfficialFeedSourceMark(sourceId: sourceId!));
     }
     final scheme = Theme.of(context).colorScheme;
     return ColoredBox(

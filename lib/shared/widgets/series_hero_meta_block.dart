@@ -11,12 +11,16 @@ class SeriesHeroMetaBlock extends StatelessWidget {
     required this.brand,
     required this.ipLine,
     this.trailingMeta,
+    this.ipNameTrailing,
     this.density = SeriesHeroMetaDensity.hero,
   });
 
   final String brand;
   final String ipLine;
   final String? trailingMeta;
+
+  /// Optional control aligned with the IP name (e.g. Discover info icon).
+  final Widget? ipNameTrailing;
   final SeriesHeroMetaDensity density;
 
   @override
@@ -77,7 +81,32 @@ class SeriesHeroMetaBlock extends StatelessWidget {
       children: [
         if (ipLabel.isNotEmpty) ...[
           SizedBox(height: topGap),
-          Text(ipLabel, style: ipStyle),
+          if (ipNameTrailing == null)
+            Text(ipLabel, style: ipStyle)
+          else
+            // Keep the trailing control beside the glyphs — a lone Flexible Text
+            // expands and parks the icon at the row's trailing edge.
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Flexible(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          ipLabel,
+                          style: ipStyle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      ipNameTrailing!,
+                    ],
+                  ),
+                ),
+              ],
+            ),
         ],
         if (showBrand) ...[
           SizedBox(height: ipLabel.isNotEmpty ? lineGap : topGap),

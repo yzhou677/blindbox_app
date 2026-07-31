@@ -623,6 +623,52 @@ void main() {
     expect(fig.rarityLabel!.length, 16);
   });
 
+  test('addCustomSeries stores optional releaseDate as YYYY-MM-DD', () {
+    CollectionAppBootstrap.prime(CollectionSnapshot.emptyTest());
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final n = container.read(collectionNotifierProvider.notifier);
+
+    n.addCustomSeries(
+      seriesName: 'Dated Custom',
+      figures: [const CustomFigureDraft(displayName: 'One')],
+      releaseDate: '2026-07-30T12:00:00.000',
+    );
+
+    final added = container.read(collectionNotifierProvider).shelfSeries.single;
+    expect(added.releaseDate, '2026-07-30');
+  });
+
+  test('updateCustomSeries can clear releaseDate', () {
+    CollectionAppBootstrap.prime(
+      CollectionSnapshot(
+        shelfSeries: [
+          testShelfSeries(
+            id: 'custom-1',
+            catalogTemplateId: null,
+            name: 'Dated',
+            releaseDate: '2026-01-01',
+          ),
+        ],
+        figureStates: const {},
+      ),
+    );
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final n = container.read(collectionNotifierProvider.notifier);
+
+    n.updateCustomSeries(
+      seriesId: 'custom-1',
+      seriesName: 'Dated',
+      releaseDate: null,
+    );
+
+    expect(
+      container.read(collectionNotifierProvider).shelfSeries.single.releaseDate,
+      isNull,
+    );
+  });
+
   test('addCustomSeries canonicalizes after sanitizing messy brand and IP', () {
     CollectionAppBootstrap.prime(CollectionSnapshot.emptyTest());
     final container = ProviderContainer();
@@ -1391,6 +1437,59 @@ void main() {
       FigureCollectionState.wishlist,
     );
     expect(snap.figureStates.containsKey('custom_edit_1-f-2'), isFalse);
+  });
+
+  test('addCustomFigure and updateCustomFigure preserve series releaseDate', () {
+    CollectionAppBootstrap.prime(
+      CollectionSnapshot(
+        shelfSeries: [
+          testShelfSeries(
+            id: 'custom_dated',
+            catalogTemplateId: null,
+            name: 'Dated Set',
+            brand: 'Independent',
+            ipName: 'Dated Set',
+            taxonomyBrandId: 'independent',
+            taxonomyIpId: 'dated_set',
+            releaseDate: '2026-07-30',
+            figures: const [
+              ShelfFigure(
+                id: 'custom_dated-f-0',
+                seriesId: 'custom_dated',
+                name: 'One',
+                rarity: 'Regular',
+                isSecret: false,
+              ),
+            ],
+          ),
+        ],
+        figureStates: const {},
+      ),
+    );
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final n = container.read(collectionNotifierProvider.notifier);
+
+    n.addCustomFigure(
+      seriesId: 'custom_dated',
+      name: 'Two',
+      isSecret: false,
+    );
+    expect(
+      container.read(collectionNotifierProvider).shelfSeries.single.releaseDate,
+      '2026-07-30',
+    );
+
+    n.updateCustomFigure(
+      seriesId: 'custom_dated',
+      figureId: 'custom_dated-f-0',
+      name: 'One Renamed',
+      isSecret: false,
+    );
+    expect(
+      container.read(collectionNotifierProvider).shelfSeries.single.releaseDate,
+      '2026-07-30',
+    );
   });
 
   test('addCustomFigure ignores catalog-backed series', () {

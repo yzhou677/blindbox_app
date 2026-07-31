@@ -35,6 +35,7 @@ final class _EditAdvancedTestNotifier extends CollectionNotifier {
     String? ipDisplayName,
     String? customCoverImageUri,
     String? notes,
+    String? releaseDate,
   }) {
     super.updateCustomSeries(
       seriesId: seriesId,
@@ -43,6 +44,7 @@ final class _EditAdvancedTestNotifier extends CollectionNotifier {
       ipDisplayName: ipDisplayName,
       customCoverImageUri: customCoverImageUri,
       notes: notes,
+      releaseDate: releaseDate,
     );
     _snap = state;
   }
@@ -141,6 +143,7 @@ Future<ProviderContainer> _pumpEditForm(
                         String? ipDisplayName,
                         String? customCoverImageUri,
                         String? notes,
+                        String? releaseDate,
                       }) {
                         container
                             .read(collectionNotifierProvider.notifier)
@@ -151,6 +154,7 @@ Future<ProviderContainer> _pumpEditForm(
                               ipDisplayName: ipDisplayName,
                               customCoverImageUri: customCoverImageUri,
                               notes: notes,
+                              releaseDate: releaseDate,
                             );
                       },
                   onFigureSubmit:
@@ -492,6 +496,7 @@ void main() {
                     required List<CustomFigureDraft> figures,
                     String? customCoverImageUri,
                     String? notes,
+                    String? releaseDate,
                   }) {},
             ),
           ),
@@ -502,5 +507,7 @@ void main() {
 
     expect(find.text(customSeriesEditAdvancedOptionsTitle), findsNothing);
     expect(find.byType(TextFormField), findsNWidgets(4));
+    expect(find.byKey(const Key('custom-series-release-date')), findsOneWidget);
+    expect(find.text(customSeriesReleaseDateFieldHint), findsOneWidget);
   });
 }

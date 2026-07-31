@@ -70,7 +70,7 @@ These must stay separate. Do not merge persistence, media keys, or loading paths
 
 - **Purpose:** Editorial feed (home) and market browse; entry points to save releases or view listings.
 - **Locations:** `lib/features/home/`, `lib/features/market/`
-- **Home:** Catalog-backed Latest/Trending via [`home_feed_provider`](../lib/features/home/application/home_feed_provider.dart); **Official drops** via [`official_feed`](../lib/features/official_feed/) (Firestore `official_feed_items`, external URLs). Save via `collectionNotifier.addSeriesFromRelease` + [`series_release_lookup`](../lib/features/collection/data/series_release_lookup.dart)
+- **Home:** Catalog-backed Latest/Trending via [`home_feed_provider`](../lib/features/home/application/home_feed_provider.dart); **Official feeds** via [`official_feed`](../lib/features/official_feed/) (Firestore `official_feed_items`, curated brands POP MART → TNT SPACE → TOP TOY, external URLs). Runtime availability, last-good cache, chips, and `publishedAt` vs destination: [`FIRESTORE_OFFICIAL_FEED_SCHEMA.md`](../lib/features/official_feed/FIRESTORE_OFFICIAL_FEED_SCHEMA.md). Save via `collectionNotifier.addSeriesFromRelease` + [`series_release_lookup`](../lib/features/collection/data/series_release_lookup.dart)
 - **For You recommendations:** [`lib/features/recommendations/`](../lib/features/recommendations/) — catalog series only; **tracked** shelf series excluded; Add Series unlocks readiness. **ADR (read before changes):** [`docs/decisions/architecture/ADR-001-recommendation-semantics.md`](../docs/decisions/architecture/ADR-001-recommendation-semantics.md).
 - **Market listings:** [`MarketSource`](../lib/features/market/data/source/market_source.dart) implementations (default [`AssetMarketSource`](../lib/features/market/data/source/asset_market_source.dart); dormant [`EbayMarketSource`](../lib/features/market/data/source/ebay_market_source.dart), [`MercariMarketSource`](../lib/features/market/data/source/mercari_market_source.dart)) → [`MarketListingsRepository`](../lib/features/market/data/repository/market_listings_repository.dart) → [`MarketListing`](../lib/models/market_listing.dart). Card art via [`MarketListingImage`](../lib/features/market/presentation/market_listing_image.dart) only — **not** catalog `imageKey` / Firestore.
 - **Market identity matching (Phase 2A):** listing titles → [`MarketIdentityMatcher`](../lib/features/market/application/market_identity_matcher.dart) over offline [`CatalogIdentityIndex`](../lib/features/market/data/catalog_identity_index.dart) (built from catalog bundle at startup). Result on `MarketListing.catalogMatch` (data layer only; UI stays provider-neutral). Prefer unresolved/partial matches over wrong figure binding.
@@ -124,7 +124,7 @@ Market (separate data path — not catalog bodies)
 
 ```
 lib/
-  core/           # router, theme, FeedRhythm, Firebase init, device_local_ref
+  core/           # router, theme, FeedRhythm, Firebase init, network recovery, device_local_ref
   features/       # feature slices (primary organization)
     catalog/      # read-only universe (no tab)
     collection/   # user shelf
@@ -145,7 +145,7 @@ Per feature (when applicable):
 
 ### `lib/models/` (grandfathered — expansion frozen)
 
-Holds **legacy shared presentation** types only: `Collectible`, `MarketListing`, `ToySeriesHighlight`.
+Holds **legacy shared presentation** types only: `Collectible`, `MarketListing`.
 
 - **Frozen:** Do **not** add new files, classes, DTOs, enums, or transport types under `lib/models/`.
 - **Allowed:** Import and extend existing grandfathered types only when a task truly requires touching them.
@@ -246,6 +246,10 @@ Firebase is for the **catalog universe only** in the current roadmap. Collection
 - Reintroducing `labubu` as a Firestore IP document id.
 
 Security rules live in the Firebase console or your infra repo — catalog read public (or auth-read); no user shelf paths until a future sync project.
+
+### IP introduction profiles (Discover)
+
+Firestore `ip_profiles/{ipId}` is **catalog-adjacent marketing copy**, not the catalog bundle and not shelf state. Load on demand by stable `ipId` only. Process-local cache: ~7-day success TTL, short confirmed-missing TTL, three-attempt transient retry, Discover PTR / offline→online soft revalidation via [`AppNetworkRecoveryHost`](../lib/core/network/app_network_recovery.dart) → Discover refresh. See [`docs/ARCHITECTURE_NOTES.md`](../docs/ARCHITECTURE_NOTES.md) § IP introduction profiles.
 
 ---
 
