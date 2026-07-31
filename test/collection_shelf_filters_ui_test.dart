@@ -272,7 +272,7 @@ void main() {
     await _openFiltersSheet(tester);
     await tester.tap(find.byKey(const Key('filters_sheet_clear_all')));
     await tester.pump();
-    await _applyFiltersSheet(tester);
+    await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.text('Filters'), findsOneWidget);
     expect(find.text('Filters · 1'), findsNothing);
@@ -393,8 +393,6 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     await tester.tap(find.byKey(const Key('filters_sheet_clear_all')));
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('filters_sheet_show_results')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(applied?.filters, CollectionShelfFilters.empty);

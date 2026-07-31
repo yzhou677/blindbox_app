@@ -518,22 +518,84 @@ void main() {
     // Duplicates AND wishlist → 0 matches.
     expect(find.text('Show results (0)'), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('filters_sheet_clear_all')));
-    await tester.pump();
-    expect(find.text('Show results (6)'), findsOneWidget);
-
     await tester.ensureVisible(
       find.byKey(const Key('filters_sheet_custom_series')),
     );
     await tester.pump();
     await tester.tap(find.byKey(const Key('filters_sheet_custom_series')));
     await tester.pump();
-    expect(find.text('Show results (1)'), findsOneWidget);
+    expect(find.text('Show results (0)'), findsOneWidget);
 
     Navigator.of(tester.element(find.text('Filters').first)).pop();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(applied, isNull);
+  });
+
+  testWidgets('Clear all applies empty Filters immediately and closes sheet', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    final corpus = _corpus();
+    final snap = CollectionSnapshot(
+      shelfSeries: corpus.series,
+      figureStates: corpus.states,
+    );
+    CollectionShelfFiltersSheetResult? applied;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          collectionNotifierProvider.overrideWith(() => _SnapNotifier(snap)),
+          catalogBundleProvider.overrideWith(
+            (ref) async => const CatalogSeedBundle(
+              brands: [],
+              ips: [],
+              series: [],
+              figures: [],
+            ),
+          ),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(disableAnimations: true),
+            child: child!,
+          ),
+          home: Builder(
+            builder: (context) {
+              return Scaffold(
+                body: TextButton(
+                  onPressed: () async {
+                    applied = await showCollectionShelfFiltersSheet(
+                      context: context,
+                      initial: const CollectionShelfFilters(
+                        hasDuplicates: true,
+                      ),
+                      shelfSeries: snap.shelfSeries,
+                      figureStates: snap.figureStates,
+                    );
+                  },
+                  child: const Text('open'),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('Show results (1)'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('filters_sheet_clear_all')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(applied?.filters, CollectionShelfFilters.empty);
+    expect(find.byKey(const Key('filters_sheet_show_results')), findsNothing);
   });
 
   testWidgets('layout host renders filtered ids for grid/list/compact', (

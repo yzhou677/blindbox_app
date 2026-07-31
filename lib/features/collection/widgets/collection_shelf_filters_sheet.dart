@@ -83,8 +83,9 @@ String collectionShelfIpFilterSummary({
 
 /// Opens the Collection filters sheet with draft Filters and draft Sort.
 ///
-/// Returns [CollectionShelfFiltersSheetResult] when the user taps Show, or
-/// `null` if dismissed without applying. Preview counts use
+/// Returns [CollectionShelfFiltersSheetResult] when the user taps Show **or**
+/// Clear all (empty Filters + current draft Sort), or `null` if dismissed
+/// without applying. Preview counts use
 /// [previewCollectionShelfFilterResults] — Sort does not affect the count.
 Future<CollectionShelfFiltersSheetResult?> showCollectionShelfFiltersSheet({
   required BuildContext context,
@@ -159,15 +160,18 @@ class _CollectionShelfFiltersSheetState
     ),
   );
 
-  /// Clears draft Filters only — draft Sort is preserved.
-  void _clearAll() => setState(() {
-    _draft = CollectionShelfFilters.empty;
-    _brandQuery = '';
-    _ipQuery = '';
-    _brandExpanded = false;
-    _ipExpanded = false;
-  });
-
+  /// Clears draft Filters and applies empty Filters immediately (Sort kept).
+  ///
+  /// Pops the sheet with the cleared Filters + current draft Sort so the
+  /// caller does not need a second Show results tap.
+  void _clearAll() {
+    Navigator.of(context).pop(
+      CollectionShelfFiltersSheetResult(
+        filters: CollectionShelfFilters.empty,
+        sort: _draftSort,
+      ),
+    );
+  }
   void _setDraft(CollectionShelfFilters next, List<ShelfSeries> shelfSeries) {
     setState(() {
       _draft = pruneCollectionShelfIpIdsToBrandScope(

@@ -409,7 +409,7 @@ void main() {
     expect(applied?.filters.activeCount, 1);
   });
 
-  testWidgets('Clear all clears only draft Filters and keeps draft Sort', (
+  testWidgets('Clear all applies empty Filters immediately and keeps Sort', (
     tester,
   ) async {
     CollectionShelfFiltersSheetResult? applied;
@@ -427,14 +427,11 @@ void main() {
     expect(find.text(CollectionShelfSort.completion.menuLabel), findsOneWidget);
     await tester.tap(find.byKey(const Key('filters_sheet_clear_all')));
     await tester.pump();
-    expect(find.text('Show results (2)'), findsOneWidget);
-    expect(find.text(CollectionShelfSort.completion.menuLabel), findsOneWidget);
-
-    await tester.tap(find.byKey(const Key('filters_sheet_show_results')));
-    await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
+
     expect(applied?.filters, CollectionShelfFilters.empty);
     expect(applied?.sort, CollectionShelfSort.completion);
+    expect(find.byKey(const Key('filters_sheet_show_results')), findsNothing);
   });
 
   testWidgets('Sort does not change preview count; does change order key', (
