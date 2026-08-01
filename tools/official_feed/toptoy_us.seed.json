@@ -2,7 +2,11 @@
   "sourceId": "toptoy_us",
   "sourceLabel": "TOP TOY",
   "locale": "us",
-  "retiredItemIds": [],
+  "retiredItemIds": [
+    "toptoy_us_toy_story_my_friends_forever",
+    "toptoy_us_sanrio_ice_cream_cone_stacking_plush",
+    "toptoy_us_basaka_love_what_you_do_be_happy_plush"
+  ],
   "items": [
     {
       "id": "toptoy_us_my_melody_classic_series_plush_pendant",
@@ -14,6 +18,17 @@
       "publishedAt": "2026-07-29T12:00:20.656Z",
       "status": "active",
       "instagramUrl": "https://www.instagram.com/p/DbYEJVrj03N/"
+    },
+    {
+      "id": "toptoy_us_crayon_shinchan_go_to_the_beach_plush_charm",
+      "releaseType": "product",
+      "title": "CRAYON SHINCHAN Go To The Beach Series Plush Charm Blind Box",
+      "summary": "Crayon Shinchan Go To The Beach plush charm — now on TOP TOY US.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fcrayon_shinchan_go_to_the_beach_plush_charm.jpg?alt=media&token=74c67ebc-fa93-4653-bca6-a467360ec04e",
+      "officialUrl": "https://gotoptoy.com/products/crayon-shinchan-go-to-the-beach-series-plush-charm-blind-box?variant=46506635853974",
+      "publishedAt": "2026-07-29T09:00:26.890Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DbXvjvYlMac/"
     },
     {
       "id": "toptoy_us_heymi_witchs_game_plush_doll",
@@ -49,37 +64,26 @@
       "instagramUrl": "https://www.instagram.com/p/DbSAbaFlFvD/"
     },
     {
-      "id": "toptoy_us_basaka_love_what_you_do_be_happy_plush",
-      "releaseType": "product",
-      "title": "Basaka Love What You Do, Be Happy Series Plush Blind Box",
-      "summary": "Basaka Love What You Do, Be Happy Plush — now on TOP TOY US.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fbasaka_love_what_you_do_be_happy_plush.jpg?alt=media&token=e2bffcc1-e3ae-468c-998d-d05d20bae363",
-      "officialUrl": "https://gotoptoy.com/products/basaka-love-what-you-do-be-happy-series-plush-blind-box",
-      "publishedAt": "2026-07-26T02:00:20.806Z",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DbPRGM2gdfc/"
-    },
-    {
-      "id": "toptoy_us_sanrio_ice_cream_cone_stacking_plush",
-      "releaseType": "product",
-      "title": "Sanrio characters Ice Cream Cone Stacking Series Plush Pendant Blind Box",
-      "summary": "Sanrio Ice Cream Cone Stacking Plush Pendant — now on TOP TOY US.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fsanrio_ice_cream_cone_stacking_plush.jpg?alt=media&token=71d84266-0434-4e31-8602-81626ce43bdb",
-      "officialUrl": "https://gotoptoy.com/products/sanrio-characters-ice-cream-cone-stacking-series-plush-pendant-blind-box?variant=46450901319830",
-      "publishedAt": "2026-07-14T06:22:58.612Z",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/Daw1nQtlHQD/"
-    },
-    {
-      "id": "toptoy_us_toy_story_my_friends_forever",
+      "id": "toptoy_us_usahana_charm_ig_DaMvnGblEEg",
       "releaseType": "announcement",
-      "title": "Toy Story — My friends forever",
-      "summary": "TOP TOY Toy Story collectibles showcase. My friends forever.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2FScreenshot%202026-07-30%20133757.png?alt=media&token=ba1fab38-50c8-42bb-97d8-eab622fb59c7",
-      "officialUrl": "https://www.instagram.com/p/DZ66UuWxgHj/",
-      "publishedAt": "2026-06-23T07:45:08.870Z",
+      "title": "U·SA·HA·NA Charm Pendant",
+      "summary": "Usahana charm pendant with bead strap. Official Instagram post.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2FScreenshot%202026-08-01%20165600.png?alt=media&token=9506605b-565f-41cc-abfc-d50e78261316",
+      "officialUrl": "https://www.instagram.com/p/DaMvnGblEEg/",
+      "publishedAt": "2026-06-30T05:57:52.016Z",
       "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DZ66UuWxgHj/"
+      "instagramUrl": "https://www.instagram.com/p/DaMvnGblEEg/"
+    },
+    {
+      "id": "toptoy_us_hello_kitty_puppy_party_plush_pendant",
+      "releaseType": "product",
+      "title": "Hello Kitty Puppy Party Series Plush Pendant Blind Box",
+      "summary": "Hello Kitty Puppy Party plush pendant — now on TOP TOY US.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fhello_kitty_puppy_party_plush_pendant.jpg?alt=media&token=d0c226ac-6978-4d0e-a110-5b7795893810",
+      "officialUrl": "https://gotoptoy.com/products/hello-kitty-puppy-party-series-plush-pendant-blind-box",
+      "publishedAt": "2026-05-25T08:00:46.721Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DYwRD1UAR8c/"
     }
   ]
 }
