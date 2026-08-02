@@ -28,10 +28,11 @@ import 'helpers/collection_fixtures.dart';
 SeriesRelease _release({
   required DateTime releaseDate,
   String dropId = 'series_a',
+  String seriesName = 'Exciting Macaron',
 }) {
   return SeriesRelease(
     dropId: dropId,
-    seriesName: 'Exciting Macaron',
+    seriesName: seriesName,
     brand: 'POP MART',
     ipLine: 'POP MART · THE MONSTERS',
     releaseDate: releaseDate,
@@ -39,7 +40,7 @@ SeriesRelease _release({
     heroCollectible: Collectible(
       id: dropId,
       name: 'Hero',
-      series: 'Exciting Macaron',
+      series: seriesName,
       brand: 'POP MART',
       releaseDate: releaseDate,
       imageUrl: '',
@@ -260,6 +261,55 @@ void main() {
       expect(find.textContaining('could not be found'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
+
+    testWidgets(
+      'shows full wrapping series name below hero; AppBar stays ellipsis',
+      (tester) async {
+        const longName =
+            'Nyota × Chibi Maruko Chan Growing Up By Your Side Special Edition Series';
+        final release = _release(
+          releaseDate: DateTime(2026, 8, 6),
+          seriesName: longName,
+        );
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              seriesReleaseLookupProvider.overrideWith(
+                (ref) =>
+                    (id) => release,
+              ),
+            ],
+            child: MaterialApp(
+              theme: AppTheme.light(),
+              home: DropDetailScreen(releaseId: release.dropId),
+            ),
+          ),
+        );
+        await tester.pump();
+
+        final bodyName = find.byKey(
+          const Key('drop_detail_series_name'),
+          skipOffstage: false,
+        );
+        expect(bodyName, findsOneWidget);
+        await tester.ensureVisible(bodyName);
+        await tester.pump();
+
+        final bodyTitle = tester.widget<Text>(bodyName);
+        expect(bodyTitle.data, longName);
+        expect(bodyTitle.maxLines, isNull);
+        expect(bodyTitle.overflow, isNot(TextOverflow.ellipsis));
+
+        final appBarTitle = tester.widget<Text>(
+          find.descendant(
+            of: find.byType(SliverAppBar),
+            matching: find.text(longName),
+          ),
+        );
+        expect(appBarTitle.maxLines, 1);
+        expect(appBarTitle.overflow, TextOverflow.ellipsis);
+      },
+    );
   });
 
   group('SeriesFiguresSheet', () {

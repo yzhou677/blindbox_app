@@ -114,6 +114,16 @@ class DropDetailScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // AppBar keeps a single-line ellipsis; body shows the full
+                  // series name so long titles stay readable after opening.
+                  Text(
+                    key: const Key('drop_detail_series_name'),
+                    release.seriesName,
+                    style: CollectibleTypography.seriesHeroTitle(
+                      textTheme,
+                      scheme,
+                    ),
+                  ),
                   SeriesHeroMetaBlock(
                     brand: release.brand,
                     ipLine: release.ipLine?.trim() ?? '',
