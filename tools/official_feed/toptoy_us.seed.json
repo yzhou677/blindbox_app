@@ -5,85 +5,81 @@
   "retiredItemIds": [
     "toptoy_us_toy_story_my_friends_forever",
     "toptoy_us_sanrio_ice_cream_cone_stacking_plush",
-    "toptoy_us_basaka_love_what_you_do_be_happy_plush"
+    "toptoy_us_basaka_love_what_you_do_be_happy_plush",
+    "toptoy_us_my_melody_classic_series_plush_pendant",
+    "toptoy_us_crayon_shinchan_go_to_the_beach_plush_charm",
+    "toptoy_us_heymi_witchs_game_plush_doll",
+    "toptoy_us_hello_kitty_classic_revival_figure",
+    "toptoy_us_hello_kitty_swimsuit_party_surprise_bag",
+    "toptoy_us_usahana_charm_ig_DaMvnGblEEg",
+    "toptoy_us_hello_kitty_puppy_party_plush_pendant"
   ],
   "items": [
     {
-      "id": "toptoy_us_my_melody_classic_series_plush_pendant",
+      "id": "toptoy_us_my_melody_crem_mousse_ig_Db8SMTMSyqH",
       "releaseType": "announcement",
-      "title": "My Melody Classic Series Plush Pendant Blind Box",
-      "summary": "My Melody Classic Series Plush Pendant Blind Box. Release July 31, 2026.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2FScreenshot%202026-07-30%20134017.png?alt=media&token=42891dee-0265-4a17-b652-9544639db93b",
-      "officialUrl": "https://www.instagram.com/p/DbYEJVrj03N/",
-      "publishedAt": "2026-07-29T12:00:20.656Z",
+      "title": "My Melody Crem Mousse Series",
+      "summary": "My Melody Crem Mousse series plush. Official Instagram post.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fig_Db8SMTMSyqH.png?alt=media&token=f7785379-a007-462d-a30e-3888f028aee2",
+      "officialUrl": "https://www.instagram.com/p/Db8SMTMSyqH/",
+      "publishedAt": "2026-08-12T13:35:44.497Z",
       "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DbYEJVrj03N/"
+      "instagramUrl": "https://www.instagram.com/p/Db8SMTMSyqH/"
     },
     {
-      "id": "toptoy_us_crayon_shinchan_go_to_the_beach_plush_charm",
-      "releaseType": "product",
-      "title": "CRAYON SHINCHAN Go To The Beach Series Plush Charm Blind Box",
-      "summary": "Crayon Shinchan Go To The Beach plush charm — now on TOP TOY US.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fcrayon_shinchan_go_to_the_beach_plush_charm.jpg?alt=media&token=74c67ebc-fa93-4653-bca6-a467360ec04e",
-      "officialUrl": "https://gotoptoy.com/products/crayon-shinchan-go-to-the-beach-series-plush-charm-blind-box?variant=46506635853974",
-      "publishedAt": "2026-07-29T09:00:26.890Z",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DbXvjvYlMac/"
-    },
-    {
-      "id": "toptoy_us_heymi_witchs_game_plush_doll",
-      "releaseType": "product",
-      "title": "Heymi Witch's Game Series Plush Doll Blind Box",
-      "summary": "Heymi Witch's Game Series Plush Doll Blind Box — now on TOP TOY US.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fheymi_witchs_game_plush_doll.jpg?alt=media&token=8289d849-60b1-48b2-8b8a-020bad677c6d",
-      "officialUrl": "https://gotoptoy.com/products/heymi-witchs-game-series-plush-doll-blind-box?variant=46506637983894",
-      "publishedAt": "2026-07-29T03:00:09.988Z",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DbXGU9VjXSy/"
-    },
-    {
-      "id": "toptoy_us_hello_kitty_classic_revival_figure",
-      "releaseType": "product",
-      "title": "Hello Kitty Classic Revival Series Figure Blind Box",
-      "summary": "Hello Kitty Classic Revival Figure Blind Box — now on TOP TOY US.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fhello_kitty_classic_revival_figure.jpg?alt=media&token=4491c2a8-b2f2-42c3-bdd2-6cbba3e6de1c",
-      "officialUrl": "https://gotoptoy.com/products/hello-kitty-classic-revival-series-figure-blind-box?variant=46418085314710",
-      "publishedAt": "2026-07-28T09:54:46.118Z",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DbVQ-uGzZQv/"
-    },
-    {
-      "id": "toptoy_us_hello_kitty_swimsuit_party_surprise_bag",
-      "releaseType": "product",
-      "title": "Hello Kitty Swimsuit Party Series Figures Surprise Bag",
-      "summary": "Hello Kitty Swimsuit Party Surprise Bag — now on TOP TOY US.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fhello_kitty_swimsuit_party_surprise_bag.jpg?alt=media&token=951deaf5-88b4-4d57-ae84-d88559c26ee6",
-      "officialUrl": "https://gotoptoy.com/products/hello-kitty-swimsuit-party-series-figures-surprise-bag?variant=46430765383830",
-      "publishedAt": "2026-07-27T03:32:24.932Z",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DbSAbaFlFvD/"
-    },
-    {
-      "id": "toptoy_us_usahana_charm_ig_DaMvnGblEEg",
+      "id": "toptoy_us_hello_kitty_dear_daniel_century_wedding_ig_DbziB3_oza4",
       "releaseType": "announcement",
-      "title": "U·SA·HA·NA Charm Pendant",
-      "summary": "Usahana charm pendant with bead strap. Official Instagram post.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2FScreenshot%202026-08-01%20165600.png?alt=media&token=9506605b-565f-41cc-abfc-d50e78261316",
-      "officialUrl": "https://www.instagram.com/p/DaMvnGblEEg/",
-      "publishedAt": "2026-06-30T05:57:52.016Z",
+      "title": "Hello Kitty & Dear Daniel Century Wedding Series",
+      "summary": "Hello Kitty & Dear Daniel wedding figures. Online August 14, 2026.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fig_DbziB3_oza4.png?alt=media&token=003a4fb6-9383-4a77-a46a-88938e43f922",
+      "officialUrl": "https://www.instagram.com/p/DbziB3_oza4/",
+      "publishedAt": "2026-08-09T04:00:57.816Z",
       "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DaMvnGblEEg/"
+      "instagramUrl": "https://www.instagram.com/p/DbziB3_oza4/"
     },
     {
-      "id": "toptoy_us_hello_kitty_puppy_party_plush_pendant",
-      "releaseType": "product",
-      "title": "Hello Kitty Puppy Party Series Plush Pendant Blind Box",
-      "summary": "Hello Kitty Puppy Party plush pendant — now on TOP TOY US.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fhello_kitty_puppy_party_plush_pendant.jpg?alt=media&token=d0c226ac-6978-4d0e-a110-5b7795893810",
-      "officialUrl": "https://gotoptoy.com/products/hello-kitty-puppy-party-series-plush-pendant-blind-box",
-      "publishedAt": "2026-05-25T08:00:46.721Z",
+      "id": "toptoy_us_stitch_in_cute_costumes_ig_Dbzh-jpmy7U",
+      "releaseType": "announcement",
+      "title": "Disney Stitch in Cute Costumes Series",
+      "summary": "Stitch in Cute Costumes figure blind box. Official Instagram post.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fig_Dbzh-jpmy7U.png?alt=media&token=af6bca59-bb95-4fa3-8558-209063be97c3",
+      "officialUrl": "https://www.instagram.com/p/Dbzh-jpmy7U/",
+      "publishedAt": "2026-08-09T04:00:30.636Z",
       "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DYwRD1UAR8c/"
+      "instagramUrl": "https://www.instagram.com/p/Dbzh-jpmy7U/"
+    },
+    {
+      "id": "toptoy_us_nommi_3rd_birthday_giveaway_ig_DbwvavME0He",
+      "releaseType": "announcement",
+      "title": "Happy 3rd Birthday, Nommi — Giveaway",
+      "summary": "Nommi 3rd birthday giveaway. Ends August 20, 2026. Official IG.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fig_DbwvavME0He.png?alt=media&token=f71dea20-619a-4b1e-85b5-bdd6a86cf009",
+      "officialUrl": "https://www.instagram.com/p/DbwvavME0He/",
+      "publishedAt": "2026-08-08T02:00:13.937Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DbwvavME0He/"
+    },
+    {
+      "id": "toptoy_us_disney_baby_dreams_plush_charm_ig_DbvBjpEm0AI",
+      "releaseType": "announcement",
+      "title": "Disney Baby Dreams Series Plush Charm Blind Box",
+      "summary": "Disney Baby Dreams plush charms. Official Instagram post.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fig_DbvBjpEm0AI.png?alt=media&token=ec794253-526c-4c00-a041-08389dfcfbf2",
+      "officialUrl": "https://www.instagram.com/p/DbvBjpEm0AI/",
+      "publishedAt": "2026-08-07T10:00:15.202Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DbvBjpEm0AI/"
+    },
+    {
+      "id": "toptoy_us_nommi_treasure_collector_ig_DbsjDa7DBRU",
+      "releaseType": "announcement",
+      "title": "Nommi Treasure Collector Series Plush Doll Blind Box",
+      "summary": "Nommi Treasure Collector plush dolls. Online August 8, 2026.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fig_DbsjDa7DBRU.png?alt=media&token=829d2a00-633f-4e02-8c25-0e5646fe2882",
+      "officialUrl": "https://www.instagram.com/p/DbsjDa7DBRU/",
+      "publishedAt": "2026-08-06T10:55:13.743Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DbsjDa7DBRU/"
     }
   ]
 }

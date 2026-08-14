@@ -2,8 +2,33 @@
   "sourceId": "tntspace_us",
   "sourceLabel": "TNT SPACE",
   "locale": "us",
-  "retiredItemIds": [],
+  "retiredItemIds": [
+    "tntspace_us_liita_crush_academy_figurine_GMQ_C87901",
+    "tntspace_us_anmoo_little_disguise_figurine_GMQ_C87801"
+  ],
   "items": [
+    {
+      "id": "tntspace_us_zoraa_fairytale_town_ig_DbsLMBMCbyK",
+      "releaseType": "announcement",
+      "title": "Zoraa Fairytale Town Series Figures",
+      "summary": "Zoraa Fairytale Town series figures. Release August 9, 2026.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftntspace_us%2Fig_DbsLMBMCbyK.png?alt=media&token=9c646118-b6d2-4115-8546-8dfb11044af4",
+      "officialUrl": "https://www.instagram.com/p/DbsLMBMCbyK/",
+      "publishedAt": "2026-08-06T07:26:41.265Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DbsLMBMCbyK/"
+    },
+    {
+      "id": "tntspace_us_zootopia_2_mysterious_journey_ig_DbkwN8eG4I7",
+      "releaseType": "announcement",
+      "title": "TNTSPACE × Zootopia 2 Mysterious Journey Plush Pendant",
+      "summary": "Zootopia 2 Mysterious Journey plush pendant. Coming soon.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftntspace_us%2Fig_DbkwN8eG4I7.png?alt=media&token=d0411754-2a36-4fbc-a036-0090df1d0d5e",
+      "officialUrl": "https://www.instagram.com/p/DbkwN8eG4I7/",
+      "publishedAt": "2026-08-03T10:16:20.245Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DbkwN8eG4I7/"
+    },
     {
       "id": "tntspace_us_mowdo_after_school_escape_plush_pendant",
       "releaseType": "announcement",
@@ -48,30 +73,6 @@
       "publishedAt": "2026-07-20T07:15:53.179Z",
       "status": "active",
       "instagramUrl": "https://www.instagram.com/p/DbAYcCBCJlJ/"
-    },
-    {
-      "id": "tntspace_us_anmoo_little_disguise_figurine_GMQ_C87801",
-      "releaseType": "product",
-      "productId": "GMQ_C87801",
-      "title": "Anmoo Little Disguise Figurine",
-      "summary": "Anmoo Little Disguise Figurine — now on TNT SPACE US.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftntspace_us%2Fanmoo_little_disguise_figurine.png?alt=media&token=b1ea2f8d-f73e-43c4-b5c6-c418b6ce9b36",
-      "officialUrl": "https://tntspace.com/us/collections/new-arrivals/products/GMQ_C87801~Anmoo-Little-Disguise-Figurine",
-      "publishedAt": "2026-07-13T08:45:15.383Z",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DauhGePCGzp/"
-    },
-    {
-      "id": "tntspace_us_liita_crush_academy_figurine_GMQ_C87901",
-      "releaseType": "product",
-      "productId": "GMQ_C87901",
-      "title": "Liita Crush Academy Figurine",
-      "summary": "Liita Crush Academy Figurine — now on TNT SPACE US.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftntspace_us%2Fliita_crush_academy_figurine.png?alt=media&token=6655e6c4-2e5d-4c73-97e0-3e0ffa1036cb",
-      "officialUrl": "https://tntspace.com/us/collections/new-arrivals/products/GMQ_C87901~Liita-Crush-Academy-Figurine",
-      "publishedAt": "2026-07-13T08:40:40.003Z",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/Daugk21CILi/"
     }
   ]
 }
