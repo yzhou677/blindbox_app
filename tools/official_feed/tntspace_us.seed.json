@@ -4,9 +4,34 @@
   "locale": "us",
   "retiredItemIds": [
     "tntspace_us_liita_crush_academy_figurine_GMQ_C87901",
-    "tntspace_us_anmoo_little_disguise_figurine_GMQ_C87801"
+    "tntspace_us_anmoo_little_disguise_figurine_GMQ_C87801",
+    "tntspace_us_rayan_more_than_friends_plush_pendant",
+    "tntspace_us_rayan_tent_no_7_C723A"
   ],
   "items": [
+    {
+      "id": "tntspace_us_dora_paw_print_block_series_bjd_ig_DcC6-r0mx7i",
+      "releaseType": "announcement",
+      "title": "DORA Paw Print Block Series BJD Figure",
+      "summary": "DORA Paw Print Block Series BJD Figure teaser. Coming soon.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftntspace_us%2Fdora_paw_print_block_series_bjd_ig_DcC6-r0mx7i.png?alt=media&token=c778dc63-029d-4c4d-b761-805f158f539b",
+      "officialUrl": "https://www.instagram.com/p/DcC6-r0mx7i/",
+      "publishedAt": "2026-08-15T03:27:35.362Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DcC6-r0mx7i/"
+    },
+    {
+      "id": "tntspace_us_beanbin_on_duty_series_figures_C772A",
+      "releaseType": "product",
+      "productId": "C772A",
+      "title": "BeanBin On Duty Series Figures",
+      "summary": "BeanBin On Duty series figures. Release August 18, 2026, 10:00 AM GMT+8.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftntspace_us%2Fbeanbin_on_duty_series_figures.png?alt=media&token=3692ac4d-7673-4eeb-8a6b-c2f56e4750c4",
+      "officialUrl": "https://tntspace.com/us/collections/new-arrivals/products/C772A~BeanBin%E8%B1%86%E5%9C%A8%E8%90%A5%E4%B8%9A%E7%B3%BB%E5%88%97",
+      "publishedAt": "2026-08-15T01:57:03.746Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DcCwnpUqVIu/"
+    },
     {
       "id": "tntspace_us_zoraa_fairytale_town_ig_DbsLMBMCbyK",
       "releaseType": "announcement",
@@ -50,29 +75,6 @@
       "publishedAt": "2026-07-24T05:49:33.726Z",
       "status": "active",
       "instagramUrl": "https://www.instagram.com/p/DbKhvRiiYks/"
-    },
-    {
-      "id": "tntspace_us_rayan_more_than_friends_plush_pendant",
-      "releaseType": "announcement",
-      "title": "Rayan More Than Friends series Plush Pendant",
-      "summary": "Rayan More Than Friends series Plush Pendant teaser. Coming soon.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftntspace_us%2Frayan_more_than_friends_plush_pendant.png?alt=media&token=f1b85e59-b5fc-4a16-9b29-6b522bb621b4",
-      "officialUrl": "https://www.instagram.com/p/DbCmTM7C-3k/",
-      "publishedAt": "2026-07-21T03:55:29.743Z",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DbCmTM7C-3k/"
-    },
-    {
-      "id": "tntspace_us_rayan_tent_no_7_C723A",
-      "releaseType": "product",
-      "productId": "C723A",
-      "title": "Rayan Tent No. 7 series figures",
-      "summary": "Rayan Tent No. 7 series figures — Direct Purchase on TNT SPACE US.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftntspace_us%2Frayan_tent_no_7_series_figures.png?alt=media&token=5b7a30d0-7ca7-4fd9-80f3-3ccb3f7f08c0",
-      "officialUrl": "https://tntspace.com/us/collections/Rayan/products/C723A~Rayan-Tent-No-7-series-figures",
-      "publishedAt": "2026-07-20T07:15:53.179Z",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DbAYcCBCJlJ/"
     }
   ]
 }
