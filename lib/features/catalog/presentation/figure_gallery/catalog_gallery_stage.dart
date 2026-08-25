@@ -1,18 +1,18 @@
 import 'dart:io';
-import 'dart:ui' show ImageFilter;
 
-import 'package:blindbox_app/core/theme/app_image_styles.dart';
 import 'package:blindbox_app/core/theme/app_radii.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_aspect_image.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
+import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_immersive_feathered_subject.dart';
+import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_immersive_figure_stage.dart';
 import 'package:blindbox_app/features/collection/widgets/collectible_figure_placeholder.dart';
 import 'package:blindbox_app/shared/widgets/app_image_shimmer.dart';
 import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
 import 'package:flutter/material.dart';
 
-/// Fullscreen gallery “stage” — blurred cover backdrop + sharp contain foreground.
+/// Fullscreen gallery stage for local-file figure art.
 ///
-/// Unifies mixed-aspect promo art without re-exporting database assets.
+/// Visual composition matches [CatalogResolvedImage] immersive gallery mode.
 class CatalogGalleryStage extends StatelessWidget {
   const CatalogGalleryStage({
     super.key,
@@ -35,9 +35,11 @@ class CatalogGalleryStage extends StatelessWidget {
   final File? file;
   final bool useBackdrop;
 
+  static const Duration _layerFadeIn = Duration.zero;
+  static const Duration _layerFadeOut = Duration.zero;
+
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final ref = imageRef.trim();
     if (file == null && ref.isEmpty) {
       return SizedBox(
@@ -58,43 +60,52 @@ class CatalogGalleryStage extends StatelessWidget {
     final dpr = MediaQuery.devicePixelRatioOf(context);
     final constraints = BoxConstraints(maxWidth: width, maxHeight: height);
     final decode = spec.memCacheDecodeExtent(constraints, dpr);
+    final radius = AppRadii.figureGalleryRadius;
+    final showBackdrop = useBackdrop && !spec.fillsFrame;
+    final slot = CatalogImmersiveFigureStage.innerSlotSize(
+      constraints: constraints,
+      spec: spec,
+    );
+    final slotW = slot.width ?? width;
+    final slotH = slot.height ?? height;
 
-    Widget buildLayer({
-      required BoxFit fit,
-      required bool fillBounds,
-      Key? key,
-    }) {
+    ImageProvider foregroundProvider() {
       if (file != null) {
-        final layer = CatalogAspectImage.coverFile(
+        return CatalogImmersiveImageProviders.file(file!);
+      }
+      return CatalogImmersiveImageProviders.fromDisplayRef(ref);
+    }
+
+    Widget buildBackdrop() {
+      if (file != null) {
+        return CatalogAspectImage.coverFile(
           file: file!,
-          fit: fit,
-          fillBounds: fillBounds,
+          fit: BoxFit.cover,
+          fillBounds: true,
           decodeExtent: decode,
         );
-        return key != null ? KeyedSubtree(key: key, child: layer) : layer;
       }
       if (CollectibleThumbImage.isAssetPath(ref)) {
         return CatalogAspectImage.presentAsset(
-          key: key,
+          key: ValueKey<String>('gallery-bg:$ref'),
           asset: ref,
-          fit: fit,
-          fillBounds: fillBounds,
+          fit: BoxFit.cover,
+          fillBounds: true,
           filterQuality: spec.filterQuality,
           decodeExtent: decode,
         );
       }
       return CatalogAspectImage.presentNetwork(
-        key: key,
+        key: ValueKey<String>('gallery-bg:$ref'),
         imageUrl: ref,
         cacheKey: ref,
-        fit: fit,
-        fillBounds: fillBounds,
+        fit: BoxFit.cover,
+        fillBounds: true,
         filterQuality: spec.filterQuality,
         decodeExtent: decode,
-        fadeInDuration: spec.fadeInDuration,
-        fadeOutDuration: spec.fadeOutDuration,
-        placeholder: (_, _) =>
-            AppImageShimmer(borderRadius: AppRadii.figureGalleryRadius),
+        fadeInDuration: _layerFadeIn,
+        fadeOutDuration: _layerFadeOut,
+        placeholder: (_, _) => AppImageShimmer(borderRadius: radius),
         errorWidget: (_, _, _) => CollectibleFigurePlaceholder(
           name: name,
           seedKey: seedKey,
@@ -103,69 +114,45 @@ class CatalogGalleryStage extends StatelessWidget {
       );
     }
 
-    final showBackdrop = useBackdrop && !spec.fillsFrame;
+    final foregroundSubject = CatalogImmersiveFeatheredSubject(
+      key: ValueKey<String>('gallery-fg:$ref:${file?.path}'),
+      imageProvider: foregroundProvider(),
+      slotWidth: slotW,
+      slotHeight: slotH,
+      filterQuality: spec.filterQuality,
+      decodeExtent: decode,
+      placeholder: (context) => AppImageShimmer(borderRadius: radius),
+      errorBuilder: (context, error, stackTrace) => CollectibleFigurePlaceholder(
+        name: name,
+        seedKey: seedKey,
+        isSecret: isSecret,
+      ),
+    );
+
+    if (!showBackdrop) {
+      return SizedBox(
+        width: width,
+        height: height,
+        child: ClipRRect(
+          borderRadius: radius,
+          child: CatalogImmersiveFigureStage.subjectContainLayer(
+            constraints: constraints,
+            spec: spec,
+            child: foregroundSubject,
+          ),
+        ),
+      );
+    }
 
     return SizedBox(
       width: width,
       height: height,
-      child: ClipRRect(
-        borderRadius: AppRadii.figureGalleryRadius,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            if (showBackdrop) ...[
-              Positioned.fill(
-                child: Opacity(
-                  opacity: 0.52,
-                  child: ImageFiltered(
-                    imageFilter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-                    child: Transform.scale(
-                      scale: 1.12,
-                      child: buildLayer(
-                        key: ValueKey<String>('gallery-bg:$ref'),
-                        fit: BoxFit.cover,
-                        fillBounds: true,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned.fill(
-                child: ColoredBox(color: scheme.scrim.withValues(alpha: 0.42)),
-              ),
-            ] else
-              ColoredBox(color: AppImageStyles.figureMat(scheme)),
-            _ForegroundContain(
-              spec: spec,
-              child: buildLayer(
-                key: ValueKey<String>('gallery-fg:$ref'),
-                fit: BoxFit.contain,
-                fillBounds: false,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ForegroundContain extends StatelessWidget {
-  const _ForegroundContain({required this.spec, required this.child});
-
-  final CatalogImageDisplaySpec spec;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final pad = spec.contentPadding;
-    final zoom = spec.subjectZoom.clamp(1.0, 1.15);
-
-    return Padding(
-      padding: pad,
-      child: Align(
-        alignment: spec.alignment,
-        child: Transform.scale(scale: zoom, child: child),
+      child: CatalogImmersiveFigureStage(
+        constraints: constraints,
+        borderRadius: radius,
+        spec: spec,
+        backdrop: buildBackdrop(),
+        foregroundSubject: foregroundSubject,
       ),
     );
   }

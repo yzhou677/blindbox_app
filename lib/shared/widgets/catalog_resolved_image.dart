@@ -1,9 +1,10 @@
 import 'dart:io';
-import 'dart:ui' show ImageFilter;
 
 import 'package:blindbox_app/core/media/device_local_ref.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_aspect_image.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
+import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_immersive_feathered_subject.dart';
+import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_immersive_figure_stage.dart';
 import 'package:blindbox_app/features/collection/widgets/collectible_figure_placeholder.dart';
 import 'package:blindbox_app/shared/widgets/app_image_shimmer.dart';
 import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
@@ -39,6 +40,9 @@ class CatalogResolvedImage extends StatelessWidget {
   /// Blurred cover backdrop + contain foreground (fullscreen gallery).
   final bool immersiveGalleryStage;
 
+  static const Duration _immersiveLayerFadeIn = Duration.zero;
+  static const Duration _immersiveLayerFadeOut = Duration.zero;
+
   @override
   Widget build(BuildContext context) {
     final ref = imageRef.trim();
@@ -53,35 +57,40 @@ class CatalogResolvedImage extends StatelessWidget {
         final scheme = Theme.of(context).colorScheme;
         final dpr = MediaQuery.devicePixelRatioOf(context);
         final mat = _matColor(scheme);
+        final immersive = immersiveGalleryStage && !spec.fillsFrame;
 
-        final image = _buildImage(
-          ref: ref,
-          constraints: constraints,
-          dpr: dpr,
-          placeholder: () => _loadingMat(scheme),
-          onError: () => _placeholder(radius),
-        );
-
-        final framed = immersiveGalleryStage && !spec.fillsFrame
-            ? _immersiveGalleryFrame(
-                scheme: scheme,
-                radius: radius,
+        final framed = immersive
+            ? _buildImmersiveStage(
+                ref: ref,
                 constraints: constraints,
                 dpr: dpr,
-                ref: ref,
-                foreground: image,
-                placeholder: () => _loadingMat(scheme),
-                onError: () => _placeholder(radius),
+                scheme: scheme,
+                radius: radius,
               )
             : ClipRRect(
                 borderRadius: radius,
                 child: ColoredBox(
                   color: mat,
                   child: spec.fillsFrame
-                      ? _coverFrame(constraints: constraints, image: image)
+                      ? _coverFrame(
+                          constraints: constraints,
+                          image: _buildImage(
+                            ref: ref,
+                            constraints: constraints,
+                            dpr: dpr,
+                            placeholder: () => _loadingMat(scheme),
+                            onError: () => _placeholder(radius),
+                          ),
+                        )
                       : _subjectContainFrame(
                           constraints: constraints,
-                          image: image,
+                          image: _buildImage(
+                            ref: ref,
+                            constraints: constraints,
+                            dpr: dpr,
+                            placeholder: () => _loadingMat(scheme),
+                            onError: () => _placeholder(radius),
+                          ),
                         ),
                 ),
               );
@@ -117,71 +126,53 @@ class CatalogResolvedImage extends StatelessWidget {
     required BoxConstraints constraints,
     required Widget image,
   }) {
-    final pad = spec.contentPadding;
-    final innerW = constraints.maxWidth.isFinite
-        ? (constraints.maxWidth - pad.horizontal).clamp(0.0, double.infinity)
-        : null;
-    final innerH = constraints.maxHeight.isFinite
-        ? (constraints.maxHeight - pad.vertical).clamp(0.0, double.infinity)
-        : null;
-    final zoom = spec.subjectZoom.clamp(1.0, 1.2);
-
-    return Padding(
-      padding: pad,
-      child: ClipRect(
-        child: Align(
-          alignment: spec.alignment,
-          child: Transform.scale(
-            scale: zoom,
-            child: SizedBox(width: innerW, height: innerH, child: image),
-          ),
-        ),
+    return ClipRect(
+      child: CatalogImmersiveFigureStage.subjectContainLayer(
+        constraints: constraints,
+        spec: spec,
+        child: image,
       ),
     );
   }
 
-  Widget _immersiveGalleryFrame({
-    required ColorScheme scheme,
-    required BorderRadius radius,
+  Widget _buildImmersiveStage({
+    required String ref,
     required BoxConstraints constraints,
     required double dpr,
-    required String ref,
-    required Widget foreground,
-    required Widget Function() placeholder,
-    required Widget Function() onError,
+    required ColorScheme scheme,
+    required BorderRadius radius,
   }) {
-    final backdrop = _buildImage(
-      ref: ref,
+    final slot = CatalogImmersiveFigureStage.innerSlotSize(
       constraints: constraints,
-      dpr: dpr,
-      fit: BoxFit.cover,
-      fillBounds: true,
-      placeholder: placeholder,
-      onError: onError,
+      spec: spec,
     );
+    final slotW = slot.width ?? constraints.maxWidth;
+    final slotH = slot.height ?? constraints.maxHeight;
+    final decodeExtent = spec.memCacheDecodeExtent(constraints, dpr);
 
-    return ClipRRect(
+    return CatalogImmersiveFigureStage(
+      constraints: constraints,
       borderRadius: radius,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Positioned.fill(
-            child: Opacity(
-              opacity: 0.58,
-              child: ImageFiltered(
-                imageFilter: ImageFilter.blur(sigmaX: 26, sigmaY: 26),
-                child: Transform.scale(
-                  scale: 1.12,
-                  child: ClipRect(child: backdrop),
-                ),
-              ),
-            ),
-          ),
-          Positioned.fill(
-            child: ColoredBox(color: scheme.scrim.withValues(alpha: 0.42)),
-          ),
-          _subjectContainFrame(constraints: constraints, image: foreground),
-        ],
+      spec: spec,
+      backdrop: _buildImage(
+        ref: ref,
+        constraints: constraints,
+        dpr: dpr,
+        fit: BoxFit.cover,
+        fillBounds: true,
+        placeholder: () => _loadingMat(scheme),
+        onError: () => _placeholder(radius),
+        fadeInDuration: _immersiveLayerFadeIn,
+        fadeOutDuration: _immersiveLayerFadeOut,
+      ),
+      foregroundSubject: CatalogImmersiveFeatheredSubject(
+        imageProvider: CatalogImmersiveImageProviders.fromDisplayRef(ref),
+        slotWidth: slotW,
+        slotHeight: slotH,
+        filterQuality: spec.filterQuality,
+        decodeExtent: decodeExtent,
+        placeholder: (context) => _loadingMat(scheme),
+        errorBuilder: (context, error, stackTrace) => _placeholder(radius),
       ),
     );
   }
@@ -201,11 +192,15 @@ class CatalogResolvedImage extends StatelessWidget {
     required Widget Function() onError,
     BoxFit? fit,
     bool? fillBounds,
+    Duration? fadeInDuration,
+    Duration? fadeOutDuration,
   }) {
     final resolvedFit = fit ?? spec.fit;
     CatalogAspectImage.assertAspectPreservingFit(resolvedFit);
     final decodeExtent = spec.memCacheDecodeExtent(constraints, dpr);
     final expansive = fillBounds ?? spec.fillsFrame;
+    final fadeIn = fadeInDuration ?? spec.fadeInDuration;
+    final fadeOut = fadeOutDuration ?? spec.fadeOutDuration;
 
     if (CollectibleThumbImage.isAssetPath(ref)) {
       return CatalogAspectImage.presentAsset(
@@ -248,8 +243,8 @@ class CatalogResolvedImage extends StatelessWidget {
       filterQuality: spec.filterQuality,
       decodeExtent: decodeExtent,
       fillBounds: expansive,
-      fadeInDuration: spec.fadeInDuration,
-      fadeOutDuration: spec.fadeOutDuration,
+      fadeInDuration: fadeIn,
+      fadeOutDuration: fadeOut,
       placeholder: (context, url) => placeholder(),
       errorWidget: (context, url, error) => onError(),
     );
