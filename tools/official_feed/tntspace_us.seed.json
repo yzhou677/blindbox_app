@@ -7,11 +7,9 @@
     "tntspace_us_anmoo_little_disguise_figurine_GMQ_C87801",
     "tntspace_us_rayan_more_than_friends_plush_pendant",
     "tntspace_us_rayan_tent_no_7_C723A",
-    "tntspace_us_rayan_boundless_beat_infinite_pulse",
-    "tntspace_us_mowdo_after_school_escape_plush_pendant",
-    "tntspace_us_zootopia_2_mysterious_journey_ig_DbkwN8eG4I7",
     "tntspace_us_dora_paw_print_block_series_bjd_ig_DcC6-r0mx7i",
-    "tntspace_us_beanbin_on_duty_series_figures_C772A"
+    "tntspace_us_beanbin_on_duty_series_figures_C772A",
+    "tntspace_us_rayan_boundless_beat_infinite_pulse"
   ],
   "items": [
     {
@@ -58,6 +56,28 @@
       "publishedAt": "2026-08-06T07:26:41.265Z",
       "status": "active",
       "instagramUrl": "https://www.instagram.com/p/DbsLMBMCbyK/"
+    },
+    {
+      "id": "tntspace_us_zootopia_2_mysterious_journey_ig_DbkwN8eG4I7",
+      "releaseType": "announcement",
+      "title": "TNTSPACE × Zootopia 2 Mysterious Journey Plush Pendant",
+      "summary": "Zootopia 2 Mysterious Journey plush pendant. Coming soon.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftntspace_us%2Fig_DbkwN8eG4I7.png?alt=media&token=d0411754-2a36-4fbc-a036-0090df1d0d5e",
+      "officialUrl": "https://www.instagram.com/p/DbkwN8eG4I7/",
+      "publishedAt": "2026-08-03T10:16:20.245Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DbkwN8eG4I7/"
+    },
+    {
+      "id": "tntspace_us_mowdo_after_school_escape_plush_pendant",
+      "releaseType": "announcement",
+      "title": "Mowdo After School Escape Series Plush Pendant",
+      "summary": "Mowdo After School Escape series Plush Pendant teaser. Coming soon.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftntspace_us%2Fmowdo_after_school_escape_plush_pendant.png?alt=media&token=ba23e1b2-bf32-46f5-be01-c0f6cac3fd5b",
+      "officialUrl": "https://www.instagram.com/p/DbSjwQwihMe/",
+      "publishedAt": "2026-07-27T08:41:05.850Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DbSjwQwihMe/"
     }
   ]
 }
