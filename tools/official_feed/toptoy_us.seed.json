@@ -12,9 +12,69 @@
     "toptoy_us_hello_kitty_classic_revival_figure",
     "toptoy_us_hello_kitty_swimsuit_party_surprise_bag",
     "toptoy_us_usahana_charm_ig_DaMvnGblEEg",
-    "toptoy_us_hello_kitty_puppy_party_plush_pendant"
+    "toptoy_us_hello_kitty_puppy_party_plush_pendant",
+    "toptoy_us_hello_kitty_dear_daniel_century_wedding_ig_DbziB3_oza4",
+    "toptoy_us_stitch_in_cute_costumes_ig_Dbzh-jpmy7U",
+    "toptoy_us_nommi_3rd_birthday_giveaway_ig_DbwvavME0He",
+    "toptoy_us_disney_baby_dreams_plush_charm_ig_DbvBjpEm0AI",
+    "toptoy_us_nommi_treasure_collector_ig_DbsjDa7DBRU"
   ],
   "items": [
+    {
+      "id": "toptoy_us_crayon_shinchan_dynamic_toy_city_ig_DcTQJ-8G0l0",
+      "releaseType": "product",
+      "title": "CRAYON SHINCHAN Dynamic Toy City Series Figures Blind Box",
+      "summary": "Crayon Shinchan Dynamic Toy City series figures. Official TOP TOY US.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fcrayon_shinchan_dynamic_toy_city.jpg?alt=media&token=99f33646-07e2-4ba6-bf91-05232756600f",
+      "officialUrl": "https://gotoptoy.com/products/crayon-shinchan-dynamic-toy-city-series-figures-blind-box",
+      "publishedAt": "2026-08-21T11:40:28.881Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DcTQJ-8G0l0/"
+    },
+    {
+      "id": "toptoy_us_tears_of_themis_sweetheart_encounter_keyboard_ig_DcSWW8EG2rT",
+      "releaseType": "product",
+      "title": "Tears of Themis Sweetheart Encounter Series Keyboard Fidget Blind Box",
+      "summary": "Tears of Themis keyboard fidget blind box. Online August 22, 2026.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Ftears_of_themis_sweetheart_encounter_keyboard.jpg?alt=media&token=70817901-5b39-4686-a0bc-49b784e17f4e",
+      "officialUrl": "https://gotoptoy.com/products/tears-of-themis-sweetheart-encounter-series-keyboard-fidget-blind-box",
+      "publishedAt": "2026-08-21T03:15:26.305Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DcSWW8EG2rT/"
+    },
+    {
+      "id": "toptoy_us_maymei_greedy_bear_plush_doll_ig_DcQiUJKGx-5",
+      "releaseType": "product",
+      "title": "MayMei Greedy Bear Series Plush Doll Blind Box",
+      "summary": "MayMei Greedy Bear series plush dolls. Official TOP TOY US.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fmaymei_greedy_bear_plush_doll.jpg?alt=media&token=e044210f-b211-4a48-b431-843e4829a9d1",
+      "officialUrl": "https://gotoptoy.com/products/maymei-greedy-bear-series-plush-doll-blind-box",
+      "publishedAt": "2026-08-20T10:21:25.997Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DcQiUJKGx-5/"
+    },
+    {
+      "id": "toptoy_us_disney_toy_story_5_wedding_blister_ig_DcK4trWm8ky",
+      "releaseType": "product",
+      "title": "Disney Toy Story 5 Wedding Series Blister Pack Blind Box",
+      "summary": "Toy Story 5 Wedding blister pack. Online August 21, 2026.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fdisney_toy_story_5_wedding_blister.jpg?alt=media&token=e8476af6-96e5-4898-838f-1a3682f43d67",
+      "officialUrl": "https://gotoptoy.com/products/disney-toy-story-5-wedding-series-blister-pack-blind-box",
+      "publishedAt": "2026-08-18T05:41:42.918Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DcK4trWm8ky/"
+    },
+    {
+      "id": "toptoy_us_breads_holding_you_series_ig_DcIu_30BMUQ",
+      "releaseType": "product",
+      "title": "Breads, Holding you! Series Blind Box",
+      "summary": "Breads, Holding you! series blind box. Official TOP TOY US.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fbreads_holding_you_series.jpg?alt=media&token=65012762-2144-4d38-9fe9-add8d4f3a298",
+      "officialUrl": "https://gotoptoy.com/products/breads-holding-you-series-blind-box",
+      "publishedAt": "2026-08-17T09:38:20.225Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DcIu_30BMUQ/"
+    },
     {
       "id": "toptoy_us_my_melody_crem_mousse_ig_Db8SMTMSyqH",
       "releaseType": "announcement",
@@ -25,61 +85,6 @@
       "publishedAt": "2026-08-12T13:35:44.497Z",
       "status": "active",
       "instagramUrl": "https://www.instagram.com/p/Db8SMTMSyqH/"
-    },
-    {
-      "id": "toptoy_us_hello_kitty_dear_daniel_century_wedding_ig_DbziB3_oza4",
-      "releaseType": "announcement",
-      "title": "Hello Kitty & Dear Daniel Century Wedding Series",
-      "summary": "Hello Kitty & Dear Daniel wedding figures. Online August 14, 2026.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fig_DbziB3_oza4.png?alt=media&token=003a4fb6-9383-4a77-a46a-88938e43f922",
-      "officialUrl": "https://www.instagram.com/p/DbziB3_oza4/",
-      "publishedAt": "2026-08-09T04:00:57.816Z",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DbziB3_oza4/"
-    },
-    {
-      "id": "toptoy_us_stitch_in_cute_costumes_ig_Dbzh-jpmy7U",
-      "releaseType": "announcement",
-      "title": "Disney Stitch in Cute Costumes Series",
-      "summary": "Stitch in Cute Costumes figure blind box. Official Instagram post.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fig_Dbzh-jpmy7U.png?alt=media&token=af6bca59-bb95-4fa3-8558-209063be97c3",
-      "officialUrl": "https://www.instagram.com/p/Dbzh-jpmy7U/",
-      "publishedAt": "2026-08-09T04:00:30.636Z",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/Dbzh-jpmy7U/"
-    },
-    {
-      "id": "toptoy_us_nommi_3rd_birthday_giveaway_ig_DbwvavME0He",
-      "releaseType": "announcement",
-      "title": "Happy 3rd Birthday, Nommi — Giveaway",
-      "summary": "Nommi 3rd birthday giveaway. Ends August 20, 2026. Official IG.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fig_DbwvavME0He.png?alt=media&token=f71dea20-619a-4b1e-85b5-bdd6a86cf009",
-      "officialUrl": "https://www.instagram.com/p/DbwvavME0He/",
-      "publishedAt": "2026-08-08T02:00:13.937Z",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DbwvavME0He/"
-    },
-    {
-      "id": "toptoy_us_disney_baby_dreams_plush_charm_ig_DbvBjpEm0AI",
-      "releaseType": "announcement",
-      "title": "Disney Baby Dreams Series Plush Charm Blind Box",
-      "summary": "Disney Baby Dreams plush charms. Official Instagram post.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fig_DbvBjpEm0AI.png?alt=media&token=ec794253-526c-4c00-a041-08389dfcfbf2",
-      "officialUrl": "https://www.instagram.com/p/DbvBjpEm0AI/",
-      "publishedAt": "2026-08-07T10:00:15.202Z",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DbvBjpEm0AI/"
-    },
-    {
-      "id": "toptoy_us_nommi_treasure_collector_ig_DbsjDa7DBRU",
-      "releaseType": "announcement",
-      "title": "Nommi Treasure Collector Series Plush Doll Blind Box",
-      "summary": "Nommi Treasure Collector plush dolls. Online August 8, 2026.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fig_DbsjDa7DBRU.png?alt=media&token=829d2a00-633f-4e02-8c25-0e5646fe2882",
-      "officialUrl": "https://www.instagram.com/p/DbsjDa7DBRU/",
-      "publishedAt": "2026-08-06T10:55:13.743Z",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DbsjDa7DBRU/"
     }
   ]
 }
