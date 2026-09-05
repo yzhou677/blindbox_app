@@ -12,7 +12,8 @@
     "tntspace_us_rayan_boundless_beat_infinite_pulse",
     "tntspace_us_mowdo_after_school_escape_plush_pendant",
     "tntspace_us_zootopia_2_mysterious_journey_ig_DbkwN8eG4I7",
-    "tntspace_us_zoraa_fairytale_town_ig_DbsLMBMCbyK"
+    "tntspace_us_zoraa_fairytale_town_ig_DbsLMBMCbyK",
+    "tntspace_us_dora_paw_print_block_series_bjd_ig_DcQJ5hpmzkF"
   ],
   "items": [
     {
@@ -52,15 +53,27 @@
       "instagramUrl": "https://www.instagram.com/p/DcfC9DnijZB/"
     },
     {
-      "id": "tntspace_us_creamy_dreamwalk_mini_series_ig_DccjN61mwvg",
+      "id": "tntspace_us_baby_zoraa_plush_keychain_ig_Dc27I1Cm_9M",
       "releaseType": "announcement",
-      "title": "Creamy Dreamwalk Mini Series Figure",
-      "summary": "Creamy Dreamwalk mini series figures. Official Instagram post.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftntspace_us%2Fcreamy_dreamwalk_mini_series_ig_DccjN61mwvg.png?alt=media&token=b0cc4dab-5bc4-4ccf-8ed9-ebb59f1b011d",
-      "officialUrl": "https://www.instagram.com/p/DccjN61mwvg/",
-      "publishedAt": "2026-08-25T02:20:12.484Z",
+      "title": "Baby Zoraa Plush Keychain Series",
+      "summary": "Baby Zoraa plush keychain series. Official Instagram post.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftntspace_us%2Fig_Dc27I1Cm_9M.jpg?alt=media&token=c92d96ba-b29d-4751-9dcd-627d3611efee",
+      "officialUrl": "https://www.instagram.com/p/Dc27I1Cm_9M/",
+      "publishedAt": "2026-09-04T08:09:28.926Z",
       "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DccjN61mwvg/"
+      "instagramUrl": "https://www.instagram.com/p/Dc27I1Cm_9M/"
+    },
+    {
+      "id": "tntspace_us_zoraa_hugging_you_mini_series_C1215A",
+      "releaseType": "product",
+      "productId": "C1215A",
+      "title": "Zoraa Hugging You mini series figures",
+      "summary": "Zoraa Hugging You mini series figures. Official TNT SPACE US.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftntspace_us%2FC1215A.jpg?alt=media&token=81f0c216-ad3d-47eb-87b3-65ac610c5731",
+      "officialUrl": "https://tntspace.com/us/collections/new-arrivals/products/C1215A~Zoraa-Hugging-You-mini-series-figures",
+      "publishedAt": "2026-08-30T03:03:17.215Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DcpgH0DG-9f/"
     },
     {
       "id": "tntspace_us_beanbin_on_duty_series_figures_ig_DcStcBxiHFt",
@@ -75,15 +88,15 @@
       "instagramUrl": "https://www.instagram.com/p/DcStcBxiHFt/"
     },
     {
-      "id": "tntspace_us_dora_paw_print_block_series_bjd_ig_DcQJ5hpmzkF",
+      "id": "tntspace_us_creamy_dreamwalk_mini_series_ig_DccjN61mwvg",
       "releaseType": "announcement",
-      "title": "DORA Paw Print Block Series BJD Figure",
-      "summary": "DORA Paw Print Block Series BJD. Release August 22, 2026, 10:00 AM GMT+8.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftntspace_us%2Fdora_paw_print_block_bjd_ig_DcQJ5hpmzkF.png?alt=media&token=a43cf7b7-4431-4c39-9bf7-deb5219434f6",
-      "officialUrl": "https://www.instagram.com/p/DcQJ5hpmzkF/",
-      "publishedAt": "2026-08-20T06:48:05.036Z",
+      "title": "Creamy Dreamwalk Mini Series Figure",
+      "summary": "Creamy Dreamwalk mini series figures. Official Instagram post.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftntspace_us%2Fcreamy_dreamwalk_mini_series_ig_DccjN61mwvg.png?alt=media&token=b0cc4dab-5bc4-4ccf-8ed9-ebb59f1b011d",
+      "officialUrl": "https://www.instagram.com/p/DccjN61mwvg/",
+      "publishedAt": "2026-08-25T02:20:12.484Z",
       "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DcQJ5hpmzkF/"
+      "instagramUrl": "https://www.instagram.com/p/DccjN61mwvg/"
     }
   ]
 }

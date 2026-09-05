@@ -96,7 +96,13 @@
     "popmart_us_dimoo_world_pixar_popup_santa_clara_ig_DccAD4Jkso7",
     "popmart_us_harry_potter_patronus_figures_8693",
     "popmart_us_mega_royal_molly_100_series_1_8687",
-    "popmart_us_pucky_closed_for_today_plush_pendant_8689"
+    "popmart_us_pucky_closed_for_today_plush_pendant_8689",
+    "popmart_us_monsters_now_and_then_tickets_ig_DaNm0D5jQAA",
+    "popmart_us_hirono_the_hundreds_pendant_8749",
+    "popmart_us_hirono_the_hundreds_figure_8750",
+    "popmart_us_hirono_after_dark_night_light_charm_8756",
+    "popmart_us_ted_2_baby_ted_action_plush_pendant_8759",
+    "popmart_us_disney_nightmare_before_christmas_figures_8760"
   ],
   "items": [
     {
@@ -105,88 +111,62 @@
       "productId": "8754",
       "productIdConfirmed": true,
       "title": "Hirono After Dark Series Plush Doll Pendant",
-      "summary": "Hirono After Dark plush pendant. Online Sep 3, 5:00 PM PST.",
+      "summary": "Hirono After Dark plush doll pendant. Online Sep 3, 5:00 PM PST.",
       "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1787910817395_f74f663fc1a5e22d2d2eb8eda8dddb03__1200x1732.jpg?x-oss-process=image/format,webp",
       "officialUrl": "https://www.popmart.com/us/products/8754/Hirono%20After%20Dark%20Series%20Plush%20Doll%20Pendant",
-      "publishedAt": "2026-08-28T14:00:20.649Z",
+      "publishedAt": "2026-09-03T16:18:36.495Z",
       "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DclhufoCcDl/"
+      "instagramUrl": "https://www.instagram.com/p/Dc1OUa7G3eW/"
     },
     {
-      "id": "popmart_us_hirono_the_hundreds_figure_8750",
+      "id": "popmart_us_spooky_bakehouse_labubu_cookie_mini_bag_8844",
+      "productId": "8844",
+      "title": "Spooky Bakehouse Series - Labubu Cookie Mini Bag",
+      "summary": "Spooky Bakehouse Labubu Cookie mini bag. Online Sep 10, 5:00 PM PST.",
+      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1788510594876_c2f2ef655269e78435be56d22d536e79__1200x1688.jpg",
+      "officialUrl": "https://www.popmart.com/us/products/8844/Spooky%20Bakehouse%20Series%20-%20Labubu%20Cookie%20Mini%20Bag",
       "releaseType": "product",
-      "productId": "8750",
       "productIdConfirmed": true,
-      "title": "Hirono × The Hundreds Figure",
-      "summary": "Hirono × The Hundreds figure. Online Sep 3, 5:00 PM PST.",
-      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1787912383238_59c9465ef47a927b72994672bc3bc312__1200x1669.jpg?x-oss-process=image/format,webp",
-      "officialUrl": "https://www.popmart.com/us/products/8750/Hirono%20%C3%97%20The%20Hundreds%20Figure",
-      "publishedAt": "2026-08-28T14:00:20.649Z",
+      "publishedAt": "2026-09-04T13:30:07.207Z",
       "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DclhufoCcDl/"
+      "instagramUrl": "https://www.instagram.com/p/Dc3f1QHCWTz/"
     },
     {
-      "id": "popmart_us_hirono_after_dark_night_light_charm_8756",
+      "id": "popmart_us_spooky_bakehouse_twinkle_earphone_case_8845",
+      "productId": "8845",
+      "title": "Spooky Bakehouse Series - Twinkle Twinkle Earphone Case",
+      "summary": "Spooky Bakehouse Twinkle Twinkle earphone case. Online Sep 10, 5:00 PM PST.",
+      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1788508852367_06341ddb767226f55221335b771ec833__1200x1822.jpg",
+      "officialUrl": "https://www.popmart.com/us/products/8845/Spooky%20Bakehouse%20Series%20-%20Twinkle%20Twinkle%20Earphone%20Case",
       "releaseType": "product",
-      "productId": "8756",
       "productIdConfirmed": true,
-      "title": "Hirono After Dark Series Night Light Charm Blind Box",
-      "summary": "Hirono After Dark night light charms. Online Sep 3, 5:00 PM PST.",
-      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1787910324052_26de57b808fcf770998c03380781c3b3__1200x1660.jpg?x-oss-process=image/format,webp",
-      "officialUrl": "https://www.popmart.com/us/products/8756/Hirono%20After%20Dark%20Series%20Night%20Light%20Charm%20Blind%20Box",
-      "publishedAt": "2026-08-28T14:00:20.649Z",
+      "publishedAt": "2026-09-04T13:30:07.207Z",
       "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DclhufoCcDl/"
+      "instagramUrl": "https://www.instagram.com/p/Dc3f1QHCWTz/"
     },
     {
-      "id": "popmart_us_hirono_the_hundreds_pendant_8749",
+      "id": "popmart_us_attic_of_oddities_series_figures_8843",
+      "productId": "8843",
+      "title": "The Attic of Oddities Series Figures",
+      "summary": "The Attic of Oddities series figures. Online Sep 10, 5:00 PM PST.",
+      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1788508523742_b0979cae5f21f669b2ba8a262d4349c2__1920x1080.jpg",
+      "officialUrl": "https://www.popmart.com/us/products/8843/The%20Attic%20of%20Oddities%20Series%20Figures",
       "releaseType": "product",
-      "productId": "8749",
       "productIdConfirmed": true,
-      "title": "Hirono × The Hundreds Pendant",
-      "summary": "Hirono × The Hundreds pendant. Online Sep 3, 5:00 PM PST.",
-      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1787908980851_b514bb55f06fc6187569a45a5af7f6a7__1200x1669.jpg?x-oss-process=image/format,webp",
-      "officialUrl": "https://www.popmart.com/us/products/8749/Hirono%20%C3%97%20The%20Hundreds%20Pendant",
-      "publishedAt": "2026-08-28T14:00:20.649Z",
+      "publishedAt": "2026-09-04T13:30:07.207Z",
       "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DclhufoCcDl/"
+      "instagramUrl": "https://www.instagram.com/p/Dc3f1QHCWTz/"
     },
     {
-      "id": "popmart_us_ted_2_baby_ted_action_plush_pendant_8759",
-      "releaseType": "product",
-      "productId": "8759",
-      "productIdConfirmed": true,
-      "title": "Ted 2 - Baby Ted Action Plush Pendant",
-      "summary": "Ted 2 Baby Ted action plush pendant. Online Sep 3, 5:00 PM PST.",
-      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1787909603964_30d43415dc5176e72b507dd7c9062f39__1200x2115.jpg?x-oss-process=image/format,webp",
-      "officialUrl": "https://www.popmart.com/us/products/8759/Ted%202%20-%20Baby%20Ted%20Action%20Plush%20Pendant",
-      "publishedAt": "2026-08-28T14:00:20.649Z",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DclhufoCcDl/"
-    },
-    {
-      "id": "popmart_us_disney_nightmare_before_christmas_figures_8760",
-      "releaseType": "product",
-      "productId": "8760",
-      "productIdConfirmed": true,
-      "title": "Disney Tim Burton's The Nightmare Before Christmas Series Figures",
-      "summary": "Nightmare Before Christmas figures. Online Aug 20, 7:00 PM PST.",
-      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1787907116519_cf0f3e4def126fb3d7b9f30e90acc484__1200x1748.jpg?x-oss-process=image/format,webp",
-      "officialUrl": "https://www.popmart.com/us/products/8760/Disney%20Tim%20Burton's%20The%20Nightmare%20Before%20Christmas%20Series%20Figures",
-      "publishedAt": "2026-08-28T14:00:20.649Z",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DclhufoCcDl/"
-    },
-    {
-      "id": "popmart_us_monsters_now_and_then_tickets_ig_DaNm0D5jQAA",
+      "id": "popmart_us_dimoo_world_pixar_signing_event_ig_DcxVDW2nwH_",
       "releaseType": "announcement",
-      "title": "THE MONSTERS BY MONSTERS: NOW AND THEN — Tickets",
-      "summary": "NYC exhibition tickets July 17–August 31. Official Instagram post.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Fpopmart_us%2Fig_DaNm0D5jQAA.png?alt=media&token=e05d8964-8896-4cb6-ab92-7555e2fc3218",
-      "officialUrl": "https://www.instagram.com/p/DaNm0D5jQAA/",
-      "publishedAt": "2026-06-30T14:00:14.028Z",
+      "title": "DIMOO WORLD × PIXAR SIGNING EVENT",
+      "summary": "Dimoo World × Pixar signing event. Official Instagram post.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Fpopmart_us%2Fig_DcxVDW2nwH_.jpg?alt=media&token=d744e6c9-1fcc-4270-a0d7-ee062b4325fe",
+      "officialUrl": "https://www.instagram.com/p/DcxVDW2nwH_/",
+      "publishedAt": "2026-09-02T04:00:28.998Z",
       "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DaNm0D5jQAA/"
+      "instagramUrl": "https://www.instagram.com/p/DcxVDW2nwH_/"
     }
   ]
 }
