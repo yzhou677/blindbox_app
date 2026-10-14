@@ -24,74 +24,90 @@
     "toptoy_us_maymei_greedy_bear_plush_doll_ig_DcQiUJKGx-5",
     "toptoy_us_tears_of_themis_sweetheart_encounter_keyboard_ig_DcSWW8EG2rT",
     "toptoy_us_crayon_shinchan_dynamic_toy_city_ig_DcTQJ-8G0l0",
-    "toptoy_us_hello_kitty_lop_ear_bunny_plush_pendant_ig_DcaDALPG2Mz"
+    "toptoy_us_hello_kitty_lop_ear_bunny_plush_pendant_ig_DcaDALPG2Mz",
+    "toptoy_us_nommi_izakaya_bites_plush_doll_ig_DchxbeHiMor",
+    "toptoy_us_sanrio_sweet_whispers_plush_charm_ig_Dcc-f2FmyPv",
+    "toptoy_us_nommi_giveaway_ig_DcxQdRtG9mH",
+    "toptoy_us_one_piece_plush_giveaway_ig_DcvYa4nuxVf",
+    "toptoy_us_hello_kitty_dear_daniel_century_wedding_400_ig_Db5XmB6G4mB"
   ],
   "items": [
     {
-      "id": "toptoy_us_nommi_izakaya_bites_plush_doll_ig_DchxbeHiMor",
-      "releaseType": "product",
-      "title": "Nommi Izakaya Bites Series Plush Doll Blind Box",
-      "summary": "Nommi Izakaya Bites series plush dolls. Official TOP TOY US.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fnommi_izakaya_bites_plush_doll.jpg?alt=media&token=f848a8c7-baa1-4d14-b204-bd6a31873643",
-      "officialUrl": "https://gotoptoy.com/products/nommi-izakaya-bites-series-plush-doll-blind-box",
-      "publishedAt": "2026-08-27T03:00:35.688Z",
+      "id": "toptoy_us_nommi_gummy_plan_giveaway_ig_DeTGLZGG3jK",
+      "releaseType": "announcement",
+      "title": "Nommi Gummy Plan Special Giveaway",
+      "summary": "3 winners, each gets 2 surprise bags. Until October 20, 2026.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fig_DeTGLZGG3jK.jpg?alt=media&token=955e5244-f624-45de-86db-f1ebda3287ce",
+      "officialUrl": "https://www.instagram.com/p/DeTGLZGG3jK/",
+      "publishedAt": "2026-10-10T03:16:04.837Z",
       "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DchxbeHiMor/"
-    },
-    {
-      "id": "toptoy_us_sanrio_sweet_whispers_plush_charm_ig_Dcc-f2FmyPv",
-      "releaseType": "product",
-      "title": "Sanrio characters Sweet Whispers Stickers Series Plush Charm Blind Box",
-      "summary": "Sanrio Sweet Whispers plush charms. Official TOP TOY US.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fsanrio_sweet_whispers_plush_charm.png?alt=media&token=59cb6032-0d6e-4fa4-80ca-3e6d92abb0b2",
-      "officialUrl": "https://gotoptoy.com/products/sanrio-characters-sweet-whispers-stickers-series-plush-charm-blind-box",
-      "publishedAt": "2026-08-25T06:18:35.108Z",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/Dcc-f2FmyPv/"
+      "instagramUrl": "https://www.instagram.com/p/DeTGLZGG3jK/"
     },
     {
       "id": "toptoy_us_disney_stitch_angel_villains_magical_closet_ig_Dcp-PtCm-v9",
       "releaseType": "product",
       "title": "Disney Stitch & Angel x Villains Magical Closet Series Figures Blind Box",
-      "summary": "Disney Stitch & Angel x Villains Magical Closet series. Official TOP TOY US.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fdisney_stitch_angel_villains_magical_closet.jpg?alt=media&token=50d41fbf-0ce2-4030-96f2-47245eac72ec",
+      "summary": "6 styles. Release September 4, 2026.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fig_Dcp-PtCm-v9.png?alt=media&token=599fa09e-a36f-46bc-91ee-8b218fa1f313",
       "officialUrl": "https://gotoptoy.com/products/disney-stitch-angel-x-villains-magical-closet-series-figures-blind-box",
       "publishedAt": "2026-08-30T07:26:30.494Z",
       "status": "active",
       "instagramUrl": "https://www.instagram.com/p/Dcp-PtCm-v9/"
     },
     {
-      "id": "toptoy_us_nommi_giveaway_ig_DcxQdRtG9mH",
-      "releaseType": "announcement",
-      "title": "Nommi Giveaway",
-      "summary": "Nommi giveaway. Official Instagram post.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fig_DcxQdRtG9mH.jpg?alt=media&token=ad87a124-0171-43cf-90ab-e5d4f211dcad",
-      "officialUrl": "https://www.instagram.com/p/DcxQdRtG9mH/",
-      "publishedAt": "2026-09-02T03:20:19.891Z",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DcxQdRtG9mH/"
-    },
-    {
-      "id": "toptoy_us_one_piece_plush_giveaway_ig_DcvYa4nuxVf",
-      "releaseType": "announcement",
-      "title": "One Piece Plush Figures Giveaway",
-      "summary": "One Piece plush figures giveaway. Official Instagram post.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fig_DcvYa4nuxVf.jpg?alt=media&token=69ef69f9-e953-4e9b-a3e2-21ccd6f90162",
-      "officialUrl": "https://www.instagram.com/p/DcvYa4nuxVf/",
-      "publishedAt": "2026-09-01T09:51:25.736Z",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DcvYa4nuxVf/"
-    },
-    {
-      "id": "toptoy_us_hello_kitty_dear_daniel_century_wedding_400_ig_Db5XmB6G4mB",
+      "id": "toptoy_us_nommi_disney_dreamy_cat_tales_plush_doll_ig_Dd2vrKfm892",
       "releaseType": "product",
-      "title": "Hello Kitty & Dear Daniel Century Wedding Series 400% Plush Dolls Gift Box",
-      "summary": "Hello Kitty & Dear Daniel Century Wedding Series 400% gift box. Official TOP TOY US.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fhello_kitty_dear_daniel_century_wedding.jpg?alt=media&token=1df2688e-8261-4ed7-96f6-5edaa52e913d",
-      "officialUrl": "https://gotoptoy.com/products/hello-kitty-dear-daniel-century-wedding-series-400-plush-dolls-gift-box",
-      "publishedAt": "2026-08-11T10:25:13.421Z",
+      "title": "Nommi × Disney Dreamy Cat Tales Series Plush Doll Blind Box",
+      "summary": "6 regular styles and 1 secret. Release September 30, 2026.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fig_Dd2vrKfm892.png?alt=media&token=9d1379b0-7618-4396-bb60-7b211fe92249",
+      "officialUrl": "https://gotoptoy.com/products/nommi-disney-dreamy-cat-tales-series-plush-doll-blind-box",
+      "publishedAt": "2026-09-29T03:00:42.392Z",
       "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/Db5XmB6G4mB/"
+      "instagramUrl": "https://www.instagram.com/p/Dd2vrKfm892/"
+    },
+    {
+      "id": "toptoy_us_maymei_let_the_haunting_begin_plush_doll_ig_DebJXlGGy-J",
+      "releaseType": "product",
+      "title": "MayMei Let the Haunting Begin! Series Plush Doll Blind Box",
+      "summary": "MayMei Let the Haunting Begin plush doll blind box.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fig_DebJXlGGy-J.jpg?alt=media&token=b04079f9-28c3-4108-9991-f47ee634ab78",
+      "officialUrl": "https://gotoptoy.com/products/maymei-let-the-haunting-begin-series-plush-doll-blind-box-1",
+      "publishedAt": "2026-10-13T06:17:52.997Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DebJXlGGy-J/"
+    },
+    {
+      "id": "toptoy_us_dual_bear_attic_encounter_figures_ig_DeYMYrrm7hL",
+      "releaseType": "product",
+      "title": "Dual Bear Attic Encounter Series Figures Blind Box",
+      "summary": "Dual Bear Attic Encounter series figures.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fig_DeYMYrrm7hL.png?alt=media&token=efd1d538-ec3f-4ca4-b016-234da21ca6d3",
+      "officialUrl": "https://gotoptoy.com/products/dual-bear-attic-encounter-series-figures-blind-box",
+      "publishedAt": "2026-10-12T02:46:31.600Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DeYMYrrm7hL/"
+    },
+    {
+      "id": "toptoy_us_sisi_pet_queen_plush_charm_ig_DeQ-MnwG4GV",
+      "releaseType": "product",
+      "title": "SISI Pet Queen Series Plush Charm Blind Box",
+      "summary": "SISI Pet Queen series plush charm.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fig_DeQ-MnwG4GV.jpg?alt=media&token=f62118df-3fd5-4b84-8a4f-19ee3165d4b0",
+      "officialUrl": "https://gotoptoy.com/products/sisi-pet-queen-series-plush-charm-blind-box",
+      "publishedAt": "2026-10-09T07:27:51.737Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DeQ-MnwG4GV/"
+    },
+    {
+      "id": "toptoy_us_crayon_shinchan_search_for_shinnosuke_ig_DeYrGmIzgrk",
+      "releaseType": "product",
+      "title": "CRAYON SHINCHAN Search For Shinnosuke Series Figures Blind Box",
+      "summary": "Crayon Shinchan Search For Shinnosuke series figures.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fig_DeYrGmIzgrk.png?alt=media&token=7ea3e884-4133-4a42-8235-83dcaf53dd9c",
+      "officialUrl": "https://gotoptoy.com/products/crayon-shinchan-search-for-shinnosuke-series-figures-blind-box",
+      "publishedAt": "2026-10-12T07:14:56.362Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DeYrGmIzgrk/"
     }
   ]
 }
