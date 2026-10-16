@@ -112,7 +112,13 @@
     "popmart_us_twinkle_twinkle_coming_soon_blocks_ig_Dea1ZhUxsaz",
     "popmart_us_seafood_costume_figures_ig_DeT0gmzlvXr",
     "popmart_us_plush_pendant_blind_box_ig_DeRkOfZHTNJ",
-    "popmart_us_green_bunny_figure_ig_DeTY-IFm4rO"
+    "popmart_us_green_bunny_figure_ig_DeTY-IFm4rO",
+    "popmart_us_monsters_cat_mode_on_vinyl_plush_pendant_ig_DeRPoWRG-rZ",
+    "popmart_us_pop_bean_dip_for_fun_series_ig_DeT0gmzlvXr",
+    "popmart_us_dip_for_fun_plush_pendant_ig_DeRkOfZHTNJ",
+    "popmart_us_monsters_dance_with_wind_action_vinyl_doll_ig_DeTY-IFm4rO",
+    "popmart_us_dip_for_fun_plush_pendant_9169",
+    "popmart_us_monsters_dance_with_wind_action_vinyl_doll_9161"
   ],
   "items": [
     {
@@ -138,7 +144,7 @@
       "instagramUrl": "https://www.instagram.com/p/Dea1ZhUxsaz/"
     },
     {
-      "id": "popmart_us_pop_bean_dip_for_fun_series_ig_DeT0gmzlvXr",
+      "id": "popmart_us_pop_bean_dip_for_fun_series_9171",
       "releaseType": "product",
       "title": "POP BEAN Dip For Fun Series",
       "summary": "Stress-relief hotpot keycap and plush charm. Release October 16, 2026.",
@@ -148,32 +154,6 @@
       "status": "active",
       "instagramUrl": "https://www.instagram.com/p/DeT0gmzlvXr/",
       "productId": "9171",
-      "productIdConfirmed": true
-    },
-    {
-      "id": "popmart_us_monsters_cat_mode_on_vinyl_plush_pendant_ig_DeRPoWRG-rZ",
-      "releaseType": "product",
-      "title": "THE MONSTERS Cat Mode On Series Vinyl Plush Pendant Blind Box",
-      "summary": "THE MONSTERS Cat Mode On vinyl plush pendant. Release October 16, 2026.",
-      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1791536251096_ea71080172c9c09f2f018068297133c8.jpg",
-      "officialUrl": "https://www.popmart.com/us/products/9167",
-      "publishedAt": "2026-10-09T10:00:11.771Z",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DeRPoWRG-rZ/",
-      "productId": "9167",
-      "productIdConfirmed": true
-    },
-    {
-      "id": "popmart_us_dip_for_fun_plush_pendant_ig_DeRkOfZHTNJ",
-      "releaseType": "product",
-      "title": "Dip For Fun Series Plush Pendant Blind Box",
-      "summary": "Plush pendant, squishy, fragrance, and hand cream. Release October 16, 2026.",
-      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1791536832819_d754c451894852fe68cffd1c3189b56a.jpg",
-      "officialUrl": "https://www.popmart.com/us/products/9169",
-      "publishedAt": "2026-10-09T13:00:09.995Z",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DeRkOfZHTNJ/",
-      "productId": "9169",
       "productIdConfirmed": true
     },
     {
@@ -188,16 +168,38 @@
       "instagramUrl": "https://www.instagram.com/p/DeYJIfURAim/"
     },
     {
-      "id": "popmart_us_monsters_dance_with_wind_action_vinyl_doll_ig_DeTY-IFm4rO",
-      "releaseType": "product",
-      "title": "THE MONSTERS Dance With Wind Action Vinyl Doll",
-      "summary": "THE MONSTERS Dance With Wind action vinyl doll. Release October 16, 2026.",
-      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1791535464931_77d32ab2166eb12880028f0e514729b8.jpg",
-      "officialUrl": "https://www.popmart.com/us/products/9161",
-      "publishedAt": "2026-10-10T06:00:17.636Z",
+      "id": "popmart_us_meow_tiktok_shop_hot_new_arrivals_ig_DeaJii0jZ75",
+      "releaseType": "announcement",
+      "title": "POP MART Meow! TikTok Shop Hot New Arrivals",
+      "summary": "THE MONSTERS Cat Mode On on TikTok Shop. Oct 15–28.",
+      "publishedAt": "2026-10-12T21:00:08.386Z",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Fpopmart_us%2Fig_DeaJii0jZ75.jpg?alt=media&token=9c4f40e1-e470-466e-87a4-31415c962ff0",
+      "officialUrl": "https://www.instagram.com/p/DeaJii0jZ75/",
       "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DeTY-IFm4rO/",
-      "productId": "9161",
+      "instagramUrl": "https://www.instagram.com/p/DeaJii0jZ75/"
+    },
+    {
+      "id": "popmart_us_skullpanda_sunlight_wanderer_plush_pendant_ig_DeZf3vDE75p",
+      "releaseType": "announcement",
+      "title": "θ SKULLPANDA Sunlight Wanderer Plush Doll Pendant",
+      "summary": "Sunlight Wanderer plush pendant. Off Mode NYC Oct 16–Nov 30.",
+      "publishedAt": "2026-10-12T14:56:01.887Z",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Fpopmart_us%2Fig_DeZf3vDE75p.jpg?alt=media&token=3a9e81dd-5310-47d7-b311-b7b983455991",
+      "officialUrl": "https://www.instagram.com/p/DeZf3vDE75p/",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DeZf3vDE75p/"
+    },
+    {
+      "id": "popmart_us_merodi_snack_time_series_figures_9159",
+      "releaseType": "product",
+      "title": "Merodi Snack Time Series Figures",
+      "summary": "Merodi Snack Time series figures. Online October 15, 2026, 5:00 PM PST.",
+      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1792055719102_824406a7c679562abe475d717211c09f.jpg",
+      "officialUrl": "https://www.popmart.com/us/products/9159/merodi-snack-time-series-figures",
+      "publishedAt": "2026-10-15T13:28:44.713Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DehERDoI8wO/",
+      "productId": "9159",
       "productIdConfirmed": true
     }
   ]
