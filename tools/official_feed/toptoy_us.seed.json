@@ -29,42 +29,14 @@
     "toptoy_us_sanrio_sweet_whispers_plush_charm_ig_Dcc-f2FmyPv",
     "toptoy_us_nommi_giveaway_ig_DcxQdRtG9mH",
     "toptoy_us_one_piece_plush_giveaway_ig_DcvYa4nuxVf",
-    "toptoy_us_hello_kitty_dear_daniel_century_wedding_400_ig_Db5XmB6G4mB"
+    "toptoy_us_hello_kitty_dear_daniel_century_wedding_400_ig_Db5XmB6G4mB",
+    "toptoy_us_disney_stitch_angel_villains_magical_closet_ig_Dcp-PtCm-v9",
+    "toptoy_us_nommi_disney_dreamy_cat_tales_plush_doll_ig_Dd2vrKfm892",
+    "toptoy_us_sisi_pet_queen_plush_charm_ig_DeQ-MnwG4GV",
+    "toptoy_us_nommi_gummy_plan_giveaway_ig_DeTGLZGG3jK",
+    "toptoy_us_dual_bear_attic_encounter_figures_ig_DeYMYrrm7hL"
   ],
   "items": [
-    {
-      "id": "toptoy_us_nommi_gummy_plan_giveaway_ig_DeTGLZGG3jK",
-      "releaseType": "announcement",
-      "title": "Nommi Gummy Plan Special Giveaway",
-      "summary": "3 winners, each gets 2 surprise bags. Until October 20, 2026.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fig_DeTGLZGG3jK.jpg?alt=media&token=955e5244-f624-45de-86db-f1ebda3287ce",
-      "officialUrl": "https://www.instagram.com/p/DeTGLZGG3jK/",
-      "publishedAt": "2026-10-10T03:16:04.837Z",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DeTGLZGG3jK/"
-    },
-    {
-      "id": "toptoy_us_disney_stitch_angel_villains_magical_closet_ig_Dcp-PtCm-v9",
-      "releaseType": "product",
-      "title": "Disney Stitch & Angel x Villains Magical Closet Series Figures Blind Box",
-      "summary": "6 styles. Release September 4, 2026.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fig_Dcp-PtCm-v9.png?alt=media&token=599fa09e-a36f-46bc-91ee-8b218fa1f313",
-      "officialUrl": "https://gotoptoy.com/products/disney-stitch-angel-x-villains-magical-closet-series-figures-blind-box",
-      "publishedAt": "2026-08-30T07:26:30.494Z",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/Dcp-PtCm-v9/"
-    },
-    {
-      "id": "toptoy_us_nommi_disney_dreamy_cat_tales_plush_doll_ig_Dd2vrKfm892",
-      "releaseType": "product",
-      "title": "Nommi × Disney Dreamy Cat Tales Series Plush Doll Blind Box",
-      "summary": "6 regular styles and 1 secret. Release September 30, 2026.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fig_Dd2vrKfm892.png?alt=media&token=9d1379b0-7618-4396-bb60-7b211fe92249",
-      "officialUrl": "https://gotoptoy.com/products/nommi-disney-dreamy-cat-tales-series-plush-doll-blind-box",
-      "publishedAt": "2026-09-29T03:00:42.392Z",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/Dd2vrKfm892/"
-    },
     {
       "id": "toptoy_us_maymei_let_the_haunting_begin_plush_doll_ig_DebJXlGGy-J",
       "releaseType": "product",
@@ -77,28 +49,6 @@
       "instagramUrl": "https://www.instagram.com/p/DebJXlGGy-J/"
     },
     {
-      "id": "toptoy_us_dual_bear_attic_encounter_figures_ig_DeYMYrrm7hL",
-      "releaseType": "product",
-      "title": "Dual Bear Attic Encounter Series Figures Blind Box",
-      "summary": "Dual Bear Attic Encounter series figures.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fig_DeYMYrrm7hL.png?alt=media&token=efd1d538-ec3f-4ca4-b016-234da21ca6d3",
-      "officialUrl": "https://gotoptoy.com/products/dual-bear-attic-encounter-series-figures-blind-box",
-      "publishedAt": "2026-10-12T02:46:31.600Z",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DeYMYrrm7hL/"
-    },
-    {
-      "id": "toptoy_us_sisi_pet_queen_plush_charm_ig_DeQ-MnwG4GV",
-      "releaseType": "product",
-      "title": "SISI Pet Queen Series Plush Charm Blind Box",
-      "summary": "SISI Pet Queen series plush charm.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fig_DeQ-MnwG4GV.jpg?alt=media&token=f62118df-3fd5-4b84-8a4f-19ee3165d4b0",
-      "officialUrl": "https://gotoptoy.com/products/sisi-pet-queen-series-plush-charm-blind-box",
-      "publishedAt": "2026-10-09T07:27:51.737Z",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DeQ-MnwG4GV/"
-    },
-    {
       "id": "toptoy_us_crayon_shinchan_search_for_shinnosuke_ig_DeYrGmIzgrk",
       "releaseType": "product",
       "title": "CRAYON SHINCHAN Search For Shinnosuke Series Figures Blind Box",
@@ -108,6 +58,61 @@
       "publishedAt": "2026-10-12T07:14:56.362Z",
       "status": "active",
       "instagramUrl": "https://www.instagram.com/p/DeYrGmIzgrk/"
+    },
+    {
+      "id": "toptoy_us_dual_bear_attic_encounter_figures_ig_Dest1_oG4PT",
+      "releaseType": "product",
+      "title": "Dual Bear Attic Encounter Series Figures Blind Box",
+      "summary": "Dual Bear Attic Encounter series figures.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fig_Dest1_oG4PT.jpg?alt=media&token=d4577ef5-74b4-4ec9-9811-9756f3d40f4e",
+      "officialUrl": "https://gotoptoy.com/products/dual-bear-attic-encounter-series-figures-blind-box",
+      "publishedAt": "2026-10-20T02:03:41.865Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/Dest1_oG4PT/"
+    },
+    {
+      "id": "toptoy_us_nommi_zootopia_coming_soon_ig_Dey2BYXG5gU",
+      "releaseType": "announcement",
+      "title": "Nommi × Zootopia Coming Soon",
+      "summary": "Nommi × Zootopia. Coming soon.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fig_Dey2BYXG5gU.jpg?alt=media&token=0a3212c8-8cf0-48f2-bcec-598351eec2d0",
+      "officialUrl": "https://www.instagram.com/p/Dey2BYXG5gU/",
+      "publishedAt": "2026-10-22T11:10:36.039Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/Dey2BYXG5gU/"
+    },
+    {
+      "id": "toptoy_us_nommi_gummy_plan_mini_figures_ig_De_rfpJEue_",
+      "releaseType": "product",
+      "title": "Nommi Gummy Plan Series Mini Figures Surprise Bag",
+      "summary": "Nommi mini gummy plan babies.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fig_De_rfpJEue_.png?alt=media&token=74803010-7849-468d-be2e-394234c94c76",
+      "officialUrl": "https://gotoptoy.com/products/nommi-gummy-plan-series-mini-figures-surprise-bag",
+      "publishedAt": "2026-10-27T10:48:44.395Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/De_rfpJEue_/"
+    },
+    {
+      "id": "toptoy_us_nommi_zootopia_best_dance_partners_400_ig_DfD6HWQGyTe",
+      "releaseType": "product",
+      "title": "Nommi × Zootopia Best Dance Partners Series 400% Vinyl Plush Set",
+      "summary": "Best Dance Partners 400% vinyl plush. Online October 30, 2026.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fig_DfD6HWQGyTe.jpg?alt=media&token=37bcdfb1-0b28-4875-8457-23b7746e2e9a",
+      "officialUrl": "https://gotoptoy.com/products/nommi-zootopia-best-dance-partners-series-400-vinyl-plush-set",
+      "publishedAt": "2026-10-29T02:13:27.417Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DfD6HWQGyTe/"
+    },
+    {
+      "id": "toptoy_us_nommi_christmas_forest_feast_plush_doll_ig_DfGkRi3jDR1",
+      "releaseType": "product",
+      "title": "Nommi Christmas Forest Feast Series Plush Doll Blind Box",
+      "summary": "Christmas Forest Feast plush dolls. Release November 1, 2026.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftoptoy_us%2Fig_DfGkRi3jDR1.png?alt=media&token=8ab161c5-00aa-4e58-865b-be151fecd2f0",
+      "officialUrl": "https://gotoptoy.com/products/nommi-christmas-forest-feast-series-plush-doll-blind-box",
+      "publishedAt": "2026-10-30T03:00:19.912Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DfGkRi3jDR1/"
     }
   ]
 }

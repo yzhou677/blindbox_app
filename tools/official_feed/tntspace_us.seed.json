@@ -27,7 +27,13 @@
     "tntspace_us_pajama_figures_ig_DeOye2dlg7M",
     "tntspace_us_apple_time_ig_DdWIFp6K7-z",
     "tntspace_us_silver_outfit_plush_ig_DdiNQikGwBy",
-    "tntspace_us_zoraa_ig_DdqxK3yG3s5"
+    "tntspace_us_zoraa_ig_DdqxK3yG3s5",
+    "tntspace_us_no_right_answers_on_this_block_ig_DdWIFp6K7-z",
+    "tntspace_us_seven_looks_seven_moods_ig_DdiNQikGwBy",
+    "tntspace_us_zoraa_shushu_cheese_figurine_ig_DdqxK3yG3s5",
+    "tntspace_us_zoraa_my_little_blankie_mili_series_C1187A",
+    "tntspace_us_rayan_steampunk_mage_figurine_GMQ_C8761",
+    "tntspace_us_dora_high_school_sweetheart_figure_GMQ_C88101"
   ],
   "items": [
     {
@@ -43,73 +49,76 @@
       "productId": "C1230A"
     },
     {
-      "id": "tntspace_us_dora_high_school_sweetheart_figure_GMQ_C88101",
+      "id": "tntspace_us_rayan_room_in_my_heart_series_C777A",
       "releaseType": "product",
-      "title": "DORA High School Sweetheart Figure",
-      "summary": "DORA High School Sweetheart figure. Release October 14, 2026, 10:00 AM GMT+8.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftntspace_us%2Fig_DeYNxmLlmAI.jpg?alt=media&token=d96a87cc-67af-4f96-a369-52b9add7e720",
-      "officialUrl": "https://tntspace.com/us/collections/new-arrivals/products/GMQ_C88101",
-      "publishedAt": "2026-10-12T02:58:39.984Z",
+      "productId": "C777A",
+      "title": "Rayan Room in My Heart Series",
+      "summary": "Rayan Room in My Heart series. Release October 26, 2026, 10:00 AM GMT+8.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftntspace_us%2Fig_De7FlJuk8F8.jpg?alt=media&token=3503afa7-a7c7-4317-a626-33ea16cbb9d9",
+      "officialUrl": "https://tntspace.com/us/collections/new-arrivals/products/C777A",
+      "publishedAt": "2026-10-25T16:00:28.854Z",
       "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DeYNxmLlmAI/",
-      "productId": "GMQ_C88101"
+      "instagramUrl": "https://www.instagram.com/p/De7FlJuk8F8/"
     },
     {
-      "id": "tntspace_us_rayan_steampunk_mage_figurine_GMQ_C8761",
+      "id": "tntspace_us_dora_reject_definition_series_YFS_Y1317",
       "releaseType": "product",
-      "title": "Rayan Steampunk Mage Figurine",
-      "summary": "Rayan Steampunk Mage figurine. Release October 14, 2026, 10:00 AM GMT+8.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftntspace_us%2Fig_DeTVsZnlhoU.jpg?alt=media&token=6812a0a7-4af6-4c6c-b3d4-21327ce243c6",
-      "officialUrl": "https://tntspace.com/us/collections/new-arrivals/products/GMQ_C8761",
-      "publishedAt": "2026-10-10T05:31:39.560Z",
+      "productId": "YFS_Y1317",
+      "title": "DORA Reject Definition Series KUJI",
+      "summary": "DORA Reject Definition series KUJI. Release October 24, 2026, 8:00 PM GMT+8.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftntspace_us%2Fig_De1-Dd_mmJ9.jpg?alt=media&token=069193c6-ece9-40af-8abb-4c79ff6e42c5",
+      "officialUrl": "https://tntspace.com/us/collections/new-arrivals/yifanshang/YFS_Y1317",
+      "publishedAt": "2026-10-23T16:18:30.744Z",
       "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DeTVsZnlhoU/",
-      "productId": "GMQ_C8761"
+      "instagramUrl": "https://www.instagram.com/p/De1-Dd_mmJ9/"
     },
     {
-      "id": "tntspace_us_zoraa_my_little_blankie_mili_series_C1187A",
+      "id": "tntspace_us_dora_chill_daily_mili_series_C1222A",
       "releaseType": "product",
-      "title": "Zoraa My Little Blankie Mili Series",
-      "summary": "Zoraa My Little Blankie. Release October 10, 2026, 10:00 AM GMT+8.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftntspace_us%2Fig_DeOye2dlg7M.jpg?alt=media&token=824c0601-6ff0-464e-b4ec-1163f8260d7a",
-      "officialUrl": "https://tntspace.com/us/collections/new-arrivals/products/C1187A",
-      "publishedAt": "2026-10-08T11:07:00.756Z",
+      "productId": "C1222A",
+      "title": "DORA Chill Daily mili Series",
+      "summary": "DORA Chill Daily mili series. Release October 23, 2026, 10:00 AM GMT+8.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftntspace_us%2Fig_DezZVZKlj1y.jpg?alt=media&token=a06674c9-1386-4f4c-8d27-998c41886928",
+      "officialUrl": "https://tntspace.com/us/collections/new-arrivals/products/C1222A",
+      "publishedAt": "2026-10-22T16:19:10.062Z",
       "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DeOye2dlg7M/",
-      "productId": "C1187A"
+      "instagramUrl": "https://www.instagram.com/p/DezZVZKlj1y/"
     },
     {
-      "id": "tntspace_us_no_right_answers_on_this_block_ig_DdWIFp6K7-z",
-      "releaseType": "announcement",
-      "title": "No Right Answers on This Block",
-      "summary": "I define my path. Official Instagram post.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftntspace_us%2Fig_DdWIFp6K7-z.png?alt=media&token=88e7e0f3-1a09-4f0e-8174-a1170fa9c4a1",
-      "officialUrl": "https://www.instagram.com/p/DdWIFp6K7-z/",
-      "publishedAt": "2026-09-16T10:59:06.061Z",
+      "id": "tntspace_us_rayan_the_circus_series_plush_pendant_C1241A",
+      "releaseType": "product",
+      "productId": "C1241A",
+      "title": "Rayan The Circus Series Plush Pendant",
+      "summary": "Rayan The Circus plush pendant. Release October 19, 2026, 10:00 AM GMT+8.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftntspace_us%2Fig_DekFwm9Fhyt.jpg?alt=media&token=0047b6a0-8ce9-439b-b9b9-c4b34f2ac5f0",
+      "officialUrl": "https://tntspace.com/us/collections/new-arrivals/products/C1241A",
+      "publishedAt": "2026-10-16T17:39:30.771Z",
       "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DdWIFp6K7-z/"
+      "instagramUrl": "https://www.instagram.com/p/DekFwm9Fhyt/"
     },
     {
-      "id": "tntspace_us_seven_looks_seven_moods_ig_DdiNQikGwBy",
-      "releaseType": "announcement",
-      "title": "Seven Looks, Seven Moods",
-      "summary": "Rayan. Release September 22, 2026, 10:00 AM GMT+8.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftntspace_us%2Fig_DdiNQikGwBy.jpg?alt=media&token=f1ade308-d34f-4c52-b551-4260e1f023a0",
-      "officialUrl": "https://www.instagram.com/p/DdiNQikGwBy/",
-      "publishedAt": "2026-09-21T03:35:09.857Z",
+      "id": "tntspace_us_zoraa_snowfall_letter_plush_pendant_ZHIGOU_C1235104",
+      "releaseType": "product",
+      "productId": "ZHIGOU_C1235104",
+      "title": "Zoraa Snowfall Letter Plush Pendant",
+      "summary": "Zoraa Snowfall Letter plush pendant. Release October 16, 2026, 10:00 AM GMT+8.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftntspace_us%2Fig_DegzfusFqHc.jpg?alt=media&token=22268b2d-f4d6-41c1-8c4d-1d4209b5eb32",
+      "officialUrl": "https://tntspace.com/us/collections/new-arrivals/products/ZHIGOU_C1235104",
+      "publishedAt": "2026-10-15T11:02:12.017Z",
       "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DdiNQikGwBy/"
+      "instagramUrl": "https://www.instagram.com/p/DegzfusFqHc/"
     },
     {
-      "id": "tntspace_us_zoraa_shushu_cheese_figurine_ig_DdqxK3yG3s5",
-      "releaseType": "announcement",
-      "title": "Zoraa ShuShu Cheese Figurine",
-      "summary": "Zoraa ShuShu Cheese figurine. Special edition drop rate 12%.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftntspace_us%2Fig_DdqxK3yG3s5.jpg?alt=media&token=1f227208-041d-43a6-b7ef-c5398a0a32db",
-      "officialUrl": "https://www.instagram.com/p/DdqxK3yG3s5/",
-      "publishedAt": "2026-09-24T11:22:53.245Z",
+      "id": "tntspace_us_dora_super_sour_lemon_candy_plush_ZHIGOU_C1070001",
+      "releaseType": "product",
+      "productId": "ZHIGOU_C1070001",
+      "title": "DORA Super Sour Lemon Candy Plush",
+      "summary": "DORA Super Sour Lemon Candy plush. Release October 15, 2026, 8:00 PM GMT+8.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftntspace_us%2Fig_Def2YaYlvz3.jpg?alt=media&token=f1e7009d-1e86-4e45-b0e0-11d050a71801",
+      "officialUrl": "https://tntspace.com/us/collections/new-arrivals/products/ZHIGOU_C1070001",
+      "publishedAt": "2026-10-15T02:08:10.506Z",
       "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DdqxK3yG3s5/"
+      "instagramUrl": "https://www.instagram.com/p/Def2YaYlvz3/"
     }
   ]
 }

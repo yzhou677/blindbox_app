@@ -118,77 +118,16 @@
     "popmart_us_dip_for_fun_plush_pendant_ig_DeRkOfZHTNJ",
     "popmart_us_monsters_dance_with_wind_action_vinyl_doll_ig_DeTY-IFm4rO",
     "popmart_us_dip_for_fun_plush_pendant_9169",
-    "popmart_us_monsters_dance_with_wind_action_vinyl_doll_9161"
+    "popmart_us_monsters_dance_with_wind_action_vinyl_doll_9161",
+    "popmart_us_pop_bean_dip_for_fun_series_9171",
+    "popmart_us_mega_skullpanda_robert_wun_ig_DeYJIfURAim",
+    "popmart_us_skullpanda_sunlight_wanderer_plush_pendant_ig_DeZf3vDE75p",
+    "popmart_us_meow_tiktok_shop_hot_new_arrivals_ig_DeaJii0jZ75",
+    "popmart_us_twinkle_twinkle_blocks_ig_Dea1ZhUxsaz",
+    "popmart_us_crybaby_round_n_round_ig_Debi5uBhzYy",
+    "popmart_us_peach_riot_honmoon_era_ig_DfAN5Cso2Uu"
   ],
   "items": [
-    {
-      "id": "popmart_us_crybaby_round_n_round_ig_Debi5uBhzYy",
-      "releaseType": "announcement",
-      "title": "Crybaby Round n Round",
-      "summary": "A little escape is calling. Coming soon.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Fpopmart_us%2Fig_Debi5uBhzYy.png?alt=media&token=ce55ac00-f1dc-47db-856b-16806ecf2400",
-      "officialUrl": "https://www.instagram.com/p/Debi5uBhzYy/",
-      "publishedAt": "2026-10-13T10:00:59.868Z",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/Debi5uBhzYy/"
-    },
-    {
-      "id": "popmart_us_twinkle_twinkle_blocks_ig_Dea1ZhUxsaz",
-      "releaseType": "announcement",
-      "title": "Twinkle Twinkle Blocks",
-      "summary": "A new look for Twinkle Twinkle. Coming soon.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Fpopmart_us%2Fig_Dea1ZhUxsaz.jpg?alt=media&token=de05edcd-6249-4408-9667-9273f0306627",
-      "officialUrl": "https://www.instagram.com/p/Dea1ZhUxsaz/",
-      "publishedAt": "2026-10-13T03:23:23.138Z",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/Dea1ZhUxsaz/"
-    },
-    {
-      "id": "popmart_us_pop_bean_dip_for_fun_series_9171",
-      "releaseType": "product",
-      "title": "POP BEAN Dip For Fun Series",
-      "summary": "Stress-relief hotpot keycap and plush charm. Release October 16, 2026.",
-      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1791537264417_e894b98637a1cd5a14846edf248cd9b2.jpg",
-      "officialUrl": "https://www.popmart.com/us/products/9171",
-      "publishedAt": "2026-10-10T10:00:55.872Z",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DeT0gmzlvXr/",
-      "productId": "9171",
-      "productIdConfirmed": true
-    },
-    {
-      "id": "popmart_us_mega_skullpanda_robert_wun_ig_DeYJIfURAim",
-      "releaseType": "announcement",
-      "title": "MEGA SKULLPANDA × Robert Wun",
-      "summary": "Where imagination meets form, and life takes shape through bone and structure.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Fpopmart_us%2Fig_DeYJIfURAim.png?alt=media&token=b185db2c-176a-4a8a-a7a4-90f77af5ab07",
-      "officialUrl": "https://www.instagram.com/p/DeYJIfURAim/",
-      "publishedAt": "2026-10-12T02:18:06.081Z",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DeYJIfURAim/"
-    },
-    {
-      "id": "popmart_us_meow_tiktok_shop_hot_new_arrivals_ig_DeaJii0jZ75",
-      "releaseType": "announcement",
-      "title": "POP MART Meow! TikTok Shop Hot New Arrivals",
-      "summary": "THE MONSTERS Cat Mode On on TikTok Shop. Oct 15–28.",
-      "publishedAt": "2026-10-12T21:00:08.386Z",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Fpopmart_us%2Fig_DeaJii0jZ75.jpg?alt=media&token=9c4f40e1-e470-466e-87a4-31415c962ff0",
-      "officialUrl": "https://www.instagram.com/p/DeaJii0jZ75/",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DeaJii0jZ75/"
-    },
-    {
-      "id": "popmart_us_skullpanda_sunlight_wanderer_plush_pendant_ig_DeZf3vDE75p",
-      "releaseType": "announcement",
-      "title": "θ SKULLPANDA Sunlight Wanderer Plush Doll Pendant",
-      "summary": "Sunlight Wanderer plush pendant. Off Mode NYC Oct 16–Nov 30.",
-      "publishedAt": "2026-10-12T14:56:01.887Z",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Fpopmart_us%2Fig_DeZf3vDE75p.jpg?alt=media&token=3a9e81dd-5310-47d7-b311-b7b983455991",
-      "officialUrl": "https://www.instagram.com/p/DeZf3vDE75p/",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DeZf3vDE75p/"
-    },
     {
       "id": "popmart_us_merodi_snack_time_series_figures_9159",
       "releaseType": "product",
@@ -201,6 +140,80 @@
       "instagramUrl": "https://www.instagram.com/p/DehERDoI8wO/",
       "productId": "9159",
       "productIdConfirmed": true
+    },
+    {
+      "id": "popmart_us_ribodiary_forest_gathering_day_plush_pendant_9418",
+      "releaseType": "product",
+      "title": "RiboDiary Forest Gathering Day Series Plush Doll Pendant",
+      "summary": "RiboDiary Forest Gathering Day plush doll pendant. Launch October 30.",
+      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1792746921706_51f8ba8bb40b10288601ff9b8472c7ec.jpg",
+      "officialUrl": "https://www.popmart.com/us/products/9418/ribodiary-forest-gathering-day-series-plush-doll-pendant",
+      "publishedAt": "2026-10-24T13:56:51.200Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/De4SozTo42D/",
+      "productId": "9418",
+      "productIdConfirmed": true
+    },
+    {
+      "id": "popmart_us_angry_molly_play_disney_princess_plush_pendant_9405",
+      "releaseType": "product",
+      "title": "Angry Molly [PLAY] Disney Princess Series Plush Pendant",
+      "summary": "Angry Molly [PLAY] Disney Princess plush pendant. Launch October 30.",
+      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1792742237287_a9e3ce38d919020f3ac119bf72183795.jpg",
+      "officialUrl": "https://www.popmart.com/us/products/9405/angry-molly-[play]-disney-princess-series-plush-pendant",
+      "publishedAt": "2026-10-25T11:42:09.657Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/De6oBKQAYTz/",
+      "productId": "9405",
+      "productIdConfirmed": true
+    },
+    {
+      "id": "popmart_us_ribodiary_forest_gathering_day_figures_9420",
+      "releaseType": "product",
+      "title": "RiboDiary Forest Gathering Day Series Figures",
+      "summary": "RiboDiary Forest Gathering Day series figures.",
+      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1792746539280_fc4f4d6975933c8392acf314281f353e.jpg",
+      "officialUrl": "https://www.popmart.com/us/products/9420/ribodiary-forest-gathering-day-series-figures",
+      "publishedAt": "2026-10-24T14:40:01.934Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/De4XlDajpD-/",
+      "productId": "9420",
+      "productIdConfirmed": true
+    },
+    {
+      "id": "popmart_us_peach_riot_sugar_mode_series_figures_9413",
+      "releaseType": "product",
+      "title": "Peach Riot Sugar Mode Series Figures",
+      "summary": "Peach Riot Sugar Mode series figures.",
+      "imageUrl": "https://prod-global-biz.popmart.com/globalAdmin/1792745501045_e4923170e78f3ebb99bd7dfa27d82e2b.jpg",
+      "officialUrl": "https://www.popmart.com/us/products/9413/peach-riot-sugar-mode-series-figures",
+      "publishedAt": "2026-10-27T15:49:18.258Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DfAN5Cso2Uu/",
+      "productId": "9413",
+      "productIdConfirmed": true
+    },
+    {
+      "id": "popmart_us_halloween_costume_check_ig_DfFEOBRlOCb",
+      "releaseType": "announcement",
+      "title": "Halloween Costume Check",
+      "summary": "Halloween costume check. Dress your kitty up. Official Instagram post.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Fpopmart_us%2Fig_DfAN5Cso2Uu.jpg?alt=media&token=666965f0-f237-4241-a318-22e5882ddb29",
+      "officialUrl": "https://www.instagram.com/p/DfFEOBRlOCb/",
+      "publishedAt": "2026-10-29T13:00:59.388Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DfFEOBRlOCb/"
+    },
+    {
+      "id": "popmart_us_spooky_corner_challenge_giveaway_ig_Dd19Eg4lY5Z",
+      "releaseType": "announcement",
+      "title": "Giveaway: Spooky Corner Challenge",
+      "summary": "Show your spookiest POP MART setup. Giveaway until October 31.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Fpopmart_us%2Fig_Dd19Eg4lY5Z.jpg?alt=media&token=874e3564-af7a-4f53-a44f-737375edbd25",
+      "officialUrl": "https://www.instagram.com/p/Dd19Eg4lY5Z/",
+      "publishedAt": "2026-09-28T19:38:31.370Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/Dd19Eg4lY5Z/"
     }
   ]
 }
