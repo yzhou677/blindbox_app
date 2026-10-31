@@ -21,7 +21,6 @@ final addSeriesCatalogRecommendationsProvider = Provider<List<CatalogSeries>>((
 
   final picks = pickAddSeriesBrowseFeed(bundle);
   return [
-    for (final seedSeries in picks)
-      if (lookup.seriesTemplate(seedSeries.id) case final template?) template,
+    for (final seedSeries in picks) ?lookup.seriesTemplate(seedSeries.id),
   ];
 });

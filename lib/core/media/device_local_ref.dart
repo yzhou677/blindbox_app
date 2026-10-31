@@ -7,8 +7,9 @@ abstract final class DeviceLocalImageRef {
     if (r.isEmpty) return false;
     if (r.startsWith('assets/')) return false;
     final lower = r.toLowerCase();
-    if (lower.startsWith('http://') || lower.startsWith('https://'))
+    if (lower.startsWith('http://') || lower.startsWith('https://')) {
       return false;
+    }
     if (r.startsWith('file:')) return true;
     if (kIsWeb) return false;
     if (r.startsWith('/')) return true;

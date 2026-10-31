@@ -47,7 +47,7 @@ void main() {
   setUp(CatalogBundleCache.resetForTest);
   tearDown(CatalogBundleCache.resetForTest);
 
-  ProviderContainer _container() {
+  ProviderContainer createContainer() {
     final container = ProviderContainer();
     addTearDown(container.dispose);
     container.read(catalogBundleRevisionProvider);
@@ -57,7 +57,7 @@ void main() {
   test(
     'catalogBundleProvider returns updated bundle after replacement',
     () async {
-      final container = _container();
+      final container = createContainer();
 
       CatalogBundleCache.prime(
         _bundle(seriesId: 'seed', figureName: 'Seed Figure'),
@@ -77,7 +77,7 @@ void main() {
   );
 
   test('catalogSearchServiceProvider reflects replacement bundle', () async {
-    final container = _container();
+    final container = createContainer();
 
     CatalogBundleCache.prime(
       _bundle(seriesId: 'seed', figureName: 'Seed Figure'),
@@ -102,7 +102,7 @@ void main() {
   test(
     'buildCatalogSeriesSearchRows uses replaced bundle via provider',
     () async {
-      final container = _container();
+      final container = createContainer();
 
       CatalogBundleCache.prime(
         _bundle(seriesId: 'seed', figureName: 'Seed Figure'),
@@ -134,7 +134,7 @@ void main() {
   );
 
   test('MarketCatalogIdentityCache reinstalls on bundle replacement', () async {
-    final container = _container();
+    final container = createContainer();
 
     CatalogBundleCache.prime(
       _bundle(seriesId: 'seed', figureName: 'Seed Figure'),
@@ -161,7 +161,7 @@ void main() {
   test(
     'homeFeedSnapshotProvider recomputes via catalogBundleProvider',
     () async {
-      final container = _container();
+      final container = createContainer();
 
       CatalogBundleCache.prime(
         _bundle(seriesId: 'seed_only_series', figureName: 'Seed Figure'),
@@ -196,7 +196,7 @@ void main() {
   test(
     'catalogSearchServiceProvider uses ready cache before provider completes',
     () {
-      final container = _container();
+      final container = createContainer();
       CatalogBundleCache.prime(
         _bundle(seriesId: 'cached', figureName: 'Cached'),
       );
@@ -210,7 +210,7 @@ void main() {
   test(
     'multiple bundle replacements bump revision and refresh search',
     () async {
-      final container = _container();
+      final container = createContainer();
       CatalogBundleCache.prime(
         _bundle(seriesId: 'v1', figureName: 'V1 Figure'),
       );
@@ -246,7 +246,7 @@ void main() {
   test(
     'duplicate revision notifier instances share one cache listener per container',
     () async {
-      final container = _container();
+      final container = createContainer();
       expect(CatalogBundleCache.bundleReplacedListenerCountForTest, 1);
 
       container.read(catalogBundleRevisionProvider);

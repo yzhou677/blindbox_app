@@ -70,7 +70,7 @@ void main() {
             name: 'Pinky Energy',
             brand: 'TOP TOY',
             ipName: 'Nommi',
-            figures: const [],
+            figures: [],
             shelfAccent: Color(0xFFE4F2EA),
           ),
         ],

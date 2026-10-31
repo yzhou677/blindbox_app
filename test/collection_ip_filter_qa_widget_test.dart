@@ -11,7 +11,6 @@ import 'package:blindbox_app/features/collection/widgets/collection_ip_filter_ro
 import 'package:blindbox_app/shared/widgets/taxonomy_brand_chip_rail.dart';
 import 'package:blindbox_app/shared/widgets/taxonomy_filter_section_label.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';

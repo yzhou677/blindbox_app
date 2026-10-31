@@ -79,8 +79,9 @@ ShelfEmotionalProfile interpretShelf(CollectionSnapshot snap) {
       : ShelfInterpretationConfidence.low;
 
   final themes = <String>[];
-  if (secretSlots > 0 && secretOwned > 0)
+  if (secretSlots > 0 && secretOwned > 0) {
     themes.add(ShelfEditorialTheme.secrets);
+  }
   if (nearCompleteSeries > 0) themes.add(ShelfEditorialTheme.nearComplete);
   if (ipCounts.length >= 2 || ipCounts.values.any((count) => count >= 2)) {
     themes.add(ShelfEditorialTheme.multiUniverse);

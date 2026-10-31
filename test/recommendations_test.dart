@@ -1059,11 +1059,13 @@ void main() {
         }
 
         final bundle = bundleForPool();
-        final run = (String profileHash) => computeLocalRecommendations(
-          signals: signalsFor(profileHash),
-          bundle: bundle,
-          clock: DateTime(2026, 5, 21),
-        );
+        List<RecommendationItem> run(String profileHash) {
+          return computeLocalRecommendations(
+            signals: signalsFor(profileHash),
+            bundle: bundle,
+            clock: DateTime(2026, 5, 21),
+          );
+        }
 
         final stableRun = run('profile-gap-fill');
         final repeatRun = run('profile-gap-fill');
@@ -1132,16 +1134,17 @@ void main() {
 
       final bundle = bundleFor(manySeries);
       final signals = signalsFor('profile-hash');
-      final run =
-          ({
-            required PreferenceSignals signals,
-            required CatalogSeedBundle bundle,
-            DateTime? clock,
-          }) => computeLocalRecommendations(
-            signals: signals,
-            bundle: bundle,
-            clock: clock ?? DateTime.utc(2026, 5, 21),
-          );
+      List<RecommendationItem> run({
+        required PreferenceSignals signals,
+        required CatalogSeedBundle bundle,
+        DateTime? clock,
+      }) {
+        return computeLocalRecommendations(
+          signals: signals,
+          bundle: bundle,
+          clock: clock ?? DateTime.utc(2026, 5, 21),
+        );
+      }
 
       final baseline = run(signals: signals, bundle: bundle);
       final stable = baseline.take(8).map((item) => item.seriesId).toList();

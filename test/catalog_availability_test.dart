@@ -31,7 +31,7 @@ void main() {
   setUp(CatalogBundleCache.resetForTest);
   tearDown(CatalogBundleCache.resetForTest);
 
-  ProviderContainer _container() {
+  ProviderContainer createContainer() {
     final container = ProviderContainer();
     addTearDown(container.dispose);
     container.read(catalogBundleRevisionProvider);
@@ -39,7 +39,7 @@ void main() {
   }
 
   test('bootstrap placeholder resolves to loading', () async {
-    final container = _container();
+    final container = createContainer();
     CatalogBundleCache.loadPersistedOverride = () async => null;
     CatalogBundleCache.loadFirestoreOverride = () async {
       await Completer<void>().future;
@@ -53,7 +53,7 @@ void main() {
   });
 
   test('resolved empty bundle resolves to offline first launch', () async {
-    final container = _container();
+    final container = createContainer();
     CatalogBundleCache.prime(
       const CatalogSeedBundle(brands: [], ips: [], series: [], figures: []),
     );
@@ -75,7 +75,7 @@ void main() {
   });
 
   test('catalog-ready bundle resolves to ready', () async {
-    final container = _container();
+    final container = createContainer();
     CatalogBundleCache.prime(_bundle());
     await container.read(catalogBundleProvider.future);
 
@@ -87,7 +87,7 @@ void main() {
   test(
     'in-flight refresh keeps catalog ready when bundle is already usable',
     () async {
-      final container = _container();
+      final container = createContainer();
       CatalogBundleCache.prime(_bundle());
       await container.read(catalogBundleProvider.future);
 
@@ -107,7 +107,7 @@ void main() {
   test(
     'failed background refresh over persisted catalog stays ready',
     () async {
-      final container = _container();
+      final container = createContainer();
       CatalogBundleCache.prime(_bundle());
       await container.read(catalogBundleProvider.future);
 

@@ -340,7 +340,7 @@ void main() {
   // -------------------------------------------------------------------------
 
   group('CatalogSearchHistorySection widget', () {
-    Widget _wrap({
+    Widget wrapHistory({
       required List<String> queries,
       ValueChanged<String>? onQueryTap,
       ValueChanged<String>? onRemove,
@@ -359,13 +359,13 @@ void main() {
     }
 
     testWidgets('renders nothing when queries is empty', (tester) async {
-      await tester.pumpWidget(_wrap(queries: const []));
+      await tester.pumpWidget(wrapHistory(queries: const []));
       expect(find.text('Recent Searches'), findsNothing);
       expect(find.text('Clear All'), findsNothing);
     });
 
     testWidgets('renders header and queries when non-empty', (tester) async {
-      await tester.pumpWidget(_wrap(queries: const ['labubu', 'crybaby']));
+      await tester.pumpWidget(wrapHistory(queries: const ['labubu', 'crybaby']));
       expect(find.text('Recent Searches'), findsOneWidget);
       expect(find.text('labubu'), findsOneWidget);
       expect(find.text('crybaby'), findsOneWidget);
@@ -375,7 +375,7 @@ void main() {
     testWidgets('tapping row calls onQueryTap with the query', (tester) async {
       String? tapped;
       await tester.pumpWidget(
-        _wrap(queries: const ['labubu'], onQueryTap: (q) => tapped = q),
+        wrapHistory(queries: const ['labubu'], onQueryTap: (q) => tapped = q),
       );
       await tester.tap(find.text('labubu'));
       expect(tapped, equals('labubu'));
@@ -384,7 +384,7 @@ void main() {
     testWidgets('tapping × calls onRemove with the query', (tester) async {
       String? removed;
       await tester.pumpWidget(
-        _wrap(queries: const ['labubu'], onRemove: (q) => removed = q),
+        wrapHistory(queries: const ['labubu'], onRemove: (q) => removed = q),
       );
       await tester.tap(find.byIcon(Symbols.close_rounded));
       expect(removed, equals('labubu'));
@@ -393,7 +393,7 @@ void main() {
     testWidgets('tapping Clear All calls onClearAll', (tester) async {
       var cleared = false;
       await tester.pumpWidget(
-        _wrap(queries: const ['labubu'], onClearAll: () => cleared = true),
+        wrapHistory(queries: const ['labubu'], onClearAll: () => cleared = true),
       );
       await tester.tap(find.text('Clear All'));
       expect(cleared, isTrue);
@@ -404,7 +404,7 @@ void main() {
     ) async {
       var cleared = false;
       await tester.pumpWidget(
-        _wrap(queries: const ['labubu'], onClearAll: () => cleared = true),
+        wrapHistory(queries: const ['labubu'], onClearAll: () => cleared = true),
       );
 
       final labelRect = tester.getRect(find.text('Clear All'));
@@ -501,7 +501,7 @@ void main() {
   // -------------------------------------------------------------------------
 
   group('searchEmptyQuerySection', () {
-    Widget _wrapSection({
+    Widget wrapSection({
       required List<String> history,
       ValueChanged<String>? onHistoryTap,
       ValueChanged<String>? onRemove,
@@ -522,7 +522,7 @@ void main() {
     }
 
     testWidgets('empty history shows Suggested Searches', (tester) async {
-      await tester.pumpWidget(_wrapSection(history: const []));
+      await tester.pumpWidget(wrapSection(history: const []));
       expect(find.text('Suggested Searches'), findsOneWidget);
       expect(find.text('Recent Searches'), findsNothing);
 
@@ -541,7 +541,7 @@ void main() {
     });
 
     testWidgets('non-empty history shows Recent Searches only', (tester) async {
-      await tester.pumpWidget(_wrapSection(history: const ['nommi']));
+      await tester.pumpWidget(wrapSection(history: const ['nommi']));
       expect(find.text('Recent Searches'), findsOneWidget);
       expect(find.text('Suggested Searches'), findsNothing);
       expect(find.text('nommi'), findsOneWidget);
@@ -551,7 +551,7 @@ void main() {
     testWidgets('suggested row tap calls onSuggestedTap', (tester) async {
       String? tapped;
       await tester.pumpWidget(
-        _wrapSection(history: const [], onSuggestedTap: (q) => tapped = q),
+        wrapSection(history: const [], onSuggestedTap: (q) => tapped = q),
       );
       final suggestion = kSuggestedSearches
           .where((s) => find.text(s.displayLabel).evaluate().isNotEmpty)
@@ -561,7 +561,7 @@ void main() {
     });
 
     testWidgets('suggested rows have no delete button', (tester) async {
-      await tester.pumpWidget(_wrapSection(history: const []));
+      await tester.pumpWidget(wrapSection(history: const []));
       expect(find.byIcon(Symbols.close_rounded), findsNothing);
     });
 
@@ -576,8 +576,8 @@ void main() {
       addTearDown(controller.dispose);
 
       await tester.pumpWidget(
-        ProviderScope(
-          parent: container,
+        UncontrolledProviderScope(
+          container: container,
           child: MaterialApp(
             home: Scaffold(
               body: Consumer(

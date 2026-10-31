@@ -1,6 +1,5 @@
 import 'package:blindbox_app/features/ip_profile/data/ip_profile_document_source.dart';
 import 'package:blindbox_app/features/ip_profile/data/ip_profile_repository.dart';
-import 'package:blindbox_app/features/ip_profile/domain/ip_introduction_profile.dart';
 import 'package:blindbox_app/features/ip_profile/domain/ip_profile_cache_policy.dart';
 import 'package:blindbox_app/features/ip_profile/data/ip_profile_fetch_error.dart';
 import 'package:firebase_core/firebase_core.dart';
