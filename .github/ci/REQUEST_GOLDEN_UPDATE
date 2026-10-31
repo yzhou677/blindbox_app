@@ -1,2 +1,0 @@
-# Presence of this file makes PR CI run the update-goldens job on Linux.
-# Delete this file after downloading the linux-goldens artifact and committing PNGs.
