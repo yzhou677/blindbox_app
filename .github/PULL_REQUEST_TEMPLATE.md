@@ -123,3 +123,10 @@ Examples:
 - intentional limitations
 - ADR references
 - non-goals
+
+---
+
+# Coverage (CI)
+
+Do not edit the auto-generated block between `<!-- coverage:start -->` and
+`<!-- coverage:end -->` — PR CI replaces it on every push. See [`docs/CI.md`](../docs/CI.md).

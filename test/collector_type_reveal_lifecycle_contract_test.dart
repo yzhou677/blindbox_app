@@ -335,15 +335,33 @@ void main() {
             ],
           ),
         ],
-        figureStates: const {},
+        figureStates: const {
+          'a': TrackedFigure(
+            figureId: 'a',
+            state: FigureCollectionState.owned,
+          ),
+          'b': TrackedFigure(
+            figureId: 'b',
+            state: FigureCollectionState.owned,
+          ),
+          'c': TrackedFigure(
+            figureId: 'c',
+            state: FigureCollectionState.owned,
+          ),
+          'd': TrackedFigure(
+            figureId: 'd',
+            state: FigureCollectionState.owned,
+          ),
+        },
       );
       final live = resolveCollectorType(
         snapshot: snap,
         profile: interpretShelf(snap),
       );
-      expect(live.archetypeId, CollectorTypeArchetypeId.loyalist);
+      // Three owned Smiski series → Minimalist under resolver 6.2 (≤3 series).
+      expect(live.archetypeId, CollectorTypeArchetypeId.minimalist);
 
-      // Same signature as live, but old resolver version ??needsReveal.
+      // Same signature as live, but old resolver version → needsReveal.
       await _persistIdentity(
         archetypeId: CollectorTypeArchetypeId.wanderer,
         signatureHash: live.signatureHash,
@@ -375,7 +393,7 @@ void main() {
       final revealed =
           container.read(collectorTypeViewModelProvider)
               as CollectorTypeRevealRevealed;
-      expect(revealed.identity.archetypeId, CollectorTypeArchetypeId.loyalist);
+      expect(revealed.identity.archetypeId, CollectorTypeArchetypeId.minimalist);
       expect(
         CollectionMemoryStore.instance.cached.revealedResolverVersion,
         kCollectorTypeResolverVersion,

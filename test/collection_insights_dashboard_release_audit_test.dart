@@ -11,7 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 const _goldenDir = 'goldens/collection_insights_dashboard';
 
 /// Offline-stable theme (no Google Fonts network fetch).
-ThemeData _auditTheme({double textScale = 1.0}) {
+ThemeData _auditTheme() {
   const seed = Color(0xFFA892CC);
   final raw = ColorScheme.fromSeed(
     seedColor: seed,
@@ -296,22 +296,6 @@ void _expectFinderContainedInSlot(WidgetTester tester, Finder content) {
     slotRect.bottom,
     greaterThanOrEqualTo(contentRect.bottom - 1),
     reason: '$content bottom clipped inside dashboard slot',
-  );
-}
-
-void _expectNoExcessiveGapBelowContent(
-  WidgetTester tester,
-  Finder lastContent, {
-  double maxGap = 28,
-}) {
-  final slotRect = tester.getRect(
-    find.byKey(const Key('collection_insights_dashboard_slot')),
-  );
-  final contentRect = tester.getRect(lastContent);
-  expect(
-    slotRect.bottom - contentRect.bottom,
-    lessThanOrEqualTo(maxGap),
-    reason: 'dashboard slot taller than intrinsic content (blank gap)',
   );
 }
 
@@ -792,7 +776,7 @@ void main() {
       ),
       (
         file: 'collapsed_320',
-        scenario: const _DashboardScenario(
+        scenario: _DashboardScenario(
           name: 'collapsed',
           stats: _typicalStats,
         ),
@@ -809,7 +793,7 @@ void main() {
       ),
       (
         file: 'collapsed_600',
-        scenario: const _DashboardScenario(
+        scenario: _DashboardScenario(
           name: 'collapsed',
           stats: _typicalStats,
         ),

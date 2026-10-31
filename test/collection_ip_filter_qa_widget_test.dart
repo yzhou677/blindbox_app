@@ -11,7 +11,6 @@ import 'package:blindbox_app/features/collection/widgets/collection_ip_filter_ro
 import 'package:blindbox_app/shared/widgets/taxonomy_brand_chip_rail.dart';
 import 'package:blindbox_app/shared/widgets/taxonomy_filter_section_label.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -115,16 +114,6 @@ List<ShelfSeries> _stressShelfDistinctIps(int count) {
       ),
   ];
 }
-
-Finder _brandChipLabel(String label) => find.descendant(
-  of: find.byType(TaxonomyBrandChipRail).first,
-  matching: find.text(label),
-);
-
-Finder _ipChipLabel(String label) => find.descendant(
-  of: find.byType(TaxonomyBrandChipRail).last,
-  matching: find.text(label),
-);
 
 /// Goldens use system fonts so labels render without google_fonts network fetch.
 ThemeData _qaScreenshotTheme() {
@@ -336,19 +325,13 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    // All + select IP Hirono
-    await tester.tap(_ipChipLabel('Hirono'));
-    await tester.pump();
-
+    // Pure selection rules (Filters sheet hosts the chips now).
     final allHirono = shelfSeriesVisibleForIpFilter(
       shelfSeriesVisibleForBrandFilter(shelf, collectionAnyBrandFilterId),
       'hirono',
     );
     expect(allHirono.length, 2);
-    expect(find.text('Hirono — The Other One'), findsOneWidget);
-    expect(find.text('Skullpanda — Warmth'), findsNothing);
 
-    // Brand POP MART — Hirono should stay selected (code + UI)
     final popMartScoped = shelfSeriesVisibleForBrandFilter(shelf, 'popmart');
     final ipOptionsAfterPopMart = buildCollectionShelfIpFilterOptions(
       popMartScoped,
@@ -361,13 +344,6 @@ void main() {
       'hirono',
     );
 
-    await tester.ensureVisible(_brandChipLabel('POP MART'));
-    await tester.tap(_brandChipLabel('POP MART'));
-    await tester.pump();
-    expect(find.text('Hirono — The Other One'), findsOneWidget);
-    expect(find.text('TNT SPACE — Rayan'), findsNothing);
-
-    // Brand TOP TOY — Hirono chip gone, selection resets to All
     final topScoped = shelfSeriesVisibleForBrandFilter(shelf, 'toptoy');
     final ipOptionsAfterTopToy = buildCollectionShelfIpFilterOptions(topScoped);
     expect(
@@ -378,11 +354,17 @@ void main() {
       collectionAnyIpFilterId,
     );
 
-    await tester.ensureVisible(_brandChipLabel('TOP TOY'));
-    await tester.tap(_brandChipLabel('TOP TOY'));
+    // UI: open Filters, pick Hirono, apply — shelf updates.
+    await tester.tap(find.byKey(const Key('collection_shelf_filters_control')));
     await tester.pump();
-    await tester.ensureVisible(find.text('TNT SPACE — Rayan'));
-    expect(find.text('TNT SPACE — Rayan'), findsOneWidget);
-    expect(find.text('Hirono — The Other One'), findsNothing);
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.ensureVisible(find.text('Hirono'));
+    await tester.tap(find.text('Hirono'));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('filters_sheet_show_results')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('Hirono — The Other One'), findsOneWidget);
+    expect(find.text('Skullpanda — Warmth'), findsNothing);
   });
 }

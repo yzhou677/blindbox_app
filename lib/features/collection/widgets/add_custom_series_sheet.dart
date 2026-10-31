@@ -7,6 +7,8 @@ import 'package:blindbox_app/features/collection/widgets/custom_series_form_shee
 
 /// Back-compat alias — prefer [CustomSeriesFormSheet.create].
 class AddCustomSeriesSheet extends CustomSeriesFormSheet {
-  AddCustomSeriesSheet({super.key, required CustomSeriesFormSubmit onSubmit})
-    : super.create(onSubmit: onSubmit);
+  const AddCustomSeriesSheet({
+    super.key,
+    required super.onSubmit,
+  }) : super.create();
 }

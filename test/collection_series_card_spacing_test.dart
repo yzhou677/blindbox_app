@@ -276,68 +276,75 @@ void main() {
     );
   });
 
-  testWidgets('bottom padding below count is ~16dp without spare slack', (
-    tester,
-  ) async {
-    final series = _series();
-    final states = _owned(series, 3);
-    await _pumpCard(tester, series: series, states: states);
+  // Effective gap under the count = padding.bottom (16) + minRailHeight
+  // pack slack (~4). Slack is intentional so Linux font metrics do not overflow.
+  final expectedCountBottomGap = CollectionCardTokens.padding.bottom + 4;
 
-    final cardBottom = tester
-        .getBottomLeft(find.byType(CollectionBrowseCard))
-        .dy;
-    final countBottom = tester.getBottomLeft(find.text('3 / 12')).dy;
-    final gap = cardBottom - countBottom;
-    expect(gap, closeTo(CollectionCardTokens.padding.bottom, 3));
-    expect(gap, lessThan(22));
-  });
+  testWidgets(
+    'bottom padding below count is 16dp token plus rail pack slack',
+    (tester) async {
+      final series = _series();
+      final states = _owned(series, 3);
+      await _pumpCard(tester, series: series, states: states);
 
-  testWidgets('zero owned progress still packs with minimal bottom padding', (
-    tester,
-  ) async {
-    final series = _series();
-    final states = <String, TrackedFigure>{};
-    await _pumpCard(tester, series: series, states: states);
+      final cardBottom = tester
+          .getBottomLeft(find.byType(CollectionBrowseCard))
+          .dy;
+      final countBottom = tester.getBottomLeft(find.text('3 / 12')).dy;
+      final gap = cardBottom - countBottom;
+      expect(gap, closeTo(expectedCountBottomGap, 3));
+      expect(gap, lessThan(24));
+    },
+  );
 
-    expect(find.byType(LinearProgressIndicator), findsOneWidget);
-    expect(find.textContaining('/'), findsOneWidget);
-    final cardBottom = tester
-        .getBottomLeft(find.byType(CollectionBrowseCard))
-        .dy;
-    final countBottom = tester.getBottomLeft(find.textContaining('/')).dy;
-    expect(cardBottom - countBottom, closeTo(16, 3));
-  });
+  testWidgets(
+    'zero owned progress still packs with padding token plus rail slack',
+    (tester) async {
+      final series = _series();
+      final states = <String, TrackedFigure>{};
+      await _pumpCard(tester, series: series, states: states);
 
-  testWidgets('meta-enabled cards grow height and keep ~16dp below count', (
-    tester,
-  ) async {
-    final series = _series();
-    final states = _owned(series, 3);
-    await _pumpCard(
-      tester,
-      series: series,
-      states: states,
-      cardContent: const CollectionShelfCardContentSelection([
-        CollectionShelfCardContentField.brand,
-      ]),
-    );
+      expect(find.byType(LinearProgressIndicator), findsOneWidget);
+      expect(find.textContaining('/'), findsOneWidget);
+      final cardBottom = tester
+          .getBottomLeft(find.byType(CollectionBrowseCard))
+          .dy;
+      final countBottom = tester.getBottomLeft(find.textContaining('/')).dy;
+      expect(cardBottom - countBottom, closeTo(expectedCountBottomGap, 3));
+    },
+  );
 
-    final browse = tester.widget<CollectionBrowseCard>(
-      find.byType(CollectionBrowseCard),
-    );
-    expect(
-      browse.height,
-      CollectionCardTokens.minRailHeightFor(
-        TextScaler.noScaling,
-        metaLineCount: 1,
-      ),
-    );
-    final cardBottom = tester
-        .getBottomLeft(find.byType(CollectionBrowseCard))
-        .dy;
-    final countBottom = tester.getBottomLeft(find.text('3 / 12')).dy;
-    expect(cardBottom - countBottom, closeTo(16, 4));
-  });
+  testWidgets(
+    'meta-enabled cards grow height and keep padding token plus rail slack',
+    (tester) async {
+      final series = _series();
+      final states = _owned(series, 3);
+      await _pumpCard(
+        tester,
+        series: series,
+        states: states,
+        cardContent: const CollectionShelfCardContentSelection([
+          CollectionShelfCardContentField.brand,
+        ]),
+      );
+
+      final browse = tester.widget<CollectionBrowseCard>(
+        find.byType(CollectionBrowseCard),
+      );
+      expect(
+        browse.height,
+        CollectionCardTokens.minRailHeightFor(
+          TextScaler.noScaling,
+          metaLineCount: 1,
+        ),
+      );
+      final cardBottom = tester
+          .getBottomLeft(find.byType(CollectionBrowseCard))
+          .dy;
+      final countBottom = tester.getBottomLeft(find.text('3 / 12')).dy;
+      expect(cardBottom - countBottom, closeTo(expectedCountBottomGap, 4));
+    },
+  );
 
   testWidgets('large text keeps title, progress, and count unclipped', (
     tester,

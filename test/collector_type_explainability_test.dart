@@ -92,7 +92,9 @@ void main() {
       expect(line, isNotNull);
       expect(
         line,
-        contains('collecting journey has explored many different worlds'),
+        contains(
+          'Current shelf universe count is lower than the historical universe count recorded in Journey.',
+        ),
       );
     },
   );

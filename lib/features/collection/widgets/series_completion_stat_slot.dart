@@ -8,8 +8,9 @@ enum SeriesCompletionStatLevel { inProgress, seriesComplete, masterComplete }
 SeriesCompletionStatLevel seriesCompletionStatLevel(
   SeriesCompletionResolution resolution,
 ) {
-  if (resolution.isMasterComplete)
+  if (resolution.isMasterComplete) {
     return SeriesCompletionStatLevel.masterComplete;
+  }
   if (resolution.isCompleted) return SeriesCompletionStatLevel.seriesComplete;
   return SeriesCompletionStatLevel.inProgress;
 }

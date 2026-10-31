@@ -114,15 +114,6 @@ Future<void> _openMarketSearchWithQuery(
   await tester.pump(const Duration(milliseconds: 450));
 }
 
-Future<void> _marketTabReselect(WidgetTester tester) async {
-  await tester.tap(_marketNavTab());
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 400));
-  await tester.tap(_marketNavTab());
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 500));
-}
-
 void _expectBrowseChromeNotImmersive(ProviderContainer container) {
   expect(container.read(marketSearchOverlayOpenProvider), isFalse);
   expect(

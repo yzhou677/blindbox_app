@@ -9,7 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'helpers/collection_fixtures.dart';
 
-const _goldenDir = '../docs/completion_visual_verification';
+const _goldenDir = 'goldens/completion_visual_verification';
 
 /// Shelfy light palette without Google Fonts (goldens must run offline).
 ThemeData _visualVerificationTheme() {

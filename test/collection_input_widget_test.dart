@@ -38,6 +38,7 @@ void main() {
                     required List<CustomFigureDraft> figures,
                     String? customCoverImageUri,
                     String? notes,
+                    String? releaseDate,
                   }) {},
             ),
           ),

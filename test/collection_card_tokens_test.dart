@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   test('Collection card tokens share browse width and pack rail extent', () {
     expect(CollectionCardTokens.width, AppCardTokens.browseRailWidth);
-    expect(CollectionCardTokens.minRailHeight, 266);
+    expect(CollectionCardTokens.minRailHeight, 268);
     expect(CollectionCardTokens.compactMinRailHeight, 205);
     expect(CollectionCardTokens.imageToTitleGap, 12);
     expect(CollectionCardTokens.titleToMetaGap, 16);

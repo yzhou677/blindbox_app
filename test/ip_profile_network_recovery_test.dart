@@ -115,7 +115,7 @@ void main() {
 
     final sub = container.listen(
       ipIntroductionProfileProvider('molly'),
-      (_, __) {},
+      (_, _) {},
       fireImmediately: true,
     );
     addTearDown(sub.close);
@@ -296,7 +296,7 @@ void main() {
 
     final sub = container.listen(
       ipIntroductionProfileProvider('molly'),
-      (_, __) {},
+      (_, _) {},
       fireImmediately: true,
     );
     addTearDown(sub.close);

@@ -22,9 +22,6 @@ void main() {
     final figure = CatalogImageDisplaySpec.forMode(
       CatalogImageDisplayMode.figureThumb,
     );
-    final lineup = CatalogImageDisplaySpec.forMode(
-      CatalogImageDisplayMode.figureLineupCell,
-    );
 
     expect(figure.presentationMode, CatalogImageMode.figure);
     expect(figure.framing, CatalogImageFraming.subjectContain);

@@ -41,7 +41,9 @@ void main() {
         f.id: TrackedFigure(figureId: f.id, state: FigureCollectionState.owned),
     };
 
-    await tester.binding.setSurfaceSize(const Size(400, 700));
+    // Card content grew past 700px tall on Linux (1.8px overflow); keep headroom
+    // so the golden captures the full card without a layout exception.
+    await tester.binding.setSurfaceSize(const Size(400, 760));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(
@@ -71,7 +73,7 @@ void main() {
     await expectLater(
       find.byKey(const Key('series_card_spacing_after')),
       matchesGoldenFile(
-        '../docs/screenshots/collection_series_card_spacing/after.png',
+        'goldens/collection_series_card_spacing/after.png',
       ),
     );
   });

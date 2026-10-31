@@ -163,10 +163,12 @@ void main() {
   test(
     'Completionist wins completed multi-IP shelf that Journey used to tip to Curator',
     () {
+      // Resolver 6.2: Completionist requires seriesCount > Minimalist cap (3).
       final series = [
         _series(id: 'a1', ip: 'ip1', brand: 'pop', figs: 3),
         _series(id: 'a2', ip: 'ip2', brand: 'pop', figs: 3),
         _series(id: 'a3', ip: 'ip3', brand: 'pop', figs: 3),
+        _series(id: 'a4', ip: 'ip4', brand: 'pop', figs: 3),
       ];
       final states = <String, TrackedFigure>{
         for (final s in series)

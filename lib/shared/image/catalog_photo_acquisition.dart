@@ -42,8 +42,9 @@ class ImagePickerCatalogPhotoAcquirer implements CatalogPhotoAcquirer {
     );
     if (file == null) return null;
     final length = await file.length();
-    if (length <= 0)
+    if (length <= 0) {
       throw const FormatException('The selected image is empty.');
+    }
     final mimeType = file.mimeType?.toLowerCase();
     final path = file.path.toLowerCase();
     final supportedMime =

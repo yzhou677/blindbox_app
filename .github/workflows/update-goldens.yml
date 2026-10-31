@@ -1,0 +1,77 @@
+# =============================================================================
+# Manually refresh Flutter golden baselines on Linux (matches PR CI runners).
+# =============================================================================
+# Why: macOS/Windows rasterization differs from ubuntu-latest. Never commit
+# goldens produced on a Mac/Windows laptop as CI baselines.
+#
+# Usage:
+#   gh workflow run update-goldens.yml --ref <branch>
+#   gh run download <run-id> -n linux-goldens
+#   commit the extracted PNGs on that branch
+# =============================================================================
+
+name: Update goldens (Linux)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  update-goldens:
+    name: flutter test --update-goldens
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.41.9"
+          channel: stable
+          cache: true
+
+      - name: Pub get
+        run: flutter pub get
+
+      - name: Ensure golden directories
+        run: |
+          mkdir -p test/goldens/collection_insights_dashboard
+          mkdir -p test/goldens/ip_introduction_ownership
+          mkdir -p test/goldens/collection_series_card_spacing
+          mkdir -p test/goldens/completion_visual_verification
+
+      - name: Update goldens
+        run: |
+          set +e
+          fail=0
+          for t in \
+            test/ip_introduction_ownership_screenshot_test.dart \
+            test/collection_series_card_spacing_screenshot_test.dart \
+            test/collection_insights_dashboard_release_audit_test.dart \
+            test/completion_visual_verification_test.dart
+          do
+            flutter test "$t" --update-goldens || fail=1
+          done
+          flutter test test/collection_ip_filter_qa_widget_test.dart \
+            --name "screenshot|golden" \
+            --update-goldens || fail=1
+          exit "$fail"
+
+      - name: Upload linux-goldens artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-goldens
+          path: test/goldens/
+          if-no-files-found: error
+          retention-days: 7

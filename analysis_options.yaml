@@ -9,6 +9,14 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+analyzer:
+  # Cloud Functions live under `functions/` (Node). Local `npm install` drops
+  # Dart *templates* inside firebase-tools that are not part of this Flutter
+  # package and lack their declared dependencies — exclude them so
+  # `flutter analyze` matches CI (which does not install functions deps).
+  exclude:
+    - functions/**
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`

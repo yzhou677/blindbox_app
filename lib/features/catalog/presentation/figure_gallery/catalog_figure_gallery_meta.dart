@@ -1,11 +1,9 @@
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_item.dart';
 import 'package:blindbox_app/features/collection/presentation/figure_secret_rarity_style.dart';
-import 'package:flutter/foundation.dart';
 
 final RegExp _galleryOddsTokenPattern = RegExp(r'\d+\s*:\s*\d+');
 
 /// Normalizes pull odds to `1:72` form; null when [raw] is not a ratio label.
-@visibleForTesting
 String? catalogFigureGalleryNormalizeOdds(String? raw) {
   final label = raw?.trim();
   if (label == null || label.isEmpty) return null;
@@ -18,12 +16,10 @@ String? catalogFigureGalleryNormalizeOdds(String? raw) {
   return '${parts[0].trim()}:${parts[1].trim()}';
 }
 
-@visibleForTesting
 bool catalogFigureGalleryLabelDenotesOdds(String? label) =>
     catalogFigureGalleryNormalizeOdds(label) != null;
 
 /// True when [label] already conveys secret (exact or embedded, e.g. Super Rare Secret).
-@visibleForTesting
 bool catalogFigureGalleryLabelDenotesSecret(String label) {
   final lower = label.trim().toLowerCase();
   if (lower == 'secret') return true;
@@ -31,7 +27,6 @@ bool catalogFigureGalleryLabelDenotesSecret(String label) {
 }
 
 /// Splits a combined rarity string into descriptive rarity and odds.
-@visibleForTesting
 ({String? rarity, String? odds}) catalogFigureGallerySplitRarityOdds(
   String? raw,
 ) {
@@ -59,7 +54,6 @@ bool catalogFigureGalleryLabelDenotesSecret(String label) {
 }
 
 /// Builds the figure rarity/meta segment: rarity → Secret (if needed) → odds.
-@visibleForTesting
 String? catalogFigureGalleryFigureMetaLine(CatalogFigureGalleryItem item) {
   final parts = <String>[];
 
@@ -94,7 +88,6 @@ String? catalogFigureGalleryFigureMetaLine(CatalogFigureGalleryItem item) {
 }
 
 /// Joins series title and figure meta for the gallery subtitle.
-@visibleForTesting
 String? catalogFigureGalleryCaptionSecondary({
   required String? metaLine,
   required String? seriesTitle,

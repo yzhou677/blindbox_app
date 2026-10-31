@@ -42,10 +42,10 @@ abstract final class CollectionCardTokens {
   /// Packed height with **no** Card Content meta and 16dp below the count.
   ///
   /// Calibrated to AppTheme light + two reserved title lines (equal row height
-  /// whether the title wraps). Includes +2dp subpixel slack so Completed
-  /// footers with a second meta line (e.g. duplicates) do not overflow by a
-  /// fraction of a pixel. Prefer [minRailHeightFor] with a meta count.
-  static const double minRailHeight = 266;
+  /// whether the title wraps). Includes +4dp subpixel slack so Completed
+  /// footers / Linux CI font metrics do not overflow by a fraction of a pixel.
+  /// Prefer [minRailHeightFor] with a meta count.
+  static const double minRailHeight = 268;
 
   /// Extra height when the first Card Content meta line is present.
   static const double metaFirstLineExtent = 31.5;

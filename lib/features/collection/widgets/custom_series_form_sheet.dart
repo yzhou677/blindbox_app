@@ -107,17 +107,14 @@ class CustomSeriesFormSheet extends ConsumerStatefulWidget {
 
   const CustomSeriesFormSheet.edit({
     super.key,
-    required ShelfSeries initialSeries,
+    required this.initialSeries,
     required CustomSeriesMetadataSubmit onSubmit,
-    required CustomSeriesFigureSubmit onFigureSubmit,
-    required CustomSeriesFigureAddSubmit onFigureAdd,
+    required this.onFigureSubmit,
+    required this.onFigureAdd,
     this.pickFigureImage,
   }) : mode = CustomSeriesFormMode.edit,
-       initialSeries = initialSeries,
        onCreateSubmit = null,
-       onEditSubmit = onSubmit,
-       onFigureSubmit = onFigureSubmit,
-       onFigureAdd = onFigureAdd;
+       onEditSubmit = onSubmit;
 
   final CustomSeriesFormMode mode;
   final ShelfSeries? initialSeries;
