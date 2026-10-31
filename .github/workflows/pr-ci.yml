@@ -148,6 +148,18 @@ jobs:
           retention-days: 7
 
       # ---- Debug APK --------------------------------------------------------
+      # `android/gradle.properties` pins a Windows Android Studio JBR path for
+      # local developers (`org.gradle.java.home=C:/Program Files/...`). That
+      # path is invalid on Linux runners. Strip those lines in the CI workspace
+      # only — do not change the committed file for Windows workflows.
+      - name: Neutralize Windows-only Gradle JDK paths
+        if: always()
+        run: |
+          sed -i '/^org\.gradle\.java\.home=/d' android/gradle.properties
+          sed -i '/^org\.gradle\.java\.installations\.paths=/d' android/gradle.properties
+          echo "Removed Windows-only org.gradle.java.home / installations.paths for Linux CI."
+          grep -n 'java' android/gradle.properties || true
+
       # Build even when analyze/tests failed so reviewers can still download a
       # debug APK from a red CI run (stub google-services is already in place).
       - name: Build debug APK

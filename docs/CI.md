@@ -81,9 +81,14 @@ Local baseline when this pipeline was added (`flutter analyze` + `flutter test -
 
 - **Error:** `test/collection_input_widget_test.dart` — `CustomSeriesFormSubmit` argument type mismatch (also prevents that test file from loading)
 
-### Tests (33 failing, 1 skipped; ~2212 passing)
+### Tests
 
-Representative groups (full list may drift — re-run locally to refresh):
+| Environment | Pass | Skip | Fail |
+| --- | ---: | ---: | ---: |
+| Local (Windows) | ~2212 | 1 | 33 |
+| GitHub Actions (first run) | 2208 | 1 | **37** |
+
+Representative failing groups (list drifts — re-run to refresh):
 
 - Goldens / screenshots: `collection_insights_dashboard_release_audit_test`, `collection_ip_filter_qa_widget_test`, `collection_series_card_spacing_screenshot_test`, `ip_introduction_ownership_screenshot_test`, `completion_visual_verification_test`
 - Catalog / home refresh: `catalog_bundle_propagation_test`, `home_feed_catalog_refresh_test`
@@ -92,13 +97,17 @@ Representative groups (full list may drift — re-run locally to refresh):
 - Shelf smoke: `widget_test` Collection tab; `collection_ip_filter_widget_test`
 - Compile fail: `collection_input_widget_test` (same analyzer error)
 
-**Cloud Functions:** `npm run lint` (`tsc --noEmit`), build, and tests were green locally (Node 22). One intermittent failure was observed on a first local retry; treat flakes as real if they show up in Actions.
+**Cloud Functions:** path-filter correctly skipped when `functions/**` is untouched. Locally, `npm run lint` / build / test were green on Node 22 (one intermittent flake observed once).
 
 CI **does not** mark these as skipped to go green. Expect a red Flutter job until they are fixed productively.
 
 ### Approximate coverage
 
-From a local `flutter test --coverage` run that still wrote lcov despite failures: **~82.4%** line coverage (19133 / 23218). Numbers on the PR will come from the Actions run.
+From a local `flutter test --coverage` run that still wrote lcov despite failures: **~82.4%** line coverage (19133 / 23218). Numbers on the PR come from the Actions run (see the coverage block).
+
+### Linux CI notes
+
+- `android/gradle.properties` may contain Windows-only `org.gradle.java.home` / `org.gradle.java.installations.paths`. The workflow strips those lines in the runner workspace before `flutter build apk --debug` so Gradle uses the runner JDK.
 
 ---
 

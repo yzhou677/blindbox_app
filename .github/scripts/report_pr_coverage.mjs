@@ -116,15 +116,51 @@ function buildBlock({ overall, perFileRows, sha, note }) {
   return lines.join('\n');
 }
 
+/**
+ * Find the coverage marker pair to replace.
+ *
+ * PR descriptions sometimes *mention* the markers in educational prose
+ * (e.g. "replaces `<!-- coverage:start -->` … `<!-- coverage:end -->`").
+ * A naive first-match would then wipe that prose. Prefer:
+ *   1. A pair whose interior already looks like our generated block
+ *   2. Otherwise the last well-formed pair in the body
+ */
+function findCoverageRange(src) {
+  const ranges = [];
+  let from = 0;
+  while (from < src.length) {
+    const startIdx = src.indexOf(START, from);
+    if (startIdx < 0) break;
+    const endIdx = src.indexOf(END, startIdx + START.length);
+    if (endIdx < 0) break;
+    ranges.push({
+      startIdx,
+      endIdx,
+      interior: src.slice(startIdx + START.length, endIdx),
+    });
+    from = endIdx + END.length;
+  }
+  if (ranges.length === 0) return null;
+
+  const preferred = [...ranges]
+    .reverse()
+    .find(
+      (r) =>
+        r.interior.includes('Coverage (auto-generated)') ||
+        r.interior.includes('auto-generated') ||
+        r.interior.trim().length === 0 ||
+        r.interior.includes('Coverage will appear here'),
+    );
+  return preferred ?? ranges[ranges.length - 1];
+}
+
 function upsertBlock(body, block) {
   const src = body ?? '';
-  const startIdx = src.indexOf(START);
-  const endIdx = src.indexOf(END);
+  const range = findCoverageRange(src);
 
-  if (startIdx >= 0 && endIdx > startIdx) {
-    const before = src.slice(0, startIdx);
-    const after = src.slice(endIdx + END.length);
-    // Preserve a single trailing newline after the block when possible.
+  if (range) {
+    const before = src.slice(0, range.startIdx);
+    const after = src.slice(range.endIdx + END.length);
     const trimmedAfter = after.replace(/^\r?\n/, '');
     return `${before}${block}\n${trimmedAfter}`;
   }
