@@ -114,15 +114,19 @@ From a local `flutter test --coverage` run that still wrote lcov despite failure
 
 Widget goldens live under [`test/goldens/`](../test/goldens/). `docs/screenshots/` stays gitignored (human dumps) and is **not** used as CI baselines.
 
-Rasterization differs across macOS / Windows / Linux — refresh baselines only on Linux:
+Rasterization differs across macOS / Windows / Linux — refresh baselines only on Linux.
+
+**On a PR branch** (works before the workflow exists on `main`):
+
+1. Add an empty marker file `.github/ci/REQUEST_GOLDEN_UPDATE` and push.
+2. PR CI runs the `Update goldens (Linux)` job and uploads artifact `linux-goldens`.
+3. Download into `test/goldens/`, commit the PNGs, delete the marker file.
 
 ```bash
-gh workflow run update-goldens.yml --ref <branch>
-# wait for the run, then:
 gh run download <run-id> -n linux-goldens -D test/goldens
 ```
 
-Workflow: [`.github/workflows/update-goldens.yml`](../.github/workflows/update-goldens.yml).
+After merge, [`.github/workflows/update-goldens.yml`](../.github/workflows/update-goldens.yml) also supports `workflow_dispatch` on `main`.
 
 ---
 

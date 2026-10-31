@@ -319,3 +319,53 @@ jobs:
       - name: Skip notice
         if: steps.filter.outputs.functions != 'true'
         run: echo "No functions/** changes in this PR — skipping Cloud Functions CI."
+
+  # ---------------------------------------------------------------------------
+  # Optional — regenerate goldens on Linux when the request marker is present.
+  # Create `.github/ci/REQUEST_GOLDEN_UPDATE` on the PR branch, push, download the
+  # `linux-goldens` artifact, commit PNGs under test/goldens/, delete the marker.
+  # (workflow_dispatch files must live on the default branch; this works on PRs.)
+  # ---------------------------------------------------------------------------
+  update-goldens:
+    name: Update goldens (Linux)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    if: hashFiles('.github/ci/REQUEST_GOLDEN_UPDATE') != ''
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.41.9"
+          channel: stable
+          cache: true
+
+      - name: Pub get
+        run: flutter pub get
+
+      - name: Ensure golden directories
+        run: |
+          mkdir -p test/goldens/collection_insights_dashboard
+          mkdir -p test/goldens/ip_introduction_ownership
+          mkdir -p test/goldens/collection_series_card_spacing
+          mkdir -p test/goldens/completion_visual_verification
+
+      - name: Update goldens
+        run: |
+          flutter test \
+            test/ip_introduction_ownership_screenshot_test.dart \
+            test/collection_series_card_spacing_screenshot_test.dart \
+            test/collection_insights_dashboard_release_audit_test.dart \
+            test/completion_visual_verification_test.dart \
+            test/collection_ip_filter_qa_widget_test.dart \
+            --update-goldens
+
+      - name: Upload linux-goldens artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-goldens
+          path: test/goldens/
+          if-no-files-found: error
+          retention-days: 7
