@@ -374,16 +374,35 @@ jobs:
           mkdir -p test/goldens/completion_visual_verification
 
       - name: Update goldens
+        id: update
         run: |
-          flutter test \
+          set +e
+          fail=0
+          for t in \
             test/ip_introduction_ownership_screenshot_test.dart \
             test/collection_series_card_spacing_screenshot_test.dart \
             test/collection_insights_dashboard_release_audit_test.dart \
-            test/completion_visual_verification_test.dart \
-            test/collection_ip_filter_qa_widget_test.dart \
+            test/completion_visual_verification_test.dart
+          do
+            echo "::group::update $t"
+            flutter test "$t" --update-goldens
+            code=$?
+            echo "::endgroup::"
+            if [ "$code" -ne 0 ]; then fail=1; fi
+          done
+          # Only golden/screenshot cases — skip logic tests in the same file.
+          echo "::group::update collection_ip_filter goldens"
+          flutter test test/collection_ip_filter_qa_widget_test.dart \
+            --name "screenshot|golden" \
             --update-goldens
+          code=$?
+          echo "::endgroup::"
+          if [ "$code" -ne 0 ]; then fail=1; fi
+          find test/goldens -type f -name '*.png' | sort
+          exit "$fail"
 
       - name: Upload linux-goldens artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: linux-goldens
