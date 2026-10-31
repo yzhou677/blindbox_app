@@ -71,7 +71,7 @@ void main() {
     await expectLater(
       find.byKey(const Key('series_card_spacing_after')),
       matchesGoldenFile(
-        '../docs/screenshots/collection_series_card_spacing/after.png',
+        'goldens/collection_series_card_spacing/after.png',
       ),
     );
   });

@@ -110,6 +110,20 @@ From a local `flutter test --coverage` run that still wrote lcov despite failure
 - `android/gradle.properties` may contain Windows-only `org.gradle.java.home` / `org.gradle.java.installations.paths`. The workflow strips those lines in the runner workspace before `flutter build apk --debug`.
 - CI installs **Temurin JDK 17** (`actions/setup-java`) because the app targets Java 17 and newer runner default JDKs (e.g. 25.x on ubuntu-26.04) break AGP `assembleDebug`.
 
+### Golden baselines
+
+Widget goldens live under [`test/goldens/`](../test/goldens/). `docs/screenshots/` stays gitignored (human dumps) and is **not** used as CI baselines.
+
+Rasterization differs across macOS / Windows / Linux — refresh baselines only on Linux:
+
+```bash
+gh workflow run update-goldens.yml --ref <branch>
+# wait for the run, then:
+gh run download <run-id> -n linux-goldens -D test/goldens
+```
+
+Workflow: [`.github/workflows/update-goldens.yml`](../.github/workflows/update-goldens.yml).
+
 ---
 
 ## Artifacts

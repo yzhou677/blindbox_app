@@ -4,6 +4,7 @@ tools/*_audit_run.txt
 # Local machine / doc artifacts (not part of the repo)
 .tools/
 build_env.txt
+# Human/doc screenshot dumps — CI golden baselines live under test/goldens/ instead.
 docs/screenshots/
 
 # Miscellaneous

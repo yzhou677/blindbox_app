@@ -139,7 +139,7 @@ void main() {
     await expectLater(
       find.byKey(const Key('ip_intro_ownership_nonzero')),
       matchesGoldenFile(
-        '../docs/screenshots/ip_introduction_ownership/nonzero_series_count.png',
+        'goldens/ip_introduction_ownership/nonzero_series_count.png',
       ),
     );
   });
@@ -190,7 +190,7 @@ void main() {
     await expectLater(
       find.byKey(const Key('ip_intro_ownership_zero')),
       matchesGoldenFile(
-        '../docs/screenshots/ip_introduction_ownership/zero_omitted.png',
+        'goldens/ip_introduction_ownership/zero_omitted.png',
       ),
     );
   });
@@ -235,7 +235,7 @@ void main() {
     await expectLater(
       find.byKey(const Key('ip_intro_info_icon')),
       matchesGoldenFile(
-        '../docs/screenshots/ip_introduction_ownership/info_icon_resized.png',
+        'goldens/ip_introduction_ownership/info_icon_resized.png',
       ),
     );
   });
