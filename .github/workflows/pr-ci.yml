@@ -325,12 +325,33 @@ jobs:
   # Create `.github/ci/REQUEST_GOLDEN_UPDATE` on the PR branch, push, download the
   # `linux-goldens` artifact, commit PNGs under test/goldens/, delete the marker.
   # (workflow_dispatch files must live on the default branch; this works on PRs.)
+  # Note: job-level hashFiles is unreliable before checkout — use a gate job.
   # ---------------------------------------------------------------------------
+  golden-gate:
+    name: Golden update gate
+    runs-on: ubuntu-latest
+    outputs:
+      requested: ${{ steps.check.outputs.requested }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Check request marker
+        id: check
+        run: |
+          if [ -f .github/ci/REQUEST_GOLDEN_UPDATE ]; then
+            echo "requested=true" >> "$GITHUB_OUTPUT"
+            echo "REQUEST_GOLDEN_UPDATE present — will regenerate goldens."
+          else
+            echo "requested=false" >> "$GITHUB_OUTPUT"
+            echo "No golden update requested."
+          fi
+
   update-goldens:
     name: Update goldens (Linux)
+    needs: [golden-gate]
+    if: needs.golden-gate.outputs.requested == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    if: hashFiles('.github/ci/REQUEST_GOLDEN_UPDATE') != ''
     steps:
       - name: Checkout
         uses: actions/checkout@v4
