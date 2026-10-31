@@ -1,0 +1,299 @@
+# =============================================================================
+# PR CI — analyze, test (+ coverage report), optional Cloud Functions, debug APK
+# =============================================================================
+# Triggers on every pull request that targets `main` when it is opened, updated
+# (new commits / force-push), or reopened.
+#
+# Design notes (why things look this way):
+#   1. Default GITHUB_TOKEN permissions are read-only. Only the coverage job
+#      that edits the PR description gets `pull-requests: write`.
+#   2. Fork PRs cannot safely write back to the base repo with the default token
+#      for untrusted code. We detect forks and skip the description update.
+#   3. Coverage is report-only: we never fail the build over a percentage.
+#   4. Known flaky / failing tests are NOT skipped — CI stays honest.
+#   5. `google-services.json` is gitignored. Analyze/tests do not need it;
+#      the debug APK Gradle plugin does. We copy a stub from `.github/ci/`.
+#   6. Leave `.github/workflows/deploy-pages.yml` alone — unrelated pipeline.
+# =============================================================================
+
+name: PR CI
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+# Least privilege for the workflow as a whole. Jobs that need more declare it.
+permissions:
+  contents: read
+
+concurrency:
+  # Cancel outdated runs on the same PR when new commits arrive.
+  group: pr-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1 — Flutter: analyze, full test suite with lcov, debug APK artifact
+  # ---------------------------------------------------------------------------
+  flutter:
+    name: Flutter analyze / test / APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      # ---- Checkout ---------------------------------------------------------
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ---- Flutter toolchain ------------------------------------------------
+      # Pin must match the project's local Flutter (see `flutter --version`).
+      # Caching pub packages is handled by the action's `cache: true`.
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          # Must match local `flutter --version` for this repo (stable).
+          flutter-version: "3.41.9"
+          channel: stable
+          cache: true
+
+      - name: Show Flutter / Dart versions
+        run: |
+          flutter --version
+          dart --version
+
+      # ---- Dependencies -----------------------------------------------------
+      - name: Pub get
+        run: flutter pub get
+
+      # ---- google-services stub ---------------------------------------------
+      # Fact check (local investigation):
+      #   - `flutter analyze` → does NOT need google-services.json
+      #   - `flutter test`    → does NOT need google-services.json
+      #   - `flutter build apk --debug` → DOES need it (google-services Gradle
+      #     plugin reads android/app/google-services.json)
+      # We never commit real Firebase credentials. The stub under `.github/ci/`
+      # is a non-functional placeholder with the correct package_name so Gradle
+      # can parse the file. Runtime Firebase calls are not exercised by this
+      # debug APK job beyond compile/link.
+      # No GitHub Secrets are required for analyze / test / debug APK today.
+      - name: Install CI stub google-services.json
+        run: |
+          mkdir -p android/app
+          cp .github/ci/google-services.ci.json android/app/google-services.json
+          echo "Installed stub google-services.json for CI APK builds."
+
+      # ---- Static analysis --------------------------------------------------
+      # Capture exit code so we can still run tests + coverage + APK, then
+      # fail the job at the end if analyze (or tests) failed. We do NOT skip
+      # known-broken tests to fake a green run.
+      - name: Flutter analyze
+        id: analyze
+        continue-on-error: true
+        run: flutter analyze
+
+      # ---- Tests + coverage -------------------------------------------------
+      # Produce lcov.info even when some tests fail, so the coverage reporter
+      # still has something to post. Failures are recorded and re-surfaced.
+      - name: Flutter test with coverage
+        id: flutter_test
+        continue-on-error: true
+        run: |
+          set +e
+          flutter test --coverage --reporter=compact
+          code=$?
+          set -e
+          if [ -f coverage/lcov.info ]; then
+            echo "lcov_present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "lcov_present=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit $code
+
+      # Upload lcov even when tests failed (for the coverage job / debugging).
+      - name: Upload lcov artifact
+        if: always() && hashFiles('coverage/lcov.info') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: lcov-info
+          path: coverage/lcov.info
+          if-no-files-found: ignore
+          retention-days: 7
+
+      # List changed Dart files for the coverage reporter (base…head).
+      - name: Collect changed Dart files
+        if: always()
+        id: changed_dart
+        run: |
+          set -e
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          git fetch --depth=1 origin "$BASE_SHA" || true
+          {
+            git diff --name-only --diff-filter=ACMR "$BASE_SHA...$HEAD_SHA" -- '*.dart' \
+              || git diff --name-only --diff-filter=ACMR "${{ github.event.pull_request.base.sha }}" HEAD -- '*.dart' \
+              || true
+          } > changed_dart_files.txt
+          echo "Changed Dart files:"
+          cat changed_dart_files.txt || true
+
+      - name: Upload changed-Dart list
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: changed-dart-files
+          path: changed_dart_files.txt
+          if-no-files-found: ignore
+          retention-days: 7
+
+      # ---- Debug APK --------------------------------------------------------
+      # Build even when analyze/tests failed so reviewers can still download a
+      # debug APK from a red CI run (stub google-services is already in place).
+      - name: Build debug APK
+        id: apk
+        if: always()
+        continue-on-error: true
+        run: flutter build apk --debug
+
+      - name: Upload debug APK
+        if: always() && hashFiles('build/app/outputs/flutter-apk/app-debug.apk') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 7
+
+      # Re-surface analyze / test / apk failures so the job is red when honest.
+      - name: Fail job if analyze, tests, or APK failed
+        if: always()
+        run: |
+          analyze="${{ steps.analyze.outcome }}"
+          tests="${{ steps.flutter_test.outcome }}"
+          apk="${{ steps.apk.outcome }}"
+          echo "analyze=$analyze tests=$tests apk=$apk"
+          if [ "$analyze" != "success" ] || [ "$tests" != "success" ] || [ "$apk" != "success" ]; then
+            echo "::error::Flutter CI failed (analyze=$analyze, tests=$tests, apk=$apk). Known pre-existing failures are documented in docs/CI.md — they are not skipped."
+            exit 1
+          fi
+
+
+  # ---------------------------------------------------------------------------
+  # Job 2 — Post coverage into the PR description (report-only)
+  # ---------------------------------------------------------------------------
+  coverage-report:
+    name: PR coverage comment block
+    runs-on: ubuntu-latest
+    needs: [flutter]
+    # Run even when flutter tests failed, as long as we might have lcov.
+    if: always() && needs.flutter.result != 'cancelled'
+    # Only this job needs write access to mutate the PR body.
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout (scripts only)
+        uses: actions/checkout@v4
+
+      # Fork PRs: the default GITHUB_TOKEN from a fork workflow run cannot
+      # (and should not) edit the base repository PR description. Skip politely.
+      - name: Detect fork PR
+        id: fork
+        run: |
+          HEAD_REPO="${{ github.event.pull_request.head.repo.full_name }}"
+          BASE_REPO="${{ github.repository }}"
+          echo "head_repo=$HEAD_REPO"
+          echo "base_repo=$BASE_REPO"
+          if [ "$HEAD_REPO" != "$BASE_REPO" ]; then
+            echo "is_fork=true" >> "$GITHUB_OUTPUT"
+            echo "Fork PR detected — skipping PR body coverage update."
+          else
+            echo "is_fork=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download lcov artifact
+        if: steps.fork.outputs.is_fork != 'true'
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: lcov-info
+          path: coverage
+
+      - name: Download changed-Dart list
+        if: steps.fork.outputs.is_fork != 'true'
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: changed-dart-files
+          path: .
+
+      - name: Update PR description coverage block
+        if: steps.fork.outputs.is_fork != 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GITHUB_SHA: ${{ github.event.pull_request.head.sha }}
+          LCOV_PATH: coverage/lcov.info
+        run: |
+          # Prefer file list from artifact; fall back to empty.
+          if [ -f changed_dart_files.txt ]; then
+            export CHANGED_DART_FILES="$(cat changed_dart_files.txt)"
+          else
+            export CHANGED_DART_FILES=""
+          fi
+          node .github/scripts/report_pr_coverage.mjs
+
+  # ---------------------------------------------------------------------------
+  # Job 3 — Cloud Functions (only when functions/** changed)
+  # ---------------------------------------------------------------------------
+  functions:
+    name: Cloud Functions
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Path filter: skip the whole job when this PR does not touch functions/.
+    # `dorny/paths-filter` compares against the PR base.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect functions/** changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            functions:
+              - 'functions/**'
+
+      - name: Set up Node.js 22
+        if: steps.filter.outputs.functions == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: npm ci
+        if: steps.filter.outputs.functions == 'true'
+        working-directory: functions
+        run: npm ci
+
+      # `lint` in package.json is `tsc --noEmit` — keep it if it stays green.
+      - name: Lint (tsc --noEmit)
+        if: steps.filter.outputs.functions == 'true'
+        working-directory: functions
+        run: npm run lint
+
+      - name: Build
+        if: steps.filter.outputs.functions == 'true'
+        working-directory: functions
+        run: npm run build
+
+      - name: Test
+        if: steps.filter.outputs.functions == 'true'
+        working-directory: functions
+        run: npm test
+
+      - name: Skip notice
+        if: steps.filter.outputs.functions != 'true'
+        run: echo "No functions/** changes in this PR — skipping Cloud Functions CI."
