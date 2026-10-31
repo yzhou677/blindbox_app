@@ -158,19 +158,20 @@ CollectionSnapshot _nommiHeavyCollectionSnapshot() {
 }
 
 CatalogSeedBundle _nommiBundle() {
+  // Keep owned series outside the 90d recency window; reco/other inside it.
   return CatalogSeedBundle(
     brands: const [CatalogBrand(id: 'popmart', displayName: 'POP MART')],
     ips: const [
       CatalogIp(id: 'nommi', brandId: 'popmart', displayName: 'NOMMI'),
       CatalogIp(id: 'labubu', brandId: 'popmart', displayName: 'LABUBU'),
     ],
-    series: const [
+    series: [
       catalog.CatalogSeries(
         id: 'nommi_owned_1',
         brandId: 'popmart',
         ipId: 'nommi',
         displayName: 'Nommi Owned 1',
-        releaseDate: '2026-01-01',
+        releaseDate: _isoDaysAgo(200),
         isBlindBox: true,
         imageKey: 'nommi_owned_1',
       ),
@@ -179,7 +180,7 @@ CatalogSeedBundle _nommiBundle() {
         brandId: 'popmart',
         ipId: 'nommi',
         displayName: 'Nommi Owned 2',
-        releaseDate: '2026-01-02',
+        releaseDate: _isoDaysAgo(190),
         isBlindBox: true,
         imageKey: 'nommi_owned_2',
       ),
@@ -188,7 +189,7 @@ CatalogSeedBundle _nommiBundle() {
         brandId: 'popmart',
         ipId: 'nommi',
         displayName: 'Nommi Owned 3',
-        releaseDate: '2026-01-03',
+        releaseDate: _isoDaysAgo(180),
         isBlindBox: true,
         imageKey: 'nommi_owned_3',
       ),
@@ -197,7 +198,7 @@ CatalogSeedBundle _nommiBundle() {
         brandId: 'popmart',
         ipId: 'nommi',
         displayName: 'Nommi Reco',
-        releaseDate: '2026-05-01',
+        releaseDate: _isoDaysAgo(14),
         isBlindBox: true,
         imageKey: 'nommi_reco',
       ),
@@ -206,7 +207,7 @@ CatalogSeedBundle _nommiBundle() {
         brandId: 'popmart',
         ipId: 'labubu',
         displayName: 'Labubu Other',
-        releaseDate: '2026-05-02',
+        releaseDate: _isoDaysAgo(7),
         isBlindBox: true,
         imageKey: 'labubu_other',
       ),
@@ -880,9 +881,15 @@ void main() {
           _installId,
           _nommiBundle(),
         );
+        // Empty shelf may gap-fill catalog series (including nommi_reco) as
+        // newInCatalog. It must not treat them as tracked-IP taste yet.
         expect(
-          before.items.map((item) => item.seriesId),
-          isNot(contains('nommi_reco')),
+          before.items.where(
+            (item) =>
+                item.seriesId == 'nommi_reco' &&
+                item.primaryReasonType == RecommendationReasonType.trackedIp,
+          ),
+          isEmpty,
         );
 
         container
