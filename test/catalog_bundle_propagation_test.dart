@@ -11,10 +11,18 @@ import 'package:blindbox_app/features/market/data/market_catalog_identity_cache.
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+/// Release date inside the Latest Drops window ([homeLatestDropsWindow] = 60d).
+String _recentReleaseDate({int daysAgo = 7}) {
+  final d = DateTime.now().toUtc().subtract(Duration(days: daysAgo));
+  final m = d.month.toString().padLeft(2, '0');
+  final day = d.day.toString().padLeft(2, '0');
+  return '${d.year}-$m-$day';
+}
+
 CatalogSeedBundle _bundle({
   required String seriesId,
   required String figureName,
-  String releaseDate = '2026-05-10',
+  String? releaseDate,
 }) => CatalogSeedBundle(
   brands: const [CatalogBrand(id: 'b', displayName: 'B')],
   ips: const [CatalogIp(id: 'ip', brandId: 'b', displayName: 'IP')],
@@ -24,7 +32,7 @@ CatalogSeedBundle _bundle({
       brandId: 'b',
       ipId: 'ip',
       displayName: seriesId,
-      releaseDate: releaseDate,
+      releaseDate: releaseDate ?? _recentReleaseDate(),
       isBlindBox: true,
       imageKey: seriesId,
     ),
@@ -176,7 +184,7 @@ void main() {
         _bundle(
           seriesId: 'firestore_only_series',
           figureName: 'Remote Figure',
-          releaseDate: '2026-05-15',
+          releaseDate: _recentReleaseDate(daysAgo: 3),
         ),
       );
       CatalogBundleCache.triggerBundleReplacedForTest();

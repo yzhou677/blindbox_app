@@ -99,19 +99,27 @@ CollectionSnapshot _expandedCollectionSnapshot() {
   );
 }
 
+String _isoDaysAgo(int daysAgo) {
+  final d = DateTime.now().toUtc().subtract(Duration(days: daysAgo));
+  final m = d.month.toString().padLeft(2, '0');
+  final day = d.day.toString().padLeft(2, '0');
+  return '${d.year}-$m-$day';
+}
+
 CatalogSeedBundle _testBundle() {
+  // dimoo_new must stay inside the local rule engine recency window (90d).
   return CatalogSeedBundle(
     brands: const [CatalogBrand(id: 'popmart', displayName: 'POP MART')],
     ips: const [
       CatalogIp(id: 'dimoo', brandId: 'popmart', displayName: 'DIMOO'),
     ],
-    series: const [
+    series: [
       catalog.CatalogSeries(
         id: 'dimoo_owned',
         brandId: 'popmart',
         ipId: 'dimoo',
         displayName: 'Dimoo Owned',
-        releaseDate: '2026-01-01',
+        releaseDate: _isoDaysAgo(200),
         isBlindBox: true,
         imageKey: 'dimoo_owned',
       ),
@@ -120,7 +128,7 @@ CatalogSeedBundle _testBundle() {
         brandId: 'popmart',
         ipId: 'dimoo',
         displayName: 'Dimoo New',
-        releaseDate: '2026-05-01',
+        releaseDate: _isoDaysAgo(14),
         isBlindBox: true,
         imageKey: 'dimoo_new',
       ),

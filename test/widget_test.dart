@@ -207,10 +207,19 @@ void main() {
       find.byKey(const Key('collection_header_add_series')),
       findsOneWidget,
     );
-    expect(find.text('All Brands'), findsOneWidget);
-    expect(find.text('All IPs'), findsOneWidget);
+    // Brand/IP filters live in the Filters sheet (not always-visible chip rails).
+    await tester.tap(find.byKey(const Key('collection_shelf_filters_control')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('Brand'), findsOneWidget);
+    expect(find.text('IP'), findsOneWidget);
+    expect(find.text('All'), findsWidgets);
+    expect(find.text('POP MART'), findsWidgets);
+    await tester.tap(find.byKey(const Key('filters_sheet_show_results')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
 
-    // Completed series are collapsed by default ??expand before asserting card text.
+    // Completed series are collapsed by default — expand before asserting card text.
     for (var i = 0; i < 4; i++) {
       await tester.drag(
         find.byType(CustomScrollView).first,
@@ -224,14 +233,23 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
     expect(find.text('The Other One'), findsOneWidget);
 
-    // Brand chips are built from shelf brands only (POP MART for this seed).
+    // Apply brand filter via the Filters sheet.
+    await tester.tap(find.byKey(const Key('collection_shelf_filters_control')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
     await tester.ensureVisible(find.text('POP MART'));
     await tester.tap(find.text('POP MART'));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('filters_sheet_show_results')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('The Other One'), findsOneWidget);
 
-    await tester.tap(find.text('All Brands'));
+    // Clear brand selection via Filters sheet (no always-visible "All Brands" chip).
+    await tester.tap(find.byKey(const Key('collection_shelf_filters_control')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(find.byKey(const Key('filters_sheet_clear_all')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('The Other One'), findsOneWidget);

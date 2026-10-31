@@ -38,7 +38,16 @@ void main() {
       addTearDown(container.dispose);
       container.read(catalogBundleRevisionProvider);
 
-      final seedBundle = _bundle([_series('seed_only_series', '2026-05-10')]);
+      String recent({int daysAgo = 7}) {
+        final d = DateTime.now().toUtc().subtract(Duration(days: daysAgo));
+        final m = d.month.toString().padLeft(2, '0');
+        final day = d.day.toString().padLeft(2, '0');
+        return '${d.year}-$m-$day';
+      }
+
+      final seedBundle = _bundle([
+        _series('seed_only_series', recent(daysAgo: 10)),
+      ]);
       CatalogBundleCache.prime(seedBundle);
 
       final feedBefore = await container.read(homeFeedSnapshotProvider.future);
@@ -48,7 +57,7 @@ void main() {
       );
 
       final firestoreBundle = _bundle([
-        _series('firestore_only_series', '2026-05-15'),
+        _series('firestore_only_series', recent(daysAgo: 3)),
       ]);
       CatalogBundleCache.prime(firestoreBundle);
       CatalogBundleCache.triggerBundleReplacedForTest();

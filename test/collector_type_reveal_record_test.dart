@@ -61,7 +61,7 @@ void main() {
     expect(record.reasonKey, CollectorTypeReasonKey.dominantUniverse);
     expect(
       CollectorTypeCopy.becauseLineForRecord(record),
-      'Because one universe clearly defines your shelf.',
+      'Because one universe has the strongest presence in this reveal.',
     );
   });
 

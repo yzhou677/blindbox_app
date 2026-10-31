@@ -4,7 +4,6 @@ import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/collection_screen.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
-import 'package:blindbox_app/shared/widgets/taxonomy_brand_chip_rail.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -68,7 +67,13 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
+    await tester.tap(find.byKey(const Key('collection_shelf_filters_control')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('Nyota'), findsNothing);
+    await tester.tap(find.byKey(const Key('filters_sheet_show_results')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     final container = ProviderScope.containerOf(
       tester.element(find.byType(CollectionScreen)),
@@ -79,12 +84,14 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
+    await tester.tap(find.byKey(const Key('collection_shelf_filters_control')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('Nyota'), findsAtLeastNWidgets(1));
     expect(find.text('Brand'), findsOneWidget);
     expect(find.text('IP'), findsOneWidget);
-    expect(find.text('All Brands'), findsOneWidget);
-    expect(find.text('All IPs'), findsOneWidget);
-    expect(find.byType(TaxonomyBrandChipRail), findsNWidgets(2));
+    // Collapsed Brand/IP facet summary uses [filterFacetAllSummary] ("All").
+    expect(find.text('All'), findsWidgets);
 
     // Flush CollectionNotifier persistence debounce timer.
     await tester.pump(const Duration(milliseconds: 400));
