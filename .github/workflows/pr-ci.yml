@@ -46,6 +46,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # ---- JDK (Android / AGP) ----------------------------------------------
+      # `android/app/build.gradle.kts` targets Java 17. GitHub's ubuntu-26.04
+      # image may default to a newer JDK (e.g. 25.x); AGP then fails with a
+      # cryptic one-line version error during `assembleDebug`. Pin Temurin 17.
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
       # ---- Flutter toolchain ------------------------------------------------
       # Pin must match the project's local Flutter (see `flutter --version`).
       # Caching pub packages is handled by the action's `cache: true`.
