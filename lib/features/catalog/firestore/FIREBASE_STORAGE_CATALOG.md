@@ -9,7 +9,7 @@ Public **catalog** thumbnails only. User shelf photos (`localImageUri`, `customC
 ## Purpose
 
 - Host series/figure art keyed by catalog **`imageKey`** (same opaque ids as Firestore documents).
-- Ship a small bundled **art** subset offline (`assets/catalog/**`) while loading full catalog art from Storage when connected. Catalog **metadata** is not bundled in the APK.
+- **SSOT** for catalog art binaries is Firebase Storage (plus on-device disk cache). Catalog **metadata** and **art** are not bundled in the APK.
 
 ---
 
@@ -46,7 +46,7 @@ Dart helper: `CatalogImageResolver.storageObjectPath(kind:, imageKey:, extension
 
 - **Firestore** — canonical metadata only: ids, `displayName`, `imageKey`, taxonomy fields, dates, plus additive sync fields `updatedAt` / `imageVersion` (see [FIRESTORE_CATALOG_SCHEMA.md](FIRESTORE_CATALOG_SCHEMA.md))
 - **Storage** — binary assets only, at the paths above
-- **App resolver** — `imageKey` + kind (series/figure) + extension → bundled asset or ephemeral download URL
+- **App resolver** — `imageKey` + kind (series/figure) + extension → disk cache path or ephemeral download URL
 - **`imageVersion`** — copy of the Storage object’s **`md5Hash`** (base64) onto the matching series/figure (or `alternativeImages[]` entry). Clients append `&v=<encodeQueryComponent(imageVersion)>` to download URLs and key disk / CachedNetworkImage caches as `kind/imageKey#imageVersion`. Not a URL; never stored as a URL in Firestore.
 
 **Never:**
@@ -63,10 +63,9 @@ Resolved download URLs may appear in widget/shelf `imageUrl` at add time for dis
 
 ## Resolver order (when Storage is wired)
 
-1. **Bundled asset** under `assets/catalog/figures/` or `assets/catalog/series/` (offline art subset / tests).
-2. **Bounded disk cache** — previously fetched Storage bytes (`ApplicationSupport/catalog_image_cache/`).
-3. **Firebase Storage** download URL for `catalog/{figures|series}/{imageKey}.{ext}`.
-4. **Placeholder** — never broken-image UI.
+1. **Bounded disk cache** — previously fetched Storage bytes (`ApplicationSupport/catalog_image_cache/`).
+2. **Firebase Storage** download URL for `catalog/{figures|series}/{imageKey}.{ext}`.
+3. **Placeholder** — never broken-image UI.
 
 **Runtime metadata** comes from Firestore + persisted `catalog_bundle_v1.json` via `catalogBundleProvider` — not from `tools/seed/` or any APK JSON fallback.
 

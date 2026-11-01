@@ -215,26 +215,6 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
     required int generation,
     required String imageKey,
   }) async {
-    final bundled = _isSeriesMode
-        ? await CatalogImageResolver.resolveSeriesAsset(imageKey)
-        : await CatalogImageResolver.resolveFigureAsset(imageKey);
-
-    if (!_resolveCoordinator.shouldApply(generation) || !mounted) return;
-
-    if (bundled != null && bundled.isNotEmpty) {
-      if (kDebugMode) {
-        debugPrint(
-          'CatalogImageFromKey: imageKey="$imageKey" provider=bundled_asset '
-          'path=$bundled',
-        );
-      }
-      setState(() {
-        _imageRef = bundled;
-        _loading = false;
-      });
-      return;
-    }
-
     final kind = _isSeriesMode
         ? CatalogImageKind.series
         : CatalogImageKind.figure;
@@ -260,11 +240,9 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
     if (kDebugMode) {
       final provider = ref == null || ref.isEmpty
           ? 'placeholder'
-          : (ref.startsWith('assets/')
-                ? 'bundled_asset'
-                : DeviceLocalImageRef.looksLikeDevicePath(ref)
-                ? 'disk_cache'
-                : 'network_url');
+          : DeviceLocalImageRef.looksLikeDevicePath(ref)
+          ? 'disk_cache'
+          : 'network_url';
       debugPrint(
         'CatalogImageFromKey: imageKey="$imageKey" provider=$provider '
         'storageFallback=${CatalogImageResolver.storageFallbackEnabled}',

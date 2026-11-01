@@ -3,36 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('CatalogImageResolver', () {
-    test('candidate paths follow format priority', () {
-      expect(
-        CatalogImageResolver.candidatePaths(
-          CatalogImageResolver.figuresRoot,
-          'the_monsters_exciting_macaron_soymilk',
-        ).toList(),
-        [
-          'assets/catalog/figures/the_monsters_exciting_macaron_soymilk.avif',
-          'assets/catalog/figures/the_monsters_exciting_macaron_soymilk.webp',
-          'assets/catalog/figures/the_monsters_exciting_macaron_soymilk.png',
-          'assets/catalog/figures/the_monsters_exciting_macaron_soymilk.jpg',
-          'assets/catalog/figures/the_monsters_exciting_macaron_soymilk.jpeg',
-        ],
-      );
-    });
-
-    test(
-      'before ensureReady, sync paths prefer highest-priority extension',
-      () {
-        expect(
-          CatalogImageResolver.figureAsset('foo'),
-          'assets/catalog/figures/foo.avif',
-        );
-        expect(
-          CatalogImageResolver.seriesAsset('bar'),
-          'assets/catalog/series/bar.avif',
-        );
-      },
-    );
-
     test('storage probe order lists all supported extensions per imageKey', () {
       final paths = [
         for (final ext in CatalogImageResolver.assetExtensions)

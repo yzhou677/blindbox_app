@@ -19,7 +19,7 @@ class CatalogSearchResult {
   final String brandId;
   final String ipId;
 
-  /// Opaque image identity; expand to a display path via `CatalogImageResolver.figureAsset`.
+  /// Opaque image identity; expand via `CatalogImageResolver.resolveFigureDisplayRef`.
   final String imageKey;
   final bool isSecret;
 }

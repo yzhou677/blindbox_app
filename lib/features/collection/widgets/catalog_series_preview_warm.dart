@@ -57,12 +57,6 @@ abstract final class CatalogSeriesPreviewWarm {
     String imageKey,
     int? decodeExtent,
   ) async {
-    final bundled = await CatalogImageResolver.resolveSeriesAsset(imageKey);
-    if (!context.mounted) return;
-    if (bundled != null && bundled.isNotEmpty) {
-      await _precache(context, AssetImage(bundled), decodeExtent);
-      return;
-    }
     if (!CatalogImageResolver.storageFallbackEnabled) return;
     final ref = await CatalogImageResolver.resolveSeriesStorageRef(imageKey);
     if (!context.mounted) return;
@@ -74,12 +68,6 @@ abstract final class CatalogSeriesPreviewWarm {
     String imageKey,
     int? decodeExtent,
   ) async {
-    final bundled = await CatalogImageResolver.resolveFigureAsset(imageKey);
-    if (!context.mounted) return;
-    if (bundled != null && bundled.isNotEmpty) {
-      await _precache(context, AssetImage(bundled), decodeExtent);
-      return;
-    }
     if (!CatalogImageResolver.storageFallbackEnabled) return;
     final ref = await CatalogImageResolver.resolveFigureStorageRef(imageKey);
     if (!context.mounted) return;
@@ -92,10 +80,6 @@ abstract final class CatalogSeriesPreviewWarm {
     int? decodeExtent,
   ) async {
     if (ref == null || ref.isEmpty) return;
-    if (ref.startsWith('assets/')) {
-      await _precache(context, AssetImage(ref), decodeExtent);
-      return;
-    }
     if (DeviceLocalImageRef.looksLikeDevicePath(ref)) {
       final path = DeviceLocalImageRef.normalizeToFilePath(ref);
       final file = File(path);

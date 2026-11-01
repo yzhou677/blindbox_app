@@ -76,7 +76,7 @@ Features
 
 ### Media identity
 
-- **Catalog art:** `imageKey` (+ optional `imageVersion` for disk/CDN bust) → `CatalogImageResolver` → bundled `assets/catalog/**` or Firebase Storage
+- **Catalog art:** `imageKey` (+ optional `imageVersion` for disk/CDN bust) → `CatalogImageResolver` → disk cache or Firebase Storage (no APK-bundled art)
 - **Shelf photos:** `localImageUri` on shelf models only
 - **Market listing photos:** external URLs via `MarketListingImage` boundary
 
