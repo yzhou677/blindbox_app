@@ -47,7 +47,7 @@ Dart helper: `CatalogImageResolver.storageObjectPath(kind:, imageKey:, extension
 - **Firestore** — canonical metadata only: ids, `displayName`, `imageKey`, taxonomy fields, dates, plus additive sync fields `updatedAt` / `imageVersion` (see [FIRESTORE_CATALOG_SCHEMA.md](FIRESTORE_CATALOG_SCHEMA.md))
 - **Storage** — binary assets only, at the paths above
 - **App resolver** — `imageKey` + kind (series/figure) + extension → bundled asset or ephemeral download URL
-- **`imageVersion`** — copy of the Storage object’s **`md5Hash`** (base64) onto the matching series/figure (or `alternativeImages[]` entry). Used by clients (PR2c) to bust disk / CDN caches when bytes change under the same `imageKey`. Not a URL.
+- **`imageVersion`** — copy of the Storage object’s **`md5Hash`** (base64) onto the matching series/figure (or `alternativeImages[]` entry). Clients append `&v=<encodeQueryComponent(imageVersion)>` to download URLs and key disk / CachedNetworkImage caches as `kind/imageKey#imageVersion`. Not a URL; never stored as a URL in Firestore.
 
 **Never:**
 
