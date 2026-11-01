@@ -66,6 +66,7 @@ class CatalogImageFromKey extends StatefulWidget {
     required this.name,
     required this.seedKey,
     required this.displayMode,
+    this.imageVersion,
     this.isSecret = false,
     this.compact = false,
     this.borderRadius,
@@ -76,6 +77,10 @@ class CatalogImageFromKey extends StatefulWidget {
   });
 
   final String imageKey;
+
+  /// Storage object `md5Hash` for cache busting. When null, looked up from the
+  /// in-memory catalog bundle (series / figure / alternativeImages).
+  final String? imageVersion;
   final String name;
   final String seedKey;
   final CatalogImageDisplayMode displayMode;
@@ -97,6 +102,7 @@ class CatalogImageFromKey extends StatefulWidget {
     required String imageKey,
     required String name,
     required String seedKey,
+    String? imageVersion,
     bool series = false,
     bool isSecret = false,
     bool compact = false,
@@ -112,6 +118,7 @@ class CatalogImageFromKey extends StatefulWidget {
     return CatalogImageFromKey(
       key: key,
       imageKey: imageKey,
+      imageVersion: imageVersion,
       name: name,
       seedKey: seedKey,
       displayMode: mode,
@@ -161,6 +168,7 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
   void didUpdateWidget(CatalogImageFromKey oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.imageKey != widget.imageKey ||
+        oldWidget.imageVersion != widget.imageVersion ||
         oldWidget.displayMode != widget.displayMode ||
         oldWidget.deferInitialResolve != widget.deferInitialResolve ||
         oldWidget.resolveStaggerBatch != widget.resolveStaggerBatch) {
@@ -227,11 +235,24 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
       return;
     }
 
+    final kind = _isSeriesMode
+        ? CatalogImageKind.series
+        : CatalogImageKind.figure;
+    final imageVersion =
+        widget.imageVersion ??
+        CatalogImageResolver.lookupImageVersion(kind: kind, imageKey: imageKey);
+
     String? ref;
     if (CatalogImageResolver.storageFallbackEnabled) {
       ref = _isSeriesMode
-          ? await CatalogImageResolver.resolveSeriesStorageRef(imageKey)
-          : await CatalogImageResolver.resolveFigureStorageRef(imageKey);
+          ? await CatalogImageResolver.resolveSeriesStorageRef(
+              imageKey,
+              imageVersion: imageVersion,
+            )
+          : await CatalogImageResolver.resolveFigureStorageRef(
+              imageKey,
+              imageVersion: imageVersion,
+            );
     }
 
     if (!_resolveCoordinator.shouldApply(generation) || !mounted) return;
@@ -276,11 +297,21 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
         ),
       );
     }
+    final resolvedVersion =
+        widget.imageVersion ??
+        CatalogImageResolver.lookupImageVersion(
+          kind: _isSeriesMode
+              ? CatalogImageKind.series
+              : CatalogImageKind.figure,
+          imageKey: widget.imageKey,
+        );
     return CatalogResolvedImage(
       key: ValueKey<String>(
-        'catalog-resolved:${widget.imageKey.trim()}:$_imageRef',
+        'catalog-resolved:${widget.imageKey.trim()}:'
+        '${resolvedVersion ?? ''}:$_imageRef',
       ),
       imageRef: _imageRef!,
+      imageVersion: resolvedVersion,
       spec: _spec,
       name: widget.name,
       seedKey: widget.seedKey,

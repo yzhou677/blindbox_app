@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:blindbox_app/core/media/device_local_ref.dart';
+import 'package:blindbox_app/features/catalog/data/catalog_image_version.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_aspect_image.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_immersive_feathered_subject.dart';
@@ -19,6 +20,7 @@ class CatalogResolvedImage extends StatelessWidget {
     required this.spec,
     required this.name,
     required this.seedKey,
+    this.imageVersion,
     this.isSecret = false,
     this.compact = false,
     this.borderRadius,
@@ -28,6 +30,9 @@ class CatalogResolvedImage extends StatelessWidget {
   });
 
   final String imageRef;
+
+  /// Optional Storage `md5Hash` — folded into CachedNetworkImage [cacheKey].
+  final String? imageVersion;
   final CatalogImageDisplaySpec spec;
   final String name;
   final String seedKey;
@@ -166,7 +171,10 @@ class CatalogResolvedImage extends StatelessWidget {
         fadeOutDuration: _immersiveLayerFadeOut,
       ),
       foregroundSubject: CatalogImmersiveFeatheredSubject(
-        imageProvider: CatalogImmersiveImageProviders.fromDisplayRef(ref),
+        imageProvider: CatalogImmersiveImageProviders.fromDisplayRef(
+          ref,
+          imageVersion: imageVersion,
+        ),
         slotWidth: slotW,
         slotHeight: slotH,
         filterQuality: spec.filterQuality,
@@ -234,10 +242,11 @@ class CatalogResolvedImage extends StatelessWidget {
       );
     }
 
+    final cacheKey = CatalogImageVersion.networkCacheKey(ref, imageVersion);
     return CatalogAspectImage.presentNetwork(
-      key: ValueKey<String>('catalog-cached:$ref'),
+      key: ValueKey<String>('catalog-cached:$cacheKey'),
       imageUrl: ref,
-      cacheKey: ref,
+      cacheKey: cacheKey,
       fit: resolvedFit,
       alignment: spec.alignment,
       filterQuality: spec.filterQuality,
