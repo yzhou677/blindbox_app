@@ -26,12 +26,14 @@ Catalog metadata is **read-only reference data**. It is not the user shelf, not 
 
 ```
 Firestore
-  brands / ips / series / figures  (one-shot .get(), flat collections)
+  brands / ips / series / figures  (flat collections; additive updatedAt / imageVersion)
+  meta/catalog                     (lastUpdatedAt sync cursor — PR2b+)
         │
         ▼
 CatalogBundleCache
   in-memory CatalogSeedBundle + CatalogBundleMemoryOrigin
-  stale-while-revalidate refresh (5 min TTL, deduped in-flight)
+  today: stale-while-revalidate full .get() (5 min TTL, deduped in-flight)
+  PR2b: meta check → incremental updatedAt queries; 24h full reconcile兜底
         │
         ├──► Persisted cache (Application Support)
         │         catalog_bundle_v1.json

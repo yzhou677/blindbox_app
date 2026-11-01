@@ -44,17 +44,20 @@ Dart helper: `CatalogImageResolver.storageObjectPath(kind:, imageKey:, extension
 
 ## Firestore ↔ Storage (separation of concerns)
 
-- **Firestore** — canonical metadata only: ids, `displayName`, `imageKey`, taxonomy fields, dates
+- **Firestore** — canonical metadata only: ids, `displayName`, `imageKey`, taxonomy fields, dates, plus additive sync fields `updatedAt` / `imageVersion` (see [FIRESTORE_CATALOG_SCHEMA.md](FIRESTORE_CATALOG_SCHEMA.md))
 - **Storage** — binary assets only, at the paths above
 - **App resolver** — `imageKey` + kind (series/figure) + extension → bundled asset or ephemeral download URL
+- **`imageVersion`** — copy of the Storage object’s **`md5Hash`** (base64) onto the matching series/figure (or `alternativeImages[]` entry). Used by clients (PR2c) to bust disk / CDN caches when bytes change under the same `imageKey`. Not a URL.
 
 **Never:**
 
 - Store full Storage URLs in Firestore
 - Add `imagePath` (or similar) to catalog docs
-- Change the `imageKey` architecture
+- Change the `imageKey` architecture when art bytes change (bump `imageVersion` instead)
 
 Resolved download URLs may appear in widget/shelf `imageUrl` at add time for display; that is a **runtime cache**, not catalog source of truth.
+
+**Overwrite policy:** Replacing bytes at the same Storage path is allowed. Ingest must then write the new object `md5Hash` into Firestore `imageVersion` and bump `updatedAt` / `meta/catalog.lastUpdatedAt`. Catalog rows are never deleted.
 
 ---
 

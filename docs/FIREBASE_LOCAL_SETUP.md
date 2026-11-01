@@ -11,7 +11,7 @@ Client config files are **gitignored** so API keys are not pushed to GitHub. Eac
 | Service | Used? | Role |
 |---------|-------|------|
 | **Firebase Core** | Yes | `ensureFirebaseInitialized()` in `main.dart` |
-| **Cloud Firestore** | Yes | Catalog (`brands`, `ips`, `series`, `figures`); Discover Official feeds (`official_feed_items` — POP MART / TNT SPACE / TOP TOY); IP introductions (`ip_profiles`) |
+| **Cloud Firestore** | Yes | Catalog (`brands`, `ips`, `series`, `figures`) + sync cursor `meta/catalog`; Discover Official feeds (`official_feed_items` — POP MART / TNT SPACE / TOP TOY); IP introductions (`ip_profiles`) |
 | **Cloud Storage** | Yes | Catalog art at `catalog/series/*`, `catalog/figures/*` via `getDownloadURL()` |
 | **Cloud Functions (market)** | Yes (HTTPS) | Client calls `GET …/market/v1/browse` via `http` — **not** `firebase_functions` SDK |
 | Firebase Authentication | No | — |
@@ -127,8 +127,8 @@ Never commit `*-firebase-adminsdk-*.json` or service account keys — patterns a
 
 Baseline rules live at repo root: `firestore.rules`, `storage.rules` (wired via `firebase.json.example` → local `firebase.json`).
 
-- **Client:** read-only `brands` / `ips` / `series` / `figures` / `official_feed_items` / `ip_profiles`; read-only `catalog/**` Storage; no client writes.
-- **Ingestion:** `tools/official_feed/push_official_feed.mjs` and external catalog pipelines must use **Admin SDK** or service account (bypass client rules).
+- **Client:** read-only `brands` / `ips` / `series` / `figures` / `meta/catalog` / `official_feed_items` / `ip_profiles`; read-only `catalog/**` Storage; no client writes.
+- **Ingestion:** `tools/official_feed/push_official_feed.mjs` and external catalog pipelines (`D:\blindbox-catalog`) must use **Admin SDK** or service account (bypass client rules). Catalog sync field contract: [`CATALOG_DELTA_SYNC_INGEST.md`](CATALOG_DELTA_SYNC_INGEST.md).
 
 Deploy only after staging validation (from repo root; local `firebase.json` required — see above):
 

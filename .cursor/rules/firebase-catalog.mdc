@@ -11,14 +11,18 @@ Read [`.cursor/ARCHITECTURE.md`](../ARCHITECTURE.md) → **Firebase (Firestore +
 - [`FIRESTORE_CATALOG_SCHEMA.md`](../../lib/features/catalog/firestore/FIRESTORE_CATALOG_SCHEMA.md)
 - [`FIREBASE_STORAGE_CATALOG.md`](../../lib/features/catalog/firestore/FIREBASE_STORAGE_CATALOG.md)
 
-## Firestore (canonical schema — do not extend)
+## Firestore (canonical schema — do not extend entity model)
 
-- Use **only** existing top-level collections: `brands`, `ips`, `series`, `figures`
+- Entity collections: `brands`, `ips`, `series`, `figures`
+- Sync cursor only: `meta/catalog` (`lastUpdatedAt`) — not a second catalog tree
 - Do **not** add nested hierarchies, duplicate catalog collections, or image-metadata collections
-- Metadata only on docs (`imageKey`, ids, `displayName`, …) — **no** Storage URLs, **no** `imagePath`
+- Metadata only on docs (`imageKey`, ids, `displayName`, additive `updatedAt` / `imageVersion`, …) — **no** Storage URLs, **no** `imagePath`
+- `imageVersion` = Storage object `md5Hash` (base64); never invent a parallel hash scheme; never change `imageKey` when bytes change
+- **Never delete** catalog entity docs (collectible atlas). No soft-delete / tombstone fields
 - `loadFirestoreCatalogBundle()` — one-shot reads inside `CatalogBundleCache`; consumers use `catalogBundleProvider`, not direct Firestore calls from widgets
 - **Runtime:** Firestore authoritative; persisted cache offline baseline; no APK metadata seed fallback
 - Canonical ids must match filters, Storage filenames, and `imageKey` resolution (e.g. `the_monsters`, not display labels)
+- Ingest contract: [`docs/CATALOG_DELTA_SYNC_INGEST.md`](../../docs/CATALOG_DELTA_SYNC_INGEST.md)
 
 ## Storage (canonical paths — deterministic)
 

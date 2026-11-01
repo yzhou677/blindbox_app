@@ -25,6 +25,13 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Catalog sync cursor (incremental refresh). Document id must be `catalog`.
+    // Clients read lastUpdatedAt; only Admin SDK / ingest tooling may write.
+    match /meta/catalog {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // Home official updates (not Latest drops commerce rail)
     match /official_feed_items/{itemId} {
       allow read: if true;

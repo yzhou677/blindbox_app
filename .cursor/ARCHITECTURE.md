@@ -208,7 +208,7 @@ Firebase is for the **catalog universe only** in the current roadmap. Collection
 
 ### Firestore (catalog reference)
 
-- **Canonical collections only:** `brands`, `ips`, `series`, `figures` (flat top-level — no nested/duplicate catalog trees). See [`FIRESTORE_CATALOG_SCHEMA.md`](../lib/features/catalog/firestore/FIRESTORE_CATALOG_SCHEMA.md).
+- **Canonical collections only:** `brands`, `ips`, `series`, `figures` (flat top-level — no nested/duplicate catalog trees), plus sync cursor `meta/catalog`. See [`FIRESTORE_CATALOG_SCHEMA.md`](../lib/features/catalog/firestore/FIRESTORE_CATALOG_SCHEMA.md) and [`docs/CATALOG_DELTA_SYNC_INGEST.md`](../docs/CATALOG_DELTA_SYNC_INGEST.md).
 - **Loader:** `loadFirestoreCatalogBundle()` — four one-shot `.get()` queries → `CatalogSeedBundle`, committed via `CatalogBundleCache`. Metadata only (`imageKey`, canonical ids) — no Storage URLs or `imagePath` on docs.
 - **Runtime:** Firestore is authoritative; persisted snapshot is offline baseline. **No** APK-bundled metadata JSON (`tools/seed/*.json` removed from runtime). First install uses `bootstrapPlaceholder` until Firestore or `getOrLoad()` completes.
 - **Do not** introduce alternate Firestore layouts or `imagePath` fields when extending catalog features.
