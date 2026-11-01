@@ -6,7 +6,7 @@ import 'package:blindbox_app/features/catalog/catalog_image_resolver.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_item.dart';
 import 'package:flutter/material.dart';
 
-/// Warms bundled assets / cached Storage URLs for adjacent gallery pages (non-blocking).
+/// Warms disk-cache / Storage URLs for adjacent gallery pages (non-blocking).
 abstract final class CatalogFigureGalleryPrecache {
   CatalogFigureGalleryPrecache._();
 
@@ -51,12 +51,6 @@ abstract final class CatalogFigureGalleryPrecache {
 
     final key = item.catalogImageKey?.trim();
     if (key != null && key.isNotEmpty) {
-      final bundled = await CatalogImageResolver.resolveFigureAsset(key);
-      if (!context.mounted) return;
-      if (bundled != null && bundled.isNotEmpty) {
-        await precacheImage(AssetImage(bundled), context);
-        return;
-      }
       final remote = CatalogImageResolver.storageFallbackEnabled
           ? await CatalogImageResolver.resolveFigureStorageRef(key)
           : null;

@@ -36,10 +36,10 @@ void main() {
     );
   });
 
-  test('bundled figure assets upgrade to transparentFigure mode', () {
+  test('figure Storage paths upgrade to transparentFigure mode', () {
     final spec = CatalogImageDisplaySpec.forMode(
       CatalogImageDisplayMode.figureThumb,
-      imageRef: 'assets/catalog/figures/foo.webp',
+      imageRef: 'catalog/figures/foo.webp',
     );
     expect(spec.presentationMode, CatalogImageMode.transparentFigure);
     expect(spec.fit, BoxFit.contain);

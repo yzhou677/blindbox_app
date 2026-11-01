@@ -174,7 +174,7 @@ npx --prefix functions firebase deploy --only functions:market:subjectLocatorV1 
 
 - [ ] Cold launch online: catalog loads or persisted cache + background refresh (`CatalogBundleCache: refresh source=firestore`)
 - [ ] Discover Official feeds: loads curated brands or empty gracefully (no `permission-denied`; missing index shows as empty feed, not crash)
-- [ ] Catalog images: Storage objects resolve or placeholder after bundled/disk miss
+- [ ] Catalog images: Storage objects resolve or placeholder after disk miss
 - [ ] Market tab (if gateway enabled): listings load or empty state with gateway errors only in logs
 
 ### SHA certificates and protected callable rollout

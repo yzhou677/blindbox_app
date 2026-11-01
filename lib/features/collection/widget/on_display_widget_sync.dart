@@ -13,7 +13,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path_provider/path_provider.dart';
 
 const _channel = MethodChannel('app.shelfy.collector/on_display_widget');
 
@@ -187,22 +186,6 @@ class _OnDisplayWidgetSyncHostState
 
     final imageKey = series.imageKey?.trim();
     if (imageKey == null || imageKey.isEmpty) return '';
-
-    final asset = await CatalogImageResolver.resolveSeriesAsset(imageKey);
-    if (asset != null) {
-      try {
-        final data = await rootBundle.load(asset);
-        final root = await getApplicationSupportDirectory();
-        final directory = Directory('${root.path}/on_display_widget');
-        await directory.create(recursive: true);
-        final safeId = series.id.replaceAll(RegExp(r'[^A-Za-z0-9_.-]'), '_');
-        final file = File('${directory.path}/$safeId.img');
-        await file.writeAsBytes(data.buffer.asUint8List(), flush: true);
-        return file.path;
-      } on Object {
-        return '';
-      }
-    }
 
     return await CatalogImageDiskCache.lookupLocalPath(
           kind: CatalogImageKind.series,

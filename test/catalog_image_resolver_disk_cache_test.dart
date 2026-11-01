@@ -7,9 +7,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
-/// Bundled in repo under assets/catalog/figures/.
-const _bundledFigureKey = 'the_monsters_exciting_macaron_soymilk';
-
 /// Minimal 1×1 PNG.
 final _pngBytes = base64Decode(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
@@ -147,17 +144,17 @@ void main() {
     );
   });
 
-  group('bundled + storage fallback contract', () {
+  group('storage fallback contract', () {
     test(
-      'storageFallbackEnabled=false still resolves bundled assets',
+      'storageFallbackEnabled=false returns null (no APK art tier)',
       () async {
         CatalogImageResolver.storageFallbackOverride = false;
 
         final ref = await CatalogImageResolver.resolveFigureDisplayRef(
-          _bundledFigureKey,
+          'the_monsters_exciting_macaron_soymilk',
         );
 
-        expect(ref, 'assets/catalog/figures/$_bundledFigureKey.png');
+        expect(ref, isNull);
       },
     );
 

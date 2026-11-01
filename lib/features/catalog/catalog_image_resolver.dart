@@ -6,32 +6,26 @@ import 'package:blindbox_app/features/catalog/data/catalog_image_version.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 
 /// Resolves catalog art from [imageKey] only — never from Firestore paths or URLs.
 ///
-/// **Firestore:** canonical metadata (`imageKey`, ids, display names). No Storage URLs,
-/// no `imagePath`, no binary fields on catalog documents.
+/// **SSOT:** Firestore metadata + Firebase Storage binaries. No APK-bundled catalog art.
 ///
-/// **Firebase Storage:** binary assets at deterministic paths:
+/// **Firebase Storage** paths (deterministic):
 /// - `catalog/series/<imageKey>.<ext>`
 /// - `catalog/figures/<imageKey>.<ext>`
 ///
 /// **Runtime resolution order:**
-/// 1. Bundled `assets/catalog/**` (stable offline seed)
-/// 2. Bounded disk cache (resilience — LRU + TTL staleness)
-/// 3. Firebase Storage (freshness / enrichment; stale disk renders immediately)
-/// 4. Placeholder (null ref)
+/// 1. Bounded disk cache (resilience — LRU + TTL staleness)
+/// 2. Firebase Storage (freshness / enrichment; stale disk renders immediately)
+/// 3. Placeholder (null ref)
 ///
 /// Disk cache is **not** canonical storage. Stale entries still paint offline while
 /// a deduped background refresh runs when network + Storage are available.
 ///
 /// Download URLs are not written back to Firestore or shelf [imageKey].
 abstract final class CatalogImageResolver {
-  /// When true (default), after a bundled miss, resolve from Firebase Storage.
-  ///
-  /// Discover / catalog UI is designed around Firestore metadata + Storage art.
-  /// Bundled `assets/catalog/**` is offline-first cache for a small seed subset.
+  /// When true (default), resolve from Firebase Storage after a disk miss.
   ///
   /// Set `CATALOG_STORAGE_FALLBACK=false` only to suppress Storage probes (e.g.
   /// catalog-only dev with placeholders). Missing keys are negative-cached so
@@ -93,10 +87,7 @@ abstract final class CatalogImageResolver {
 
   static const Duration storageUrlTimeout = Duration(seconds: 8);
 
-  static const String figuresRoot = 'assets/catalog/figures';
-  static const String seriesRoot = 'assets/catalog/series';
-
-  /// Probe order for bundled assets and Storage (`catalog/series|figures/<imageKey><ext>`).
+  /// Probe order for Storage (`catalog/series|figures/<imageKey><ext>`).
   ///
   /// Bucket mix is mostly png / webp / jpg with some avif — never assume a single format.
   /// Each [imageKey] tries every extension here until one object exists (or all miss → placeholder).
@@ -107,9 +98,6 @@ abstract final class CatalogImageResolver {
     '.jpg',
     '.jpeg',
   ];
-
-  static Set<String>? _bundleAssetKeys;
-  static Future<void>? _ensureReadyFuture;
 
   /// Session memory for disk paths or network URLs resolved from Storage tier.
   static final Map<String, String> _storageDisplayRefCache = {};
@@ -144,76 +132,10 @@ abstract final class CatalogImageResolver {
     return '${storagePrefixFor(kind)}/$k$ext';
   }
 
-  /// Bundled asset path: `assets/catalog/{series|figures}/<imageKey><ext>`.
-  static String bundledAssetPath({
-    required CatalogImageKind kind,
-    required String imageKey,
-    required String extension,
-  }) {
-    final root = kind == CatalogImageKind.figure ? figuresRoot : seriesRoot;
-    final ext = extension.startsWith('.') ? extension : '.$extension';
-    return '$root/${imageKey.trim()}$ext';
-  }
+  /// No-op retained for call-site compatibility (formerly warmed AssetManifest).
+  static Future<void> ensureReady() async {}
 
-  /// Loads [AssetManifest] once so sync lookups can find existing files.
-  /// Called from catalog loaders; safe to call multiple times.
-  static Future<void> ensureReady() async {
-    if (_bundleAssetKeys != null) return;
-    _ensureReadyFuture ??= _loadAssetManifest();
-    await _ensureReadyFuture;
-  }
-
-  static Future<void> _loadAssetManifest() async {
-    final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
-    _bundleAssetKeys = manifest.listAssets().toSet();
-  }
-
-  /// All candidate paths for [imageKey] under [root], highest-priority extension first.
-  static Iterable<String> candidatePaths(String root, String imageKey) sync* {
-    final k = imageKey.trim();
-    if (k.isEmpty) return;
-    for (final ext in assetExtensions) {
-      yield '$root/$k$ext';
-    }
-  }
-
-  /// First existing figure asset for [imageKey], or null if none are bundled.
-  static Future<String?> resolveFigureAsset(String imageKey) async {
-    final k = imageKey.trim();
-    if (k.isEmpty) return null;
-    await ensureReady();
-    final hit = _firstExisting(figuresRoot, k);
-    _traceResolution(
-      imageKey: k,
-      kind: CatalogImageKind.figure,
-      phase: 'bundled',
-      attemptedPath: _lastProbedBundledPath,
-      hit: hit != null,
-      storageSkipped: null,
-      outcome: hit != null ? 'bundled_asset' : 'bundled_miss',
-    );
-    return hit;
-  }
-
-  /// First existing series asset for [imageKey], or null if none are bundled.
-  static Future<String?> resolveSeriesAsset(String imageKey) async {
-    final k = imageKey.trim();
-    if (k.isEmpty) return null;
-    await ensureReady();
-    final hit = _firstExisting(seriesRoot, k);
-    _traceResolution(
-      imageKey: k,
-      kind: CatalogImageKind.series,
-      phase: 'bundled',
-      attemptedPath: _lastProbedBundledPath,
-      hit: hit != null,
-      storageSkipped: null,
-      outcome: hit != null ? 'bundled_asset' : 'bundled_miss',
-    );
-    return hit;
-  }
-
-  /// Disk cache or Firebase Storage — does not probe bundled assets.
+  /// Disk cache or Firebase Storage.
   static Future<String?> resolveFigureStorageRef(
     String imageKey, {
     String? imageVersion,
@@ -227,7 +149,7 @@ abstract final class CatalogImageResolver {
     );
   }
 
-  /// Disk cache or Firebase Storage — does not probe bundled assets.
+  /// Disk cache or Firebase Storage.
   static Future<String?> resolveSeriesStorageRef(
     String imageKey, {
     String? imageVersion,
@@ -241,15 +163,13 @@ abstract final class CatalogImageResolver {
     );
   }
 
-  /// Bundled asset path, else Storage when [storageFallbackEnabled].
+  /// Disk cache, else Storage when [storageFallbackEnabled].
   static Future<String?> resolveFigureDisplayRef(
     String imageKey, {
     String? imageVersion,
   }) async {
     final k = imageKey.trim();
     if (k.isEmpty) return null;
-    final asset = await resolveFigureAsset(k);
-    if (asset != null) return asset;
     final storage = await _resolveStorageDisplayRef(
       CatalogImageKind.figure,
       k,
@@ -264,15 +184,13 @@ abstract final class CatalogImageResolver {
     return storage;
   }
 
-  /// Bundled asset path, else Storage when [storageFallbackEnabled].
+  /// Disk cache, else Storage when [storageFallbackEnabled].
   static Future<String?> resolveSeriesDisplayRef(
     String imageKey, {
     String? imageVersion,
   }) async {
     final k = imageKey.trim();
     if (k.isEmpty) return null;
-    final asset = await resolveSeriesAsset(k);
-    if (asset != null) return asset;
     final storage = await _resolveStorageDisplayRef(
       CatalogImageKind.series,
       k,
@@ -316,42 +234,6 @@ abstract final class CatalogImageResolver {
         }
       }
     }
-    return null;
-  }
-
-  /// Bundled figure path for [imageKey].
-  ///
-  /// After [ensureReady], returns the first existing file (same order as
-  /// [resolveFigureAsset]). Before warm-up, returns the highest-priority extension
-  /// path as a best-effort guess (may 404 in [Image.asset] until [ensureReady] runs).
-  static String figureAsset(String imageKey) {
-    final existing = _firstExisting(figuresRoot, imageKey);
-    if (existing != null) return existing;
-    final k = imageKey.trim();
-    return '$figuresRoot/$k${assetExtensions.first}';
-  }
-
-  /// Bundled series path for [imageKey] — same rules as [figureAsset].
-  static String seriesAsset(String imageKey) {
-    final existing = _firstExisting(seriesRoot, imageKey);
-    if (existing != null) return existing;
-    final k = imageKey.trim();
-    return '$seriesRoot/$k${assetExtensions.first}';
-  }
-
-  static String? _lastProbedBundledPath;
-
-  static String? _firstExisting(String root, String imageKey) {
-    final keys = _bundleAssetKeys;
-    if (keys == null) {
-      _lastProbedBundledPath = null;
-      return null;
-    }
-    for (final path in candidatePaths(root, imageKey)) {
-      _lastProbedBundledPath = path;
-      if (keys.contains(path)) return path;
-    }
-    _lastProbedBundledPath = null;
     return null;
   }
 

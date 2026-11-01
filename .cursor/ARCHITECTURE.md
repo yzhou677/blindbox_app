@@ -16,7 +16,7 @@ Treat these as **ongoing product and architecture law**, not a single refactor t
 | **Canonical identity** | Firebase catalog (`brands` / `ips` / `series` / `figures`, `imageKey`, aliases, rarity) is truth; Collection/Market **adapt** via mappers — no parallel per-screen DTOs or title/image logic |
 | **Three universes** | Catalog (read-only), Shelf (local-first), Market/Home (discover + listings) — do not mix persistence or media keys |
 | **imageKey** | UI renders through shared primitives + `CatalogImageResolver`; never construct Storage URLs in widgets; `imageUrl` is optional cache only |
-| **Offline-first** | Usable on bad network — bundled catalog art, persistent disk cache for previously seen Storage images, local shelf codec, placeholders; browse/search/gallery without blocking on Firebase |
+| **Offline-first** | Usable on bad network — persistent disk cache for previously seen Storage images, local shelf codec, placeholders; browse/search/gallery without blocking on Firebase |
 | **Async** | Optimistic mutations; background hydration; no `await` resolve before shelf `_commit` or modal dismiss |
 | **Reuse** | `commitCatalogSeriesToShelf`, `showCollectibleBottomSheet`, `showCatalogFigureGallery`, shared cards/typography — extend before forking |
 | **Layers** | Widgets = render; application = rules/mutations; data/media = Firebase, codec, resolver, DTOs |
@@ -39,7 +39,7 @@ These must stay separate. Do not merge persistence, media keys, or loading paths
 - **Runtime source:** `CatalogBundleCache` → `catalogBundleProvider` (Firestore authoritative; persisted disk offline baseline; **no** bundled metadata seed). Loader: [`firestore_catalog_loader.dart`](../lib/features/catalog/firestore/firestore_catalog_loader.dart) via [`catalog_bundle_cache.dart`](../lib/features/catalog/application/catalog_bundle_cache.dart).
 - **Provenance:** `CatalogBundleMemoryOrigin` — `bootstrapPlaceholder` (not ready) → `persisted` | `firestore` | `resolved` (ready). See catalog spec §2.
 - **UI readiness:** [`catalogAvailabilityProvider`](../lib/features/catalog/application/catalog_availability.dart) — loading / offlineFirstLaunch / ready; widgets must not call Firestore directly.
-- **Media:** Opaque `imageKey` on catalog models; resolve via [`CatalogImageResolver`](../lib/features/catalog/catalog_image_resolver.dart) — **bundled art assets → bounded disk cache (LRU + TTL) → Firebase Storage → placeholder** (see [Firebase](#firebase-firestore--storage)); [`CatalogImageFromKey`](../lib/shared/widgets/catalog_image_from_key.dart) for catalog UI.
+- **Media:** Opaque `imageKey` on catalog models; resolve via [`CatalogImageResolver`](../lib/features/catalog/catalog_image_resolver.dart) — **bounded disk cache (LRU + TTL) → Firebase Storage → placeholder** (see [Firebase](#firebase-firestore--storage)); [`CatalogImageFromKey`](../lib/shared/widgets/catalog_image_from_key.dart) for catalog UI.
 - **Search:** Shared Search V2 stack ([`lib/core/search/`](../lib/core/search/), [`CatalogSearchService`](../lib/features/catalog/search/catalog_search_service.dart)) — token AND, normalization, combined haystack. See [`docs/SEARCH_ARCHITECTURE.md`](../docs/SEARCH_ARCHITECTURE.md).
 - **Propagation:** `catalogBundleRevisionProvider` bumps on bundle replace → reactive provider graph (search, Discover feeds, Add Series, relationship index, …). No per-feature `ref.invalidate` lists.
 - **Into shelf:** Only through adapters + `CollectionNotifier` (e.g. [`catalog_seed_to_collection_template.dart`](../lib/features/catalog/adapters/catalog_seed_to_collection_template.dart)) — catalog does **not** own shelf rows
@@ -93,7 +93,7 @@ Catalog universe (read-only) — NOT used for market listing bodies
         ▼                                      ▼
   Storage catalog/series|figures/*      catalogBundleRevisionProvider
         imageKey → CatalogImageResolver            │
-        (bundled art → disk cache → Storage)       ▼
+        (disk cache → Storage → placeholder)       ▼
                                                    catalogBundleProvider
                                                          │
                          ┌───────────────────────────────┼───────────────────────────────┐
@@ -219,13 +219,14 @@ Firebase is for the **catalog universe only** in the current roadmap. Collection
 
 - **Scope:** read-only catalog thumbnails keyed by `imageKey`. Deterministic paths: `catalog/series/<imageKey>.<ext>`, `catalog/figures/<imageKey>.<ext>` — probe `.avif`, `.webp`, `.png`, `.jpg`, `.jpeg` until one exists. See [`FIREBASE_STORAGE_CATALOG.md`](../lib/features/catalog/firestore/FIREBASE_STORAGE_CATALOG.md).
 - **Not in scope for MVP agents:** uploading `localImageUri` / `customCoverImageUri` (private shelf photos).
-- **Resolver:** four-tier display strategy at **display time** (see [`catalog_image_resolver.dart`](../lib/features/catalog/catalog_image_resolver.dart), [`catalog_image_disk_cache.dart`](../lib/features/catalog/data/catalog_image_disk_cache.dart), [`catalog_image_cache_policy.dart`](../lib/features/catalog/data/catalog_image_cache_policy.dart)):
-  1. Bundled `assets/catalog/**` (stable offline **art** subset — not metadata JSON)
-  2. Bounded disk cache (`ApplicationSupport/catalog_image_cache/`) — **resilience layer**, not canonical storage
-  3. Firebase Storage — freshness / enrichment (network when available)
-  4. Placeholder when all tiers miss
+- **Resolver:** three-tier display strategy at **display time** (see [`catalog_image_resolver.dart`](../lib/features/catalog/catalog_image_resolver.dart), [`catalog_image_disk_cache.dart`](../lib/features/catalog/data/catalog_image_disk_cache.dart), [`catalog_image_cache_policy.dart`](../lib/features/catalog/data/catalog_image_cache_policy.dart)):
+  1. Bounded disk cache (`ApplicationSupport/catalog_image_cache/`) — **resilience layer**, not canonical storage
+  2. Firebase Storage — freshness / enrichment (network when available)
+  3. Placeholder when all tiers miss
 
-  **Offline-first ≠ offline-only.** The app degrades gracefully without network (bundled + any disk bytes still on device). When online, Storage opportunistically refreshes stale cache entries without blocking UI.
+  **SSOT** for catalog art is Firestore metadata + Firebase Storage binaries — **no** APK-bundled `assets/catalog/**`.
+
+  **Offline-first ≠ offline-only.** The app degrades gracefully without network (any disk bytes still on device; otherwise placeholder). When online, Storage opportunistically refreshes stale cache entries without blocking UI.
 
   **Disk cache lifecycle** ([`CatalogImageCachePolicy`](../lib/features/catalog/data/catalog_image_cache_policy.dart)):
   - **LRU eviction:** ~150 MB cap; oldest-accessed files removed first (`cache_index.json` tracks access + size)

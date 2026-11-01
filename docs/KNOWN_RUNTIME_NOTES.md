@@ -56,24 +56,20 @@ Before shipping, verify **backend deployment** per [`FIREBASE_LOCAL_SETUP.md` �
 
 | Log | Meaning |
 |-----|---------|
-| `CatalogImageResolver[bundled] … outcome=bundled_miss` | `imageKey` not in bundled assets under `assets/catalog/`. **Expected** for most Firestore-only keys. |
 | `CatalogImageResolver[disk_cache] … outcome=disk_cache_hit` | Previously fetched image served from on-device LRU cache. Healthy. |
 | `CatalogImageFromKey: provider=disk_cache` | UI consuming cached bytes — no network required. |
 
-### `bundled_miss` alone is not a bug
+### Resolution chain
 
-Typical resolution chain ([`CatalogImageResolver`](../lib/features/catalog/catalog_image_resolver.dart)):
+Typical order ([`CatalogImageResolver`](../lib/features/catalog/catalog_image_resolver.dart)):
 
 ```
-bundled asset
-  → disk cache (LRU + TTL)
-  → Firebase Storage (extension probe: .webp, .png, …)
+disk cache (LRU + TTL)
+  → Firebase Storage (extension probe: .avif, .webp, .png, …)
   → placeholder
 ```
 
-A `bundled_miss` followed by `disk_cache_hit` or successful Storage load is **correct behavior**.
-
-Release builds do not emit bundled-phase debug traces.
+No APK-bundled `assets/catalog/**` tier. Fresh install + offline shows placeholders until Storage has been fetched at least once.
 
 ### Catalog bundle logs (informational)
 
@@ -101,9 +97,9 @@ CatalogImageResolver: missing Storage asset for {series|figure} imageKey="…" (
 1. Reproduce in debug build; browse catalog until placeholders appear on a **fresh device** (no disk cache).
 2. Call `CatalogImageResolver.debugDumpMissingKeys()` (debug only) for a grouped snapshot.
 3. Compare keys against Storage bucket layout ([`FIREBASE_STORAGE_CATALOG.md`](../lib/features/catalog/firestore/FIREBASE_STORAGE_CATALOG.md)) and Firestore `imageKey` fields.
-4. Backfill Storage objects or bundled `assets/catalog/**` art for truly missing keys.
+4. Backfill Storage objects for truly missing keys.
 
-**Ignore if:** disk cache or bundled asset eventually serves the image and UI looks correct.
+**Ignore if:** disk cache eventually serves the image and UI looks correct.
 
 ---
 
@@ -141,7 +137,7 @@ Treat as real product issues:
 | `CatalogBundleCache: Firestore refresh skipped:` (repeated) | Network, rules, or Firebase init |
 | `Firebase init skipped:` at startup | Invalid/missing Firebase platform config |
 | `CatalogBundleCache: startup source=empty` after prior sync | Corrupt/missing persisted file |
-| Catalog images blank on **fresh install** | No bundled + no disk cache + no Storage object |
+| Catalog images blank on **fresh install** | No disk cache + no Storage object / network |
 | User-visible rendering defects | Reproduce; may relate to Impeller or widget opacity |
 | App crash / ANR | Always actionable |
 | Market browse empty with gateway errors | `MARKET_GATEWAY_EBAY`, gateway URL, network — separate from catalog |
