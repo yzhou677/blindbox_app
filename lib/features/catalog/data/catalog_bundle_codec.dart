@@ -11,7 +11,11 @@ import 'package:blindbox_app/features/catalog/models/catalog_series.dart';
 abstract final class CatalogBundleCodec {
   CatalogBundleCodec._();
 
-  static const int schemaVersion = 1;
+  /// Current on-disk schema (includes optional `updatedAt` / `imageVersion`).
+  static const int schemaVersion = 2;
+
+  /// Legacy snapshots written before sync fields (still readable).
+  static const int legacySchemaVersion = 1;
 
   static String encode(CatalogSeedBundle bundle, {DateTime? syncedAt}) {
     final at = (syncedAt ?? DateTime.now()).toUtc();
@@ -26,6 +30,9 @@ abstract final class CatalogBundleCodec {
   }
 
   /// Returns null when [raw] is empty, corrupt, or an unsupported schema version.
+  ///
+  /// Accepts [legacySchemaVersion] (v1) and [schemaVersion] (v2). Missing sync
+  /// fields decode as null — compatible with older caches.
   static CatalogSeedBundle? tryDecode(String raw) {
     if (raw.trim().isEmpty) return null;
     try {
@@ -33,7 +40,9 @@ abstract final class CatalogBundleCodec {
       final root = catalogReadMap(decoded);
       if (root == null) return null;
       final version = catalogReadInt(root, 'schemaVersion', fallback: -1);
-      if (version != schemaVersion) return null;
+      if (version != schemaVersion && version != legacySchemaVersion) {
+        return null;
+      }
 
       final brands = catalogReadObjectList(root['brands']);
       final ips = catalogReadObjectList(root['ips']);

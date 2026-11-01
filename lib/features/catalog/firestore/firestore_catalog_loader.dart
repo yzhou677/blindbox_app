@@ -11,9 +11,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// Loads the catalog from canonical Firestore collections into [CatalogSeedBundle].
 ///
 /// **Collections (flat, top-level only):** `brands`, `ips`, `series`, `figures`.
-/// Schema: [FIRESTORE_CATALOG_SCHEMA.md]. Storage paths: [FIREBASE_STORAGE_CATALOG.md].
+/// Sync cursor: `meta/catalog`. Schema: [FIRESTORE_CATALOG_SCHEMA.md].
 ///
-/// One-shot `.get()` per collection (no listeners).
+/// Full load uses one-shot `.get()` per collection. Incremental load queries
+/// `updatedAt > since` per collection (add/update only — catalog never deletes).
 Future<CatalogSeedBundle> loadFirestoreCatalogBundle({
   FirebaseFirestore? firestore,
 }) async {
@@ -33,10 +34,84 @@ Future<CatalogSeedBundle> loadFirestoreCatalogBundle({
     figuresSnap,
   ]);
 
-  final brands = _mapBrands(results[0]);
-  final ips = _mapIps(results[1]);
-  final series = _mapSeries(results[2]);
-  final figures = _mapFigures(results[3]);
+  return _bundleFromSnapshots(
+    brandsSnap: results[0],
+    ipsSnap: results[1],
+    seriesSnap: results[2],
+    figuresSnap: results[3],
+  );
+}
+
+/// Reads `meta/catalog.lastUpdatedAt`, or null when missing / unreadable.
+Future<DateTime?> loadCatalogMetaLastUpdatedAt({
+  FirebaseFirestore? firestore,
+}) async {
+  await ensureFirebaseInitialized();
+  final db = firestore ?? FirebaseFirestore.instance;
+  final snap = await db.collection('meta').doc('catalog').get();
+  if (!snap.exists) return null;
+  final raw = snap.data()?['lastUpdatedAt'];
+  if (raw is Timestamp) return raw.toDate().toUtc();
+  if (raw is DateTime) return raw.toUtc();
+  if (raw is String) return DateTime.tryParse(raw)?.toUtc();
+  return null;
+}
+
+/// Changed documents since [since] (exclusive), as a partial [CatalogSeedBundle].
+///
+/// Empty lists mean no changes in that collection. Caller merges into the local
+/// snapshot. Does not remove entities (catalog never deletes).
+Future<CatalogSeedBundle> loadFirestoreCatalogDelta({
+  required DateTime since,
+  FirebaseFirestore? firestore,
+}) async {
+  await CatalogImageResolver.ensureReady();
+  await ensureFirebaseInitialized();
+  final db = firestore ?? FirebaseFirestore.instance;
+  final cursor = Timestamp.fromDate(since.toUtc());
+
+  final brandsSnap = db
+      .collection('brands')
+      .where('updatedAt', isGreaterThan: cursor)
+      .get();
+  final ipsSnap = db
+      .collection('ips')
+      .where('updatedAt', isGreaterThan: cursor)
+      .get();
+  final seriesSnap = db
+      .collection('series')
+      .where('updatedAt', isGreaterThan: cursor)
+      .get();
+  final figuresSnap = db
+      .collection('figures')
+      .where('updatedAt', isGreaterThan: cursor)
+      .get();
+
+  final results = await Future.wait([
+    brandsSnap,
+    ipsSnap,
+    seriesSnap,
+    figuresSnap,
+  ]);
+
+  return _bundleFromSnapshots(
+    brandsSnap: results[0],
+    ipsSnap: results[1],
+    seriesSnap: results[2],
+    figuresSnap: results[3],
+  );
+}
+
+CatalogSeedBundle _bundleFromSnapshots({
+  required QuerySnapshot<Map<String, dynamic>> brandsSnap,
+  required QuerySnapshot<Map<String, dynamic>> ipsSnap,
+  required QuerySnapshot<Map<String, dynamic>> seriesSnap,
+  required QuerySnapshot<Map<String, dynamic>> figuresSnap,
+}) {
+  final brands = _mapBrands(brandsSnap);
+  final ips = _mapIps(ipsSnap);
+  final series = _mapSeries(seriesSnap);
+  final figures = _mapFigures(figuresSnap);
 
   brands.sort((a, b) => a.id.compareTo(b.id));
   ips.sort((a, b) => a.id.compareTo(b.id));

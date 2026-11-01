@@ -13,6 +13,8 @@ class CatalogSeries {
     required this.isBlindBox,
     required this.imageKey,
     this.aliases = const [],
+    this.imageVersion,
+    this.updatedAt,
   });
 
   final String id;
@@ -35,8 +37,15 @@ class CatalogSeries {
   /// Search aliases from Firestore (e.g. shortened series titles).
   final List<String> aliases;
 
+  /// Storage object `md5Hash` for primary cover (optional; cache bust in PR2c).
+  final String? imageVersion;
+
+  /// Firestore sync watermark (optional until backfill / older caches).
+  final DateTime? updatedAt;
+
   factory CatalogSeries.fromJson(Map<String, dynamic> json) {
     final id = catalogReadString(json, 'id');
+    final imageVersion = catalogReadString(json, 'imageVersion').trim();
     return CatalogSeries(
       id: id,
       brandId: catalogReadString(json, 'brandId'),
@@ -50,6 +59,8 @@ class CatalogSeries {
         legacyThumbField: catalogReadString(json, 'thumbnailAsset'),
       ),
       aliases: catalogReadStringList(json['aliases']),
+      imageVersion: imageVersion.isEmpty ? null : imageVersion,
+      updatedAt: catalogReadDateTimeMaybe(json, 'updatedAt'),
     );
   }
 
@@ -62,5 +73,7 @@ class CatalogSeries {
     'isBlindBox': isBlindBox,
     'imageKey': imageKey,
     if (aliases.isNotEmpty) 'aliases': aliases,
+    if (imageVersion != null) 'imageVersion': imageVersion,
+    if (updatedAt != null) 'updatedAt': updatedAt!.toUtc().toIso8601String(),
   };
 }

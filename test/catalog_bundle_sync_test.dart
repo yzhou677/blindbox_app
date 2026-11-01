@@ -327,16 +327,24 @@ void main() {
   );
 
   test(
-    'refreshFromFirestore skips Firestore within catalogRefreshTtl',
+    'refreshFromFirestore skips collection queries when meta is unchanged',
     () async {
+      final local = _bundle();
+      final lastSync = DateTime.utc(2026, 4, 1);
+      CatalogBundleCache.prime(local);
+      CatalogBundleCache.setLastSyncAtMemoryForTest(lastSync);
+      CatalogBundleCache.setLastFirestoreRefreshAtForTest(DateTime.now().toUtc());
+      CatalogBundleCache.loadMetaOverride = () async => lastSync;
       CatalogBundleCache.loadFirestoreOverride = () async {
-        throw StateError('should not fetch');
+        throw StateError('should not fetch full');
       };
-      CatalogBundleCache.setLastFirestoreRefreshAtForTest(DateTime.now());
+      CatalogBundleCache.loadDeltaOverride = (_) async {
+        throw StateError('should not fetch delta');
+      };
 
       final outcome = await CatalogBundleCache.refreshFromFirestore();
 
-      expect(outcome, CatalogFirestoreRefreshResult.skippedWithinTtl);
+      expect(outcome, CatalogFirestoreRefreshResult.unchanged);
     },
   );
 

@@ -11,6 +11,8 @@ abstract final class CatalogBundlePersistence {
   CatalogBundlePersistence._();
 
   static const _syncedPrefsKey = 'catalog_bundle_firestore_synced_v1';
+  static const _lastSyncAtPrefsKey = 'catalog_bundle_last_sync_at_v1';
+  static const _lastFullSyncAtPrefsKey = 'catalog_bundle_last_full_sync_at_v1';
   static const _bundleFileName = 'catalog_bundle_v1.json';
   static const _bundleTempFileName = 'catalog_bundle_v1.json.tmp';
 
@@ -30,6 +32,35 @@ abstract final class CatalogBundlePersistence {
     return prefs.getBool(_syncedPrefsKey) ?? false;
   }
 
+  /// Watermark from `meta/catalog.lastUpdatedAt` after a successful sync.
+  static Future<DateTime?> loadLastSyncAt() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_lastSyncAtPrefsKey);
+    if (raw == null || raw.isEmpty) return null;
+    return DateTime.tryParse(raw)?.toUtc();
+  }
+
+  static Future<void> saveLastSyncAt(DateTime at) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_lastSyncAtPrefsKey, at.toUtc().toIso8601String());
+  }
+
+  /// Wall-clock time of the last successful **full** catalog `.get()`.
+  static Future<DateTime?> loadLastFullSyncAt() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_lastFullSyncAtPrefsKey);
+    if (raw == null || raw.isEmpty) return null;
+    return DateTime.tryParse(raw)?.toUtc();
+  }
+
+  static Future<void> saveLastFullSyncAt(DateTime at) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      _lastFullSyncAtPrefsKey,
+      at.toUtc().toIso8601String(),
+    );
+  }
+
   @visibleForTesting
   static Future<void> setFirestoreSyncCompletedForTest(bool value) async {
     final prefs = await SharedPreferences.getInstance();
@@ -38,6 +69,13 @@ abstract final class CatalogBundlePersistence {
     } else {
       await prefs.remove(_syncedPrefsKey);
     }
+  }
+
+  @visibleForTesting
+  static Future<void> clearSyncWatermarksForTest() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_lastSyncAtPrefsKey);
+    await prefs.remove(_lastFullSyncAtPrefsKey);
   }
 
   static Future<CatalogSeedBundle?> load() async {

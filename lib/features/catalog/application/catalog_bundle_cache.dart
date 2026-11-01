@@ -1,8 +1,11 @@
 import 'dart:async';
 
+import 'package:blindbox_app/core/firebase/ensure_firebase_initialized.dart';
 import 'package:blindbox_app/features/catalog/catalog_bundle.dart';
+import 'package:blindbox_app/features/catalog/data/catalog_bundle_merge.dart';
 import 'package:blindbox_app/features/catalog/data/catalog_bundle_persistence.dart';
 import 'package:blindbox_app/features/catalog/firestore/firestore_catalog_loader.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
 enum CatalogBundleLoadSource {
@@ -16,26 +19,25 @@ enum CatalogBundleLoadSource {
   empty,
 }
 
-enum CatalogFirestoreRefreshResult { refreshed, skippedWithinTtl, failed }
+enum CatalogFirestoreRefreshResult {
+  /// Bundle replaced via full or incremental sync.
+  refreshed,
+
+  /// Meta watermark unchanged and within full-reconcile window — no collection queries.
+  unchanged,
+
+  /// Legacy alias used by older call sites / tests for “did not fetch full catalog”.
+  skippedWithinTtl,
+
+  failed,
+}
 
 /// In-memory provenance for [_bundle] inside [CatalogBundleCache].
-///
-/// Single source of truth for catalog readiness — replaces a parallel placeholder
-/// flag. [bootstrapPlaceholder] is the only non-ready state with a memory slot.
 enum CatalogBundleMemoryOrigin {
-  /// No bundle in memory.
   none,
-
-  /// [loadOfflineFirst] empty bootstrap — [getOrLoad] must await refresh/load.
   bootstrapPlaceholder,
-
-  /// On-disk Firestore snapshot.
   persisted,
-
-  /// Successful Firestore fetch (background refresh or [getOrLoad] network path).
   firestore,
-
-  /// Refresh/load fallbacks exhausted; bundle may still be empty lists.
   resolved;
 
   bool get isCatalogReady =>
@@ -44,35 +46,20 @@ enum CatalogBundleMemoryOrigin {
 
 /// In-memory catalog snapshot — static metadata only (no Storage URLs).
 ///
-/// **Offline-first startup:** persisted Firestore snapshot (when available) →
-/// bootstrap placeholder → background Firestore refresh. After the first
-/// successful refresh, persisted data is authoritative on cold start.
+/// **Sync policy (PR2b)**
 ///
-/// **Readiness vs memory slot**
-///
-/// [_bundle] plus [CatalogBundleMemoryOrigin] track provenance. Only
-/// [CatalogBundleMemoryOrigin.bootstrapPlaceholder] is a non-ready memory
-/// slot: [getOrLoad] awaits startup Firestore refresh (or the shared network
-/// load) instead of returning the empty bundle immediately.
-///
-/// **State machine (what callers receive)**
-///
-/// | [CatalogBundleMemoryOrigin] | [loadOfflineFirst] | [getOrLoad] |
-/// |-------|-------------------|-------------|
-/// | `persisted` | Returns disk snapshot; background refresh | Returns immediately |
-/// | `bootstrapPlaceholder` | Returns empty; background refresh | Awaits refresh / shared load |
-/// | `firestore` | Returns memory bundle | Returns immediately |
-/// | `resolved` | Returns empty (load exhausted) | Returns empty (no duplicate fetch) |
-///
-/// **Refresh policy**
-///
-/// - Successful refreshes are throttled for 5 minutes.
-/// - Failed refreshes never update the TTL.
-/// - Concurrent refreshes share one in-flight [Future].
-/// - [refreshFromFirestore] `force: true` bypasses the TTL.
+/// 1. Read `meta/catalog.lastUpdatedAt`.
+/// 2. If `lastSyncAt` is set and meta ≤ lastSyncAt and last full sync &lt; 24h →
+///    keep cache (zero collection reads).
+/// 3. Else if local bundle + lastSyncAt exist → incremental
+///    `updatedAt > lastSyncAt` merge (on failure → full `.get()`).
+/// 4. Else → full `.get()` (first install / no watermark).
+/// 5. Full `.get()` also when last full sync ≥ 24h (兜底校对) or `force: true`.
 abstract final class CatalogBundleCache {
   static const Duration firestoreTimeout = Duration(seconds: 12);
-  static const Duration catalogRefreshTtl = Duration(minutes: 5);
+
+  /// Full-collection reconcile interval (not the meta check interval).
+  static const Duration catalogRefreshTtl = Duration(hours: 24);
 
   static CatalogSeedBundle? _bundle;
   static CatalogBundleMemoryOrigin _memoryOrigin =
@@ -81,20 +68,19 @@ abstract final class CatalogBundleCache {
   static Future<CatalogSeedBundle>? _inFlight;
   static Future<CatalogFirestoreRefreshResult>? _refreshInFlight;
   static DateTime? _lastFirestoreRefreshAt;
+  static DateTime? _lastSyncAtMemory;
+
+  static StreamSubscription<dynamic>? _metaSubscription;
 
   static CatalogSeedBundle? get current => _bundle;
 
-  /// Provenance of the in-memory bundle (debug / tests).
   static CatalogBundleMemoryOrigin get memoryOrigin => _memoryOrigin;
 
-  /// Whether [_bundle] is non-null (includes bootstrap placeholders).
   static bool get hasValue => _bundle != null;
 
-  /// Whether [_bundle] is safe to treat as a completed catalog load.
   static bool get isCatalogReady =>
       _memoryOrigin.isCatalogReady && _bundle != null;
 
-  /// Whether a background Firestore refresh is in flight (UI hint only).
   static bool get isRefreshInFlight => _refreshInFlight != null;
 
   @visibleForTesting
@@ -104,21 +90,28 @@ abstract final class CatalogBundleCache {
   static DateTime? get lastFirestoreRefreshAt => _lastFirestoreRefreshAt;
 
   @visibleForTesting
+  static DateTime? get lastSyncAtMemoryForTest => _lastSyncAtMemory;
+
+  @visibleForTesting
   static void setLastFirestoreRefreshAtForTest(DateTime? at) {
     _lastFirestoreRefreshAt = at;
   }
 
-  static bool _isWithinRefreshTtl(DateTime now) {
-    final last = _lastFirestoreRefreshAt;
-    if (last == null) return false;
-    return now.difference(last) < catalogRefreshTtl;
+  @visibleForTesting
+  static void setLastSyncAtMemoryForTest(DateTime? at) {
+    _lastSyncAtMemory = at;
   }
 
-  /// Startup source for the current in-memory bundle (debug / tests).
   static CatalogBundleLoadSource? lastStartupSource;
 
   @visibleForTesting
   static Future<CatalogSeedBundle> Function()? loadFirestoreOverride;
+
+  @visibleForTesting
+  static Future<CatalogSeedBundle> Function(DateTime since)? loadDeltaOverride;
+
+  @visibleForTesting
+  static Future<DateTime?> Function()? loadMetaOverride;
 
   @visibleForTesting
   static Future<CatalogSeedBundle?> Function()? loadPersistedOverride;
@@ -126,11 +119,26 @@ abstract final class CatalogBundleCache {
   @visibleForTesting
   static Future<void> Function(CatalogSeedBundle bundle)? persistOverride;
 
+  @visibleForTesting
+  static Future<DateTime?> Function()? loadLastSyncAtOverride;
+
+  @visibleForTesting
+  static Future<void> Function(DateTime at)? saveLastSyncAtOverride;
+
+  @visibleForTesting
+  static Future<DateTime?> Function()? loadLastFullSyncAtOverride;
+
+  @visibleForTesting
+  static Future<void> Function(DateTime at)? saveLastFullSyncAtOverride;
+
+  /// When non-null, [startMetaListener] uses this instead of Firestore snapshots.
+  @visibleForTesting
+  static Stream<DateTime?> Function()? metaSnapshotStreamOverride;
+
   static void prime(CatalogSeedBundle bundle) {
     _setMemoryBundle(bundle, CatalogBundleMemoryOrigin.firestore);
   }
 
-  /// Non-ready bootstrap slot without starting a background Firestore refresh.
   @visibleForTesting
   static void primeBootstrapPlaceholderForTest() {
     _setMemoryBundle(
@@ -152,18 +160,11 @@ abstract final class CatalogBundleCache {
     _memoryOrigin = CatalogBundleMemoryOrigin.none;
   }
 
-  /// Optional hook after a successful Firestore refresh replaces [_bundle].
-  ///
-  /// Registered by [CatalogBundleRefreshBridge] to invalidate Discover feed.
   static void Function()? onBundleReplaced;
 
   static final List<void Function()> _bundleReplacedListeners = [];
   static final List<void Function()> _refreshStateListeners = [];
 
-  /// Registers [listener] for refresh start/end (success, failure, or TTL skip).
-  ///
-  /// Used so Riverpod rebuilds when [isRefreshInFlight] clears without a bundle
-  /// replacement — e.g. failed background refresh over a persisted snapshot.
   static void Function() addRefreshStateListener(void Function() listener) {
     _refreshStateListeners.add(listener);
     return () {
@@ -175,9 +176,6 @@ abstract final class CatalogBundleCache {
   static int get refreshStateListenerCountForTest =>
       _refreshStateListeners.length;
 
-  /// Registers [listener] for successful in-memory bundle replacements.
-  ///
-  /// Returns a dispose callback. Listeners must not throw.
   static void Function() addBundleReplacedListener(void Function() listener) {
     _bundleReplacedListeners.add(listener);
     return () {
@@ -207,20 +205,29 @@ abstract final class CatalogBundleCache {
 
   @visibleForTesting
   static void resetForTest() {
+    unawaited(stopMetaListener());
     _clearMemoryBundle();
     _inFlight = null;
     _refreshInFlight = null;
     _lastFirestoreRefreshAt = null;
+    _lastSyncAtMemory = null;
     onBundleReplaced = null;
     _bundleReplacedListeners.clear();
     _refreshStateListeners.clear();
     loadFirestoreOverride = null;
+    loadDeltaOverride = null;
+    loadMetaOverride = null;
     loadPersistedOverride = null;
     persistOverride = null;
+    loadLastSyncAtOverride = null;
+    saveLastSyncAtOverride = null;
+    loadLastFullSyncAtOverride = null;
+    saveLastFullSyncAtOverride = null;
+    metaSnapshotStreamOverride = null;
+    ensureFirebaseForMetaListenerOverride = null;
     lastStartupSource = null;
   }
 
-  /// Persisted snapshot when available, otherwise bootstrap placeholder + refresh.
   static Future<CatalogSeedBundle> loadOfflineFirst() async {
     if (_bundle != null) {
       _logStartup(CatalogBundleLoadSource.memory, _bundle!);
@@ -231,6 +238,8 @@ abstract final class CatalogBundleCache {
     final local = await _loadLocalCatalog();
     if (local != null) {
       _setMemoryBundle(local, CatalogBundleMemoryOrigin.persisted);
+      _lastSyncAtMemory = await _readLastSyncAt();
+      _lastFirestoreRefreshAt = await _readLastFullSyncAt();
       _logStartup(CatalogBundleLoadSource.persisted, local);
       unawaited(refreshFromFirestore());
       return local;
@@ -243,11 +252,6 @@ abstract final class CatalogBundleCache {
     return empty;
   }
 
-  /// Returns a catalog-ready bundle or loads once (deduped).
-  ///
-  /// Prefer [loadOfflineFirst] at startup for offline-first paint. Does not
-  /// return a bootstrap placeholder without awaiting startup refresh or the
-  /// shared network load path.
   static Future<CatalogSeedBundle> getOrLoad() async {
     if (isCatalogReady) {
       return _bundle!;
@@ -261,8 +265,6 @@ abstract final class CatalogBundleCache {
       if (isCatalogReady) {
         return _bundle!;
       }
-      // Startup refresh was TTL-skipped or never started; fall through to the
-      // shared network load without returning the placeholder early.
     }
 
     final pending = _inFlight;
@@ -277,21 +279,14 @@ abstract final class CatalogBundleCache {
     }
   }
 
-  /// Stale-while-revalidate: updates [current] when network succeeds; never throws.
-  ///
-  /// Skips Firestore when [force] is false and the last successful refresh is
-  /// within [catalogRefreshTtl]. Concurrent calls share one in-flight request.
+  /// Stale-while-revalidate against meta + optional delta / full get.
   static Future<CatalogFirestoreRefreshResult> refreshFromFirestore({
     bool force = false,
   }) async {
-    if (!force && _isWithinRefreshTtl(DateTime.now())) {
-      return CatalogFirestoreRefreshResult.skippedWithinTtl;
-    }
-
     final pending = _refreshInFlight;
     if (pending != null) return pending;
 
-    final refresh = _refreshFromFirestoreImpl();
+    final refresh = _refreshFromFirestoreImpl(force: force);
     _refreshInFlight = refresh;
     _notifyRefreshStateChanged();
     try {
@@ -302,13 +297,58 @@ abstract final class CatalogBundleCache {
     }
   }
 
-  static Future<CatalogFirestoreRefreshResult>
-  _refreshFromFirestoreImpl() async {
+  static Future<CatalogFirestoreRefreshResult> _refreshFromFirestoreImpl({
+    required bool force,
+  }) async {
     try {
-      final fresh = await _loadFirestore().timeout(firestoreTimeout);
-      await _commitFirestoreBundle(fresh, notifyListeners: true);
-      _lastFirestoreRefreshAt = DateTime.now();
-      return CatalogFirestoreRefreshResult.refreshed;
+      if (force || !isCatalogReady) {
+        return await _fullRefresh();
+      }
+
+      final now = DateTime.now().toUtc();
+      final lastSync = _lastSyncAtMemory ?? await _readLastSyncAt();
+      final lastFull = _lastFirestoreRefreshAt ?? await _readLastFullSyncAt();
+      final needFullByAge =
+          lastFull == null ||
+          now.difference(lastFull) >= catalogRefreshTtl;
+
+      // Meta is a cheap gate — if it is unreachable, fall through to full get
+      // rather than failing the whole refresh (Discover PTR / offline tests).
+      DateTime? metaAt;
+      try {
+        metaAt = await _loadMeta().timeout(firestoreTimeout);
+      } catch (e, st) {
+        debugPrint(
+          'CatalogBundleCache: meta watermark read failed, using full get: $e\n$st',
+        );
+        metaAt = null;
+      }
+
+      if (!needFullByAge &&
+          lastSync != null &&
+          metaAt != null &&
+          !metaAt.isAfter(lastSync)) {
+        _lastSyncAtMemory = lastSync;
+        return CatalogFirestoreRefreshResult.unchanged;
+      }
+
+      if (needFullByAge || lastSync == null || metaAt == null) {
+        return await _fullRefresh(metaHint: metaAt);
+      }
+
+      try {
+        final delta = await _loadDelta(lastSync).timeout(firestoreTimeout);
+        final merged = mergeCatalogSeedBundle(_bundle!, delta);
+        await _commitFirestoreBundle(merged, notifyListeners: true);
+        await _writeLastSyncAt(metaAt);
+        _lastSyncAtMemory = metaAt;
+        return CatalogFirestoreRefreshResult.refreshed;
+      } catch (e, st) {
+        debugPrint(
+          'CatalogBundleCache: incremental sync failed, falling back to full: $e\n$st',
+        );
+        return await _fullRefresh(metaHint: metaAt);
+      }
     } catch (e, st) {
       if (_memoryOrigin == CatalogBundleMemoryOrigin.bootstrapPlaceholder) {
         _memoryOrigin = CatalogBundleMemoryOrigin.resolved;
@@ -319,11 +359,37 @@ abstract final class CatalogBundleCache {
     }
   }
 
+  static Future<CatalogFirestoreRefreshResult> _fullRefresh({
+    DateTime? metaHint,
+  }) async {
+    final fresh = await _loadFirestore().timeout(firestoreTimeout);
+    await _commitFirestoreBundle(fresh, notifyListeners: true);
+    final now = DateTime.now().toUtc();
+    _lastFirestoreRefreshAt = now;
+    await _writeLastFullSyncAt(now);
+    DateTime? metaAt = metaHint;
+    if (metaAt == null) {
+      try {
+        metaAt = await _loadMeta().timeout(firestoreTimeout);
+      } catch (e, st) {
+        debugPrint('CatalogBundleCache: meta watermark read skipped: $e\n$st');
+      }
+    }
+    final syncAt = metaAt ?? now;
+    await _writeLastSyncAt(syncAt);
+    _lastSyncAtMemory = syncAt;
+    return CatalogFirestoreRefreshResult.refreshed;
+  }
+
   static Future<CatalogSeedBundle> _loadNetworkThenPersisted() async {
     try {
-      final remote = await _loadFirestore().timeout(firestoreTimeout);
-      await _commitFirestoreBundle(remote, notifyListeners: true);
-      return remote;
+      final outcome = await refreshFromFirestore(force: true);
+      if (outcome == CatalogFirestoreRefreshResult.refreshed &&
+          _bundle != null) {
+        return _bundle!;
+      }
+      if (_bundle != null && isCatalogReady) return _bundle!;
+      throw StateError('catalog refresh failed');
     } catch (_) {
       final persisted = await _loadPersisted();
       if (persisted != null) {
@@ -353,8 +419,35 @@ abstract final class CatalogBundleCache {
     return loadFirestoreOverride?.call() ?? loadFirestoreCatalogBundle();
   }
 
-  /// Memory + listener update first; persistence is best-effort and must not
-  /// block catalog consumers when the local write fails.
+  static Future<CatalogSeedBundle> _loadDelta(DateTime since) {
+    return loadDeltaOverride?.call(since) ??
+        loadFirestoreCatalogDelta(since: since);
+  }
+
+  static Future<DateTime?> _loadMeta() {
+    return loadMetaOverride?.call() ?? loadCatalogMetaLastUpdatedAt();
+  }
+
+  static Future<DateTime?> _readLastSyncAt() {
+    return loadLastSyncAtOverride?.call() ??
+        CatalogBundlePersistence.loadLastSyncAt();
+  }
+
+  static Future<void> _writeLastSyncAt(DateTime at) {
+    return saveLastSyncAtOverride?.call(at) ??
+        CatalogBundlePersistence.saveLastSyncAt(at);
+  }
+
+  static Future<DateTime?> _readLastFullSyncAt() {
+    return loadLastFullSyncAtOverride?.call() ??
+        CatalogBundlePersistence.loadLastFullSyncAt();
+  }
+
+  static Future<void> _writeLastFullSyncAt(DateTime at) {
+    return saveLastFullSyncAtOverride?.call(at) ??
+        CatalogBundlePersistence.saveLastFullSyncAt(at);
+  }
+
   static Future<void> _commitFirestoreBundle(
     CatalogSeedBundle fresh, {
     required bool notifyListeners,
@@ -369,6 +462,61 @@ abstract final class CatalogBundleCache {
     } catch (e, st) {
       debugPrint('CatalogBundleCache: catalog persist skipped: $e\n$st');
     }
+  }
+
+  /// Foreground-only listener on `meta/catalog`. Cancel with [stopMetaListener].
+  static Future<void> startMetaListener() async {
+    await stopMetaListener();
+    final override = metaSnapshotStreamOverride;
+    if (override != null) {
+      _metaSubscription = override().listen(_onMetaWatermark);
+      return;
+    }
+
+    try {
+      await ensureFirebaseForMetaListener();
+      _metaSubscription = FirebaseFirestore.instance
+          .collection('meta')
+          .doc('catalog')
+          .snapshots()
+          .listen(
+            (snap) {
+              final raw = snap.data()?['lastUpdatedAt'];
+              if (raw is! Timestamp) return;
+              _onMetaWatermark(raw.toDate().toUtc());
+            },
+            onError: (Object e, StackTrace st) {
+              debugPrint('CatalogBundleCache: meta listener error: $e\n$st');
+            },
+          );
+    } catch (e, st) {
+      debugPrint('CatalogBundleCache: meta listener start skipped: $e\n$st');
+    }
+  }
+
+  static void _onMetaWatermark(DateTime? at) {
+    if (at == null) return;
+    final last = _lastSyncAtMemory;
+    if (last != null && !at.isAfter(last)) return;
+    unawaited(refreshFromFirestore());
+  }
+
+  /// Test-seam Firebase init before attaching the meta snapshot listener.
+  @visibleForTesting
+  static Future<void> Function()? ensureFirebaseForMetaListenerOverride;
+
+  static Future<void> ensureFirebaseForMetaListener() async {
+    final override = ensureFirebaseForMetaListenerOverride;
+    if (override != null) {
+      await override();
+      return;
+    }
+    await ensureFirebaseInitialized();
+  }
+
+  static Future<void> stopMetaListener() async {
+    await _metaSubscription?.cancel();
+    _metaSubscription = null;
   }
 
   static CatalogSeedBundle _emptyBundle() =>

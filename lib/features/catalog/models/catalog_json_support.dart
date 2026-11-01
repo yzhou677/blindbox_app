@@ -69,6 +69,19 @@ String? catalogReadIsoDateMaybe(Map<String, dynamic> json, String key) {
   return v.toString();
 }
 
+/// UTC instant from ISO-8601 string (or null when missing / unparsable).
+DateTime? catalogReadDateTimeMaybe(Map<String, dynamic> json, String key) {
+  final v = json[key];
+  if (v == null) return null;
+  if (v is DateTime) return v.toUtc();
+  if (v is String) {
+    final t = v.trim();
+    if (t.isEmpty) return null;
+    return DateTime.tryParse(t)?.toUtc();
+  }
+  return null;
+}
+
 /// Prefer explicit `imageKey`, else stem from bundled `thumbnailAsset`, else canonical [fallbackId].
 String catalogReadCatalogImageKey(
   Map<String, dynamic> json, {

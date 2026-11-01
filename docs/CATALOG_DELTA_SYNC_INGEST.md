@@ -3,7 +3,8 @@
 **Audience:** maintainers of `D:\blindbox-catalog` (Admin SDK upload scripts).  
 **App contract:** [`lib/features/catalog/firestore/FIRESTORE_CATALOG_SCHEMA.md`](../lib/features/catalog/firestore/FIRESTORE_CATALOG_SCHEMA.md).  
 **This PR (PR2a):** schema + rules + this guide + a backfill script template.  
-**Not in this PR:** Flutter incremental client (PR2b), image disk-cache busting (PR2c).
+**Flutter client:** incremental sync lives in PR2b (`CatalogBundleCache` +
+`lastSyncAt`). **Not here:** image disk-cache busting (PR2c).
 
 ## Goals
 
@@ -152,7 +153,8 @@ Dry-run flag should print planned writes without mutating.
    `blindbox-catalog`.
 4. Then ship Flutter PR2b / PR2c.
 
-Until step 4, production behavior stays “full collection get + 5 min TTL”.
+After PR2b merges, production uses meta + incremental queries with a 24h full
+reconcile兜底 (force refresh in settings/availability UI unchanged).
 
 ## Manual checklist for you
 
