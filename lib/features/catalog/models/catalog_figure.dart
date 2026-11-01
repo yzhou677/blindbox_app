@@ -8,19 +8,29 @@ class CatalogAlternativeImage {
   const CatalogAlternativeImage({
     required this.imageKey,
     required this.variant,
+    this.imageVersion,
   });
 
   final String imageKey;
   final String variant;
 
+  /// Storage object `md5Hash` for this alternative (optional; PR2c cache bust).
+  final String? imageVersion;
+
   factory CatalogAlternativeImage.fromJson(Map<String, dynamic> json) {
+    final imageVersion = catalogReadString(json, 'imageVersion').trim();
     return CatalogAlternativeImage(
       imageKey: catalogReadString(json, 'imageKey').trim(),
       variant: catalogReadString(json, 'variant').trim(),
+      imageVersion: imageVersion.isEmpty ? null : imageVersion,
     );
   }
 
-  Map<String, dynamic> toJson() => {'imageKey': imageKey, 'variant': variant};
+  Map<String, dynamic> toJson() => {
+    'imageKey': imageKey,
+    'variant': variant,
+    if (imageVersion != null) 'imageVersion': imageVersion,
+  };
 }
 
 @immutable
@@ -36,6 +46,8 @@ class CatalogFigure {
     required this.sortOrder,
     required this.imageKey,
     this.alternativeImages = const [],
+    this.imageVersion,
+    this.updatedAt,
   });
 
   final String id;
@@ -53,9 +65,16 @@ class CatalogFigure {
   /// Optional recognition-only supplemental images. Never used by catalog UI.
   final List<CatalogAlternativeImage> alternativeImages;
 
+  /// Storage object `md5Hash` for primary figure art (optional; PR2c cache bust).
+  final String? imageVersion;
+
+  /// Firestore sync watermark (optional until backfill / older caches).
+  final DateTime? updatedAt;
+
   factory CatalogFigure.fromJson(Map<String, dynamic> json) {
     final rarityStr = catalogReadString(json, 'rarityLabel');
     final id = catalogReadString(json, 'id');
+    final imageVersion = catalogReadString(json, 'imageVersion').trim();
     return CatalogFigure(
       id: id,
       seriesId: catalogReadString(json, 'seriesId'),
@@ -71,6 +90,8 @@ class CatalogFigure {
         legacyThumbField: catalogReadString(json, 'thumbnailAsset'),
       ),
       alternativeImages: _readAlternativeImages(json['alternativeImages']),
+      imageVersion: imageVersion.isEmpty ? null : imageVersion,
+      updatedAt: catalogReadDateTimeMaybe(json, 'updatedAt'),
     );
   }
 
@@ -86,6 +107,8 @@ class CatalogFigure {
     'imageKey': imageKey,
     if (alternativeImages.isNotEmpty)
       'alternativeImages': [for (final alt in alternativeImages) alt.toJson()],
+    if (imageVersion != null) 'imageVersion': imageVersion,
+    if (updatedAt != null) 'updatedAt': updatedAt!.toUtc().toIso8601String(),
   };
 }
 

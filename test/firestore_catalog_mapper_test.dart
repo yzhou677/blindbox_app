@@ -69,5 +69,67 @@ void main() {
       });
       expect(mapped, isNull);
     });
+
+    test('reads updatedAt and imageVersion including alternativeImages', () {
+      final mapped = mapFirestoreFigure('fig_1', {
+        'brandId': 'pop_mart',
+        'displayName': 'Fig',
+        'imageKey': 'fig_1',
+        'ipId': 'aespa',
+        'isSecret': false,
+        'seriesId': 'series_1',
+        'sortOrder': 1,
+        'imageVersion': 'primaryMd5',
+        'updatedAt': Timestamp.fromDate(DateTime.utc(2026, 4, 2, 8)),
+        'alternativeImages': [
+          {
+            'imageKey': 'fig_1_alt',
+            'variant': 'box',
+            'imageVersion': 'altMd5',
+          },
+        ],
+      });
+      expect(mapped, isNotNull);
+      expect(mapped!.imageVersion, 'primaryMd5');
+      expect(mapped.updatedAt, DateTime.utc(2026, 4, 2, 8));
+      expect(mapped.alternativeImages.single.imageVersion, 'altMd5');
+    });
+
+    test('tolerates docs missing updatedAt and imageVersion', () {
+      final mapped = mapFirestoreFigure('fig_2', {
+        'brandId': 'pop_mart',
+        'displayName': 'Fig',
+        'imageKey': 'fig_2',
+        'ipId': 'aespa',
+        'isSecret': false,
+        'seriesId': 'series_1',
+        'sortOrder': 1,
+      });
+      expect(mapped, isNotNull);
+      expect(mapped!.imageVersion, isNull);
+      expect(mapped.updatedAt, isNull);
+    });
+  });
+
+  group('mapFirestoreBrand / Series sync fields', () {
+    test('brand and series accept Timestamp updatedAt', () {
+      final brand = mapFirestoreBrand('pop_mart', {
+        'displayName': 'POP MART',
+        'updatedAt': Timestamp.fromDate(DateTime.utc(2026, 3, 1)),
+      });
+      expect(brand?.updatedAt, DateTime.utc(2026, 3, 1));
+
+      final series = mapFirestoreSeries('s1', {
+        'brandId': 'pop_mart',
+        'ipId': 'aespa',
+        'displayName': 'S',
+        'imageKey': 's1',
+        'isBlindBox': true,
+        'imageVersion': 'coverMd5',
+        'updatedAt': Timestamp.fromDate(DateTime.utc(2026, 3, 2)),
+      });
+      expect(series?.imageVersion, 'coverMd5');
+      expect(series?.updatedAt, DateTime.utc(2026, 3, 2));
+    });
   });
 }

@@ -32,11 +32,14 @@ Firestore
         ▼
 CatalogBundleCache
   in-memory CatalogSeedBundle + CatalogBundleMemoryOrigin
-  today: stale-while-revalidate full .get() (5 min TTL, deduped in-flight)
-  PR2b: meta check → incremental updatedAt queries; 24h full reconcile兜底
+  sync: meta/catalog check → unchanged (0 collection reads) |
+        incremental updatedAt > lastSyncAt merge |
+        full .get() on cold start / delta failure / ≥24h / force
+  foreground: meta/catalog snapshot listener (cancelled in background)
         │
         ├──► Persisted cache (Application Support)
-        │         catalog_bundle_v1.json
+        │         catalog_bundle_v1.json (codec schema v1→v2; file name unchanged)
+        │         prefs: lastSyncAt + lastFullSyncAt watermarks
         │         written after successful Firestore commit
         │
         ▼

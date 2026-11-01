@@ -24,6 +24,11 @@ Map<String, dynamic> firestoreCatalogDocToJsonMap(
     out['releaseDate'] = null;
   }
 
+  final ua = out['updatedAt'];
+  if (ua is Timestamp) {
+    out['updatedAt'] = ua.toDate().toUtc().toIso8601String();
+  }
+
   // Firestore may store numbers as [double].
   final so = out['sortOrder'];
   if (so is double) {
