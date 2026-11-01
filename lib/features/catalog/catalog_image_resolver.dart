@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
 import 'package:blindbox_app/features/catalog/data/catalog_image_disk_cache.dart';
+import 'package:blindbox_app/features/catalog/data/catalog_image_version.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
@@ -212,26 +214,47 @@ abstract final class CatalogImageResolver {
   }
 
   /// Disk cache or Firebase Storage — does not probe bundled assets.
-  static Future<String?> resolveFigureStorageRef(String imageKey) async {
+  static Future<String?> resolveFigureStorageRef(
+    String imageKey, {
+    String? imageVersion,
+  }) async {
     final k = imageKey.trim();
     if (k.isEmpty) return null;
-    return _resolveStorageDisplayRef(CatalogImageKind.figure, k);
+    return _resolveStorageDisplayRef(
+      CatalogImageKind.figure,
+      k,
+      imageVersion: imageVersion,
+    );
   }
 
   /// Disk cache or Firebase Storage — does not probe bundled assets.
-  static Future<String?> resolveSeriesStorageRef(String imageKey) async {
+  static Future<String?> resolveSeriesStorageRef(
+    String imageKey, {
+    String? imageVersion,
+  }) async {
     final k = imageKey.trim();
     if (k.isEmpty) return null;
-    return _resolveStorageDisplayRef(CatalogImageKind.series, k);
+    return _resolveStorageDisplayRef(
+      CatalogImageKind.series,
+      k,
+      imageVersion: imageVersion,
+    );
   }
 
   /// Bundled asset path, else Storage when [storageFallbackEnabled].
-  static Future<String?> resolveFigureDisplayRef(String imageKey) async {
+  static Future<String?> resolveFigureDisplayRef(
+    String imageKey, {
+    String? imageVersion,
+  }) async {
     final k = imageKey.trim();
     if (k.isEmpty) return null;
     final asset = await resolveFigureAsset(k);
     if (asset != null) return asset;
-    final storage = await _resolveStorageDisplayRef(CatalogImageKind.figure, k);
+    final storage = await _resolveStorageDisplayRef(
+      CatalogImageKind.figure,
+      k,
+      imageVersion: imageVersion,
+    );
     _traceResolution(
       imageKey: k,
       kind: CatalogImageKind.figure,
@@ -242,12 +265,19 @@ abstract final class CatalogImageResolver {
   }
 
   /// Bundled asset path, else Storage when [storageFallbackEnabled].
-  static Future<String?> resolveSeriesDisplayRef(String imageKey) async {
+  static Future<String?> resolveSeriesDisplayRef(
+    String imageKey, {
+    String? imageVersion,
+  }) async {
     final k = imageKey.trim();
     if (k.isEmpty) return null;
     final asset = await resolveSeriesAsset(k);
     if (asset != null) return asset;
-    final storage = await _resolveStorageDisplayRef(CatalogImageKind.series, k);
+    final storage = await _resolveStorageDisplayRef(
+      CatalogImageKind.series,
+      k,
+      imageVersion: imageVersion,
+    );
     _traceResolution(
       imageKey: k,
       kind: CatalogImageKind.series,
@@ -255,6 +285,38 @@ abstract final class CatalogImageResolver {
       outcome: storage != null ? 'storage_url' : 'null',
     );
     return storage;
+  }
+
+  /// Looks up `imageVersion` for [imageKey] from the in-memory catalog bundle.
+  ///
+  /// Checks series covers, figure primaries, and `alternativeImages` entries.
+  static String? lookupImageVersion({
+    required CatalogImageKind kind,
+    required String imageKey,
+  }) {
+    final bundle = CatalogBundleCache.current;
+    if (bundle == null) return null;
+    final k = imageKey.trim();
+    if (k.isEmpty) return null;
+    if (kind == CatalogImageKind.series) {
+      for (final s in bundle.series) {
+        if (s.imageKey.trim() == k) {
+          return CatalogImageVersion.normalize(s.imageVersion);
+        }
+      }
+      return null;
+    }
+    for (final f in bundle.figures) {
+      if (f.imageKey.trim() == k) {
+        return CatalogImageVersion.normalize(f.imageVersion);
+      }
+      for (final alt in f.alternativeImages) {
+        if (alt.imageKey.trim() == k) {
+          return CatalogImageVersion.normalize(alt.imageVersion);
+        }
+      }
+    }
+    return null;
   }
 
   /// Bundled figure path for [imageKey].
@@ -296,17 +358,27 @@ abstract final class CatalogImageResolver {
   /// First existing Storage object for [kind] + [imageKey]; returns a download URL for UI only.
   static Future<String?> _resolveStorageDisplayRef(
     CatalogImageKind kind,
-    String imageKey,
-  ) async {
+    String imageKey, {
+    String? imageVersion,
+  }) async {
     final k = imageKey.trim();
     if (k.isEmpty) return null;
+    final version = CatalogImageVersion.normalize(imageVersion);
 
-    final primaryCacheKey = '${storagePrefixFor(kind)}/$k';
+    final primaryCacheKey = CatalogImageVersion.diskEntryKey(
+      kind: kind,
+      imageKey: k,
+      imageVersion: version,
+    );
 
     final sessionCached = _storageDisplayRefCache[primaryCacheKey];
     if (sessionCached != null) return sessionCached;
 
-    final diskHit = await CatalogImageDiskCache.lookup(kind: kind, imageKey: k);
+    final diskHit = await CatalogImageDiskCache.lookup(
+      kind: kind,
+      imageKey: k,
+      imageVersion: version,
+    );
     if (diskHit != null) {
       _storageDisplayRefCache[primaryCacheKey] = diskHit.localPath;
       _traceResolution(
@@ -320,6 +392,7 @@ abstract final class CatalogImageResolver {
         _scheduleStaleRefresh(
           kind: kind,
           imageKey: k,
+          imageVersion: version,
           primaryCacheKey: primaryCacheKey,
         );
       }
@@ -354,6 +427,7 @@ abstract final class CatalogImageResolver {
     final future = _fetchAndPersistFromStorage(
       kind: kind,
       imageKey: k,
+      imageVersion: version,
       primaryCacheKey: primaryCacheKey,
       recordMissingOnFailure: true,
     );
@@ -369,6 +443,7 @@ abstract final class CatalogImageResolver {
     required CatalogImageKind kind,
     required String imageKey,
     required String primaryCacheKey,
+    String? imageVersion,
   }) {
     if (!storageFallbackEnabled || !_firebaseStorageReady) return;
     if (_storageRefreshInFlight.containsKey(primaryCacheKey)) return;
@@ -378,6 +453,7 @@ abstract final class CatalogImageResolver {
       _StaleRefreshJob(
         kind: kind,
         imageKey: imageKey,
+        imageVersion: imageVersion,
         primaryCacheKey: primaryCacheKey,
       ),
     );
@@ -403,6 +479,7 @@ abstract final class CatalogImageResolver {
           await CatalogImageDiskCache.shouldAttemptBackgroundRefresh(
             kind: job.kind,
             imageKey: job.imageKey,
+            imageVersion: job.imageVersion,
           );
       if (!mayRefresh) return;
       if (_storageRefreshInFlight.containsKey(job.primaryCacheKey)) return;
@@ -410,11 +487,13 @@ abstract final class CatalogImageResolver {
       await CatalogImageDiskCache.markRefreshAttempted(
         kind: job.kind,
         imageKey: job.imageKey,
+        imageVersion: job.imageVersion,
       );
 
       final refresh = _refreshFromStorage(
         kind: job.kind,
         imageKey: job.imageKey,
+        imageVersion: job.imageVersion,
         primaryCacheKey: job.primaryCacheKey,
       );
       _storageRefreshInFlight[job.primaryCacheKey] = refresh;
@@ -430,11 +509,13 @@ abstract final class CatalogImageResolver {
     required CatalogImageKind kind,
     required String imageKey,
     required String primaryCacheKey,
+    String? imageVersion,
   }) async {
     backgroundRefreshCount++;
     final updated = await _fetchAndPersistFromStorage(
       kind: kind,
       imageKey: imageKey,
+      imageVersion: imageVersion,
       primaryCacheKey: primaryCacheKey,
       recordMissingOnFailure: false,
     );
@@ -448,6 +529,7 @@ abstract final class CatalogImageResolver {
     required String imageKey,
     required String primaryCacheKey,
     required bool recordMissingOnFailure,
+    String? imageVersion,
   }) async {
     var sawOnlyObjectNotFound = true;
     final useOverride = getDownloadUrlOverride != null;
@@ -460,26 +542,29 @@ abstract final class CatalogImageResolver {
       );
       try {
         storageExtensionProbeCount++;
-        final String url;
+        final String rawUrl;
         if (useOverride) {
           final resolved = await getDownloadUrlOverride!(path);
           if (resolved == null || resolved.isEmpty) {
             continue;
           }
-          url = resolved;
+          rawUrl = resolved;
         } else {
           storageRoot ??= FirebaseStorage.instance.ref();
-          url = await storageRoot
+          rawUrl = await storageRoot
               .child(path)
               .getDownloadURL()
               .timeout(storageUrlTimeout);
         }
+        final url = CatalogImageVersion.appendQueryParam(rawUrl, imageVersion);
         final localPath = await CatalogImageDiskCache.persistFromUrl(
           kind: kind,
           imageKey: imageKey,
-          downloadUrl: url,
+          imageVersion: imageVersion,
+          downloadUrl: rawUrl,
           extension: ext,
         );
+        // Prefer disk path; network fallback already carries `v=` for CDN bust.
         final displayRef = localPath ?? url;
         _storageDisplayRefCache[primaryCacheKey] = displayRef;
         _storageMissingCache.remove(primaryCacheKey);
@@ -634,10 +719,12 @@ final class _StaleRefreshJob {
     required this.kind,
     required this.imageKey,
     required this.primaryCacheKey,
+    this.imageVersion,
   });
 
   final CatalogImageKind kind;
   final String imageKey;
+  final String? imageVersion;
   final String primaryCacheKey;
 }
 

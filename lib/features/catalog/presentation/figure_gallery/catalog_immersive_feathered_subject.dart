@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:blindbox_app/core/media/device_local_ref.dart';
+import 'package:blindbox_app/features/catalog/data/catalog_image_version.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_immersive_edge_feather.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_immersive_figure_stage.dart';
 import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
@@ -99,7 +100,10 @@ abstract final class CatalogImmersiveImageProviders {
 
   static ImageProvider file(File file) => FileImage(file);
 
-  static ImageProvider fromDisplayRef(String ref) {
+  static ImageProvider fromDisplayRef(
+    String ref, {
+    String? imageVersion,
+  }) {
     final trimmed = ref.trim();
     if (CollectibleThumbImage.isAssetPath(trimmed)) {
       return asset(trimmed);
@@ -107,6 +111,9 @@ abstract final class CatalogImmersiveImageProviders {
     if (!kIsWeb && DeviceLocalImageRef.looksLikeDevicePath(trimmed)) {
       return file(File(DeviceLocalImageRef.normalizeToFilePath(trimmed)));
     }
-    return network(trimmed, cacheKey: trimmed);
+    return network(
+      trimmed,
+      cacheKey: CatalogImageVersion.networkCacheKey(trimmed, imageVersion),
+    );
   }
 }

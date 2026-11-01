@@ -4,7 +4,7 @@
 **App contract:** [`lib/features/catalog/firestore/FIRESTORE_CATALOG_SCHEMA.md`](../lib/features/catalog/firestore/FIRESTORE_CATALOG_SCHEMA.md).  
 **This PR (PR2a):** schema + rules + this guide + a backfill script template.  
 **Flutter client:** incremental sync lives in PR2b (`CatalogBundleCache` +
-`lastSyncAt`). **Not here:** image disk-cache busting (PR2c).
+`lastSyncAt`). Image disk/CDN cache busting via `imageVersion` is PR2c.
 
 ## Goals
 
