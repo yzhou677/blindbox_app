@@ -312,7 +312,17 @@ abstract final class CatalogBundleCache {
           lastFull == null ||
           now.difference(lastFull) >= catalogRefreshTtl;
 
-      final metaAt = await _loadMeta().timeout(firestoreTimeout);
+      // Meta is a cheap gate — if it is unreachable, fall through to full get
+      // rather than failing the whole refresh (Discover PTR / offline tests).
+      DateTime? metaAt;
+      try {
+        metaAt = await _loadMeta().timeout(firestoreTimeout);
+      } catch (e, st) {
+        debugPrint(
+          'CatalogBundleCache: meta watermark read failed, using full get: $e\n$st',
+        );
+        metaAt = null;
+      }
 
       if (!needFullByAge &&
           lastSync != null &&

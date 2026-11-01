@@ -64,15 +64,21 @@ void main() {
   );
 
   test(
-    'homeDiscoverRefreshProvider skips catalog within TTL but reloads official feed',
+    'homeDiscoverRefreshProvider skips catalog when meta unchanged but reloads official feed',
     () async {
       var catalogRefreshCount = 0;
       var officialFeedLoadCount = 0;
+      final lastSync = DateTime.now().toUtc();
 
       CatalogBundleCache.prime(
         const CatalogSeedBundle(brands: [], ips: [], series: [], figures: []),
       );
-      CatalogBundleCache.setLastFirestoreRefreshAtForTest(DateTime.now());
+      CatalogBundleCache.setLastFirestoreRefreshAtForTest(lastSync);
+      CatalogBundleCache.setLastSyncAtMemoryForTest(lastSync);
+      CatalogBundleCache.loadMetaOverride = () async => lastSync;
+      CatalogBundleCache.loadDeltaOverride = (_) async {
+        fail('delta should not run when meta is unchanged');
+      };
       CatalogBundleCache.loadFirestoreOverride = () async {
         catalogRefreshCount++;
         return const CatalogSeedBundle(
