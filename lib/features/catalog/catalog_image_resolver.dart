@@ -24,9 +24,11 @@ import 'package:flutter/foundation.dart';
 /// Disk cache is **not** canonical storage. Stale entries still paint offline while
 /// a deduped background refresh runs when network + Storage are available.
 ///
-/// Offline / transport failures fail fast: do not walk every extension with an
-/// 8s timeout each (that made placeholders feel stuck after bundled art was removed).
-/// Transient transport misses are **not** written to the session missing-key cache.
+/// Offline skips Storage immediately. A probe [TimeoutException] while still
+/// online continues to the next extension (missing `.avif` must not block
+/// `.webp`). After a full miss that included timeouts, further Storage probes
+/// pause until connectivity recovers. Transient transport misses are **not**
+/// written to the session missing-key cache.
 ///
 /// Download URLs are not written back to Firestore or shelf [imageKey].
 abstract final class CatalogImageResolver {
@@ -104,14 +106,15 @@ abstract final class CatalogImageResolver {
 
   /// Probe order for Storage (`catalog/series|figures/<imageKey><ext>`).
   ///
-  /// Bucket mix is mostly png / webp / jpg with some avif — never assume a single format.
+  /// Bucket mix is mostly webp / png / jpg with some avif — prefer common
+  /// formats first so a slow miss on rare `.avif` does not delay hits.
   /// Each [imageKey] tries every extension here until one object exists (or all miss → placeholder).
   static const List<String> assetExtensions = [
-    '.avif',
     '.webp',
     '.png',
     '.jpg',
     '.jpeg',
+    '.avif',
   ];
 
   /// Session memory for disk paths or network URLs resolved from Storage tier.
@@ -437,6 +440,7 @@ abstract final class CatalogImageResolver {
     String? imageVersion,
   }) async {
     var sawOnlyObjectNotFound = true;
+    var sawTimeout = false;
     final useOverride = getDownloadUrlOverride != null;
     Reference? storageRoot;
     for (final ext in assetExtensions) {
@@ -485,7 +489,8 @@ abstract final class CatalogImageResolver {
         );
         return displayRef;
       } on TimeoutException {
-        _markStorageTransportUnavailable();
+        sawOnlyObjectNotFound = false;
+        sawTimeout = true;
         _traceResolution(
           imageKey: imageKey,
           kind: kind,
@@ -495,7 +500,13 @@ abstract final class CatalogImageResolver {
           storageSkipped: false,
           outcome: 'storage_timeout',
         );
-        return null;
+        // Truly offline → stop. Still online → try next extension (e.g. .avif
+        // timed out / missing must not block an existing .webp).
+        if (!await _isLikelyOnline()) {
+          _markStorageTransportUnavailable();
+          return null;
+        }
+        continue;
       } on FirebaseException catch (e) {
         if (_isObjectNotFound(e)) continue;
         if (e.code == 'no-app') return null;
@@ -518,6 +529,11 @@ abstract final class CatalogImageResolver {
         sawOnlyObjectNotFound = false;
         return null;
       }
+    }
+    if (sawTimeout) {
+      // Avoid 5×timeout on every subsequent tile when the link is dead but
+      // connectivity still looked online for the first key.
+      _markStorageTransportUnavailable();
     }
     if (sawOnlyObjectNotFound && recordMissingOnFailure) {
       // Missing object for all known extensions: cache as absent so repeated

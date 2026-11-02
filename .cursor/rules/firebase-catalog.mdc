@@ -27,7 +27,7 @@ Read [`.cursor/ARCHITECTURE.md`](../ARCHITECTURE.md) → **Firebase (Firestore +
 ## Storage (canonical paths — deterministic)
 
 - `catalog/series/<imageKey>.<ext>` and `catalog/figures/<imageKey>.<ext>`
-- Build paths in `CatalogImageResolver` from `imageKey` + `CatalogImageKind` + extensions (`.avif`, `.webp`, `.png`, `.jpg`, `.jpeg`) — probe all until Storage returns an object
+- Build paths in `CatalogImageResolver` from `imageKey` + `CatalogImageKind` + extensions (`.webp`, `.png`, `.jpg`, `.jpeg`, `.avif`) — probe all until Storage returns an object
 - Do **not** store URLs in Firestore or invent dynamic folder layouts
 - Resolver order: bundled asset → Storage download URL (runtime only) → placeholder
 - **Never** upload or sync `localImageUri` / `customCoverImageUri` from `features/collection/` in MVP tasks

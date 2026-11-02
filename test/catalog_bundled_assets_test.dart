@@ -13,11 +13,11 @@ void main() {
           ),
       ];
       expect(paths, [
-        'catalog/series/crybaby_cry_me_an_ocean.avif',
         'catalog/series/crybaby_cry_me_an_ocean.webp',
         'catalog/series/crybaby_cry_me_an_ocean.png',
         'catalog/series/crybaby_cry_me_an_ocean.jpg',
         'catalog/series/crybaby_cry_me_an_ocean.jpeg',
+        'catalog/series/crybaby_cry_me_an_ocean.avif',
       ]);
     });
 
