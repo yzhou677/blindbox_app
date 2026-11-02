@@ -9,6 +9,7 @@ import 'package:blindbox_app/features/collection/data/custom_series_conventions.
 import 'package:blindbox_app/features/collection/data/series_release_lookup.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
+import 'package:blindbox_app/features/collection/data/shelf_media_vault.dart';
 import 'package:blindbox_app/features/collection/persistence/collection_snapshot_storage.dart';
 import 'package:blindbox_app/features/home/domain/series_release.dart';
 import 'package:blindbox_app/models/collectible.dart';
@@ -95,6 +96,15 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       previous: truePrevious,
       next: current,
     );
+    unawaited(_collectShelfMediaGarbage(current));
+  }
+
+  Future<void> _collectShelfMediaGarbage(CollectionSnapshot snapshot) async {
+    try {
+      await ShelfMediaVault.collectGarbage(snapshot);
+    } catch (e, st) {
+      debugPrint('Shelf media vault GC skipped: $e\n$st');
+    }
   }
 
   /// Cancels any pending debounce timer and immediately flushes to disk.

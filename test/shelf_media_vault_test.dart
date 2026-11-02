@@ -7,7 +7,6 @@ import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 
-/// Minimal valid JPEG large enough to resize.
 Uint8List _jpegBytes({int width = 800, int height = 600}) {
   final image = img.Image(width: width, height: height);
   img.fill(image, color: img.ColorRgb8(40, 120, 200));
@@ -17,126 +16,172 @@ Uint8List _jpegBytes({int width = 800, int height = 600}) {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late Directory tempRoot;
+  late Directory tempSupport;
 
   setUp(() async {
-    tempRoot = await Directory.systemTemp.createTemp('shelf_media_vault_');
+    tempSupport = await Directory.systemTemp.createTemp('shelf_media_support_');
     ShelfMediaVault.resetForTest();
-    ShelfMediaVault.testRootOverride = tempRoot;
+    ShelfMediaVault.testSupportOverride = tempSupport;
+    await ShelfMediaVault.ensureReady();
   });
 
   tearDown(() async {
     ShelfMediaVault.resetForTest();
-    if (await tempRoot.exists()) {
-      await tempRoot.delete(recursive: true);
+    if (await tempSupport.exists()) {
+      await tempSupport.delete(recursive: true);
     }
   });
 
-  test('importFromPath copies into originals and writes 512 thumb', () async {
-    final source = File('${tempRoot.path}${Platform.pathSeparator}picker.jpg');
+  test('importFromPath returns relative vault ref and writes thumb', () async {
+    final source = File('${tempSupport.path}${Platform.pathSeparator}picker.jpg');
     await source.writeAsBytes(_jpegBytes());
 
-    final vaultPath = await ShelfMediaVault.importFromPath(source.path);
-    expect(vaultPath, isNotNull);
-    expect(await ShelfMediaVault.isVaultOriginalPath(vaultPath!), isTrue);
-    expect(File(vaultPath).existsSync(), isTrue);
-    expect(vaultPath, isNot(source.path));
+    final ref = await ShelfMediaVault.importFromPath(source.path);
+    expect(ref, isNotNull);
+    expect(ShelfMediaVault.isVaultRef(ref), isTrue);
+    expect(ref, startsWith('shelf_media/originals/'));
 
-    final thumb = await ShelfMediaVault.thumbPathForOriginal(vaultPath);
-    expect(thumb, isNotNull);
-    expect(File(thumb!).existsSync(), isTrue);
+    final abs = ShelfMediaVault.resolveToFilePathSync(ref);
+    expect(abs, isNotNull);
+    expect(File(abs!).existsSync(), isTrue);
 
-    final decoded = img.decodeImage(await File(thumb).readAsBytes());
+    final entries = await ShelfMediaVault.entriesByRecentAccess();
+    expect(entries, hasLength(1));
+    expect(entries.single.vaultRef, ref);
+    expect(File(entries.single.thumbPath!).existsSync(), isTrue);
+
+    final decoded = img.decodeImage(
+      await File(entries.single.thumbPath!).readAsBytes(),
+    );
     expect(decoded, isNotNull);
     final longest = decoded!.width > decoded.height
         ? decoded.width
         : decoded.height;
     expect(longest, lessThanOrEqualTo(ShelfMediaVault.thumbLongestEdge));
-
-    final entries = await ShelfMediaVault.entriesByRecentAccess();
-    expect(entries, hasLength(1));
-    expect(File(entries.single.originalPath).path, File(vaultPath).path);
-    expect(File(entries.single.thumbPath!).path, File(thumb).path);
   });
 
-  test('importing an existing vault path is idempotent', () async {
-    final source = File('${tempRoot.path}${Platform.pathSeparator}a.jpg');
-    await source.writeAsBytes(_jpegBytes(width: 400, height: 400));
-    final first = await ShelfMediaVault.importFromPath(source.path);
-    final second = await ShelfMediaVault.importFromPath(first!);
-    expect(second, first);
-    expect(await ShelfMediaVault.entriesByRecentAccess(), hasLength(1));
+  test('resolveToFilePathSync reads relative vault refs', () async {
+    final source = File('${tempSupport.path}${Platform.pathSeparator}a.jpg');
+    await source.writeAsBytes(_jpegBytes(width: 200, height: 200));
+    final ref = await ShelfMediaVault.importFromPath(source.path);
+    final path = ShelfMediaVault.resolveToFilePathSync(ref);
+    expect(path, isNotNull);
+    expect(await File(path!).exists(), isTrue);
   });
 
-  test('ensureInVault leaves missing paths unchanged', () async {
-    const missing = '/tmp/does_not_exist_shelf_photo.jpg';
-    expect(await ShelfMediaVault.ensureInVault(missing), missing);
-  });
+  test('second migrate does not change lastAccessedAt', () async {
+    final source = File('${tempSupport.path}${Platform.pathSeparator}m.jpg');
+    await source.writeAsBytes(_jpegBytes(width: 120, height: 120));
+    final ref = await ShelfMediaVault.importFromPath(source.path);
+    final firstAccess = await ShelfMediaVault.lastAccessedAtForTest(ref!);
+    expect(firstAccess, isNotNull);
 
-  test('migrateSnapshot rewrites existing local paths into the vault', () async {
-    final coverFile = File(
-      '${tempRoot.path}${Platform.pathSeparator}cover.jpg',
-    );
-    final figFile = File('${tempRoot.path}${Platform.pathSeparator}fig.jpg');
-    await coverFile.writeAsBytes(_jpegBytes(width: 640, height: 640));
-    await figFile.writeAsBytes(_jpegBytes(width: 320, height: 480));
+    await Future<void>.delayed(const Duration(milliseconds: 20));
 
     final snapshot = CollectionSnapshot(
       shelfSeries: [
         ShelfSeries(
-          id: 'custom_1',
-          name: 'Custom',
-          brand: 'Me',
-          ipName: 'Me',
+          id: 's1',
+          name: 'S',
+          brand: 'B',
+          ipName: 'I',
           figures: [
             ShelfFigure(
               id: 'f1',
-              seriesId: 'custom_1',
-              name: 'Fig',
-              localImageUri: figFile.path,
+              seriesId: 's1',
+              name: 'F',
+              localImageUri: ref,
               rarity: 'Regular',
               isSecret: false,
             ),
           ],
           shelfAccent: const Color(0xFFE8F5E9),
-          customCoverImageUri: coverFile.path,
         ),
       ],
       figureStates: const {},
     );
 
-    final result = await ShelfMediaVault.migrateSnapshot(snapshot);
-    expect(result.changed, isTrue);
-    final series = result.snapshot.shelfSeries.single;
-    expect(
-      await ShelfMediaVault.isVaultOriginalPath(series.customCoverImageUri!),
-      isTrue,
-    );
-    expect(
-      await ShelfMediaVault.isVaultOriginalPath(
-        series.figures.single.localImageUri!,
-      ),
-      isTrue,
-    );
-    expect(await ShelfMediaVault.entriesByRecentAccess(), hasLength(2));
+    final migrated = await ShelfMediaVault.migrateSnapshot(snapshot);
+    expect(migrated.changed, isFalse);
+    final secondAccess = await ShelfMediaVault.lastAccessedAtForTest(ref);
+    expect(secondAccess, firstAccess);
   });
 
-  test('entriesByRecentAccess orders by lastAccessedAt descending', () async {
-    final a = File('${tempRoot.path}${Platform.pathSeparator}a.jpg');
-    final b = File('${tempRoot.path}${Platform.pathSeparator}b.jpg');
-    await a.writeAsBytes(_jpegBytes(width: 100, height: 100));
-    await b.writeAsBytes(_jpegBytes(width: 100, height: 100));
+  test('migrate rewrites absolute vault paths to relative refs', () async {
+    final source = File('${tempSupport.path}${Platform.pathSeparator}abs.jpg');
+    await source.writeAsBytes(_jpegBytes(width: 160, height: 160));
+    final relative = await ShelfMediaVault.importFromPath(source.path);
+    final absolute = ShelfMediaVault.resolveToFilePathSync(relative)!;
 
-    final pathA = await ShelfMediaVault.importFromPath(a.path);
-    await Future<void>.delayed(const Duration(milliseconds: 5));
-    final pathB = await ShelfMediaVault.importFromPath(b.path);
-    await ShelfMediaVault.touchAccess(pathA!);
-
-    final entries = await ShelfMediaVault.entriesByRecentAccess();
-    expect(
-      entries.map((e) => File(e.originalPath).path).toList(),
-      [File(pathA).path, File(pathB!).path],
+    final snapshot = CollectionSnapshot(
+      shelfSeries: [
+        ShelfSeries(
+          id: 's1',
+          name: 'S',
+          brand: 'B',
+          ipName: 'I',
+          figures: const [],
+          shelfAccent: const Color(0xFFE8F5E9),
+          customCoverImageUri: absolute,
+        ),
+      ],
+      figureStates: const {},
     );
+
+    final beforeAccess = await ShelfMediaVault.lastAccessedAtForTest(relative!);
+    final migrated = await ShelfMediaVault.migrateSnapshot(snapshot);
+    expect(migrated.changed, isTrue);
+    expect(
+      migrated.snapshot.shelfSeries.single.customCoverImageUri,
+      relative,
+    );
+    expect(
+      await ShelfMediaVault.lastAccessedAtForTest(relative),
+      beforeAccess,
+    );
+  });
+
+  test('GC deletes replaced photo and keeps referenced one', () async {
+    final a = File('${tempSupport.path}${Platform.pathSeparator}old.jpg');
+    final b = File('${tempSupport.path}${Platform.pathSeparator}new.jpg');
+    await a.writeAsBytes(_jpegBytes(width: 100, height: 100));
+    await b.writeAsBytes(_jpegBytes(width: 110, height: 110));
+
+    final oldRef = await ShelfMediaVault.importFromPath(a.path);
+    final newRef = await ShelfMediaVault.importFromPath(b.path);
+    final oldAbs = ShelfMediaVault.resolveToFilePathSync(oldRef)!;
+    final newAbs = ShelfMediaVault.resolveToFilePathSync(newRef)!;
+    expect(File(oldAbs).existsSync(), isTrue);
+    expect(File(newAbs).existsSync(), isTrue);
+
+    final snapshot = CollectionSnapshot(
+      shelfSeries: [
+        ShelfSeries(
+          id: 's1',
+          name: 'S',
+          brand: 'B',
+          ipName: 'I',
+          figures: [
+            ShelfFigure(
+              id: 'f1',
+              seriesId: 's1',
+              name: 'F',
+              localImageUri: newRef,
+              rarity: 'Regular',
+              isSecret: false,
+            ),
+          ],
+          shelfAccent: const Color(0xFFE8F5E9),
+        ),
+      ],
+      figureStates: const {},
+    );
+
+    final gc = await ShelfMediaVault.collectGarbage(snapshot);
+    expect(gc.removedIds, contains(ShelfMediaVault.idFromRef(oldRef)));
+    expect(File(oldAbs).existsSync(), isFalse);
+    expect(File(newAbs).existsSync(), isTrue);
+    expect(await ShelfMediaVault.entriesByRecentAccess(), hasLength(1));
   });
 
   test('constants match recovery budget contract', () {

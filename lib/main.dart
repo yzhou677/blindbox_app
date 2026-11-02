@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:blindbox_app/core/firebase/ensure_firebase_initialized.dart';
 import 'package:blindbox_app/core/firebase/activate_firebase_app_check.dart';
 import 'package:blindbox_app/core/network/app_network_recovery.dart';
@@ -10,6 +12,7 @@ import 'package:blindbox_app/features/collection/data/collection_seed_data.dart'
 import 'package:blindbox_app/features/collection/data/series_release_lookup.dart';
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
 import 'package:blindbox_app/features/collection/data/shelf_media_vault.dart';
+import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/persistence/collection_snapshot_storage.dart';
 import 'package:blindbox_app/features/home/application/catalog_bundle_refresh_bridge.dart';
 import 'package:blindbox_app/features/home/application/home_feed_provider.dart';
@@ -39,6 +42,11 @@ Future<void> main() async {
     debugPrint('Catalog offline-first bootstrap skipped: $e\n$st');
   }
   await bootstrapMarketBrowseListings();
+  try {
+    await ShelfMediaVault.ensureReady();
+  } catch (e, st) {
+    debugPrint('Shelf media vault ensureReady skipped: $e\n$st');
+  }
   final restored = await CollectionSnapshotStorage.load();
   var snapshot = restored ?? CollectionSeedData.initialSnapshot();
   if (restored != null) {
@@ -48,6 +56,8 @@ Future<void> main() async {
         snapshot = migrated.snapshot;
         await CollectionSnapshotStorage.save(snapshot);
       }
+      // Orphan sweep must not block first frame.
+      unawaited(_shelfMediaGc(snapshot));
     } catch (e, st) {
       debugPrint('Shelf media vault migrate skipped: $e\n$st');
     }
@@ -64,6 +74,14 @@ Future<void> main() async {
       child: const CatalogBundleRefreshBridge(child: BlindboxApp()),
     ),
   );
+}
+
+Future<void> _shelfMediaGc(CollectionSnapshot snapshot) async {
+  try {
+    await ShelfMediaVault.collectGarbage(snapshot);
+  } catch (e, st) {
+    debugPrint('Shelf media vault GC skipped: $e\n$st');
+  }
 }
 
 class BlindboxApp extends ConsumerWidget {

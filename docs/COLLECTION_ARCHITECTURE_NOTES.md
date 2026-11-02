@@ -74,11 +74,15 @@ Future scaling should be evaluated using real-world collection sizes rather than
 
 ### Shelf media vault
 
-User-authored photos (`localImageUri`, `customCoverImageUri`) are copied into
-app-owned storage under Application Support `shelf_media/` (originals + 512px
-JPEG q75 thumbs). Gallery picks must not remain on ImagePicker cache paths —
-those do not survive reinstall. Recovery Auto Backup (later PR) ships thumbs
-only; full-resolution originals stay in the vault for manual export.
+User-authored photos (`localImageUri`, `customCoverImageUri`) are stored as
+**vault-relative** refs (`shelf_media/originals/<id>.<ext>`) and resolved to
+absolute paths at display time. Gallery picks are copied into Application
+Support `shelf_media/` (originals + 512px JPEG q75 thumbs). `lastAccessedAt`
+updates only on user pick/replace — not on migrate or display.
+
+Unreferenced originals/thumbs are GC'd after snapshot persist and on a
+background startup sweep. Recovery Auto Backup (later PR) ships thumbs only;
+full-resolution originals stay in the vault for manual export.
 
 ---
 
