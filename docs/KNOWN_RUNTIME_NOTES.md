@@ -71,6 +71,8 @@ disk cache (LRU + TTL)
 
 No APK-bundled `assets/catalog/**` tier. Fresh install + offline shows placeholders until Storage has been fetched at least once.
 
+**Offline fail-fast:** if connectivity is offline, or a Storage probe times out / hits a transport error, the resolver stops immediately (does **not** walk remaining extensions with 8s timeouts) and pauses further Storage probes for the session until connectivity looks online again. Transient transport misses are not written to the session missing-key cache.
+
 ### Catalog bundle logs (informational)
 
 | Log | Meaning |
