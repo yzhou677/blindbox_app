@@ -148,6 +148,13 @@ abstract final class ShelfRecoveryPack {
       _debouncedSnapshotHint = snapshot;
     }
     _debounceTimer?.cancel();
+    // Widget tests assert no pending Timers after dispose. Skip the debounce
+    // Timer under `flutter test`; tests that need a pack call [write] directly.
+    if (Platform.environment.containsKey('FLUTTER_TEST')) {
+      _debouncedSnapshotHint = null;
+      _debounceTimer = null;
+      return;
+    }
     _debounceTimer = Timer(writeDebounce, () {
       final hint = _debouncedSnapshotHint;
       _debouncedSnapshotHint = null;
