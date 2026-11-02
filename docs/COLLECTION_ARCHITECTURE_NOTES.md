@@ -81,8 +81,11 @@ Support `shelf_media/` (originals + 512px JPEG q75 thumbs). `lastAccessedAt`
 updates only on user pick/replace — not on migrate or display.
 
 Unreferenced originals/thumbs are GC'd after snapshot persist and on a
-background startup sweep. Recovery Auto Backup (later PR) ships thumbs only;
-full-resolution originals stay in the vault for manual export.
+background startup sweep, but only after a 24h grace window on `createdAt`
+(or file mtime for disk orphans). That protects pick-before-save races.
+Import / migrate / GC share a serial index lock. Recovery Auto Backup (later
+PR) ships thumbs only; full-resolution originals stay in the vault for manual
+export.
 
 ---
 

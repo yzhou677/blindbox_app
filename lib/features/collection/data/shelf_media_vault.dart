@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
@@ -74,6 +75,9 @@ abstract final class ShelfMediaVault {
   static const thumbJpegQuality = 75;
   static const autoBackupMaxBytes = 20 * 1024 * 1024;
 
+  /// Unreferenced vault media younger than this is kept (pick-before-save race).
+  static const gcGracePeriod = Duration(hours: 24);
+
   static const _uuid = Uuid();
 
   /// Fake Application Support root for tests (vault lives at `<this>/shelf_media`).
@@ -91,10 +95,27 @@ abstract final class ShelfMediaVault {
     _rootFuture = null;
     _index = null;
     _cachedSupportPath = null;
+    _indexOpChain = Future<void>.value();
   }
 
   static Future<Directory>? _rootFuture;
   static _VaultIndex? _index;
+
+  /// Serializes index writers ([importFromPath] / migrate / GC).
+  static Future<void> _indexOpChain = Future<void>.value();
+
+  static Future<T> _runExclusiveIndexOp<T>(Future<T> Function() op) {
+    final gate = Completer<void>();
+    final previous = _indexOpChain;
+    _indexOpChain = gate.future;
+    return previous.then((_) async {
+      try {
+        return await op();
+      } finally {
+        gate.complete();
+      }
+    });
+  }
 
   static String get _sep => Platform.pathSeparator;
 
@@ -186,9 +207,13 @@ abstract final class ShelfMediaVault {
   /// relative inputs are normalized to a relative ref without bumping access.
   static Future<String?> importFromPath(String sourcePath) async {
     if (kIsWeb) return sourcePath.trim().isEmpty ? null : sourcePath.trim();
-    await ensureReady();
     final trimmed = sourcePath.trim();
     if (trimmed.isEmpty) return null;
+    return _runExclusiveIndexOp(() => _importFromPathLocked(trimmed));
+  }
+
+  static Future<String?> _importFromPathLocked(String trimmed) async {
+    await ensureReady();
 
     if (isVaultRef(trimmed)) {
       final id = idFromRef(trimmed);
@@ -304,6 +329,12 @@ abstract final class ShelfMediaVault {
     if (kIsWeb) {
       return ShelfMediaMigrationResult(snapshot: snapshot, changed: false);
     }
+    return _runExclusiveIndexOp(() => _migrateSnapshotLocked(snapshot));
+  }
+
+  static Future<ShelfMediaMigrationResult> _migrateSnapshotLocked(
+    CollectionSnapshot snapshot,
+  ) async {
     await ensureReady();
     var changed = false;
     final nextSeries = <ShelfSeries>[];
@@ -365,13 +396,23 @@ abstract final class ShelfMediaVault {
     );
   }
 
-  /// Deletes originals/thumbs/index rows not referenced by [snapshot].
+  /// Deletes unreferenced originals/thumbs/index rows older than [gcGracePeriod].
+  ///
+  /// Fresh imports (pick before snapshot save) stay until the grace window
+  /// passes. Disk orphans without an index row use file modified time the same
+  /// way.
   static Future<ShelfMediaGcResult> collectGarbage(
     CollectionSnapshot snapshot,
   ) async {
     if (kIsWeb) {
       return const ShelfMediaGcResult(removedIds: []);
     }
+    return _runExclusiveIndexOp(() => _collectGarbageLocked(snapshot));
+  }
+
+  static Future<ShelfMediaGcResult> _collectGarbageLocked(
+    CollectionSnapshot snapshot,
+  ) async {
     await ensureReady();
     final referenced = <String>{};
     for (final series in snapshot.shelfSeries) {
@@ -383,6 +424,7 @@ abstract final class ShelfMediaVault {
       }
     }
 
+    final now = DateTime.now().toUtc();
     final index = await _ensureIndex();
     final removed = <String>[];
     final staleIds = index.entries.keys
@@ -391,6 +433,7 @@ abstract final class ShelfMediaVault {
     for (final id in staleIds) {
       final entry = index.entries[id];
       if (entry == null) continue;
+      if (!_isOlderThanGrace(entry.createdAt, now: now)) continue;
       await _deleteQuietly(
         _absoluteFromVaultRelative(entry.originalRelative),
       );
@@ -411,6 +454,8 @@ abstract final class ShelfMediaVault {
       final id = _parseIdFromFileName(entity.path);
       if (id == null) continue;
       if (index.entries.containsKey(id) || referenced.contains(id)) continue;
+      final modified = (await entity.stat()).modified.toUtc();
+      if (!_isOlderThanGrace(modified, now: now)) continue;
       await _deleteQuietly(entity.path);
       final thumb = await _thumbAbsForId(id);
       await _deleteQuietly(thumb);
@@ -419,6 +464,11 @@ abstract final class ShelfMediaVault {
 
     await _flushIndex();
     return ShelfMediaGcResult(removedIds: removed);
+  }
+
+  static bool _isOlderThanGrace(DateTime stamp, {required DateTime now}) {
+    return !now.difference(stamp.toUtc()).isNegative &&
+        now.difference(stamp.toUtc()) >= gcGracePeriod;
   }
 
   /// Entries newest [lastAccessedAt] first — for recovery package truncation.
@@ -451,6 +501,29 @@ abstract final class ShelfMediaVault {
     if (id == null) return null;
     final index = await _ensureIndex();
     return index.entries[id]?.lastAccessedAt;
+  }
+
+  /// Ages an index row for GC grace-period tests.
+  @visibleForTesting
+  static Future<void> backdateCreatedAtForTest(
+    String vaultRef,
+    DateTime createdAt,
+  ) async {
+    await _runExclusiveIndexOp(() async {
+      final id = idFromRef(vaultRef);
+      if (id == null) return;
+      final index = await _ensureIndex();
+      final entry = index.entries[id];
+      if (entry == null) return;
+      index.upsert(
+        id: id,
+        originalRelative: entry.originalRelative,
+        thumbRelative: entry.thumbRelative,
+        createdAt: createdAt.toUtc(),
+        lastAccessedAt: entry.lastAccessedAt,
+      );
+      await _flushIndex();
+    });
   }
 
   static String _absoluteFromVaultRelative(String relative) {

@@ -154,6 +154,11 @@ void main() {
     expect(File(oldAbs).existsSync(), isTrue);
     expect(File(newAbs).existsSync(), isTrue);
 
+    await ShelfMediaVault.backdateCreatedAtForTest(
+      oldRef!,
+      DateTime.now().toUtc().subtract(ShelfMediaVault.gcGracePeriod),
+    );
+
     final snapshot = CollectionSnapshot(
       shelfSeries: [
         ShelfSeries(
@@ -184,9 +189,51 @@ void main() {
     expect(await ShelfMediaVault.entriesByRecentAccess(), hasLength(1));
   });
 
+  test('GC keeps fresh import not yet in snapshot', () async {
+    final source = File('${tempSupport.path}${Platform.pathSeparator}pending.jpg');
+    await source.writeAsBytes(_jpegBytes(width: 130, height: 130));
+    final pendingRef = await ShelfMediaVault.importFromPath(source.path);
+    final abs = ShelfMediaVault.resolveToFilePathSync(pendingRef)!;
+
+    final emptySnapshot = CollectionSnapshot(
+      shelfSeries: const [],
+      figureStates: const {},
+    );
+    final gc = await ShelfMediaVault.collectGarbage(emptySnapshot);
+
+    expect(gc.removedIds, isEmpty);
+    expect(File(abs).existsSync(), isTrue);
+    expect(await ShelfMediaVault.entriesByRecentAccess(), hasLength(1));
+  });
+
+  test('GC deletes unreferenced entry older than grace', () async {
+    final source = File('${tempSupport.path}${Platform.pathSeparator}stale.jpg');
+    await source.writeAsBytes(_jpegBytes(width: 140, height: 140));
+    final staleRef = await ShelfMediaVault.importFromPath(source.path);
+    final abs = ShelfMediaVault.resolveToFilePathSync(staleRef)!;
+
+    await ShelfMediaVault.backdateCreatedAtForTest(
+      staleRef!,
+      DateTime.now().toUtc().subtract(
+        ShelfMediaVault.gcGracePeriod + const Duration(minutes: 1),
+      ),
+    );
+
+    final emptySnapshot = CollectionSnapshot(
+      shelfSeries: const [],
+      figureStates: const {},
+    );
+    final gc = await ShelfMediaVault.collectGarbage(emptySnapshot);
+
+    expect(gc.removedIds, contains(ShelfMediaVault.idFromRef(staleRef)));
+    expect(File(abs).existsSync(), isFalse);
+    expect(await ShelfMediaVault.entriesByRecentAccess(), isEmpty);
+  });
+
   test('constants match recovery budget contract', () {
     expect(ShelfMediaVault.thumbLongestEdge, 512);
     expect(ShelfMediaVault.thumbJpegQuality, 75);
     expect(ShelfMediaVault.autoBackupMaxBytes, 20 * 1024 * 1024);
+    expect(ShelfMediaVault.gcGracePeriod, const Duration(hours: 24));
   });
 }
