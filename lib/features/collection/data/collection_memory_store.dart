@@ -308,46 +308,53 @@ final class CollectionMemoryStore {
         a.secretOwnedCount == b.secretOwnedCount;
   }
 
+  /// JSON payload matching the prefs v3 shape (for recovery packs).
+  Future<String> encodeJson() async {
+    await ensureLoaded();
+    return jsonEncode(_toJsonMap(_cached));
+  }
+
   Future<void> _persist() async {
     final prefs = await SharedPreferences.getInstance();
-    final era = _cached.lastRecordedEra;
-    await prefs.setString(
-      _prefsKeyV3,
-      jsonEncode({
-        'firstSecretOwnedAtMs': _cached.firstSecretOwnedAtMs,
-        'lastCompletedSeriesId': _cached.lastCompletedSeriesId,
-        'lastCompletedAtMs': _cached.lastCompletedAtMs,
-        'firstSeriesAddedAtMs': _cached.firstSeriesAddedAtMs,
-        'ipSeriesDepth': _cached.ipSeriesDepth,
-        if (era != null) 'lastRecordedEra': _encodeEra(era),
-        if (_cached.priorEraForEvolution != null)
-          'priorEraForEvolution': _encodeEra(_cached.priorEraForEvolution!),
-        'priorEraSetAtMs': _cached.priorEraSetAtMs,
-        if (_cached.collectorTypeArchetypeId != null &&
-            _cached.collectorTypeArchetypeId!.isNotEmpty)
-          'collectorTypeArchetypeId': _cached.collectorTypeArchetypeId,
-        if (_cached.collectorTypeRevealedAtMs != null)
-          'collectorTypeRevealedAtMs': _cached.collectorTypeRevealedAtMs,
-        if (_cached.collectorTypeSignatureHash != null &&
-            _cached.collectorTypeSignatureHash!.isNotEmpty)
-          'collectorTypeSignatureHash': _cached.collectorTypeSignatureHash,
-        if (_cached.collectorTypeStatsJson != null &&
-            _cached.collectorTypeStatsJson!.isNotEmpty)
-          'collectorTypeStatsJson': _cached.collectorTypeStatsJson,
-        if (_cached.collectorTypeStatsVersion != null)
-          'collectorTypeStatsVersion': _cached.collectorTypeStatsVersion,
-        if (_cached.collectorTypeReasonKey != null &&
-            _cached.collectorTypeReasonKey!.isNotEmpty)
-          'collectorTypeReasonKey': _cached.collectorTypeReasonKey,
-        if (_cached.collectorTypeResolverVersion != null &&
-            _cached.collectorTypeResolverVersion!.isNotEmpty)
-          'collectorTypeResolverVersion': _cached.collectorTypeResolverVersion,
-        if (_cached.collectorTypeRevealHistory.isNotEmpty)
-          'collectorTypeRevealHistory': [
-            for (final r in _cached.collectorTypeRevealHistory) r.toJson(),
-          ],
-      }),
-    );
+    await prefs.setString(_prefsKeyV3, jsonEncode(_toJsonMap(_cached)));
+  }
+
+  static Map<String, Object?> _toJsonMap(CollectionMemoryData data) {
+    final era = data.lastRecordedEra;
+    return {
+      'firstSecretOwnedAtMs': data.firstSecretOwnedAtMs,
+      'lastCompletedSeriesId': data.lastCompletedSeriesId,
+      'lastCompletedAtMs': data.lastCompletedAtMs,
+      'firstSeriesAddedAtMs': data.firstSeriesAddedAtMs,
+      'ipSeriesDepth': data.ipSeriesDepth,
+      if (era != null) 'lastRecordedEra': _encodeEra(era),
+      if (data.priorEraForEvolution != null)
+        'priorEraForEvolution': _encodeEra(data.priorEraForEvolution!),
+      'priorEraSetAtMs': data.priorEraSetAtMs,
+      if (data.collectorTypeArchetypeId != null &&
+          data.collectorTypeArchetypeId!.isNotEmpty)
+        'collectorTypeArchetypeId': data.collectorTypeArchetypeId,
+      if (data.collectorTypeRevealedAtMs != null)
+        'collectorTypeRevealedAtMs': data.collectorTypeRevealedAtMs,
+      if (data.collectorTypeSignatureHash != null &&
+          data.collectorTypeSignatureHash!.isNotEmpty)
+        'collectorTypeSignatureHash': data.collectorTypeSignatureHash,
+      if (data.collectorTypeStatsJson != null &&
+          data.collectorTypeStatsJson!.isNotEmpty)
+        'collectorTypeStatsJson': data.collectorTypeStatsJson,
+      if (data.collectorTypeStatsVersion != null)
+        'collectorTypeStatsVersion': data.collectorTypeStatsVersion,
+      if (data.collectorTypeReasonKey != null &&
+          data.collectorTypeReasonKey!.isNotEmpty)
+        'collectorTypeReasonKey': data.collectorTypeReasonKey,
+      if (data.collectorTypeResolverVersion != null &&
+          data.collectorTypeResolverVersion!.isNotEmpty)
+        'collectorTypeResolverVersion': data.collectorTypeResolverVersion,
+      if (data.collectorTypeRevealHistory.isNotEmpty)
+        'collectorTypeRevealHistory': [
+          for (final r in data.collectorTypeRevealHistory) r.toJson(),
+        ],
+    };
   }
 
   static Map<String, Object?> _encodeEra(ShelfEra era) => {

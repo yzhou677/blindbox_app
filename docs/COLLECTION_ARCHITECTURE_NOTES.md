@@ -83,9 +83,18 @@ updates only on user pick/replace — not on migrate or display.
 Unreferenced originals/thumbs are GC'd after snapshot persist and on a
 background startup sweep, but only after a 24h grace window on `createdAt`
 (or file mtime for disk orphans). That protects pick-before-save races.
-Import / migrate / GC share a serial index lock. Recovery Auto Backup (later
-PR) ships thumbs only; full-resolution originals stay in the vault for manual
-export.
+Import / migrate / GC share a serial index lock.
+
+### Shelf recovery pack (Android Auto Backup)
+
+After each collection persist debounce, Shelfy writes
+`files/recovery/pack/` (`ShelfRecoveryPack`): manifest + snapshot + memory +
+UI prefs + vault thumbs (newest `lastAccessedAt` first, total ≤ 20MB;
+`mediaTruncated` when thumbs are dropped for size). Snapshot vault refs stay
+relative. Catalog art is not packed. Packs older than 30 days are deleted on
+read. Android `fullBackupContent` / `dataExtractionRules` include only
+`files/recovery/` and exclude `shared_prefs` so reinstall restores the pack
+without auto-hydrating `collection_snapshot_v1` (dialog restore is PR3).
 
 ---
 
