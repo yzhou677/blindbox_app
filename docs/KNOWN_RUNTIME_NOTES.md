@@ -65,13 +65,13 @@ Typical order ([`CatalogImageResolver`](../lib/features/catalog/catalog_image_re
 
 ```
 disk cache (LRU + TTL)
-  → Firebase Storage (extension probe: .avif, .webp, .png, …)
+  → Firebase Storage (extension probe: .webp, .png, .jpg, …)
   → placeholder
 ```
 
 No APK-bundled `assets/catalog/**` tier. Fresh install + offline shows placeholders until Storage has been fetched at least once.
 
-**Offline fail-fast:** if connectivity is offline, or a Storage probe times out / hits a transport error, the resolver stops immediately (does **not** walk remaining extensions with 8s timeouts) and pauses further Storage probes for the session until connectivity looks online again. Transient transport misses are not written to the session missing-key cache.
+**Offline / transport gating:** if connectivity is offline, Storage probes are skipped. A per-extension `TimeoutException` while still online continues to the next extension (so a slow/missing `.avif` does not block `.webp`). If a key finishes with timeouts and no hit, further Storage probes pause until connectivity recovers. Hard Firebase transport errors still fail that key immediately. Transient transport misses are not written to the session missing-key cache.
 
 ### Catalog bundle logs (informational)
 

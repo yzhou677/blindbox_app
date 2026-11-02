@@ -217,7 +217,7 @@ Firebase is for the **catalog universe only** in the current roadmap. Collection
 
 ### Storage (public catalog art)
 
-- **Scope:** read-only catalog thumbnails keyed by `imageKey`. Deterministic paths: `catalog/series/<imageKey>.<ext>`, `catalog/figures/<imageKey>.<ext>` — probe `.avif`, `.webp`, `.png`, `.jpg`, `.jpeg` until one exists. See [`FIREBASE_STORAGE_CATALOG.md`](../lib/features/catalog/firestore/FIREBASE_STORAGE_CATALOG.md).
+- **Scope:** read-only catalog thumbnails keyed by `imageKey`. Deterministic paths: `catalog/series/<imageKey>.<ext>`, `catalog/figures/<imageKey>.<ext>` — probe `.webp`, `.png`, `.jpg`, `.jpeg`, `.avif` until one exists. See [`FIREBASE_STORAGE_CATALOG.md`](../lib/features/catalog/firestore/FIREBASE_STORAGE_CATALOG.md).
 - **Not in scope for MVP agents:** uploading `localImageUri` / `customCoverImageUri` (private shelf photos).
 - **Resolver:** three-tier display strategy at **display time** (see [`catalog_image_resolver.dart`](../lib/features/catalog/catalog_image_resolver.dart), [`catalog_image_disk_cache.dart`](../lib/features/catalog/data/catalog_image_disk_cache.dart), [`catalog_image_cache_policy.dart`](../lib/features/catalog/data/catalog_image_cache_policy.dart)):
   1. Bounded disk cache (`ApplicationSupport/catalog_image_cache/`) — **resilience layer**, not canonical storage

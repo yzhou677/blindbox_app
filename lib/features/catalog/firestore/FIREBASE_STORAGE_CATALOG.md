@@ -20,7 +20,7 @@ Paths are **deterministic** — constructed at runtime from `imageKey` only.
 **Series:** `catalog/series/<imageKey>.<ext>`  
 **Figures:** `catalog/figures/<imageKey>.<ext>`
 
-**Supported `<ext>` (probe in this order until one exists):** `.avif`, `.webp`, `.png`, `.jpg`, `.jpeg`
+**Supported `<ext>` (probe in this order until one exists):** `.webp`, `.png`, `.jpg`, `.jpeg`, `.avif`
 
 Catalog art uses mixed formats in the bucket (mostly png / webp / jpg, some avif). Upload any supported extension; the app does not assume png-only.
 

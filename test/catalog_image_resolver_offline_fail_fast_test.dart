@@ -62,79 +62,125 @@ void main() {
       expect(CatalogImageResolver.storageTransportUnavailable, isTrue);
     });
 
-    test('TimeoutException stops after first extension probe', () async {
-      CatalogImageResolver.getDownloadUrlOverride = (_) async {
-        throw TimeoutException('simulated storage timeout');
-      };
-
-      final ref = await CatalogImageResolver.resolveFigureStorageRef(
-        'timeout_key_bbb',
-      );
-
-      expect(ref, isNull);
-      expect(CatalogImageResolver.storageExtensionProbeCount, 1);
-      expect(CatalogImageResolver.storageTransportUnavailable, isTrue);
-    });
-
     test(
-      'timeout does not negative-cache the key; later online can probe again',
+      'online TimeoutException on first ext continues and can hit later ext',
       () async {
-        var mode = 'timeout';
         CatalogImageResolver.getDownloadUrlOverride = (path) async {
-          if (mode == 'timeout') {
-            throw TimeoutException('down');
-          }
           if (path.endsWith('.webp')) {
+            throw TimeoutException('avif-equivalent first probe slow');
+          }
+          if (path.endsWith('.png')) {
             return 'https://example.test/$path';
           }
           return null;
+        };
+
+        final ref = await CatalogImageResolver.resolveFigureStorageRef(
+          'webp_timeout_png_hit',
+        );
+
+        expect(ref, isNotNull);
+        expect(CatalogImageResolver.storageExtensionProbeCount, 2);
+        expect(CatalogImageResolver.storageTransportUnavailable, isFalse);
+      },
+    );
+
+    test(
+      'all-extension timeouts while online mark transport unavailable',
+      () async {
+        CatalogImageResolver.getDownloadUrlOverride = (_) async {
+          throw TimeoutException('simulated storage timeout');
+        };
+
+        final ref = await CatalogImageResolver.resolveFigureStorageRef(
+          'timeout_key_bbb',
+        );
+
+        expect(ref, isNull);
+        expect(
+          CatalogImageResolver.storageExtensionProbeCount,
+          CatalogImageResolver.assetExtensions.length,
+        );
+        expect(CatalogImageResolver.storageTransportUnavailable, isTrue);
+      },
+    );
+
+    test(
+      'timeout while flipping offline aborts remaining extensions',
+      () async {
+        var online = true;
+        CatalogImageResolver.isOnlineOverride = () async => online;
+        CatalogImageResolver.getDownloadUrlOverride = (_) async {
+          online = false;
+          throw TimeoutException('link dropped mid-probe');
+        };
+
+        final ref = await CatalogImageResolver.resolveFigureStorageRef(
+          'drop_mid_probe',
+        );
+
+        expect(ref, isNull);
+        expect(CatalogImageResolver.storageExtensionProbeCount, 1);
+        expect(CatalogImageResolver.storageTransportUnavailable, isTrue);
+      },
+    );
+
+    test(
+      'timeout miss does not negative-cache; later online can probe again',
+      () async {
+        CatalogImageResolver.getDownloadUrlOverride = (_) async {
+          throw TimeoutException('down');
         };
 
         expect(
           await CatalogImageResolver.resolveFigureStorageRef('recover_key'),
           isNull,
         );
-        expect(CatalogImageResolver.storageExtensionProbeCount, 1);
+        expect(
+          CatalogImageResolver.storageExtensionProbeCount,
+          CatalogImageResolver.assetExtensions.length,
+        );
 
-        // Still offline: subsequent keys must not walk extensions.
+        // Gate stays closed while offline.
         CatalogImageResolver.isOnlineOverride = () async => false;
-        final probesAfterTimeout =
-            CatalogImageResolver.storageExtensionProbeCount;
+        CatalogImageResolver.storageExtensionProbeCount = 0;
         expect(
           await CatalogImageResolver.resolveFigureStorageRef('another_key'),
           isNull,
         );
-        expect(
-          CatalogImageResolver.storageExtensionProbeCount,
-          probesAfterTimeout,
-        );
+        expect(CatalogImageResolver.storageExtensionProbeCount, 0);
 
-        // Back online: clear gate and resolve the original key.
+        // Back online: clear gate and resolve via webp.
         CatalogImageResolver.isOnlineOverride = () async => true;
-        mode = 'ok';
         CatalogImageResolver.storageExtensionProbeCount = 0;
+        CatalogImageResolver.getDownloadUrlOverride = (path) async {
+          if (path.endsWith('.webp')) {
+            return 'https://example.test/$path';
+          }
+          return null;
+        };
 
         final recovered = await CatalogImageResolver.resolveFigureStorageRef(
           'recover_key',
         );
         expect(recovered, isNotNull);
         expect(CatalogImageResolver.storageTransportUnavailable, isFalse);
-        expect(
-          CatalogImageResolver.storageExtensionProbeCount,
-          lessThan(CatalogImageResolver.assetExtensions.length),
-        );
+        expect(CatalogImageResolver.storageExtensionProbeCount, 1);
       },
     );
 
     test(
-      'after transport failure, sibling keys skip probes while offline',
+      'after all-timeout miss, sibling keys skip probes while gate held',
       () async {
         CatalogImageResolver.getDownloadUrlOverride = (_) async {
           throw TimeoutException('down');
         };
 
         await CatalogImageResolver.resolveSeriesStorageRef('first_miss');
-        expect(CatalogImageResolver.storageExtensionProbeCount, 1);
+        expect(
+          CatalogImageResolver.storageExtensionProbeCount,
+          CatalogImageResolver.assetExtensions.length,
+        );
 
         CatalogImageResolver.isOnlineOverride = () async => false;
         CatalogImageResolver.storageExtensionProbeCount = 0;
@@ -165,7 +211,6 @@ void main() {
         );
         expect(CatalogImageResolver.storageTransportUnavailable, isFalse);
 
-        // Second call uses session missing cache — zero probes.
         CatalogImageResolver.storageExtensionProbeCount = 0;
         expect(
           await CatalogImageResolver.resolveFigureStorageRef(
