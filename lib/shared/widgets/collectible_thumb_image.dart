@@ -1,6 +1,7 @@
 import 'package:blindbox_app/core/media/device_local_ref.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_aspect_image.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
+import 'package:blindbox_app/features/collection/data/shelf_media_vault.dart';
 import 'package:blindbox_app/features/collection/widgets/collectible_figure_placeholder.dart';
 import 'package:blindbox_app/shared/widgets/catalog_resolved_image.dart';
 import 'collectible_local_file_image_stub.dart'
@@ -60,8 +61,11 @@ class CollectibleThumbImage extends StatelessWidget {
 
     CatalogAspectImage.assertAspectPreservingFit(fit);
 
-    if (DeviceLocalImageRef.looksLikeDevicePath(ref)) {
-      final path = DeviceLocalImageRef.normalizeToFilePath(ref);
+    if (ShelfMediaVault.isVaultRef(ref) ||
+        DeviceLocalImageRef.looksLikeDevicePath(ref)) {
+      final path =
+          ShelfMediaVault.resolveToFilePathSync(ref) ??
+          DeviceLocalImageRef.normalizeToFilePath(ref);
       return shelf_local_image.buildCollectibleLocalFileImage(
         filePath: path,
         name: name,

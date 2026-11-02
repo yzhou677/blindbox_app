@@ -6,6 +6,7 @@ import 'package:blindbox_app/core/router/app_router.dart';
 import 'package:blindbox_app/features/catalog/catalog_image_resolver.dart';
 import 'package:blindbox_app/features/catalog/data/catalog_image_disk_cache.dart';
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
+import 'package:blindbox_app/features/collection/data/shelf_media_vault.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/domain/series_completion_resolution.dart';
 import 'package:blindbox_app/features/collection/widget/on_display_widget_payload.dart';
@@ -180,7 +181,9 @@ class _OnDisplayWidgetSyncHostState
   Future<String> _localCoverPath(ShelfSeries series) async {
     final custom = series.customCoverImageUri?.trim();
     if (custom != null && custom.isNotEmpty) {
-      final path = DeviceLocalImageRef.normalizeToFilePath(custom);
+      final path =
+          ShelfMediaVault.resolveToFilePathSync(custom) ??
+          DeviceLocalImageRef.normalizeToFilePath(custom);
       if (await File(path).exists()) return path;
     }
 
