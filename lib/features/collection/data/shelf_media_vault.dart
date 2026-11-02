@@ -5,6 +5,7 @@ import 'dart:isolate';
 import 'dart:typed_data' show Uint8List;
 
 import 'package:blindbox_app/core/media/device_local_ref.dart';
+import 'package:blindbox_app/features/collection/bootstrap/collection_recovery_gate.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:flutter/foundation.dart'
     show debugPrint, immutable, kIsWeb, visibleForTesting;
@@ -407,7 +408,61 @@ abstract final class ShelfMediaVault {
     if (kIsWeb) {
       return const ShelfMediaGcResult(removedIds: []);
     }
+    if (CollectionRecoveryGate.blocksBackgroundWrites) {
+      return const ShelfMediaGcResult(removedIds: []);
+    }
     return _runExclusiveIndexOp(() => _collectGarbageLocked(snapshot));
+  }
+
+  /// Installs a recovery-pack thumb as vault media under a stable [id].
+  ///
+  /// When originals are missing (Auto Backup only ships thumbs), the thumb
+  /// bytes are also written as the original and [recoveredFromThumb] is set.
+  static Future<String> installRecoveredThumb({
+    required String id,
+    required List<int> thumbBytes,
+  }) async {
+    if (kIsWeb) {
+      return _vaultRefFor(id: id, ext: '.jpg');
+    }
+    return _runExclusiveIndexOp(() async {
+      await ensureReady();
+      final trimmedId = id.trim();
+      if (trimmedId.isEmpty || thumbBytes.isEmpty) {
+        throw ArgumentError('recover thumb requires id and bytes');
+      }
+      final originals = await _subdir(originalsFolderName);
+      final thumbs = await _subdir(thumbsFolderName);
+      final originalPath = '${originals.path}$_sep$trimmedId.jpg';
+      final thumbPath = '${thumbs.path}$_sep$trimmedId.jpg';
+      final originalFile = File(originalPath);
+      final hadOriginal = await originalFile.exists();
+      if (!hadOriginal) {
+        await originalFile.writeAsBytes(thumbBytes, flush: true);
+      }
+      await File(thumbPath).writeAsBytes(thumbBytes, flush: true);
+      final now = DateTime.now().toUtc();
+      final index = await _ensureIndex();
+      final existing = index.entries[trimmedId];
+      index.upsert(
+        id: trimmedId,
+        originalRelative: '$originalsFolderName/$trimmedId.jpg',
+        thumbRelative: '$thumbsFolderName/$trimmedId.jpg',
+        createdAt: existing?.createdAt ?? now,
+        lastAccessedAt: existing?.lastAccessedAt ?? now,
+        recoveredFromThumb: !hadOriginal || (existing?.recoveredFromThumb ?? false),
+      );
+      await _flushIndex();
+      return _vaultRefFor(id: trimmedId, ext: '.jpg');
+    });
+  }
+
+  @visibleForTesting
+  static Future<bool?> recoveredFromThumbForTest(String vaultRef) async {
+    final id = idFromRef(vaultRef);
+    if (id == null) return null;
+    final index = await _ensureIndex();
+    return index.entries[id]?.recoveredFromThumb;
   }
 
   static Future<ShelfMediaGcResult> _collectGarbageLocked(
@@ -521,6 +576,7 @@ abstract final class ShelfMediaVault {
         thumbRelative: entry.thumbRelative,
         createdAt: createdAt.toUtc(),
         lastAccessedAt: entry.lastAccessedAt,
+        recoveredFromThumb: entry.recoveredFromThumb,
       );
       await _flushIndex();
     });
@@ -544,6 +600,7 @@ abstract final class ShelfMediaVault {
         thumbRelative: entry.thumbRelative,
         createdAt: entry.createdAt,
         lastAccessedAt: lastAccessedAt.toUtc(),
+        recoveredFromThumb: entry.recoveredFromThumb,
       );
       await _flushIndex();
     });
@@ -591,6 +648,7 @@ abstract final class ShelfMediaVault {
           thumbRelative: entry.thumbRelative ?? '$thumbsFolderName/$id.jpg',
           createdAt: entry.createdAt,
           lastAccessedAt: DateTime.now().toUtc(),
+          recoveredFromThumb: entry.recoveredFromThumb,
         );
       }
       return false;
@@ -612,6 +670,7 @@ abstract final class ShelfMediaVault {
       lastAccessedAt: bumpAccess
           ? now
           : (entry?.lastAccessedAt ?? now),
+      recoveredFromThumb: entry?.recoveredFromThumb ?? false,
     );
     return true;
   }
@@ -791,6 +850,7 @@ class _VaultIndex {
     required String? thumbRelative,
     required DateTime createdAt,
     required DateTime lastAccessedAt,
+    bool recoveredFromThumb = false,
   }) {
     entries[id] = _VaultIndexEntry(
       id: id,
@@ -798,6 +858,7 @@ class _VaultIndex {
       thumbRelative: thumbRelative,
       createdAt: createdAt,
       lastAccessedAt: lastAccessedAt,
+      recoveredFromThumb: recoveredFromThumb,
     );
     dirty = true;
   }
@@ -816,6 +877,7 @@ class _VaultIndexEntry {
     required this.thumbRelative,
     required this.createdAt,
     required this.lastAccessedAt,
+    this.recoveredFromThumb = false,
   });
 
   final String id;
@@ -823,6 +885,7 @@ class _VaultIndexEntry {
   final String? thumbRelative;
   final DateTime createdAt;
   final DateTime lastAccessedAt;
+  final bool recoveredFromThumb;
 
   static _VaultIndexEntry? fromJson(String id, Map<String, dynamic> json) {
     final original = json['original']?.toString();
@@ -839,6 +902,7 @@ class _VaultIndexEntry {
       thumbRelative: json['thumb']?.toString(),
       createdAt: parse(json['createdAt']?.toString(), now),
       lastAccessedAt: parse(json['lastAccessedAt']?.toString(), now),
+      recoveredFromThumb: json['recoveredFromThumb'] == true,
     );
   }
 
@@ -847,5 +911,6 @@ class _VaultIndexEntry {
     if (thumbRelative != null) 'thumb': thumbRelative,
     'createdAt': createdAt.toIso8601String(),
     'lastAccessedAt': lastAccessedAt.toIso8601String(),
+    if (recoveredFromThumb) 'recoveredFromThumb': true,
   };
 }

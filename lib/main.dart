@@ -8,6 +8,7 @@ import 'package:blindbox_app/core/router/app_router.dart';
 import 'package:blindbox_app/core/theme/app_theme.dart';
 import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
 import 'package:blindbox_app/features/collection/bootstrap/collection_app_bootstrap.dart';
+import 'package:blindbox_app/features/collection/bootstrap/collection_recovery_gate.dart';
 import 'package:blindbox_app/features/collection/data/collection_seed_data.dart';
 import 'package:blindbox_app/features/collection/data/series_release_lookup.dart';
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
@@ -15,6 +16,7 @@ import 'package:blindbox_app/features/collection/data/shelf_media_vault.dart';
 import 'package:blindbox_app/features/collection/data/shelf_recovery_pack.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/persistence/collection_snapshot_storage.dart';
+import 'package:blindbox_app/features/collection/widgets/shelf_recovery_decision_app.dart';
 import 'package:blindbox_app/features/home/application/catalog_bundle_refresh_bridge.dart';
 import 'package:blindbox_app/features/home/application/home_feed_provider.dart';
 import 'package:blindbox_app/features/market/data/market_catalog_identity_cache.dart';
@@ -48,22 +50,32 @@ Future<void> main() async {
   } catch (e, st) {
     debugPrint('Shelf media vault ensureReady skipped: $e\n$st');
   }
+
   final restored = await CollectionSnapshotStorage.load();
-  var snapshot = restored ?? CollectionSeedData.initialSnapshot();
-  if (restored != null) {
-    try {
-      final migrated = await ShelfMediaVault.migrateSnapshot(restored);
-      if (migrated.changed) {
-        snapshot = migrated.snapshot;
-        await CollectionSnapshotStorage.save(snapshot);
+  // tryLoad deletes expired packs and returns null — no dialog in that case.
+  final recoveryPack = await ShelfRecoveryPack.tryLoad();
+  final needsRecovery = restored == null && recoveryPack != null;
+
+  if (needsRecovery) {
+    CollectionRecoveryGate.enterPending();
+  } else {
+    var snapshot = restored ?? CollectionSeedData.initialSnapshot();
+    if (restored != null) {
+      try {
+        final migrated = await ShelfMediaVault.migrateSnapshot(restored);
+        if (migrated.changed) {
+          snapshot = migrated.snapshot;
+          await CollectionSnapshotStorage.save(snapshot);
+        }
+        // Orphan sweep must not block first frame.
+        unawaited(_shelfMediaGc(snapshot));
+      } catch (e, st) {
+        debugPrint('Shelf media vault migrate skipped: $e\n$st');
       }
-      // Orphan sweep must not block first frame.
-      unawaited(_shelfMediaGc(snapshot));
-    } catch (e, st) {
-      debugPrint('Shelf media vault migrate skipped: $e\n$st');
     }
+    CollectionAppBootstrap.prime(snapshot);
   }
-  CollectionAppBootstrap.prime(snapshot);
+
   await CollectionMemoryStore.instance.ensureLoaded();
   ShelfRecoveryPack.installPersistHooks();
   runApp(
@@ -73,7 +85,14 @@ Future<void> main() async {
           (ref) => ref.watch(homeSeriesReleaseLookupProvider),
         ),
       ],
-      child: const CatalogBundleRefreshBridge(child: BlindboxApp()),
+      child: CatalogBundleRefreshBridge(
+        child: needsRecovery
+            ? ShelfRecoveryDecisionApp(
+                pack: recoveryPack,
+                appBuilder: (_) => const BlindboxApp(),
+              )
+            : const BlindboxApp(),
+      ),
     ),
   );
 }

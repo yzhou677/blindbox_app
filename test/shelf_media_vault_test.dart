@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
 
+import 'package:blindbox_app/features/collection/bootstrap/collection_recovery_gate.dart';
 import 'package:blindbox_app/features/collection/data/shelf_media_vault.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,12 +21,14 @@ void main() {
 
   setUp(() async {
     tempSupport = await Directory.systemTemp.createTemp('shelf_media_support_');
+    CollectionRecoveryGate.resetForTest();
     ShelfMediaVault.resetForTest();
     ShelfMediaVault.testSupportOverride = tempSupport;
     await ShelfMediaVault.ensureReady();
   });
 
   tearDown(() async {
+    CollectionRecoveryGate.resetForTest();
     ShelfMediaVault.resetForTest();
     if (await tempSupport.exists()) {
       await tempSupport.delete(recursive: true);

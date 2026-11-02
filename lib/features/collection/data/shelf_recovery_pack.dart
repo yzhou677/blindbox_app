@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:blindbox_app/features/collection/application/collection_shelf_ui_prefs_provider.dart';
+import 'package:blindbox_app/features/collection/bootstrap/collection_recovery_gate.dart';
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
 import 'package:blindbox_app/features/collection/data/shelf_media_vault.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
@@ -142,6 +143,7 @@ abstract final class ShelfRecoveryPack {
   /// Debounced pack write (collection / memory / UI prefs).
   static void scheduleWrite({CollectionSnapshot? snapshot}) {
     if (kIsWeb) return;
+    if (CollectionRecoveryGate.blocksBackgroundWrites) return;
     if (snapshot != null) {
       _debouncedSnapshotHint = snapshot;
     }
@@ -169,6 +171,9 @@ abstract final class ShelfRecoveryPack {
     String? uiPrefsJson,
   }) async {
     if (kIsWeb) {
+      return const ShelfRecoveryWriteResult(wrote: false, mediaTruncated: false);
+    }
+    if (CollectionRecoveryGate.blocksBackgroundWrites) {
       return const ShelfRecoveryWriteResult(wrote: false, mediaTruncated: false);
     }
 
@@ -465,6 +470,19 @@ abstract final class ShelfRecoveryPack {
       mediaIds: mediaIds,
       packPath: pack.path,
     );
+  }
+
+  /// Deletes pack / staging / old directories (Start fresh).
+  static Future<void> deletePack() async {
+    if (kIsWeb) return;
+    final root = await recoveryRoot();
+    await _deleteQuietly(Directory('${root.path}$_sep$packDirName'));
+    await _deleteQuietly(Directory('${root.path}$_sep$stagingDirName'));
+    await _deleteQuietly(Directory('${root.path}$_sep$oldDirName'));
+  }
+
+  static String mediaFilePath(String packPath, String mediaId) {
+    return '$packPath$_sep$mediaDirName$_sep$mediaId.jpg';
   }
 
   static Future<void> _deleteQuietly(Directory dir) async {
