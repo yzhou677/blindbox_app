@@ -1,15 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Auto Backup (API ≤ 30 / fullBackupContent): only files/recovery/.
-  shared_prefs and every other domain must stay out so reinstall does not
-  silently restore collection_snapshot_v1 — recovery dialog owns that restore.
+  Explicitly exclude shared_prefs so collection_snapshot_v1 is never
+  auto-restored — recovery dialog (PR3) owns that restore.
 -->
 <full-backup-content>
     <include domain="file" path="recovery/" />
     <exclude domain="sharedpref" path="." />
-    <exclude domain="database" path="." />
-    <exclude domain="root" path="." />
-    <exclude domain="external" path="." />
-    <exclude domain="file" path="shelf_media/" />
-    <exclude domain="file" path="app_flutter/" />
 </full-backup-content>

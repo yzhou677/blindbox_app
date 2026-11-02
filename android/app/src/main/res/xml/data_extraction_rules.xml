@@ -1,26 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Android 12+ data extraction: cloud-backup and device-transfer both restore
-  only files/recovery/. Explicitly exclude shared_prefs so shelf prefs never
-  auto-hydrate after reinstall / device transfer.
+  only files/recovery/. Exclude shared_prefs so shelf prefs never auto-hydrate.
 -->
 <data-extraction-rules>
     <cloud-backup>
         <include domain="file" path="recovery/" />
         <exclude domain="sharedpref" path="." />
-        <exclude domain="database" path="." />
-        <exclude domain="root" path="." />
-        <exclude domain="external" path="." />
-        <exclude domain="file" path="shelf_media/" />
-        <exclude domain="file" path="app_flutter/" />
     </cloud-backup>
     <device-transfer>
         <include domain="file" path="recovery/" />
         <exclude domain="sharedpref" path="." />
-        <exclude domain="database" path="." />
-        <exclude domain="root" path="." />
-        <exclude domain="external" path="." />
-        <exclude domain="file" path="shelf_media/" />
-        <exclude domain="file" path="app_flutter/" />
     </device-transfer>
 </data-extraction-rules>

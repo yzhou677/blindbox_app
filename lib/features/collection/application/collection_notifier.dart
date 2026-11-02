@@ -97,16 +97,8 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       previous: truePrevious,
       next: current,
     );
-    unawaited(_writeShelfRecoveryPack(current));
+    ShelfRecoveryPack.scheduleWrite(snapshot: current);
     unawaited(_collectShelfMediaGarbage(current));
-  }
-
-  Future<void> _writeShelfRecoveryPack(CollectionSnapshot snapshot) async {
-    try {
-      await ShelfRecoveryPack.write(snapshot: snapshot);
-    } catch (e, st) {
-      debugPrint('Shelf recovery pack write skipped: $e\n$st');
-    }
   }
 
   Future<void> _collectShelfMediaGarbage(CollectionSnapshot snapshot) async {

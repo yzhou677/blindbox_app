@@ -18,7 +18,7 @@ Uint8List _jpegBytes({int width = 200, int height = 200}) {
   return Uint8List.fromList(img.encodeJpg(image, quality: 90));
 }
 
-CollectionSnapshot _snapshotWithLocal(String? localRef) {
+CollectionSnapshot _snapshotWithLocal(String? localRef, {String name = 'Figure'}) {
   return CollectionSnapshot(
     shelfSeries: [
       ShelfSeries(
@@ -30,7 +30,7 @@ CollectionSnapshot _snapshotWithLocal(String? localRef) {
           ShelfFigure(
             id: 'f1',
             seriesId: 's1',
-            name: 'Figure',
+            name: name,
             localImageUri: localRef,
             rarity: 'Regular',
             isSecret: false,
@@ -49,6 +49,28 @@ Future<String> _importJpeg(Directory support, String name) async {
   final ref = await ShelfMediaVault.importFromPath(source.path);
   expect(ref, isNotNull);
   return ref!;
+}
+
+class _BackupRule {
+  const _BackupRule({
+    required this.kind,
+    required this.domain,
+    required this.path,
+  });
+
+  final String kind;
+  final String domain;
+  final String path;
+}
+
+List<_BackupRule> _parseBackupRules(String xml) {
+  final re = RegExp(
+    r'<(include|exclude)\s+domain="([^"]+)"\s+path="([^"]+)"\s*/>',
+  );
+  return [
+    for (final m in re.allMatches(xml))
+      _BackupRule(kind: m.group(1)!, domain: m.group(2)!, path: m.group(3)!),
+  ];
 }
 
 void main() {
@@ -132,7 +154,6 @@ void main() {
       DateTime.utc(2024, 6, 1),
     );
 
-    // Oversized thumbs so only one fits after JSON budget.
     final entries = await ShelfMediaVault.entriesByRecentAccess();
     for (final e in entries) {
       final thumb = File(e.thumbPath!);
@@ -226,11 +247,9 @@ void main() {
     expect(loaded, isNotNull);
     expect(loaded!.snapshot.shelfSeries, isEmpty);
     expect(loaded.manifest.mediaCount, 0);
-    // Missing thumb is skipped; not a size truncation.
     expect(loaded.manifest.mediaTruncated, isFalse);
     expect(loaded.mediaIds, isEmpty);
 
-    // Snapshot without custom photos also fine.
     final noPhoto = await ShelfRecoveryPack.write(
       snapshot: _snapshotWithLocal(null),
       memoryJson: '{}',
@@ -271,26 +290,160 @@ void main() {
     expect(still.memoryJson, contains('"marker":"v1"'));
   });
 
-  test('Android backup XML includes recovery and excludes shared_prefs', () async {
+  test('concurrent write coalesces to latest snapshot', () async {
+    ShelfRecoveryPack.testBeforeCommitHook = () async {
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+    };
+
+    final first = ShelfRecoveryPack.write(
+      snapshot: _snapshotWithLocal(null, name: 'first'),
+      memoryJson: '{"n":1}',
+      uiPrefsJson: '{}',
+      appVersion: 'first',
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 5));
+    final second = ShelfRecoveryPack.write(
+      snapshot: _snapshotWithLocal(null, name: 'second'),
+      memoryJson: '{"n":2}',
+      uiPrefsJson: '{}',
+      appVersion: 'second',
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 5));
+    final third = ShelfRecoveryPack.write(
+      snapshot: _snapshotWithLocal(null, name: 'third'),
+      memoryJson: '{"n":3}',
+      uiPrefsJson: '{}',
+      appVersion: 'third',
+    );
+
+    await Future.wait([first, second, third]);
+    final loaded = await ShelfRecoveryPack.tryLoad();
+    expect(loaded, isNotNull);
+    expect(loaded!.manifest.appVersion, 'third');
+    expect(loaded.snapshot.shelfSeries.single.figures.single.name, 'third');
+    expect(loaded.memoryJson, contains('"n":3'));
+  });
+
+  test('tryLoad recovers pack.old when pack is missing', () async {
+    await ShelfRecoveryPack.write(
+      snapshot: _snapshotWithLocal(null, name: 'from-old'),
+      memoryJson: '{"from":"old"}',
+      uiPrefsJson: '{}',
+      appVersion: 'old-pack',
+    );
+    final root = Directory(
+      '${tempSupport.path}${Platform.pathSeparator}${ShelfRecoveryPack.folderName}',
+    );
+    final pack = Directory(
+      '${root.path}${Platform.pathSeparator}${ShelfRecoveryPack.packDirName}',
+    );
+    final old = Directory(
+      '${root.path}${Platform.pathSeparator}${ShelfRecoveryPack.oldDirName}',
+    );
+    expect(await pack.exists(), isTrue);
+    await pack.rename(old.path);
+    expect(await pack.exists(), isFalse);
+    expect(await old.exists(), isTrue);
+
+    final loaded = await ShelfRecoveryPack.tryLoad();
+    expect(loaded, isNotNull);
+    expect(loaded!.manifest.appVersion, 'old-pack');
+    expect(loaded.snapshot.shelfSeries.single.figures.single.name, 'from-old');
+    expect(await pack.exists(), isTrue);
+    expect(await old.exists(), isFalse);
+  });
+
+  test('incremental thumb reuse matches full copy content', () async {
+    final ref = await _importJpeg(tempSupport, 'reuse.jpg');
+    await ShelfRecoveryPack.write(
+      snapshot: _snapshotWithLocal(ref),
+      memoryJson: '{}',
+      uiPrefsJson: '{}',
+    );
+    final first = await ShelfRecoveryPack.tryLoad();
+    expect(first, isNotNull);
+    final firstMedia = File(
+      '${first!.packPath}${Platform.pathSeparator}'
+      '${ShelfRecoveryPack.mediaDirName}${Platform.pathSeparator}'
+      '${ShelfMediaVault.idFromRef(ref)}.jpg',
+    );
+    final firstBytes = await firstMedia.readAsBytes();
+
+    ShelfRecoveryPack.testThumbCopiedFromVault = 0;
+    ShelfRecoveryPack.testThumbReusedFromPack = 0;
+    await ShelfRecoveryPack.write(
+      snapshot: _snapshotWithLocal(ref),
+      memoryJson: '{}',
+      uiPrefsJson: '{}',
+    );
+    expect(ShelfRecoveryPack.testThumbReusedFromPack, greaterThan(0));
+    expect(ShelfRecoveryPack.testThumbCopiedFromVault, 0);
+
+    final second = await ShelfRecoveryPack.tryLoad();
+    expect(second, isNotNull);
+    final secondMedia = File(
+      '${second!.packPath}${Platform.pathSeparator}'
+      '${ShelfRecoveryPack.mediaDirName}${Platform.pathSeparator}'
+      '${ShelfMediaVault.idFromRef(ref)}.jpg',
+    );
+    expect(await secondMedia.readAsBytes(), firstBytes);
+    expect(second.mediaIds, first.mediaIds);
+  });
+
+  test('Android backup XML only includes recovery and excludes sharedpref', () async {
     final backupRules = File('android/app/src/main/res/xml/backup_rules.xml');
     final extraction = File(
       'android/app/src/main/res/xml/data_extraction_rules.xml',
     );
     final manifest = File('android/app/src/main/AndroidManifest.xml');
 
-    expect(await backupRules.exists(), isTrue);
-    expect(await extraction.exists(), isTrue);
-
-    final backupText = await backupRules.readAsString();
-    expect(backupText, contains('path="recovery/"'));
-    expect(backupText, contains('domain="sharedpref"'));
-    expect(backupText, contains('path="."'));
+    final backupParsed = _parseBackupRules(await backupRules.readAsString());
+    expect(
+      backupParsed.where((r) => r.kind == 'include').toList(),
+      [
+        isA<_BackupRule>()
+            .having((r) => r.domain, 'domain', 'file')
+            .having((r) => r.path, 'path', 'recovery/'),
+      ],
+    );
+    expect(
+      backupParsed.where((r) => r.kind == 'exclude').toList(),
+      [
+        isA<_BackupRule>()
+            .having((r) => r.domain, 'domain', 'sharedpref')
+            .having((r) => r.path, 'path', '.'),
+      ],
+    );
+    expect(backupParsed.any((r) => r.domain == 'root'), isFalse);
 
     final extractionText = await extraction.readAsString();
     expect(extractionText, contains('<cloud-backup>'));
     expect(extractionText, contains('<device-transfer>'));
-    expect(extractionText, contains('path="recovery/"'));
-    expect(extractionText, contains('domain="sharedpref"'));
+
+    for (final section in ['cloud-backup', 'device-transfer']) {
+      final sectionMatch = RegExp(
+        '<$section>([\\s\\S]*?)</$section>',
+      ).firstMatch(extractionText);
+      expect(sectionMatch, isNotNull, reason: section);
+      final rules = _parseBackupRules(sectionMatch!.group(1)!);
+      expect(
+        rules.where((r) => r.kind == 'include').toList(),
+        [
+          isA<_BackupRule>()
+              .having((r) => r.domain, 'domain', 'file')
+              .having((r) => r.path, 'path', 'recovery/'),
+        ],
+      );
+      expect(
+        rules.where((r) => r.kind == 'exclude').toList(),
+        [
+          isA<_BackupRule>()
+              .having((r) => r.domain, 'domain', 'sharedpref')
+              .having((r) => r.path, 'path', '.'),
+        ],
+      );
+      expect(rules.any((r) => r.domain == 'root'), isFalse);
+    }
 
     final manifestText = await manifest.readAsString();
     expect(manifestText, contains('android:allowBackup="true"'));

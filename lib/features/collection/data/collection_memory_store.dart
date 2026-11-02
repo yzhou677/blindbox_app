@@ -124,6 +124,9 @@ final class CollectionMemoryStore {
   static const _prefsKeyV2 = 'collection_memory_v2';
   static const _prefsKeyV1 = 'collection_memory_v1';
 
+  /// Called after a successful prefs persist (recovery pack schedule hook).
+  static void Function()? afterPersistHook;
+
   CollectionMemoryData _cached = const CollectionMemoryData();
   CollectorTypeIdentity? _cachedCollectorTypeIdentity;
   bool _loaded = false;
@@ -317,6 +320,7 @@ final class CollectionMemoryStore {
   Future<void> _persist() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_prefsKeyV3, jsonEncode(_toJsonMap(_cached)));
+    afterPersistHook?.call();
   }
 
   static Map<String, Object?> _toJsonMap(CollectionMemoryData data) {

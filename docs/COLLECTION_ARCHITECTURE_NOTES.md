@@ -87,13 +87,14 @@ Import / migrate / GC share a serial index lock.
 
 ### Shelf recovery pack (Android Auto Backup)
 
-After each collection persist debounce, Shelfy writes
-`files/recovery/pack/` (`ShelfRecoveryPack`): manifest + snapshot + memory +
-UI prefs + vault thumbs (newest `lastAccessedAt` first, total ≤ 20MB;
-`mediaTruncated` when thumbs are dropped for size). Snapshot vault refs stay
-relative. Catalog art is not packed. Packs older than 30 days are deleted on
-read. Android `fullBackupContent` / `dataExtractionRules` include only
-`files/recovery/` and exclude `shared_prefs` so reinstall restores the pack
+After collection / memory / UI prefs persists (debounced + coalesced), Shelfy
+writes `files/recovery/pack/` (`ShelfRecoveryPack`): manifest + snapshot +
+memory + UI prefs + vault thumbs (newest `lastAccessedAt` first, total ≤ 20MB;
+`mediaTruncated` when thumbs are dropped for size; unchanged thumbs reused from
+the previous pack). Snapshot vault refs stay relative. Catalog art is not
+packed. Packs older than 30 days are deleted on read; a lone `pack.old` from a
+mid-rename crash is promoted back to `pack`. Android backup XML includes only
+`files/recovery/` and excludes `sharedpref` so reinstall restores the pack
 without auto-hydrating `collection_snapshot_v1` (dialog restore is PR3).
 
 ---
