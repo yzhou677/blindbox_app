@@ -9,6 +9,7 @@ import 'package:blindbox_app/features/collection/bootstrap/collection_app_bootst
 import 'package:blindbox_app/features/collection/data/collection_seed_data.dart';
 import 'package:blindbox_app/features/collection/data/series_release_lookup.dart';
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
+import 'package:blindbox_app/features/collection/data/shelf_media_vault.dart';
 import 'package:blindbox_app/features/collection/persistence/collection_snapshot_storage.dart';
 import 'package:blindbox_app/features/home/application/catalog_bundle_refresh_bridge.dart';
 import 'package:blindbox_app/features/home/application/home_feed_provider.dart';
@@ -39,7 +40,18 @@ Future<void> main() async {
   }
   await bootstrapMarketBrowseListings();
   final restored = await CollectionSnapshotStorage.load();
-  final snapshot = restored ?? CollectionSeedData.initialSnapshot();
+  var snapshot = restored ?? CollectionSeedData.initialSnapshot();
+  if (restored != null) {
+    try {
+      final migrated = await ShelfMediaVault.migrateSnapshot(restored);
+      if (migrated.changed) {
+        snapshot = migrated.snapshot;
+        await CollectionSnapshotStorage.save(snapshot);
+      }
+    } catch (e, st) {
+      debugPrint('Shelf media vault migrate skipped: $e\n$st');
+    }
+  }
   CollectionAppBootstrap.prime(snapshot);
   await CollectionMemoryStore.instance.ensureLoaded();
   runApp(

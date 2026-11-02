@@ -72,6 +72,14 @@ Current architecture is considered appropriate for:
 
 Future scaling should be evaluated using real-world collection sizes rather than theoretical limits.
 
+### Shelf media vault
+
+User-authored photos (`localImageUri`, `customCoverImageUri`) are copied into
+app-owned storage under Application Support `shelf_media/` (originals + 512px
+JPEG q75 thumbs). Gallery picks must not remain on ImagePicker cache paths —
+those do not survive reinstall. Recovery Auto Backup (later PR) ships thumbs
+only; full-resolution originals stay in the vault for manual export.
+
 ---
 
 ### Collector Identity Is A Snapshot
