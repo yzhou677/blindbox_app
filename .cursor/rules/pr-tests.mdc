@@ -1,0 +1,16 @@
+---
+description: Required automated tests and local verify before every feature/fix PR push
+alwaysApply: true
+---
+
+# PR tests (push gate)
+
+每个功能或修复 PR，push 前必须：
+
+- 为改动写全自动化测试：正常路径、边界情况（空数据、缺字段、旧版本数据）、失败路径（文件损坏、写一半失败、网络失败）。
+- 改了持久化格式的，要测新旧格式往返和兼容读取。
+- 修 bug 的，要先加一个能复现这个 bug 的测试。
+- 本地跑 `flutter analyze` 和相关测试全部通过。
+- PR 描述里列出新增了哪些测试、各测什么，以及哪些只能手动测、为什么。
+
+同一问题连续修 2 次不过就停下来报告，不要继续盲改。

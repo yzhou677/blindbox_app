@@ -10,6 +10,7 @@ import 'package:blindbox_app/features/collection/data/series_release_lookup.dart
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
 import 'package:blindbox_app/features/collection/data/shelf_media_vault.dart';
+import 'package:blindbox_app/features/collection/data/shelf_recovery_pack.dart';
 import 'package:blindbox_app/features/collection/persistence/collection_snapshot_storage.dart';
 import 'package:blindbox_app/features/home/domain/series_release.dart';
 import 'package:blindbox_app/models/collectible.dart';
@@ -96,6 +97,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
       previous: truePrevious,
       next: current,
     );
+    ShelfRecoveryPack.scheduleWrite(snapshot: current);
     unawaited(_collectShelfMediaGarbage(current));
   }
 

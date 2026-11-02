@@ -526,6 +526,29 @@ abstract final class ShelfMediaVault {
     });
   }
 
+  /// Sets [lastAccessedAt] for recovery truncation-order tests.
+  @visibleForTesting
+  static Future<void> setLastAccessedAtForTest(
+    String vaultRef,
+    DateTime lastAccessedAt,
+  ) async {
+    await _runExclusiveIndexOp(() async {
+      final id = idFromRef(vaultRef);
+      if (id == null) return;
+      final index = await _ensureIndex();
+      final entry = index.entries[id];
+      if (entry == null) return;
+      index.upsert(
+        id: id,
+        originalRelative: entry.originalRelative,
+        thumbRelative: entry.thumbRelative,
+        createdAt: entry.createdAt,
+        lastAccessedAt: lastAccessedAt.toUtc(),
+      );
+      await _flushIndex();
+    });
+  }
+
   static String _absoluteFromVaultRelative(String relative) {
     // relative like originals/x.jpg under vault root
     final support = _cachedSupportPath;

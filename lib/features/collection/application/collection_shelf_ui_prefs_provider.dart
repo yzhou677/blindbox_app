@@ -132,6 +132,9 @@ abstract final class CollectionShelfUiPrefsCodec {
 }
 
 abstract final class CollectionShelfUiPrefsStorage {
+  /// Called after a successful prefs persist (recovery pack schedule hook).
+  static void Function()? afterPersistHook;
+
   static Future<CollectionShelfUiPrefs> load() async {
     final prefs = await SharedPreferences.getInstance();
     return CollectionShelfUiPrefsCodec.decode(
@@ -145,6 +148,7 @@ abstract final class CollectionShelfUiPrefsStorage {
       kCollectionShelfUiPrefsKey,
       CollectionShelfUiPrefsCodec.encode(prefs),
     );
+    afterPersistHook?.call();
   }
 
   static Future<void> clear() async {

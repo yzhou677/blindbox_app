@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Auto Backup (API ≤ 30 / fullBackupContent): only files/recovery/.
+  Explicitly exclude shared_prefs so collection_snapshot_v1 is never
+  auto-restored — recovery dialog (PR3) owns that restore.
+-->
+<full-backup-content>
+    <include domain="file" path="recovery/" />
+    <exclude domain="sharedpref" path="." />
+</full-backup-content>

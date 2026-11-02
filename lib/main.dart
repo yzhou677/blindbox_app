@@ -12,6 +12,7 @@ import 'package:blindbox_app/features/collection/data/collection_seed_data.dart'
 import 'package:blindbox_app/features/collection/data/series_release_lookup.dart';
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
 import 'package:blindbox_app/features/collection/data/shelf_media_vault.dart';
+import 'package:blindbox_app/features/collection/data/shelf_recovery_pack.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/persistence/collection_snapshot_storage.dart';
 import 'package:blindbox_app/features/home/application/catalog_bundle_refresh_bridge.dart';
@@ -64,6 +65,7 @@ Future<void> main() async {
   }
   CollectionAppBootstrap.prime(snapshot);
   await CollectionMemoryStore.instance.ensureLoaded();
+  ShelfRecoveryPack.installPersistHooks();
   runApp(
     ProviderScope(
       overrides: [
