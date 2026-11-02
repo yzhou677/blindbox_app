@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
 import 'package:blindbox_app/features/catalog/data/catalog_image_disk_cache.dart';
 import 'package:blindbox_app/features/catalog/data/catalog_image_version.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
@@ -22,6 +23,10 @@ import 'package:flutter/foundation.dart';
 ///
 /// Disk cache is **not** canonical storage. Stale entries still paint offline while
 /// a deduped background refresh runs when network + Storage are available.
+///
+/// Offline / transport failures fail fast: do not walk every extension with an
+/// 8s timeout each (that made placeholders feel stuck after bundled art was removed).
+/// Transient transport misses are **not** written to the session missing-key cache.
 ///
 /// Download URLs are not written back to Firestore or shelf [imageKey].
 abstract final class CatalogImageResolver {
@@ -49,6 +54,10 @@ abstract final class CatalogImageResolver {
   static Future<String?> Function(String storageObjectPath)?
   getDownloadUrlOverride;
 
+  /// When set, replaces [Connectivity.checkConnectivity] for online gating.
+  @visibleForTesting
+  static Future<bool> Function()? isOnlineOverride;
+
   /// Counts Storage extension probes in the current test session.
   @visibleForTesting
   static int storageExtensionProbeCount = 0;
@@ -68,6 +77,10 @@ abstract final class CatalogImageResolver {
   @visibleForTesting
   static int get queuedStaleRefreshCount => _staleRefreshQueue.length;
 
+  /// True after a Storage timeout / transport failure until connectivity recovers.
+  @visibleForTesting
+  static bool get storageTransportUnavailable => _storageTransportUnavailable;
+
   @visibleForTesting
   static void resetSessionCachesForTest() {
     _storageDisplayRefCache.clear();
@@ -78,11 +91,13 @@ abstract final class CatalogImageResolver {
     _staleRefreshQueuedKeys.clear();
     _activeStaleRefreshCount = 0;
     _debugLoggedMissingKeys.clear();
+    _storageTransportUnavailable = false;
     storageExtensionProbeCount = 0;
     backgroundRefreshCount = 0;
     maxConcurrentStaleRefreshesOverride = null;
     firebaseStorageReadyOverride = null;
     getDownloadUrlOverride = null;
+    isOnlineOverride = null;
   }
 
   static const Duration storageUrlTimeout = Duration(seconds: 8);
@@ -108,6 +123,10 @@ abstract final class CatalogImageResolver {
   static final Set<String> _staleRefreshQueuedKeys = <String>{};
   static int _activeStaleRefreshCount = 0;
   static final Set<String> _debugLoggedMissingKeys = <String>{};
+
+  /// Session gate: skip further Storage probes after timeout / transport failure
+  /// until [isOnlineOverride] / connectivity reports online again.
+  static bool _storageTransportUnavailable = false;
 
   static int get _staleRefreshConcurrencyCap =>
       maxConcurrentStaleRefreshesOverride ?? maxConcurrentStaleRefreshes;
@@ -305,6 +324,9 @@ abstract final class CatalogImageResolver {
       );
       return null;
     }
+    if (!await _allowStorageTransport(kind: kind, imageKey: k)) {
+      return null;
+    }
 
     final future = _fetchAndPersistFromStorage(
       kind: kind,
@@ -328,6 +350,7 @@ abstract final class CatalogImageResolver {
     String? imageVersion,
   }) {
     if (!storageFallbackEnabled || !_firebaseStorageReady) return;
+    if (_storageTransportUnavailable) return;
     if (_storageRefreshInFlight.containsKey(primaryCacheKey)) return;
     if (_staleRefreshQueuedKeys.contains(primaryCacheKey)) return;
 
@@ -450,6 +473,7 @@ abstract final class CatalogImageResolver {
         final displayRef = localPath ?? url;
         _storageDisplayRefCache[primaryCacheKey] = displayRef;
         _storageMissingCache.remove(primaryCacheKey);
+        _storageTransportUnavailable = false;
         _traceResolution(
           imageKey: imageKey,
           kind: kind,
@@ -461,11 +485,33 @@ abstract final class CatalogImageResolver {
         );
         return displayRef;
       } on TimeoutException {
-        sawOnlyObjectNotFound = false;
-        continue;
+        _markStorageTransportUnavailable();
+        _traceResolution(
+          imageKey: imageKey,
+          kind: kind,
+          phase: 'storage',
+          attemptedPath: path,
+          hit: false,
+          storageSkipped: false,
+          outcome: 'storage_timeout',
+        );
+        return null;
       } on FirebaseException catch (e) {
         if (_isObjectNotFound(e)) continue;
         if (e.code == 'no-app') return null;
+        if (_isTransportFailure(e)) {
+          _markStorageTransportUnavailable();
+          _traceResolution(
+            imageKey: imageKey,
+            kind: kind,
+            phase: 'storage',
+            attemptedPath: path,
+            hit: false,
+            storageSkipped: false,
+            outcome: 'storage_transport_error',
+          );
+          return null;
+        }
         sawOnlyObjectNotFound = false;
         return null;
       } on Object {
@@ -487,6 +533,71 @@ abstract final class CatalogImageResolver {
       outcome: 'storage_miss',
     );
     return null;
+  }
+
+  /// Returns false when Storage probes should be skipped (offline / paused).
+  static Future<bool> _allowStorageTransport({
+    required CatalogImageKind kind,
+    required String imageKey,
+  }) async {
+    if (_storageTransportUnavailable) {
+      if (!await _isLikelyOnline()) {
+        _traceResolution(
+          imageKey: imageKey,
+          kind: kind,
+          phase: 'storage',
+          storageSkipped: true,
+          outcome: 'skipped_transport_unavailable',
+        );
+        return false;
+      }
+      _storageTransportUnavailable = false;
+    } else if (!await _isLikelyOnline()) {
+      _markStorageTransportUnavailable();
+      _traceResolution(
+        imageKey: imageKey,
+        kind: kind,
+        phase: 'storage',
+        storageSkipped: true,
+        outcome: 'skipped_offline',
+      );
+      return false;
+    }
+    return true;
+  }
+
+  static void _markStorageTransportUnavailable() {
+    _storageTransportUnavailable = true;
+  }
+
+  static Future<bool> _isLikelyOnline() async {
+    final override = isOnlineOverride;
+    if (override != null) return override();
+    // Download-URL test harness must not depend on platform connectivity.
+    if (getDownloadUrlOverride != null) return true;
+    try {
+      final results = await Connectivity().checkConnectivity();
+      return results.any((r) => r != ConnectivityResult.none);
+    } on Object {
+      // Connectivity probe failed — stay optimistic and let Storage decide.
+      return true;
+    }
+  }
+
+  static bool _isTransportFailure(FirebaseException e) {
+    final code = e.code.toLowerCase();
+    if (code == 'unavailable' ||
+        code == 'deadline-exceeded' ||
+        code == 'network-request-failed' ||
+        code == 'retry-limit-exceeded' ||
+        code == 'canceled') {
+      return true;
+    }
+    final msg = (e.message ?? '').toLowerCase();
+    return msg.contains('network') ||
+        msg.contains('unreachable') ||
+        msg.contains('timed out') ||
+        msg.contains('timeout');
   }
 
   static void _traceResolution({
