@@ -84,6 +84,28 @@ abstract final class ShelfExportArchive {
 
   static String get _sep => Platform.pathSeparator;
 
+  /// Planned uncompressed size without writing a zip (for 4b warn / reject UI).
+  static Future<ShelfExportSizeEstimate> estimateSize({
+    required CollectionSnapshot snapshot,
+    required String memoryJson,
+    required String uiPrefsJson,
+  }) async {
+    if (kIsWeb) {
+      throw UnsupportedError('Shelf export is not supported on web');
+    }
+    await ShelfMediaVault.ensureReady();
+    final plan = await _buildMediaPlan(snapshot);
+    final jsonBytes =
+        utf8.encode(CollectionSnapshotCodec.encode(snapshot)).length +
+        utf8.encode(memoryJson).length +
+        utf8.encode(uiPrefsJson).length +
+        256;
+    return ShelfExportSizeEstimate(
+      uncompressedBytes: plan.plannedBytes + jsonBytes,
+      mediaIncomplete: plan.mediaIncomplete,
+    );
+  }
+
   /// Progress: [completed] files processed out of [total].
   static Future<ShelfExportWriteResult> exportToZip({
     required CollectionSnapshot snapshot,
@@ -919,6 +941,30 @@ class ShelfExportManifest {
 }
 
 enum ShelfExportRejectReason { tooLarge }
+
+@immutable
+class ShelfExportSizeEstimate {
+  const ShelfExportSizeEstimate({
+    required this.uncompressedBytes,
+    required this.mediaIncomplete,
+  });
+
+  final int uncompressedBytes;
+  final bool mediaIncomplete;
+
+  bool get exceedsWarnThreshold {
+    final warn =
+        ShelfExportArchive.testWarnBytesOverride ?? ShelfExportArchive.warnBytes;
+    return uncompressedBytes > warn;
+  }
+
+  bool get exceedsRejectThreshold {
+    final reject =
+        ShelfExportArchive.testRejectBytesOverride ??
+        ShelfExportArchive.rejectBytes;
+    return uncompressedBytes > reject;
+  }
+}
 
 @immutable
 class ShelfExportWriteResult {

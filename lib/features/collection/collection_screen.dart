@@ -587,7 +587,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                 'My collection',
                 style: AppTypography.tabTitle(textTheme, scheme),
               ),
-              actions: _insightsAppBarActions(ref),
+              actions: _collectionAppBarActions(ref),
             ),
             SliverToBoxAdapter(
               child: SizedBox(height: FeedRhythm.belowMainTabAppBar),
@@ -788,7 +788,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               'My collection',
               style: AppTypography.tabTitle(textTheme, scheme),
             ),
-            actions: _insightsAppBarActions(ref),
+            actions: _collectionAppBarActions(ref),
           ),
           SliverToBoxAdapter(
             child: SizedBox(height: FeedRhythm.belowMainTabAppBar),
@@ -1109,30 +1109,50 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     );
   }
 
-  List<Widget> _insightsAppBarActions(WidgetRef ref) {
-    if (_pageSegment != CollectionPageSegment.insights) {
-      return const [];
-    }
-    final needsReveal = ref.watch(collectorTypeNeedsRevealProvider);
-    final stage = ref.watch(collectorTypeViewModelProvider);
-    final showRevealAgainMenu =
-        stage is CollectorTypeRevealRevealed && !needsReveal;
-    if (!showRevealAgainMenu) return const [];
-    return [
-      PopupMenuButton<String>(
-        onSelected: (value) {
-          if (value == 'reveal') {
-            ref.read(collectorTypeViewModelProvider.notifier).requestReveal();
-          }
-        },
-        itemBuilder: (context) => [
-          const PopupMenuItem(
-            value: 'reveal',
-            child: Text(CollectorTypeCopy.revealAgain),
-          ),
-        ],
+  List<Widget> _collectionAppBarActions(WidgetRef ref) {
+    final actions = <Widget>[
+      IconButton(
+        key: const Key('collection_settings_button'),
+        tooltip: 'Settings',
+        onPressed: () => context.push('/collection/settings'),
+        icon: Icon(
+          Symbols.settings_rounded,
+          size: AppIconSizes.navigation,
+          fill: ShelfySymbols.fillOutline,
+          weight: ShelfySymbols.weight,
+          grade: ShelfySymbols.grade,
+          opticalSize: ShelfySymbols.opticalSize,
+        ),
       ),
     ];
+
+    if (_pageSegment == CollectionPageSegment.insights) {
+      final needsReveal = ref.watch(collectorTypeNeedsRevealProvider);
+      final stage = ref.watch(collectorTypeViewModelProvider);
+      final showRevealAgainMenu =
+          stage is CollectorTypeRevealRevealed && !needsReveal;
+      if (showRevealAgainMenu) {
+        actions.insert(
+          0,
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'reveal') {
+                ref
+                    .read(collectorTypeViewModelProvider.notifier)
+                    .requestReveal();
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'reveal',
+                child: Text(CollectorTypeCopy.revealAgain),
+              ),
+            ],
+          ),
+        );
+      }
+    }
+    return actions;
   }
 }
 
