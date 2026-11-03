@@ -317,6 +317,15 @@ final class CollectionMemoryStore {
     return jsonEncode(_toJsonMap(_cached));
   }
 
+  /// Replace in-memory + prefs state from a recovery pack memory JSON.
+  Future<void> replaceFromRecoveryJson(String raw) async {
+    _cached = _decode(raw);
+    final loaded = _cached.collectorTypeIdentity?.healed();
+    _cachedCollectorTypeIdentity = loaded;
+    _loaded = true;
+    await _persist();
+  }
+
   Future<void> _persist() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_prefsKeyV3, jsonEncode(_toJsonMap(_cached)));
@@ -539,7 +548,7 @@ final class CollectionMemoryStore {
   void resetForTest() {
     _cached = const CollectionMemoryData();
     _cachedCollectorTypeIdentity = null;
-    _loaded = true;
+    _loaded = false;
   }
 
   /// Test-only: re-read SharedPreferences (e.g. legacy upgrade fixtures).

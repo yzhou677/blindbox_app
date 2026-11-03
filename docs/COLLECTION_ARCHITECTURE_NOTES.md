@@ -95,7 +95,14 @@ the previous pack). Snapshot vault refs stay relative. Catalog art is not
 packed. Packs older than 30 days are deleted on read; a lone `pack.old` from a
 mid-rename crash is promoted back to `pack`. Android backup XML includes only
 `files/recovery/` and excludes `sharedpref` so reinstall restores the pack
-without auto-hydrating `collection_snapshot_v1` (dialog restore is PR3).
+without auto-hydrating `collection_snapshot_v1`.
+
+Cold start (PR3): if prefs lack `collection_snapshot_v1` and
+`ShelfRecoveryPack.tryLoad()` returns a pack, `CollectionRecoveryGate` stays
+pending and the Import / Start fresh dialog runs before the main shell.
+While pending, pack writes, vault GC, and notifier snapshot persists no-op.
+Import restores prefs + vault thumbs (`recoveredFromThumb` when originals are
+absent); Start fresh double-confirms then deletes the pack.
 
 ---
 

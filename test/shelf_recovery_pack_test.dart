@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:blindbox_app/features/collection/application/collection_shelf_ui_prefs_provider.dart';
+import 'package:blindbox_app/features/collection/bootstrap/collection_recovery_gate.dart';
 import 'package:blindbox_app/features/collection/data/shelf_media_vault.dart';
 import 'package:blindbox_app/features/collection/data/shelf_recovery_pack.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
@@ -81,6 +82,7 @@ void main() {
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     tempSupport = await Directory.systemTemp.createTemp('shelf_recovery_');
+    CollectionRecoveryGate.resetForTest();
     ShelfMediaVault.resetForTest();
     ShelfRecoveryPack.resetForTest();
     ShelfMediaVault.testSupportOverride = tempSupport;
@@ -89,6 +91,7 @@ void main() {
   });
 
   tearDown(() async {
+    CollectionRecoveryGate.resetForTest();
     ShelfMediaVault.resetForTest();
     ShelfRecoveryPack.resetForTest();
     if (await tempSupport.exists()) {

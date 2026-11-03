@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:blindbox_app/features/collection/application/master_complete_celebration_controller.dart';
 import 'package:blindbox_app/features/collection/bootstrap/collection_app_bootstrap.dart';
+import 'package:blindbox_app/features/collection/bootstrap/collection_recovery_gate.dart';
 import 'package:blindbox_app/features/collection/domain/master_complete_transition.dart';
 import 'package:blindbox_app/features/collection/data/collection_input_sanitizer.dart';
 import 'package:blindbox_app/features/collection/data/collection_taxonomy_canonicalizer.dart';
@@ -78,6 +79,8 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
   /// Clears [_pendingPersistencePrevious] before awaiting I/O so a concurrent
   /// timer tick or [ref.onDispose] flush cannot record the same transition twice.
   Future<void> _persistPendingSnapshot() async {
+    if (CollectionRecoveryGate.blocksBackgroundWrites) return;
+
     final truePrevious = _pendingPersistencePrevious;
     if (truePrevious == null) return;
 

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:blindbox_app/features/collection/application/collection_shelf_ui_prefs_provider.dart';
+import 'package:blindbox_app/features/collection/bootstrap/collection_recovery_gate.dart';
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
 import 'package:blindbox_app/features/collection/data/shelf_media_vault.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
@@ -74,6 +75,11 @@ abstract final class ShelfRecoveryPack {
   @visibleForTesting
   static int testThumbReusedFromPack = 0;
 
+  /// When false, [scheduleWrite] cancels any timer and returns without
+  /// scheduling (widget-test safe). Production keeps the default `true`.
+  @visibleForTesting
+  static bool debounceEnabledForTest = true;
+
   static Future<Directory>? _rootFuture;
   static Timer? _debounceTimer;
   static CollectionSnapshot? _debouncedSnapshotHint;
@@ -91,6 +97,8 @@ abstract final class ShelfRecoveryPack {
     testNowUtc = null;
     testThumbCopiedFromVault = 0;
     testThumbReusedFromPack = 0;
+    // Leave [debounceEnabledForTest] alone — [test/flutter_test_config.dart]
+    // owns the suite-wide default.
     _rootFuture = null;
     _debounceTimer?.cancel();
     _debounceTimer = null;
@@ -142,10 +150,18 @@ abstract final class ShelfRecoveryPack {
   /// Debounced pack write (collection / memory / UI prefs).
   static void scheduleWrite({CollectionSnapshot? snapshot}) {
     if (kIsWeb) return;
+    if (CollectionRecoveryGate.blocksBackgroundWrites) return;
     if (snapshot != null) {
       _debouncedSnapshotHint = snapshot;
     }
     _debounceTimer?.cancel();
+    // Widget tests assert no pending Timers after dispose. Suite config sets
+    // [debounceEnabledForTest] false; tests that need a pack call [write].
+    if (!debounceEnabledForTest) {
+      _debouncedSnapshotHint = null;
+      _debounceTimer = null;
+      return;
+    }
     _debounceTimer = Timer(writeDebounce, () {
       final hint = _debouncedSnapshotHint;
       _debouncedSnapshotHint = null;
@@ -169,6 +185,9 @@ abstract final class ShelfRecoveryPack {
     String? uiPrefsJson,
   }) async {
     if (kIsWeb) {
+      return const ShelfRecoveryWriteResult(wrote: false, mediaTruncated: false);
+    }
+    if (CollectionRecoveryGate.blocksBackgroundWrites) {
       return const ShelfRecoveryWriteResult(wrote: false, mediaTruncated: false);
     }
 
@@ -465,6 +484,19 @@ abstract final class ShelfRecoveryPack {
       mediaIds: mediaIds,
       packPath: pack.path,
     );
+  }
+
+  /// Deletes pack / staging / old directories (Start fresh).
+  static Future<void> deletePack() async {
+    if (kIsWeb) return;
+    final root = await recoveryRoot();
+    await _deleteQuietly(Directory('${root.path}$_sep$packDirName'));
+    await _deleteQuietly(Directory('${root.path}$_sep$stagingDirName'));
+    await _deleteQuietly(Directory('${root.path}$_sep$oldDirName'));
+  }
+
+  static String mediaFilePath(String packPath, String mediaId) {
+    return '$packPath$_sep$mediaDirName$_sep$mediaId.jpg';
   }
 
   static Future<void> _deleteQuietly(Directory dir) async {
