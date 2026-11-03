@@ -202,6 +202,17 @@ abstract final class ShelfMediaVault {
   static String _vaultRefFor({required String id, required String ext}) =>
       '$originalsRefPrefix$id$ext';
 
+  /// Recovery install always lands at `<id>.jpg` — rewrite pack refs to match.
+  ///
+  /// Non-vault refs are returned unchanged. Null/empty stay null/empty.
+  static String? recoveredJpgRef(String? ref) {
+    final raw = ref?.trim();
+    if (raw == null || raw.isEmpty) return ref;
+    final id = idFromRef(raw);
+    if (id == null) return ref;
+    return _vaultRefFor(id: id, ext: '.jpg');
+  }
+
   /// Import a picker/cache file; returns a vault-relative ref.
   ///
   /// Updates [lastAccessedAt] (user pick / replace). Already-vault absolute or

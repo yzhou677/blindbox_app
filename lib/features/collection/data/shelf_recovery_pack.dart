@@ -75,6 +75,11 @@ abstract final class ShelfRecoveryPack {
   @visibleForTesting
   static int testThumbReusedFromPack = 0;
 
+  /// When false, [scheduleWrite] cancels any timer and returns without
+  /// scheduling (widget-test safe). Production keeps the default `true`.
+  @visibleForTesting
+  static bool debounceEnabledForTest = true;
+
   static Future<Directory>? _rootFuture;
   static Timer? _debounceTimer;
   static CollectionSnapshot? _debouncedSnapshotHint;
@@ -92,6 +97,8 @@ abstract final class ShelfRecoveryPack {
     testNowUtc = null;
     testThumbCopiedFromVault = 0;
     testThumbReusedFromPack = 0;
+    // Leave [debounceEnabledForTest] alone — [test/flutter_test_config.dart]
+    // owns the suite-wide default.
     _rootFuture = null;
     _debounceTimer?.cancel();
     _debounceTimer = null;
@@ -148,9 +155,9 @@ abstract final class ShelfRecoveryPack {
       _debouncedSnapshotHint = snapshot;
     }
     _debounceTimer?.cancel();
-    // Widget tests assert no pending Timers after dispose. Skip the debounce
-    // Timer under `flutter test`; tests that need a pack call [write] directly.
-    if (Platform.environment.containsKey('FLUTTER_TEST')) {
+    // Widget tests assert no pending Timers after dispose. Suite config sets
+    // [debounceEnabledForTest] false; tests that need a pack call [write].
+    if (!debounceEnabledForTest) {
       _debouncedSnapshotHint = null;
       _debounceTimer = null;
       return;

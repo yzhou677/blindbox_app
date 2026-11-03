@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/application/collection_shelf_ui_prefs_provider.dart';
 import 'package:blindbox_app/features/collection/application/shelf_recovery_import.dart';
 import 'package:blindbox_app/features/collection/bootstrap/collection_app_bootstrap.dart';
@@ -12,23 +13,33 @@ import 'package:blindbox_app/features/collection/data/shelf_media_vault.dart';
 import 'package:blindbox_app/features/collection/data/shelf_recovery_pack.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/persistence/collection_snapshot_storage.dart';
+import 'package:blindbox_app/features/collection/widgets/collectible_figure_placeholder.dart';
+import 'package:blindbox_app/features/collection/widgets/shelf_recovery_decision_app.dart';
 import 'package:blindbox_app/features/collection/widgets/shelf_recovery_dialog.dart';
 import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 import 'package:shared_preferences/shared_preferences.dart';
 
-Uint8List _jpegBytes({int width = 160, int height = 160}) {
+Uint8List _jpegBytes({int width = 48, int height = 48, int r = 90}) {
   final image = img.Image(width: width, height: height);
-  img.fill(image, color: img.ColorRgb8(90, 40, 160));
-  return Uint8List.fromList(img.encodeJpg(image, quality: 90));
+  img.fill(image, color: img.ColorRgb8(r, 40, 160));
+  return Uint8List.fromList(img.encodeJpg(image, quality: 85));
+}
+
+Uint8List _pngBytes({int width = 64, int height = 64}) {
+  final image = img.Image(width: width, height: height);
+  img.fill(image, color: img.ColorRgb8(20, 180, 90));
+  return Uint8List.fromList(img.encodePng(image));
 }
 
 CollectionSnapshot _snap({
   String? localRef,
   String name = 'Figure',
   String? missingRef,
+  String? coverRef,
 }) {
   return CollectionSnapshot(
     shelfSeries: [
@@ -37,6 +48,7 @@ CollectionSnapshot _snap({
         name: 'Series',
         brand: 'Brand',
         ipName: 'IP',
+        customCoverImageUri: coverRef,
         figures: [
           ShelfFigure(
             id: 'f1',
@@ -63,10 +75,65 @@ CollectionSnapshot _snap({
   );
 }
 
-Future<String> _importJpeg(Directory support, String name) async {
+Future<String> _importJpeg(Directory support, String name, {int r = 90}) async {
   final source = File('${support.path}${Platform.pathSeparator}$name');
-  await source.writeAsBytes(_jpegBytes());
+  await source.writeAsBytes(_jpegBytes(r: r));
   return (await ShelfMediaVault.importFromPath(source.path))!;
+}
+
+Future<String> _importPng(Directory support, String name) async {
+  final source = File('${support.path}${Platform.pathSeparator}$name');
+  await source.writeAsBytes(_pngBytes());
+  return (await ShelfMediaVault.importFromPath(source.path))!;
+}
+
+/// Widget tests: avoid [Isolate.run] inside [importFromPath] (can hang the binding).
+Future<String> _seedVaultJpeg(String id, {int r = 90}) async {
+  await ShelfMediaVault.installRecoveredThumb(
+    id: id,
+    thumbBytes: _jpegBytes(r: r),
+  );
+  return 'shelf_media/originals/$id.jpg';
+}
+
+Future<void> _wipeVaultKeepPack(Directory support) async {
+  SharedPreferences.setMockInitialValues({});
+  final vaultRoot = Directory(
+    '${support.path}${Platform.pathSeparator}shelf_media',
+  );
+  if (await vaultRoot.exists()) {
+    await vaultRoot.delete(recursive: true);
+  }
+  ShelfMediaVault.resetForTest(clearSupportOverride: false);
+  ShelfMediaVault.testSupportOverride = support;
+  await ShelfMediaVault.ensureReady();
+}
+
+/// Advances real File/prefs IO started by DecisionApp, then rebuilds.
+Future<void> _pumpDecisionIo(
+  WidgetTester tester, {
+  required Finder done,
+}) async {
+  await tester.pump();
+  final deadline = DateTime.now().add(const Duration(seconds: 5));
+  while (DateTime.now().isBefore(deadline)) {
+    await tester.runAsync(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    });
+    await tester.pump();
+    if (done.evaluate().isNotEmpty) return;
+  }
+}
+
+Widget _decisionApp(ShelfRecoveryPackContents pack) {
+  return ShelfRecoveryDecisionApp(
+    pack: pack,
+    theme: ThemeData(useMaterial3: true),
+    darkTheme: ThemeData(useMaterial3: true, brightness: Brightness.dark),
+    appBuilder: (_) => const MaterialApp(
+      home: Scaffold(body: Text('main')),
+    ),
+  );
 }
 
 void main() {
@@ -81,18 +148,22 @@ void main() {
     ShelfRecoveryPack.resetForTest();
     CollectionRecoveryGate.resetForTest();
     CollectionMemoryStore.instance.resetForTest();
-    ShelfRecoveryImport.testBeforeCommitHook = null;
+    ShelfRecoveryImport.testBeforeMemoryHook = null;
+    ShelfRecoveryImport.testBeforeSnapshotSaveHook = null;
     ShelfMediaVault.testSupportOverride = tempSupport;
     ShelfRecoveryPack.testSupportOverride = tempSupport;
+    ShelfRecoveryPack.debounceEnabledForTest = false;
     await ShelfMediaVault.ensureReady();
   });
 
   tearDown(() async {
-    ShelfRecoveryImport.testBeforeCommitHook = null;
+    ShelfRecoveryImport.testBeforeMemoryHook = null;
+    ShelfRecoveryImport.testBeforeSnapshotSaveHook = null;
     CollectionRecoveryGate.resetForTest();
     CollectionMemoryStore.instance.resetForTest();
     ShelfMediaVault.resetForTest();
     ShelfRecoveryPack.resetForTest();
+    ShelfRecoveryPack.debounceEnabledForTest = false;
     if (await tempSupport.exists()) {
       await tempSupport.delete(recursive: true);
     }
@@ -176,6 +247,46 @@ void main() {
     expect(after.memoryJson, contains('"marker":"orig"'));
   });
 
+  test('pending gate blocks CollectionNotifier persist; clear allows write',
+      () async {
+    CollectionAppBootstrap.prime(
+      CollectionSnapshot(
+        shelfSeries: [
+          ShelfSeries(
+            id: 's1',
+            name: 'Series',
+            brand: 'Brand',
+            ipName: 'IP',
+            figures: const [
+              ShelfFigure(
+                id: 'f1',
+                seriesId: 's1',
+                name: 'Fig',
+                rarity: 'Regular',
+                isSecret: false,
+              ),
+            ],
+            shelfAccent: const Color(0xFFE8F5E9),
+          ),
+        ],
+        figureStates: const {},
+      ),
+    );
+    CollectionRecoveryGate.enterPending();
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final n = container.read(collectionNotifierProvider.notifier);
+
+    n.cycleFigure('f1');
+    await Future<void>.delayed(const Duration(milliseconds: 500));
+    expect(await CollectionSnapshotStorage.load(), isNull);
+
+    CollectionRecoveryGate.clearPending();
+    n.cycleFigure('f1'); // wishlist → owned triggers another persist window
+    await Future<void>.delayed(const Duration(milliseconds: 500));
+    expect(await CollectionSnapshotStorage.load(), isNotNull);
+  });
+
   test('Import restores snapshot, memory, prefs, thumbs, and vault refs', () async {
     final ref = await _importJpeg(tempSupport, 'photo.jpg');
     final id = ShelfMediaVault.idFromRef(ref)!;
@@ -192,24 +303,17 @@ void main() {
       uiPrefsJson: uiPrefsJson,
     );
 
-    // Simulate reinstall: clear prefs + wipe vault files, keep recovery pack.
-    SharedPreferences.setMockInitialValues({});
-    final vaultRoot = Directory(
-      '${tempSupport.path}${Platform.pathSeparator}shelf_media',
-    );
-    if (await vaultRoot.exists()) {
-      await vaultRoot.delete(recursive: true);
-    }
-    ShelfMediaVault.resetForTest(clearSupportOverride: false);
-    ShelfMediaVault.testSupportOverride = tempSupport;
-    await ShelfMediaVault.ensureReady();
+    await _wipeVaultKeepPack(tempSupport);
 
     final pack = await ShelfRecoveryPack.tryLoad();
     expect(pack, isNotNull);
     CollectionRecoveryGate.enterPending();
     final imported = await ShelfRecoveryImport.apply(pack!);
     expect(imported.shelfSeries.single.figures.single.name, 'Imported');
-    expect(imported.shelfSeries.single.figures.single.localImageUri, ref);
+    expect(
+      imported.shelfSeries.single.figures.single.localImageUri,
+      'shelf_media/originals/$id.jpg',
+    );
 
     final loadedSnap = await CollectionSnapshotStorage.load();
     expect(loadedSnap!.shelfSeries.single.figures.single.name, 'Imported');
@@ -223,19 +327,63 @@ void main() {
     final prefs = await CollectionShelfUiPrefsStorage.load();
     expect(prefs.completedSectionExpanded, isTrue);
 
-    final abs = ShelfMediaVault.resolveToFilePathSync(ref);
+    final jpgRef = 'shelf_media/originals/$id.jpg';
+    final abs = ShelfMediaVault.resolveToFilePathSync(jpgRef);
     expect(abs, isNotNull);
     expect(File(abs!).existsSync(), isTrue);
-    expect(await ShelfMediaVault.recoveredFromThumbForTest(ref), isTrue);
-
-    final thumb = File(
-      '${tempSupport.path}${Platform.pathSeparator}shelf_media'
-      '${Platform.pathSeparator}thumbs${Platform.pathSeparator}$id.jpg',
-    );
-    expect(thumb.existsSync(), isTrue);
+    expect(await ShelfMediaVault.recoveredFromThumbForTest(jpgRef), isTrue);
   });
 
-  test('import failure keeps recovery pack', () async {
+  test('png original ref is rewritten to .jpg and resolves after import', () async {
+    final pngRef = await _importPng(tempSupport, 'figure.png');
+    expect(pngRef.endsWith('.png'), isTrue);
+    final id = ShelfMediaVault.idFromRef(pngRef)!;
+
+    await ShelfRecoveryPack.write(
+      snapshot: _snap(localRef: pngRef, coverRef: pngRef, name: 'PngFig'),
+      memoryJson: '{}',
+      uiPrefsJson: '{}',
+    );
+    await _wipeVaultKeepPack(tempSupport);
+
+    final pack = (await ShelfRecoveryPack.tryLoad())!;
+    final imported = await ShelfRecoveryImport.apply(pack);
+    final figureRef = imported.shelfSeries.single.figures.single.localImageUri;
+    final coverRef = imported.shelfSeries.single.customCoverImageUri;
+    expect(figureRef, 'shelf_media/originals/$id.jpg');
+    expect(coverRef, 'shelf_media/originals/$id.jpg');
+
+    final path = ShelfMediaVault.resolveToFilePathSync(figureRef);
+    expect(path, isNotNull);
+    expect(File(path!).existsSync(), isTrue);
+  });
+
+  test('memory failure leaves no snapshot prefs and keeps pack', () async {
+    final ref = await _importJpeg(tempSupport, 'mem.jpg');
+    await ShelfRecoveryPack.write(
+      snapshot: _snap(localRef: ref, name: 'Keep'),
+      memoryJson: '{}',
+      uiPrefsJson: '{}',
+      appVersion: 'mem-fail',
+    );
+    await _wipeVaultKeepPack(tempSupport);
+    final pack = (await ShelfRecoveryPack.tryLoad())!;
+
+    ShelfRecoveryImport.testBeforeMemoryHook = () async {
+      throw StateError('memory boom');
+    };
+    await expectLater(
+      () => ShelfRecoveryImport.apply(pack),
+      throwsA(isA<StateError>()),
+    );
+
+    expect(await CollectionSnapshotStorage.load(), isNull);
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getString('collection_snapshot_v1'), isNull);
+    expect((await ShelfRecoveryPack.tryLoad())!.manifest.appVersion, 'mem-fail');
+  });
+
+  test('import failure before snapshot save keeps pack and no snapshot', () async {
     await ShelfRecoveryPack.write(
       snapshot: _snap(name: 'Keep'),
       memoryJson: '{}',
@@ -243,37 +391,85 @@ void main() {
       appVersion: 'keep-me',
     );
     final pack = await ShelfRecoveryPack.tryLoad();
-    ShelfRecoveryImport.testBeforeCommitHook = () async {
+    ShelfRecoveryImport.testBeforeSnapshotSaveHook = () async {
       throw StateError('boom');
     };
     await expectLater(
       () => ShelfRecoveryImport.apply(pack!),
       throwsA(isA<StateError>()),
     );
+    expect(await CollectionSnapshotStorage.load(), isNull);
     final still = await ShelfRecoveryPack.tryLoad();
     expect(still!.manifest.appVersion, 'keep-me');
   });
 
-  test('mediaTruncated missing refs have no file on disk', () async {
-    final present = await _importJpeg(tempSupport, 'present.jpg');
-    final missingRef = 'shelf_media/originals/missingthumbid.jpg';
-    await ShelfRecoveryPack.write(
-      snapshot: _snap(localRef: present, missingRef: missingRef),
+  test('mediaTruncated pack omits older thumb after tight budget write', () async {
+    // Seed two vault thumbs without Isolate.importFromPath decode cost.
+    const keptId = 'keptthumb01';
+    const droppedId = 'dropthumb02';
+    await ShelfMediaVault.installRecoveredThumb(
+      id: keptId,
+      thumbBytes: _jpegBytes(r: 10),
+    );
+    await ShelfMediaVault.installRecoveredThumb(
+      id: droppedId,
+      thumbBytes: _jpegBytes(r: 200),
+    );
+    final kept = 'shelf_media/originals/$keptId.jpg';
+    final dropped = 'shelf_media/originals/$droppedId.jpg';
+
+    // Budget fits JSON + one small thumb only (48x48 jpegs are tiny).
+    ShelfRecoveryPack.testMaxBytesOverride = 900;
+    final result = await ShelfRecoveryPack.write(
+      snapshot: _snap(localRef: kept, missingRef: dropped),
       memoryJson: '{}',
       uiPrefsJson: '{}',
     );
-    SharedPreferences.setMockInitialValues({});
-    final pack = await ShelfRecoveryPack.tryLoad();
-    final imported = await ShelfRecoveryImport.apply(pack!);
-    final missing = imported.shelfSeries.single.figures
-        .firstWhere((f) => f.id == 'f2')
-        .localImageUri;
-    final path = ShelfMediaVault.resolveToFilePathSync(missing);
-    expect(path, isNotNull);
-    expect(File(path!).existsSync(), isFalse);
+    expect(result.wrote, isTrue);
+    expect(result.mediaTruncated, isTrue);
+
+    await _wipeVaultKeepPack(tempSupport);
+    final pack = (await ShelfRecoveryPack.tryLoad())!;
+    expect(pack.manifest.mediaTruncated, isTrue);
+    expect(pack.mediaIds.length, lessThan(2));
+
+    final imported = await ShelfRecoveryImport.apply(pack);
+    final missingFig =
+        imported.shelfSeries.single.figures.firstWhere((f) => f.id == 'f2');
+    final missingPath =
+        ShelfMediaVault.resolveToFilePathSync(missingFig.localImageUri);
+    expect(missingPath, isNotNull);
+    expect(File(missingPath!).existsSync(), isFalse);
   });
 
-  testWidgets('dialog shows copy, buttons, and is not barrier-dismissible', (
+  testWidgets(
+    'mediaTruncated missing figure shows CollectibleFigurePlaceholder',
+    (tester) async {
+      // Pack truncation + missing file are covered by the unit test above.
+      // Widget side: a recovered .jpg vault ref with no file must degrade to
+      // CollectibleFigurePlaceholder (no crash).
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 80,
+              height: 80,
+              child: CollectibleThumbImage(
+                imageRef: 'shelf_media/originals/dropthumb02.jpg',
+                name: 'Missing',
+                seedKey: 'f2',
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+      expect(find.byType(CollectibleFigurePlaceholder), findsOneWidget);
+    },
+  );
+
+  testWidgets('dialog shows copy, buttons, and system back keeps panel', (
     tester,
   ) async {
     var imported = false;
@@ -299,9 +495,10 @@ void main() {
     await tester.tap(find.byKey(const Key('shelf_recovery_start_fresh')));
     expect(fresh, isTrue);
 
-    // PopScope canPop:false — back does not remove the panel.
-    final dynamic widgetsBinding = tester.binding;
-    expect(widgetsBinding is TestWidgetsFlutterBinding, isTrue);
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+    expect(find.text(ShelfRecoveryDialogCopy.title), findsOneWidget);
+    expect(find.byType(ShelfRecoveryDecisionPanel), findsOneWidget);
   });
 
   testWidgets('Start fresh confirm cancel vs delete', (tester) async {
@@ -336,6 +533,150 @@ void main() {
     expect(await deleteFuture, isTrue);
   });
 
+  testWidgets('DecisionApp Import success shows main and clears gate', (
+    tester,
+  ) async {
+    late ShelfRecoveryPackContents pack;
+    await tester.runAsync(() async {
+      final ref = await _seedVaultJpeg('decisionok');
+      await ShelfRecoveryPack.write(
+        snapshot: _snap(localRef: ref, name: 'OK'),
+        memoryJson: '{}',
+        uiPrefsJson: '{}',
+      );
+      await _wipeVaultKeepPack(tempSupport);
+      pack = (await ShelfRecoveryPack.tryLoad())!;
+    });
+    CollectionRecoveryGate.enterPending();
+
+    await tester.pumpWidget(_decisionApp(pack));
+    await tester.pump();
+    expect(find.text(ShelfRecoveryDialogCopy.title), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('shelf_recovery_import')));
+    await _pumpDecisionIo(tester, done: find.text('main'));
+
+    expect(find.text('main'), findsOneWidget);
+    expect(CollectionRecoveryGate.isPending, isFalse);
+    await tester.runAsync(() async {
+      expect(await CollectionSnapshotStorage.load(), isNotNull);
+    });
+  });
+
+  testWidgets('DecisionApp Import failure keeps panel, pack, gate; retry works', (
+    tester,
+  ) async {
+    late ShelfRecoveryPackContents pack;
+    await tester.runAsync(() async {
+      final ref = await _seedVaultJpeg('decisionretry');
+      await ShelfRecoveryPack.write(
+        snapshot: _snap(localRef: ref, name: 'Retry'),
+        memoryJson: '{}',
+        uiPrefsJson: '{}',
+        appVersion: 'retry-pack',
+      );
+      await _wipeVaultKeepPack(tempSupport);
+      pack = (await ShelfRecoveryPack.tryLoad())!;
+    });
+    CollectionRecoveryGate.enterPending();
+    ShelfRecoveryImport.testBeforeSnapshotSaveHook = () async {
+      throw StateError('nope');
+    };
+
+    await tester.pumpWidget(_decisionApp(pack));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('shelf_recovery_import')));
+    await _pumpDecisionIo(
+      tester,
+      done: find.text(ShelfRecoveryDialogCopy.importFailed),
+    );
+
+    expect(find.text(ShelfRecoveryDialogCopy.importFailed), findsOneWidget);
+    expect(find.text(ShelfRecoveryDialogCopy.title), findsOneWidget);
+    expect(find.text('main'), findsNothing);
+    expect(CollectionRecoveryGate.isPending, isTrue);
+    await tester.runAsync(() async {
+      expect(
+        (await ShelfRecoveryPack.tryLoad())!.manifest.appVersion,
+        'retry-pack',
+      );
+    });
+
+    ShelfRecoveryImport.testBeforeSnapshotSaveHook = null;
+    await tester.tap(find.byKey(const Key('shelf_recovery_import')));
+    await _pumpDecisionIo(tester, done: find.text('main'));
+
+    expect(find.text('main'), findsOneWidget);
+    expect(CollectionRecoveryGate.isPending, isFalse);
+  });
+
+  testWidgets('DecisionApp Start fresh Cancel keeps panel and pack', (
+    tester,
+  ) async {
+    late ShelfRecoveryPackContents pack;
+    await tester.runAsync(() async {
+      await ShelfRecoveryPack.write(
+        snapshot: _snap(name: 'Stay'),
+        memoryJson: '{}',
+        uiPrefsJson: '{}',
+        appVersion: 'stay-pack',
+      );
+      pack = (await ShelfRecoveryPack.tryLoad())!;
+    });
+    CollectionRecoveryGate.enterPending();
+
+    await tester.pumpWidget(_decisionApp(pack));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('shelf_recovery_start_fresh')));
+    await tester.pump();
+    await tester.pump();
+    expect(find.text(ShelfRecoveryDialogCopy.confirmBody), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('shelf_recovery_confirm_cancel')));
+    await tester.pump();
+
+    expect(find.text(ShelfRecoveryDialogCopy.title), findsOneWidget);
+    expect(find.text('main'), findsNothing);
+    await tester.runAsync(() async {
+      expect(
+        (await ShelfRecoveryPack.tryLoad())!.manifest.appVersion,
+        'stay-pack',
+      );
+    });
+    expect(CollectionRecoveryGate.isPending, isTrue);
+  });
+
+  testWidgets('DecisionApp Start fresh Delete shows main and removes pack', (
+    tester,
+  ) async {
+    late ShelfRecoveryPackContents pack;
+    await tester.runAsync(() async {
+      await ShelfRecoveryPack.write(
+        snapshot: _snap(name: 'Gone'),
+        memoryJson: '{}',
+        uiPrefsJson: '{}',
+        appVersion: 'gone-pack',
+      );
+      pack = (await ShelfRecoveryPack.tryLoad())!;
+    });
+    CollectionRecoveryGate.enterPending();
+
+    await tester.pumpWidget(_decisionApp(pack));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('shelf_recovery_start_fresh')));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('shelf_recovery_confirm_delete')));
+    await _pumpDecisionIo(tester, done: find.text('main'));
+
+    expect(find.text('main'), findsOneWidget);
+    await tester.runAsync(() async {
+      expect(await ShelfRecoveryPack.tryLoad(), isNull);
+    });
+    expect(CollectionRecoveryGate.isPending, isFalse);
+    expect(CollectionAppBootstrap.takeInitialSnapshot(), isNotNull);
+  });
+
   test('Start fresh deletes pack and clears gate', () async {
     await ShelfRecoveryPack.write(
       snapshot: _snap(name: 'Fresh'),
@@ -352,76 +693,6 @@ void main() {
 
     expect(await ShelfRecoveryPack.tryLoad(), isNull);
     expect(CollectionRecoveryGate.isPending, isFalse);
-    // Seed content varies; priming must succeed for the notifier bootstrap.
     expect(CollectionAppBootstrap.takeInitialSnapshot(), isNotNull);
-  });
-
-  test('Import success clears gate and primes snapshot', () async {
-    final ref = await _importJpeg(tempSupport, 'ok.jpg');
-    await ShelfRecoveryPack.write(
-      snapshot: _snap(localRef: ref, name: 'OK'),
-      memoryJson: '{}',
-      uiPrefsJson: '{}',
-    );
-    final pack = (await ShelfRecoveryPack.tryLoad())!;
-    CollectionRecoveryGate.enterPending();
-
-    final imported = await ShelfRecoveryImport.apply(pack);
-    CollectionAppBootstrap.prime(imported);
-    CollectionRecoveryGate.clearPending();
-    ShelfRecoveryPack.scheduleWrite(snapshot: imported);
-
-    expect(CollectionRecoveryGate.isPending, isFalse);
-    expect(
-      CollectionAppBootstrap.takeInitialSnapshot()
-          .shelfSeries
-          .single
-          .figures
-          .single
-          .name,
-      'OK',
-    );
-  });
-
-  test('Import failure keeps gate pending and pack', () async {
-    await ShelfRecoveryPack.write(
-      snapshot: _snap(name: 'Fail'),
-      memoryJson: '{}',
-      uiPrefsJson: '{}',
-      appVersion: 'fail-pack',
-    );
-    final pack = (await ShelfRecoveryPack.tryLoad())!;
-    CollectionRecoveryGate.enterPending();
-    ShelfRecoveryImport.testBeforeCommitHook = () async {
-      throw StateError('nope');
-    };
-
-    await expectLater(
-      () => ShelfRecoveryImport.apply(pack),
-      throwsA(isA<StateError>()),
-    );
-    expect(CollectionRecoveryGate.isPending, isTrue);
-    expect((await ShelfRecoveryPack.tryLoad())!.manifest.appVersion, 'fail-pack');
-  });
-
-  testWidgets('missing vault image shows placeholder widget', (tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: Scaffold(
-          body: SizedBox(
-            width: 80,
-            height: 80,
-            child: CollectibleThumbImage(
-              imageRef: 'shelf_media/originals/doesnotexist.jpg',
-              name: 'Ghost',
-              seedKey: 'ghost',
-            ),
-          ),
-        ),
-      ),
-    );
-    await tester.pump();
-    expect(tester.takeException(), isNull);
-    expect(find.byType(CollectibleThumbImage), findsOneWidget);
   });
 }

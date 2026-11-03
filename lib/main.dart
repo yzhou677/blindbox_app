@@ -54,7 +54,10 @@ Future<void> main() async {
   final restored = await CollectionSnapshotStorage.load();
   // tryLoad deletes expired packs and returns null — no dialog in that case.
   final recoveryPack = await ShelfRecoveryPack.tryLoad();
-  final needsRecovery = restored == null && recoveryPack != null;
+  final needsRecovery = CollectionRecoveryGate.shouldOfferRecovery(
+    hasSnapshotPrefs: restored != null,
+    hasValidPack: recoveryPack != null,
+  );
 
   if (needsRecovery) {
     CollectionRecoveryGate.enterPending();
@@ -88,7 +91,7 @@ Future<void> main() async {
       child: CatalogBundleRefreshBridge(
         child: needsRecovery
             ? ShelfRecoveryDecisionApp(
-                pack: recoveryPack,
+                pack: recoveryPack!,
                 appBuilder: (_) => const BlindboxApp(),
               )
             : const BlindboxApp(),

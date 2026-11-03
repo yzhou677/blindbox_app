@@ -11,10 +11,13 @@ abstract final class ShelfRecoveryDialogCopy {
   static const importLabel = 'Import';
   static const startFreshLabel = 'Start fresh';
   static const confirmTitle = 'Start fresh?';
-  static const confirmBody = '旧数据会被删除，无法找回';
+  static const confirmBody =
+      'Your old shelf will be deleted and can’t be recovered.';
   static const confirmCancel = 'Cancel';
   static const confirmDelete = 'Delete';
-  static const importFailed = 'Couldn’t import this shelf. Try again or start fresh.';
+  static const importFailed =
+      'Couldn’t import this shelf. Try again or start fresh.';
+  static const startFreshFailed = 'Couldn’t start fresh. Try again.';
 }
 
 /// Non-dismissible recovery choice sheet shown before the main shell.

@@ -2,8 +2,8 @@ import 'package:blindbox_app/core/theme/app_theme.dart';
 import 'package:blindbox_app/features/collection/application/shelf_recovery_import.dart';
 import 'package:blindbox_app/features/collection/bootstrap/collection_app_bootstrap.dart';
 import 'package:blindbox_app/features/collection/bootstrap/collection_recovery_gate.dart';
-import 'package:blindbox_app/features/collection/data/collection_seed_data.dart';
 import 'package:blindbox_app/features/collection/data/shelf_recovery_pack.dart';
+import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/widgets/shelf_recovery_dialog.dart';
 import 'package:flutter/material.dart';
 
@@ -72,7 +72,8 @@ class _ShelfRecoveryDecisionAppState extends State<ShelfRecoveryDecisionApp> {
     setState(() => _busy = true);
     try {
       await ShelfRecoveryPack.deletePack();
-      CollectionAppBootstrap.prime(CollectionSeedData.initialSnapshot());
+      // Empty shelf — same as no prefs / no pack cold start.
+      CollectionAppBootstrap.prime(CollectionSnapshot.emptyTest());
       CollectionRecoveryGate.clearPending();
       if (!mounted) return;
       setState(() {
@@ -84,7 +85,7 @@ class _ShelfRecoveryDecisionAppState extends State<ShelfRecoveryDecisionApp> {
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _error = ShelfRecoveryDialogCopy.importFailed;
+        _error = ShelfRecoveryDialogCopy.startFreshFailed;
       });
     }
   }
