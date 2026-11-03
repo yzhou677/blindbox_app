@@ -450,24 +450,23 @@ abstract final class ShelfExportArchive {
             final original = staging.originalFiles[id];
             final thumb = staging.thumbFiles[id];
             if (original != null) {
-              final bytes = await original.readAsBytes();
-              if (bytes.isEmpty) continue;
-              final ext = _extensionOfFileName(original.uri.pathSegments.last);
-              final thumbBytes = thumb == null
-                  ? null
-                  : await thumb.readAsBytes();
-              await ShelfMediaVault.installExportedOriginal(
+              if (!await original.exists() || await original.length() == 0) {
+                continue;
+              }
+              final ext = _extensionOfFileName(_baseName(original.path));
+              await ShelfMediaVault.installExportedOriginalFromFiles(
                 id: id,
-                originalBytes: bytes,
+                originalFile: original,
                 ext: ext,
-                thumbBytes: thumbBytes,
+                thumbFile: thumb,
               );
             } else if (thumb != null) {
-              final bytes = await thumb.readAsBytes();
-              if (bytes.isEmpty) continue;
-              await ShelfMediaVault.installRecoveredThumb(
+              if (!await thumb.exists() || await thumb.length() == 0) {
+                continue;
+              }
+              await ShelfMediaVault.installRecoveredThumbFromFile(
                 id: id,
-                thumbBytes: bytes,
+                thumbFile: thumb,
               );
             }
           }

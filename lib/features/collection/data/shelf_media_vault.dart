@@ -518,6 +518,104 @@ abstract final class ShelfMediaVault {
     });
   }
 
+  /// Same as [installExportedOriginal] but copies files (no full read into RAM).
+  static Future<String> installExportedOriginalFromFiles({
+    required String id,
+    required File originalFile,
+    required String ext,
+    File? thumbFile,
+  }) async {
+    if (kIsWeb) {
+      return _vaultRefFor(id: id, ext: _normalizeExt(ext));
+    }
+    return _runExclusiveIndexOp(() async {
+      await ensureReady();
+      final trimmedId = id.trim();
+      final normalizedExt = _normalizeExt(ext);
+      if (trimmedId.isEmpty || !await originalFile.exists()) {
+        throw ArgumentError('export original requires id and source file');
+      }
+      if (await originalFile.length() == 0) {
+        throw ArgumentError('export original file is empty');
+      }
+      final originals = await _subdir(originalsFolderName);
+      final thumbs = await _subdir(thumbsFolderName);
+      final originalPath = '${originals.path}$_sep$trimmedId$normalizedExt';
+      await originalFile.copy(originalPath);
+
+      var thumbOk = false;
+      final thumbPath = '${thumbs.path}$_sep$trimmedId.jpg';
+      if (thumbFile != null && await thumbFile.exists()) {
+        if (await thumbFile.length() > 0) {
+          await thumbFile.copy(thumbPath);
+          thumbOk = true;
+        }
+      }
+      if (!thumbOk) {
+        final bytes = await File(originalPath).readAsBytes();
+        thumbOk = await _writeThumbFile(id: trimmedId, sourceBytes: bytes);
+      }
+
+      final now = DateTime.now().toUtc();
+      final index = await _ensureIndex();
+      final existing = index.entries[trimmedId];
+      index.upsert(
+        id: trimmedId,
+        originalRelative: '$originalsFolderName/$trimmedId$normalizedExt',
+        thumbRelative: thumbOk ? '$thumbsFolderName/$trimmedId.jpg' : null,
+        createdAt: existing?.createdAt ?? now,
+        lastAccessedAt: existing?.lastAccessedAt ?? now,
+        recoveredFromThumb: false,
+      );
+      await _flushIndex();
+      return _vaultRefFor(id: trimmedId, ext: normalizedExt);
+    });
+  }
+
+  /// Thumb-only install via [File.copy] (export archive missing original).
+  static Future<String> installRecoveredThumbFromFile({
+    required String id,
+    required File thumbFile,
+  }) async {
+    if (kIsWeb) {
+      return _vaultRefFor(id: id, ext: '.jpg');
+    }
+    return _runExclusiveIndexOp(() async {
+      await ensureReady();
+      final trimmedId = id.trim();
+      if (trimmedId.isEmpty || !await thumbFile.exists()) {
+        throw ArgumentError('recover thumb requires id and source file');
+      }
+      if (await thumbFile.length() == 0) {
+        throw ArgumentError('recover thumb file is empty');
+      }
+      final originals = await _subdir(originalsFolderName);
+      final thumbs = await _subdir(thumbsFolderName);
+      final originalPath = '${originals.path}$_sep$trimmedId.jpg';
+      final thumbPath = '${thumbs.path}$_sep$trimmedId.jpg';
+      final originalFile = File(originalPath);
+      final hadOriginal = await originalFile.exists();
+      if (!hadOriginal) {
+        await thumbFile.copy(originalPath);
+      }
+      await thumbFile.copy(thumbPath);
+      final now = DateTime.now().toUtc();
+      final index = await _ensureIndex();
+      final existing = index.entries[trimmedId];
+      index.upsert(
+        id: trimmedId,
+        originalRelative: '$originalsFolderName/$trimmedId.jpg',
+        thumbRelative: '$thumbsFolderName/$trimmedId.jpg',
+        createdAt: existing?.createdAt ?? now,
+        lastAccessedAt: existing?.lastAccessedAt ?? now,
+        recoveredFromThumb:
+            !hadOriginal || (existing?.recoveredFromThumb ?? false),
+      );
+      await _flushIndex();
+      return _vaultRefFor(id: trimmedId, ext: '.jpg');
+    });
+  }
+
   static String _normalizeExt(String ext) {
     final t = ext.trim().toLowerCase();
     if (t.isEmpty) return '.jpg';
