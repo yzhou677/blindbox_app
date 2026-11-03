@@ -7,6 +7,31 @@ import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 
+/// Counts + created date shown on the Replace confirm dialog.
+@immutable
+class ShelfImportBackupSummary {
+  const ShelfImportBackupSummary({
+    required this.seriesCount,
+    required this.figureCount,
+    required this.createdAt,
+  });
+
+  /// Prefer snapshot tallies over manifest counts when they disagree.
+  factory ShelfImportBackupSummary.fromStaging(ShelfExportStaging staging) {
+    return ShelfImportBackupSummary(
+      seriesCount: staging.snapshot.shelfSeries.length,
+      figureCount: staging.snapshot.totalShelfFigures,
+      createdAt: staging.manifest.createdAt,
+    );
+  }
+
+  final int seriesCount;
+  final int figureCount;
+
+  /// Manifest `createdAt` (UTC). Display via [ShelfImportCopy.formatCreatedDate].
+  final DateTime createdAt;
+}
+
 /// User-visible English copy for Settings → Import shelf.
 abstract final class ShelfImportCopy {
   ShelfImportCopy._();
@@ -23,6 +48,7 @@ abstract final class ShelfImportCopy {
   static const confirmCancel = 'Cancel';
   static const confirmReplace = 'Replace shelf';
 
+  static const checking = 'Checking backup…';
   static const importing = 'Importing backup…';
   static const successSnack = 'Shelf imported';
   static const failedSnack =
@@ -31,6 +57,39 @@ abstract final class ShelfImportCopy {
       'This backup is too large to import (over 2 GB).';
   static const safetyFailedSnack =
       'Couldn\'t save a safety copy. Import canceled.';
+
+  /// English summary line. [series] stays "series"; [figure]/[figures] pluralize.
+  static String confirmSummary({
+    required int seriesCount,
+    required int figureCount,
+    required String createdDate,
+  }) {
+    final seriesLabel =
+        seriesCount == 1 ? '1 series' : '$seriesCount series';
+    final figureLabel =
+        figureCount == 1 ? '1 figure' : '$figureCount figures';
+    return 'This backup has $seriesLabel and $figureLabel, created $createdDate.';
+  }
+
+  /// Local-time `MMM d, yyyy` (e.g. `Jan 1, 2026`).
+  static String formatCreatedDate(DateTime createdAt) {
+    final local = createdAt.toLocal();
+    const months = <String>[
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${months[local.month - 1]} ${local.day}, ${local.year}';
+  }
 }
 
 enum ShelfImportFlowStatus {
@@ -69,7 +128,8 @@ class ShelfImportFlowDeps {
   /// Returns a filesystem path to a `.zip`, or null if the user cancelled.
   final Future<String?> Function()? pickZipPath;
 
-  final Future<bool> Function()? confirmReplace;
+  /// Shown after a successful unpack. Return false to cancel (staging deleted).
+  final Future<bool> Function(ShelfImportBackupSummary summary)? confirmReplace;
 
   final Future<ShelfExportStaging> Function(String zipPath)? unpack;
 
@@ -92,8 +152,9 @@ class ShelfImportFlowDeps {
   final void Function(CollectionSnapshot snapshot)? scheduleRecoveryPack;
 }
 
-/// Manual Import shelf (Replace only): pick → confirm → validate → safety →
-/// commit → refresh notifier. Does not change recovery-gate *policy*.
+/// Manual Import shelf (Replace only):
+/// pick → unpack/validate → confirm (summary) → safety → commit.
+/// Does not change recovery-gate *policy*.
 abstract final class ShelfImportFlow {
   ShelfImportFlow._();
 
@@ -128,15 +189,6 @@ abstract final class ShelfImportFlow {
         );
       }
 
-      if (confirm != null) {
-        final ok = await confirm();
-        if (!ok) {
-          return const ShelfImportFlowResult(
-            status: ShelfImportFlowStatus.cancelled,
-          );
-        }
-      }
-
       suspendPersistence();
 
       ShelfExportStaging? staging;
@@ -153,6 +205,16 @@ abstract final class ShelfImportFlow {
           return const ShelfImportFlowResult(
             status: ShelfImportFlowStatus.failed,
           );
+        }
+
+        if (confirm != null) {
+          final summary = ShelfImportBackupSummary.fromStaging(staging);
+          final ok = await confirm(summary);
+          if (!ok) {
+            return const ShelfImportFlowResult(
+              status: ShelfImportFlowStatus.cancelled,
+            );
+          }
         }
 
         final shelfEmpty = currentSnapshot.shelfSeries.isEmpty;

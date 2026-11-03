@@ -38,7 +38,8 @@ class CollectionSettingsScreen extends ConsumerStatefulWidget {
 
   /// When set, skips the Replace shelf dialog (tests).
   @visibleForTesting
-  final Future<bool> Function()? confirmReplaceOverride;
+  final Future<bool> Function(ShelfImportBackupSummary summary)?
+      confirmReplaceOverride;
 
   @override
   ConsumerState<CollectionSettingsScreen> createState() =>
@@ -48,13 +49,14 @@ class CollectionSettingsScreen extends ConsumerStatefulWidget {
 class _CollectionSettingsScreenState
     extends ConsumerState<CollectionSettingsScreen> {
   bool _exporting = false;
+  bool _checking = false;
   bool _importing = false;
   int _progressDone = 0;
   int _progressTotal = 0;
   String? _statusMessage;
   bool _statusIsError = false;
 
-  bool get _busy => _exporting || _importing;
+  bool get _busy => _exporting || _checking || _importing;
 
   Future<void> _onExportPressed() async {
     if (_busy) return;
@@ -140,10 +142,15 @@ class _CollectionSettingsScreenState
     });
   }
 
-  Future<bool> _confirmReplaceDialog() async {
+  Future<bool> _confirmReplaceDialog(ShelfImportBackupSummary summary) async {
     final override = widget.confirmReplaceOverride;
-    if (override != null) return override();
+    if (override != null) return override(summary);
     if (!mounted) return false;
+    final summaryLine = ShelfImportCopy.confirmSummary(
+      seriesCount: summary.seriesCount,
+      figureCount: summary.figureCount,
+      createdDate: ShelfImportCopy.formatCreatedDate(summary.createdAt),
+    );
     final choice = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -151,7 +158,8 @@ class _CollectionSettingsScreenState
         final scheme = Theme.of(ctx).colorScheme;
         return AlertDialog(
           title: const Text(ShelfImportCopy.confirmTitle),
-          content: const Text(
+          content: Text(
+            '$summaryLine\n\n'
             '${ShelfImportCopy.confirmBody}\n\n'
             '${ShelfImportCopy.confirmSafetyNote}',
           ),
@@ -200,22 +208,33 @@ class _CollectionSettingsScreenState
       resumePersistence: notifier.resumePersistence,
       reloadUiPrefs: prefsNotifier.reloadFromStorage,
       deps: ShelfImportFlowDeps(
-        // Pick → confirm → then show busy. Returning null = cancelled.
+        // Pick → Checking → confirm(summary) → Importing → commit.
         pickZipPath: () async {
           final pick = widget.importDeps.pickZipPath;
           final resolved =
               pick != null ? await pick() : await ShelfImportFlow.pickZipPath();
           if (resolved == null || resolved.isEmpty) return null;
-          final ok = await _confirmReplaceDialog();
-          if (!ok) return null;
           if (mounted) {
             setState(() {
-              _importing = true;
+              _checking = true;
             });
           }
           return resolved;
         },
-        confirmReplace: () async => true,
+        confirmReplace: (summary) async {
+          if (mounted) {
+            setState(() {
+              _checking = false;
+            });
+          }
+          final ok = await _confirmReplaceDialog(summary);
+          if (ok && mounted) {
+            setState(() {
+              _importing = true;
+            });
+          }
+          return ok;
+        },
         unpack: widget.importDeps.unpack,
         writeSafetyZip: widget.importDeps.writeSafetyZip,
         commitStaging: widget.importDeps.commitStaging,
@@ -228,6 +247,7 @@ class _CollectionSettingsScreenState
     if (!mounted) return;
 
     setState(() {
+      _checking = false;
       _importing = false;
     });
 
@@ -430,13 +450,15 @@ class _CollectionSettingsScreenState
                                 style:
                                     AppTypography.cardMeta(textTheme, scheme),
                               ),
-                              if (_importing) ...[
+                              if (_checking || _importing) ...[
                                 const SizedBox(height: 12),
                                 Text(
                                   key: const Key(
                                     'collection_settings_import_progress',
                                   ),
-                                  ShelfImportCopy.importing,
+                                  _checking
+                                      ? ShelfImportCopy.checking
+                                      : ShelfImportCopy.importing,
                                   style: AppTypography.cardMeta(
                                     textTheme,
                                     scheme,

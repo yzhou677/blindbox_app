@@ -139,7 +139,7 @@ void main() {
       reloadUiPrefs: () async {},
       deps: ShelfImportFlowDeps(
         pickZipPath: () async => null,
-        confirmReplace: () async => true,
+        confirmReplace: (_) async => true,
         clearPickerTemp: () async {},
       ),
     );
@@ -150,15 +150,118 @@ void main() {
     expect(after!.shelfSeries.single.name, 'Old');
   });
 
-  test('confirm Cancel leaves shelf unchanged', () async {
+  test('confirm Cancel deletes staging and leaves shelf unchanged', () async {
     final current = _snap(seriesId: 'old', name: 'Old');
     await CollectionSnapshotStorage.save(current);
-    final zip = File('${tempCache.path}${Platform.pathSeparator}noop.zip');
-    await zip.writeAsBytes([1], flush: true);
 
+    CollectionAppBootstrap.prime(current);
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final notifier = container.read(collectionNotifierProvider.notifier);
+
+    var stagingDeleted = false;
+    var resumeCalls = 0;
     var packCalls = 0;
+    ShelfImportBackupSummary? seenSummary;
+    final staging = _CancelStaging(
+      onDelete: () => stagingDeleted = true,
+      snapshot: _snap(seriesId: 'new', name: 'Would Import'),
+      createdAt: DateTime.utc(2026, 3, 15),
+    );
+
     final result = await ShelfImportFlow.run(
       currentSnapshot: current,
+      currentMemoryJson: '{}',
+      currentUiPrefsJson: '{}',
+      suspendPersistence: notifier.suspendPersistenceForImport,
+      replaceNotifierState: (_) => fail('should not replace'),
+      resumePersistence: () {
+        resumeCalls++;
+        notifier.resumePersistence();
+      },
+      reloadUiPrefs: () async {},
+      deps: ShelfImportFlowDeps(
+        pickZipPath: () async => 'fake.zip',
+        unpack: (_) async => staging,
+        confirmReplace: (summary) async {
+          seenSummary = summary;
+          expect(notifier.persistenceSuspendedForTest, isTrue);
+          return false;
+        },
+        commitStaging: (_) async => fail('should not commit'),
+        clearPickerTemp: () async {},
+        scheduleRecoveryPack: (_) => packCalls++,
+      ),
+    );
+
+    expect(result.status, ShelfImportFlowStatus.cancelled);
+    expect(stagingDeleted, isTrue);
+    expect(resumeCalls, 1);
+    expect(packCalls, 0);
+    expect(notifier.persistenceSuspendedForTest, isFalse);
+    expect(seenSummary!.seriesCount, 1);
+    expect(seenSummary!.figureCount, 1);
+    final after = await CollectionSnapshotStorage.load();
+    expect(after!.shelfSeries.single.name, 'Old');
+    expect(
+      container.read(collectionNotifierProvider).shelfSeries.single.name,
+      'Old',
+    );
+  });
+
+  test('confirm summary uses snapshot counts over tampered manifest', () async {
+    final snap = CollectionSnapshot(
+      shelfSeries: [
+        ShelfSeries(
+          id: 's1',
+          name: 'A',
+          brand: 'B',
+          ipName: 'I',
+          figures: [
+            ShelfFigure(
+              id: 'f1',
+              seriesId: 's1',
+              name: 'One',
+              rarity: 'Regular',
+              isSecret: false,
+            ),
+            ShelfFigure(
+              id: 'f2',
+              seriesId: 's1',
+              name: 'Two',
+              rarity: 'Regular',
+              isSecret: false,
+            ),
+          ],
+          shelfAccent: const Color(0xFFE8F5E9),
+        ),
+      ],
+      figureStates: const {},
+    );
+    final staging = ShelfExportStaging(
+      stagingDir: Directory.systemTemp,
+      manifest: ShelfExportManifest(
+        kind: ShelfExportArchive.kind,
+        schemaVersion: 1,
+        createdAt: DateTime.utc(2026, 1, 1),
+        appVersion: '1',
+        seriesCount: 99,
+        figureCount: 99,
+        originalCount: 0,
+        thumbCount: 0,
+        mediaIncomplete: false,
+      ),
+      snapshot: snap,
+      memoryJson: '{}',
+      uiPrefsJson: '{}',
+      originalFiles: const {},
+      thumbFiles: const {},
+      extractedBytes: 0,
+    );
+
+    ShelfImportBackupSummary? seen;
+    final result = await ShelfImportFlow.run(
+      currentSnapshot: CollectionSnapshot.emptyTest(),
       currentMemoryJson: '{}',
       currentUiPrefsJson: '{}',
       suspendPersistence: () {},
@@ -166,18 +269,52 @@ void main() {
       resumePersistence: () {},
       reloadUiPrefs: () async {},
       deps: ShelfImportFlowDeps(
-        pickZipPath: () async => zip.path,
-        confirmReplace: () async => false,
-        unpack: (_) async => fail('should not unpack'),
+        pickZipPath: () async => 'x.zip',
+        unpack: (_) async => staging,
+        confirmReplace: (summary) async {
+          seen = summary;
+          return false;
+        },
         clearPickerTemp: () async {},
-        scheduleRecoveryPack: (_) => packCalls++,
+        scheduleRecoveryPack: (_) {},
       ),
     );
 
     expect(result.status, ShelfImportFlowStatus.cancelled);
-    expect(packCalls, 0);
+    expect(seen!.seriesCount, 1);
+    expect(seen!.figureCount, 2);
+  });
+
+  test('bad zip fails before confirm dialog', () async {
+    final old = _snap(seriesId: 'old', name: 'Keep');
+    await CollectionSnapshotStorage.save(old);
+    var confirmCalls = 0;
+    final corrupt = File('${tempCache.path}${Platform.pathSeparator}bad.zip');
+    await corrupt.writeAsBytes([1, 2, 3], flush: true);
+
+    final result = await ShelfImportFlow.run(
+      currentSnapshot: old,
+      currentMemoryJson: '{}',
+      currentUiPrefsJson: '{}',
+      suspendPersistence: () {},
+      replaceNotifierState: (_) => fail('no'),
+      resumePersistence: () {},
+      reloadUiPrefs: () async {},
+      deps: ShelfImportFlowDeps(
+        pickZipPath: () async => corrupt.path,
+        confirmReplace: (_) async {
+          confirmCalls++;
+          return true;
+        },
+        clearPickerTemp: () async {},
+        scheduleRecoveryPack: (_) {},
+      ),
+    );
+
+    expect(result.status, ShelfImportFlowStatus.failed);
+    expect(confirmCalls, 0);
     final after = await CollectionSnapshotStorage.load();
-    expect(after!.shelfSeries.single.name, 'Old');
+    expect(after!.shelfSeries.single.name, 'Keep');
   });
 
   test('happy path import replaces prefs memory media and notifier', () async {
@@ -234,7 +371,7 @@ void main() {
       },
       deps: ShelfImportFlowDeps(
         pickZipPath: () async => exported.zipPath,
-        confirmReplace: () async => true,
+        confirmReplace: (_) async => true,
         clearPickerTemp: () async {
           clearedTemp = true;
         },
@@ -297,7 +434,7 @@ void main() {
       reloadUiPrefs: () async {},
       deps: ShelfImportFlowDeps(
         pickZipPath: () async => backup.zipPath,
-        confirmReplace: () async => true,
+        confirmReplace: (_) async => true,
         writeSafetyZip: ({
           required snapshot,
           required memoryJson,
@@ -339,7 +476,7 @@ void main() {
       reloadUiPrefs: () async {},
       deps: ShelfImportFlowDeps(
         pickZipPath: () async => backup.zipPath,
-        confirmReplace: () async => true,
+        confirmReplace: (_) async => true,
         writeSafetyZip: ({
           required snapshot,
           required memoryJson,
@@ -380,7 +517,7 @@ void main() {
         reloadUiPrefs: () async {},
         deps: ShelfImportFlowDeps(
           pickZipPath: () async => zipPath,
-          confirmReplace: () async => true,
+          confirmReplace: (_) async => true,
           clearPickerTemp: () async {},
           scheduleRecoveryPack: (_) => packCalls++,
         ),
@@ -492,7 +629,7 @@ void main() {
       reloadUiPrefs: () async {},
       deps: ShelfImportFlowDeps(
         pickZipPath: () async => exported.zipPath,
-        confirmReplace: () async => true,
+        confirmReplace: (_) async => true,
         clearPickerTemp: () async {},
         scheduleRecoveryPack: (_) => packCalls++,
       ),
@@ -534,7 +671,7 @@ void main() {
       reloadUiPrefs: () async {},
       deps: ShelfImportFlowDeps(
         pickZipPath: () async => backup.zipPath,
-        confirmReplace: () async => true,
+        confirmReplace: (_) async => true,
         writeSafetyZip: ({
           required snapshot,
           required memoryJson,
@@ -617,7 +754,7 @@ void main() {
       reloadUiPrefs: () async {},
       deps: ShelfImportFlowDeps(
         pickZipPath: () async => zipPath,
-        confirmReplace: () async => true,
+        confirmReplace: (_) async => true,
         writeSafetyZip: ({
           required snapshot,
           required memoryJson,
@@ -669,7 +806,7 @@ void main() {
       reloadUiPrefs: () async {},
       deps: ShelfImportFlowDeps(
         pickZipPath: () async => backup.zipPath,
-        confirmReplace: () async => true,
+        confirmReplace: (_) async => true,
         writeSafetyZip: ({
           required snapshot,
           required memoryJson,
@@ -720,7 +857,7 @@ void main() {
       reloadUiPrefs: () async {},
       deps: ShelfImportFlowDeps(
         pickZipPath: () async => backup.zipPath,
-        confirmReplace: () async => true,
+        confirmReplace: (_) async => true,
         writeSafetyZip: ({
           required snapshot,
           required memoryJson,
@@ -777,10 +914,39 @@ void main() {
     expect(ShelfImportCopy.importTitle, 'Import shelf');
     expect(ShelfImportCopy.confirmTitle, 'Replace your shelf?');
     expect(ShelfImportCopy.confirmReplace, 'Replace shelf');
+    expect(ShelfImportCopy.checking, 'Checking backup…');
     expect(ShelfImportCopy.successSnack, 'Shelf imported');
     expect(ShelfImportCopy.failedSnack, contains('Couldn\'t import'));
     expect(ShelfImportCopy.tooLargeSnack, contains('2 GB'));
     expect(ShelfImportCopy.safetyFailedSnack, contains('safety copy'));
+
+    expect(
+      ShelfImportCopy.confirmSummary(
+        seriesCount: 1,
+        figureCount: 1,
+        createdDate: 'Jan 1, 2026',
+      ),
+      'This backup has 1 series and 1 figure, created Jan 1, 2026.',
+    );
+    expect(
+      ShelfImportCopy.confirmSummary(
+        seriesCount: 2,
+        figureCount: 2,
+        createdDate: 'Mar 15, 2026',
+      ),
+      'This backup has 2 series and 2 figures, created Mar 15, 2026.',
+    );
+    expect(
+      ShelfImportCopy.formatCreatedDate(DateTime.utc(2026, 1, 1)),
+      ShelfImportCopy.formatCreatedDate(DateTime.utc(2026, 1, 1).toLocal()),
+    );
+    // Local MMM d, yyyy shape.
+    expect(
+      RegExp(r'^[A-Z][a-z]{2} \d{1,2}, \d{4}$')
+          .hasMatch(ShelfImportCopy.formatCreatedDate(DateTime.utc(2026, 3, 15))),
+      isTrue,
+    );
+
     // No CJK characters in user-facing strings.
     final all = [
       ShelfImportCopy.importTitle,
@@ -790,12 +956,54 @@ void main() {
       ShelfImportCopy.confirmSafetyNote,
       ShelfImportCopy.confirmCancel,
       ShelfImportCopy.confirmReplace,
+      ShelfImportCopy.checking,
       ShelfImportCopy.importing,
       ShelfImportCopy.successSnack,
       ShelfImportCopy.failedSnack,
       ShelfImportCopy.tooLargeSnack,
       ShelfImportCopy.safetyFailedSnack,
+      ShelfImportCopy.confirmSummary(
+        seriesCount: 1,
+        figureCount: 1,
+        createdDate: 'Jan 1, 2026',
+      ),
+      ShelfImportCopy.confirmSummary(
+        seriesCount: 2,
+        figureCount: 3,
+        createdDate: 'Mar 15, 2026',
+      ),
     ].join();
     expect(RegExp(r'[\u4e00-\u9fff]').hasMatch(all), isFalse);
   });
+}
+
+class _CancelStaging extends ShelfExportStaging {
+  _CancelStaging({
+    required this.onDelete,
+    required super.snapshot,
+    required DateTime createdAt,
+  }) : super(
+          stagingDir: Directory.systemTemp,
+          manifest: ShelfExportManifest(
+            kind: ShelfExportArchive.kind,
+            schemaVersion: 1,
+            createdAt: createdAt,
+            appVersion: '1',
+            seriesCount: 0,
+            figureCount: 0,
+            originalCount: 0,
+            thumbCount: 0,
+            mediaIncomplete: false,
+          ),
+          memoryJson: '{}',
+          uiPrefsJson: '{}',
+          originalFiles: const {},
+          thumbFiles: const {},
+          extractedBytes: 0,
+        );
+
+  final void Function() onDelete;
+
+  @override
+  Future<void> delete() async => onDelete();
 }
