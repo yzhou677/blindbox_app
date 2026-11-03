@@ -14,6 +14,7 @@ class ShelfExportFlowDeps {
     this.export,
     this.shareZip,
     this.deleteFile,
+    this.cleanupStale,
     this.loadMemoryJson,
     this.loadUiPrefsJson,
   });
@@ -36,7 +37,11 @@ class ShelfExportFlowDeps {
   /// Shares [zipPath]; return value is ignored except for completion.
   final Future<Object?> Function(String zipPath)? shareZip;
 
+  /// Used only when share throws (receiver never got the file).
   final Future<void> Function(String path)? deleteFile;
+
+  /// Best-effort purge of zip/staging older than one day (before export).
+  final Future<void> Function()? cleanupStale;
 
   /// Optional loaders for widget tests (avoid SharedPreferences channel waits).
   final Future<String> Function()? loadMemoryJson;
@@ -64,7 +69,11 @@ class ShelfExportFlowResult {
   final int estimatedBytes;
 }
 
-/// Runs estimate → optional large confirm → zip → share → delete zip.
+/// Runs estimate → optional large confirm → zip → share.
+///
+/// Keeps the zip after share success/cancel so Android receivers can finish
+/// reading it. Deletes immediately only when share throws. Stale cache files
+/// are purged before export and on app startup.
 abstract final class ShelfExportFlow {
   ShelfExportFlow._();
 
@@ -76,10 +85,17 @@ abstract final class ShelfExportFlow {
     required void Function(int completed, int total) onProgress,
     ShelfExportFlowDeps deps = const ShelfExportFlowDeps(),
   }) async {
+    final cleanupFn = deps.cleanupStale ?? ShelfExportArchive.cleanupStaleExports;
     final estimateFn = deps.estimate ?? ShelfExportArchive.estimateSize;
     final exportFn = deps.export ?? _defaultExport;
     final shareFn = deps.shareZip ?? _defaultShare;
     final deleteFn = deps.deleteFile ?? _defaultDelete;
+
+    try {
+      await cleanupFn();
+    } on Object {
+      // best-effort; export may still succeed
+    }
 
     late final ShelfExportSizeEstimate estimate;
     try {
@@ -151,7 +167,7 @@ abstract final class ShelfExportFlow {
     try {
       await shareFn(zipPath);
     } on Object {
-      // Share failure still cleans up; treat as failed export UX.
+      // Share never handed off — safe to delete immediately.
       await _safeDelete(deleteFn, zipPath);
       return ShelfExportFlowResult(
         status: ShelfExportFlowStatus.failed,
@@ -160,7 +176,7 @@ abstract final class ShelfExportFlow {
       );
     }
 
-    await _safeDelete(deleteFn, zipPath);
+    // Keep zip after share success/cancel; stale cleanup removes it later.
     return ShelfExportFlowResult(
       status: ShelfExportFlowStatus.success,
       mediaIncomplete: write.mediaIncomplete,

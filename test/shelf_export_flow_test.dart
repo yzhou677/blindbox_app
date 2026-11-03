@@ -22,6 +22,7 @@ void main() {
       confirmLargeBackup: (_) async => true,
       onProgress: (_, _) {},
       deps: ShelfExportFlowDeps(
+        cleanupStale: () async {},
         estimate: ({
           required snapshot,
           required memoryJson,
@@ -67,6 +68,7 @@ void main() {
       confirmLargeBackup: (_) async => false,
       onProgress: (_, _) {},
       deps: ShelfExportFlowDeps(
+        cleanupStale: () async {},
         estimate: ({
           required snapshot,
           required memoryJson,
@@ -99,12 +101,13 @@ void main() {
     expect(exportCalls, 0);
   });
 
-  test('large warn Continue exports, shares, then deletes zip', () async {
+  test('large warn Continue exports, shares, and keeps zip', () async {
     final temp = await Directory.systemTemp.createTemp('shelf_export_flow_');
     final zip = File('${temp.path}${Platform.pathSeparator}out.zip');
     await zip.writeAsBytes([1, 2, 3], flush: true);
     var shareCalls = 0;
     var deleted = false;
+    var cleanupCalls = 0;
 
     ShelfExportArchive.testWarnBytesOverride = 50;
     final result = await ShelfExportFlow.run(
@@ -114,6 +117,9 @@ void main() {
       confirmLargeBackup: (_) async => true,
       onProgress: (_, _) {},
       deps: ShelfExportFlowDeps(
+        cleanupStale: () async {
+          cleanupCalls++;
+        },
         estimate: ({
           required snapshot,
           required memoryJson,
@@ -157,16 +163,18 @@ void main() {
     expect(result.status, ShelfExportFlowStatus.success);
     expect(result.mediaIncomplete, isTrue);
     expect(shareCalls, 1);
-    expect(deleted, isTrue);
-    expect(zip.existsSync(), isFalse);
+    expect(cleanupCalls, 1);
+    expect(deleted, isFalse);
+    expect(zip.existsSync(), isTrue);
     expect(CollectionRecoveryGate.isPending, isFalse);
     await temp.delete(recursive: true);
   });
 
-  test('share cancel path still deletes zip', () async {
+  test('share cancel path keeps zip', () async {
     final temp = await Directory.systemTemp.createTemp('shelf_export_flow2_');
     final zip = File('${temp.path}${Platform.pathSeparator}out.zip');
     await zip.writeAsBytes([9], flush: true);
+    var deleted = false;
 
     final result = await ShelfExportFlow.run(
       snapshot: CollectionSnapshot.emptyTest(),
@@ -175,6 +183,7 @@ void main() {
       confirmLargeBackup: (_) async => true,
       onProgress: (_, _) {},
       deps: ShelfExportFlowDeps(
+        cleanupStale: () async {},
         estimate: ({
           required snapshot,
           required memoryJson,
@@ -205,14 +214,117 @@ void main() {
           return null;
         },
         deleteFile: (path) async {
+          deleted = true;
           await File(path).delete();
         },
       ),
     );
 
     expect(result.status, ShelfExportFlowStatus.success);
+    expect(deleted, isFalse);
+    expect(zip.existsSync(), isTrue);
+    await temp.delete(recursive: true);
+  });
+
+  test('share exception deletes zip', () async {
+    final temp = await Directory.systemTemp.createTemp('shelf_export_flow3_');
+    final zip = File('${temp.path}${Platform.pathSeparator}out.zip');
+    await zip.writeAsBytes([9], flush: true);
+
+    final result = await ShelfExportFlow.run(
+      snapshot: CollectionSnapshot.emptyTest(),
+      memoryJson: '{}',
+      uiPrefsJson: '{}',
+      confirmLargeBackup: (_) async => true,
+      onProgress: (_, _) {},
+      deps: ShelfExportFlowDeps(
+        cleanupStale: () async {},
+        estimate: ({
+          required snapshot,
+          required memoryJson,
+          required uiPrefsJson,
+        }) async =>
+            const ShelfExportSizeEstimate(
+              uncompressedBytes: 10,
+              mediaIncomplete: false,
+            ),
+        export: ({
+          required snapshot,
+          required memoryJson,
+          required uiPrefsJson,
+          onProgress,
+        }) async {
+          return ShelfExportWriteResult.written(
+            zipPath: zip.path,
+            uncompressedBytes: 10,
+            zipBytes: 1,
+            mediaIncomplete: false,
+            exceedsWarnThreshold: false,
+            originalCount: 0,
+            thumbCount: 0,
+          );
+        },
+        shareZip: (_) async {
+          throw StateError('share failed');
+        },
+        deleteFile: (path) async {
+          await File(path).delete();
+        },
+      ),
+    );
+
+    expect(result.status, ShelfExportFlowStatus.failed);
     expect(zip.existsSync(), isFalse);
     await temp.delete(recursive: true);
+  });
+
+  test('runs cleanup before export', () async {
+    final order = <String>[];
+    await ShelfExportFlow.run(
+      snapshot: CollectionSnapshot.emptyTest(),
+      memoryJson: '{}',
+      uiPrefsJson: '{}',
+      confirmLargeBackup: (_) async => true,
+      onProgress: (_, _) {},
+      deps: ShelfExportFlowDeps(
+        cleanupStale: () async {
+          order.add('cleanup');
+        },
+        estimate: ({
+          required snapshot,
+          required memoryJson,
+          required uiPrefsJson,
+        }) async {
+          order.add('estimate');
+          return const ShelfExportSizeEstimate(
+            uncompressedBytes: 10,
+            mediaIncomplete: false,
+          );
+        },
+        export: ({
+          required snapshot,
+          required memoryJson,
+          required uiPrefsJson,
+          onProgress,
+        }) async {
+          order.add('export');
+          return ShelfExportWriteResult.written(
+            zipPath: 'unused.zip',
+            uncompressedBytes: 10,
+            zipBytes: 1,
+            mediaIncomplete: false,
+            exceedsWarnThreshold: false,
+            originalCount: 0,
+            thumbCount: 0,
+          );
+        },
+        shareZip: (_) async {
+          order.add('share');
+          return null;
+        },
+      ),
+    );
+    expect(order, ['cleanup', 'estimate', 'export', 'share']);
   });
 
   test('export failure does not share and leaves gate untouched', () async {
@@ -225,6 +337,7 @@ void main() {
       confirmLargeBackup: (_) async => true,
       onProgress: (_, _) {},
       deps: ShelfExportFlowDeps(
+        cleanupStale: () async {},
         estimate: ({
           required snapshot,
           required memoryJson,

@@ -138,6 +138,7 @@ void main() {
         child: MaterialApp(
           home: CollectionSettingsScreen(
             flowDeps: ShelfExportFlowDeps(
+              cleanupStale: () async {},
               loadMemoryJson: () async => '{}',
               loadUiPrefsJson: () async => '{}',
               estimate: ({
@@ -190,15 +191,15 @@ void main() {
     await tester.pump();
     expect(exportCalls, 1);
 
-    // Finish the delayed export + share + delete.
+    // Finish the delayed export + share (zip kept for receivers).
     await tester.pump(const Duration(milliseconds: 100));
     await tester.pump();
 
     expect(shareCalls, 1);
-    expect(zip.existsSync(), isFalse);
+    expect(zip.existsSync(), isTrue);
   });
 
-  testWidgets('share dismiss still deletes zip', (tester) async {
+  testWidgets('share dismiss keeps zip', (tester) async {
     final temp = Directory.systemTemp.createTempSync('settings_share_');
     addTearDown(() {
       if (temp.existsSync()) temp.deleteSync(recursive: true);
@@ -214,6 +215,7 @@ void main() {
         child: MaterialApp(
           home: CollectionSettingsScreen(
             flowDeps: ShelfExportFlowDeps(
+              cleanupStale: () async {},
               loadMemoryJson: () async => '{}',
               loadUiPrefsJson: () async => '{}',
               estimate: ({
@@ -243,7 +245,62 @@ void main() {
     await tester.tap(find.byKey(const Key('collection_settings_export_tile')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
+    expect(zip.existsSync(), isTrue);
+  });
+
+  testWidgets('share exception deletes zip', (tester) async {
+    final temp = Directory.systemTemp.createTempSync('settings_share_fail_');
+    addTearDown(() {
+      if (temp.existsSync()) temp.deleteSync(recursive: true);
+    });
+    final zip = File('${temp.path}${Platform.pathSeparator}bak.zip')
+      ..writeAsBytesSync([1], flush: true);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          collectionNotifierProvider.overrideWith(_EmptyCollectionNotifier.new),
+        ],
+        child: MaterialApp(
+          home: CollectionSettingsScreen(
+            flowDeps: ShelfExportFlowDeps(
+              cleanupStale: () async {},
+              loadMemoryJson: () async => '{}',
+              loadUiPrefsJson: () async => '{}',
+              estimate: ({
+                required snapshot,
+                required memoryJson,
+                required uiPrefsJson,
+              }) async =>
+                  const ShelfExportSizeEstimate(
+                    uncompressedBytes: 10,
+                    mediaIncomplete: false,
+                  ),
+              export: ({
+                required snapshot,
+                required memoryJson,
+                required uiPrefsJson,
+                onProgress,
+              }) async =>
+                  _writtenZip(zip.path),
+              shareZip: (_) async {
+                throw StateError('share failed');
+              },
+              deleteFile: _syncDelete,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('collection_settings_export_tile')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
     expect(zip.existsSync(), isFalse);
+    expect(
+      find.text('Couldn\'t create a backup. Try again.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('over 500MB Cancel does not export; Continue does', (tester) async {
@@ -266,6 +323,7 @@ void main() {
             home: CollectionSettingsScreen(
               confirmLargeBackupOverride: confirm,
               flowDeps: ShelfExportFlowDeps(
+                cleanupStale: () async {},
                 loadMemoryJson: () async => '{}',
                 loadUiPrefsJson: () async => '{}',
                 estimate: ({
@@ -332,6 +390,7 @@ void main() {
         child: MaterialApp(
           home: CollectionSettingsScreen(
             flowDeps: ShelfExportFlowDeps(
+              cleanupStale: () async {},
               loadMemoryJson: () async => '{}',
               loadUiPrefsJson: () async => '{}',
               estimate: ({
@@ -384,6 +443,7 @@ void main() {
         child: MaterialApp(
           home: CollectionSettingsScreen(
             flowDeps: ShelfExportFlowDeps(
+              cleanupStale: () async {},
               loadMemoryJson: () async => '{}',
               loadUiPrefsJson: () async => '{}',
               estimate: ({
@@ -441,6 +501,7 @@ void main() {
         child: MaterialApp(
           home: CollectionSettingsScreen(
             flowDeps: ShelfExportFlowDeps(
+              cleanupStale: () async {},
               loadMemoryJson: () async => '{}',
               loadUiPrefsJson: () async => '{}',
               estimate: ({
@@ -499,6 +560,7 @@ void main() {
         child: MaterialApp(
           home: CollectionSettingsScreen(
             flowDeps: ShelfExportFlowDeps(
+              cleanupStale: () async {},
               loadMemoryJson: () async => '{"firstSeriesAddedAtMs":11}',
               loadUiPrefsJson: () async => '{}',
               estimate: ({

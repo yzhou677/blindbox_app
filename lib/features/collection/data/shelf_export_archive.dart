@@ -47,6 +47,11 @@ abstract final class ShelfExportArchive {
   static const maxEntries = 20000;
   static const maxSingleFileBytes = 512 * 1024 * 1024;
 
+  /// Zip / unpack staging older than this are purged by [cleanupStaleExports].
+  static const staleMaxAge = Duration(days: 1);
+
+  static const unpackStagingPrefix = 'shelf_export_unpack_';
+
   /// Keep in sync with pubspec `version` (no package_info dependency).
   static const defaultAppVersion = '1.0.14+27';
 
@@ -65,6 +70,13 @@ abstract final class ShelfExportArchive {
   @visibleForTesting
   static int? testMaxSingleFileBytesOverride;
 
+  /// Overrides "now" for backup filenames and stale cutoff (tests).
+  @visibleForTesting
+  static DateTime? testNowOverride;
+
+  @visibleForTesting
+  static Duration? testStaleMaxAgeOverride;
+
   @visibleForTesting
   static void resetForTest({bool clearCacheOverride = true}) {
     if (clearCacheOverride) {
@@ -74,6 +86,8 @@ abstract final class ShelfExportArchive {
     testWarnBytesOverride = null;
     testMaxEntriesOverride = null;
     testMaxSingleFileBytesOverride = null;
+    testNowOverride = null;
+    testStaleMaxAgeOverride = null;
   }
 
   static int get _rejectBytes => testRejectBytesOverride ?? rejectBytes;
@@ -81,6 +95,10 @@ abstract final class ShelfExportArchive {
   static int get _maxEntries => testMaxEntriesOverride ?? maxEntries;
   static int get _maxSingleFileBytes =>
       testMaxSingleFileBytesOverride ?? maxSingleFileBytes;
+  static Duration get _staleMaxAge =>
+      testStaleMaxAgeOverride ?? staleMaxAge;
+
+  static DateTime get _now => testNowOverride ?? DateTime.now();
 
   static String get _sep => Platform.pathSeparator;
 
@@ -106,6 +124,71 @@ abstract final class ShelfExportArchive {
     );
   }
 
+  /// Deletes zip files and unpack staging dirs in the export cache that are
+  /// older than [staleMaxAge] (best-effort). Safe to call from app startup
+  /// without awaiting first frame.
+  static Future<void> cleanupStaleExports({
+    DateTime? now,
+    Duration? maxAge,
+  }) async {
+    if (kIsWeb) return;
+    try {
+      final cache = await _cacheRoot();
+      if (!await cache.exists()) return;
+      final cutoff = (now ?? _now).subtract(maxAge ?? _staleMaxAge);
+      await for (final entity in cache.list(followLinks: false)) {
+        try {
+          final name = _baseName(entity.path);
+          final DateTime modified;
+          if (entity is Directory && name.startsWith(unpackStagingPrefix)) {
+            modified = _stagingAgeHint(name) ?? (await entity.stat()).modified;
+          } else {
+            modified = (await entity.stat()).modified;
+          }
+          if (!modified.isBefore(cutoff)) continue;
+          if (entity is File) {
+            if (name.toLowerCase().endsWith('.zip')) {
+              await entity.delete();
+            }
+          } else if (entity is Directory) {
+            if (name.startsWith(unpackStagingPrefix)) {
+              await entity.delete(recursive: true);
+            }
+          }
+        } on Object {
+          // skip one entry
+        }
+      }
+    } on Object {
+      // best-effort
+    }
+  }
+
+  /// `Shelfy-backup-YYYY-MM-DD` (local calendar day).
+  @visibleForTesting
+  static String backupZipStem(DateTime localDate) {
+    final y = localDate.year.toString().padLeft(4, '0');
+    final m = localDate.month.toString().padLeft(2, '0');
+    final d = localDate.day.toString().padLeft(2, '0');
+    return 'Shelfy-backup-$y-$m-$d';
+  }
+
+  /// Picks `Shelfy-backup-YYYY-MM-DD.zip`, or `-2`, `-3`, … when taken.
+  @visibleForTesting
+  static String allocateBackupZipFileName({
+    required DateTime localDate,
+    required bool Function(String fileName) exists,
+  }) {
+    final stem = backupZipStem(localDate);
+    final first = '$stem.zip';
+    if (!exists(first)) return first;
+    for (var n = 2; n < 10000; n++) {
+      final candidate = '$stem-$n.zip';
+      if (!exists(candidate)) return candidate;
+    }
+    throw StateError('too many shelf exports for $stem');
+  }
+
   /// Progress: [completed] files processed out of [total].
   static Future<ShelfExportWriteResult> exportToZip({
     required CollectionSnapshot snapshot,
@@ -120,6 +203,7 @@ abstract final class ShelfExportArchive {
       throw UnsupportedError('Shelf export is not supported on web');
     }
 
+    await cleanupStaleExports();
     await ShelfMediaVault.ensureReady();
     final createdAt = (createdAtUtc ?? DateTime.now().toUtc()).toUtc();
     final plan = await _buildMediaPlan(snapshot);
@@ -179,9 +263,17 @@ abstract final class ShelfExportArchive {
     };
 
     final cache = await _cacheRoot();
-    final stamp = createdAt.millisecondsSinceEpoch;
-    final zipPath =
-        outputPath ?? '${cache.path}${_sep}shelf_export_$stamp.zip';
+    final String zipPath;
+    if (outputPath != null) {
+      zipPath = outputPath;
+    } else {
+      final localDay = _now;
+      final fileName = allocateBackupZipFileName(
+        localDate: localDay,
+        exists: (name) => File('${cache.path}$_sep$name').existsSync(),
+      );
+      zipPath = '${cache.path}$_sep$fileName';
+    }
 
     final zipOut = File(zipPath);
     if (await zipOut.exists()) {
@@ -238,7 +330,7 @@ abstract final class ShelfExportArchive {
 
     final cache = await _cacheRoot();
     final stagingPath =
-        '${cache.path}${_sep}shelf_export_unpack_${DateTime.now().toUtc().millisecondsSinceEpoch}';
+        '${cache.path}$_sep$unpackStagingPrefix${DateTime.now().toUtc().millisecondsSinceEpoch}';
 
     // Capture limits on this isolate — worker isolates do not see test overrides.
     final maxEntries = _maxEntries;
@@ -498,6 +590,24 @@ abstract final class ShelfExportArchive {
       await dir.create(recursive: true);
     }
     return dir;
+  }
+
+  static String _baseName(String path) {
+    final normalized = path.replaceAll('\\', '/');
+    final parts = normalized.split('/');
+    for (var i = parts.length - 1; i >= 0; i--) {
+      if (parts[i].isNotEmpty) return parts[i];
+    }
+    return path;
+  }
+
+  /// Prefer epoch embedded in `shelf_export_unpack_<ms>` names.
+  static DateTime? _stagingAgeHint(String dirName) {
+    if (!dirName.startsWith(unpackStagingPrefix)) return null;
+    final suffix = dirName.substring(unpackStagingPrefix.length);
+    final ms = int.tryParse(suffix);
+    if (ms == null) return null;
+    return DateTime.fromMillisecondsSinceEpoch(ms, isUtc: true).toLocal();
   }
 
   static String _extensionOfFileName(String name) {

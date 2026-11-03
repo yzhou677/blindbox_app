@@ -12,6 +12,7 @@ import 'package:blindbox_app/features/collection/bootstrap/collection_recovery_g
 import 'package:blindbox_app/features/collection/data/collection_seed_data.dart';
 import 'package:blindbox_app/features/collection/data/series_release_lookup.dart';
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
+import 'package:blindbox_app/features/collection/data/shelf_export_archive.dart';
 import 'package:blindbox_app/features/collection/data/shelf_media_vault.dart';
 import 'package:blindbox_app/features/collection/data/shelf_recovery_pack.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
@@ -79,6 +80,9 @@ Future<void> main() async {
     CollectionAppBootstrap.prime(snapshot);
   }
 
+  // Stale export zip / staging cleanup must not block first frame.
+  unawaited(_shelfExportCacheCleanup());
+
   await CollectionMemoryStore.instance.ensureLoaded();
   ShelfRecoveryPack.installPersistHooks();
   runApp(
@@ -105,6 +109,14 @@ Future<void> _shelfMediaGc(CollectionSnapshot snapshot) async {
     await ShelfMediaVault.collectGarbage(snapshot);
   } catch (e, st) {
     debugPrint('Shelf media vault GC skipped: $e\n$st');
+  }
+}
+
+Future<void> _shelfExportCacheCleanup() async {
+  try {
+    await ShelfExportArchive.cleanupStaleExports();
+  } catch (e, st) {
+    debugPrint('Shelf export cache cleanup skipped: $e\n$st');
   }
 }
 
