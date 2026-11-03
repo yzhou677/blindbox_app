@@ -115,8 +115,11 @@ void main() {
       find.text('Share a full backup with original photos'),
       findsOneWidget,
     );
-    expect(find.text('Import'), findsNothing);
-    expect(find.textContaining('Import shelf'), findsNothing);
+    expect(find.text('Import shelf'), findsOneWidget);
+    expect(
+      find.text('Replace your shelf with a backup file'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('Export shows progress, disables repeat taps, shares once',

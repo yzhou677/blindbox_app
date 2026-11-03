@@ -239,4 +239,118 @@ void main() {
     expect(ShelfMediaVault.autoBackupMaxBytes, 20 * 1024 * 1024);
     expect(ShelfMediaVault.gcGracePeriod, const Duration(hours: 24));
   });
+
+  test('installRecoveredThumbFromFile overwriteOriginal replaces png original',
+      () async {
+    final png = Uint8List.fromList(
+      img.encodePng(img.Image(width: 8, height: 8)),
+    );
+    final oldThumb = _jpegBytes(width: 32, height: 32);
+    final newThumbImage = img.Image(width: 32, height: 32);
+    img.fill(newThumbImage, color: img.ColorRgb8(200, 10, 10));
+    final newThumb = Uint8List.fromList(
+      img.encodeJpg(newThumbImage, quality: 90),
+    );
+
+    await ShelfMediaVault.installExportedOriginal(
+      id: 'A',
+      originalBytes: png,
+      ext: '.png',
+      thumbBytes: oldThumb,
+    );
+    final before = await ShelfMediaVault.pathsForId('A');
+    final oldPng = before.originalPath!;
+    expect(File(oldPng).readAsBytesSync(), png);
+
+    final thumbFile = File(
+      '${tempSupport.path}${Platform.pathSeparator}backup_thumb.jpg',
+    );
+    await thumbFile.writeAsBytes(newThumb, flush: true);
+
+    await ShelfMediaVault.installRecoveredThumbFromFile(
+      id: 'A',
+      thumbFile: thumbFile,
+      overwriteOriginal: true,
+    );
+
+    expect(File(oldPng).existsSync(), isFalse);
+    final after = await ShelfMediaVault.pathsForId('A');
+    expect(after.originalPath!.endsWith('.jpg'), isTrue);
+    expect(File(after.originalPath!).readAsBytesSync(), newThumb);
+    expect(
+      await ShelfMediaVault.recoveredFromThumbForTest(
+        'shelf_media/originals/A.jpg',
+      ),
+      isTrue,
+    );
+  });
+
+  test('installRecoveredThumbFromFile default preserves existing original',
+      () async {
+    // PR3/default path only checks originals/<id>.jpg — use jpg original.
+    final original = _jpegBytes(width: 48, height: 48);
+    final oldThumb = _jpegBytes(width: 32, height: 32);
+    final newThumbImage = img.Image(width: 32, height: 32);
+    img.fill(newThumbImage, color: img.ColorRgb8(10, 200, 10));
+    final newThumb = Uint8List.fromList(
+      img.encodeJpg(newThumbImage, quality: 90),
+    );
+
+    await ShelfMediaVault.installExportedOriginal(
+      id: 'keep',
+      originalBytes: original,
+      ext: '.jpg',
+      thumbBytes: oldThumb,
+    );
+    final before = await ShelfMediaVault.pathsForId('keep');
+    final originalBytes = File(before.originalPath!).readAsBytesSync();
+
+    final thumbFile = File(
+      '${tempSupport.path}${Platform.pathSeparator}keep_thumb.jpg',
+    );
+    await thumbFile.writeAsBytes(newThumb, flush: true);
+
+    await ShelfMediaVault.installRecoveredThumbFromFile(
+      id: 'keep',
+      thumbFile: thumbFile,
+    );
+
+    final after = await ShelfMediaVault.pathsForId('keep');
+    expect(after.originalPath, before.originalPath);
+    expect(File(after.originalPath!).readAsBytesSync(), originalBytes);
+    expect(File(after.thumbPath!).readAsBytesSync(), newThumb);
+    expect(
+      await ShelfMediaVault.recoveredFromThumbForTest(
+        'shelf_media/originals/keep.jpg',
+      ),
+      isFalse,
+    );
+  });
+
+  test('installRecoveredThumb PR3 path does not overwrite existing original',
+      () async {
+    final original = _jpegBytes(width: 40, height: 40);
+    await ShelfMediaVault.installExportedOriginal(
+      id: 'pr3',
+      originalBytes: original,
+      ext: '.jpg',
+      thumbBytes: _jpegBytes(width: 16, height: 16),
+    );
+    final before = await ShelfMediaVault.pathsForId('pr3');
+    final originalBytes = File(before.originalPath!).readAsBytesSync();
+
+    final otherThumbImage = img.Image(width: 16, height: 16);
+    img.fill(otherThumbImage, color: img.ColorRgb8(1, 2, 3));
+    final otherThumb = Uint8List.fromList(
+      img.encodeJpg(otherThumbImage, quality: 90),
+    );
+    await ShelfMediaVault.installRecoveredThumb(
+      id: 'pr3',
+      thumbBytes: otherThumb,
+    );
+
+    final after = await ShelfMediaVault.pathsForId('pr3');
+    expect(File(after.originalPath!).readAsBytesSync(), originalBytes);
+    expect(File(after.thumbPath!).readAsBytesSync(), otherThumb);
+  });
 }

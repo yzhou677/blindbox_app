@@ -179,6 +179,11 @@ class CollectionShelfUiPrefsNotifier extends Notifier<CollectionShelfUiPrefs> {
     }
   }
 
+  /// Reloads prefs after a shelf import commit (Replace).
+  Future<void> reloadFromStorage() async {
+    state = await CollectionShelfUiPrefsStorage.load();
+  }
+
   void setSort(CollectionShelfSort sort) {
     if (state.sort == sort) return;
     state = state.copyWith(sort: sort);

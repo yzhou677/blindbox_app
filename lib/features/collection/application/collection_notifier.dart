@@ -38,11 +38,39 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
   // across the entire rapid-tap sequence is correctly detected.
   CollectionSnapshot? _pendingPersistencePrevious;
 
+  /// When true, debounce persist is cancelled and new commits skip scheduling
+  /// (manual shelf import — avoid stale in-memory state overwriting prefs).
+  bool _persistenceSuspended = false;
+
   @override
   CollectionSnapshot build() {
     ref.onDispose(_flushPendingPersistence);
     return CollectionAppBootstrap.takeInitialSnapshot();
   }
+
+  /// Cancels pending debounce writes and blocks new ones until [resumePersistence].
+  void suspendPersistenceForImport() {
+    _persistenceTimer?.cancel();
+    _persistenceTimer = null;
+    _pendingPersistencePrevious = null;
+    _persistenceSuspended = true;
+  }
+
+  /// Re-enables debounce persistence after import success or failure.
+  void resumePersistence() {
+    _persistenceSuspended = false;
+  }
+
+  /// Replaces in-memory shelf after a successful import commit (no persist).
+  void replaceStateFromImport(CollectionSnapshot snapshot) {
+    state = snapshot;
+    _pendingPersistencePrevious = null;
+    _persistenceTimer?.cancel();
+    _persistenceTimer = null;
+  }
+
+  @visibleForTesting
+  bool get persistenceSuspendedForTest => _persistenceSuspended;
 
   void _commit(CollectionSnapshot next) {
     // UI state update is instant — providers and widgets rebuild immediately.
@@ -50,6 +78,8 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
     state = next;
 
     _celebrateNewlyMasterCompleteSeries(previous, next);
+
+    if (_persistenceSuspended) return;
 
     // Capture the snapshot that preceded this debounce window on first tap.
     _pendingPersistencePrevious ??= previous;
@@ -79,6 +109,7 @@ class CollectionNotifier extends Notifier<CollectionSnapshot> {
   /// Clears [_pendingPersistencePrevious] before awaiting I/O so a concurrent
   /// timer tick or [ref.onDispose] flush cannot record the same transition twice.
   Future<void> _persistPendingSnapshot() async {
+    if (_persistenceSuspended) return;
     if (CollectionRecoveryGate.blocksBackgroundWrites) return;
 
     final truePrevious = _pendingPersistencePrevious;
