@@ -22,9 +22,11 @@ abstract final class ShelfBackupCommit {
   /// Applies a full replace of shelf state.
   ///
   /// When [manageGate] is true, enters [CollectionRecoveryGate] for the
-  /// duration of this call (export import). Recovery cold-start already holds
-  /// the gate and should pass `manageGate: false` so a failed import keeps
-  /// the gate pending.
+  /// duration of this call (export import). Clears only if the gate was
+  /// **not** already pending on entry (nested cold-start keeps it).
+  ///
+  /// Recovery cold-start should pass `manageGate: false` so a failed import
+  /// keeps the gate pending.
   static Future<CollectionSnapshot> apply({
     required CollectionSnapshot snapshot,
     required String memoryJson,
@@ -33,6 +35,7 @@ abstract final class ShelfBackupCommit {
     CollectionSnapshot Function(CollectionSnapshot)? transformSnapshot,
     bool manageGate = false,
   }) async {
+    final wasPending = CollectionRecoveryGate.isPending;
     if (manageGate) {
       CollectionRecoveryGate.enterPending();
     }
@@ -59,7 +62,7 @@ abstract final class ShelfBackupCommit {
       await CollectionSnapshotStorage.save(toSave);
       return toSave;
     } finally {
-      if (manageGate) {
+      if (manageGate && !wasPending) {
         CollectionRecoveryGate.clearPending();
       }
     }

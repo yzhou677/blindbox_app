@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
+
 import 'package:archive/archive_io.dart';
 import 'package:blindbox_app/features/collection/application/shelf_backup_commit.dart';
 import 'package:blindbox_app/features/collection/data/shelf_media_vault.dart';
@@ -117,129 +118,93 @@ abstract final class ShelfExportArchive {
       );
     }
 
+    var originalCount = 0;
+    var thumbCount = 0;
+    final fileEntries = <List<String>>[];
+    for (final item in plan.items) {
+      if (item.originalSource != null) {
+        fileEntries.add([
+          item.originalSource!,
+          '$rootFolderName/$originalsDirName/${item.originalFileName}',
+        ]);
+        originalCount += 1;
+      }
+      if (item.thumbSource != null) {
+        fileEntries.add([
+          item.thumbSource!,
+          '$rootFolderName/$thumbsDirName/${item.id}.jpg',
+        ]);
+        thumbCount += 1;
+      }
+    }
+
+    final manifest = ShelfExportManifest(
+      kind: kind,
+      schemaVersion: schemaVersion,
+      createdAt: createdAt,
+      appVersion: appVersion,
+      seriesCount: snapshot.shelfSeries.length,
+      figureCount: snapshot.totalShelfFigures,
+      originalCount: originalCount,
+      thumbCount: thumbCount,
+      mediaIncomplete: plan.mediaIncomplete,
+    );
+    final jsonEntries = <String, String>{
+      '$rootFolderName/$manifestFileName': jsonEncode(manifest.toJson()),
+      '$rootFolderName/$snapshotFileName': snapshotJson,
+      '$rootFolderName/$memoryFileName': memoryJson,
+      '$rootFolderName/$uiPrefsFileName': uiPrefsJson,
+    };
+
     final cache = await _cacheRoot();
     final stamp = createdAt.millisecondsSinceEpoch;
-    final staging = Directory(
-      '${cache.path}${_sep}shelf_export_staging_$stamp',
-    );
     final zipPath =
-        outputPath ??
-        '${cache.path}${_sep}shelf_export_$stamp.zip';
+        outputPath ?? '${cache.path}${_sep}shelf_export_$stamp.zip';
 
-    if (await staging.exists()) {
-      await staging.delete(recursive: true);
-    }
-    await staging.create(recursive: true);
-    final exportRoot = Directory('${staging.path}$_sep$rootFolderName');
-    await exportRoot.create(recursive: true);
-    await Directory(
-      '${exportRoot.path}$_sep$originalsDirName',
-    ).create(recursive: true);
-    await Directory(
-      '${exportRoot.path}$_sep$thumbsDirName',
-    ).create(recursive: true);
-
-    final total = plan.items.length + 4; // media + 4 json files
-    var completed = 0;
-    void tick() {
-      completed += 1;
-      onProgress?.call(completed.clamp(0, total), total);
+    final zipOut = File(zipPath);
+    if (await zipOut.exists()) {
+      await zipOut.delete();
     }
 
-    try {
-      var originalCount = 0;
-      var thumbCount = 0;
-      for (final item in plan.items) {
-        if (item.originalSource != null) {
-          final dest = File(
-            '${exportRoot.path}$_sep$originalsDirName$_sep${item.originalFileName}',
-          );
-          await File(item.originalSource!).copy(dest.path);
-          originalCount += 1;
-        }
-        if (item.thumbSource != null) {
-          final dest = File(
-            '${exportRoot.path}$_sep$thumbsDirName$_sep${item.id}.jpg',
-          );
-          await File(item.thumbSource!).copy(dest.path);
-          thumbCount += 1;
-        }
-        tick();
-      }
+    final total = jsonEntries.length + fileEntries.length;
+    onProgress?.call(0, total);
 
-      final manifest = ShelfExportManifest(
-        kind: kind,
-        schemaVersion: schemaVersion,
-        createdAt: createdAt,
-        appVersion: appVersion,
-        seriesCount: snapshot.shelfSeries.length,
-        figureCount: snapshot.totalShelfFigures,
-        originalCount: originalCount,
-        thumbCount: thumbCount,
-        mediaIncomplete: plan.mediaIncomplete,
-      );
-      await File(
-        '${exportRoot.path}$_sep$manifestFileName',
-      ).writeAsString(jsonEncode(manifest.toJson()), flush: true);
-      tick();
-      await File(
-        '${exportRoot.path}$_sep$snapshotFileName',
-      ).writeAsString(snapshotJson, flush: true);
-      tick();
-      await File(
-        '${exportRoot.path}$_sep$memoryFileName',
-      ).writeAsString(memoryJson, flush: true);
-      tick();
-      await File(
-        '${exportRoot.path}$_sep$uiPrefsFileName',
-      ).writeAsString(uiPrefsJson, flush: true);
-      tick();
-
-      final zipOut = File(zipPath);
-      if (await zipOut.exists()) {
-        await zipOut.delete();
-      }
-      await Isolate.run(
-        () => _zipExportStagingSync(
-          stagingPath: staging.path,
-          zipPath: zipPath,
-          rootFolderName: rootFolderName,
-        ),
-      );
-
-      final zipBytes = await zipOut.length();
-      if (zipBytes > _rejectBytes) {
-        await zipOut.delete();
-        return ShelfExportWriteResult.rejected(
-          uncompressedBytes: plannedUncompressed,
-          mediaIncomplete: plan.mediaIncomplete,
-          reason: ShelfExportRejectReason.tooLarge,
-        );
-      }
-
-      onProgress?.call(total, total);
-      return ShelfExportWriteResult.written(
+    await Isolate.run(
+      () => _zipDirectFromSourcesSync(
         zipPath: zipPath,
+        jsonEntries: jsonEntries,
+        fileEntries: fileEntries,
+      ),
+    );
+
+    onProgress?.call(total, total);
+
+    final zipBytes = await zipOut.length();
+    if (zipBytes > _rejectBytes) {
+      await zipOut.delete();
+      return ShelfExportWriteResult.rejected(
         uncompressedBytes: plannedUncompressed,
-        zipBytes: zipBytes,
         mediaIncomplete: plan.mediaIncomplete,
-        exceedsWarnThreshold:
-            plannedUncompressed > _warnBytes || zipBytes > _warnBytes,
-        originalCount: originalCount,
-        thumbCount: thumbCount,
+        reason: ShelfExportRejectReason.tooLarge,
       );
-    } finally {
-      if (await staging.exists()) {
-        try {
-          await staging.delete(recursive: true);
-        } on Object {
-          // best-effort cleanup
-        }
-      }
     }
+
+    return ShelfExportWriteResult.written(
+      zipPath: zipPath,
+      uncompressedBytes: plannedUncompressed,
+      zipBytes: zipBytes,
+      mediaIncomplete: plan.mediaIncomplete,
+      exceedsWarnThreshold:
+          plannedUncompressed > _warnBytes || zipBytes > _warnBytes,
+      originalCount: originalCount,
+      thumbCount: thumbCount,
+    );
   }
 
   /// Unpacks [zipPath] into a validated staging directory (does not commit).
+  ///
+  /// Decode + extract + path/size checks run inside [Isolate.run]. Limits use
+  /// **actual bytes written**, not zip-header sizes alone.
   static Future<ShelfExportStaging> unpackToStaging(String zipPath) async {
     if (kIsWeb) {
       throw UnsupportedError('Shelf export is not supported on web');
@@ -249,162 +214,105 @@ abstract final class ShelfExportArchive {
       throw ShelfExportException('zip file missing');
     }
 
-    // Read fully then decode so Windows releases the zip handle before
-    // callers delete temp dirs (InputFileStream can keep locks open).
-    final zipBytes = await zipFile.readAsBytes();
-    late final Archive archive;
-    try {
-      archive = ZipDecoder().decodeBytes(
-        zipBytes,
-        verify: true,
-        throwOnError: true,
-      );
-    } on Object catch (e) {
-      throw ShelfExportException('zip corrupt or CRC failed: $e');
+    final cache = await _cacheRoot();
+    final stagingPath =
+        '${cache.path}${_sep}shelf_export_unpack_${DateTime.now().toUtc().millisecondsSinceEpoch}';
+
+    // Capture limits on this isolate — worker isolates do not see test overrides.
+    final maxEntries = _maxEntries;
+    final maxSingleFileBytes = _maxSingleFileBytes;
+    final rejectBytes = _rejectBytes;
+
+    final isolateResult = await Isolate.run(
+      () => _unpackZipStreamingSync(
+        zipPath: zipPath,
+        stagingPath: stagingPath,
+        rootFolderName: rootFolderName,
+        maxEntries: maxEntries,
+        maxSingleFileBytes: maxSingleFileBytes,
+        rejectBytes: rejectBytes,
+        manifestFileName: manifestFileName,
+        snapshotFileName: snapshotFileName,
+        memoryFileName: memoryFileName,
+        uiPrefsFileName: uiPrefsFileName,
+        originalsDirName: originalsDirName,
+        thumbsDirName: thumbsDirName,
+      ),
+    );
+
+    if (!isolateResult.ok) {
+      throw ShelfExportException(isolateResult.error ?? 'unpack failed');
     }
 
+    final staging = Directory(isolateResult.stagingPath!);
     try {
-      if (archive.files.length > _maxEntries) {
-        throw ShelfExportException('too many zip entries');
+      final exportRoot = Directory('${staging.path}$_sep$rootFolderName');
+      final manifestFile = File('${exportRoot.path}$_sep$manifestFileName');
+      final snapshotFile = File('${exportRoot.path}$_sep$snapshotFileName');
+      if (!await manifestFile.exists()) {
+        throw ShelfExportException('missing manifest');
+      }
+      if (!await snapshotFile.exists()) {
+        throw ShelfExportException('missing snapshot');
       }
 
-      final cache = await _cacheRoot();
-      final staging = Directory(
-        '${cache.path}${_sep}shelf_export_unpack_${DateTime.now().toUtc().millisecondsSinceEpoch}',
+      final manifest = ShelfExportManifest.fromJson(
+        jsonDecode(await manifestFile.readAsString()) as Object?,
       );
+      if (manifest == null) {
+        throw ShelfExportException('invalid manifest');
+      }
+      if (manifest.kind != kind) {
+        throw ShelfExportException('unsupported kind: ${manifest.kind}');
+      }
+      if (!supportedSchemaVersions.contains(manifest.schemaVersion)) {
+        throw ShelfExportException(
+          'unsupported schemaVersion: ${manifest.schemaVersion}',
+        );
+      }
+
+      final snapshotJson = await snapshotFile.readAsString();
+      final snapshot = CollectionSnapshotCodec.tryDecode(snapshotJson);
+      if (snapshot == null) {
+        throw ShelfExportException('invalid snapshot');
+      }
+
+      final memoryFile = File('${exportRoot.path}$_sep$memoryFileName');
+      final uiPrefsFile = File('${exportRoot.path}$_sep$uiPrefsFileName');
+      final memoryJson = await memoryFile.exists()
+          ? await memoryFile.readAsString()
+          : '{}';
+      final uiPrefsJson = await uiPrefsFile.exists()
+          ? await uiPrefsFile.readAsString()
+          : '{}';
+
+      final originals = <String, File>{
+        for (final e in isolateResult.originalPaths.entries) e.key: File(e.value),
+      };
+      final thumbs = <String, File>{
+        for (final e in isolateResult.thumbPaths.entries) e.key: File(e.value),
+      };
+
+      return ShelfExportStaging(
+        stagingDir: staging,
+        manifest: manifest,
+        snapshot: snapshot,
+        memoryJson: memoryJson,
+        uiPrefsJson: uiPrefsJson,
+        originalFiles: originals,
+        thumbFiles: thumbs,
+        extractedBytes: isolateResult.extractedBytes,
+      );
+    } catch (e) {
       if (await staging.exists()) {
-        await staging.delete(recursive: true);
+        try {
+          await staging.delete(recursive: true);
+        } on Object {
+          // best-effort
+        }
       }
-      await staging.create(recursive: true);
-
-      var extractedBytes = 0;
-      try {
-        for (final entry in archive.files) {
-          final rawName = entry.name;
-          if (entry.isDirectory ||
-              rawName.endsWith('/') ||
-              rawName.endsWith('\\')) {
-            continue;
-          }
-          _assertSafeEntryPath(rawName);
-          final name = rawName.replaceAll('\\', '/');
-          final size = entry.size;
-          if (size < 0 || size > _maxSingleFileBytes) {
-            throw ShelfExportException('entry too large: $name');
-          }
-          extractedBytes += size;
-          if (extractedBytes > _rejectBytes) {
-            throw ShelfExportException('extracted size exceeds limit');
-          }
-
-          final bytes = entry.readBytes();
-          if (bytes == null) {
-            throw ShelfExportException('failed to read entry: $name');
-          }
-          if (bytes.length > _maxSingleFileBytes) {
-            throw ShelfExportException('entry too large: $name');
-          }
-          await _writeStagingFile(staging, name, bytes);
-        }
-
-        final exportRoot = Directory('${staging.path}$_sep$rootFolderName');
-        final manifestFile = File(
-          '${exportRoot.path}$_sep$manifestFileName',
-        );
-        final snapshotFile = File(
-          '${exportRoot.path}$_sep$snapshotFileName',
-        );
-        if (!await manifestFile.exists()) {
-          throw ShelfExportException('missing manifest');
-        }
-        if (!await snapshotFile.exists()) {
-          throw ShelfExportException('missing snapshot');
-        }
-
-        final manifest = ShelfExportManifest.fromJson(
-          jsonDecode(await manifestFile.readAsString()) as Object?,
-        );
-        if (manifest == null) {
-          throw ShelfExportException('invalid manifest');
-        }
-        if (manifest.kind != kind) {
-          throw ShelfExportException('unsupported kind: ${manifest.kind}');
-        }
-        if (!supportedSchemaVersions.contains(manifest.schemaVersion)) {
-          throw ShelfExportException(
-            'unsupported schemaVersion: ${manifest.schemaVersion}',
-          );
-        }
-
-        final snapshotJson = await snapshotFile.readAsString();
-        final snapshot = CollectionSnapshotCodec.tryDecode(snapshotJson);
-        if (snapshot == null) {
-          throw ShelfExportException('invalid snapshot');
-        }
-
-        final memoryFile = File('${exportRoot.path}$_sep$memoryFileName');
-        final uiPrefsFile = File('${exportRoot.path}$_sep$uiPrefsFileName');
-        final memoryJson = await memoryFile.exists()
-            ? await memoryFile.readAsString()
-            : '{}';
-        final uiPrefsJson = await uiPrefsFile.exists()
-            ? await uiPrefsFile.readAsString()
-            : '{}';
-
-        final originalsDir = Directory(
-          '${exportRoot.path}$_sep$originalsDirName',
-        );
-        final thumbsDir = Directory('${exportRoot.path}$_sep$thumbsDirName');
-        final originals = <String, File>{};
-        final thumbs = <String, File>{};
-        if (await originalsDir.exists()) {
-          await for (final entity in originalsDir.list()) {
-            if (entity is! File) continue;
-            final base = entity.uri.pathSegments.last;
-            final id = _idFromMediaFileName(base);
-            if (id == null) {
-              throw ShelfExportException('invalid original name: $base');
-            }
-            originals[id] = entity;
-          }
-        }
-        if (await thumbsDir.exists()) {
-          await for (final entity in thumbsDir.list()) {
-            if (entity is! File) continue;
-            final base = entity.uri.pathSegments.last;
-            final id = _idFromMediaFileName(base);
-            if (id == null || !base.toLowerCase().endsWith('.jpg')) {
-              throw ShelfExportException('invalid thumb name: $base');
-            }
-            thumbs[id] = entity;
-          }
-        }
-
-        return ShelfExportStaging(
-          stagingDir: staging,
-          manifest: manifest,
-          snapshot: snapshot,
-          memoryJson: memoryJson,
-          uiPrefsJson: uiPrefsJson,
-          originalFiles: originals,
-          thumbFiles: thumbs,
-          extractedBytes: extractedBytes,
-        );
-      } catch (e) {
-        if (await staging.exists()) {
-          try {
-            await staging.delete(recursive: true);
-          } on Object {
-            // best-effort
-          }
-        }
-        if (e is ShelfExportException) rethrow;
-        throw ShelfExportException('unpack failed: $e');
-      }
-    } finally {
-      for (final entry in archive.files) {
-        entry.closeSync();
-      }
+      if (e is ShelfExportException) rethrow;
+      throw ShelfExportException('unpack failed: $e');
     }
   }
 
@@ -451,7 +359,6 @@ abstract final class ShelfExportArchive {
           }
         },
         transformSnapshot: (snap) {
-          // Thumb-only installs land as .jpg — rewrite those ids only.
           final thumbOnly = <String>{};
           for (final id in staging.thumbFiles.keys) {
             if (!staging.originalFiles.containsKey(id)) {
@@ -538,12 +445,7 @@ abstract final class ShelfExportArchive {
       if (paths.thumbPath != null && await File(paths.thumbPath!).exists()) {
         thumbSource = paths.thumbPath;
         plannedBytes += await File(thumbSource!).length();
-      } else if (paths.vaultRef != null) {
-        // Referenced but no thumb either — still incomplete if original gone.
-        if (originalSource == null) {
-          mediaIncomplete = true;
-        }
-      } else {
+      } else if (paths.vaultRef == null || originalSource == null) {
         mediaIncomplete = true;
       }
 
@@ -576,81 +478,6 @@ abstract final class ShelfExportArchive {
     return dir;
   }
 
-  static Future<void> _writeStagingFile(
-    Directory staging,
-    String relativePosix,
-    List<int> bytes,
-  ) async {
-    final parts = relativePosix.split('/');
-    final file = File([staging.path, ...parts].join(_sep));
-    await file.parent.create(recursive: true);
-    await file.writeAsBytes(bytes, flush: true);
-  }
-
-  static void _assertSafeEntryPath(String name) {
-    if (name.contains('\\')) {
-      throw ShelfExportException('backslash path rejected: $name');
-    }
-    final n = name;
-    if (n.contains('..')) {
-      throw ShelfExportException('path traversal rejected: $n');
-    }
-    if (n.startsWith('/')) {
-      throw ShelfExportException('absolute path rejected: $n');
-    }
-    if (RegExp(r'^[a-zA-Z]:').hasMatch(n)) {
-      throw ShelfExportException('drive path rejected: $n');
-    }
-    if (n.contains(':')) {
-      throw ShelfExportException('colon path rejected: $n');
-    }
-    if (!_isAllowedRelativePath(n)) {
-      throw ShelfExportException('path not on whitelist: $n');
-    }
-  }
-
-  static bool _isAllowedRelativePath(String n) {
-    const prefix = '$rootFolderName/';
-    if (!n.startsWith(prefix)) return false;
-    final rest = n.substring(prefix.length);
-    if (rest == manifestFileName ||
-        rest == snapshotFileName ||
-        rest == memoryFileName ||
-        rest == uiPrefsFileName) {
-      return true;
-    }
-    if (rest.startsWith('$originalsDirName/')) {
-      final file = rest.substring(originalsDirName.length + 1);
-      return _isSafeMediaFileName(file) && !file.contains('/');
-    }
-    if (rest.startsWith('$thumbsDirName/')) {
-      final file = rest.substring(thumbsDirName.length + 1);
-      return _isSafeMediaFileName(file) &&
-          !file.contains('/') &&
-          file.toLowerCase().endsWith('.jpg');
-    }
-    return false;
-  }
-
-  static final _mediaNameRe = RegExp(r'^[A-Za-z0-9][A-Za-z0-9._-]*$');
-
-  static bool _isSafeMediaFileName(String name) {
-    if (name.isEmpty || name.contains('/') || name.contains('\\')) {
-      return false;
-    }
-    final dot = name.lastIndexOf('.');
-    if (dot <= 0 || dot == name.length - 1) return false;
-    return _mediaNameRe.hasMatch(name);
-  }
-
-  static String? _idFromMediaFileName(String name) {
-    final dot = name.lastIndexOf('.');
-    if (dot <= 0) return null;
-    final id = name.substring(0, dot);
-    if (!_mediaNameRe.hasMatch(name)) return null;
-    return id;
-  }
-
   static String _extensionOfFileName(String name) {
     final dot = name.lastIndexOf('.');
     if (dot < 0) return '.jpg';
@@ -658,26 +485,346 @@ abstract final class ShelfExportArchive {
   }
 }
 
-/// Top-level for [Isolate.run].
-void _zipExportStagingSync({
-  required String stagingPath,
+/// Top-level for [Isolate.run] — zip JSON + vault files without a staging copy.
+void _zipDirectFromSourcesSync({
   required String zipPath,
-  required String rootFolderName,
+  required Map<String, String> jsonEntries,
+  required List<List<String>> fileEntries,
 }) {
-  final staging = Directory(stagingPath);
-  final exportRoot = Directory('$stagingPath${Platform.pathSeparator}$rootFolderName');
-  if (!exportRoot.existsSync()) {
-    throw StateError('export staging missing root folder');
-  }
   final encoder = ZipFileEncoder();
   encoder.create(zipPath);
-  // Include the root folder name in zip entries.
-  encoder.addDirectorySync(exportRoot, includeDirName: true);
-  encoder.closeSync();
-  // Touch staging so analyzer keeps the param used on all platforms.
-  if (!staging.existsSync()) {
-    throw StateError('export staging missing');
+  try {
+    for (final e in jsonEntries.entries) {
+      encoder.addArchiveFile(ArchiveFile.string(e.key, e.value));
+    }
+    for (final pair in fileEntries) {
+      final abs = pair[0];
+      final entryName = pair[1];
+      final file = File(abs);
+      if (!file.existsSync()) {
+        throw StateError('missing vault file for export: $abs');
+      }
+      encoder.addFileSync(file, entryName);
+    }
+  } finally {
+    encoder.closeSync();
   }
+}
+
+/// Top-level for [Isolate.run] — stream-decode zip to staging with byte caps.
+_UnpackIsolateResult _unpackZipStreamingSync({
+  required String zipPath,
+  required String stagingPath,
+  required String rootFolderName,
+  required int maxEntries,
+  required int maxSingleFileBytes,
+  required int rejectBytes,
+  required String manifestFileName,
+  required String snapshotFileName,
+  required String memoryFileName,
+  required String uiPrefsFileName,
+  required String originalsDirName,
+  required String thumbsDirName,
+}) {
+  final staging = Directory(stagingPath);
+  final sep = Platform.pathSeparator;
+
+  void deleteStaging() {
+    if (staging.existsSync()) {
+      try {
+        staging.deleteSync(recursive: true);
+      } on Object {
+        // best-effort
+      }
+    }
+  }
+
+  InputFileStream? input;
+  Archive? archive;
+  try {
+    if (staging.existsSync()) {
+      staging.deleteSync(recursive: true);
+    }
+    staging.createSync(recursive: true);
+
+    input = InputFileStream(zipPath);
+    try {
+      archive = ZipDecoder().decodeStream(
+        input,
+        verify: true,
+        throwOnError: true,
+      );
+    } on Object catch (e) {
+      deleteStaging();
+      return _UnpackIsolateResult.fail('zip corrupt or CRC failed: $e');
+    }
+
+    if (archive.files.length > maxEntries) {
+      deleteStaging();
+      return _UnpackIsolateResult.fail('too many zip entries');
+    }
+
+    var extractedBytes = 0;
+    final originalPaths = <String, String>{};
+    final thumbPaths = <String, String>{};
+    final mediaNameRe = RegExp(r'^[A-Za-z0-9][A-Za-z0-9._-]*$');
+
+    bool isSafeMediaFileName(String name) {
+      if (name.isEmpty || name.contains('/') || name.contains('\\')) {
+        return false;
+      }
+      final dot = name.lastIndexOf('.');
+      if (dot <= 0 || dot == name.length - 1) return false;
+      return mediaNameRe.hasMatch(name);
+    }
+
+    bool isAllowedRelativePath(String n) {
+      final prefix = '$rootFolderName/';
+      if (!n.startsWith(prefix)) return false;
+      final rest = n.substring(prefix.length);
+      if (rest == manifestFileName ||
+          rest == snapshotFileName ||
+          rest == memoryFileName ||
+          rest == uiPrefsFileName) {
+        return true;
+      }
+      if (rest.startsWith('$originalsDirName/')) {
+        final file = rest.substring(originalsDirName.length + 1);
+        return isSafeMediaFileName(file) && !file.contains('/');
+      }
+      if (rest.startsWith('$thumbsDirName/')) {
+        final file = rest.substring(thumbsDirName.length + 1);
+        return isSafeMediaFileName(file) &&
+            !file.contains('/') &&
+            file.toLowerCase().endsWith('.jpg');
+      }
+      return false;
+    }
+
+    void assertSafeEntryPath(String name) {
+      if (name.contains('\\')) {
+        throw StateError('backslash path rejected: $name');
+      }
+      if (name.contains('..')) {
+        throw StateError('path traversal rejected: $name');
+      }
+      if (name.startsWith('/')) {
+        throw StateError('absolute path rejected: $name');
+      }
+      if (RegExp(r'^[a-zA-Z]:').hasMatch(name)) {
+        throw StateError('drive path rejected: $name');
+      }
+      if (name.contains(':')) {
+        throw StateError('colon path rejected: $name');
+      }
+      if (!isAllowedRelativePath(name)) {
+        throw StateError('path not on whitelist: $name');
+      }
+    }
+
+    String? idFromMediaFileName(String name) {
+      final dot = name.lastIndexOf('.');
+      if (dot <= 0) return null;
+      if (!mediaNameRe.hasMatch(name)) return null;
+      return name.substring(0, dot);
+    }
+
+    for (final entry in archive.files) {
+      final rawName = entry.name;
+      if (entry.isDirectory ||
+          rawName.endsWith('/') ||
+          rawName.endsWith('\\')) {
+        continue;
+      }
+      assertSafeEntryPath(rawName);
+      final name = rawName.replaceAll('\\', '/');
+
+      // Header size is an early reject only — totals use actual writes below.
+      if (entry.size < 0 || entry.size > maxSingleFileBytes) {
+        throw StateError('entry too large: $name');
+      }
+
+      final parts = name.split('/');
+      final dest = File([stagingPath, ...parts].join(sep));
+      dest.parent.createSync(recursive: true);
+
+      final out = OutputFileStream(dest.path);
+      final counter = _LimitedCountingOutput(
+        inner: out,
+        maxSingleFileBytes: maxSingleFileBytes,
+        maxTotalBytes: rejectBytes,
+        totalWrittenBefore: extractedBytes,
+      );
+      try {
+        entry.writeContent(counter, freeMemory: true);
+        counter.flush();
+      } finally {
+        out.closeSync();
+      }
+      extractedBytes = counter.totalWritten;
+      entry.closeSync();
+
+      if (name.startsWith('$rootFolderName/$originalsDirName/')) {
+        final base = parts.last;
+        final id = idFromMediaFileName(base);
+        if (id == null) {
+          throw StateError('invalid original name: $base');
+        }
+        originalPaths[id] = dest.path;
+      } else if (name.startsWith('$rootFolderName/$thumbsDirName/')) {
+        final base = parts.last;
+        final id = idFromMediaFileName(base);
+        if (id == null || !base.toLowerCase().endsWith('.jpg')) {
+          throw StateError('invalid thumb name: $base');
+        }
+        thumbPaths[id] = dest.path;
+      }
+    }
+
+    final exportRoot = Directory('$stagingPath$sep$rootFolderName');
+    if (!File('$stagingPath$sep$rootFolderName$sep$manifestFileName')
+        .existsSync()) {
+      throw StateError('missing manifest');
+    }
+    if (!File('$stagingPath$sep$rootFolderName$sep$snapshotFileName')
+        .existsSync()) {
+      throw StateError('missing snapshot');
+    }
+    // Touch exportRoot so empty-media packs still validate path exists.
+    if (!exportRoot.existsSync()) {
+      throw StateError('missing export root');
+    }
+
+    return _UnpackIsolateResult.ok(
+      stagingPath: stagingPath,
+      extractedBytes: extractedBytes,
+      originalPaths: originalPaths,
+      thumbPaths: thumbPaths,
+    );
+  } on Object catch (e) {
+    deleteStaging();
+    final msg = e is StateError ? e.message : '$e';
+    return _UnpackIsolateResult.fail(msg);
+  } finally {
+    if (archive != null) {
+      for (final entry in archive.files) {
+        try {
+          entry.closeSync();
+        } on Object {
+          // ignore
+        }
+      }
+    }
+    try {
+      input?.closeSync();
+    } on Object {
+      // ignore
+    }
+  }
+}
+
+/// Counts actual bytes written while enforcing single-file and total caps.
+class _LimitedCountingOutput extends OutputStream {
+  _LimitedCountingOutput({
+    required this.inner,
+    required this.maxSingleFileBytes,
+    required this.maxTotalBytes,
+    required int totalWrittenBefore,
+  }) : totalWritten = totalWrittenBefore,
+       super(byteOrder: ByteOrder.littleEndian);
+
+  final OutputFileStream inner;
+  final int maxSingleFileBytes;
+  final int maxTotalBytes;
+  int totalWritten;
+  int fileWritten = 0;
+
+  void _account(int n) {
+    if (n <= 0) return;
+    fileWritten += n;
+    totalWritten += n;
+    if (fileWritten > maxSingleFileBytes) {
+      throw StateError('entry too large (actual bytes)');
+    }
+    if (totalWritten > maxTotalBytes) {
+      throw StateError('extracted size exceeds limit (actual bytes)');
+    }
+  }
+
+  @override
+  int get length => inner.length;
+
+  @override
+  void clear() {
+    // Counting wrapper does not own buffered clear semantics.
+  }
+
+  @override
+  void flush() => inner.flush();
+
+  @override
+  Uint8List subset(int start, [int? end]) => inner.subset(start, end);
+
+  @override
+  void writeByte(int value) {
+    _account(1);
+    inner.writeByte(value);
+  }
+
+  @override
+  void writeBytes(List<int> bytes, {int? length}) {
+    final len = length ?? bytes.length;
+    _account(len);
+    inner.writeBytes(bytes, length: length);
+  }
+
+  @override
+  void writeStream(InputStream stream) {
+    const chunk = 64 * 1024;
+    while (!stream.isEOS) {
+      final slice = stream.readBytes(chunk);
+      final bytes = slice.toUint8List();
+      if (bytes.isEmpty) break;
+      writeBytes(bytes);
+    }
+  }
+}
+
+class _UnpackIsolateResult {
+  const _UnpackIsolateResult._({
+    required this.ok,
+    this.error,
+    this.stagingPath,
+    this.extractedBytes = 0,
+    this.originalPaths = const {},
+    this.thumbPaths = const {},
+  });
+
+  factory _UnpackIsolateResult.ok({
+    required String stagingPath,
+    required int extractedBytes,
+    required Map<String, String> originalPaths,
+    required Map<String, String> thumbPaths,
+  }) {
+    return _UnpackIsolateResult._(
+      ok: true,
+      stagingPath: stagingPath,
+      extractedBytes: extractedBytes,
+      originalPaths: originalPaths,
+      thumbPaths: thumbPaths,
+    );
+  }
+
+  factory _UnpackIsolateResult.fail(String error) {
+    return _UnpackIsolateResult._(ok: false, error: error);
+  }
+
+  final bool ok;
+  final String? error;
+  final String? stagingPath;
+  final int extractedBytes;
+  final Map<String, String> originalPaths;
+  final Map<String, String> thumbPaths;
 }
 
 class _MediaPlan {

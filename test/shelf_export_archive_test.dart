@@ -740,4 +740,232 @@ void main() {
     expect(result.wrote, isFalse);
     expect(result.rejectReason, ShelfExportRejectReason.tooLarge);
   });
+
+  test('defaultAppVersion matches pubspec.yaml version', () {
+    final pubspec = File('pubspec.yaml').readAsStringSync();
+    final match = RegExp(r'^version:\s*(\S+)\s*$', multiLine: true)
+        .firstMatch(pubspec);
+    expect(match, isNotNull);
+    expect(ShelfExportArchive.defaultAppVersion, match!.group(1));
+  });
+
+  test('lied header size still rejects on actual written bytes', () async {
+    await CollectionSnapshotStorage.save(
+      CollectionSnapshot(
+        shelfSeries: [
+          ShelfSeries(
+            id: 'keep',
+            name: 'Keep Me',
+            brand: 'B',
+            ipName: 'I',
+            figures: const [],
+            shelfAccent: const Color(0xFFE8F5E9),
+          ),
+        ],
+        figureStates: const {},
+      ),
+    );
+    final keepRef = await ShelfMediaVault.installExportedOriginal(
+      id: 'keepmedia',
+      originalBytes: _jpegBytes(r: 1),
+      ext: '.jpg',
+      thumbBytes: _jpegBytes(r: 2),
+    );
+    final keepAbs = ShelfMediaVault.resolveToFilePathSync(keepRef)!;
+    expect(File(keepAbs).existsSync(), isTrue);
+
+    ShelfExportArchive.testMaxSingleFileBytesOverride = 40;
+    final payload = List<int>.filled(200, 9);
+    final zipPath =
+        '${tempCache.path}${Platform.pathSeparator}lied_size.zip';
+    await _writeZipWithLiedUncompressedSize(
+      zipPath: zipPath,
+      entryName: 'shelfy_shelf_export/originals/bomb.jpg',
+      payload: payload,
+      liedUncompressedSize: 8,
+    );
+
+    final cacheRoot = Directory(
+      '${tempCache.path}${Platform.pathSeparator}shelf_export',
+    );
+    final beforeDirs = cacheRoot.existsSync()
+        ? cacheRoot
+            .listSync()
+            .whereType<Directory>()
+            .map((d) => d.path)
+            .toSet()
+        : <String>{};
+
+    await expectLater(
+      ShelfExportArchive.unpackToStaging(zipPath),
+      throwsA(isA<ShelfExportException>()),
+    );
+
+    final after = await CollectionSnapshotStorage.load();
+    expect(after!.shelfSeries.single.name, 'Keep Me');
+    expect(File(keepAbs).existsSync(), isTrue);
+
+    if (cacheRoot.existsSync()) {
+      for (final entity in cacheRoot.listSync()) {
+        if (entity is Directory &&
+            entity.path.contains('shelf_export_unpack_') &&
+            !beforeDirs.contains(entity.path)) {
+          fail('staging left behind: ${entity.path}');
+        }
+      }
+    }
+    ShelfExportArchive.testMaxSingleFileBytesOverride = null;
+  });
+
+  test('export leaves no staging dirs in cache', () async {
+    final ref = await ShelfMediaVault.installExportedOriginal(
+      id: 'nostage',
+      originalBytes: _pngBytes(),
+      ext: '.png',
+      thumbBytes: _jpegBytes(r: 3),
+    );
+    final result = await ShelfExportArchive.exportToZip(
+      snapshot: CollectionSnapshot(
+        shelfSeries: [
+          ShelfSeries(
+            id: 's1',
+            name: 'S',
+            brand: 'B',
+            ipName: 'I',
+            figures: [
+              ShelfFigure(
+                id: 'f1',
+                seriesId: 's1',
+                name: 'F',
+                localImageUri: ref,
+                rarity: 'Regular',
+                isSecret: false,
+              ),
+            ],
+            shelfAccent: const Color(0xFFE8F5E9),
+          ),
+        ],
+        figureStates: const {},
+      ),
+      memoryJson: '{}',
+      uiPrefsJson: '{}',
+    );
+    expect(result.wrote, isTrue);
+
+    final cacheRoot = Directory(
+      '${tempCache.path}${Platform.pathSeparator}shelf_export',
+    );
+    expect(cacheRoot.existsSync(), isTrue);
+    for (final entity in cacheRoot.listSync()) {
+      if (entity is Directory) {
+        fail('unexpected staging dir after export: ${entity.path}');
+      }
+    }
+    expect(File(result.zipPath!).existsSync(), isTrue);
+  });
+
+  test('manageGate nested over existing pending keeps gate pending', () async {
+    CollectionRecoveryGate.enterPending();
+    expect(CollectionRecoveryGate.isPending, isTrue);
+
+    final snap = CollectionSnapshot.emptyTest();
+    await ShelfBackupCommit.apply(
+      snapshot: snap,
+      memoryJson: '{}',
+      uiPrefsJson: '{}',
+      manageGate: true,
+      installMedia: () async {},
+    );
+
+    expect(CollectionRecoveryGate.isPending, isTrue);
+    CollectionRecoveryGate.clearPending();
+  });
+}
+
+/// Builds a stored zip entry then patches local+central uncompressed size
+/// so header claims [liedUncompressedSize] while payload is larger.
+Future<void> _writeZipWithLiedUncompressedSize({
+  required String zipPath,
+  required String entryName,
+  required List<int> payload,
+  required int liedUncompressedSize,
+}) async {
+  final archive = Archive();
+  final file = ArchiveFile.bytes(entryName, payload);
+  file.compression = CompressionType.none;
+  archive.addFile(file);
+  // Minimal companions so path whitelist still applies to the bomb entry.
+  archive.addFile(
+    ArchiveFile.string(
+      'shelfy_shelf_export/manifest.json',
+      jsonEncode({
+        'kind': 'shelf_export',
+        'schemaVersion': 1,
+        'createdAt': '2026-01-01T00:00:00.000Z',
+        'appVersion': '1',
+      }),
+    ),
+  );
+  archive.addFile(
+    ArchiveFile.string(
+      'shelfy_shelf_export/collection_snapshot_v1.json',
+      CollectionSnapshotCodec.encode(CollectionSnapshot.emptyTest()),
+    ),
+  );
+  final encoded = ZipEncoder().encodeBytes(archive);
+  final patched = _patchUncompressedSizeFields(
+    Uint8List.fromList(encoded),
+    from: payload.length,
+    to: liedUncompressedSize,
+  );
+  await File(zipPath).writeAsBytes(patched, flush: true);
+}
+
+Uint8List _patchUncompressedSizeFields(
+  Uint8List zip, {
+  required int from,
+  required int to,
+}) {
+  final out = Uint8List.fromList(zip);
+  var i = 0;
+  while (i + 4 <= out.length) {
+    final sig = _u32le(out, i);
+    if (sig == 0x04034b50) {
+      // Local file header: uncompressed size at +22
+      if (i + 26 <= out.length && _u32le(out, i + 22) == from) {
+        _setU32le(out, i + 22, to);
+      }
+      final nameLen = _u16le(out, i + 26);
+      final extraLen = _u16le(out, i + 28);
+      final compSize = _u32le(out, i + 18);
+      i += 30 + nameLen + extraLen + compSize;
+      continue;
+    }
+    if (sig == 0x02014b50) {
+      // Central directory: uncompressed size at +24
+      if (i + 28 <= out.length && _u32le(out, i + 24) == from) {
+        _setU32le(out, i + 24, to);
+      }
+      final nameLen = _u16le(out, i + 28);
+      final extraLen = _u16le(out, i + 30);
+      final commentLen = _u16le(out, i + 32);
+      i += 46 + nameLen + extraLen + commentLen;
+      continue;
+    }
+    if (sig == 0x06054b50) break;
+    i += 1;
+  }
+  return out;
+}
+
+int _u16le(Uint8List b, int i) => b[i] | (b[i + 1] << 8);
+
+int _u32le(Uint8List b, int i) =>
+    b[i] | (b[i + 1] << 8) | (b[i + 2] << 16) | (b[i + 3] << 24);
+
+void _setU32le(Uint8List b, int i, int v) {
+  b[i] = v & 0xff;
+  b[i + 1] = (v >> 8) & 0xff;
+  b[i + 2] = (v >> 16) & 0xff;
+  b[i + 3] = (v >> 24) & 0xff;
 }
