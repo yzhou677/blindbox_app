@@ -468,6 +468,83 @@ abstract final class ShelfMediaVault {
     });
   }
 
+  /// Installs an export-archive original (+ optional thumb) under a stable [id].
+  ///
+  /// [ext] must include the leading dot (e.g. `.png`). Snapshot refs keep this
+  /// extension — unlike [installRecoveredThumb], no `.jpg` rewrite.
+  static Future<String> installExportedOriginal({
+    required String id,
+    required List<int> originalBytes,
+    required String ext,
+    List<int>? thumbBytes,
+  }) async {
+    if (kIsWeb) {
+      return _vaultRefFor(id: id, ext: _normalizeExt(ext));
+    }
+    return _runExclusiveIndexOp(() async {
+      await ensureReady();
+      final trimmedId = id.trim();
+      final normalizedExt = _normalizeExt(ext);
+      if (trimmedId.isEmpty || originalBytes.isEmpty) {
+        throw ArgumentError('export original requires id and bytes');
+      }
+      final originals = await _subdir(originalsFolderName);
+      final thumbs = await _subdir(thumbsFolderName);
+      final originalPath = '${originals.path}$_sep$trimmedId$normalizedExt';
+      await File(originalPath).writeAsBytes(originalBytes, flush: true);
+
+      var thumbOk = false;
+      final thumbPath = '${thumbs.path}$_sep$trimmedId.jpg';
+      if (thumbBytes != null && thumbBytes.isNotEmpty) {
+        await File(thumbPath).writeAsBytes(thumbBytes, flush: true);
+        thumbOk = true;
+      } else {
+        thumbOk = await _writeThumbFile(id: trimmedId, sourceBytes: originalBytes);
+      }
+
+      final now = DateTime.now().toUtc();
+      final index = await _ensureIndex();
+      final existing = index.entries[trimmedId];
+      index.upsert(
+        id: trimmedId,
+        originalRelative: '$originalsFolderName/$trimmedId$normalizedExt',
+        thumbRelative: thumbOk ? '$thumbsFolderName/$trimmedId.jpg' : null,
+        createdAt: existing?.createdAt ?? now,
+        lastAccessedAt: existing?.lastAccessedAt ?? now,
+        recoveredFromThumb: false,
+      );
+      await _flushIndex();
+      return _vaultRefFor(id: trimmedId, ext: normalizedExt);
+    });
+  }
+
+  static String _normalizeExt(String ext) {
+    final t = ext.trim().toLowerCase();
+    if (t.isEmpty) return '.jpg';
+    return t.startsWith('.') ? t : '.$t';
+  }
+
+  /// Absolute original / thumb paths for a vault id, if indexed.
+  static Future<({String? originalPath, String? thumbPath, String? vaultRef})>
+      pathsForId(String id) async {
+    await ensureReady();
+    final index = await _ensureIndex();
+    final entry = index.entries[id];
+    if (entry == null) {
+      return (originalPath: null, thumbPath: null, vaultRef: null);
+    }
+    return (
+      originalPath: _absoluteFromVaultRelative(entry.originalRelative),
+      thumbPath: entry.thumbRelative == null
+          ? null
+          : _absoluteFromVaultRelative(entry.thumbRelative!),
+      vaultRef: _vaultRefFor(
+        id: id,
+        ext: _extensionFromRelative(entry.originalRelative),
+      ),
+    );
+  }
+
   @visibleForTesting
   static Future<bool?> recoveredFromThumbForTest(String vaultRef) async {
     final id = idFromRef(vaultRef);

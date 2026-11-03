@@ -1,24 +1,14 @@
 import 'dart:io';
 
-import 'package:blindbox_app/features/collection/application/collection_shelf_ui_prefs_provider.dart';
-import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
+import 'package:blindbox_app/features/collection/application/shelf_backup_commit.dart';
 import 'package:blindbox_app/features/collection/data/shelf_media_vault.dart';
 import 'package:blindbox_app/features/collection/data/shelf_recovery_pack.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
-import 'package:blindbox_app/features/collection/persistence/collection_snapshot_storage.dart';
 import 'package:flutter/foundation.dart';
 
 /// Applies a [ShelfRecoveryPackContents] into local prefs + vault.
 abstract final class ShelfRecoveryImport {
   ShelfRecoveryImport._();
-
-  /// Throws before memory replace (thumbs may already be installed).
-  @visibleForTesting
-  static Future<void> Function()? testBeforeMemoryHook;
-
-  /// Throws immediately before the snapshot prefs write (the commit marker).
-  @visibleForTesting
-  static Future<void> Function()? testBeforeSnapshotSaveHook;
 
   /// Restores thumbs / memory / UI prefs, then writes snapshot last.
   ///
@@ -27,34 +17,26 @@ abstract final class ShelfRecoveryImport {
   ///
   /// Vault thumbs are always installed as `<id>.jpg`; snapshot vault refs are
   /// rewritten to match before save.
-  static Future<CollectionSnapshot> apply(ShelfRecoveryPackContents pack) async {
-    await ShelfMediaVault.ensureReady();
-    for (final id in pack.mediaIds) {
-      final file = File(ShelfRecoveryPack.mediaFilePath(pack.packPath, id));
-      if (!await file.exists()) continue;
-      final bytes = await file.readAsBytes();
-      if (bytes.isEmpty) continue;
-      await ShelfMediaVault.installRecoveredThumb(id: id, thumbBytes: bytes);
-    }
-
-    final beforeMemory = testBeforeMemoryHook;
-    if (beforeMemory != null) {
-      await beforeMemory();
-    }
-    await CollectionMemoryStore.instance.replaceFromRecoveryJson(pack.memoryJson);
-
-    final uiPrefs = CollectionShelfUiPrefsCodec.decode(pack.uiPrefsJson);
-    await CollectionShelfUiPrefsStorage.save(uiPrefs);
-
-    final rewritten = rewriteVaultRefsToRecoveredJpg(pack.snapshot);
-
-    final beforeSnapshot = testBeforeSnapshotSaveHook;
-    if (beforeSnapshot != null) {
-      await beforeSnapshot();
-    }
-    await CollectionSnapshotStorage.save(rewritten);
-
-    return rewritten;
+  ///
+  /// Test hooks live on [ShelfBackupCommit].
+  static Future<CollectionSnapshot> apply(ShelfRecoveryPackContents pack) {
+    return ShelfBackupCommit.apply(
+      snapshot: pack.snapshot,
+      memoryJson: pack.memoryJson,
+      uiPrefsJson: pack.uiPrefsJson,
+      manageGate: false,
+      transformSnapshot: rewriteVaultRefsToRecoveredJpg,
+      installMedia: () async {
+        await ShelfMediaVault.ensureReady();
+        for (final id in pack.mediaIds) {
+          final file = File(ShelfRecoveryPack.mediaFilePath(pack.packPath, id));
+          if (!await file.exists()) continue;
+          final bytes = await file.readAsBytes();
+          if (bytes.isEmpty) continue;
+          await ShelfMediaVault.installRecoveredThumb(id: id, thumbBytes: bytes);
+        }
+      },
+    );
   }
 
   /// Maps vault relative refs to `shelf_media/originals/<id>.jpg`.

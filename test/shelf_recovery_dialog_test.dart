@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/application/collection_shelf_ui_prefs_provider.dart';
+import 'package:blindbox_app/features/collection/application/shelf_backup_commit.dart';
 import 'package:blindbox_app/features/collection/application/shelf_recovery_import.dart';
 import 'package:blindbox_app/features/collection/bootstrap/collection_app_bootstrap.dart';
 import 'package:blindbox_app/features/collection/bootstrap/collection_recovery_gate.dart';
@@ -148,8 +149,8 @@ void main() {
     ShelfRecoveryPack.resetForTest();
     CollectionRecoveryGate.resetForTest();
     CollectionMemoryStore.instance.resetForTest();
-    ShelfRecoveryImport.testBeforeMemoryHook = null;
-    ShelfRecoveryImport.testBeforeSnapshotSaveHook = null;
+    ShelfBackupCommit.testBeforeMemoryHook = null;
+    ShelfBackupCommit.testBeforeSnapshotSaveHook = null;
     ShelfMediaVault.testSupportOverride = tempSupport;
     ShelfRecoveryPack.testSupportOverride = tempSupport;
     ShelfRecoveryPack.debounceEnabledForTest = false;
@@ -157,8 +158,8 @@ void main() {
   });
 
   tearDown(() async {
-    ShelfRecoveryImport.testBeforeMemoryHook = null;
-    ShelfRecoveryImport.testBeforeSnapshotSaveHook = null;
+    ShelfBackupCommit.testBeforeMemoryHook = null;
+    ShelfBackupCommit.testBeforeSnapshotSaveHook = null;
     CollectionRecoveryGate.resetForTest();
     CollectionMemoryStore.instance.resetForTest();
     ShelfMediaVault.resetForTest();
@@ -369,7 +370,7 @@ void main() {
     await _wipeVaultKeepPack(tempSupport);
     final pack = (await ShelfRecoveryPack.tryLoad())!;
 
-    ShelfRecoveryImport.testBeforeMemoryHook = () async {
+    ShelfBackupCommit.testBeforeMemoryHook = () async {
       throw StateError('memory boom');
     };
     await expectLater(
@@ -391,7 +392,7 @@ void main() {
       appVersion: 'keep-me',
     );
     final pack = await ShelfRecoveryPack.tryLoad();
-    ShelfRecoveryImport.testBeforeSnapshotSaveHook = () async {
+    ShelfBackupCommit.testBeforeSnapshotSaveHook = () async {
       throw StateError('boom');
     };
     await expectLater(
@@ -579,7 +580,7 @@ void main() {
       pack = (await ShelfRecoveryPack.tryLoad())!;
     });
     CollectionRecoveryGate.enterPending();
-    ShelfRecoveryImport.testBeforeSnapshotSaveHook = () async {
+    ShelfBackupCommit.testBeforeSnapshotSaveHook = () async {
       throw StateError('nope');
     };
 
@@ -602,7 +603,7 @@ void main() {
       );
     });
 
-    ShelfRecoveryImport.testBeforeSnapshotSaveHook = null;
+    ShelfBackupCommit.testBeforeSnapshotSaveHook = null;
     await tester.tap(find.byKey(const Key('shelf_recovery_import')));
     await _pumpDecisionIo(tester, done: find.text('main'));
 
