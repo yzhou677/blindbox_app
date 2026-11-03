@@ -864,6 +864,152 @@ void main() {
     expect(File(result.zipPath!).existsSync(), isTrue);
   });
 
+  test('backup zip name uses local date and -2 for same-day collision', () {
+    final day = DateTime(2026, 11, 2, 15, 30);
+    expect(
+      ShelfExportArchive.backupZipStem(day),
+      'Shelfy-backup-2026-11-02',
+    );
+    expect(
+      ShelfExportArchive.allocateBackupZipFileName(
+        localDate: day,
+        exists: (_) => false,
+      ),
+      'Shelfy-backup-2026-11-02.zip',
+    );
+    expect(
+      ShelfExportArchive.allocateBackupZipFileName(
+        localDate: day,
+        exists: (name) => name == 'Shelfy-backup-2026-11-02.zip',
+      ),
+      'Shelfy-backup-2026-11-02-2.zip',
+    );
+    expect(
+      ShelfExportArchive.allocateBackupZipFileName(
+        localDate: day,
+        exists: (name) =>
+            name == 'Shelfy-backup-2026-11-02.zip' ||
+            name == 'Shelfy-backup-2026-11-02-2.zip',
+      ),
+      'Shelfy-backup-2026-11-02-3.zip',
+    );
+  });
+
+  test('exportToZip writes Shelfy-backup date name and bumps -2', () async {
+    ShelfExportArchive.testNowOverride = DateTime(2026, 3, 15, 9, 0);
+    final first = await ShelfExportArchive.exportToZip(
+      snapshot: CollectionSnapshot.emptyTest(),
+      memoryJson: '{}',
+      uiPrefsJson: '{}',
+    );
+    expect(first.wrote, isTrue);
+    expect(
+      first.zipPath!.replaceAll('\\', '/').split('/').last,
+      'Shelfy-backup-2026-03-15.zip',
+    );
+
+    final second = await ShelfExportArchive.exportToZip(
+      snapshot: CollectionSnapshot.emptyTest(),
+      memoryJson: '{}',
+      uiPrefsJson: '{}',
+    );
+    expect(second.wrote, isTrue);
+    expect(
+      second.zipPath!.replaceAll('\\', '/').split('/').last,
+      'Shelfy-backup-2026-03-15-2.zip',
+    );
+    expect(File(first.zipPath!).existsSync(), isTrue);
+    expect(File(second.zipPath!).existsSync(), isTrue);
+  });
+
+  test('cleanupStaleExports removes old zip and staging; keeps fresh', () async {
+    final cacheRoot = Directory(
+      '${tempCache.path}${Platform.pathSeparator}shelf_export',
+    );
+    await cacheRoot.create(recursive: true);
+    final now = DateTime(2026, 11, 3, 12);
+    final oldZip = File(
+      '${cacheRoot.path}${Platform.pathSeparator}Shelfy-backup-2020-01-01.zip',
+    );
+    await oldZip.writeAsBytes([1], flush: true);
+    await oldZip.setLastModified(now.subtract(const Duration(days: 2)));
+    final freshZip = File(
+      '${cacheRoot.path}${Platform.pathSeparator}Shelfy-backup-2026-11-02.zip',
+    );
+    await freshZip.writeAsBytes([2], flush: true);
+    await freshZip.setLastModified(now.subtract(const Duration(hours: 2)));
+
+    final oldMs =
+        now.subtract(const Duration(days: 2)).toUtc().millisecondsSinceEpoch;
+    final freshMs =
+        now.subtract(const Duration(hours: 2)).toUtc().millisecondsSinceEpoch;
+    final oldStaging = Directory(
+      '${cacheRoot.path}${Platform.pathSeparator}'
+      '${ShelfExportArchive.unpackStagingPrefix}$oldMs',
+    );
+    await oldStaging.create(recursive: true);
+    final freshStaging = Directory(
+      '${cacheRoot.path}${Platform.pathSeparator}'
+      '${ShelfExportArchive.unpackStagingPrefix}$freshMs',
+    );
+    await freshStaging.create(recursive: true);
+
+    ShelfExportArchive.testNowOverride = now;
+    await ShelfExportArchive.cleanupStaleExports();
+
+    expect(oldZip.existsSync(), isFalse);
+    expect(freshZip.existsSync(), isTrue);
+    expect(oldStaging.existsSync(), isFalse);
+    expect(freshStaging.existsSync(), isTrue);
+  });
+
+  test('cleanupStaleExports keeps entries within one day', () async {
+    final cacheRoot = Directory(
+      '${tempCache.path}${Platform.pathSeparator}shelf_export',
+    );
+    await cacheRoot.create(recursive: true);
+    final now = DateTime(2026, 11, 3, 12);
+    final zip = File(
+      '${cacheRoot.path}${Platform.pathSeparator}Shelfy-backup-keep.zip',
+    );
+    await zip.writeAsBytes([1], flush: true);
+    await zip.setLastModified(now.subtract(const Duration(hours: 12)));
+    final freshMs =
+        now.subtract(const Duration(hours: 12)).toUtc().millisecondsSinceEpoch;
+    final staging = Directory(
+      '${cacheRoot.path}${Platform.pathSeparator}'
+      '${ShelfExportArchive.unpackStagingPrefix}$freshMs',
+    );
+    await staging.create(recursive: true);
+    ShelfExportArchive.testNowOverride = now;
+    await ShelfExportArchive.cleanupStaleExports();
+    expect(zip.existsSync(), isTrue);
+    expect(staging.existsSync(), isTrue);
+  });
+
+  test('exportToZip runs stale cleanup before writing', () async {
+    final cacheRoot = Directory(
+      '${tempCache.path}${Platform.pathSeparator}shelf_export',
+    );
+    await cacheRoot.create(recursive: true);
+    final stale = File(
+      '${cacheRoot.path}${Platform.pathSeparator}old_export.zip',
+    );
+    await stale.writeAsBytes([9], flush: true);
+    final now = DateTime(2026, 11, 3);
+    await stale.setLastModified(now.subtract(const Duration(days: 3)));
+    ShelfExportArchive.testNowOverride = now;
+
+    final result = await ShelfExportArchive.exportToZip(
+      snapshot: CollectionSnapshot.emptyTest(),
+      memoryJson: '{}',
+      uiPrefsJson: '{}',
+    );
+    expect(result.wrote, isTrue);
+    expect(stale.existsSync(), isFalse);
+    expect(File(result.zipPath!).existsSync(), isTrue);
+  });
+
   test('manageGate nested over existing pending keeps gate pending', () async {
     CollectionRecoveryGate.enterPending();
     expect(CollectionRecoveryGate.isPending, isTrue);
