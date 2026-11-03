@@ -156,6 +156,7 @@ void main() {
     final zip = File('${tempCache.path}${Platform.pathSeparator}noop.zip');
     await zip.writeAsBytes([1], flush: true);
 
+    var packCalls = 0;
     final result = await ShelfImportFlow.run(
       currentSnapshot: current,
       currentMemoryJson: '{}',
@@ -169,10 +170,12 @@ void main() {
         confirmReplace: () async => false,
         unpack: (_) async => fail('should not unpack'),
         clearPickerTemp: () async {},
+        scheduleRecoveryPack: (_) => packCalls++,
       ),
     );
 
     expect(result.status, ShelfImportFlowStatus.cancelled);
+    expect(packCalls, 0);
     final after = await CollectionSnapshotStorage.load();
     expect(after!.shelfSeries.single.name, 'Old');
   });
@@ -213,6 +216,7 @@ void main() {
     expect(container.read(collectionNotifierProvider).shelfSeries.single.name, 'Old Shelf');
 
     var clearedTemp = false;
+    CollectionSnapshot? scheduledPackSnap;
     final result = await ShelfImportFlow.run(
       currentSnapshot: old,
       currentMemoryJson: '{"firstSeriesAddedAtMs":1}',
@@ -235,11 +239,15 @@ void main() {
           clearedTemp = true;
         },
         collectGarbage: (_) async {},
+        scheduleRecoveryPack: (snap) {
+          scheduledPackSnap = snap;
+        },
       ),
     );
 
     expect(result.status, ShelfImportFlowStatus.success);
     expect(clearedTemp, isTrue);
+    expect(scheduledPackSnap!.shelfSeries.single.name, 'Imported');
     expect(notifier.persistenceSuspendedForTest, isFalse);
 
     final prefsSnap = await CollectionSnapshotStorage.load();
@@ -320,6 +328,7 @@ void main() {
       uiPrefsJson: '{}',
     );
 
+    var packCalls = 0;
     final result = await ShelfImportFlow.run(
       currentSnapshot: old,
       currentMemoryJson: '{}',
@@ -339,9 +348,11 @@ void main() {
           throw StateError('disk full');
         },
         clearPickerTemp: () async {},
+        scheduleRecoveryPack: (_) => packCalls++,
       ),
     );
     expect(result.status, ShelfImportFlowStatus.safetyCopyFailed);
+    expect(packCalls, 0);
     final after = await CollectionSnapshotStorage.load();
     expect(after!.shelfSeries.single.name, 'Keep');
   });
@@ -358,6 +369,7 @@ void main() {
       final cacheBefore = Directory(
         '${tempCache.path}${Platform.pathSeparator}shelf_export',
       );
+      var packCalls = 0;
       final result = await ShelfImportFlow.run(
         currentSnapshot: old,
         currentMemoryJson: '{"firstSeriesAddedAtMs":9}',
@@ -370,9 +382,11 @@ void main() {
           pickZipPath: () async => zipPath,
           confirmReplace: () async => true,
           clearPickerTemp: () async {},
+          scheduleRecoveryPack: (_) => packCalls++,
         ),
       );
       expect(result.status, ShelfImportFlowStatus.failed);
+      expect(packCalls, 0);
       final after = await CollectionSnapshotStorage.load();
       expect(after!.shelfSeries.single.name, 'Keep');
       await CollectionMemoryStore.instance.ensureLoaded();
@@ -467,6 +481,7 @@ void main() {
     expect(exported.wrote, isTrue);
 
     ShelfExportArchive.testRejectBytesOverride = 50;
+    var packCalls = 0;
     final result = await ShelfImportFlow.run(
       currentSnapshot: old,
       currentMemoryJson: '{}',
@@ -479,11 +494,150 @@ void main() {
         pickZipPath: () async => exported.zipPath,
         confirmReplace: () async => true,
         clearPickerTemp: () async {},
+        scheduleRecoveryPack: (_) => packCalls++,
       ),
     );
     expect(result.status, ShelfImportFlowStatus.rejectedTooLarge);
+    expect(packCalls, 0);
     final after = await CollectionSnapshotStorage.load();
     expect(after!.shelfSeries.single.name, 'Keep');
+  });
+
+  test('successful import refreshes real recovery pack', () async {
+    // Suite keeps debounceEnabledForTest=false so scheduleWrite no-ops.
+    // Inject real ShelfRecoveryPack.write (immediate, no debounce timer).
+    final old = _snap(seriesId: 'old', name: 'Old Pack');
+    await CollectionSnapshotStorage.save(old);
+    await CollectionMemoryStore.instance.replaceFromRecoveryJson('{}');
+    await ShelfRecoveryPack.write(
+      snapshot: old,
+      memoryJson: '{}',
+      uiPrefsJson: '{}',
+    );
+    final before = await ShelfRecoveryPack.tryLoad();
+    expect(before!.snapshot.shelfSeries.single.name, 'Old Pack');
+
+    final backup = await ShelfExportArchive.exportToZip(
+      snapshot: _snap(seriesId: 'new', name: 'Imported Pack'),
+      memoryJson: '{}',
+      uiPrefsJson: '{}',
+    );
+
+    final packWrites = <Future<void>>[];
+    final result = await ShelfImportFlow.run(
+      currentSnapshot: old,
+      currentMemoryJson: '{}',
+      currentUiPrefsJson: '{}',
+      suspendPersistence: () {},
+      replaceNotifierState: (_) {},
+      resumePersistence: () {},
+      reloadUiPrefs: () async {},
+      deps: ShelfImportFlowDeps(
+        pickZipPath: () async => backup.zipPath,
+        confirmReplace: () async => true,
+        writeSafetyZip: ({
+          required snapshot,
+          required memoryJson,
+          required uiPrefsJson,
+        }) async {},
+        clearPickerTemp: () async {},
+        collectGarbage: (_) async {},
+        scheduleRecoveryPack: (snap) {
+          packWrites.add(
+            ShelfRecoveryPack.write(snapshot: snap).then((_) {}),
+          );
+        },
+      ),
+    );
+
+    expect(result.status, ShelfImportFlowStatus.success);
+    expect(packWrites, isNotEmpty);
+    await Future.wait(packWrites);
+    final after = await ShelfRecoveryPack.tryLoad();
+    expect(after!.snapshot.shelfSeries.single.name, 'Imported Pack');
+  });
+
+  test('thumb-only Replace import overwrites existing original bytes', () async {
+    final oldOriginal = _pngBytes();
+    final backupThumb = _jpegBytes(r: 200);
+    await ShelfMediaVault.installExportedOriginal(
+      id: 'A',
+      originalBytes: oldOriginal,
+      ext: '.png',
+      thumbBytes: _jpegBytes(r: 1),
+    );
+    final beforePaths = await ShelfMediaVault.pathsForId('A');
+    final oldPngPath = beforePaths.originalPath!;
+    expect(oldPngPath.endsWith('.png'), isTrue);
+    expect(File(oldPngPath).existsSync(), isTrue);
+
+    final backupSnap = _snap(
+      seriesId: 'imported',
+      name: 'ThumbOnly',
+      mediaRef: 'shelf_media/originals/A.png',
+    );
+    final zipPath =
+        '${tempCache.path}${Platform.pathSeparator}thumb_only_import.zip';
+    await _writeCraftedZip(zipPath, {
+      'shelfy_shelf_export/manifest.json': utf8.encode(
+        jsonEncode({
+          'kind': 'shelf_export',
+          'schemaVersion': 1,
+          'createdAt': '2026-01-01T00:00:00.000Z',
+          'appVersion': '1',
+          'seriesCount': 1,
+          'figureCount': 1,
+          'originalCount': 0,
+          'thumbCount': 1,
+          'mediaIncomplete': true,
+        }),
+      ),
+      'shelfy_shelf_export/collection_snapshot_v1.json': utf8.encode(
+        CollectionSnapshotCodec.encode(backupSnap),
+      ),
+      'shelfy_shelf_export/collection_memory.json': utf8.encode('{}'),
+      'shelfy_shelf_export/collection_shelf_ui_prefs.json': utf8.encode('{}'),
+      'shelfy_shelf_export/thumbs/A.jpg': backupThumb,
+    });
+
+    final old = _snap(
+      seriesId: 'old',
+      name: 'Old With Png',
+      mediaRef: 'shelf_media/originals/A.png',
+    );
+    await CollectionSnapshotStorage.save(old);
+
+    final result = await ShelfImportFlow.run(
+      currentSnapshot: old,
+      currentMemoryJson: '{}',
+      currentUiPrefsJson: '{}',
+      suspendPersistence: () {},
+      replaceNotifierState: (_) {},
+      resumePersistence: () {},
+      reloadUiPrefs: () async {},
+      deps: ShelfImportFlowDeps(
+        pickZipPath: () async => zipPath,
+        confirmReplace: () async => true,
+        writeSafetyZip: ({
+          required snapshot,
+          required memoryJson,
+          required uiPrefsJson,
+        }) async {},
+        clearPickerTemp: () async {},
+        collectGarbage: (_) async {},
+        scheduleRecoveryPack: (_) {},
+      ),
+    );
+
+    expect(result.status, ShelfImportFlowStatus.success);
+    expect(File(oldPngPath).existsSync(), isFalse);
+    final afterPaths = await ShelfMediaVault.pathsForId('A');
+    expect(afterPaths.originalPath!.endsWith('.jpg'), isTrue);
+    expect(File(afterPaths.originalPath!).readAsBytesSync(), backupThumb);
+    expect(
+      await ShelfMediaVault.recoveredFromThumbForTest('shelf_media/originals/A.jpg'),
+      isTrue,
+    );
   });
 
   test('commit mid-failure keeps old snapshot and resumes persist', () async {
@@ -504,6 +658,7 @@ void main() {
       throw StateError('boom');
     };
 
+    var packCalls = 0;
     final result = await ShelfImportFlow.run(
       currentSnapshot: old,
       currentMemoryJson: '{}',
@@ -521,10 +676,12 @@ void main() {
           required uiPrefsJson,
         }) async {},
         clearPickerTemp: () async {},
+        scheduleRecoveryPack: (_) => packCalls++,
       ),
     );
 
     expect(result.status, ShelfImportFlowStatus.failed);
+    expect(packCalls, 0);
     expect(notifier.persistenceSuspendedForTest, isFalse);
     expect(
       container.read(collectionNotifierProvider).shelfSeries.single.name,

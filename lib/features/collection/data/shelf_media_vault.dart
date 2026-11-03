@@ -541,6 +541,11 @@ abstract final class ShelfMediaVault {
       final originals = await _subdir(originalsFolderName);
       final thumbs = await _subdir(thumbsFolderName);
       final originalPath = '${originals.path}$_sep$trimmedId$normalizedExt';
+      await _deleteOtherOriginalsForId(
+        originalsDir: originals,
+        id: trimmedId,
+        keepAbsolutePath: originalPath,
+      );
       await originalFile.copy(originalPath);
 
       var thumbOk = false;
@@ -573,9 +578,15 @@ abstract final class ShelfMediaVault {
   }
 
   /// Thumb-only install via [File.copy] (export archive missing original).
+  ///
+  /// When [overwriteOriginal] is true (Replace import), always copy the thumb
+  /// over `originals/<id>.jpg` and set [recoveredFromThumb]. Other original
+  /// extensions for the same id are deleted. PR3 recovery keeps the default
+  /// `overwriteOriginal: false` (preserve an existing original).
   static Future<String> installRecoveredThumbFromFile({
     required String id,
     required File thumbFile,
+    bool overwriteOriginal = false,
   }) async {
     if (kIsWeb) {
       return _vaultRefFor(id: id, ext: '.jpg');
@@ -595,7 +606,14 @@ abstract final class ShelfMediaVault {
       final thumbPath = '${thumbs.path}$_sep$trimmedId.jpg';
       final originalFile = File(originalPath);
       final hadOriginal = await originalFile.exists();
-      if (!hadOriginal) {
+      if (overwriteOriginal) {
+        await _deleteOtherOriginalsForId(
+          originalsDir: originals,
+          id: trimmedId,
+          keepAbsolutePath: originalPath,
+        );
+        await thumbFile.copy(originalPath);
+      } else if (!hadOriginal) {
         await thumbFile.copy(originalPath);
       }
       await thumbFile.copy(thumbPath);
@@ -608,12 +626,37 @@ abstract final class ShelfMediaVault {
         thumbRelative: '$thumbsFolderName/$trimmedId.jpg',
         createdAt: existing?.createdAt ?? now,
         lastAccessedAt: existing?.lastAccessedAt ?? now,
-        recoveredFromThumb:
-            !hadOriginal || (existing?.recoveredFromThumb ?? false),
+        recoveredFromThumb: overwriteOriginal
+            ? true
+            : (!hadOriginal || (existing?.recoveredFromThumb ?? false)),
       );
       await _flushIndex();
       return _vaultRefFor(id: trimmedId, ext: '.jpg');
     });
+  }
+
+  /// Deletes `originals/<id>.*` files other than [keepAbsolutePath].
+  static Future<void> _deleteOtherOriginalsForId({
+    required Directory originalsDir,
+    required String id,
+    required String keepAbsolutePath,
+  }) async {
+    final keepNorm = keepAbsolutePath.replaceAll('\\', '/');
+    final prefix = '$id.';
+    await for (final entity in originalsDir.list(followLinks: false)) {
+      if (entity is! File) continue;
+      final name = entity.uri.pathSegments.isEmpty
+          ? entity.path.split(Platform.pathSeparator).last
+          : entity.uri.pathSegments.last;
+      if (!name.startsWith(prefix)) continue;
+      final pathNorm = entity.path.replaceAll('\\', '/');
+      if (pathNorm == keepNorm) continue;
+      try {
+        await entity.delete();
+      } on Object {
+        // best-effort
+      }
+    }
   }
 
   static String _normalizeExt(String ext) {

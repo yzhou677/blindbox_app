@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:blindbox_app/features/collection/data/shelf_export_archive.dart';
 import 'package:blindbox_app/features/collection/data/shelf_media_vault.dart';
+import 'package:blindbox_app/features/collection/data/shelf_recovery_pack.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
@@ -62,6 +63,7 @@ class ShelfImportFlowDeps {
     this.commitStaging,
     this.clearPickerTemp,
     this.collectGarbage,
+    this.scheduleRecoveryPack,
   });
 
   /// Returns a filesystem path to a `.zip`, or null if the user cancelled.
@@ -85,6 +87,9 @@ class ShelfImportFlowDeps {
   final Future<void> Function()? clearPickerTemp;
 
   final Future<void> Function(CollectionSnapshot snapshot)? collectGarbage;
+
+  /// Refresh Auto Backup recovery pack after a successful Replace import.
+  final void Function(CollectionSnapshot snapshot)? scheduleRecoveryPack;
 }
 
 /// Manual Import shelf (Replace only): pick → confirm → validate → safety →
@@ -109,6 +114,10 @@ abstract final class ShelfImportFlow {
     final commitFn = deps.commitStaging ?? ShelfExportArchive.commitStaging;
     final clearTemp = deps.clearPickerTemp ?? _defaultClearTemp;
     final gcFn = deps.collectGarbage ?? _defaultGc;
+    final schedulePack = deps.scheduleRecoveryPack ??
+        ((CollectionSnapshot s) {
+          ShelfRecoveryPack.scheduleWrite(snapshot: s);
+        });
 
     String? pickedPath;
     try {
@@ -175,6 +184,13 @@ abstract final class ShelfImportFlow {
           await reloadUiPrefs();
         } on Object {
           // snapshot already committed; prefs UI may lag until next launch
+        }
+
+        // Import bypasses notifier persist — refresh recovery pack explicitly.
+        try {
+          schedulePack(saved);
+        } on Object {
+          // best-effort; prefs snapshot is already the commit marker
         }
 
         unawaited(() async {

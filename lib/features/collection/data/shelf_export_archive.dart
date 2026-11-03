@@ -467,6 +467,7 @@ abstract final class ShelfExportArchive {
               await ShelfMediaVault.installRecoveredThumbFromFile(
                 id: id,
                 thumbFile: thumb,
+                overwriteOriginal: true,
               );
             }
           }

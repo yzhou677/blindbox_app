@@ -221,6 +221,7 @@ class _CollectionSettingsScreenState
         commitStaging: widget.importDeps.commitStaging,
         clearPickerTemp: widget.importDeps.clearPickerTemp,
         collectGarbage: widget.importDeps.collectGarbage,
+        scheduleRecoveryPack: widget.importDeps.scheduleRecoveryPack,
       ),
     );
 
@@ -258,7 +259,9 @@ class _CollectionSettingsScreenState
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    return Scaffold(
+    return PopScope(
+      canPop: !_busy,
+      child: Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
@@ -458,6 +461,7 @@ class _CollectionSettingsScreenState
             ),
           ),
         ],
+      ),
       ),
     );
   }

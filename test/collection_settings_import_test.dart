@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
@@ -228,6 +229,79 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.text(ShelfImportCopy.tooLargeSnack), findsOneWidget);
+  });
+
+  testWidgets('system back during import is blocked', (tester) async {
+    final gate = Completer<CollectionSnapshot>();
+    final staging = _FakeStaging();
+    addTearDown(() {
+      if (!gate.isCompleted) {
+        gate.complete(CollectionSnapshot.emptyTest());
+      }
+    });
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          collectionNotifierProvider.overrideWith(
+            () => _FixedNotifier(CollectionSnapshot.emptyTest()),
+          ),
+        ],
+        child: MaterialApp(
+          home: Builder(
+            builder: (context) {
+              return Scaffold(
+                body: TextButton(
+                  key: const Key('open_settings'),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => CollectionSettingsScreen(
+                          confirmReplaceOverride: () async => true,
+                          importDeps: ShelfImportFlowDeps(
+                            pickZipPath: () async => 'fake.zip',
+                            unpack: (_) async => staging,
+                            writeSafetyZip: ({
+                              required snapshot,
+                              required memoryJson,
+                              required uiPrefsJson,
+                            }) async {},
+                            commitStaging: (_) => gate.future,
+                            clearPickerTemp: () async {},
+                            collectGarbage: (_) async {},
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text('Open'),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('open_settings')));
+    await tester.pumpAndSettle();
+    expect(find.byType(CollectionSettingsScreen), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('collection_settings_import_tile')));
+    await tester.pump();
+    await tester.pump();
+    expect(find.text(ShelfImportCopy.importing), findsOneWidget);
+
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+    expect(find.byType(CollectionSettingsScreen), findsOneWidget);
+    expect(find.text(ShelfImportCopy.importing), findsOneWidget);
+    expect(find.text('Open'), findsNothing);
+
+    gate.complete(CollectionSnapshot.emptyTest());
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.text(ShelfImportCopy.importing), findsNothing);
   });
 }
 
