@@ -316,14 +316,19 @@ class _ShelfBackupButtonState extends ConsumerState<ShelfBackupButton> {
         resumePersistence: notifier.resumePersistence,
         reloadUiPrefs: prefsNotifier.reloadFromStorage,
         deps: ShelfImportFlowDeps(
-          pickZipPath: () async {
-            final pick = widget.importDeps.pickZipPath;
-            final resolved = pick != null
-                ? await pick()
-                : await ShelfImportFlow.pickZipPath();
-            if (resolved == null || resolved.isEmpty) return null;
+          pickBackupFile: () async {
+            if (widget.importDeps.pickBackupFile != null) {
+              return widget.importDeps.pickBackupFile!();
+            }
+            if (widget.importDeps.pickZipPath != null) {
+              final path = await widget.importDeps.pickZipPath!();
+              if (path == null || path.isEmpty) return null;
+              return ShelfImportPickedFile.pathOnly(path);
+            }
+            return ShelfImportFlow.pickBackupFile();
+          },
+          onChecking: () {
             if (mounted) _ensureProgress(ShelfBackupCopy.checking);
-            return resolved;
           },
           confirmReplace: (summary) async {
             await _hideProgress();
@@ -363,6 +368,10 @@ class _ShelfBackupButtonState extends ConsumerState<ShelfBackupButton> {
         case ShelfImportFlowStatus.safetyCopyFailed:
           messenger.showSnackBar(
             const SnackBar(content: Text(ShelfImportCopy.safetyFailedSnack)),
+          );
+        case ShelfImportFlowStatus.rejectedNotZip:
+          messenger.showSnackBar(
+            const SnackBar(content: Text(ShelfImportCopy.chooseZipSnack)),
           );
         case ShelfImportFlowStatus.failed:
           messenger.showSnackBar(

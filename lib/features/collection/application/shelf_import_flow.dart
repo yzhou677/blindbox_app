@@ -60,6 +60,8 @@ abstract final class ShelfImportCopy {
       'This backup is too large to import (over 2 GB).';
   static const safetyFailedSnack =
       'Couldn\'t save a safety copy. Import canceled.';
+  static const chooseZipSnack =
+      'Choose a Shelfy backup (.zip) file.';
 
   /// English summary line. Omits wishlist when [wishlistCount] is 0.
   ///
@@ -110,7 +112,29 @@ enum ShelfImportFlowStatus {
   cancelled,
   rejectedTooLarge,
   safetyCopyFailed,
+
+  /// Picked file is not a `.zip` by name (before unpack / Checking).
+  rejectedNotZip,
   failed,
+}
+
+/// Result of the system file picker for Import shelf.
+@immutable
+class ShelfImportPickedFile {
+  const ShelfImportPickedFile({
+    required this.path,
+    this.name = '',
+  });
+
+  /// Test helper: [name] defaults to [path] so extension checks use the path.
+  factory ShelfImportPickedFile.pathOnly(String path) =>
+      ShelfImportPickedFile(path: path, name: path);
+
+  /// Filesystem path (may lack an extension after Android content-URI copy).
+  final String path;
+
+  /// Original display name from the picker ([PlatformFile.name]).
+  final String name;
 }
 
 @immutable
@@ -129,6 +153,8 @@ class ShelfImportFlowResult {
 class ShelfImportFlowDeps {
   const ShelfImportFlowDeps({
     this.pickZipPath,
+    this.pickBackupFile,
+    this.onChecking,
     this.confirmReplace,
     this.unpack,
     this.writeSafetyZip,
@@ -138,8 +164,18 @@ class ShelfImportFlowDeps {
     this.scheduleRecoveryPack,
   });
 
-  /// Returns a filesystem path to a `.zip`, or null if the user cancelled.
+  /// Returns a filesystem path, or null if the user cancelled.
+  ///
+  /// Prefer [pickBackupFile] when the original display name is needed
+  /// (Android content URIs often drop the `.zip` suffix on [path]).
   final Future<String?> Function()? pickZipPath;
+
+  /// Richer picker result (path + original name). Takes precedence over
+  /// [pickZipPath] when both are set.
+  final Future<ShelfImportPickedFile?> Function()? pickBackupFile;
+
+  /// Called after the picked file passes the `.zip` name check, before unpack.
+  final void Function()? onChecking;
 
   /// Shown after a successful unpack. Return false to cancel (staging deleted).
   final Future<bool> Function(ShelfImportBackupSummary summary)? confirmReplace;
@@ -181,7 +217,6 @@ abstract final class ShelfImportFlow {
     required Future<void> Function() reloadUiPrefs,
     ShelfImportFlowDeps deps = const ShelfImportFlowDeps(),
   }) async {
-    final pick = deps.pickZipPath ?? _defaultPickZip;
     final confirm = deps.confirmReplace;
     final unpackFn = deps.unpack ?? ShelfExportArchive.unpackToStaging;
     final safetyFn = deps.writeSafetyZip ?? _defaultSafetyZip;
@@ -193,21 +228,27 @@ abstract final class ShelfImportFlow {
           ShelfRecoveryPack.scheduleWrite(snapshot: s);
         });
 
-    String? pickedPath;
     try {
-      pickedPath = await pick();
-      if (pickedPath == null || pickedPath.isEmpty) {
+      final picked = await _resolvePickedFile(deps);
+      if (picked == null || picked.path.isEmpty) {
         return const ShelfImportFlowResult(
           status: ShelfImportFlowStatus.cancelled,
         );
       }
 
+      if (!isZipBackupFilename(path: picked.path, name: picked.name)) {
+        return const ShelfImportFlowResult(
+          status: ShelfImportFlowStatus.rejectedNotZip,
+        );
+      }
+
+      deps.onChecking?.call();
       suspendPersistence();
 
       ShelfExportStaging? staging;
       try {
         try {
-          staging = await unpackFn(pickedPath);
+          staging = await unpackFn(picked.path);
         } on ShelfExportException catch (e) {
           return ShelfImportFlowResult(
             status: _isTooLargeMessage(e.message)
@@ -296,16 +337,60 @@ abstract final class ShelfImportFlow {
     }
   }
 
-  /// Shared picker used by Settings and the default [ShelfImportFlowDeps].
-  static Future<String?> pickZipPath() => _defaultPickZip();
+  /// Shared picker used by the Shelf backup sheet and default deps.
+  static Future<String?> pickZipPath() async {
+    final picked = await pickBackupFile();
+    return picked?.path;
+  }
 
-  static Future<String?> _defaultPickZip() async {
-    // file_picker 13+: path-based pick (no withData) — avoids loading zip RAM.
-    final file = await FilePicker.pickFile(
-      type: FileType.custom,
-      allowedExtensions: const ['zip'],
-    );
-    return file?.path;
+  /// Path + original name; uses [FileType.any] (no Android MIME filter).
+  static Future<ShelfImportPickedFile?> pickBackupFile() => _defaultPickBackup();
+
+  /// True when the picked backup looks like a `.zip` by display name / path.
+  ///
+  /// Prefer [name] ([PlatformFile.name]) when [path] has no file extension
+  /// (common after Android content-URI copies). Case-insensitive.
+  static bool isZipBackupFilename({
+    required String path,
+    String name = '',
+  }) {
+    final pathBase = _basename(path);
+    final pathHasExtension = pathBase.contains('.');
+    final trimmedName = name.trim();
+    // Prefer PlatformFile.name when the copied path has no extension.
+    final check = (!pathHasExtension && trimmedName.isNotEmpty)
+        ? trimmedName
+        : (pathBase.isNotEmpty ? pathBase : trimmedName);
+    return check.toLowerCase().endsWith('.zip');
+  }
+
+  static String _basename(String path) {
+    final normalized = path.replaceAll('\\', '/');
+    final slash = normalized.lastIndexOf('/');
+    return slash < 0 ? normalized : normalized.substring(slash + 1);
+  }
+
+  static Future<ShelfImportPickedFile?> _resolvePickedFile(
+    ShelfImportFlowDeps deps,
+  ) async {
+    if (deps.pickBackupFile != null) {
+      return deps.pickBackupFile!();
+    }
+    if (deps.pickZipPath != null) {
+      final path = await deps.pickZipPath!();
+      if (path == null || path.isEmpty) return null;
+      return ShelfImportPickedFile.pathOnly(path);
+    }
+    return _defaultPickBackup();
+  }
+
+  static Future<ShelfImportPickedFile?> _defaultPickBackup() async {
+    // FileType.any: Android MIME filters drop Drive/Gmail zips that are not
+    // application/zip. Keep path-based pick (no withData) to avoid RAM load.
+    final file = await FilePicker.pickFile(type: FileType.any);
+    final path = file?.path;
+    if (file == null || path == null || path.isEmpty) return null;
+    return ShelfImportPickedFile(path: path, name: file.name);
   }
 
   static Future<void> _defaultSafetyZip({

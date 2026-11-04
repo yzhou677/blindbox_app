@@ -404,6 +404,37 @@ void main() {
     expect(find.text(ShelfImportCopy.successSnack), findsNothing);
   });
 
+  testWidgets('non-zip pick shows choose-zip SnackBar without Checking',
+      (tester) async {
+    var unpackCalls = 0;
+    await _pumpBackupHost(
+      tester,
+      snapshot: _populatedSnap(),
+      importDeps: ShelfImportFlowDeps(
+        pickBackupFile: () async => const ShelfImportPickedFile(
+          path: '/tmp/notes.pdf',
+          name: 'notes.pdf',
+        ),
+        unpack: (_) async {
+          unpackCalls++;
+          fail('should not unpack');
+        },
+        clearPickerTemp: () async {},
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('collection_backup_button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('shelf_backup_import_row')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text(ShelfImportCopy.chooseZipSnack), findsOneWidget);
+    expect(find.text(ShelfBackupCopy.checking), findsNothing);
+    expect(find.byKey(const Key('shelf_backup_progress_label')), findsNothing);
+    expect(unpackCalls, 0);
+  });
+
   testWidgets('Import success SnackBar is English', (tester) async {
     final staging = _FakeStaging(snapshot: _populatedSnap());
 

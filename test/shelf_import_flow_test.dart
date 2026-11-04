@@ -150,6 +150,147 @@ void main() {
     expect(after!.shelfSeries.single.name, 'Old');
   });
 
+  test('uppercase .ZIP name enters Checking and unpacks', () async {
+    final current = _snap(seriesId: 'old', name: 'Old');
+    await CollectionSnapshotStorage.save(current);
+    var checkingCalls = 0;
+    var unpackCalls = 0;
+    final staging = _CancelStaging(
+      onDelete: () {},
+      snapshot: _snap(seriesId: 'new', name: 'New'),
+      createdAt: DateTime.utc(2026, 1, 1),
+    );
+
+    final result = await ShelfImportFlow.run(
+      currentSnapshot: current,
+      currentMemoryJson: '{}',
+      currentUiPrefsJson: '{}',
+      suspendPersistence: () {},
+      replaceNotifierState: (_) {},
+      resumePersistence: () {},
+      reloadUiPrefs: () async {},
+      deps: ShelfImportFlowDeps(
+        pickBackupFile: () async => const ShelfImportPickedFile(
+          path: r'C:\Downloads\BACKUP.ZIP',
+          name: 'BACKUP.ZIP',
+        ),
+        onChecking: () => checkingCalls++,
+        unpack: (_) async {
+          unpackCalls++;
+          return staging;
+        },
+        confirmReplace: (_) async => false,
+        clearPickerTemp: () async {},
+      ),
+    );
+
+    expect(result.status, ShelfImportFlowStatus.cancelled);
+    expect(checkingCalls, 1);
+    expect(unpackCalls, 1);
+    expect(
+      ShelfImportFlow.isZipBackupFilename(
+        path: r'C:\Downloads\BACKUP.ZIP',
+        name: 'BACKUP.ZIP',
+      ),
+      isTrue,
+    );
+  });
+
+  test('non-zip pick shows rejectedNotZip without Checking or staging',
+      () async {
+    final current = _snap(seriesId: 'old', name: 'Old');
+    await CollectionSnapshotStorage.save(current);
+    var checkingCalls = 0;
+    var unpackCalls = 0;
+    var suspended = false;
+
+    Future<void> expectRejected(ShelfImportPickedFile picked) async {
+      checkingCalls = 0;
+      unpackCalls = 0;
+      suspended = false;
+      final result = await ShelfImportFlow.run(
+        currentSnapshot: current,
+        currentMemoryJson: '{}',
+        currentUiPrefsJson: '{}',
+        suspendPersistence: () => suspended = true,
+        replaceNotifierState: (_) => fail('no replace'),
+        resumePersistence: () {},
+        reloadUiPrefs: () async {},
+        deps: ShelfImportFlowDeps(
+          pickBackupFile: () async => picked,
+          onChecking: () => checkingCalls++,
+          unpack: (_) async {
+            unpackCalls++;
+            fail('should not unpack');
+          },
+          clearPickerTemp: () async {},
+        ),
+      );
+      expect(result.status, ShelfImportFlowStatus.rejectedNotZip);
+      expect(checkingCalls, 0);
+      expect(unpackCalls, 0);
+      expect(suspended, isFalse);
+      final after = await CollectionSnapshotStorage.load();
+      expect(after!.shelfSeries.single.name, 'Old');
+    }
+
+    await expectRejected(
+      const ShelfImportPickedFile(path: '/tmp/notes.pdf', name: 'notes.pdf'),
+    );
+    await expectRejected(
+      const ShelfImportPickedFile(path: '/tmp/noext', name: 'noext'),
+    );
+  });
+
+  test('path without extension uses PlatformFile name for .zip check',
+      () async {
+    final current = _snap(seriesId: 'old', name: 'Old');
+    await CollectionSnapshotStorage.save(current);
+    var checkingCalls = 0;
+    var unpackCalls = 0;
+    final staging = _CancelStaging(
+      onDelete: () {},
+      snapshot: _snap(seriesId: 'new', name: 'New'),
+      createdAt: DateTime.utc(2026, 1, 1),
+    );
+
+    expect(
+      ShelfImportFlow.isZipBackupFilename(
+        path: '/cache/content_abc123',
+        name: 'backup.zip',
+      ),
+      isTrue,
+    );
+
+    final result = await ShelfImportFlow.run(
+      currentSnapshot: current,
+      currentMemoryJson: '{}',
+      currentUiPrefsJson: '{}',
+      suspendPersistence: () {},
+      replaceNotifierState: (_) {},
+      resumePersistence: () {},
+      reloadUiPrefs: () async {},
+      deps: ShelfImportFlowDeps(
+        pickBackupFile: () async => const ShelfImportPickedFile(
+          path: '/cache/content_abc123',
+          name: 'backup.zip',
+        ),
+        onChecking: () => checkingCalls++,
+        unpack: (path) async {
+          expect(path, '/cache/content_abc123');
+          unpackCalls++;
+          return staging;
+        },
+        confirmReplace: (_) async => false,
+        clearPickerTemp: () async {},
+      ),
+    );
+
+    expect(result.status, ShelfImportFlowStatus.cancelled);
+    expect(checkingCalls, 1);
+    expect(unpackCalls, 1);
+  });
+
   test('confirm Cancel deletes staging and leaves shelf unchanged', () async {
     final current = _snap(seriesId: 'old', name: 'Old');
     await CollectionSnapshotStorage.save(current);
@@ -1046,6 +1187,10 @@ void main() {
     expect(ShelfImportCopy.failedSnack, contains('Couldn\'t import'));
     expect(ShelfImportCopy.tooLargeSnack, contains('2 GB'));
     expect(ShelfImportCopy.safetyFailedSnack, contains('safety copy'));
+    expect(
+      ShelfImportCopy.chooseZipSnack,
+      'Choose a Shelfy backup (.zip) file.',
+    );
 
     expect(
       ShelfImportCopy.confirmSummary(
@@ -1107,6 +1252,7 @@ void main() {
       ShelfImportCopy.failedSnack,
       ShelfImportCopy.tooLargeSnack,
       ShelfImportCopy.safetyFailedSnack,
+      ShelfImportCopy.chooseZipSnack,
       ShelfImportCopy.confirmSummary(
         seriesCount: 1,
         figureCount: 1,
