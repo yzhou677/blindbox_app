@@ -34,6 +34,7 @@ abstract final class ShelfBackupCopy {
 
   static const exportMediaIncomplete =
       'Some photos were missing and weren\'t included.';
+  static const exportReadySnack = 'Backup ready to share';
   static const exportTooLarge =
       'This shelf is too large to export (over 2 GB).';
   static const exportFailed = 'Couldn\'t create a backup. Try again.';
@@ -276,6 +277,10 @@ class _ShelfBackupButtonState extends ConsumerState<ShelfBackupButton> {
               const SnackBar(
                 content: Text(ShelfBackupCopy.exportMediaIncomplete),
               ),
+            );
+          } else {
+            messenger.showSnackBar(
+              const SnackBar(content: Text(ShelfBackupCopy.exportReadySnack)),
             );
           }
         case ShelfExportFlowStatus.cancelled:

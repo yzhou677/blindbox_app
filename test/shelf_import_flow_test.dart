@@ -150,6 +150,44 @@ void main() {
     expect(after!.shelfSeries.single.name, 'Old');
   });
 
+  test('isZipBackupFilename accepts path or name .zip (case-insensitive)', () {
+    expect(
+      ShelfImportFlow.isZipBackupFilename(
+        path: '/cache/content.tmp',
+        name: 'backup.zip',
+      ),
+      isTrue,
+    );
+    expect(
+      ShelfImportFlow.isZipBackupFilename(
+        path: '/cache/backup.ZIP',
+        name: 'ignored.pdf',
+      ),
+      isTrue,
+    );
+    expect(
+      ShelfImportFlow.isZipBackupFilename(
+        path: r'C:\Downloads\BACKUP.ZIP',
+        name: 'BACKUP.ZIP',
+      ),
+      isTrue,
+    );
+    expect(
+      ShelfImportFlow.isZipBackupFilename(
+        path: '/tmp/notes.pdf',
+        name: 'notes.pdf',
+      ),
+      isFalse,
+    );
+    expect(
+      ShelfImportFlow.isZipBackupFilename(
+        path: '/cache/content.tmp',
+        name: 'noext',
+      ),
+      isFalse,
+    );
+  });
+
   test('uppercase .ZIP name enters Checking and unpacks', () async {
     final current = _snap(seriesId: 'old', name: 'Old');
     await CollectionSnapshotStorage.save(current);
@@ -242,8 +280,7 @@ void main() {
     );
   });
 
-  test('path without extension uses PlatformFile name for .zip check',
-      () async {
+  test('path .tmp with name backup.zip enters Checking', () async {
     final current = _snap(seriesId: 'old', name: 'Old');
     await CollectionSnapshotStorage.save(current);
     var checkingCalls = 0;
@@ -252,14 +289,6 @@ void main() {
       onDelete: () {},
       snapshot: _snap(seriesId: 'new', name: 'New'),
       createdAt: DateTime.utc(2026, 1, 1),
-    );
-
-    expect(
-      ShelfImportFlow.isZipBackupFilename(
-        path: '/cache/content_abc123',
-        name: 'backup.zip',
-      ),
-      isTrue,
     );
 
     final result = await ShelfImportFlow.run(
@@ -272,12 +301,12 @@ void main() {
       reloadUiPrefs: () async {},
       deps: ShelfImportFlowDeps(
         pickBackupFile: () async => const ShelfImportPickedFile(
-          path: '/cache/content_abc123',
+          path: '/cache/content.tmp',
           name: 'backup.zip',
         ),
         onChecking: () => checkingCalls++,
         unpack: (path) async {
-          expect(path, '/cache/content_abc123');
+          expect(path, '/cache/content.tmp');
           unpackCalls++;
           return staging;
         },

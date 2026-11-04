@@ -346,23 +346,19 @@ abstract final class ShelfImportFlow {
   /// Path + original name; uses [FileType.any] (no Android MIME filter).
   static Future<ShelfImportPickedFile?> pickBackupFile() => _defaultPickBackup();
 
-  /// True when the picked backup looks like a `.zip` by display name / path.
+  /// True when [path] or [name] ends with `.zip` (case-insensitive).
   ///
-  /// Prefer [name] ([PlatformFile.name]) when [path] has no file extension
-  /// (common after Android content-URI copies). Case-insensitive.
+  /// Either side is enough: Android content-URI copies often keep the original
+  /// name while the cached [path] has no / a non-zip suffix.
   static bool isZipBackupFilename({
     required String path,
     String name = '',
   }) {
-    final pathBase = _basename(path);
-    final pathHasExtension = pathBase.contains('.');
-    final trimmedName = name.trim();
-    // Prefer PlatformFile.name when the copied path has no extension.
-    final check = (!pathHasExtension && trimmedName.isNotEmpty)
-        ? trimmedName
-        : (pathBase.isNotEmpty ? pathBase : trimmedName);
-    return check.toLowerCase().endsWith('.zip');
+    return _endsWithZip(_basename(path)) || _endsWithZip(name.trim());
   }
+
+  static bool _endsWithZip(String value) =>
+      value.toLowerCase().endsWith('.zip');
 
   static String _basename(String path) {
     final normalized = path.replaceAll('\\', '/');

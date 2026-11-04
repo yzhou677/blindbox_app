@@ -326,6 +326,104 @@ void main() {
     expect(shareCalls, 1);
     expect(find.byKey(const Key('shelf_backup_progress_label')), findsNothing);
     expect(_rootNavigator(tester).canPop(), isFalse);
+    expect(find.text(ShelfBackupCopy.exportReadySnack), findsOneWidget);
+    expect(find.text(ShelfBackupCopy.exportMediaIncomplete), findsNothing);
+    expect(find.text(ShelfBackupCopy.exportFailed), findsNothing);
+  });
+
+  testWidgets('Export mediaIncomplete shows missing-photos SnackBar only',
+      (tester) async {
+    final temp = Directory.systemTemp.createTempSync('backup_export_inc_');
+    addTearDown(() {
+      if (temp.existsSync()) temp.deleteSync(recursive: true);
+    });
+    final zip = File('${temp.path}${Platform.pathSeparator}bak.zip')
+      ..writeAsBytesSync([1], flush: true);
+
+    await _pumpBackupHost(
+      tester,
+      snapshot: _populatedSnap(),
+      exportDeps: ShelfExportFlowDeps(
+        cleanupStale: () async {},
+        loadMemoryJson: () async => '{}',
+        loadUiPrefsJson: () async => '{}',
+        estimate: ({
+          required snapshot,
+          required memoryJson,
+          required uiPrefsJson,
+        }) async =>
+            const ShelfExportSizeEstimate(
+              uncompressedBytes: 10,
+              mediaIncomplete: true,
+            ),
+        export: ({
+          required snapshot,
+          required memoryJson,
+          required uiPrefsJson,
+          onProgress,
+        }) async {
+          return ShelfExportWriteResult.written(
+            zipPath: zip.path,
+            uncompressedBytes: 10,
+            zipBytes: 1,
+            mediaIncomplete: true,
+            exceedsWarnThreshold: false,
+            originalCount: 0,
+            thumbCount: 0,
+          );
+        },
+        shareZip: (_) async => null,
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('collection_backup_button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('shelf_backup_export_row')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text(ShelfBackupCopy.exportMediaIncomplete), findsOneWidget);
+    expect(find.text(ShelfBackupCopy.exportReadySnack), findsNothing);
+  });
+
+  testWidgets('Export failed shows failure SnackBar without ready SnackBar',
+      (tester) async {
+    await _pumpBackupHost(
+      tester,
+      snapshot: _populatedSnap(),
+      exportDeps: ShelfExportFlowDeps(
+        cleanupStale: () async {},
+        loadMemoryJson: () async => '{}',
+        loadUiPrefsJson: () async => '{}',
+        estimate: ({
+          required snapshot,
+          required memoryJson,
+          required uiPrefsJson,
+        }) async =>
+            const ShelfExportSizeEstimate(
+              uncompressedBytes: 10,
+              mediaIncomplete: false,
+            ),
+        export: ({
+          required snapshot,
+          required memoryJson,
+          required uiPrefsJson,
+          onProgress,
+        }) async {
+          throw StateError('export boom');
+        },
+        shareZip: (_) async => fail('must not share'),
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('collection_backup_button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('shelf_backup_export_row')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text(ShelfBackupCopy.exportFailed), findsOneWidget);
+    expect(find.text(ShelfBackupCopy.exportReadySnack), findsNothing);
   });
 
   testWidgets('empty shelf disables Export and does not share', (tester) async {
@@ -870,10 +968,12 @@ void main() {
       ShelfBackupCopy.checking,
       ShelfBackupCopy.importing,
       ShelfBackupCopy.exportMediaIncomplete,
+      ShelfBackupCopy.exportReadySnack,
       ShelfBackupCopy.exportTooLarge,
       ShelfBackupCopy.exportFailed,
     ].join();
     expect(RegExp(r'[\u4e00-\u9fff]').hasMatch(all), isFalse);
+    expect(ShelfBackupCopy.exportReadySnack, 'Backup ready to share');
   });
 }
 
