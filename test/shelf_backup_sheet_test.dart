@@ -114,6 +114,8 @@ List<Override> _appOverrides({CollectionNotifier Function()? notifier}) => [
       ),
     ];
 
+const Key _backupHostPageKey = Key('shelf_backup_host_page');
+
 Future<void> _pumpBackupHost(
   WidgetTester tester, {
   required CollectionSnapshot snapshot,
@@ -131,6 +133,7 @@ Future<void> _pumpBackupHost(
       ],
       child: MaterialApp(
         home: Scaffold(
+          key: _backupHostPageKey,
           appBar: AppBar(
             actions: [
               ShelfBackupButton(
@@ -146,6 +149,27 @@ Future<void> _pumpBackupHost(
       ),
     ),
   );
+}
+
+NavigatorState _rootNavigator(WidgetTester tester) {
+  return tester.state<NavigatorState>(find.byType(Navigator).first);
+}
+
+Future<void> _expectProgressBlocksPop(
+  WidgetTester tester, {
+  required String expectedLabel,
+}) async {
+  expect(find.byKey(const Key('shelf_backup_progress_label')), findsOneWidget);
+  expect(find.text(expectedLabel), findsOneWidget);
+  expect(find.byKey(_backupHostPageKey), findsOneWidget);
+
+  final handled = await tester.binding.handlePopRoute();
+  await tester.pump();
+
+  expect(handled, isTrue);
+  expect(find.byKey(const Key('shelf_backup_progress_label')), findsOneWidget);
+  expect(find.text(expectedLabel), findsOneWidget);
+  expect(find.byKey(_backupHostPageKey), findsOneWidget);
 }
 
 void main() {
@@ -297,10 +321,11 @@ void main() {
 
     exportGate.complete(_writtenZip(zip.path));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
+    await tester.pump(const Duration(milliseconds: 100));
     expect(exportCalls, 1);
     expect(shareCalls, 1);
     expect(find.byKey(const Key('shelf_backup_progress_label')), findsNothing);
+    expect(_rootNavigator(tester).canPop(), isFalse);
   });
 
   testWidgets('empty shelf disables Export and does not share', (tester) async {
@@ -556,15 +581,15 @@ void main() {
     );
   });
 
-  testWidgets('progress dialog blocks system back', (tester) async {
+  testWidgets('Preparing progress dialog consumes system back', (tester) async {
     final exportGate = Completer<ShelfExportWriteResult>();
-    final temp = Directory.systemTemp.createTempSync('backup_pop_');
+    final temp = Directory.systemTemp.createTempSync('backup_pop_prep_');
+    final zipPath = '${temp.path}${Platform.pathSeparator}z.zip';
+    File(zipPath).writeAsBytesSync([1]);
     addTearDown(() {
       if (temp.existsSync()) temp.deleteSync(recursive: true);
       if (!exportGate.isCompleted) {
-        exportGate.complete(
-          _writtenZip('${temp.path}${Platform.pathSeparator}z.zip'),
-        );
+        exportGate.complete(_writtenZip(zipPath));
       }
     });
 
@@ -595,26 +620,150 @@ void main() {
       ),
     );
 
+    final nav = _rootNavigator(tester);
+    expect(nav.canPop(), isFalse);
+
     await tester.tap(find.byKey(const Key('collection_backup_button')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('shelf_backup_export_row')));
     await tester.pump();
     await tester.pump();
-    expect(find.byKey(const Key('shelf_backup_progress_label')), findsOneWidget);
 
-    await tester.binding.handlePopRoute();
-    await tester.pump();
-    expect(find.byKey(const Key('shelf_backup_progress_label')), findsOneWidget);
-    expect(find.text(ShelfBackupCopy.preparing), findsOneWidget);
-
-    exportGate.complete(
-      _writtenZip('${temp.path}${Platform.pathSeparator}z.zip'
-          .replaceAll('${Platform.pathSeparator}${Platform.pathSeparator}', Platform.pathSeparator)),
+    await _expectProgressBlocksPop(
+      tester,
+      expectedLabel: ShelfBackupCopy.preparing,
     );
-    // ensure zip exists
-    File('${temp.path}${Platform.pathSeparator}z.zip').writeAsBytesSync([1]);
+
+    exportGate.complete(_writtenZip(zipPath));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
+
+    expect(find.byKey(const Key('shelf_backup_progress_label')), findsNothing);
+    expect(find.byKey(_backupHostPageKey), findsOneWidget);
+    expect(nav.canPop(), isFalse);
+  });
+
+  testWidgets('Checking progress dialog consumes system back', (tester) async {
+    final unpackGate = Completer<ShelfExportStaging>();
+    addTearDown(() {
+      if (!unpackGate.isCompleted) {
+        unpackGate.complete(_FakeStaging(snapshot: _populatedSnap()));
+      }
+    });
+
+    await _pumpBackupHost(
+      tester,
+      snapshot: CollectionSnapshot.emptyTest(),
+      confirmReplace: (_) async => false,
+      importDeps: ShelfImportFlowDeps(
+        pickZipPath: () async => 'checking.zip',
+        unpack: (_) => unpackGate.future,
+        clearPickerTemp: () async {},
+      ),
+    );
+
+    final nav = _rootNavigator(tester);
+    expect(nav.canPop(), isFalse);
+
+    await tester.tap(find.byKey(const Key('collection_backup_button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('shelf_backup_import_row')));
+    await tester.pump();
+    await tester.pump();
+
+    await _expectProgressBlocksPop(
+      tester,
+      expectedLabel: ShelfBackupCopy.checking,
+    );
+
+    unpackGate.complete(_FakeStaging(snapshot: _populatedSnap()));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(find.byKey(const Key('shelf_backup_progress_label')), findsNothing);
+    expect(find.byKey(_backupHostPageKey), findsOneWidget);
+    expect(nav.canPop(), isFalse);
+  });
+
+  testWidgets('Importing progress dialog consumes system back', (tester) async {
+    final commitGate = Completer<CollectionSnapshot>();
+    addTearDown(() {
+      if (!commitGate.isCompleted) {
+        commitGate.complete(_populatedSnap());
+      }
+    });
+
+    await _pumpBackupHost(
+      tester,
+      snapshot: CollectionSnapshot.emptyTest(),
+      confirmReplace: (_) async => true,
+      importDeps: ShelfImportFlowDeps(
+        pickZipPath: () async => 'importing.zip',
+        unpack: (_) async => _FakeStaging(snapshot: _populatedSnap()),
+        writeSafetyZip: ({
+          required snapshot,
+          required memoryJson,
+          required uiPrefsJson,
+        }) async {},
+        commitStaging: (_) => commitGate.future,
+        clearPickerTemp: () async {},
+        collectGarbage: (_) async {},
+        scheduleRecoveryPack: (_) {},
+      ),
+    );
+
+    final nav = _rootNavigator(tester);
+    expect(nav.canPop(), isFalse);
+
+    await tester.tap(find.byKey(const Key('collection_backup_button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('shelf_backup_import_row')));
+    // pick → Checking → unpack → hide → confirm → Importing → gated commit
+    for (var i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 20));
+      if (find.text(ShelfBackupCopy.importing).evaluate().isNotEmpty) break;
+    }
+
+    await _expectProgressBlocksPop(
+      tester,
+      expectedLabel: ShelfBackupCopy.importing,
+    );
+
+    commitGate.complete(_populatedSnap());
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.byKey(const Key('shelf_backup_progress_label')), findsNothing);
+    expect(find.byKey(_backupHostPageKey), findsOneWidget);
+    expect(nav.canPop(), isFalse);
+  });
+
+  testWidgets('Replace Cancel leaves no residual progress dialog', (tester) async {
+    await _pumpBackupHost(
+      tester,
+      snapshot: CollectionSnapshot.emptyTest(),
+      confirmReplace: (_) async => false,
+      importDeps: ShelfImportFlowDeps(
+        pickZipPath: () async => 'cancel.zip',
+        unpack: (_) async => _FakeStaging(snapshot: _populatedSnap()),
+        clearPickerTemp: () async {},
+      ),
+    );
+
+    final nav = _rootNavigator(tester);
+    expect(nav.canPop(), isFalse);
+
+    await tester.tap(find.byKey(const Key('collection_backup_button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('shelf_backup_import_row')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.byKey(const Key('shelf_backup_progress_label')), findsNothing);
+    expect(find.text(ShelfBackupCopy.checking), findsNothing);
+    expect(find.text(ShelfBackupCopy.importing), findsNothing);
+    expect(find.byKey(_backupHostPageKey), findsOneWidget);
+    expect(nav.canPop(), isFalse);
   });
 
   testWidgets('busy blocks starting a second flow from the icon', (tester) async {

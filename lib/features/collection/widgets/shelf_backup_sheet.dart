@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:blindbox_app/core/layout/feed_rhythm.dart';
 import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/core/theme/app_typography.dart';
@@ -70,11 +72,21 @@ class _ShelfBackupButtonState extends ConsumerState<ShelfBackupButton> {
   bool _busy = false;
   final ValueNotifier<String> _progressLabel =
       ValueNotifier<String>(ShelfBackupCopy.preparing);
-  OverlayEntry? _progressEntry;
+
+  /// Completes when the current progress dialog route is fully removed.
+  Completer<void>? _progressClosed;
+
+  /// Exact progress [DialogRoute] (removed via [Navigator.removeRoute]).
+  DialogRoute<void>? _progressRoute;
+
+  /// Navigator that owns [_progressRoute] (root navigator).
+  NavigatorState? _progressNavigator;
+
+  bool get _progressVisible => _progressRoute != null;
 
   @override
   void dispose() {
-    _removeProgressEntry();
+    _removeProgressRoute();
     _progressLabel.dispose();
     super.dispose();
   }
@@ -92,67 +104,93 @@ class _ShelfBackupButtonState extends ConsumerState<ShelfBackupButton> {
     );
   }
 
+  /// Shows a real dialog route so [PopScope] consumes system back.
+  ///
+  /// Label updates reuse the same route via [_progressLabel] (no flicker).
   void _ensureProgress(String label) {
     _progressLabel.value = label;
-    if (_progressEntry != null) return;
-    final entry = OverlayEntry(
-      builder: (ctx) {
+    if (_progressRoute != null) return;
+    if (!mounted) return;
+
+    final navigator = Navigator.of(context, rootNavigator: true);
+    final closed = Completer<void>();
+    final route = DialogRoute<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
         return PopScope(
           canPop: false,
-          child: Stack(
-            children: [
-              ModalBarrier(
-                dismissible: false,
-                color: Theme.of(ctx).colorScheme.scrim.withValues(alpha: 0.32),
+          child: Dialog(
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: ValueListenableBuilder<String>(
+                valueListenable: _progressLabel,
+                builder: (context, value, _) {
+                  return Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SizedBox(
+                        width: 28,
+                        height: 28,
+                        child: CircularProgressIndicator(strokeWidth: 3),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Flexible(
+                        child: Text(
+                          key: const Key('shelf_backup_progress_label'),
+                          value,
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
-              Center(
-                child: Material(
-                  color: Theme.of(ctx).colorScheme.surfaceContainerHigh,
-                  elevation: 6,
-                  borderRadius: BorderRadius.circular(12),
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppSpacing.lg),
-                    child: ValueListenableBuilder<String>(
-                      valueListenable: _progressLabel,
-                      builder: (context, value, _) {
-                        return Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const SizedBox(
-                              width: 28,
-                              height: 28,
-                              child: CircularProgressIndicator(strokeWidth: 3),
-                            ),
-                            const SizedBox(width: AppSpacing.md),
-                            Flexible(
-                              child: Text(
-                                key: const Key('shelf_backup_progress_label'),
-                                value,
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         );
       },
     );
-    _progressEntry = entry;
-    Overlay.of(context, rootOverlay: true).insert(entry);
+
+    _progressRoute = route;
+    _progressNavigator = navigator;
+    _progressClosed = closed;
+
+    unawaited(
+      navigator.push(route).whenComplete(() {
+        if (identical(_progressRoute, route)) {
+          _progressRoute = null;
+        }
+        if (identical(_progressNavigator, navigator)) {
+          _progressNavigator = null;
+        }
+        if (identical(_progressClosed, closed)) {
+          _progressClosed = null;
+        }
+        if (!closed.isCompleted) closed.complete();
+      }),
+    );
   }
 
-  void _removeProgressEntry() {
-    _progressEntry?.remove();
-    _progressEntry = null;
+  /// Removes only the progress dialog route (safe with [PopScope.canPop] false).
+  void _removeProgressRoute() {
+    final route = _progressRoute;
+    final nav = _progressNavigator;
+    _progressRoute = null;
+    _progressNavigator = null;
+    if (route == null || nav == null || !nav.mounted) return;
+    if (route.isActive) {
+      nav.removeRoute(route);
+    }
   }
 
   Future<void> _hideProgress() async {
-    _removeProgressEntry();
+    if (!_progressVisible) return;
+    final closed = _progressClosed;
+    _removeProgressRoute();
+    if (closed != null) {
+      await closed.future;
+    }
+    // Allow a confirm dialog / re-show on the next frame.
     await Future<void>.delayed(Duration.zero);
   }
 
