@@ -456,6 +456,133 @@ void main() {
     expect(safetyFiles, isEmpty);
   });
 
+  test('export then clear then import restores collection and wishlist',
+      () async {
+    final original = CollectionSnapshot(
+      shelfSeries: [
+        ShelfSeries(
+          id: 's1',
+          name: 'Kept',
+          brand: 'B',
+          ipName: 'I',
+          figures: [
+            ShelfFigure(
+              id: 'f1',
+              seriesId: 's1',
+              name: 'Fig',
+              rarity: 'Regular',
+              isSecret: false,
+            ),
+          ],
+          shelfAccent: const Color(0xFFE8F5E9),
+        ),
+      ],
+      figureStates: const {
+        'f1': TrackedFigure(
+          figureId: 'f1',
+          state: FigureCollectionState.owned,
+          ownedQuantity: 1,
+        ),
+      },
+      seriesWishlist: [
+        WishlistedCatalogSeries(
+          catalogSeriesId: 'wish-1',
+          name: 'Wish',
+          brand: 'B',
+          ipName: 'I',
+          imageKey: 'k',
+          addedAtMicros: 1,
+        ),
+      ],
+    );
+    final exported = await ShelfExportArchive.exportToZip(
+      snapshot: original,
+      memoryJson: '{}',
+      uiPrefsJson: '{}',
+    );
+    expect(exported.wrote, isTrue);
+
+    final empty = CollectionSnapshot.emptyTest();
+    await CollectionSnapshotStorage.save(empty);
+
+    final result = await ShelfImportFlow.run(
+      currentSnapshot: empty,
+      currentMemoryJson: '{}',
+      currentUiPrefsJson: '{}',
+      suspendPersistence: () {},
+      replaceNotifierState: (_) {},
+      resumePersistence: () {},
+      reloadUiPrefs: () async {},
+      deps: ShelfImportFlowDeps(
+        pickZipPath: () async => exported.zipPath,
+        confirmReplace: (_) async => true,
+        clearPickerTemp: () async {},
+        collectGarbage: (_) async {},
+        scheduleRecoveryPack: (_) {},
+      ),
+    );
+    expect(result.status, ShelfImportFlowStatus.success);
+    final loaded = await CollectionSnapshotStorage.load();
+    expect(loaded!.shelfSeries.single.name, 'Kept');
+    expect(loaded.seriesWishlist.single.catalogSeriesId, 'wish-1');
+    expect(
+      loaded.figureStates['f1']!.state,
+      FigureCollectionState.owned,
+    );
+  });
+
+  test('wishlist-only current shelf writes pre_import safety zip', () async {
+    final wishlistOnly = CollectionSnapshot(
+      shelfSeries: const [],
+      figureStates: const {},
+      seriesWishlist: [
+        WishlistedCatalogSeries(
+          catalogSeriesId: 'wish-1',
+          name: 'Wish',
+          brand: 'B',
+          ipName: 'I',
+          imageKey: 'k',
+          addedAtMicros: 1,
+        ),
+      ],
+    );
+    expect(wishlistOnly.isEmptyShelf, isFalse);
+    await CollectionSnapshotStorage.save(wishlistOnly);
+
+    final backup = await ShelfExportArchive.exportToZip(
+      snapshot: _snap(seriesId: 'n', name: 'N'),
+      memoryJson: '{}',
+      uiPrefsJson: '{}',
+    );
+
+    var safetyCalls = 0;
+    final result = await ShelfImportFlow.run(
+      currentSnapshot: wishlistOnly,
+      currentMemoryJson: '{}',
+      currentUiPrefsJson: '{}',
+      suspendPersistence: () {},
+      replaceNotifierState: (_) {},
+      resumePersistence: () {},
+      reloadUiPrefs: () async {},
+      deps: ShelfImportFlowDeps(
+        pickZipPath: () async => backup.zipPath,
+        confirmReplace: (_) async => true,
+        writeSafetyZip: ({
+          required snapshot,
+          required memoryJson,
+          required uiPrefsJson,
+        }) async {
+          safetyCalls++;
+          expect(snapshot.seriesWishlist, isNotEmpty);
+        },
+        clearPickerTemp: () async {},
+        collectGarbage: (_) async {},
+      ),
+    );
+    expect(result.status, ShelfImportFlowStatus.success);
+    expect(safetyCalls, 1);
+  });
+
   test('safety zip failure cancels import and keeps old shelf', () async {
     final old = _snap(seriesId: 'old', name: 'Keep');
     await CollectionSnapshotStorage.save(old);
@@ -935,6 +1062,24 @@ void main() {
         createdDate: 'Mar 15, 2026',
       ),
       'This backup has 2 series and 2 figures, created Mar 15, 2026.',
+    );
+    expect(
+      ShelfImportCopy.confirmSummary(
+        seriesCount: 1,
+        figureCount: 1,
+        wishlistCount: 1,
+        createdDate: 'Jan 1, 2026',
+      ),
+      'This backup has 1 series, 1 figure and 1 wishlist item, created Jan 1, 2026.',
+    );
+    expect(
+      ShelfImportCopy.confirmSummary(
+        seriesCount: 2,
+        figureCount: 2,
+        wishlistCount: 2,
+        createdDate: 'Mar 15, 2026',
+      ),
+      'This backup has 2 series, 2 figures and 2 wishlist items, created Mar 15, 2026.',
     );
     expect(
       ShelfImportCopy.formatCreatedDate(DateTime.utc(2026, 1, 1)),

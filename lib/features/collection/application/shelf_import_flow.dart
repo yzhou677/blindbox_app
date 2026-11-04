@@ -13,6 +13,7 @@ class ShelfImportBackupSummary {
   const ShelfImportBackupSummary({
     required this.seriesCount,
     required this.figureCount,
+    required this.wishlistCount,
     required this.createdAt,
   });
 
@@ -21,18 +22,20 @@ class ShelfImportBackupSummary {
     return ShelfImportBackupSummary(
       seriesCount: staging.snapshot.shelfSeries.length,
       figureCount: staging.snapshot.totalShelfFigures,
+      wishlistCount: staging.snapshot.totalWishlistItems,
       createdAt: staging.manifest.createdAt,
     );
   }
 
   final int seriesCount;
   final int figureCount;
+  final int wishlistCount;
 
   /// Manifest `createdAt` (UTC). Display via [ShelfImportCopy.formatCreatedDate].
   final DateTime createdAt;
 }
 
-/// User-visible English copy for Settings → Import shelf.
+/// User-visible English copy for Collection → Shelf backup sheet / import.
 abstract final class ShelfImportCopy {
   ShelfImportCopy._();
 
@@ -58,17 +61,27 @@ abstract final class ShelfImportCopy {
   static const safetyFailedSnack =
       'Couldn\'t save a safety copy. Import canceled.';
 
-  /// English summary line. [series] stays "series"; [figure]/[figures] pluralize.
+  /// English summary line. Omits wishlist when [wishlistCount] is 0.
+  ///
+  /// Plural rules: series stays "series"; figure(s); wishlist item(s).
   static String confirmSummary({
     required int seriesCount,
     required int figureCount,
     required String createdDate,
+    int wishlistCount = 0,
   }) {
     final seriesLabel =
         seriesCount == 1 ? '1 series' : '$seriesCount series';
     final figureLabel =
         figureCount == 1 ? '1 figure' : '$figureCount figures';
-    return 'This backup has $seriesLabel and $figureLabel, created $createdDate.';
+    if (wishlistCount <= 0) {
+      return 'This backup has $seriesLabel and $figureLabel, created $createdDate.';
+    }
+    final wishlistLabel = wishlistCount == 1
+        ? '1 wishlist item'
+        : '$wishlistCount wishlist items';
+    return 'This backup has $seriesLabel, $figureLabel and $wishlistLabel, '
+        'created $createdDate.';
   }
 
   /// Local-time `MMM d, yyyy` (e.g. `Jan 1, 2026`).
@@ -217,8 +230,7 @@ abstract final class ShelfImportFlow {
           }
         }
 
-        final shelfEmpty = currentSnapshot.shelfSeries.isEmpty;
-        if (!shelfEmpty) {
+        if (!currentSnapshot.isEmptyShelf) {
           try {
             await safetyFn(
               snapshot: currentSnapshot,

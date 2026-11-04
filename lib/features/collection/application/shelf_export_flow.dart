@@ -91,6 +91,12 @@ abstract final class ShelfExportFlow {
     final shareFn = deps.shareZip ?? _defaultShare;
     final deleteFn = deps.deleteFile ?? _defaultDelete;
 
+    if (snapshot.isEmptyShelf) {
+      return const ShelfExportFlowResult(
+        status: ShelfExportFlowStatus.cancelled,
+      );
+    }
+
     try {
       await cleanupFn();
     } on Object {

@@ -644,12 +644,31 @@ class CollectionSnapshot {
     return c;
   }
 
+  /// Series wishlist rows + figure wishlist states (backup summary / empty check).
+  int get totalWishlistItems =>
+      seriesWishlist.length + totalWishlistFigures;
+
   int get totalShelfFigures {
     var n = 0;
     for (final s in shelfSeries) {
       n += s.figureCount;
     }
     return n;
+  }
+
+  /// True when there is nothing meaningful to back up or protect with a
+  /// pre-import safety zip: no shelf series, no series wishlist, and no
+  /// owned/wishlist figure state.
+  bool get isEmptyShelf {
+    if (shelfSeries.isNotEmpty) return false;
+    if (seriesWishlist.isNotEmpty) return false;
+    for (final tracked in figureStates.values) {
+      if (tracked.state == FigureCollectionState.owned ||
+          tracked.state == FigureCollectionState.wishlist) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /// Shelf Regular Progress % — mean of canonical [SeriesCompletionResolution.progressRatio].

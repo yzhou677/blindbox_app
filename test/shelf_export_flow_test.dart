@@ -1,10 +1,27 @@
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:blindbox_app/features/collection/application/shelf_export_flow.dart';
 import 'package:blindbox_app/features/collection/bootstrap/collection_recovery_gate.dart';
 import 'package:blindbox_app/features/collection/data/shelf_export_archive.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+CollectionSnapshot _nonEmptySnap() {
+  return CollectionSnapshot(
+    shelfSeries: [
+      ShelfSeries(
+        id: 's1',
+        name: 'S',
+        brand: 'B',
+        ipName: 'I',
+        figures: const [],
+        shelfAccent: const Color(0xFFE8F5E9),
+      ),
+    ],
+    figureStates: const {},
+  );
+}
 
 void main() {
   setUp(() {
@@ -16,7 +33,7 @@ void main() {
     var shareCalls = 0;
     var exportCalls = 0;
     final result = await ShelfExportFlow.run(
-      snapshot: CollectionSnapshot.emptyTest(),
+      snapshot: _nonEmptySnap(),
       memoryJson: '{}',
       uiPrefsJson: '{}',
       confirmLargeBackup: (_) async => true,
@@ -62,7 +79,7 @@ void main() {
     var exportCalls = 0;
     ShelfExportArchive.testWarnBytesOverride = 50;
     final result = await ShelfExportFlow.run(
-      snapshot: CollectionSnapshot.emptyTest(),
+      snapshot: _nonEmptySnap(),
       memoryJson: '{}',
       uiPrefsJson: '{}',
       confirmLargeBackup: (_) async => false,
@@ -111,7 +128,7 @@ void main() {
 
     ShelfExportArchive.testWarnBytesOverride = 50;
     final result = await ShelfExportFlow.run(
-      snapshot: CollectionSnapshot.emptyTest(),
+      snapshot: _nonEmptySnap(),
       memoryJson: '{}',
       uiPrefsJson: '{}',
       confirmLargeBackup: (_) async => true,
@@ -177,7 +194,7 @@ void main() {
     var deleted = false;
 
     final result = await ShelfExportFlow.run(
-      snapshot: CollectionSnapshot.emptyTest(),
+      snapshot: _nonEmptySnap(),
       memoryJson: '{}',
       uiPrefsJson: '{}',
       confirmLargeBackup: (_) async => true,
@@ -232,7 +249,7 @@ void main() {
     await zip.writeAsBytes([9], flush: true);
 
     final result = await ShelfExportFlow.run(
-      snapshot: CollectionSnapshot.emptyTest(),
+      snapshot: _nonEmptySnap(),
       memoryJson: '{}',
       uiPrefsJson: '{}',
       confirmLargeBackup: (_) async => true,
@@ -281,7 +298,7 @@ void main() {
   test('runs cleanup before export', () async {
     final order = <String>[];
     await ShelfExportFlow.run(
-      snapshot: CollectionSnapshot.emptyTest(),
+      snapshot: _nonEmptySnap(),
       memoryJson: '{}',
       uiPrefsJson: '{}',
       confirmLargeBackup: (_) async => true,
@@ -331,7 +348,7 @@ void main() {
     CollectionRecoveryGate.enterPending();
     var shareCalls = 0;
     final result = await ShelfExportFlow.run(
-      snapshot: CollectionSnapshot.emptyTest(),
+      snapshot: _nonEmptySnap(),
       memoryJson: '{}',
       uiPrefsJson: '{}',
       confirmLargeBackup: (_) async => true,
