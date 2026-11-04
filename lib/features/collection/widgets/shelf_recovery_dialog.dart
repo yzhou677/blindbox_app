@@ -16,9 +16,9 @@ abstract final class ShelfRecoveryDialogCopy {
       'Restore your shelf from the last 30 days.';
   static const importLabel = 'Restore my shelf';
   static const startFreshLabel = 'Start fresh';
-  static const confirmTitle = 'Start fresh?';
+  static const confirmTitle = 'Delete your old shelf?';
   static const confirmBody =
-      'Your old shelf will be deleted and can’t be recovered.';
+      'Your old shelf will be permanently deleted. This can\'t be undone.';
   static const confirmCancel = 'Cancel';
   static const confirmDelete = 'Delete';
   static const importFailed =
@@ -185,6 +185,7 @@ Future<bool> showShelfRecoveryStartFreshConfirm(BuildContext context) async {
     context: context,
     barrierDismissible: false,
     builder: (ctx) {
+      final scheme = Theme.of(ctx).colorScheme;
       return AlertDialog(
         title: const Text(ShelfRecoveryDialogCopy.confirmTitle),
         content: const Text(ShelfRecoveryDialogCopy.confirmBody),
@@ -196,6 +197,10 @@ Future<bool> showShelfRecoveryStartFreshConfirm(BuildContext context) async {
           ),
           FilledButton(
             key: const Key('shelf_recovery_confirm_delete'),
+            style: FilledButton.styleFrom(
+              backgroundColor: scheme.error,
+              foregroundColor: scheme.onError,
+            ),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text(ShelfRecoveryDialogCopy.confirmDelete),
           ),

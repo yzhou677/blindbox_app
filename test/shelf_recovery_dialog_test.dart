@@ -643,9 +643,17 @@ void main() {
 
   testWidgets('Start fresh confirm cancel vs delete', (tester) async {
     late BuildContext dialogContext;
+    final theme = ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: const Color(0xFF6B8F71),
+        error: const Color(0xFFB3261E),
+        onError: const Color(0xFFFFFFFF),
+      ),
+    );
     await tester.pumpWidget(
       MaterialApp(
-        theme: ThemeData(useMaterial3: true),
+        theme: theme,
         home: Builder(
           builder: (context) {
             dialogContext = context;
@@ -656,10 +664,32 @@ void main() {
     );
     await tester.pump();
 
+    expect(ShelfRecoveryDialogCopy.confirmTitle, 'Delete your old shelf?');
+    expect(
+      ShelfRecoveryDialogCopy.confirmBody,
+      'Your old shelf will be permanently deleted. This can\'t be undone.',
+    );
+    expect(ShelfRecoveryDialogCopy.confirmDelete, 'Delete');
+    expect(find.text('Start fresh?'), findsNothing);
+
     final cancelFuture = showShelfRecoveryStartFreshConfirm(dialogContext);
     await tester.pump();
     await tester.pump();
+    expect(find.text(ShelfRecoveryDialogCopy.confirmTitle), findsOneWidget);
     expect(find.text(ShelfRecoveryDialogCopy.confirmBody), findsOneWidget);
+    expect(find.text(ShelfRecoveryDialogCopy.confirmCancel), findsOneWidget);
+    expect(find.text(ShelfRecoveryDialogCopy.confirmDelete), findsOneWidget);
+
+    final deleteButton = tester.widget<FilledButton>(
+      find.byKey(const Key('shelf_recovery_confirm_delete')),
+    );
+    final resolved = deleteButton.style!.backgroundColor!
+        .resolve(<WidgetState>{})!;
+    expect(resolved, theme.colorScheme.error);
+    final onError = deleteButton.style!.foregroundColor!
+        .resolve(<WidgetState>{})!;
+    expect(onError, theme.colorScheme.onError);
+
     await tester.tap(find.byKey(const Key('shelf_recovery_confirm_cancel')));
     await tester.pump();
     expect(await cancelFuture, isFalse);
