@@ -1211,6 +1211,20 @@ void main() {
     expect(ShelfImportCopy.importTitle, 'Import shelf');
     expect(ShelfImportCopy.confirmTitle, 'Replace your shelf?');
     expect(ShelfImportCopy.confirmReplace, 'Replace shelf');
+    expect(
+      ShelfImportCopy.confirmBody,
+      'Your current shelf, including your wishlist, will be replaced.',
+    );
+    expect(
+      ShelfImportCopy.confirmSafetyNote,
+      'A safety copy is saved on this device for 7 days.',
+    );
+    expect(ShelfImportCopy.confirmBody.toLowerCase(), isNot(contains('restore')));
+    expect(
+      ShelfImportCopy.confirmSafetyNote.toLowerCase(),
+      isNot(contains('restore')),
+    );
+    expect(ShelfImportCopy.confirmBody, isNot(contains("can't be restored")));
     expect(ShelfImportCopy.checking, 'Checking backup…');
     expect(ShelfImportCopy.successSnack, 'Shelf imported');
     expect(ShelfImportCopy.failedSnack, contains('Couldn\'t import'));

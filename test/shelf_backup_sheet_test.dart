@@ -629,6 +629,66 @@ void main() {
     expect(find.text(ShelfBackupCopy.exportDisabledSubtitle), findsNothing);
   });
 
+  testWidgets('Replace confirm dialog shows new body without restore language',
+      (tester) async {
+    final staging = _FakeStaging(
+      snapshot: _populatedSnap(),
+      createdAt: DateTime.utc(2026, 6, 15, 12),
+    );
+
+    // No confirmReplaceOverride — drive the real AlertDialog.
+    await _pumpBackupHost(
+      tester,
+      snapshot: CollectionSnapshot.emptyTest(),
+      importDeps: ShelfImportFlowDeps(
+        pickZipPath: () async => 'confirm.zip',
+        unpack: (_) async => staging,
+        clearPickerTemp: () async {},
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('collection_backup_button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('shelf_backup_import_row')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text(ShelfImportCopy.confirmTitle), findsOneWidget);
+    expect(find.text(ShelfImportCopy.confirmCancel), findsOneWidget);
+    expect(find.text(ShelfImportCopy.confirmReplace), findsOneWidget);
+
+    // Body paragraphs are concatenated into one content Text with the summary.
+    expect(find.textContaining(ShelfImportCopy.confirmBody), findsOneWidget);
+    expect(
+      find.textContaining(ShelfImportCopy.confirmSafetyNote),
+      findsOneWidget,
+    );
+
+    final dialogText = tester
+        .widgetList<Text>(find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.byType(Text),
+        ))
+        .map((t) => t.data ?? '')
+        .join('\n');
+    expect(dialogText, contains(ShelfImportCopy.confirmBody));
+    expect(dialogText, contains(ShelfImportCopy.confirmSafetyNote));
+    expect(dialogText.toLowerCase(), isNot(contains('restore')));
+    expect(dialogText, isNot(contains("can't be restored")));
+    expect(
+      dialogText,
+      isNot(contains('This replaces your current collection with the backup.')),
+    );
+    // Summary line still present (W=0 omit wishlist for this populated snap).
+    expect(dialogText, contains('This backup has'));
+    expect(dialogText, contains('created'));
+
+    await tester.tap(find.byKey(const Key('collection_backup_import_cancel')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.text(ShelfImportCopy.confirmTitle), findsNothing);
+  });
+
   testWidgets('confirm summary includes wishlist counts with plural forms',
       (tester) async {
     final withWish = CollectionSnapshot(

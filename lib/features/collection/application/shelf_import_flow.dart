@@ -44,10 +44,9 @@ abstract final class ShelfImportCopy {
 
   static const confirmTitle = 'Replace your shelf?';
   static const confirmBody =
-      'This replaces your current collection with the backup. '
-      'Your current shelf can\'t be restored after this.';
+      'Your current shelf, including your wishlist, will be replaced.';
   static const confirmSafetyNote =
-      'A safety copy is kept on this device for 7 days.';
+      'A safety copy is saved on this device for 7 days.';
   static const confirmCancel = 'Cancel';
   static const confirmReplace = 'Replace shelf';
 
