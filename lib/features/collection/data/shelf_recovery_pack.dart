@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:blindbox_app/features/collection/application/collection_shelf_ui_prefs_provider.dart';
 import 'package:blindbox_app/features/collection/bootstrap/collection_recovery_gate.dart';
+import 'package:blindbox_app/features/collection/data/android_backup_notifier.dart';
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
 import 'package:blindbox_app/features/collection/data/shelf_media_vault.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
@@ -328,6 +329,7 @@ abstract final class ShelfRecoveryPack {
     }
 
     await _commitStaging(root: root, staging: staging);
+    await AndroidBackupNotifier.notifyDataChanged();
     return ShelfRecoveryWriteResult(
       wrote: true,
       mediaTruncated: truncated,
@@ -493,6 +495,7 @@ abstract final class ShelfRecoveryPack {
     await _deleteQuietly(Directory('${root.path}$_sep$packDirName'));
     await _deleteQuietly(Directory('${root.path}$_sep$stagingDirName'));
     await _deleteQuietly(Directory('${root.path}$_sep$oldDirName'));
+    await AndroidBackupNotifier.notifyDataChanged();
   }
 
   static String mediaFilePath(String packPath, String mediaId) {

@@ -14,6 +14,8 @@ abstract final class ShelfRecoveryDialogCopy {
   static const subtitle = 'We found a shelf on this device.';
   static const summaryFallback =
       'Restore your shelf from the last 30 days.';
+  static const androidBackupCadenceNote =
+      'Android backs up about once a day, so your latest changes may not be included.';
   static const importLabel = 'Restore my shelf';
   static const startFreshLabel = 'Start fresh';
   static const confirmTitle = 'Delete your old shelf?';
@@ -131,6 +133,15 @@ class ShelfRecoveryDecisionPanel extends StatelessWidget {
                           summaryLine,
                           textAlign: TextAlign.center,
                           style: AppTypography.supportive(textTheme, scheme),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        Text(
+                          key: const Key('shelf_recovery_android_backup_note'),
+                          ShelfRecoveryDialogCopy.androidBackupCadenceNote,
+                          textAlign: TextAlign.center,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
                         ),
                         if (errorMessage != null &&
                             errorMessage!.trim().isNotEmpty) ...[

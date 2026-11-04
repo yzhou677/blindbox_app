@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/application/collection_shelf_ui_prefs_provider.dart';
@@ -9,6 +8,7 @@ import 'package:blindbox_app/features/collection/application/shelf_import_flow.d
 import 'package:blindbox_app/features/collection/application/shelf_recovery_import.dart';
 import 'package:blindbox_app/features/collection/bootstrap/collection_app_bootstrap.dart';
 import 'package:blindbox_app/features/collection/bootstrap/collection_recovery_gate.dart';
+import 'package:blindbox_app/features/collection/data/android_backup_notifier.dart';
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
 import 'package:blindbox_app/features/collection/data/collection_seed_data.dart';
 import 'package:blindbox_app/features/collection/data/shelf_media_vault.dart';
@@ -20,6 +20,7 @@ import 'package:blindbox_app/features/collection/widgets/shelf_recovery_decision
 import 'package:blindbox_app/features/collection/widgets/shelf_recovery_dialog.dart';
 import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
@@ -150,17 +151,27 @@ void main() {
     ShelfRecoveryPack.resetForTest();
     CollectionRecoveryGate.resetForTest();
     CollectionMemoryStore.instance.resetForTest();
+    AndroidBackupNotifier.resetForTest();
     ShelfBackupCommit.testBeforeMemoryHook = null;
     ShelfBackupCommit.testBeforeSnapshotSaveHook = null;
     ShelfMediaVault.testSupportOverride = tempSupport;
     ShelfRecoveryPack.testSupportOverride = tempSupport;
     ShelfRecoveryPack.debounceEnabledForTest = false;
+    // Silence MissingPluginException from BackupManager notify in pack IO.
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      AndroidBackupNotifier.channel,
+      (_) async => null,
+    );
     await ShelfMediaVault.ensureReady();
   });
 
   tearDown(() async {
     ShelfBackupCommit.testBeforeMemoryHook = null;
     ShelfBackupCommit.testBeforeSnapshotSaveHook = null;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(AndroidBackupNotifier.channel, null);
+    AndroidBackupNotifier.resetForTest();
     CollectionRecoveryGate.resetForTest();
     CollectionMemoryStore.instance.resetForTest();
     ShelfMediaVault.resetForTest();
@@ -549,6 +560,10 @@ void main() {
     expect(find.text(ShelfRecoveryDialogCopy.subtitle), findsOneWidget);
     expect(find.text(summary), findsOneWidget);
     expect(find.textContaining('6 wishlist items'), findsOneWidget);
+    expect(
+      find.text(ShelfRecoveryDialogCopy.androidBackupCadenceNote),
+      findsOneWidget,
+    );
     expect(find.text(ShelfRecoveryDialogCopy.importLabel), findsOneWidget);
     expect(find.text(ShelfRecoveryDialogCopy.startFreshLabel), findsOneWidget);
     expect(find.text('Found a shelf on this device'), findsNothing);
@@ -589,6 +604,10 @@ void main() {
     expect(find.text(noWish), findsOneWidget);
     expect(find.textContaining('wishlist'), findsNothing);
     expect(find.textContaining('1 series and 1 figure'), findsOneWidget);
+    expect(
+      find.text(ShelfRecoveryDialogCopy.androidBackupCadenceNote),
+      findsOneWidget,
+    );
 
     await tester.pumpWidget(
       MaterialApp(
@@ -603,6 +622,10 @@ void main() {
     );
     expect(
       find.text(ShelfRecoveryDialogCopy.summaryFallback),
+      findsOneWidget,
+    );
+    expect(
+      find.text(ShelfRecoveryDialogCopy.androidBackupCadenceNote),
       findsOneWidget,
     );
   });
@@ -837,6 +860,13 @@ void main() {
     });
     CollectionRecoveryGate.enterPending();
 
+    final dataChangedCalls = <MethodCall>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(AndroidBackupNotifier.channel, (call) async {
+      dataChangedCalls.add(call);
+      return null;
+    });
+
     await tester.pumpWidget(_decisionApp(pack));
     await tester.pump();
     await tester.tap(find.byKey(const Key('shelf_recovery_start_fresh')));
@@ -851,6 +881,10 @@ void main() {
     });
     expect(CollectionRecoveryGate.isPending, isFalse);
     expect(CollectionAppBootstrap.takeInitialSnapshot(), isNotNull);
+    expect(
+      dataChangedCalls.map((c) => c.method),
+      contains(AndroidBackupNotifier.methodDataChanged),
+    );
   });
 
   test('Start fresh deletes pack and clears gate', () async {
