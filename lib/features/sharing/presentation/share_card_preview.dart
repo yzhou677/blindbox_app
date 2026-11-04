@@ -9,6 +9,7 @@ import 'package:blindbox_app/features/sharing/application/share_card_native_shar
 import 'package:blindbox_app/features/sharing/application/share_card_renderer.dart';
 import 'package:blindbox_app/features/sharing/presentation/widgets/shelfy_collector_cards.dart';
 import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
+import 'package:blindbox_app/shared/widgets/shelfy_progress_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
@@ -56,7 +57,9 @@ Future<void> showShareCardPreview({
     if (navigator.canPop()) navigator.pop();
     if (entryInserted) entry.remove();
     messenger.showSnackBar(
-      const SnackBar(content: Text('Could not prepare this Shelfy card.')),
+      const SnackBar(
+        content: Text('Couldn\'t prepare this Shelfy card.'),
+      ),
     );
     return;
   }
@@ -123,41 +126,9 @@ class _ShareCardPreparingDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
     return PopScope(
       canPop: false,
-      child: Center(
-        child: Material(
-          color: scheme.surface,
-          borderRadius: BorderRadius.circular(24),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(22, 18, 22, 18),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: scheme.primary.withValues(alpha: 0.72),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Text(
-                  label,
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: scheme.onSurface.withValues(alpha: 0.78),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+      child: ShelfyProgressDialogContent(label: label),
     );
   }
 }

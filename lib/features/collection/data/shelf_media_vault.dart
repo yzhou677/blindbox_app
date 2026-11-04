@@ -267,6 +267,7 @@ abstract final class ShelfMediaVault {
       thumbRelative: thumbOk ? '$thumbsFolderName/$id.jpg' : null,
       createdAt: now,
       lastAccessedAt: now,
+      restoredThumb: false,
     );
     await _flushIndex();
     return _vaultRefFor(id: id, ext: ext);
@@ -428,7 +429,7 @@ abstract final class ShelfMediaVault {
   /// Installs a recovery-pack thumb as vault media under a stable [id].
   ///
   /// When originals are missing (Auto Backup only ships thumbs), the thumb
-  /// bytes are also written as the original and [recoveredFromThumb] is set.
+  /// bytes are also written as the original and [restoredThumb] is set.
   static Future<String> installRecoveredThumb({
     required String id,
     required List<int> thumbBytes,
@@ -461,7 +462,7 @@ abstract final class ShelfMediaVault {
         thumbRelative: '$thumbsFolderName/$trimmedId.jpg',
         createdAt: existing?.createdAt ?? now,
         lastAccessedAt: existing?.lastAccessedAt ?? now,
-        recoveredFromThumb: !hadOriginal || (existing?.recoveredFromThumb ?? false),
+        restoredThumb: !hadOriginal || (existing?.restoredThumb ?? false),
       );
       await _flushIndex();
       return _vaultRefFor(id: trimmedId, ext: '.jpg');
@@ -472,11 +473,15 @@ abstract final class ShelfMediaVault {
   ///
   /// [ext] must include the leading dot (e.g. `.png`). Snapshot refs keep this
   /// extension — unlike [installRecoveredThumb], no `.jpg` rewrite.
+  ///
+  /// Pass [restoredThumb] true when re-importing an id that was already marked
+  /// (e.g. listed in export manifest `restoredThumbIds`).
   static Future<String> installExportedOriginal({
     required String id,
     required List<int> originalBytes,
     required String ext,
     List<int>? thumbBytes,
+    bool restoredThumb = false,
   }) async {
     if (kIsWeb) {
       return _vaultRefFor(id: id, ext: _normalizeExt(ext));
@@ -511,7 +516,7 @@ abstract final class ShelfMediaVault {
         thumbRelative: thumbOk ? '$thumbsFolderName/$trimmedId.jpg' : null,
         createdAt: existing?.createdAt ?? now,
         lastAccessedAt: existing?.lastAccessedAt ?? now,
-        recoveredFromThumb: false,
+        restoredThumb: restoredThumb,
       );
       await _flushIndex();
       return _vaultRefFor(id: trimmedId, ext: normalizedExt);
@@ -524,6 +529,7 @@ abstract final class ShelfMediaVault {
     required File originalFile,
     required String ext,
     File? thumbFile,
+    bool restoredThumb = false,
   }) async {
     if (kIsWeb) {
       return _vaultRefFor(id: id, ext: _normalizeExt(ext));
@@ -570,7 +576,7 @@ abstract final class ShelfMediaVault {
         thumbRelative: thumbOk ? '$thumbsFolderName/$trimmedId.jpg' : null,
         createdAt: existing?.createdAt ?? now,
         lastAccessedAt: existing?.lastAccessedAt ?? now,
-        recoveredFromThumb: false,
+        restoredThumb: restoredThumb,
       );
       await _flushIndex();
       return _vaultRefFor(id: trimmedId, ext: normalizedExt);
@@ -580,7 +586,7 @@ abstract final class ShelfMediaVault {
   /// Thumb-only install via [File.copy] (export archive missing original).
   ///
   /// When [overwriteOriginal] is true (Replace import), always copy the thumb
-  /// over `originals/<id>.jpg` and set [recoveredFromThumb]. Other original
+  /// over `originals/<id>.jpg` and set [restoredThumb]. Other original
   /// extensions for the same id are deleted. PR3 recovery keeps the default
   /// `overwriteOriginal: false` (preserve an existing original).
   static Future<String> installRecoveredThumbFromFile({
@@ -626,9 +632,9 @@ abstract final class ShelfMediaVault {
         thumbRelative: '$thumbsFolderName/$trimmedId.jpg',
         createdAt: existing?.createdAt ?? now,
         lastAccessedAt: existing?.lastAccessedAt ?? now,
-        recoveredFromThumb: overwriteOriginal
+        restoredThumb: overwriteOriginal
             ? true
-            : (!hadOriginal || (existing?.recoveredFromThumb ?? false)),
+            : (!hadOriginal || (existing?.restoredThumb ?? false)),
       );
       await _flushIndex();
       return _vaultRefFor(id: trimmedId, ext: '.jpg');
@@ -686,12 +692,21 @@ abstract final class ShelfMediaVault {
     );
   }
 
+  /// Whether vault [id] is marked as a thumb-restored original.
+  static Future<bool> isRestoredThumbId(String id) async {
+    final trimmed = id.trim();
+    if (trimmed.isEmpty) return false;
+    await ensureReady();
+    final index = await _ensureIndex();
+    return index.entries[trimmed]?.restoredThumb ?? false;
+  }
+
   @visibleForTesting
-  static Future<bool?> recoveredFromThumbForTest(String vaultRef) async {
+  static Future<bool?> restoredThumbForTest(String vaultRef) async {
     final id = idFromRef(vaultRef);
     if (id == null) return null;
     final index = await _ensureIndex();
-    return index.entries[id]?.recoveredFromThumb;
+    return index.entries[id]?.restoredThumb;
   }
 
   static Future<ShelfMediaGcResult> _collectGarbageLocked(
@@ -805,7 +820,7 @@ abstract final class ShelfMediaVault {
         thumbRelative: entry.thumbRelative,
         createdAt: createdAt.toUtc(),
         lastAccessedAt: entry.lastAccessedAt,
-        recoveredFromThumb: entry.recoveredFromThumb,
+        restoredThumb: entry.restoredThumb,
       );
       await _flushIndex();
     });
@@ -829,7 +844,7 @@ abstract final class ShelfMediaVault {
         thumbRelative: entry.thumbRelative,
         createdAt: entry.createdAt,
         lastAccessedAt: lastAccessedAt.toUtc(),
-        recoveredFromThumb: entry.recoveredFromThumb,
+        restoredThumb: entry.restoredThumb,
       );
       await _flushIndex();
     });
@@ -877,7 +892,7 @@ abstract final class ShelfMediaVault {
           thumbRelative: entry.thumbRelative ?? '$thumbsFolderName/$id.jpg',
           createdAt: entry.createdAt,
           lastAccessedAt: DateTime.now().toUtc(),
-          recoveredFromThumb: entry.recoveredFromThumb,
+          restoredThumb: entry.restoredThumb,
         );
       }
       return false;
@@ -899,7 +914,7 @@ abstract final class ShelfMediaVault {
       lastAccessedAt: bumpAccess
           ? now
           : (entry?.lastAccessedAt ?? now),
-      recoveredFromThumb: entry?.recoveredFromThumb ?? false,
+      restoredThumb: entry?.restoredThumb ?? false,
     );
     return true;
   }
@@ -1079,7 +1094,7 @@ class _VaultIndex {
     required String? thumbRelative,
     required DateTime createdAt,
     required DateTime lastAccessedAt,
-    bool recoveredFromThumb = false,
+    bool restoredThumb = false,
   }) {
     entries[id] = _VaultIndexEntry(
       id: id,
@@ -1087,7 +1102,7 @@ class _VaultIndex {
       thumbRelative: thumbRelative,
       createdAt: createdAt,
       lastAccessedAt: lastAccessedAt,
-      recoveredFromThumb: recoveredFromThumb,
+      restoredThumb: restoredThumb,
     );
     dirty = true;
   }
@@ -1106,7 +1121,7 @@ class _VaultIndexEntry {
     required this.thumbRelative,
     required this.createdAt,
     required this.lastAccessedAt,
-    this.recoveredFromThumb = false,
+    this.restoredThumb = false,
   });
 
   final String id;
@@ -1114,7 +1129,7 @@ class _VaultIndexEntry {
   final String? thumbRelative;
   final DateTime createdAt;
   final DateTime lastAccessedAt;
-  final bool recoveredFromThumb;
+  final bool restoredThumb;
 
   static _VaultIndexEntry? fromJson(String id, Map<String, dynamic> json) {
     final original = json['original']?.toString();
@@ -1131,7 +1146,8 @@ class _VaultIndexEntry {
       thumbRelative: json['thumb']?.toString(),
       createdAt: parse(json['createdAt']?.toString(), now),
       lastAccessedAt: parse(json['lastAccessedAt']?.toString(), now),
-      recoveredFromThumb: json['recoveredFromThumb'] == true,
+      restoredThumb: json['restoredThumb'] == true ||
+          json['recoveredFromThumb'] == true,
     );
   }
 
@@ -1140,6 +1156,6 @@ class _VaultIndexEntry {
     if (thumbRelative != null) 'thumb': thumbRelative,
     'createdAt': createdAt.toIso8601String(),
     'lastAccessedAt': lastAccessedAt.toIso8601String(),
-    if (recoveredFromThumb) 'recoveredFromThumb': true,
+    if (restoredThumb) 'restoredThumb': true,
   };
 }

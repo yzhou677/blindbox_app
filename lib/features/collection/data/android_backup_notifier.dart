@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 
 /// Asks Android [BackupManager] to note that Auto Backup data changed.
 ///
-/// iOS / missing plugins: invoke fails quietly (logged only).
+/// Non-Android / missing plugins: invoke fails quietly (logged only).
 abstract final class AndroidBackupNotifier {
   AndroidBackupNotifier._();
 
@@ -20,6 +20,7 @@ abstract final class AndroidBackupNotifier {
   /// Best-effort notify. Never throws to callers.
   static Future<void> notifyDataChanged() async {
     if (kIsWeb) return;
+    if (defaultTargetPlatform != TargetPlatform.android) return;
     final override = testNotifyOverride;
     if (override != null) {
       try {

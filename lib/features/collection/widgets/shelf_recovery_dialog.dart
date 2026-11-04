@@ -3,6 +3,7 @@ import 'package:blindbox_app/core/theme/app_typography.dart';
 import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
 import 'package:blindbox_app/features/collection/application/shelf_import_flow.dart';
 import 'package:blindbox_app/features/collection/data/shelf_recovery_pack.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
@@ -21,7 +22,7 @@ abstract final class ShelfRecoveryDialogCopy {
   static const confirmTitle = 'Delete your old shelf?';
   static const confirmBody =
       'Your old shelf will be permanently deleted. This can\'t be undone.';
-  static const confirmCancel = 'Cancel';
+  static const confirmCancel = CollectionVocabulary.cancel;
   static const confirmDelete = 'Delete';
   static const importFailed =
       'Couldn\'t restore your shelf. Try again or start fresh.';

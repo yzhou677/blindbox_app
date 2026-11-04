@@ -11,8 +11,10 @@ import 'package:blindbox_app/features/collection/application/shelf_import_flow.d
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
 import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
+import 'package:blindbox_app/shared/widgets/shelfy_progress_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -35,6 +37,10 @@ abstract final class ShelfBackupCopy {
   static const exportMediaIncomplete =
       'Some photos were missing and weren\'t included.';
   static const exportReadySnack = 'Backup ready to share.';
+  static const exportRestoredThumbSnack =
+      'Backup ready to share. Some photos are low-resolution copies restored from Android backup.';
+  static const exportMediaIncompleteWithRestoredThumb =
+      'Some photos were missing and weren\'t included. Some photos are low-resolution copies restored from Android backup.';
   static const exportTooLarge =
       'This shelf is too large to export (over 2 GB).';
   static const exportFailed = 'Couldn\'t create a backup. Try again.';
@@ -42,8 +48,21 @@ abstract final class ShelfBackupCopy {
   static const largeBackupTitle = 'Large backup';
   static String largeBackupBody(String humanSize) =>
       'This backup is about $humanSize. Sharing it may take a while.';
-  static const largeBackupCancel = 'Cancel';
+  static const largeBackupCancel = CollectionVocabulary.cancel;
   static const largeBackupContinue = 'Continue';
+
+  /// Success SnackBar after export share. Missing photos take priority.
+  static String exportSuccessSnack({
+    required bool mediaIncomplete,
+    required bool hasRestoredThumb,
+  }) {
+    if (mediaIncomplete && hasRestoredThumb) {
+      return exportMediaIncompleteWithRestoredThumb;
+    }
+    if (mediaIncomplete) return exportMediaIncomplete;
+    if (hasRestoredThumb) return exportRestoredThumbSnack;
+    return exportReadySnack;
+  }
 }
 
 enum _ShelfBackupSheetAction { export, import }
@@ -127,32 +146,14 @@ class _ShelfBackupButtonState extends ConsumerState<ShelfBackupButton> {
       builder: (dialogContext) {
         return PopScope(
           canPop: false,
-          child: Dialog(
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: ValueListenableBuilder<String>(
-                valueListenable: _progressLabel,
-                builder: (context, value, _) {
-                  return Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const SizedBox(
-                        width: 28,
-                        height: 28,
-                        child: CircularProgressIndicator(strokeWidth: 3),
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      Flexible(
-                        child: Text(
-                          key: const Key('shelf_backup_progress_label'),
-                          value,
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
+          child: ValueListenableBuilder<String>(
+            valueListenable: _progressLabel,
+            builder: (context, value, _) {
+              return ShelfyProgressDialogContent(
+                key: const Key('shelf_backup_progress_label'),
+                label: value,
+              );
+            },
           ),
         );
       },
@@ -256,7 +257,7 @@ class _ShelfBackupButtonState extends ConsumerState<ShelfBackupButton> {
                     onPressed: () => Navigator.of(ctx).pop(false),
                     child: const Text(ShelfBackupCopy.largeBackupCancel),
                   ),
-                  TextButton(
+                  FilledButton(
                     onPressed: () => Navigator.of(ctx).pop(true),
                     child: const Text(ShelfBackupCopy.largeBackupContinue),
                   ),
@@ -277,17 +278,16 @@ class _ShelfBackupButtonState extends ConsumerState<ShelfBackupButton> {
       final messenger = ScaffoldMessenger.of(context);
       switch (result.status) {
         case ShelfExportFlowStatus.success:
-          if (result.mediaIncomplete) {
-            messenger.showSnackBar(
-              const SnackBar(
-                content: Text(ShelfBackupCopy.exportMediaIncomplete),
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text(
+                ShelfBackupCopy.exportSuccessSnack(
+                  mediaIncomplete: result.mediaIncomplete,
+                  hasRestoredThumb: result.hasRestoredThumb,
+                ),
               ),
-            );
-          } else {
-            messenger.showSnackBar(
-              const SnackBar(content: Text(ShelfBackupCopy.exportReadySnack)),
-            );
-          }
+            ),
+          );
         case ShelfExportFlowStatus.cancelled:
           break;
         case ShelfExportFlowStatus.rejectedTooLarge:
@@ -397,7 +397,6 @@ class _ShelfBackupButtonState extends ConsumerState<ShelfBackupButton> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) {
-        final scheme = Theme.of(ctx).colorScheme;
         return AlertDialog(
           title: const Text(ShelfImportCopy.confirmTitle),
           content: Text(
@@ -413,10 +412,6 @@ class _ShelfBackupButtonState extends ConsumerState<ShelfBackupButton> {
             ),
             FilledButton(
               key: const Key('collection_backup_import_confirm'),
-              style: FilledButton.styleFrom(
-                backgroundColor: scheme.error,
-                foregroundColor: scheme.onError,
-              ),
               onPressed: () => Navigator.of(ctx).pop(true),
               child: const Text(ShelfImportCopy.confirmReplace),
             ),

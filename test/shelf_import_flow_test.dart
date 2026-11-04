@@ -1069,7 +1069,7 @@ void main() {
     expect(afterPaths.originalPath!.endsWith('.jpg'), isTrue);
     expect(File(afterPaths.originalPath!).readAsBytesSync(), backupThumb);
     expect(
-      await ShelfMediaVault.recoveredFromThumbForTest('shelf_media/originals/A.jpg'),
+      await ShelfMediaVault.restoredThumbForTest('shelf_media/originals/A.jpg'),
       isTrue,
     );
   });
@@ -1205,6 +1205,46 @@ void main() {
     expect(File(installed.originalPath!).readAsBytesSync(), png);
     expect(File(installed.thumbPath!).readAsBytesSync(), thumb);
     expect(ref, isNotEmpty);
+  });
+
+  test('export/import round-trip preserves restoredThumb via manifest', () async {
+    final thumb = _jpegBytes(r: 90);
+    final ref = await ShelfMediaVault.installRecoveredThumb(
+      id: 'rtround',
+      thumbBytes: thumb,
+    );
+    expect(await ShelfMediaVault.restoredThumbForTest(ref), isTrue);
+
+    final snap = _snap(
+      seriesId: 's-rt',
+      name: 'Round',
+      mediaRef: ref,
+    );
+    final written = await ShelfExportArchive.exportToZip(
+      snapshot: snap,
+      memoryJson: '{}',
+      uiPrefsJson: '{}',
+      outputPath: '${tempCache.path}${Platform.pathSeparator}rt_round.zip',
+    );
+    expect(written.wrote, isTrue);
+    expect(written.hasRestoredThumb, isTrue);
+
+    final vaultRoot = Directory(
+      '${tempSupport.path}${Platform.pathSeparator}shelf_media',
+    );
+    if (await vaultRoot.exists()) {
+      await vaultRoot.delete(recursive: true);
+    }
+    ShelfMediaVault.resetForTest();
+    ShelfMediaVault.testSupportOverride = tempSupport;
+    await ShelfMediaVault.ensureReady();
+    expect(await ShelfMediaVault.isRestoredThumbId('rtround'), isFalse);
+
+    final staging = await ShelfExportArchive.unpackToStaging(written.zipPath!);
+    expect(staging.manifest.restoredThumbIds, contains('rtround'));
+    await ShelfExportArchive.commitStaging(staging);
+
+    expect(await ShelfMediaVault.isRestoredThumbId('rtround'), isTrue);
   });
 
   test('import copy constants are English', () {

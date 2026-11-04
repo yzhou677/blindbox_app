@@ -4,6 +4,7 @@ import 'package:blindbox_app/features/collection/data/shelf_export_archive.dart'
 import 'package:blindbox_app/features/collection/data/shelf_media_vault.dart';
 import 'package:blindbox_app/features/collection/data/shelf_recovery_pack.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 
@@ -47,7 +48,7 @@ abstract final class ShelfImportCopy {
       'Your current shelf, including your wishlist, will be replaced.';
   static const confirmSafetyNote =
       'A safety copy is saved on this device for 7 days.';
-  static const confirmCancel = 'Cancel';
+  static const confirmCancel = CollectionVocabulary.cancel;
   static const confirmReplace = 'Replace shelf';
 
   static const checking = 'Checking backup…';

@@ -21,6 +21,7 @@ import 'package:blindbox_app/features/official_feed/application/official_feed_pr
 import 'package:blindbox_app/features/official_feed/domain/official_feed_catalog.dart';
 import 'package:blindbox_app/main.dart';
 import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
+import 'package:blindbox_app/shared/widgets/shelfy_progress_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -332,7 +333,74 @@ void main() {
     expect(find.text(ShelfBackupCopy.exportFailed), findsNothing);
   });
 
-  testWidgets('Large backup dialog uses ShelfBackupCopy strings', (tester) async {
+  testWidgets('Large backup Continue is FilledButton and resumes export',
+      (tester) async {
+    const estimatedBytes = 250 * 1024 * 1024;
+    ShelfExportArchive.testWarnBytesOverride = 100 * 1024 * 1024;
+    addTearDown(() {
+      ShelfExportArchive.testWarnBytesOverride = null;
+    });
+    final temp = Directory.systemTemp.createTempSync('backup_large_cont_');
+    addTearDown(() {
+      if (temp.existsSync()) temp.deleteSync(recursive: true);
+    });
+    final zip = File('${temp.path}${Platform.pathSeparator}bak.zip')
+      ..writeAsBytesSync([1], flush: true);
+    var exportCalls = 0;
+
+    await _pumpBackupHost(
+      tester,
+      snapshot: _populatedSnap(),
+      exportDeps: ShelfExportFlowDeps(
+        cleanupStale: () async {},
+        loadMemoryJson: () async => '{}',
+        loadUiPrefsJson: () async => '{}',
+        estimate: ({
+          required snapshot,
+          required memoryJson,
+          required uiPrefsJson,
+        }) async =>
+            const ShelfExportSizeEstimate(
+              uncompressedBytes: estimatedBytes,
+              mediaIncomplete: false,
+            ),
+        export: ({
+          required snapshot,
+          required memoryJson,
+          required uiPrefsJson,
+          onProgress,
+        }) async {
+          exportCalls++;
+          return _writtenZip(zip.path);
+        },
+        shareZip: (_) async => null,
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('collection_backup_button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('shelf_backup_export_row')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.byType(FilledButton), findsOneWidget);
+    expect(
+      find.widgetWithText(FilledButton, ShelfBackupCopy.largeBackupContinue),
+      findsOneWidget,
+    );
+    expect(
+      find.widgetWithText(TextButton, ShelfBackupCopy.largeBackupCancel),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text(ShelfBackupCopy.largeBackupContinue));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(exportCalls, 1);
+    expect(find.text(ShelfBackupCopy.exportReadySnack), findsOneWidget);
+  });
+
+  testWidgets('Large backup Cancel skips export', (tester) async {
     const estimatedBytes = 250 * 1024 * 1024;
     ShelfExportArchive.testWarnBytesOverride = 100 * 1024 * 1024;
     addTearDown(() {
@@ -342,7 +410,6 @@ void main() {
     await _pumpBackupHost(
       tester,
       snapshot: _populatedSnap(),
-      // No confirmLarge override — exercise the real AlertDialog.
       exportDeps: ShelfExportFlowDeps(
         cleanupStale: () async {},
         loadMemoryJson: () async => '{}',
@@ -376,13 +443,6 @@ void main() {
 
     expect(find.text(ShelfBackupCopy.largeBackupTitle), findsOneWidget);
     expect(find.text(ShelfBackupCopy.largeBackupBody('250 MB')), findsOneWidget);
-    expect(find.text(ShelfBackupCopy.largeBackupCancel), findsOneWidget);
-    expect(find.text(ShelfBackupCopy.largeBackupContinue), findsOneWidget);
-    expect(find.text('Large backup'), findsOneWidget);
-    expect(
-      find.text('This backup is about 250 MB. Sharing it may take a while.'),
-      findsOneWidget,
-    );
 
     await tester.tap(find.text(ShelfBackupCopy.largeBackupCancel));
     await tester.pump();
@@ -443,6 +503,123 @@ void main() {
 
     expect(find.text(ShelfBackupCopy.exportMediaIncomplete), findsOneWidget);
     expect(find.text(ShelfBackupCopy.exportReadySnack), findsNothing);
+    expect(find.text(ShelfBackupCopy.exportRestoredThumbSnack), findsNothing);
+  });
+
+  testWidgets('Export restoredThumb SnackBar uses low-res copy copy',
+      (tester) async {
+    final temp = Directory.systemTemp.createTempSync('backup_export_rt_');
+    addTearDown(() {
+      if (temp.existsSync()) temp.deleteSync(recursive: true);
+    });
+    final zip = File('${temp.path}${Platform.pathSeparator}bak.zip')
+      ..writeAsBytesSync([1], flush: true);
+
+    await _pumpBackupHost(
+      tester,
+      snapshot: _populatedSnap(),
+      exportDeps: ShelfExportFlowDeps(
+        cleanupStale: () async {},
+        loadMemoryJson: () async => '{}',
+        loadUiPrefsJson: () async => '{}',
+        estimate: ({
+          required snapshot,
+          required memoryJson,
+          required uiPrefsJson,
+        }) async =>
+            const ShelfExportSizeEstimate(
+              uncompressedBytes: 10,
+              mediaIncomplete: false,
+            ),
+        export: ({
+          required snapshot,
+          required memoryJson,
+          required uiPrefsJson,
+          onProgress,
+        }) async {
+          return ShelfExportWriteResult.written(
+            zipPath: zip.path,
+            uncompressedBytes: 10,
+            zipBytes: 1,
+            mediaIncomplete: false,
+            hasRestoredThumb: true,
+            exceedsWarnThreshold: false,
+            originalCount: 0,
+            thumbCount: 0,
+          );
+        },
+        shareZip: (_) async => null,
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('collection_backup_button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('shelf_backup_export_row')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text(ShelfBackupCopy.exportRestoredThumbSnack), findsOneWidget);
+    expect(find.text(ShelfBackupCopy.exportReadySnack), findsNothing);
+  });
+
+  testWidgets('Export merges missing + restoredThumb into one SnackBar',
+      (tester) async {
+    final temp = Directory.systemTemp.createTempSync('backup_export_merge_');
+    addTearDown(() {
+      if (temp.existsSync()) temp.deleteSync(recursive: true);
+    });
+    final zip = File('${temp.path}${Platform.pathSeparator}bak.zip')
+      ..writeAsBytesSync([1], flush: true);
+
+    await _pumpBackupHost(
+      tester,
+      snapshot: _populatedSnap(),
+      exportDeps: ShelfExportFlowDeps(
+        cleanupStale: () async {},
+        loadMemoryJson: () async => '{}',
+        loadUiPrefsJson: () async => '{}',
+        estimate: ({
+          required snapshot,
+          required memoryJson,
+          required uiPrefsJson,
+        }) async =>
+            const ShelfExportSizeEstimate(
+              uncompressedBytes: 10,
+              mediaIncomplete: true,
+            ),
+        export: ({
+          required snapshot,
+          required memoryJson,
+          required uiPrefsJson,
+          onProgress,
+        }) async {
+          return ShelfExportWriteResult.written(
+            zipPath: zip.path,
+            uncompressedBytes: 10,
+            zipBytes: 1,
+            mediaIncomplete: true,
+            hasRestoredThumb: true,
+            exceedsWarnThreshold: false,
+            originalCount: 0,
+            thumbCount: 0,
+          );
+        },
+        shareZip: (_) async => null,
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('collection_backup_button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('shelf_backup_export_row')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(
+      find.text(ShelfBackupCopy.exportMediaIncompleteWithRestoredThumb),
+      findsOneWidget,
+    );
+    expect(find.text(ShelfBackupCopy.exportMediaIncomplete), findsNothing);
+    expect(find.text(ShelfBackupCopy.exportRestoredThumbSnack), findsNothing);
   });
 
   testWidgets('Export failed shows failure SnackBar without ready SnackBar',
@@ -810,6 +987,11 @@ void main() {
     expect(dialogText, contains('This backup has'));
     expect(dialogText, contains('created'));
 
+    final replaceButton = tester.widget<FilledButton>(
+      find.byKey(const Key('collection_backup_import_confirm')),
+    );
+    expect(replaceButton.style?.backgroundColor, isNull);
+
     await tester.tap(find.byKey(const Key('collection_backup_import_cancel')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
@@ -987,6 +1169,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
+    expect(find.byType(ShelfyProgressDialogContent), findsOneWidget);
     await _expectProgressBlocksPop(
       tester,
       expectedLabel: ShelfBackupCopy.checking,
@@ -1165,6 +1348,17 @@ void main() {
     ].join();
     expect(RegExp(r'[\u4e00-\u9fff]').hasMatch(all), isFalse);
     expect(ShelfBackupCopy.exportReadySnack, 'Backup ready to share.');
+    expect(
+      ShelfBackupCopy.exportRestoredThumbSnack,
+      'Backup ready to share. Some photos are low-resolution copies restored from Android backup.',
+    );
+    expect(
+      ShelfBackupCopy.exportSuccessSnack(
+        mediaIncomplete: true,
+        hasRestoredThumb: true,
+      ),
+      ShelfBackupCopy.exportMediaIncompleteWithRestoredThumb,
+    );
     expect(ShelfBackupCopy.largeBackupTitle, 'Large backup');
     expect(
       ShelfBackupCopy.largeBackupBody('250 MB'),

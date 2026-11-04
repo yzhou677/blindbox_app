@@ -325,7 +325,7 @@ Future<void> confirmAndRemoveSeries({
     builder: (ctx) {
       return AlertDialog(
         title: const Text('Remove series?'),
-        content: Text('“$seriesName” will leave your shelf.'),
+        content: Text('"$seriesName" will leave your shelf.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),

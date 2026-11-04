@@ -5,6 +5,7 @@ import 'package:blindbox_app/features/collection/data/android_backup_notifier.da
 import 'package:blindbox_app/features/collection/data/shelf_media_vault.dart';
 import 'package:blindbox_app/features/collection/data/shelf_recovery_pack.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -48,10 +49,12 @@ void main() {
     ShelfMediaVault.testSupportOverride = tempSupport;
     ShelfRecoveryPack.testSupportOverride = tempSupport;
     ShelfRecoveryPack.debounceEnabledForTest = false;
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
     await ShelfMediaVault.ensureReady();
   });
 
   tearDown(() async {
+    debugDefaultTargetPlatformOverride = null;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(AndroidBackupNotifier.channel, null);
     AndroidBackupNotifier.resetForTest();
@@ -62,6 +65,33 @@ void main() {
     if (await tempSupport.exists()) {
       await tempSupport.delete(recursive: true);
     }
+  });
+
+  test('notifyDataChanged skips MethodChannel on iOS', () async {
+    final calls = <MethodCall>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(AndroidBackupNotifier.channel, (call) async {
+      calls.add(call);
+      return null;
+    });
+
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    await AndroidBackupNotifier.notifyDataChanged();
+    expect(calls, isEmpty);
+  });
+
+  test('notifyDataChanged invokes MethodChannel on Android', () async {
+    final calls = <MethodCall>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(AndroidBackupNotifier.channel, (call) async {
+      calls.add(call);
+      return null;
+    });
+
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    await AndroidBackupNotifier.notifyDataChanged();
+    expect(calls, hasLength(1));
+    expect(calls.single.method, AndroidBackupNotifier.methodDataChanged);
   });
 
   test('pack write success invokes dataChanged MethodChannel', () async {

@@ -101,7 +101,7 @@ Cold start (PR3): if prefs lack `collection_snapshot_v1` and
 `ShelfRecoveryPack.tryLoad()` returns a pack, `CollectionRecoveryGate` stays
 pending and the Import / Start fresh dialog runs before the main shell.
 While pending, pack writes, vault GC, and notifier snapshot persists no-op.
-Import restores prefs + vault thumbs (`recoveredFromThumb` when originals are
+Import restores prefs + vault thumbs (`restoredThumb` when originals are
 absent); Start fresh double-confirms then deletes the pack.
 
 ---

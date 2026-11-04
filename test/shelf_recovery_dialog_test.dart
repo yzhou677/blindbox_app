@@ -344,7 +344,7 @@ void main() {
     final abs = ShelfMediaVault.resolveToFilePathSync(jpgRef);
     expect(abs, isNotNull);
     expect(File(abs!).existsSync(), isTrue);
-    expect(await ShelfMediaVault.recoveredFromThumbForTest(jpgRef), isTrue);
+    expect(await ShelfMediaVault.restoredThumbForTest(jpgRef), isTrue);
   });
 
   test('png original ref is rewritten to .jpg and resolves after import', () async {

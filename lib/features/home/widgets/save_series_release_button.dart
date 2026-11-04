@@ -166,7 +166,7 @@ class _SaveSeriesReleaseButtonState
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Remove series?'),
-        content: Text('“$name” will leave your shelf.'),
+        content: Text('"$name" will leave your shelf.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),

@@ -216,10 +216,12 @@ abstract final class ShelfExportArchive {
         256; // manifest headroom
     final plannedUncompressed = plan.plannedBytes + jsonBytes;
 
+    final hasRestoredThumb = plan.restoredThumbIds.isNotEmpty;
     if (plannedUncompressed > _rejectBytes) {
       return ShelfExportWriteResult.rejected(
         uncompressedBytes: plannedUncompressed,
         mediaIncomplete: plan.mediaIncomplete,
+        hasRestoredThumb: hasRestoredThumb,
         reason: ShelfExportRejectReason.tooLarge,
       );
     }
@@ -254,6 +256,7 @@ abstract final class ShelfExportArchive {
       originalCount: originalCount,
       thumbCount: thumbCount,
       mediaIncomplete: plan.mediaIncomplete,
+      restoredThumbIds: plan.restoredThumbIds,
     );
     final jsonEntries = <String, String>{
       '$rootFolderName/$manifestFileName': jsonEncode(manifest.toJson()),
@@ -299,6 +302,7 @@ abstract final class ShelfExportArchive {
       return ShelfExportWriteResult.rejected(
         uncompressedBytes: plannedUncompressed,
         mediaIncomplete: plan.mediaIncomplete,
+        hasRestoredThumb: hasRestoredThumb,
         reason: ShelfExportRejectReason.tooLarge,
       );
     }
@@ -308,6 +312,7 @@ abstract final class ShelfExportArchive {
       uncompressedBytes: plannedUncompressed,
       zipBytes: zipBytes,
       mediaIncomplete: plan.mediaIncomplete,
+      hasRestoredThumb: hasRestoredThumb,
       exceedsWarnThreshold:
           plannedUncompressed > _warnBytes || zipBytes > _warnBytes,
       originalCount: originalCount,
@@ -442,6 +447,7 @@ abstract final class ShelfExportArchive {
         manageGate: true,
         installMedia: () async {
           await ShelfMediaVault.ensureReady();
+          final restoredThumbIds = staging.manifest.restoredThumbIds.toSet();
           final ids = <String>{
             ...staging.originalFiles.keys,
             ...staging.thumbFiles.keys,
@@ -459,6 +465,7 @@ abstract final class ShelfExportArchive {
                 originalFile: original,
                 ext: ext,
                 thumbFile: thumb,
+                restoredThumb: restoredThumbIds.contains(id),
               );
             } else if (thumb != null) {
               if (!await thumb.exists() || await thumb.length() == 0) {
@@ -538,6 +545,7 @@ abstract final class ShelfExportArchive {
   static Future<_MediaPlan> _buildMediaPlan(CollectionSnapshot snapshot) async {
     final ids = ShelfVaultRefs.referencedIds(snapshot);
     final items = <_MediaPlanItem>[];
+    final restoredThumbIds = <String>[];
     var plannedBytes = 0;
     var mediaIncomplete = false;
 
@@ -563,6 +571,10 @@ abstract final class ShelfExportArchive {
         mediaIncomplete = true;
       }
 
+      if (await ShelfMediaVault.isRestoredThumbId(id)) {
+        restoredThumbIds.add(id);
+      }
+
       if (originalSource == null && thumbSource == null) {
         continue;
       }
@@ -576,10 +588,12 @@ abstract final class ShelfExportArchive {
       );
     }
 
+    restoredThumbIds.sort();
     return _MediaPlan(
       items: items,
       plannedBytes: plannedBytes,
       mediaIncomplete: mediaIncomplete,
+      restoredThumbIds: restoredThumbIds,
     );
   }
 
@@ -964,11 +978,15 @@ class _MediaPlan {
     required this.items,
     required this.plannedBytes,
     required this.mediaIncomplete,
+    this.restoredThumbIds = const [],
   });
 
   final List<_MediaPlanItem> items;
   final int plannedBytes;
   final bool mediaIncomplete;
+  final List<String> restoredThumbIds;
+
+  bool get hasRestoredThumb => restoredThumbIds.isNotEmpty;
 }
 
 class _MediaPlanItem {
@@ -997,6 +1015,7 @@ class ShelfExportManifest {
     required this.originalCount,
     required this.thumbCount,
     required this.mediaIncomplete,
+    this.restoredThumbIds = const [],
   });
 
   final String kind;
@@ -1008,6 +1027,7 @@ class ShelfExportManifest {
   final int originalCount;
   final int thumbCount;
   final bool mediaIncomplete;
+  final List<String> restoredThumbIds;
 
   Map<String, Object?> toJson() => {
     'kind': kind,
@@ -1019,6 +1039,7 @@ class ShelfExportManifest {
     'originalCount': originalCount,
     'thumbCount': thumbCount,
     'mediaIncomplete': mediaIncomplete,
+    if (restoredThumbIds.isNotEmpty) 'restoredThumbIds': restoredThumbIds,
   };
 
   static ShelfExportManifest? fromJson(Object? raw) {
@@ -1036,6 +1057,14 @@ class ShelfExportManifest {
     }
     final createdAt = DateTime.tryParse(createdRaw)?.toUtc();
     if (createdAt == null) return null;
+    final restoredRaw = map['restoredThumbIds'];
+    final restoredThumbIds = <String>[];
+    if (restoredRaw is List) {
+      for (final item in restoredRaw) {
+        final id = item?.toString().trim() ?? '';
+        if (id.isNotEmpty) restoredThumbIds.add(id);
+      }
+    }
     return ShelfExportManifest(
       kind: kind,
       schemaVersion: schemaVersion,
@@ -1046,6 +1075,7 @@ class ShelfExportManifest {
       originalCount: (map['originalCount'] as num?)?.toInt() ?? 0,
       thumbCount: (map['thumbCount'] as num?)?.toInt() ?? 0,
       mediaIncomplete: map['mediaIncomplete'] == true,
+      restoredThumbIds: restoredThumbIds,
     );
   }
 }
@@ -1082,6 +1112,7 @@ class ShelfExportWriteResult {
     required this.wrote,
     required this.uncompressedBytes,
     required this.mediaIncomplete,
+    this.hasRestoredThumb = false,
     this.zipPath,
     this.zipBytes = 0,
     this.exceedsWarnThreshold = false,
@@ -1098,6 +1129,7 @@ class ShelfExportWriteResult {
     required bool exceedsWarnThreshold,
     required int originalCount,
     required int thumbCount,
+    bool hasRestoredThumb = false,
   }) {
     return ShelfExportWriteResult._(
       wrote: true,
@@ -1105,6 +1137,7 @@ class ShelfExportWriteResult {
       uncompressedBytes: uncompressedBytes,
       zipBytes: zipBytes,
       mediaIncomplete: mediaIncomplete,
+      hasRestoredThumb: hasRestoredThumb,
       exceedsWarnThreshold: exceedsWarnThreshold,
       originalCount: originalCount,
       thumbCount: thumbCount,
@@ -1115,11 +1148,13 @@ class ShelfExportWriteResult {
     required int uncompressedBytes,
     required bool mediaIncomplete,
     required ShelfExportRejectReason reason,
+    bool hasRestoredThumb = false,
   }) {
     return ShelfExportWriteResult._(
       wrote: false,
       uncompressedBytes: uncompressedBytes,
       mediaIncomplete: mediaIncomplete,
+      hasRestoredThumb: hasRestoredThumb,
       rejectReason: reason,
     );
   }
@@ -1129,6 +1164,7 @@ class ShelfExportWriteResult {
   final int uncompressedBytes;
   final int zipBytes;
   final bool mediaIncomplete;
+  final bool hasRestoredThumb;
   final bool exceedsWarnThreshold;
   final int originalCount;
   final int thumbCount;
