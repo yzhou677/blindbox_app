@@ -484,6 +484,16 @@ void main() {
 
   test('recovery welcome summary uses shared inventory helper', () {
     expect(
+      ShelfRecoveryDialogCopy.androidBackupCadenceNote,
+      'Android backs up about once a day, so your latest changes may not be included.',
+    );
+    expect(
+      ShelfRecoveryDialogCopy.importFailed,
+      "Couldn't restore your shelf. Try again or start fresh.",
+    );
+    expect(ShelfRecoveryDialogCopy.importFailed, isNot(contains('’')));
+    expect(ShelfRecoveryDialogCopy.startFreshFailed, isNot(contains('’')));
+    expect(
       ShelfRecoveryDialogCopy.summaryLine(
         seriesCount: 5,
         figureCount: 35,
@@ -790,7 +800,17 @@ void main() {
       done: find.text(ShelfRecoveryDialogCopy.importFailed),
     );
 
+    expect(
+      ShelfRecoveryDialogCopy.importFailed,
+      "Couldn't restore your shelf. Try again or start fresh.",
+    );
     expect(find.text(ShelfRecoveryDialogCopy.importFailed), findsOneWidget);
+    expect(
+      find.text(
+        "Couldn't restore your shelf. Try again or start fresh.",
+      ),
+      findsOneWidget,
+    );
     expect(find.text(ShelfRecoveryDialogCopy.title), findsOneWidget);
     expect(find.text('main'), findsNothing);
     expect(CollectionRecoveryGate.isPending, isTrue);

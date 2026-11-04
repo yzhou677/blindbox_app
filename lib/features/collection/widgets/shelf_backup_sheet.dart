@@ -34,10 +34,16 @@ abstract final class ShelfBackupCopy {
 
   static const exportMediaIncomplete =
       'Some photos were missing and weren\'t included.';
-  static const exportReadySnack = 'Backup ready to share';
+  static const exportReadySnack = 'Backup ready to share.';
   static const exportTooLarge =
       'This shelf is too large to export (over 2 GB).';
   static const exportFailed = 'Couldn\'t create a backup. Try again.';
+
+  static const largeBackupTitle = 'Large backup';
+  static String largeBackupBody(String humanSize) =>
+      'This backup is about $humanSize. Sharing it may take a while.';
+  static const largeBackupCancel = 'Cancel';
+  static const largeBackupContinue = 'Continue';
 }
 
 enum _ShelfBackupSheetAction { export, import }
@@ -232,7 +238,8 @@ class _ShelfBackupButtonState extends ConsumerState<ShelfBackupButton> {
         memoryJson: memoryJson,
         uiPrefsJson: uiPrefsJson,
         deps: widget.exportDeps,
-        onProgress: (completed, total) {},
+        // Progress UI is the indeterminate dialog; archive % is unused here.
+        onProgress: (_, _) {},
         confirmLargeBackup: (humanSize) async {
           await _hideProgress();
           final override = widget.confirmLargeBackupOverride;
@@ -242,18 +249,16 @@ class _ShelfBackupButtonState extends ConsumerState<ShelfBackupButton> {
             context: context,
             builder: (ctx) {
               return AlertDialog(
-                title: const Text('Large backup'),
-                content: Text(
-                  'This backup is about $humanSize. Sharing it may take a while.',
-                ),
+                title: const Text(ShelfBackupCopy.largeBackupTitle),
+                content: Text(ShelfBackupCopy.largeBackupBody(humanSize)),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.of(ctx).pop(false),
-                    child: const Text('Cancel'),
+                    child: const Text(ShelfBackupCopy.largeBackupCancel),
                   ),
                   TextButton(
                     onPressed: () => Navigator.of(ctx).pop(true),
-                    child: const Text('Continue'),
+                    child: const Text(ShelfBackupCopy.largeBackupContinue),
                   ),
                 ],
               );
@@ -321,17 +326,8 @@ class _ShelfBackupButtonState extends ConsumerState<ShelfBackupButton> {
         resumePersistence: notifier.resumePersistence,
         reloadUiPrefs: prefsNotifier.reloadFromStorage,
         deps: ShelfImportFlowDeps(
-          pickBackupFile: () async {
-            if (widget.importDeps.pickBackupFile != null) {
-              return widget.importDeps.pickBackupFile!();
-            }
-            if (widget.importDeps.pickZipPath != null) {
-              final path = await widget.importDeps.pickZipPath!();
-              if (path == null || path.isEmpty) return null;
-              return ShelfImportPickedFile.pathOnly(path);
-            }
-            return ShelfImportFlow.pickBackupFile();
-          },
+          pickBackupFile: widget.importDeps.pickBackupFile,
+          pickZipPath: widget.importDeps.pickZipPath,
           onChecking: () {
             if (mounted) _ensureProgress(ShelfBackupCopy.checking);
           },
@@ -435,7 +431,7 @@ class _ShelfBackupButtonState extends ConsumerState<ShelfBackupButton> {
   Widget build(BuildContext context) {
     return IconButton(
       key: const Key('collection_backup_button'),
-      tooltip: 'Backup',
+      tooltip: 'Shelf backup',
       onPressed: _busy ? null : _onPressed,
       icon: Icon(
         Symbols.settings_backup_restore_rounded,

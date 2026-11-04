@@ -207,7 +207,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
 
     expect(find.byKey(const Key('collection_backup_button')), findsOneWidget);
-    expect(find.byTooltip('Backup'), findsOneWidget);
+    expect(find.byTooltip('Shelf backup'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('collection_backup_button')));
     await tester.pumpAndSettle();
@@ -326,9 +326,68 @@ void main() {
     expect(shareCalls, 1);
     expect(find.byKey(const Key('shelf_backup_progress_label')), findsNothing);
     expect(_rootNavigator(tester).canPop(), isFalse);
+    expect(find.text('Backup ready to share.'), findsOneWidget);
     expect(find.text(ShelfBackupCopy.exportReadySnack), findsOneWidget);
     expect(find.text(ShelfBackupCopy.exportMediaIncomplete), findsNothing);
     expect(find.text(ShelfBackupCopy.exportFailed), findsNothing);
+  });
+
+  testWidgets('Large backup dialog uses ShelfBackupCopy strings', (tester) async {
+    const estimatedBytes = 250 * 1024 * 1024;
+    ShelfExportArchive.testWarnBytesOverride = 100 * 1024 * 1024;
+    addTearDown(() {
+      ShelfExportArchive.testWarnBytesOverride = null;
+    });
+
+    await _pumpBackupHost(
+      tester,
+      snapshot: _populatedSnap(),
+      // No confirmLarge override — exercise the real AlertDialog.
+      exportDeps: ShelfExportFlowDeps(
+        cleanupStale: () async {},
+        loadMemoryJson: () async => '{}',
+        loadUiPrefsJson: () async => '{}',
+        estimate: ({
+          required snapshot,
+          required memoryJson,
+          required uiPrefsJson,
+        }) async =>
+            const ShelfExportSizeEstimate(
+              uncompressedBytes: estimatedBytes,
+              mediaIncomplete: false,
+            ),
+        export: ({
+          required snapshot,
+          required memoryJson,
+          required uiPrefsJson,
+          onProgress,
+        }) async {
+          fail('Cancel must skip export');
+        },
+        shareZip: (_) async => fail('Cancel must skip share'),
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('collection_backup_button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('shelf_backup_export_row')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text(ShelfBackupCopy.largeBackupTitle), findsOneWidget);
+    expect(find.text(ShelfBackupCopy.largeBackupBody('250 MB')), findsOneWidget);
+    expect(find.text(ShelfBackupCopy.largeBackupCancel), findsOneWidget);
+    expect(find.text(ShelfBackupCopy.largeBackupContinue), findsOneWidget);
+    expect(find.text('Large backup'), findsOneWidget);
+    expect(
+      find.text('This backup is about 250 MB. Sharing it may take a while.'),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text(ShelfBackupCopy.largeBackupCancel));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.text(ShelfBackupCopy.exportReadySnack), findsNothing);
   });
 
   testWidgets('Export mediaIncomplete shows missing-photos SnackBar only',
@@ -560,7 +619,75 @@ void main() {
     await tester.tap(find.byKey(const Key('shelf_backup_import_row')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
+    expect(find.text('Shelf imported.'), findsOneWidget);
     expect(find.text(ShelfImportCopy.successSnack), findsOneWidget);
+  });
+
+  testWidgets('Import pickBackupFile reaches Checking', (tester) async {
+    final unpackGate = Completer<ShelfExportStaging>();
+    addTearDown(() {
+      if (!unpackGate.isCompleted) {
+        unpackGate.complete(_FakeStaging(snapshot: _populatedSnap()));
+      }
+    });
+
+    await _pumpBackupHost(
+      tester,
+      snapshot: CollectionSnapshot.emptyTest(),
+      confirmReplace: (_) async => false,
+      importDeps: ShelfImportFlowDeps(
+        pickBackupFile: () async => const ShelfImportPickedFile(
+          path: '/cache/content.tmp',
+          name: 'backup.zip',
+        ),
+        unpack: (_) => unpackGate.future,
+        clearPickerTemp: () async {},
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('collection_backup_button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('shelf_backup_import_row')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text(ShelfBackupCopy.checking), findsOneWidget);
+
+    unpackGate.complete(_FakeStaging(snapshot: _populatedSnap()));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+  });
+
+  testWidgets('Import pickZipPath reaches Checking', (tester) async {
+    final unpackGate = Completer<ShelfExportStaging>();
+    addTearDown(() {
+      if (!unpackGate.isCompleted) {
+        unpackGate.complete(_FakeStaging(snapshot: _populatedSnap()));
+      }
+    });
+
+    await _pumpBackupHost(
+      tester,
+      snapshot: CollectionSnapshot.emptyTest(),
+      confirmReplace: (_) async => false,
+      importDeps: ShelfImportFlowDeps(
+        pickZipPath: () async => 'from_zip_path.zip',
+        unpack: (_) => unpackGate.future,
+        clearPickerTemp: () async {},
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('collection_backup_button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('shelf_backup_import_row')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text(ShelfBackupCopy.checking), findsOneWidget);
+
+    unpackGate.complete(_FakeStaging(snapshot: _populatedSnap()));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
   });
 
   testWidgets('Import failure SnackBar is English without confirm',
@@ -1031,9 +1158,20 @@ void main() {
       ShelfBackupCopy.exportReadySnack,
       ShelfBackupCopy.exportTooLarge,
       ShelfBackupCopy.exportFailed,
+      ShelfBackupCopy.largeBackupTitle,
+      ShelfBackupCopy.largeBackupBody('250 MB'),
+      ShelfBackupCopy.largeBackupCancel,
+      ShelfBackupCopy.largeBackupContinue,
     ].join();
     expect(RegExp(r'[\u4e00-\u9fff]').hasMatch(all), isFalse);
-    expect(ShelfBackupCopy.exportReadySnack, 'Backup ready to share');
+    expect(ShelfBackupCopy.exportReadySnack, 'Backup ready to share.');
+    expect(ShelfBackupCopy.largeBackupTitle, 'Large backup');
+    expect(
+      ShelfBackupCopy.largeBackupBody('250 MB'),
+      'This backup is about 250 MB. Sharing it may take a while.',
+    );
+    expect(ShelfBackupCopy.largeBackupCancel, 'Cancel');
+    expect(ShelfBackupCopy.largeBackupContinue, 'Continue');
   });
 }
 

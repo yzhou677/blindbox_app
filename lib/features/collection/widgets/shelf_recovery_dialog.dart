@@ -24,8 +24,8 @@ abstract final class ShelfRecoveryDialogCopy {
   static const confirmCancel = 'Cancel';
   static const confirmDelete = 'Delete';
   static const importFailed =
-      'Couldn’t import this shelf. Try again or start fresh.';
-  static const startFreshFailed = 'Couldn’t start fresh. Try again.';
+      'Couldn\'t restore your shelf. Try again or start fresh.';
+  static const startFreshFailed = 'Couldn\'t start fresh. Try again.';
 
   /// Summary under the subtitle. Uses [ShelfImportCopy.shelfInventorySummary].
   ///

@@ -52,7 +52,7 @@ abstract final class ShelfImportCopy {
 
   static const checking = 'Checking backup…';
   static const importing = 'Importing backup…';
-  static const successSnack = 'Shelf imported';
+  static const successSnack = 'Shelf imported.';
   static const failedSnack =
       'Couldn\'t import this backup. Your current shelf wasn\'t changed.';
   static const tooLargeSnack =

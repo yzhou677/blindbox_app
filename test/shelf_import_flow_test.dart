@@ -1226,7 +1226,7 @@ void main() {
     );
     expect(ShelfImportCopy.confirmBody, isNot(contains("can't be restored")));
     expect(ShelfImportCopy.checking, 'Checking backup…');
-    expect(ShelfImportCopy.successSnack, 'Shelf imported');
+    expect(ShelfImportCopy.successSnack, 'Shelf imported.');
     expect(ShelfImportCopy.failedSnack, contains('Couldn\'t import'));
     expect(ShelfImportCopy.tooLargeSnack, contains('2 GB'));
     expect(ShelfImportCopy.safetyFailedSnack, contains('safety copy'));
