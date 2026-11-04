@@ -62,12 +62,18 @@ abstract final class ShelfImportCopy {
   static const chooseZipSnack =
       'Choose a Shelfy backup (.zip) file.';
 
-  /// English summary line. Omits wishlist when [wishlistCount] is 0.
+  /// Shared inventory + date clause (Replace confirm / recovery welcome).
   ///
   /// Plural rules: series stays "series"; figure(s); wishlist item(s).
-  static String confirmSummary({
+  /// Omits wishlist when [wishlistCount] is 0.
+  ///
+  /// Examples:
+  /// - `1 series and 1 figure, created Jan 1, 2026.`
+  /// - `5 series, 35 figures and 6 wishlist items, saved Nov 3, 2026.`
+  static String shelfInventorySummary({
     required int seriesCount,
     required int figureCount,
+    required String dateVerb,
     required String createdDate,
     int wishlistCount = 0,
   }) {
@@ -76,13 +82,29 @@ abstract final class ShelfImportCopy {
     final figureLabel =
         figureCount == 1 ? '1 figure' : '$figureCount figures';
     if (wishlistCount <= 0) {
-      return 'This backup has $seriesLabel and $figureLabel, created $createdDate.';
+      return '$seriesLabel and $figureLabel, $dateVerb $createdDate.';
     }
     final wishlistLabel = wishlistCount == 1
         ? '1 wishlist item'
         : '$wishlistCount wishlist items';
-    return 'This backup has $seriesLabel, $figureLabel and $wishlistLabel, '
-        'created $createdDate.';
+    return '$seriesLabel, $figureLabel and $wishlistLabel, '
+        '$dateVerb $createdDate.';
+  }
+
+  /// English Replace-confirm summary. Omits wishlist when [wishlistCount] is 0.
+  static String confirmSummary({
+    required int seriesCount,
+    required int figureCount,
+    required String createdDate,
+    int wishlistCount = 0,
+  }) {
+    return 'This backup has ${shelfInventorySummary(
+      seriesCount: seriesCount,
+      figureCount: figureCount,
+      wishlistCount: wishlistCount,
+      dateVerb: 'created',
+      createdDate: createdDate,
+    )}';
   }
 
   /// Local-time `MMM d, yyyy` (e.g. `Jan 1, 2026`).

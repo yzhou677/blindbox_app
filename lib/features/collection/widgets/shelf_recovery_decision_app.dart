@@ -105,6 +105,8 @@ class _ShelfRecoveryDecisionAppState extends State<ShelfRecoveryDecisionApp> {
       home: Scaffold(
         body: SafeArea(
           child: ShelfRecoveryDecisionPanel(
+            summaryLine:
+                ShelfRecoveryDialogCopy.summaryLineForPack(widget.pack),
             busy: _busy,
             errorMessage: _error,
             onImport: _onImport,
