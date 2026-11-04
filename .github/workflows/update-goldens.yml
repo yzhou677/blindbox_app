@@ -49,6 +49,7 @@ jobs:
           mkdir -p test/goldens/ip_introduction_ownership
           mkdir -p test/goldens/collection_series_card_spacing
           mkdir -p test/goldens/completion_visual_verification
+          mkdir -p test/goldens/shelf_recovery_welcome
 
       - name: Update goldens
         run: |
@@ -64,6 +65,9 @@ jobs:
           done
           flutter test test/collection_ip_filter_qa_widget_test.dart \
             --name "screenshot|golden" \
+            --update-goldens || fail=1
+          flutter test test/shelf_recovery_dialog_test.dart \
+            --name "welcome page golden" \
             --update-goldens || fail=1
           exit "$fail"
 
