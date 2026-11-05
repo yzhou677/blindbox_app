@@ -23,7 +23,10 @@
 #   ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD,
 #   ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD,
 #   GOOGLE_SERVICES_JSON_BASE64, PLAY_SERVICE_ACCOUNT_JSON
-# A missing secret fails the job by name before the AAB is built.
+# A missing secret fails the job by name right after checkout, before
+# Flutter is installed, so that failure shows up in about a minute.
+# versionName / versionCode are parsed after Flutter is on PATH and
+# before analyze. An illegal tag never starts the test suite.
 # =============================================================================
 
 name: Release
@@ -38,6 +41,17 @@ on:
         description: "Release tag, exactly vMAJOR.MINOR.PATCH (example v1.2.3)"
         required: true
         type: string
+      # Tag pushes have no inputs, so Play status falls back to draft in the
+      # upload step (`inputs.play_status || 'draft'`). While the Play Console
+      # app itself is still a draft, the API rejects status=completed.
+      play_status:
+        description: "Play upload status. Use draft while the Play app is still a draft."
+        required: true
+        type: choice
+        default: draft
+        options:
+          - draft
+          - completed
 
 # Creating the GitHub Release needs contents: write. Nothing else is granted.
 permissions:
@@ -61,15 +75,56 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # ---- Secrets ----------------------------------------------------------
+      # Before JDK / Flutter so a missing secret fails in about a minute.
+      # `blank` only checks emptiness. It does not echo the value.
+      # `if` so a present secret (the test returns false) does not trip `set -e`.
+      - name: Require release secrets
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          set -euo pipefail
+          missing=()
+          blank() {
+            local value="$1"
+            [[ -z "${value//[[:space:]]/}" ]]
+          }
+          if blank "${ANDROID_KEYSTORE_BASE64}"; then missing+=("ANDROID_KEYSTORE_BASE64"); fi
+          if blank "${ANDROID_KEYSTORE_PASSWORD}"; then missing+=("ANDROID_KEYSTORE_PASSWORD"); fi
+          if blank "${ANDROID_KEY_ALIAS}"; then missing+=("ANDROID_KEY_ALIAS"); fi
+          if blank "${ANDROID_KEY_PASSWORD}"; then missing+=("ANDROID_KEY_PASSWORD"); fi
+          if blank "${GOOGLE_SERVICES_JSON_BASE64}"; then missing+=("GOOGLE_SERVICES_JSON_BASE64"); fi
+          if blank "${PLAY_SERVICE_ACCOUNT_JSON}"; then missing+=("PLAY_SERVICE_ACCOUNT_JSON"); fi
+          if ((${#missing[@]} > 0)); then
+            echo "::error::Release stopped before any build. Missing GitHub Actions secret(s): ${missing[*]}."
+            echo "Add them in GitHub → Settings → Secrets and variables → Actions."
+            echo "How to create each one: docs/RELEASE.md"
+            echo "Nothing was uploaded to Play, and no GitHub Release was created."
+            exit 1
+          fi
+          # Raw JSON starts with `{`. Base64 does not. We print only that fact.
+          first=$(printf '%s' "$PLAY_SERVICE_ACCOUNT_JSON" | tr -d '[:space:]' | cut -c1)
+          if [[ "$first" != "{" ]]; then
+            echo "::error::PLAY_SERVICE_ACCOUNT_JSON must be the raw service-account JSON (it should start with {). Do not base64-encode it. Release stopped."
+            exit 1
+          fi
+          echo "All release secrets are present. Values were not printed."
+
       # ---- Dispatch guard ---------------------------------------------------
       # A tag can point at any commit on purpose. A button click should not
-      # release a feature branch. Reject that before the long test run.
+      # release a feature branch. `$GITHUB_REF` is the runner env var.
+      # Do not interpolate `${{ github.ref }}` inside the script.
       - name: Manual release must run from main
         if: github.event_name == 'workflow_dispatch'
         run: |
           set -euo pipefail
-          if [ "${{ github.ref }}" != "refs/heads/main" ]; then
-            echo "::error::Manual release must be started from main. This run used ${{ github.ref }}. Open Actions → Release → Run workflow and select the main branch."
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Manual release must be started from main. This run used $GITHUB_REF. Open Actions → Release → Run workflow and select the main branch."
             exit 1
           fi
 
@@ -101,17 +156,9 @@ jobs:
       - name: Pub get
         run: flutter pub get
 
-      # ---- Quality gate -----------------------------------------------------
-      # Fail here. Do not continue-on-error. A red analyze or test must not
-      # produce an AAB or talk to Play. These steps do not need secrets, and
-      # they do not need google-services.json (same fact as pr-ci.yml).
-      - name: Flutter analyze
-        run: flutter analyze
-
-      - name: Flutter test
-        run: flutter test --reporter=compact
-
       # ---- Version ----------------------------------------------------------
+      # After Flutter is installed (the parser is `dart run`) and before
+      # analyze, so a bad tag does not wait on the full test suite.
       # Tag push: RELEASE_REF is refs/tags/v1.2.3.
       # Dispatch: RELEASE_REF is the version input (v1.2.3).
       # The script exits 1 on an empty ref, a branch ref, or an illegal tag.
@@ -123,53 +170,22 @@ jobs:
           RELEASE_RUN_NUMBER: ${{ github.run_number }}
         run: dart run tools/release/release_version.dart
 
-      # ---- Secrets ----------------------------------------------------------
-      # Stop with the missing names before we decode or build. `blank` only
-      # looks at whether the value is empty. It does not echo the value.
-      - name: Require release secrets
-        env:
-          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
-          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
-        run: |
-          set -euo pipefail
-          # `if` so a non-empty secret (the test returns false) does not
-          # trip `set -e`. The function never prints the value.
-          missing=()
-          blank() {
-            local value="$1"
-            [[ -z "${value//[[:space:]]/}" ]]
-          }
-          if blank "${ANDROID_KEYSTORE_BASE64}"; then missing+=("ANDROID_KEYSTORE_BASE64"); fi
-          if blank "${ANDROID_KEYSTORE_PASSWORD}"; then missing+=("ANDROID_KEYSTORE_PASSWORD"); fi
-          if blank "${ANDROID_KEY_ALIAS}"; then missing+=("ANDROID_KEY_ALIAS"); fi
-          if blank "${ANDROID_KEY_PASSWORD}"; then missing+=("ANDROID_KEY_PASSWORD"); fi
-          if blank "${GOOGLE_SERVICES_JSON_BASE64}"; then missing+=("GOOGLE_SERVICES_JSON_BASE64"); fi
-          if blank "${PLAY_SERVICE_ACCOUNT_JSON}"; then missing+=("PLAY_SERVICE_ACCOUNT_JSON"); fi
-          if ((${#missing[@]} > 0)); then
-            echo "::error::Release stopped before any build. Missing GitHub Actions secret(s): ${missing[*]}."
-            echo "Add them in GitHub → Settings → Secrets and variables → Actions."
-            echo "How to create each one: docs/RELEASE.md"
-            echo "Nothing was uploaded to Play, and no GitHub Release was created."
-            exit 1
-          fi
-          # Raw JSON starts with `{`. Base64 does not. We print only that fact.
-          first=$(printf '%s' "$PLAY_SERVICE_ACCOUNT_JSON" | tr -d '[:space:]' | cut -c1)
-          if [[ "$first" != "{" ]]; then
-            echo "::error::PLAY_SERVICE_ACCOUNT_JSON must be the raw service-account JSON (it should start with {). Do not base64-encode it. Release stopped."
-            exit 1
-          fi
-          echo "All release secrets are present. Values were not printed."
+      # ---- Quality gate -----------------------------------------------------
+      # Fail here. Do not continue-on-error. A red analyze or test must not
+      # produce an AAB or talk to Play. These steps do not need
+      # google-services.json (same fact as pr-ci.yml).
+      - name: Flutter analyze
+        run: flutter analyze
+
+      - name: Flutter test
+        run: flutter test --reporter=compact
 
       # ---- Signing material -------------------------------------------------
       # android/app/build.gradle.kts reads android/key.properties when the
-      # file exists, and otherwise signs release with the debug key. We
-      # create the file only on this runner. storeFile is resolved from the
-      # android/ project root, so the keystore path is upload-keystore.jks
-      # next to key.properties (android/upload-keystore.jks).
+      # file exists, and otherwise signs release with the debug key.
+      # The keystore itself stays in $RUNNER_TEMP, outside the repo tree.
+      # storeFile is an absolute path. Gradle `Project.file` keeps absolute
+      # paths as-is, so it does not depend on the android/ project root.
       #
       # printf '%s' keeps passwords out of the shell trace. There is no
       # `set -x` in this workflow. The cleanup step deletes these files.
@@ -187,8 +203,9 @@ jobs:
         run: |
           set -euo pipefail
           umask 077
-          printf '%s' "$ANDROID_KEYSTORE_BASE64" | tr -d '[:space:]' | base64 -d > android/upload-keystore.jks
-          if [[ ! -s android/upload-keystore.jks ]]; then
+          keystore_path="$RUNNER_TEMP/upload-keystore.jks"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | tr -d '[:space:]' | base64 -d > "$keystore_path"
+          if [[ ! -s "$keystore_path" ]]; then
             echo "::error::ANDROID_KEYSTORE_BASE64 decoded to an empty file. Check the secret. Release stopped."
             exit 1
           fi
@@ -196,8 +213,8 @@ jobs:
             "$ANDROID_KEYSTORE_PASSWORD" \
             "$ANDROID_KEY_PASSWORD" \
             "$ANDROID_KEY_ALIAS" \
-            "upload-keystore.jks" > android/key.properties
-          chmod 600 android/key.properties android/upload-keystore.jks
+            "$keystore_path" > android/key.properties
+          chmod 600 android/key.properties "$keystore_path"
           printf '%s' "$GOOGLE_SERVICES_JSON_BASE64" | tr -d '[:space:]' | base64 -d > android/app/google-services.json
           python3 - <<'PY'
           import json, sys
@@ -241,21 +258,23 @@ jobs:
           if-no-files-found: error
 
       # ---- Play internal ----------------------------------------------------
-      # r0adkll/upload-google-play@v1.1.3 defaults `track` to production.
-      # `internal` is set on purpose. Do not change it to production,
-      # beta, or alpha in this workflow.
-      # status `completed` makes the build available to internal testers.
+      # Pinned to the v1.1.3 commit. That release defaults `track` to
+      # production. `internal` is set on purpose. Do not change it to
+      # production, beta, or alpha in this workflow.
+      # status defaults to draft. Tag pushes have no input, so the `||`
+      # fallback applies. A manual run can choose completed only after the
+      # Play app itself is published. While the app is still a draft in
+      # Play Console, completed is rejected. See docs/RELEASE.md.
       # The first AAB for a brand-new Play app must be uploaded by hand
-      # once; the API returns "Package not found" until then. See
-      # docs/RELEASE.md.
+      # once; the API returns "Package not found" until then.
       - name: Upload AAB to Play internal track
-        uses: r0adkll/upload-google-play@v1.1.3
+        uses: r0adkll/upload-google-play@935ef9c68bb393a8e6116b1575626a7f5be3a7fb # v1.1.3
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: app.shelfy.collector
           releaseFiles: build/app/outputs/bundle/release/app-release.aab
           track: internal
-          status: completed
+          status: ${{ inputs.play_status || 'draft' }}
 
       # ---- GitHub Release ---------------------------------------------------
       # generate_release_notes asks GitHub for PRs merged since the previous
@@ -263,7 +282,7 @@ jobs:
       # long. That is expected. The AAB is attached to the release.
       # This step runs only after Play accepted the upload.
       - name: Publish GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: Shelfy ${{ steps.version.outputs.version_name }} (${{ steps.version.outputs.version_code }})
@@ -280,5 +299,5 @@ jobs:
         if: always()
         run: |
           set -euo pipefail
-          rm -f android/key.properties android/upload-keystore.jks android/app/google-services.json
+          rm -f android/key.properties "$RUNNER_TEMP/upload-keystore.jks" android/app/google-services.json
           echo "Removed temporary key.properties, keystore, and google-services.json if they were present."
