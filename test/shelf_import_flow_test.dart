@@ -150,6 +150,176 @@ void main() {
     expect(after!.shelfSeries.single.name, 'Old');
   });
 
+  test('isZipBackupFilename accepts path or name .zip (case-insensitive)', () {
+    expect(
+      ShelfImportFlow.isZipBackupFilename(
+        path: '/cache/content.tmp',
+        name: 'backup.zip',
+      ),
+      isTrue,
+    );
+    expect(
+      ShelfImportFlow.isZipBackupFilename(
+        path: '/cache/backup.ZIP',
+        name: 'ignored.pdf',
+      ),
+      isTrue,
+    );
+    expect(
+      ShelfImportFlow.isZipBackupFilename(
+        path: r'C:\Downloads\BACKUP.ZIP',
+        name: 'BACKUP.ZIP',
+      ),
+      isTrue,
+    );
+    expect(
+      ShelfImportFlow.isZipBackupFilename(
+        path: '/tmp/notes.pdf',
+        name: 'notes.pdf',
+      ),
+      isFalse,
+    );
+    expect(
+      ShelfImportFlow.isZipBackupFilename(
+        path: '/cache/content.tmp',
+        name: 'noext',
+      ),
+      isFalse,
+    );
+  });
+
+  test('uppercase .ZIP name enters Checking and unpacks', () async {
+    final current = _snap(seriesId: 'old', name: 'Old');
+    await CollectionSnapshotStorage.save(current);
+    var checkingCalls = 0;
+    var unpackCalls = 0;
+    final staging = _CancelStaging(
+      onDelete: () {},
+      snapshot: _snap(seriesId: 'new', name: 'New'),
+      createdAt: DateTime.utc(2026, 1, 1),
+    );
+
+    final result = await ShelfImportFlow.run(
+      currentSnapshot: current,
+      currentMemoryJson: '{}',
+      currentUiPrefsJson: '{}',
+      suspendPersistence: () {},
+      replaceNotifierState: (_) {},
+      resumePersistence: () {},
+      reloadUiPrefs: () async {},
+      deps: ShelfImportFlowDeps(
+        pickBackupFile: () async => const ShelfImportPickedFile(
+          path: r'C:\Downloads\BACKUP.ZIP',
+          name: 'BACKUP.ZIP',
+        ),
+        onChecking: () => checkingCalls++,
+        unpack: (_) async {
+          unpackCalls++;
+          return staging;
+        },
+        confirmReplace: (_) async => false,
+        clearPickerTemp: () async {},
+      ),
+    );
+
+    expect(result.status, ShelfImportFlowStatus.cancelled);
+    expect(checkingCalls, 1);
+    expect(unpackCalls, 1);
+    expect(
+      ShelfImportFlow.isZipBackupFilename(
+        path: r'C:\Downloads\BACKUP.ZIP',
+        name: 'BACKUP.ZIP',
+      ),
+      isTrue,
+    );
+  });
+
+  test('non-zip pick shows rejectedNotZip without Checking or staging',
+      () async {
+    final current = _snap(seriesId: 'old', name: 'Old');
+    await CollectionSnapshotStorage.save(current);
+    var checkingCalls = 0;
+    var unpackCalls = 0;
+    var suspended = false;
+
+    Future<void> expectRejected(ShelfImportPickedFile picked) async {
+      checkingCalls = 0;
+      unpackCalls = 0;
+      suspended = false;
+      final result = await ShelfImportFlow.run(
+        currentSnapshot: current,
+        currentMemoryJson: '{}',
+        currentUiPrefsJson: '{}',
+        suspendPersistence: () => suspended = true,
+        replaceNotifierState: (_) => fail('no replace'),
+        resumePersistence: () {},
+        reloadUiPrefs: () async {},
+        deps: ShelfImportFlowDeps(
+          pickBackupFile: () async => picked,
+          onChecking: () => checkingCalls++,
+          unpack: (_) async {
+            unpackCalls++;
+            fail('should not unpack');
+          },
+          clearPickerTemp: () async {},
+        ),
+      );
+      expect(result.status, ShelfImportFlowStatus.rejectedNotZip);
+      expect(checkingCalls, 0);
+      expect(unpackCalls, 0);
+      expect(suspended, isFalse);
+      final after = await CollectionSnapshotStorage.load();
+      expect(after!.shelfSeries.single.name, 'Old');
+    }
+
+    await expectRejected(
+      const ShelfImportPickedFile(path: '/tmp/notes.pdf', name: 'notes.pdf'),
+    );
+    await expectRejected(
+      const ShelfImportPickedFile(path: '/tmp/noext', name: 'noext'),
+    );
+  });
+
+  test('path .tmp with name backup.zip enters Checking', () async {
+    final current = _snap(seriesId: 'old', name: 'Old');
+    await CollectionSnapshotStorage.save(current);
+    var checkingCalls = 0;
+    var unpackCalls = 0;
+    final staging = _CancelStaging(
+      onDelete: () {},
+      snapshot: _snap(seriesId: 'new', name: 'New'),
+      createdAt: DateTime.utc(2026, 1, 1),
+    );
+
+    final result = await ShelfImportFlow.run(
+      currentSnapshot: current,
+      currentMemoryJson: '{}',
+      currentUiPrefsJson: '{}',
+      suspendPersistence: () {},
+      replaceNotifierState: (_) {},
+      resumePersistence: () {},
+      reloadUiPrefs: () async {},
+      deps: ShelfImportFlowDeps(
+        pickBackupFile: () async => const ShelfImportPickedFile(
+          path: '/cache/content.tmp',
+          name: 'backup.zip',
+        ),
+        onChecking: () => checkingCalls++,
+        unpack: (path) async {
+          expect(path, '/cache/content.tmp');
+          unpackCalls++;
+          return staging;
+        },
+        confirmReplace: (_) async => false,
+        clearPickerTemp: () async {},
+      ),
+    );
+
+    expect(result.status, ShelfImportFlowStatus.cancelled);
+    expect(checkingCalls, 1);
+    expect(unpackCalls, 1);
+  });
+
   test('confirm Cancel deletes staging and leaves shelf unchanged', () async {
     final current = _snap(seriesId: 'old', name: 'Old');
     await CollectionSnapshotStorage.save(current);
@@ -454,6 +624,133 @@ void main() {
         .whereType<File>()
         .where((f) => f.uri.pathSegments.last.startsWith('pre_import_'));
     expect(safetyFiles, isEmpty);
+  });
+
+  test('export then clear then import restores collection and wishlist',
+      () async {
+    final original = CollectionSnapshot(
+      shelfSeries: [
+        ShelfSeries(
+          id: 's1',
+          name: 'Kept',
+          brand: 'B',
+          ipName: 'I',
+          figures: [
+            ShelfFigure(
+              id: 'f1',
+              seriesId: 's1',
+              name: 'Fig',
+              rarity: 'Regular',
+              isSecret: false,
+            ),
+          ],
+          shelfAccent: const Color(0xFFE8F5E9),
+        ),
+      ],
+      figureStates: const {
+        'f1': TrackedFigure(
+          figureId: 'f1',
+          state: FigureCollectionState.owned,
+          ownedQuantity: 1,
+        ),
+      },
+      seriesWishlist: [
+        WishlistedCatalogSeries(
+          catalogSeriesId: 'wish-1',
+          name: 'Wish',
+          brand: 'B',
+          ipName: 'I',
+          imageKey: 'k',
+          addedAtMicros: 1,
+        ),
+      ],
+    );
+    final exported = await ShelfExportArchive.exportToZip(
+      snapshot: original,
+      memoryJson: '{}',
+      uiPrefsJson: '{}',
+    );
+    expect(exported.wrote, isTrue);
+
+    final empty = CollectionSnapshot.emptyTest();
+    await CollectionSnapshotStorage.save(empty);
+
+    final result = await ShelfImportFlow.run(
+      currentSnapshot: empty,
+      currentMemoryJson: '{}',
+      currentUiPrefsJson: '{}',
+      suspendPersistence: () {},
+      replaceNotifierState: (_) {},
+      resumePersistence: () {},
+      reloadUiPrefs: () async {},
+      deps: ShelfImportFlowDeps(
+        pickZipPath: () async => exported.zipPath,
+        confirmReplace: (_) async => true,
+        clearPickerTemp: () async {},
+        collectGarbage: (_) async {},
+        scheduleRecoveryPack: (_) {},
+      ),
+    );
+    expect(result.status, ShelfImportFlowStatus.success);
+    final loaded = await CollectionSnapshotStorage.load();
+    expect(loaded!.shelfSeries.single.name, 'Kept');
+    expect(loaded.seriesWishlist.single.catalogSeriesId, 'wish-1');
+    expect(
+      loaded.figureStates['f1']!.state,
+      FigureCollectionState.owned,
+    );
+  });
+
+  test('wishlist-only current shelf writes pre_import safety zip', () async {
+    final wishlistOnly = CollectionSnapshot(
+      shelfSeries: const [],
+      figureStates: const {},
+      seriesWishlist: [
+        WishlistedCatalogSeries(
+          catalogSeriesId: 'wish-1',
+          name: 'Wish',
+          brand: 'B',
+          ipName: 'I',
+          imageKey: 'k',
+          addedAtMicros: 1,
+        ),
+      ],
+    );
+    expect(wishlistOnly.isEmptyShelf, isFalse);
+    await CollectionSnapshotStorage.save(wishlistOnly);
+
+    final backup = await ShelfExportArchive.exportToZip(
+      snapshot: _snap(seriesId: 'n', name: 'N'),
+      memoryJson: '{}',
+      uiPrefsJson: '{}',
+    );
+
+    var safetyCalls = 0;
+    final result = await ShelfImportFlow.run(
+      currentSnapshot: wishlistOnly,
+      currentMemoryJson: '{}',
+      currentUiPrefsJson: '{}',
+      suspendPersistence: () {},
+      replaceNotifierState: (_) {},
+      resumePersistence: () {},
+      reloadUiPrefs: () async {},
+      deps: ShelfImportFlowDeps(
+        pickZipPath: () async => backup.zipPath,
+        confirmReplace: (_) async => true,
+        writeSafetyZip: ({
+          required snapshot,
+          required memoryJson,
+          required uiPrefsJson,
+        }) async {
+          safetyCalls++;
+          expect(snapshot.seriesWishlist, isNotEmpty);
+        },
+        clearPickerTemp: () async {},
+        collectGarbage: (_) async {},
+      ),
+    );
+    expect(result.status, ShelfImportFlowStatus.success);
+    expect(safetyCalls, 1);
   });
 
   test('safety zip failure cancels import and keeps old shelf', () async {
@@ -772,7 +1069,7 @@ void main() {
     expect(afterPaths.originalPath!.endsWith('.jpg'), isTrue);
     expect(File(afterPaths.originalPath!).readAsBytesSync(), backupThumb);
     expect(
-      await ShelfMediaVault.recoveredFromThumbForTest('shelf_media/originals/A.jpg'),
+      await ShelfMediaVault.restoredThumbForTest('shelf_media/originals/A.jpg'),
       isTrue,
     );
   });
@@ -910,15 +1207,73 @@ void main() {
     expect(ref, isNotEmpty);
   });
 
+  test('export/import round-trip preserves restoredThumb via manifest', () async {
+    final thumb = _jpegBytes(r: 90);
+    final ref = await ShelfMediaVault.installRecoveredThumb(
+      id: 'rtround',
+      thumbBytes: thumb,
+    );
+    expect(await ShelfMediaVault.restoredThumbForTest(ref), isTrue);
+
+    final snap = _snap(
+      seriesId: 's-rt',
+      name: 'Round',
+      mediaRef: ref,
+    );
+    final written = await ShelfExportArchive.exportToZip(
+      snapshot: snap,
+      memoryJson: '{}',
+      uiPrefsJson: '{}',
+      outputPath: '${tempCache.path}${Platform.pathSeparator}rt_round.zip',
+    );
+    expect(written.wrote, isTrue);
+    expect(written.hasRestoredThumb, isTrue);
+
+    final vaultRoot = Directory(
+      '${tempSupport.path}${Platform.pathSeparator}shelf_media',
+    );
+    if (await vaultRoot.exists()) {
+      await vaultRoot.delete(recursive: true);
+    }
+    ShelfMediaVault.resetForTest();
+    ShelfMediaVault.testSupportOverride = tempSupport;
+    await ShelfMediaVault.ensureReady();
+    expect(await ShelfMediaVault.isRestoredThumbId('rtround'), isFalse);
+
+    final staging = await ShelfExportArchive.unpackToStaging(written.zipPath!);
+    expect(staging.manifest.restoredThumbIds, contains('rtround'));
+    await ShelfExportArchive.commitStaging(staging);
+
+    expect(await ShelfMediaVault.isRestoredThumbId('rtround'), isTrue);
+  });
+
   test('import copy constants are English', () {
     expect(ShelfImportCopy.importTitle, 'Import shelf');
     expect(ShelfImportCopy.confirmTitle, 'Replace your shelf?');
     expect(ShelfImportCopy.confirmReplace, 'Replace shelf');
+    expect(
+      ShelfImportCopy.confirmBody,
+      'Your current shelf, including your wishlist, will be replaced.',
+    );
+    expect(
+      ShelfImportCopy.confirmSafetyNote,
+      'A safety copy is saved on this device for 7 days.',
+    );
+    expect(ShelfImportCopy.confirmBody.toLowerCase(), isNot(contains('restore')));
+    expect(
+      ShelfImportCopy.confirmSafetyNote.toLowerCase(),
+      isNot(contains('restore')),
+    );
+    expect(ShelfImportCopy.confirmBody, isNot(contains("can't be restored")));
     expect(ShelfImportCopy.checking, 'Checking backup…');
-    expect(ShelfImportCopy.successSnack, 'Shelf imported');
+    expect(ShelfImportCopy.successSnack, 'Shelf imported.');
     expect(ShelfImportCopy.failedSnack, contains('Couldn\'t import'));
     expect(ShelfImportCopy.tooLargeSnack, contains('2 GB'));
     expect(ShelfImportCopy.safetyFailedSnack, contains('safety copy'));
+    expect(
+      ShelfImportCopy.chooseZipSnack,
+      'Choose a Shelfy backup (.zip) file.',
+    );
 
     expect(
       ShelfImportCopy.confirmSummary(
@@ -935,6 +1290,24 @@ void main() {
         createdDate: 'Mar 15, 2026',
       ),
       'This backup has 2 series and 2 figures, created Mar 15, 2026.',
+    );
+    expect(
+      ShelfImportCopy.confirmSummary(
+        seriesCount: 1,
+        figureCount: 1,
+        wishlistCount: 1,
+        createdDate: 'Jan 1, 2026',
+      ),
+      'This backup has 1 series, 1 figure and 1 wishlist item, created Jan 1, 2026.',
+    );
+    expect(
+      ShelfImportCopy.confirmSummary(
+        seriesCount: 2,
+        figureCount: 2,
+        wishlistCount: 2,
+        createdDate: 'Mar 15, 2026',
+      ),
+      'This backup has 2 series, 2 figures and 2 wishlist items, created Mar 15, 2026.',
     );
     expect(
       ShelfImportCopy.formatCreatedDate(DateTime.utc(2026, 1, 1)),
@@ -962,6 +1335,7 @@ void main() {
       ShelfImportCopy.failedSnack,
       ShelfImportCopy.tooLargeSnack,
       ShelfImportCopy.safetyFailedSnack,
+      ShelfImportCopy.chooseZipSnack,
       ShelfImportCopy.confirmSummary(
         seriesCount: 1,
         figureCount: 1,

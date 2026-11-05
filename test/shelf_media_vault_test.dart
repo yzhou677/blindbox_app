@@ -278,7 +278,7 @@ void main() {
     expect(after.originalPath!.endsWith('.jpg'), isTrue);
     expect(File(after.originalPath!).readAsBytesSync(), newThumb);
     expect(
-      await ShelfMediaVault.recoveredFromThumbForTest(
+      await ShelfMediaVault.restoredThumbForTest(
         'shelf_media/originals/A.jpg',
       ),
       isTrue,
@@ -320,7 +320,7 @@ void main() {
     expect(File(after.originalPath!).readAsBytesSync(), originalBytes);
     expect(File(after.thumbPath!).readAsBytesSync(), newThumb);
     expect(
-      await ShelfMediaVault.recoveredFromThumbForTest(
+      await ShelfMediaVault.restoredThumbForTest(
         'shelf_media/originals/keep.jpg',
       ),
       isFalse,
@@ -352,5 +352,114 @@ void main() {
     final after = await ShelfMediaVault.pathsForId('pr3');
     expect(File(after.originalPath!).readAsBytesSync(), originalBytes);
     expect(File(after.thumbPath!).readAsBytesSync(), otherThumb);
+  });
+
+  test('installRecoveredThumb marks restoredThumb when original missing',
+      () async {
+    final thumb = _jpegBytes(width: 24, height: 24);
+    final ref = await ShelfMediaVault.installRecoveredThumb(
+      id: 'rt1',
+      thumbBytes: thumb,
+    );
+    expect(await ShelfMediaVault.restoredThumbForTest(ref), isTrue);
+    expect(await ShelfMediaVault.isRestoredThumbId('rt1'), isTrue);
+  });
+
+  test('legacy recoveredFromThumb JSON reads as restoredThumb', () async {
+    await ShelfMediaVault.ensureReady();
+    final indexFile = File(
+      '${tempSupport.path}${Platform.pathSeparator}shelf_media'
+      '${Platform.pathSeparator}index.json',
+    );
+    await indexFile.parent.create(recursive: true);
+    final now = DateTime.utc(2026, 1, 2).toIso8601String();
+    await indexFile.writeAsString(
+      '{'
+      '"entries":{'
+      '"legacy":{'
+      '"original":"originals/legacy.jpg",'
+      '"thumb":"thumbs/legacy.jpg",'
+      '"createdAt":"$now",'
+      '"lastAccessedAt":"$now",'
+      '"recoveredFromThumb":true'
+      '}'
+      '}'
+      '}',
+      flush: true,
+    );
+    final originals = Directory(
+      '${tempSupport.path}${Platform.pathSeparator}shelf_media'
+      '${Platform.pathSeparator}originals',
+    );
+    final thumbs = Directory(
+      '${tempSupport.path}${Platform.pathSeparator}shelf_media'
+      '${Platform.pathSeparator}thumbs',
+    );
+    await originals.create(recursive: true);
+    await thumbs.create(recursive: true);
+    final bytes = _jpegBytes(width: 16, height: 16);
+    await File('${originals.path}${Platform.pathSeparator}legacy.jpg')
+        .writeAsBytes(bytes, flush: true);
+    await File('${thumbs.path}${Platform.pathSeparator}legacy.jpg')
+        .writeAsBytes(bytes, flush: true);
+
+    ShelfMediaVault.resetForTest();
+    ShelfMediaVault.testSupportOverride = tempSupport;
+    await ShelfMediaVault.ensureReady();
+
+    expect(await ShelfMediaVault.isRestoredThumbId('legacy'), isTrue);
+    expect(
+      await ShelfMediaVault.restoredThumbForTest(
+        'shelf_media/originals/legacy.jpg',
+      ),
+      isTrue,
+    );
+  });
+
+  test('missing restoredThumb field defaults to false', () async {
+    await ShelfMediaVault.installExportedOriginal(
+      id: 'plain',
+      originalBytes: _jpegBytes(width: 20, height: 20),
+      ext: '.jpg',
+    );
+    expect(await ShelfMediaVault.isRestoredThumbId('plain'), isFalse);
+  });
+
+  test('importFromPath new photo clears restoredThumb for new id', () async {
+    final thumb = _jpegBytes(width: 24, height: 24);
+    final oldRef = await ShelfMediaVault.installRecoveredThumb(
+      id: 'oldrt',
+      thumbBytes: thumb,
+    );
+    expect(await ShelfMediaVault.restoredThumbForTest(oldRef), isTrue);
+
+    final source = File(
+      '${tempSupport.path}${Platform.pathSeparator}new_photo.jpg',
+    );
+    await source.writeAsBytes(_jpegBytes(width: 64, height: 64), flush: true);
+    final newRef = await ShelfMediaVault.importFromPath(source.path);
+    expect(newRef, isNotNull);
+    expect(await ShelfMediaVault.restoredThumbForTest(newRef!), isFalse);
+  });
+
+  test('installExportedOriginal clears restoredThumb unless flagged', () async {
+    final thumb = _jpegBytes(width: 18, height: 18);
+    await ShelfMediaVault.installRecoveredThumb(id: 'clr', thumbBytes: thumb);
+    expect(await ShelfMediaVault.isRestoredThumbId('clr'), isTrue);
+
+    await ShelfMediaVault.installExportedOriginal(
+      id: 'clr',
+      originalBytes: _jpegBytes(width: 40, height: 40),
+      ext: '.jpg',
+    );
+    expect(await ShelfMediaVault.isRestoredThumbId('clr'), isFalse);
+
+    await ShelfMediaVault.installExportedOriginal(
+      id: 'clr',
+      originalBytes: _jpegBytes(width: 42, height: 42),
+      ext: '.jpg',
+      restoredThumb: true,
+    );
+    expect(await ShelfMediaVault.isRestoredThumbId('clr'), isTrue);
   });
 }

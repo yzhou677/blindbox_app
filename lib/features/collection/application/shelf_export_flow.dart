@@ -61,11 +61,13 @@ class ShelfExportFlowResult {
   const ShelfExportFlowResult({
     required this.status,
     this.mediaIncomplete = false,
+    this.hasRestoredThumb = false,
     this.estimatedBytes = 0,
   });
 
   final ShelfExportFlowStatus status;
   final bool mediaIncomplete;
+  final bool hasRestoredThumb;
   final int estimatedBytes;
 }
 
@@ -90,6 +92,12 @@ abstract final class ShelfExportFlow {
     final exportFn = deps.export ?? _defaultExport;
     final shareFn = deps.shareZip ?? _defaultShare;
     final deleteFn = deps.deleteFile ?? _defaultDelete;
+
+    if (snapshot.isEmptyShelf) {
+      return const ShelfExportFlowResult(
+        status: ShelfExportFlowStatus.cancelled,
+      );
+    }
 
     try {
       await cleanupFn();
@@ -153,12 +161,14 @@ abstract final class ShelfExportFlow {
         return ShelfExportFlowResult(
           status: ShelfExportFlowStatus.rejectedTooLarge,
           mediaIncomplete: write.mediaIncomplete,
+          hasRestoredThumb: write.hasRestoredThumb,
           estimatedBytes: write.uncompressedBytes,
         );
       }
       return ShelfExportFlowResult(
         status: ShelfExportFlowStatus.failed,
         mediaIncomplete: write.mediaIncomplete,
+        hasRestoredThumb: write.hasRestoredThumb,
         estimatedBytes: write.uncompressedBytes,
       );
     }
@@ -172,6 +182,7 @@ abstract final class ShelfExportFlow {
       return ShelfExportFlowResult(
         status: ShelfExportFlowStatus.failed,
         mediaIncomplete: write.mediaIncomplete,
+        hasRestoredThumb: write.hasRestoredThumb,
         estimatedBytes: write.uncompressedBytes,
       );
     }
@@ -180,6 +191,7 @@ abstract final class ShelfExportFlow {
     return ShelfExportFlowResult(
       status: ShelfExportFlowStatus.success,
       mediaIncomplete: write.mediaIncomplete,
+      hasRestoredThumb: write.hasRestoredThumb,
       estimatedBytes: write.uncompressedBytes,
     );
   }

@@ -1,13 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
 import 'package:blindbox_app/features/collection/application/collection_shelf_ui_prefs_provider.dart';
 import 'package:blindbox_app/features/collection/application/shelf_backup_commit.dart';
+import 'package:blindbox_app/features/collection/application/shelf_import_flow.dart';
 import 'package:blindbox_app/features/collection/application/shelf_recovery_import.dart';
 import 'package:blindbox_app/features/collection/bootstrap/collection_app_bootstrap.dart';
 import 'package:blindbox_app/features/collection/bootstrap/collection_recovery_gate.dart';
+import 'package:blindbox_app/features/collection/data/android_backup_notifier.dart';
 import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
 import 'package:blindbox_app/features/collection/data/collection_seed_data.dart';
 import 'package:blindbox_app/features/collection/data/shelf_media_vault.dart';
@@ -19,6 +20,7 @@ import 'package:blindbox_app/features/collection/widgets/shelf_recovery_decision
 import 'package:blindbox_app/features/collection/widgets/shelf_recovery_dialog.dart';
 import 'package:blindbox_app/shared/widgets/collectible_thumb_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
@@ -149,17 +151,27 @@ void main() {
     ShelfRecoveryPack.resetForTest();
     CollectionRecoveryGate.resetForTest();
     CollectionMemoryStore.instance.resetForTest();
+    AndroidBackupNotifier.resetForTest();
     ShelfBackupCommit.testBeforeMemoryHook = null;
     ShelfBackupCommit.testBeforeSnapshotSaveHook = null;
     ShelfMediaVault.testSupportOverride = tempSupport;
     ShelfRecoveryPack.testSupportOverride = tempSupport;
     ShelfRecoveryPack.debounceEnabledForTest = false;
+    // Silence MissingPluginException from BackupManager notify in pack IO.
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      AndroidBackupNotifier.channel,
+      (_) async => null,
+    );
     await ShelfMediaVault.ensureReady();
   });
 
   tearDown(() async {
     ShelfBackupCommit.testBeforeMemoryHook = null;
     ShelfBackupCommit.testBeforeSnapshotSaveHook = null;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(AndroidBackupNotifier.channel, null);
+    AndroidBackupNotifier.resetForTest();
     CollectionRecoveryGate.resetForTest();
     CollectionMemoryStore.instance.resetForTest();
     ShelfMediaVault.resetForTest();
@@ -332,7 +344,7 @@ void main() {
     final abs = ShelfMediaVault.resolveToFilePathSync(jpgRef);
     expect(abs, isNotNull);
     expect(File(abs!).existsSync(), isTrue);
-    expect(await ShelfMediaVault.recoveredFromThumbForTest(jpgRef), isTrue);
+    expect(await ShelfMediaVault.restoredThumbForTest(jpgRef), isTrue);
   });
 
   test('png original ref is rewritten to .jpg and resolves after import', () async {
@@ -470,15 +482,82 @@ void main() {
     },
   );
 
-  testWidgets('dialog shows copy, buttons, and system back keeps panel', (
+  test('recovery welcome summary uses shared inventory helper', () {
+    expect(
+      ShelfRecoveryDialogCopy.androidBackupCadenceNote,
+      'Android backs up about once a day, so your latest changes may not be included.',
+    );
+    expect(
+      ShelfRecoveryDialogCopy.importFailed,
+      "Couldn't restore your shelf. Try again or start fresh.",
+    );
+    expect(ShelfRecoveryDialogCopy.importFailed, isNot(contains('’')));
+    expect(ShelfRecoveryDialogCopy.startFreshFailed, isNot(contains('’')));
+    expect(
+      ShelfRecoveryDialogCopy.summaryLine(
+        seriesCount: 5,
+        figureCount: 35,
+        wishlistCount: 6,
+        createdAt: DateTime.utc(2026, 11, 3, 18),
+      ),
+      '5 series, 35 figures and 6 wishlist items, saved '
+      '${ShelfImportCopy.formatCreatedDate(DateTime.utc(2026, 11, 3, 18))}.',
+    );
+    expect(
+      ShelfRecoveryDialogCopy.summaryLine(
+        seriesCount: 1,
+        figureCount: 1,
+        wishlistCount: 1,
+        createdAt: DateTime.utc(2026, 1, 1),
+      ),
+      contains('1 series, 1 figure and 1 wishlist item, saved'),
+    );
+    expect(
+      ShelfRecoveryDialogCopy.summaryLine(
+        seriesCount: 2,
+        figureCount: 2,
+        wishlistCount: 0,
+        createdAt: DateTime.utc(2026, 3, 15),
+      ),
+      allOf(
+        contains('2 series and 2 figures, saved'),
+        isNot(contains('wishlist')),
+      ),
+    );
+    expect(
+      ShelfRecoveryDialogCopy.summaryLine(
+        seriesCount: null,
+        figureCount: 1,
+        createdAt: DateTime.utc(2026, 1, 1),
+      ),
+      ShelfRecoveryDialogCopy.summaryFallback,
+    );
+    expect(
+      ShelfRecoveryDialogCopy.summaryLine(
+        seriesCount: 1,
+        figureCount: 1,
+        createdAt: null,
+      ),
+      ShelfRecoveryDialogCopy.summaryFallback,
+    );
+  });
+
+  testWidgets('welcome page shows icon, copy, summary, and blocks system back', (
     tester,
   ) async {
     var imported = false;
     var fresh = false;
+    final summary = ShelfRecoveryDialogCopy.summaryLine(
+      seriesCount: 5,
+      figureCount: 35,
+      wishlistCount: 6,
+      createdAt: DateTime.utc(2026, 11, 3, 18),
+    );
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
           body: ShelfRecoveryDecisionPanel(
+            summaryLine: summary,
             onImport: () => imported = true,
             onStartFresh: () => fresh = true,
           ),
@@ -486,27 +565,128 @@ void main() {
       ),
     );
 
+    expect(find.byKey(const Key('shelf_recovery_welcome_icon')), findsOneWidget);
     expect(find.text(ShelfRecoveryDialogCopy.title), findsOneWidget);
-    expect(find.text(ShelfRecoveryDialogCopy.body), findsOneWidget);
+    expect(find.text(ShelfRecoveryDialogCopy.subtitle), findsOneWidget);
+    expect(find.text(summary), findsOneWidget);
+    expect(find.textContaining('6 wishlist items'), findsOneWidget);
+    expect(
+      find.text(ShelfRecoveryDialogCopy.androidBackupCadenceNote),
+      findsOneWidget,
+    );
     expect(find.text(ShelfRecoveryDialogCopy.importLabel), findsOneWidget);
     expect(find.text(ShelfRecoveryDialogCopy.startFreshLabel), findsOneWidget);
+    expect(find.text('Found a shelf on this device'), findsNothing);
+    expect(find.text('Import'), findsNothing);
 
     await tester.tap(find.byKey(const Key('shelf_recovery_import')));
     expect(imported, isTrue);
     await tester.tap(find.byKey(const Key('shelf_recovery_start_fresh')));
     expect(fresh, isTrue);
 
-    await tester.binding.handlePopRoute();
+    final handled = await tester.binding.handlePopRoute();
     await tester.pump();
+    expect(handled, isTrue);
     expect(find.text(ShelfRecoveryDialogCopy.title), findsOneWidget);
     expect(find.byType(ShelfRecoveryDecisionPanel), findsOneWidget);
   });
 
-  testWidgets('Start fresh confirm cancel vs delete', (tester) async {
-    late BuildContext dialogContext;
+  testWidgets('welcome summary omits wishlist when W=0 and uses fallback', (
+    tester,
+  ) async {
+    final noWish = ShelfRecoveryDialogCopy.summaryLine(
+      seriesCount: 1,
+      figureCount: 1,
+      wishlistCount: 0,
+      createdAt: DateTime.utc(2026, 1, 1),
+    );
     await tester.pumpWidget(
       MaterialApp(
-        theme: ThemeData(useMaterial3: true),
+        home: Scaffold(
+          body: ShelfRecoveryDecisionPanel(
+            summaryLine: noWish,
+            onImport: () {},
+            onStartFresh: () {},
+          ),
+        ),
+      ),
+    );
+    expect(find.text(noWish), findsOneWidget);
+    expect(find.textContaining('wishlist'), findsNothing);
+    expect(find.textContaining('1 series and 1 figure'), findsOneWidget);
+    expect(
+      find.text(ShelfRecoveryDialogCopy.androidBackupCadenceNote),
+      findsOneWidget,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ShelfRecoveryDecisionPanel(
+            summaryLine: ShelfRecoveryDialogCopy.summaryFallback,
+            onImport: () {},
+            onStartFresh: () {},
+          ),
+        ),
+      ),
+    );
+    expect(
+      find.text(ShelfRecoveryDialogCopy.summaryFallback),
+      findsOneWidget,
+    );
+    expect(
+      find.text(ShelfRecoveryDialogCopy.androidBackupCadenceNote),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('welcome page golden', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(393, 852));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final summary = ShelfRecoveryDialogCopy.summaryLine(
+      seriesCount: 5,
+      figureCount: 35,
+      wishlistCount: 6,
+      createdAt: DateTime.utc(2026, 11, 3, 18),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(
+          useMaterial3: true,
+          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF6B8F71)),
+        ),
+        home: Scaffold(
+          body: ShelfRecoveryDecisionPanel(
+            key: const Key('shelf_recovery_welcome_golden'),
+            summaryLine: summary,
+            onImport: () {},
+            onStartFresh: () {},
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await expectLater(
+      find.byKey(const Key('shelf_recovery_welcome_golden')),
+      matchesGoldenFile('goldens/shelf_recovery_welcome/welcome.png'),
+    );
+  });
+
+  testWidgets('Start fresh confirm cancel vs delete', (tester) async {
+    late BuildContext dialogContext;
+    final theme = ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: const Color(0xFF6B8F71),
+        error: const Color(0xFFB3261E),
+        onError: const Color(0xFFFFFFFF),
+      ),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: theme,
         home: Builder(
           builder: (context) {
             dialogContext = context;
@@ -517,10 +697,32 @@ void main() {
     );
     await tester.pump();
 
+    expect(ShelfRecoveryDialogCopy.confirmTitle, 'Delete your old shelf?');
+    expect(
+      ShelfRecoveryDialogCopy.confirmBody,
+      'Your old shelf will be permanently deleted. This can\'t be undone.',
+    );
+    expect(ShelfRecoveryDialogCopy.confirmDelete, 'Delete');
+    expect(find.text('Start fresh?'), findsNothing);
+
     final cancelFuture = showShelfRecoveryStartFreshConfirm(dialogContext);
     await tester.pump();
     await tester.pump();
+    expect(find.text(ShelfRecoveryDialogCopy.confirmTitle), findsOneWidget);
     expect(find.text(ShelfRecoveryDialogCopy.confirmBody), findsOneWidget);
+    expect(find.text(ShelfRecoveryDialogCopy.confirmCancel), findsOneWidget);
+    expect(find.text(ShelfRecoveryDialogCopy.confirmDelete), findsOneWidget);
+
+    final deleteButton = tester.widget<FilledButton>(
+      find.byKey(const Key('shelf_recovery_confirm_delete')),
+    );
+    final resolved = deleteButton.style!.backgroundColor!
+        .resolve(<WidgetState>{})!;
+    expect(resolved, theme.colorScheme.error);
+    final onError = deleteButton.style!.foregroundColor!
+        .resolve(<WidgetState>{})!;
+    expect(onError, theme.colorScheme.onError);
+
     await tester.tap(find.byKey(const Key('shelf_recovery_confirm_cancel')));
     await tester.pump();
     expect(await cancelFuture, isFalse);
@@ -553,6 +755,12 @@ void main() {
     await tester.pumpWidget(_decisionApp(pack));
     await tester.pump();
     expect(find.text(ShelfRecoveryDialogCopy.title), findsOneWidget);
+    expect(find.text(ShelfRecoveryDialogCopy.subtitle), findsOneWidget);
+    expect(find.text(ShelfRecoveryDialogCopy.importLabel), findsOneWidget);
+    expect(
+      find.text(ShelfRecoveryDialogCopy.summaryLineForPack(pack)),
+      findsOneWidget,
+    );
 
     await tester.tap(find.byKey(const Key('shelf_recovery_import')));
     await _pumpDecisionIo(tester, done: find.text('main'));
@@ -592,7 +800,17 @@ void main() {
       done: find.text(ShelfRecoveryDialogCopy.importFailed),
     );
 
+    expect(
+      ShelfRecoveryDialogCopy.importFailed,
+      "Couldn't restore your shelf. Try again or start fresh.",
+    );
     expect(find.text(ShelfRecoveryDialogCopy.importFailed), findsOneWidget);
+    expect(
+      find.text(
+        "Couldn't restore your shelf. Try again or start fresh.",
+      ),
+      findsOneWidget,
+    );
     expect(find.text(ShelfRecoveryDialogCopy.title), findsOneWidget);
     expect(find.text('main'), findsNothing);
     expect(CollectionRecoveryGate.isPending, isTrue);
@@ -662,6 +880,13 @@ void main() {
     });
     CollectionRecoveryGate.enterPending();
 
+    final dataChangedCalls = <MethodCall>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(AndroidBackupNotifier.channel, (call) async {
+      dataChangedCalls.add(call);
+      return null;
+    });
+
     await tester.pumpWidget(_decisionApp(pack));
     await tester.pump();
     await tester.tap(find.byKey(const Key('shelf_recovery_start_fresh')));
@@ -676,6 +901,10 @@ void main() {
     });
     expect(CollectionRecoveryGate.isPending, isFalse);
     expect(CollectionAppBootstrap.takeInitialSnapshot(), isNotNull);
+    expect(
+      dataChangedCalls.map((c) => c.method),
+      contains(AndroidBackupNotifier.methodDataChanged),
+    );
   });
 
   test('Start fresh deletes pack and clears gate', () async {

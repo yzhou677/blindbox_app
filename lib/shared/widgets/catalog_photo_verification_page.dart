@@ -538,7 +538,7 @@ class _CatalogPhotoVerificationPageState
           ? 'We found a close match'
           : 'We found a few close matches',
     CatalogPhotoScanPresentationState.noConfidentMatch =>
-      'We couldn’t find a close match.',
+      'We couldn\'t find a close match.',
     CatalogPhotoScanPresentationState.recoverableFailure => 'Scan unavailable',
   };
 
@@ -578,15 +578,15 @@ class _CatalogPhotoVerificationPageState
         style: subtitle,
       ),
       CatalogPhotoScanPresentationState.noConfidentMatch => Text(
-        'We compared your photo with the Shelfy catalog, but couldn’t identify a confident match.',
+        'We compared your photo with the Shelfy catalog, but couldn\'t identify a confident match.',
         key: const ValueKey('no-match-guidance'),
         style: subtitle,
       ),
       CatalogPhotoScanPresentationState.recoverableFailure => Text(
         _failureKind == CatalogRecognitionFailureKind.qualityUnavailable
-            ? 'Photo quality couldn’t be checked just now.'
+            ? 'Photo quality couldn\'t be checked just now.'
             : _failureKind == CatalogRecognitionFailureKind.imagePreparation
-            ? 'This selection couldn’t be prepared.'
+            ? 'This selection couldn\'t be prepared.'
             : 'Something got in the way — try again in a moment.',
         style: subtitle,
       ),

@@ -1027,10 +1027,10 @@ void main() {
       lessThanOrEqualTo(360),
     );
     expect(find.byKey(const Key('recognition-finding-progress')), findsNothing);
-    expect(find.text('We couldn’t find a close match.'), findsOneWidget);
+    expect(find.text("We couldn't find a close match."), findsOneWidget);
     expect(
       find.text(
-        'We compared your photo with the Shelfy catalog, but couldn’t identify a confident match.',
+        "We compared your photo with the Shelfy catalog, but couldn't identify a confident match.",
       ),
       findsOneWidget,
     );
@@ -1102,7 +1102,7 @@ void main() {
         find.byKey(const Key('recognition-finding-checklist')),
         findsOneWidget,
       );
-      expect(find.text('We couldn’t find a close match.'), findsOneWidget);
+      expect(find.text("We couldn't find a close match."), findsOneWidget);
     },
   );
 
@@ -1691,10 +1691,10 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    expect(find.text('We couldn’t find a close match.'), findsOneWidget);
+    expect(find.text("We couldn't find a close match."), findsOneWidget);
     expect(
       find.text(
-        'We compared your photo with the Shelfy catalog, but couldn’t identify a confident match.',
+        "We compared your photo with the Shelfy catalog, but couldn't identify a confident match.",
       ),
       findsOneWidget,
     );

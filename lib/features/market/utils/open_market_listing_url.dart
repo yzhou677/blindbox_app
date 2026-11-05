@@ -20,5 +20,5 @@ Future<void> openMarketListingUrl(BuildContext context, String? url) async {
 
   ScaffoldMessenger.of(
     context,
-  ).showSnackBar(const SnackBar(content: Text('Could not open listing')));
+  ).showSnackBar(const SnackBar(content: Text('Couldn\'t open listing.')));
 }

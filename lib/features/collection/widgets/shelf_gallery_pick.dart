@@ -25,7 +25,7 @@ Future<String?> pickShelfGalleryImage(BuildContext context) async {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Couldn’t open photos ($e)'),
+          content: Text('Couldn\'t open photos ($e)'),
           behavior: SnackBarBehavior.floating,
         ),
       );

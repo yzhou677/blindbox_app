@@ -137,6 +137,58 @@ void main() {
     expect(find.text(CollectionVocabulary.cancel), findsOneWidget);
   });
 
+  testWidgets('Remove series confirm uses straight-quoted shelf copy', (
+    tester,
+  ) async {
+    final series = _customSeries();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          collectionNotifierProvider.overrideWith(
+            () => _ManageTestNotifier(
+              CollectionSnapshot(shelfSeries: [series], figureStates: const {}),
+            ),
+          ),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: Scaffold(
+            body: Consumer(
+              builder: (context, ref, _) => TextButton(
+                onPressed: () => confirmAndRemoveSeries(
+                  context: context,
+                  ref: ref,
+                  seriesId: series.id,
+                  seriesName: series.name,
+                ),
+                child: const Text('remove'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('remove'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Remove series?'), findsOneWidget);
+    expect(
+      find.text('"Handmade Set" will leave your shelf.'),
+      findsOneWidget,
+    );
+    expect(find.text('“Handmade Set” will leave your shelf.'), findsNothing);
+
+    final removeButton = tester.widget<FilledButton>(
+      find.widgetWithText(
+        FilledButton,
+        CollectionVocabulary.removeFromCollection,
+      ),
+    );
+    expect(removeButton.style?.backgroundColor, isNull);
+  });
+
   testWidgets('long-press on card invokes management callback', (tester) async {
     final series = testShelfSeries();
     var managed = 0;

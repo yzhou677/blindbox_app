@@ -251,6 +251,42 @@ void main() {
     container.dispose();
   });
 
+  testWidgets('owned CTA Remove series confirm uses straight-quoted copy', (
+    tester,
+  ) async {
+    const dropId = 'remove_copy_drop';
+    final snapshot = CollectionSnapshot(
+      shelfSeries: [
+        _shelf(
+          id: 's1',
+          name: 'Moments Series',
+          brand: 'POP MART',
+          catalogTemplateId: dropId,
+        ),
+      ],
+      figureStates: const {},
+    );
+    final release = _release(
+      dropId: dropId,
+      seriesName: 'Moments Series',
+      brand: 'POP MART',
+    );
+
+    await _pumpButton(tester, snapshot: snapshot, release: release);
+    expect(find.text('In your collection'), findsOneWidget);
+
+    await tester.tap(find.text('In your collection'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Remove series?'), findsOneWidget);
+    expect(
+      find.text('"Moments Series" will leave your shelf.'),
+      findsOneWidget,
+    );
+    expect(find.text('“Moments Series” will leave your shelf.'), findsNothing);
+  });
+
   testWidgets('release wishlist heart adds with snackbar undo', (tester) async {
     final release = _release(
       dropId: 'wish_drop',

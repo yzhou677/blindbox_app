@@ -1,0 +1,602 @@
+import 'dart:async';
+
+import 'package:blindbox_app/core/layout/feed_rhythm.dart';
+import 'package:blindbox_app/core/theme/app_spacing.dart';
+import 'package:blindbox_app/core/theme/app_typography.dart';
+import 'package:blindbox_app/core/theme/shelfy_symbols.dart';
+import 'package:blindbox_app/features/collection/application/collection_notifier.dart';
+import 'package:blindbox_app/features/collection/application/collection_shelf_ui_prefs_provider.dart';
+import 'package:blindbox_app/features/collection/application/shelf_export_flow.dart';
+import 'package:blindbox_app/features/collection/application/shelf_import_flow.dart';
+import 'package:blindbox_app/features/collection/data/collection_memory_store.dart';
+import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_modal_overlays.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
+import 'package:blindbox_app/shared/widgets/collectible_bottom_sheet.dart';
+import 'package:blindbox_app/shared/widgets/collectible_sheet_chrome.dart';
+import 'package:blindbox_app/shared/widgets/shelfy_progress_dialog.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_symbols_icons/symbols.dart';
+
+/// English copy for Collection → Shelf backup sheet / progress.
+abstract final class ShelfBackupCopy {
+  ShelfBackupCopy._();
+
+  static const sheetTitle = 'Shelf backup';
+  static const exportTitle = 'Export shelf';
+  static const exportSubtitle = 'Share a full backup with original photos';
+  static const exportDisabledSubtitle = 'Add a figure to back up your shelf';
+  static const importTitle = ShelfImportCopy.importTitle;
+  static const importSubtitle = ShelfImportCopy.importSubtitle;
+
+  static const preparing = 'Preparing backup…';
+  static const checking = ShelfImportCopy.checking;
+  static const importing = ShelfImportCopy.importing;
+
+  static const exportMediaIncomplete =
+      'Some photos were missing and weren\'t included.';
+  static const exportReadySnack = 'Backup ready to share.';
+  static const exportRestoredThumbSnack =
+      'Backup ready to share. Some photos are low-resolution copies restored from Android backup.';
+  static const exportMediaIncompleteWithRestoredThumb =
+      'Some photos were missing and weren\'t included. Some photos are low-resolution copies restored from Android backup.';
+  static const exportTooLarge =
+      'This shelf is too large to export (over 2 GB).';
+  static const exportFailed = 'Couldn\'t create a backup. Try again.';
+
+  static const largeBackupTitle = 'Large backup';
+  static String largeBackupBody(String humanSize) =>
+      'This backup is about $humanSize. Sharing it may take a while.';
+  static const largeBackupCancel = CollectionVocabulary.cancel;
+  static const largeBackupContinue = 'Continue';
+
+  /// Success SnackBar after export share. Missing photos take priority.
+  static String exportSuccessSnack({
+    required bool mediaIncomplete,
+    required bool hasRestoredThumb,
+  }) {
+    if (mediaIncomplete && hasRestoredThumb) {
+      return exportMediaIncompleteWithRestoredThumb;
+    }
+    if (mediaIncomplete) return exportMediaIncomplete;
+    if (hasRestoredThumb) return exportRestoredThumbSnack;
+    return exportReadySnack;
+  }
+}
+
+enum _ShelfBackupSheetAction { export, import }
+
+/// Collection AppBar backup action: sheet → progress dialog → export/import.
+class ShelfBackupButton extends ConsumerStatefulWidget {
+  const ShelfBackupButton({
+    super.key,
+    this.exportDeps = const ShelfExportFlowDeps(),
+    this.importDeps = const ShelfImportFlowDeps(),
+    this.confirmLargeBackupOverride,
+    this.confirmReplaceOverride,
+  });
+
+  @visibleForTesting
+  final ShelfExportFlowDeps exportDeps;
+
+  @visibleForTesting
+  final ShelfImportFlowDeps importDeps;
+
+  @visibleForTesting
+  final Future<bool> Function(String humanSize)? confirmLargeBackupOverride;
+
+  @visibleForTesting
+  final Future<bool> Function(ShelfImportBackupSummary summary)?
+      confirmReplaceOverride;
+
+  @override
+  ConsumerState<ShelfBackupButton> createState() => _ShelfBackupButtonState();
+}
+
+class _ShelfBackupButtonState extends ConsumerState<ShelfBackupButton> {
+  bool _busy = false;
+  final ValueNotifier<String> _progressLabel =
+      ValueNotifier<String>(ShelfBackupCopy.preparing);
+
+  /// Completes when the current progress dialog route is fully removed.
+  Completer<void>? _progressClosed;
+
+  /// Exact progress [DialogRoute] (removed via [Navigator.removeRoute]).
+  DialogRoute<void>? _progressRoute;
+
+  /// Navigator that owns [_progressRoute] (root navigator).
+  NavigatorState? _progressNavigator;
+
+  bool get _progressVisible => _progressRoute != null;
+
+  @override
+  void dispose() {
+    _removeProgressRoute();
+    _progressLabel.dispose();
+    super.dispose();
+  }
+
+  Future<_ShelfBackupSheetAction?> _openSheet(CollectionSnapshot snapshot) {
+    return showCollectionModalBottomSheet<_ShelfBackupSheetAction>(
+      context: context,
+      wrapContentHeight: true,
+      builder: (ctx, scrollController) {
+        return _ShelfBackupSheetBody(
+          snapshot: snapshot,
+          scrollController: scrollController,
+        );
+      },
+    );
+  }
+
+  /// Shows a real dialog route so [PopScope] consumes system back.
+  ///
+  /// Label updates reuse the same route via [_progressLabel] (no flicker).
+  void _ensureProgress(String label) {
+    _progressLabel.value = label;
+    if (_progressRoute != null) return;
+    if (!mounted) return;
+
+    final navigator = Navigator.of(context, rootNavigator: true);
+    final closed = Completer<void>();
+    final route = DialogRoute<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return PopScope(
+          canPop: false,
+          child: ValueListenableBuilder<String>(
+            valueListenable: _progressLabel,
+            builder: (context, value, _) {
+              return ShelfyProgressDialogContent(
+                key: const Key('shelf_backup_progress_label'),
+                label: value,
+              );
+            },
+          ),
+        );
+      },
+    );
+
+    _progressRoute = route;
+    _progressNavigator = navigator;
+    _progressClosed = closed;
+
+    unawaited(
+      navigator.push(route).whenComplete(() {
+        if (identical(_progressRoute, route)) {
+          _progressRoute = null;
+        }
+        if (identical(_progressNavigator, navigator)) {
+          _progressNavigator = null;
+        }
+        if (identical(_progressClosed, closed)) {
+          _progressClosed = null;
+        }
+        if (!closed.isCompleted) closed.complete();
+      }),
+    );
+  }
+
+  /// Removes only the progress dialog route (safe with [PopScope.canPop] false).
+  void _removeProgressRoute() {
+    final route = _progressRoute;
+    final nav = _progressNavigator;
+    _progressRoute = null;
+    _progressNavigator = null;
+    if (route == null || nav == null || !nav.mounted) return;
+    if (route.isActive) {
+      nav.removeRoute(route);
+    }
+  }
+
+  Future<void> _hideProgress() async {
+    if (!_progressVisible) return;
+    final closed = _progressClosed;
+    _removeProgressRoute();
+    if (closed != null) {
+      await closed.future;
+    }
+    // Allow a confirm dialog / re-show on the next frame.
+    await Future<void>.delayed(Duration.zero);
+  }
+
+  Future<void> _onPressed() async {
+    if (_busy) return;
+    final snapshot = ref.read(collectionNotifierProvider);
+    final action = await _openSheet(snapshot);
+    if (!mounted || action == null) return;
+    if (_busy) return;
+
+    switch (action) {
+      case _ShelfBackupSheetAction.export:
+        await _runExport();
+      case _ShelfBackupSheetAction.import:
+        await _runImport();
+    }
+  }
+
+  Future<void> _runExport() async {
+    if (_busy) return;
+    final snapshot = ref.read(collectionNotifierProvider);
+    if (snapshot.isEmptyShelf) return;
+
+    setState(() => _busy = true);
+    _ensureProgress(ShelfBackupCopy.preparing);
+
+    try {
+      final uiPrefs = ref.read(collectionShelfUiPrefsProvider);
+      final memoryJson = widget.exportDeps.loadMemoryJson != null
+          ? await widget.exportDeps.loadMemoryJson!()
+          : await CollectionMemoryStore.instance.encodeJson();
+      final uiPrefsJson = widget.exportDeps.loadUiPrefsJson != null
+          ? await widget.exportDeps.loadUiPrefsJson!()
+          : CollectionShelfUiPrefsCodec.encode(uiPrefs);
+
+      final result = await ShelfExportFlow.run(
+        snapshot: snapshot,
+        memoryJson: memoryJson,
+        uiPrefsJson: uiPrefsJson,
+        deps: widget.exportDeps,
+        // Progress UI is the indeterminate dialog; archive % is unused here.
+        onProgress: (_, _) {},
+        confirmLargeBackup: (humanSize) async {
+          await _hideProgress();
+          final override = widget.confirmLargeBackupOverride;
+          if (override != null) return override(humanSize);
+          if (!mounted) return false;
+          final choice = await showDialog<bool>(
+            context: context,
+            builder: (ctx) {
+              return AlertDialog(
+                title: const Text(ShelfBackupCopy.largeBackupTitle),
+                content: Text(ShelfBackupCopy.largeBackupBody(humanSize)),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(false),
+                    child: const Text(ShelfBackupCopy.largeBackupCancel),
+                  ),
+                  FilledButton(
+                    onPressed: () => Navigator.of(ctx).pop(true),
+                    child: const Text(ShelfBackupCopy.largeBackupContinue),
+                  ),
+                ],
+              );
+            },
+          );
+          if (choice == true && mounted) {
+            _ensureProgress(ShelfBackupCopy.preparing);
+          }
+          return choice == true;
+        },
+      );
+
+      await _hideProgress();
+      if (!mounted) return;
+
+      final messenger = ScaffoldMessenger.of(context);
+      switch (result.status) {
+        case ShelfExportFlowStatus.success:
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text(
+                ShelfBackupCopy.exportSuccessSnack(
+                  mediaIncomplete: result.mediaIncomplete,
+                  hasRestoredThumb: result.hasRestoredThumb,
+                ),
+              ),
+            ),
+          );
+        case ShelfExportFlowStatus.cancelled:
+          break;
+        case ShelfExportFlowStatus.rejectedTooLarge:
+          messenger.showSnackBar(
+            const SnackBar(content: Text(ShelfBackupCopy.exportTooLarge)),
+          );
+        case ShelfExportFlowStatus.failed:
+          messenger.showSnackBar(
+            const SnackBar(content: Text(ShelfBackupCopy.exportFailed)),
+          );
+      }
+    } finally {
+      await _hideProgress();
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _runImport() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+
+    try {
+      final snapshot = ref.read(collectionNotifierProvider);
+      final uiPrefs = ref.read(collectionShelfUiPrefsProvider);
+      final memoryJson = await CollectionMemoryStore.instance.encodeJson();
+      final uiPrefsJson = CollectionShelfUiPrefsCodec.encode(uiPrefs);
+      final notifier = ref.read(collectionNotifierProvider.notifier);
+      final prefsNotifier = ref.read(collectionShelfUiPrefsProvider.notifier);
+
+      final result = await ShelfImportFlow.run(
+        currentSnapshot: snapshot,
+        currentMemoryJson: memoryJson,
+        currentUiPrefsJson: uiPrefsJson,
+        suspendPersistence: notifier.suspendPersistenceForImport,
+        replaceNotifierState: notifier.replaceStateFromImport,
+        resumePersistence: notifier.resumePersistence,
+        reloadUiPrefs: prefsNotifier.reloadFromStorage,
+        deps: ShelfImportFlowDeps(
+          pickBackupFile: widget.importDeps.pickBackupFile,
+          pickZipPath: widget.importDeps.pickZipPath,
+          onChecking: () {
+            if (mounted) _ensureProgress(ShelfBackupCopy.checking);
+          },
+          confirmReplace: (summary) async {
+            await _hideProgress();
+            final override = widget.confirmReplaceOverride;
+            final ok = override != null
+                ? await override(summary)
+                : await _confirmReplaceDialog(summary);
+            if (ok && mounted) {
+              _ensureProgress(ShelfBackupCopy.importing);
+            }
+            return ok;
+          },
+          unpack: widget.importDeps.unpack,
+          writeSafetyZip: widget.importDeps.writeSafetyZip,
+          commitStaging: widget.importDeps.commitStaging,
+          clearPickerTemp: widget.importDeps.clearPickerTemp,
+          collectGarbage: widget.importDeps.collectGarbage,
+          scheduleRecoveryPack: widget.importDeps.scheduleRecoveryPack,
+        ),
+      );
+
+      await _hideProgress();
+      if (!mounted) return;
+
+      final messenger = ScaffoldMessenger.of(context);
+      switch (result.status) {
+        case ShelfImportFlowStatus.success:
+          messenger.showSnackBar(
+            const SnackBar(content: Text(ShelfImportCopy.successSnack)),
+          );
+        case ShelfImportFlowStatus.cancelled:
+          break;
+        case ShelfImportFlowStatus.rejectedTooLarge:
+          messenger.showSnackBar(
+            const SnackBar(content: Text(ShelfImportCopy.tooLargeSnack)),
+          );
+        case ShelfImportFlowStatus.safetyCopyFailed:
+          messenger.showSnackBar(
+            const SnackBar(content: Text(ShelfImportCopy.safetyFailedSnack)),
+          );
+        case ShelfImportFlowStatus.rejectedNotZip:
+          messenger.showSnackBar(
+            const SnackBar(content: Text(ShelfImportCopy.chooseZipSnack)),
+          );
+        case ShelfImportFlowStatus.failed:
+          messenger.showSnackBar(
+            const SnackBar(content: Text(ShelfImportCopy.failedSnack)),
+          );
+      }
+    } finally {
+      await _hideProgress();
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<bool> _confirmReplaceDialog(ShelfImportBackupSummary summary) async {
+    if (!mounted) return false;
+    final summaryLine = ShelfImportCopy.confirmSummary(
+      seriesCount: summary.seriesCount,
+      figureCount: summary.figureCount,
+      wishlistCount: summary.wishlistCount,
+      createdDate: ShelfImportCopy.formatCreatedDate(summary.createdAt),
+    );
+    final choice = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text(ShelfImportCopy.confirmTitle),
+          content: Text(
+            '$summaryLine\n\n'
+            '${ShelfImportCopy.confirmBody}\n\n'
+            '${ShelfImportCopy.confirmSafetyNote}',
+          ),
+          actions: [
+            TextButton(
+              key: const Key('collection_backup_import_cancel'),
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text(ShelfImportCopy.confirmCancel),
+            ),
+            FilledButton(
+              key: const Key('collection_backup_import_confirm'),
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text(ShelfImportCopy.confirmReplace),
+            ),
+          ],
+        );
+      },
+    );
+    return choice == true;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      key: const Key('collection_backup_button'),
+      tooltip: 'Shelf backup',
+      onPressed: _busy ? null : _onPressed,
+      icon: Icon(
+        Symbols.settings_backup_restore_rounded,
+        size: AppIconSizes.navigation,
+        fill: ShelfySymbols.fillOutline,
+        weight: ShelfySymbols.weight,
+        grade: ShelfySymbols.grade,
+        opticalSize: ShelfySymbols.opticalSize,
+      ),
+    );
+  }
+}
+
+class _ShelfBackupSheetBody extends StatelessWidget {
+  const _ShelfBackupSheetBody({
+    required this.snapshot,
+    required this.scrollController,
+  });
+
+  final CollectionSnapshot snapshot;
+  final ScrollController scrollController;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final exportEnabled = !snapshot.isEmptyShelf;
+
+    return CollectibleSheetInsets(
+      key: const Key('shelf_backup_sheet'),
+      child: CustomScrollView(
+        controller: scrollController,
+        shrinkWrap: true,
+        physics: const ClampingScrollPhysics(),
+        slivers: [
+          const SliverToBoxAdapter(
+            child: CollectibleSheetChrome(
+              editorialTitle: ShelfBackupCopy.sheetTitle,
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(
+                top: FeedRhythm.sheetTitleToBody,
+                bottom: FeedRhythm.sheetBodyBottomInset,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _ShelfBackupActionRow(
+                    key: const Key('shelf_backup_export_row'),
+                    icon: Symbols.upload_rounded,
+                    title: ShelfBackupCopy.exportTitle,
+                    subtitle: exportEnabled
+                        ? ShelfBackupCopy.exportSubtitle
+                        : ShelfBackupCopy.exportDisabledSubtitle,
+                    enabled: exportEnabled,
+                    scheme: scheme,
+                    textTheme: textTheme,
+                    onTap: exportEnabled
+                        ? () => Navigator.of(context)
+                            .pop(_ShelfBackupSheetAction.export)
+                        : null,
+                  ),
+                  _ShelfBackupActionRow(
+                    key: const Key('shelf_backup_import_row'),
+                    icon: Symbols.download_rounded,
+                    title: ShelfBackupCopy.importTitle,
+                    subtitle: ShelfBackupCopy.importSubtitle,
+                    enabled: true,
+                    scheme: scheme,
+                    textTheme: textTheme,
+                    onTap: () => Navigator.of(context)
+                        .pop(_ShelfBackupSheetAction.import),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ShelfBackupActionRow extends StatelessWidget {
+  const _ShelfBackupActionRow({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.enabled,
+    required this.scheme,
+    required this.textTheme,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool enabled;
+  final ColorScheme scheme;
+  final TextTheme textTheme;
+  final VoidCallback? onTap;
+
+  static const double _rowMinHeight = 72;
+  static const double _iconSlot = 40;
+
+  @override
+  Widget build(BuildContext context) {
+    final titleColor =
+        enabled ? null : scheme.onSurface.withValues(alpha: 0.38);
+    final subtitleColor =
+        enabled ? null : scheme.onSurfaceVariant.withValues(alpha: 0.38);
+    final iconColor = enabled
+        ? scheme.onSurfaceVariant
+        : scheme.onSurface.withValues(alpha: 0.38);
+
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: _rowMinHeight),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: _iconSlot,
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Icon(
+                      icon,
+                      size: AppIconSizes.navigation,
+                      color: iconColor,
+                      fill: ShelfySymbols.fillOutline,
+                      weight: ShelfySymbols.weight,
+                      grade: ShelfySymbols.grade,
+                      opticalSize: ShelfySymbols.opticalSize,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        title,
+                        style: AppTypography.cardTitle(textTheme, scheme)
+                            .copyWith(color: titleColor),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: AppTypography.cardMeta(textTheme, scheme)
+                            .copyWith(color: subtitleColor),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

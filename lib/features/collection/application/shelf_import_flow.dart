@@ -4,6 +4,7 @@ import 'package:blindbox_app/features/collection/data/shelf_export_archive.dart'
 import 'package:blindbox_app/features/collection/data/shelf_media_vault.dart';
 import 'package:blindbox_app/features/collection/data/shelf_recovery_pack.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
+import 'package:blindbox_app/features/collection/presentation/collection_vocabulary.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 
@@ -13,6 +14,7 @@ class ShelfImportBackupSummary {
   const ShelfImportBackupSummary({
     required this.seriesCount,
     required this.figureCount,
+    required this.wishlistCount,
     required this.createdAt,
   });
 
@@ -21,18 +23,20 @@ class ShelfImportBackupSummary {
     return ShelfImportBackupSummary(
       seriesCount: staging.snapshot.shelfSeries.length,
       figureCount: staging.snapshot.totalShelfFigures,
+      wishlistCount: staging.snapshot.totalWishlistItems,
       createdAt: staging.manifest.createdAt,
     );
   }
 
   final int seriesCount;
   final int figureCount;
+  final int wishlistCount;
 
   /// Manifest `createdAt` (UTC). Display via [ShelfImportCopy.formatCreatedDate].
   final DateTime createdAt;
 }
 
-/// User-visible English copy for Settings → Import shelf.
+/// User-visible English copy for Collection → Shelf backup sheet / import.
 abstract final class ShelfImportCopy {
   ShelfImportCopy._();
 
@@ -41,34 +45,67 @@ abstract final class ShelfImportCopy {
 
   static const confirmTitle = 'Replace your shelf?';
   static const confirmBody =
-      'This replaces your current collection with the backup. '
-      'Your current shelf can\'t be restored after this.';
+      'Your current shelf, including your wishlist, will be replaced.';
   static const confirmSafetyNote =
-      'A safety copy is kept on this device for 7 days.';
-  static const confirmCancel = 'Cancel';
+      'A safety copy is saved on this device for 7 days.';
+  static const confirmCancel = CollectionVocabulary.cancel;
   static const confirmReplace = 'Replace shelf';
 
   static const checking = 'Checking backup…';
   static const importing = 'Importing backup…';
-  static const successSnack = 'Shelf imported';
+  static const successSnack = 'Shelf imported.';
   static const failedSnack =
       'Couldn\'t import this backup. Your current shelf wasn\'t changed.';
   static const tooLargeSnack =
       'This backup is too large to import (over 2 GB).';
   static const safetyFailedSnack =
       'Couldn\'t save a safety copy. Import canceled.';
+  static const chooseZipSnack =
+      'Choose a Shelfy backup (.zip) file.';
 
-  /// English summary line. [series] stays "series"; [figure]/[figures] pluralize.
-  static String confirmSummary({
+  /// Shared inventory + date clause (Replace confirm / recovery welcome).
+  ///
+  /// Plural rules: series stays "series"; figure(s); wishlist item(s).
+  /// Omits wishlist when [wishlistCount] is 0.
+  ///
+  /// Examples:
+  /// - `1 series and 1 figure, created Jan 1, 2026.`
+  /// - `5 series, 35 figures and 6 wishlist items, saved Nov 3, 2026.`
+  static String shelfInventorySummary({
     required int seriesCount,
     required int figureCount,
+    required String dateVerb,
     required String createdDate,
+    int wishlistCount = 0,
   }) {
     final seriesLabel =
         seriesCount == 1 ? '1 series' : '$seriesCount series';
     final figureLabel =
         figureCount == 1 ? '1 figure' : '$figureCount figures';
-    return 'This backup has $seriesLabel and $figureLabel, created $createdDate.';
+    if (wishlistCount <= 0) {
+      return '$seriesLabel and $figureLabel, $dateVerb $createdDate.';
+    }
+    final wishlistLabel = wishlistCount == 1
+        ? '1 wishlist item'
+        : '$wishlistCount wishlist items';
+    return '$seriesLabel, $figureLabel and $wishlistLabel, '
+        '$dateVerb $createdDate.';
+  }
+
+  /// English Replace-confirm summary. Omits wishlist when [wishlistCount] is 0.
+  static String confirmSummary({
+    required int seriesCount,
+    required int figureCount,
+    required String createdDate,
+    int wishlistCount = 0,
+  }) {
+    return 'This backup has ${shelfInventorySummary(
+      seriesCount: seriesCount,
+      figureCount: figureCount,
+      wishlistCount: wishlistCount,
+      dateVerb: 'created',
+      createdDate: createdDate,
+    )}';
   }
 
   /// Local-time `MMM d, yyyy` (e.g. `Jan 1, 2026`).
@@ -97,7 +134,29 @@ enum ShelfImportFlowStatus {
   cancelled,
   rejectedTooLarge,
   safetyCopyFailed,
+
+  /// Picked file is not a `.zip` by name (before unpack / Checking).
+  rejectedNotZip,
   failed,
+}
+
+/// Result of the system file picker for Import shelf.
+@immutable
+class ShelfImportPickedFile {
+  const ShelfImportPickedFile({
+    required this.path,
+    this.name = '',
+  });
+
+  /// Test helper: [name] defaults to [path] so extension checks use the path.
+  factory ShelfImportPickedFile.pathOnly(String path) =>
+      ShelfImportPickedFile(path: path, name: path);
+
+  /// Filesystem path (may lack an extension after Android content-URI copy).
+  final String path;
+
+  /// Original display name from the picker ([PlatformFile.name]).
+  final String name;
 }
 
 @immutable
@@ -116,6 +175,8 @@ class ShelfImportFlowResult {
 class ShelfImportFlowDeps {
   const ShelfImportFlowDeps({
     this.pickZipPath,
+    this.pickBackupFile,
+    this.onChecking,
     this.confirmReplace,
     this.unpack,
     this.writeSafetyZip,
@@ -125,8 +186,18 @@ class ShelfImportFlowDeps {
     this.scheduleRecoveryPack,
   });
 
-  /// Returns a filesystem path to a `.zip`, or null if the user cancelled.
+  /// Returns a filesystem path, or null if the user cancelled.
+  ///
+  /// Prefer [pickBackupFile] when the original display name is needed
+  /// (Android content URIs often drop the `.zip` suffix on [path]).
   final Future<String?> Function()? pickZipPath;
+
+  /// Richer picker result (path + original name). Takes precedence over
+  /// [pickZipPath] when both are set.
+  final Future<ShelfImportPickedFile?> Function()? pickBackupFile;
+
+  /// Called after the picked file passes the `.zip` name check, before unpack.
+  final void Function()? onChecking;
 
   /// Shown after a successful unpack. Return false to cancel (staging deleted).
   final Future<bool> Function(ShelfImportBackupSummary summary)? confirmReplace;
@@ -168,7 +239,6 @@ abstract final class ShelfImportFlow {
     required Future<void> Function() reloadUiPrefs,
     ShelfImportFlowDeps deps = const ShelfImportFlowDeps(),
   }) async {
-    final pick = deps.pickZipPath ?? _defaultPickZip;
     final confirm = deps.confirmReplace;
     final unpackFn = deps.unpack ?? ShelfExportArchive.unpackToStaging;
     final safetyFn = deps.writeSafetyZip ?? _defaultSafetyZip;
@@ -180,21 +250,27 @@ abstract final class ShelfImportFlow {
           ShelfRecoveryPack.scheduleWrite(snapshot: s);
         });
 
-    String? pickedPath;
     try {
-      pickedPath = await pick();
-      if (pickedPath == null || pickedPath.isEmpty) {
+      final picked = await _resolvePickedFile(deps);
+      if (picked == null || picked.path.isEmpty) {
         return const ShelfImportFlowResult(
           status: ShelfImportFlowStatus.cancelled,
         );
       }
 
+      if (!isZipBackupFilename(path: picked.path, name: picked.name)) {
+        return const ShelfImportFlowResult(
+          status: ShelfImportFlowStatus.rejectedNotZip,
+        );
+      }
+
+      deps.onChecking?.call();
       suspendPersistence();
 
       ShelfExportStaging? staging;
       try {
         try {
-          staging = await unpackFn(pickedPath);
+          staging = await unpackFn(picked.path);
         } on ShelfExportException catch (e) {
           return ShelfImportFlowResult(
             status: _isTooLargeMessage(e.message)
@@ -217,8 +293,7 @@ abstract final class ShelfImportFlow {
           }
         }
 
-        final shelfEmpty = currentSnapshot.shelfSeries.isEmpty;
-        if (!shelfEmpty) {
+        if (!currentSnapshot.isEmptyShelf) {
           try {
             await safetyFn(
               snapshot: currentSnapshot,
@@ -284,16 +359,56 @@ abstract final class ShelfImportFlow {
     }
   }
 
-  /// Shared picker used by Settings and the default [ShelfImportFlowDeps].
-  static Future<String?> pickZipPath() => _defaultPickZip();
+  /// Shared picker used by the Shelf backup sheet and default deps.
+  static Future<String?> pickZipPath() async {
+    final picked = await pickBackupFile();
+    return picked?.path;
+  }
 
-  static Future<String?> _defaultPickZip() async {
-    // file_picker 13+: path-based pick (no withData) — avoids loading zip RAM.
-    final file = await FilePicker.pickFile(
-      type: FileType.custom,
-      allowedExtensions: const ['zip'],
-    );
-    return file?.path;
+  /// Path + original name; uses [FileType.any] (no Android MIME filter).
+  static Future<ShelfImportPickedFile?> pickBackupFile() => _defaultPickBackup();
+
+  /// True when [path] or [name] ends with `.zip` (case-insensitive).
+  ///
+  /// Either side is enough: Android content-URI copies often keep the original
+  /// name while the cached [path] has no / a non-zip suffix.
+  static bool isZipBackupFilename({
+    required String path,
+    String name = '',
+  }) {
+    return _endsWithZip(_basename(path)) || _endsWithZip(name.trim());
+  }
+
+  static bool _endsWithZip(String value) =>
+      value.toLowerCase().endsWith('.zip');
+
+  static String _basename(String path) {
+    final normalized = path.replaceAll('\\', '/');
+    final slash = normalized.lastIndexOf('/');
+    return slash < 0 ? normalized : normalized.substring(slash + 1);
+  }
+
+  static Future<ShelfImportPickedFile?> _resolvePickedFile(
+    ShelfImportFlowDeps deps,
+  ) async {
+    if (deps.pickBackupFile != null) {
+      return deps.pickBackupFile!();
+    }
+    if (deps.pickZipPath != null) {
+      final path = await deps.pickZipPath!();
+      if (path == null || path.isEmpty) return null;
+      return ShelfImportPickedFile.pathOnly(path);
+    }
+    return _defaultPickBackup();
+  }
+
+  static Future<ShelfImportPickedFile?> _defaultPickBackup() async {
+    // FileType.any: Android MIME filters drop Drive/Gmail zips that are not
+    // application/zip. Keep path-based pick (no withData) to avoid RAM load.
+    final file = await FilePicker.pickFile(type: FileType.any);
+    final path = file?.path;
+    if (file == null || path == null || path.isEmpty) return null;
+    return ShelfImportPickedFile(path: path, name: file.name);
   }
 
   static Future<void> _defaultSafetyZip({

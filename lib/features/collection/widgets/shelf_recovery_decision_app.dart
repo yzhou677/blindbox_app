@@ -103,13 +103,12 @@ class _ShelfRecoveryDecisionAppState extends State<ShelfRecoveryDecisionApp> {
       theme: widget.theme ?? AppTheme.light(),
       darkTheme: widget.darkTheme ?? AppTheme.dark(),
       home: Scaffold(
-        body: SafeArea(
-          child: ShelfRecoveryDecisionPanel(
-            busy: _busy,
-            errorMessage: _error,
-            onImport: _onImport,
-            onStartFresh: _onStartFresh,
-          ),
+        body: ShelfRecoveryDecisionPanel(
+          summaryLine: ShelfRecoveryDialogCopy.summaryLineForPack(widget.pack),
+          busy: _busy,
+          errorMessage: _error,
+          onImport: _onImport,
+          onStartFresh: _onStartFresh,
         ),
       ),
     );

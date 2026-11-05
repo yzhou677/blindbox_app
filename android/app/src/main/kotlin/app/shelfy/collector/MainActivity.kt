@@ -1,7 +1,9 @@
 package app.shelfy.collector
 
+import android.app.backup.BackupManager
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.plugin.common.MethodChannel
@@ -9,6 +11,7 @@ import app.shelfy.collector.widget.OnDisplayWidgetProvider
 
 class MainActivity : FlutterActivity() {
     private val channelName = "app.shelfy.collector/on_display_widget"
+    private val androidBackupChannelName = "app.shelfy.collector/android_backup"
     private var channel: MethodChannel? = null
     private var pendingNavigation: String? = null
     private var dartNavigationReady = false
@@ -38,6 +41,23 @@ class MainActivity : FlutterActivity() {
                 }
             }
         }
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            androidBackupChannelName,
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "dataChanged" -> {
+                    try {
+                        BackupManager(this).dataChanged()
+                        result.success(null)
+                    } catch (e: Exception) {
+                        Log.w(TAG, "BackupManager.dataChanged failed", e)
+                        result.error("backup", e.message, null)
+                    }
+                }
+                else -> result.notImplemented()
+            }
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -65,5 +85,6 @@ class MainActivity : FlutterActivity() {
     companion object {
         const val EXTRA_WIDGET_NAVIGATION = "on_display_widget_navigation"
         private const val WIDGET_ACTION_PREFIX = "app.shelfy.collector.ON_DISPLAY."
+        private const val TAG = "ShelfyAndroidBackup"
     }
 }

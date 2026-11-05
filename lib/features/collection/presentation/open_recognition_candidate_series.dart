@@ -46,7 +46,7 @@ Future<void> openRecognitionCandidateSeries(
   if (template == null) {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Couldn’t open that series right now.')),
+      const SnackBar(content: Text('Couldn\'t open that series right now.')),
     );
     return;
   }

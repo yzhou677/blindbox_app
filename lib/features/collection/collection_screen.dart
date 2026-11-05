@@ -50,6 +50,7 @@ import 'package:blindbox_app/features/collection/widgets/collection_warm_start_b
 import 'package:blindbox_app/features/collection/widgets/catalog_series_preview_sheet.dart';
 import 'package:blindbox_app/features/collection/widgets/series_figures_sheet.dart';
 import 'package:blindbox_app/features/collection/widgets/collection_wishlist_page.dart';
+import 'package:blindbox_app/features/collection/widgets/shelf_backup_sheet.dart';
 import 'package:blindbox_app/features/collection/widget/on_display_widget_sync.dart';
 import 'package:blindbox_app/features/sharing/presentation/share_card_preview.dart';
 import 'package:blindbox_app/features/sharing/presentation/widgets/shelfy_collector_cards.dart';
@@ -1111,19 +1112,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
 
   List<Widget> _collectionAppBarActions(WidgetRef ref) {
     final actions = <Widget>[
-      IconButton(
-        key: const Key('collection_settings_button'),
-        tooltip: 'Settings',
-        onPressed: () => context.push('/collection/settings'),
-        icon: Icon(
-          Symbols.settings_rounded,
-          size: AppIconSizes.navigation,
-          fill: ShelfySymbols.fillOutline,
-          weight: ShelfySymbols.weight,
-          grade: ShelfySymbols.grade,
-          opticalSize: ShelfySymbols.opticalSize,
-        ),
-      ),
+      const ShelfBackupButton(),
     ];
 
     if (_pageSegment == CollectionPageSegment.insights) {
