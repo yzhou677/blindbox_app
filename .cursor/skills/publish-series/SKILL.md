@@ -12,7 +12,7 @@ description: >-
 
 Start only when `D:\blindbox-catalog` already has the `add-series-local` changes and the user has said they can go live.
 
-Scripts stay in that repo. Before you run one, read the Usage comment at the top of the file, or run it with `--help`. Pass only flags printed there. Do not pass `--prune-remote`. That flag deletes remote objects that are missing locally.
+Scripts stay in that repo. Before you run `npm run upload:storage`, `npm run upload`, or any path such as `assets/catalog/`, read `D:\blindbox-catalog\package.json`, its README, and the script. If they disagree with this skill, stop. Then read the Usage comment at the top of the script, or run it with `--help`. Pass only flags printed there. Do not pass `--prune-remote`. That flag deletes remote objects that are missing locally.
 
 ## Order
 
@@ -26,4 +26,4 @@ npm run embed:catalog-figures -- --figure-id <figureId>
 
 One command per new `figureId`. The same command embeds that figure's `alternativeImages`. Do not pass an alternative `imageKey` as `--figure-id`. The script prints a plan and waits for `y`. Any other answer writes nothing. Do not run it with no `--figure-id`. Do not pass `--prune-stale-alternatives`. Wait for approval before the first figure, then run the rest of the approved ids.
 
-4. Read back what the scripts printed. Check each new id against that output. List every `figureId` that was embedded. Do not invent a verify script.
+4. Script logs are not the check. This repo has no read-only verify command for this publish. Do not invent a verify flag. Ask the user to open Firebase Console for project `blindbox-collection` and check the new series and figure docs, `imageVersion`, `updatedAt`, `meta/catalog.lastUpdatedAt`, and `catalogFigureEmbeddings/<figureId>` (plus each `…__alt__<imageKey>` the embed run created). List every `figureId` you passed to embed. If that Console check was not done, say "not verified".

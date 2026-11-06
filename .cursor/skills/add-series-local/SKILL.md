@@ -10,6 +10,8 @@ description: >-
 
 This skill writes files only. Do not upload Storage. Do not write Firestore. Do not run embeddings.
 
+Before you use `D:\blindbox-catalog` paths such as `assets/catalog/`, or any npm script in that repo, read its `package.json`, README, and the script. If they disagree with this skill, stop.
+
 ## Input
 
 The user gives one official product URL and pastes images. They do not write names. The pasted images have no captions.

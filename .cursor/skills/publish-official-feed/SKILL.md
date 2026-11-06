@@ -49,7 +49,8 @@ node tools/official_feed/fetch_product_images.mjs <url>
 4. If there is no product page:
    - `officialUrl` and `instagramUrl` are both the Instagram post URL.
    - Do not invent a `productId`.
-   - Use the image the user attached. `upload_official_feed_image.mjs` accepts only an https URL, then an object path `official_feed/<sourceId>/<file>`. It prints the download URL. Wait for approval before you run it. If the user did not give an https image, stop and ask. Do not pass a local file path. Do not download a different image.
+   - Use the image the user attached only when it is already an https URL. Current limit: `upload_official_feed_image.mjs` can fetch an https URL only. It cannot upload a local file. The object path is `official_feed/<sourceId>/<file>`. It prints the download URL. Wait for approval before you run it.
+   - If the user gave a local image, stop and tell them. Wait for a later PR that teaches the script to upload a local file. Do not upload that image to any public image host. Do not pass a local path. Do not substitute another image.
 5. If you are not sure the page is the same product, list the candidates and ask. Do not guess.
 
 Copy the id shape already used in that brand's seed. A product row uses `releaseType` `product`. An Instagram-only row uses `releaseType` `announcement`. Do not add deck tags.
@@ -58,7 +59,7 @@ Copy the id shape already used in that brand's seed. A product row uses `release
 
 ## Retire
 
-Adding N active items retires N active items. Retire the oldest `publishedAt` values in that seed. Put those ids in `retiredItemIds`. Remove those objects from `items`, so the active count stays the same. Push sets them to `status: archived`. It does not delete them. If two items tie for oldest, list both and ask. Do not pick.
+Adding N new active items retires N active items. Updating an existing id is not a new item. Retire the oldest `publishedAt` values in that seed. Put those ids in `retiredItemIds`. Remove those objects from `items`, so the active count stays the same. Push sets them to `status: archived`. It does not delete them. If there are not enough old items to retire, stop and ask. If two items tie for oldest, list both and ask. Do not pick.
 
 ## Confirm, then push
 
@@ -86,4 +87,4 @@ node tools/official_feed/push_official_feed.mjs tools/official_feed/<seed>.json
 
 ## Read back
 
-There is no read script in `tools/official_feed/`. Open `official_feed_items/<id>` in project `blindbox-collection`. Check that each new id is `active`, each retired id is `archived`, and every other doc for that `sourceId` is unchanged. The push log is not this check. Do not add a script.
+There is no read script in `tools/official_feed/`. Open `official_feed_items/<id>` in project `blindbox-collection`. Check that each new id is `active` and each retired id is `archived`. Other kept items keep the same business fields and stay `active`. `ingestedAt` may change, because every written item sets it (`push_official_feed.mjs`). Confirm there is no unexpected archive. The push log is not this check. Do not add a script.
