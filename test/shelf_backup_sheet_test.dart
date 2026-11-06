@@ -173,6 +173,26 @@ Future<void> _expectProgressBlocksPop(
   expect(find.byKey(_backupHostPageKey), findsOneWidget);
 }
 
+final List<Directory> _ownedStagingDirs = [];
+
+Directory _ownedStagingDir() {
+  final dir = Directory.systemTemp.createTempSync('shelfy_staging_');
+  _ownedStagingDirs.add(dir);
+  return dir;
+}
+
+void _deleteOwnedStagingDirs() {
+  for (final dir in _ownedStagingDirs) {
+    if (!dir.existsSync()) continue;
+    try {
+      dir.deleteSync(recursive: true);
+    } on Object {
+      // ignore
+    }
+  }
+  _ownedStagingDirs.clear();
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -194,6 +214,7 @@ void main() {
     ShelfMediaVault.resetForTest();
     ShelfExportArchive.resetForTest();
     CatalogBundleCache.resetForTest();
+    _deleteOwnedStagingDirs();
   });
 
   testWidgets('AppBar backup icon opens sheet with English rows and icons',
@@ -1377,7 +1398,7 @@ class _FakeStaging extends ShelfExportStaging {
     CollectionSnapshot? snapshot,
     DateTime? createdAt,
   }) : super(
-          stagingDir: Directory.systemTemp,
+          stagingDir: _ownedStagingDir(),
           manifest: ShelfExportManifest(
             kind: ShelfExportArchive.kind,
             schemaVersion: 1,
