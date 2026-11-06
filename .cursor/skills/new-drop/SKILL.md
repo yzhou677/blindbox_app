@@ -8,13 +8,15 @@ description: >-
 
 # New drop
 
-> **WARNING:** `publish-series` and `publish-official-feed` write production. Catalog documents are never deleted. A feed push has no dry-run. `add-series-local` only edits files in `D:\blindbox-catalog` (`raw/` + assets, then normalize). Wait for the user to approve each step.
+> **WARNING:** `publish-series` and `publish-official-feed` write production. Catalog documents are never deleted. A feed push has no dry-run. `add-series-local` only edits files in `D:\blindbox-catalog`. Wait for the user to approve each step.
 
 ## Steps
 
-1. Follow `add-series-local`. It does not upload. It edits `raw/`, runs normalize to refresh `data/`, and stops with a before/after summary (and git diff when that tree is a repo).
+1. Follow `add-series-local`. It does not upload.
+   - **Metadata + art** (new series or metadata change): edits `raw/`, runs normalize to refresh `data/`, writes catalog art, converts non-WebP with that repo's `npm run convert:webp` (read Usage each time), runs `catalog-image-qa`, then stops with a before/after summary (and git diff when that tree is a repo).
+   - **Art only** (metadata already in catalog and unchanged): replaces catalog art only, converts non-WebP the same way, runs `catalog-image-qa`. Does **not** edit `raw/` or `data/`, and does **not** run normalize.
 2. Stop. Wait until the user has checked that summary and says it can go live.
-3. Follow `publish-series`. It stops before each Storage, Firestore, and embedding write.
+3. Follow `publish-series`. It stops before each Storage, Firestore, and embedding write. After `upload:storage`, embed every `figureId` whose art (primary or `alternativeImages`) actually uploaded — new figures and replaced-art figures. Also re-embed hash-skipped figures in scope when a Firebase Console check shows a missing embedding or an `imageObjectPath` that does not match the current Storage object. Do not invent a check command for that. Do not skip embedding only because this run did not upload.
 4. Stop. Ask whether to publish the Home Official feed. If yes, verify the Instagram `publishedAt` before the push.
 5. After approval, follow `publish-official-feed`. Do not run `push_official_feed.mjs` until the user approves that push.
 
