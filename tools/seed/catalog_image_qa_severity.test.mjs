@@ -12,7 +12,7 @@ describe('catalogImageQaSeverity', () => {
   });
 
   it('marks path and full-poster codes as failures', () => {
-    assert.equal(catalogImageQaSeverity('MISSING_WEBP'), 'failure');
+    assert.equal(catalogImageQaSeverity('MISSING_ASSET'), 'failure');
     assert.equal(catalogImageQaSeverity('IMAGEKEY_MISMATCH'), 'failure');
     assert.equal(catalogImageQaSeverity('PROMO_COMPOSITE'), 'failure');
     assert.equal(catalogImageQaSeverity('SERIES_COVER_USED'), 'failure');

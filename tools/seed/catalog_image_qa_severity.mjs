@@ -15,7 +15,7 @@ export const CATALOG_IMAGE_QA_FAILURE_CODES = Object.freeze(
     'LIGHT_SOLID_BG',
     'MULTI_SUBJECT',
     'SMALL_SUBJECT',
-    'MISSING_WEBP',
+    'MISSING_ASSET',
     'IMAGEKEY_MISMATCH',
     'SERIES_COVER_USED',
   ]),

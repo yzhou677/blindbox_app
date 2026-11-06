@@ -42,23 +42,23 @@ Printed titles, logos, rarity labels, or the word SECRET on an otherwise single-
 
 Produce **one primary file per figure** at:
 
-`catalog/figures/<imageKey>.webp`  
+`catalog/figures/<imageKey>.<ext>`  
 (`imageKey` = Firestore `figures/{id}` stem; see [FIREBASE_STORAGE_CATALOG.md](../../lib/features/catalog/firestore/FIREBASE_STORAGE_CATALOG.md))
 
-New catalog writes use **`.webp` only**. Keep alpha when the source has transparency. After writing, each `imageKey` must have **one** file — delete same-stem `.png` / `.jpg` / `.jpeg` / `.avif` leftovers. The app may still probe other extensions for **legacy** Storage objects.
+**Prefer `.webp`.** Keep alpha when converting from a transparent source. `.png` / `.jpg` / `.jpeg` remain supported when conversion fails or is a poor fit — report `NON_WEBP` as a **warning**, do not block publish. After writing, each `imageKey` should have **one** file (remove duplicate same-stem leftovers). The app probes `.webp`, `.png`, `.jpg`, `.jpeg`, `.avif` for Storage.
 
 ### Required traits (“good” figure art)
 
 1. **Subject:** Single figure, centered, about **70–85%** of the frame height. A Secret may still show the figure (including on-image SECRET labels).
-2. **Background:** Transparent WebP **preferred**; else a very soft neutral gradient (not a cream poster page).
+2. **Background:** Transparent cutout **preferred**; else a very soft neutral gradient (not a cream poster page).
 3. **Aspect:** **1:1** (preferred) or **4:5** portrait — not 16:9 landscape.
 4. **Resolution:** Suggested long edge **≥ 1200px** (app decodes up to ~1536px in gallery). Long edge under 800px is `LOW_RES` — **warning only**, not a publish blocker.
-5. **Format:** `.webp` only for new files. Preserve alpha for cutouts.
+5. **Format:** Prefer `.webp`. `.png` / `.jpg` / `.jpeg` are allowed. Preserve alpha on cutouts when the format supports it.
 
-### Series cover (`catalog/series/<imageKey>.webp`) — different rules
+### Series cover (`catalog/series/<imageKey>.<ext>`) — different rules
 
 - Cover **may** be editorial collage / lifestyle.
-- Format is `.webp` only for new files.
+- Prefer `.webp`; other supported extensions are allowed.
 - Do **not** reuse series cover as figure art.
 
 ---
@@ -77,8 +77,8 @@ Scan every `figures/*.json` row (and Storage `catalog/figures/*`). Flag **`REEXP
 
 ### B. Technical (scriptable)
 
-- [ ] No `.webp` at `catalog/figures/<imageKey>.webp` (and no acceptable legacy object if you are only auditing Storage).
-- [ ] A non-`.webp` file shares the same stem — report as warning `NON_WEBP`; do not block publish for that alone.
+- [ ] No supported file at `catalog/figures/<imageKey>.{webp,png,jpg,jpeg,avif}` — **failure** `MISSING_ASSET`.
+- [ ] The only (or primary) file is not `.webp` — **warning** `NON_WEBP`; do not block publish.
 - [ ] `imageKey` empty or ≠ document `id` stem.
 - [ ] Only `thumbnailAsset` legacy path in seed without Storage upload (app may 404).
 
@@ -103,13 +103,13 @@ Deliver two lists. **Failures** block `publish-series`. **Warnings** do not.
 | Priority | seriesId | figureId | imageKey | isSecret | Reason code | Notes |
 |----------|----------|----------|----------|----------|-------------|-------|
 | P0 | baby_three_the_fairytale_world_series | ..._kitty_belle_pink | ... | false | PROMO_COMPOSITE | full lineup poster, not one figure |
-| P2 | ... | ... | ... | false | MISSING_WEBP | no .webp on disk |
+| P2 | ... | ... | ... | false | MISSING_ASSET | no supported file on disk |
 
 ## Warnings
 | Priority | seriesId | figureId | imageKey | isSecret | Reason code | Notes |
 |----------|----------|----------|----------|----------|-------------|-------|
 | P2 | ... | ... | ... | false | LOW_RES | long edge 400 |
-| P2 | ... | ... | ... | false | NON_WEBP | leftover .png beside .webp |
+| P2 | ... | ... | ... | false | NON_WEBP | kept as .png after convert skipped |
 ```
 
 **Reason codes** (use exactly):
@@ -119,11 +119,11 @@ Deliver two lists. **Failures** block `publish-series`. **Warnings** do not.
 - `LIGHT_SOLID_BG` — **failure** — off-brand solid light background (incl. Secret cards)
 - `MULTI_SUBJECT` — **failure** — multiple figures in one asset
 - `SMALL_SUBJECT` — **failure** — tiny figure in large canvas
-- `MISSING_WEBP` — **failure** — no `.webp` at the canonical path for a required key
+- `MISSING_ASSET` — **failure** — no supported image file for a required key
 - `IMAGEKEY_MISMATCH` — **failure** — key/path mismatch
 - `SERIES_COVER_USED` — **failure** — figure slot uses series poster art
 - `LOW_RES` — **warning** — long edge &lt; 800px
-- `NON_WEBP` — **warning** — a non-`.webp` file exists for that stem (report; do not block publish)
+- `NON_WEBP` — **warning** — file is not `.webp` (png/jpg/jpeg/avif still allowed; do not block publish)
 
 Sort within each list: **P0** = gallery/search embarrassment, **P1** = inconsistent but usable, **P2** = nice to have.
 
@@ -132,7 +132,7 @@ Sort within each list: **P0** = gallery/search embarrassment, **P1** = inconsist
 ## Do not change (unless fixing above)
 
 - Firestore schema: still **`imageKey` only**, no URLs on docs.
-- Storage paths: `catalog/figures/<imageKey>.webp` for new writes (app may still probe other extensions for legacy objects).
+- Storage paths: `catalog/figures/<imageKey>.<ext>` with preferred `.webp`; app probes supported extensions.
 - Document ids / `imageKey` stems (renaming forces app + shelf migration).
 
 Replace **binaries only**, keep ids stable.

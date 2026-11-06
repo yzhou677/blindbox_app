@@ -1,9 +1,9 @@
 ---
 name: catalog-image-qa
 description: >-
-  Checks catalog series and figure art on disk: WebP paths, imageKey stems,
-  and optional visual flags. Use when the user adds or replaces catalog images,
-  or asks whether the files are ready to publish.
+  Checks catalog series and figure art on disk: imageKey stems, preferred
+  WebP, and optional visual flags. Use when the user adds or replaces catalog
+  images, or asks whether the files are ready to publish.
 ---
 
 # Catalog image QA
@@ -16,18 +16,18 @@ Spec: [tools/seed/CATALOG_FIGURE_ART_REEXPORT_GUIDE.md](../../../tools/seed/CATA
 
 ## Figure file
 
-Path: `catalog/figures/<imageKey>.webp`.
+Path: `catalog/figures/<imageKey>.<ext>` (prefer `.webp`).
 
-1. New catalog art is `.webp` only. If another extension shares the same stem, report `NON_WEBP` as a **warning**. Do not block publish for that alone.
+1. Prefer `.webp`. A `.png` / `.jpg` / `.jpeg` / `.avif` file for that stem is `NON_WEBP` — **warning** only. Do not block publish. Do not remove png/jpg support.
 2. Filename stem equals `imageKey`. `imageKey` equals the Firestore document id stem. Mismatch is a **failure** (`IMAGEKEY_MISMATCH`).
-3. Missing `.webp` for a required key is a **failure** (`MISSING_WEBP`).
+3. No supported file for a required key is a **failure** (`MISSING_ASSET`).
 4. Suggested long edge ≥ 1200px. Long edge under 800px is `LOW_RES` — **warning** only.
 5. `PROMO_COMPOSITE` is a **failure** only when the file is a full marketing poster or collage, not a single figure. On-image title, logo, rarity, or SECRET text on a single figure is allowed. Do not report those as `PROMO_COMPOSITE`.
 6. Other guide reason codes keep their meaning. Put each finding in **failures** or **warnings** as the guide lists.
 
 ## Series cover
 
-Path: `catalog/series/<imageKey>.webp`. A cover may be an editorial collage. Do not use the series cover as a figure image. The filename stem still equals `imageKey`. New covers are `.webp` only; leftover other extensions are `NON_WEBP` warnings.
+Path: `catalog/series/<imageKey>.<ext>` (prefer `.webp`). A cover may be an editorial collage. Do not use the series cover as a figure image. The filename stem still equals `imageKey`. Non-WebP covers are `NON_WEBP` warnings.
 
 ## Result
 

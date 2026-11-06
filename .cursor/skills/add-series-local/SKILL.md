@@ -34,14 +34,18 @@ Open each saved file and record its width and height. Do not invent a size. If t
 
 ## After confirmation
 
-1. Write catalog art as `.webp` only into the folders `scripts/upload_storage.js` actually reads:
+1. Write catalog art into the folders `scripts/upload_storage.js` actually reads:
 
-- `D:\blindbox-catalog\assets\catalog\series\<seriesId>.webp`
-- `D:\blindbox-catalog\assets\catalog\figures\<figureId>.webp`
+- `D:\blindbox-catalog\assets\catalog\series\<seriesId>.<ext>`
+- `D:\blindbox-catalog\assets\catalog\figures\<figureId>.<ext>`
 
-If the paste is already `.webp`, copy it. If it is `.png`, `.jpg`, or `.jpeg`, convert to `.webp` first and keep alpha when the source has transparency. Before you convert, read `D:\blindbox-catalog\package.json`, its README, and the Usage / `--help` text of any image script there. Use only a documented convert command and its printed flags. If there is no documented convert tool, stop and ask the user. Do not invent a `sharp`, `cwebp`, or ImageMagick one-liner.
+**Prefer `.webp`.** `.png` / `.jpg` / `.jpeg` stay allowed.
 
-After writing each `.webp`, delete any other file with the same stem under that folder (`.png`, `.jpg`, `.jpeg`, `.avif`, …). Each `imageKey` must have exactly one file.
+- If the paste is already `.webp`, copy it.
+- If it is `.png`, `.jpg`, or `.jpeg`, try to convert to `.webp` and keep alpha when the source has transparency. Before you convert, read `D:\blindbox-catalog\package.json`, its README, and the Usage / `--help` text of any image script there. Use only a documented convert command and its printed flags. Do not invent a `sharp`, `cwebp`, or ImageMagick one-liner.
+- If conversion fails, there is no documented convert tool, or WebP is a poor fit, keep the original extension and say so in the summary. Do not stop the drop for that alone.
+
+After writing, each `imageKey` should have exactly one file. Remove other same-stem duplicates only when you successfully wrote the chosen file.
 
 The filename stem equals `imageKey`, which equals the id. An `alternativeImages` file uses the same figures folder and its own `imageKey`. Do not use `images/series` or `images/figures`. Those folders are not uploaded.
 
@@ -49,4 +53,4 @@ The filename stem equals `imageKey`, which equals the id. An `alternativeImages`
 3. Edit `brands.json` or `ips.json` only when the confirmation approved an id that is not already in the file. Match the existing keys: brands are `id`, `displayName`, `aliases`; ips are `id`, `brandId`, `displayName`, `aliases`.
 4. Do not run `npm run normalize`. `D:\blindbox-catalog\README.md` says `data/` is regenerated from `raw/`. Normalize would drop this hand edit.
 5. Run `catalog-image-qa` on those files. Print **Failures** and **Warnings**. Failures stop this flow before you call the drop ready. Warnings (including `LOW_RES` and `NON_WEBP`) do not. Spec: [tools/seed/CATALOG_FIGURE_ART_REEXPORT_GUIDE.md](../../../tools/seed/CATALOG_FIGURE_ART_REEXPORT_GUIDE.md).
-6. In `D:\blindbox-catalog`, show `git status` and `git diff` as a short summary: new files, and which JSON rows changed. Do not commit. Tell the user the next step is `publish-series`.
+6. In `D:\blindbox-catalog`, show `git status` and `git diff` as a short summary: new files, which JSON rows changed, and any files kept as non-WebP with why. Do not commit. Tell the user the next step is `publish-series`.
