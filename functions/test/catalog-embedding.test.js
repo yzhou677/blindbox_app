@@ -237,15 +237,59 @@ describe('CatalogEmbeddingJob', () => {
 });
 
 describe('adapters and CLI', () => {
-  it('resolves extensions in canonical order and downloads only the first match', async () => {
-    const probed = []; const read = [];
-    const resolver = new FirebaseCatalogImageResolver({ async read(path) { read.push(path); return { bytes: Buffer.from('x'), mimeType: 'image/png' }; } }, {
-      file(path) { return { async exists() { probed.push(path); return [path.endsWith('.png')]; } }; },
-    });
+  it('resolves extensions in app order and downloads only the first match', async () => {
+    const probed = [];
+    const read = [];
+    const resolver = new FirebaseCatalogImageResolver(
+      {
+        async read(path) {
+          read.push(path);
+          return { bytes: Buffer.from('x'), mimeType: 'image/png' };
+        },
+      },
+      {
+        file(path) {
+          return {
+            async exists() {
+              probed.push(path);
+              return [path.endsWith('.png')];
+            },
+          };
+        },
+      },
+    );
     const result = await resolver.resolve('a');
-    assert.deepEqual(probed, ['catalog/figures/a.avif', 'catalog/figures/a.webp', 'catalog/figures/a.png']);
+    assert.deepEqual(probed, ['catalog/figures/a.webp', 'catalog/figures/a.png']);
     assert.deepEqual(read, ['catalog/figures/a.png']);
     assert.equal(result.objectPath, 'catalog/figures/a.png');
+  });
+
+  it('prefers .webp when both .webp and .avif exist for the same imageKey', async () => {
+    const probed = [];
+    const read = [];
+    const resolver = new FirebaseCatalogImageResolver(
+      {
+        async read(path) {
+          read.push(path);
+          return { bytes: Buffer.from('webp-bytes'), mimeType: 'image/webp' };
+        },
+      },
+      {
+        file(path) {
+          return {
+            async exists() {
+              probed.push(path);
+              return [path.endsWith('.webp') || path.endsWith('.avif')];
+            },
+          };
+        },
+      },
+    );
+    const result = await resolver.resolve('figure_key');
+    assert.deepEqual(probed, ['catalog/figures/figure_key.webp']);
+    assert.deepEqual(read, ['catalog/figures/figure_key.webp']);
+    assert.equal(result.objectPath, 'catalog/figures/figure_key.webp');
+    assert.equal(result.mimeType, 'image/webp');
   });
 
   it('reports a missing image without preventing the next figure from succeeding', async () => {

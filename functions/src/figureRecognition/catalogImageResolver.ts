@@ -3,7 +3,8 @@ import type { CatalogImageResolver, ResolvedCatalogImage } from './catalogEmbedd
 import type { StorageImageReader } from './imageEmbeddingTypes';
 
 type Bucket = { file(path: string): { exists(): Promise<[boolean]> } };
-export const CATALOG_IMAGE_EXTENSIONS = ['.avif', '.webp', '.png', '.jpg', '.jpeg'] as const;
+/** Probe order matches Flutter `CatalogImageResolver.assetExtensions` (webp first, avif last). */
+export const CATALOG_IMAGE_EXTENSIONS = ['.webp', '.png', '.jpg', '.jpeg', '.avif'] as const;
 
 export class FirebaseCatalogImageResolver implements CatalogImageResolver {
   constructor(

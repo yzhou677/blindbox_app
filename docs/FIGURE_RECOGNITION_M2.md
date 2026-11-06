@@ -35,6 +35,26 @@ input price when this milestone was implemented. Pricing can change; check the
 [official pricing page](https://cloud.google.com/gemini-enterprise-agent-platform/generative-ai/pricing)
 and override the value before approving a run.
 
+### Image MIME types for embedding
+
+This job sends Storage bytes through `@google/genai` `embedContent` with
+`vertexai: true` (see `googleImageEmbeddingClient.ts`). Official docs disagree
+on which image formats `gemini-embedding-2` accepts:
+
+| Source | Image formats listed |
+| --- | --- |
+| [Gemini API Embeddings](https://ai.google.dev/gemini-api/docs/embeddings) (`gemini-embedding-2`) | PNG, JPEG only |
+| [Vertex Gemini Embedding 2 model card](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/gemini/embedding-2) | `image/png`, `image/jpeg`, `image/webp`, `image/bmp`, `image/heic`, `image/heif`, `image/avif` |
+| [Community report](https://discuss.ai.google.dev/t/embedcontent-with-gemini-embedding-2-preview-does-not-support-webp-images/134957) | `image/webp` rejected on `gemini-embedding-2-preview` |
+
+Do **not** assume WebP or AVIF will embed successfully. Before embedding a
+non-PNG/JPEG catalog object, stop and ask the operator whether to convert a
+temporary PNG/JPEG for the API call, try the stored bytes as-is, or skip.
+Do not invent a conversion path without approval.
+
+Catalog Storage probe order for embeddings matches the app:
+`.webp`, `.png`, `.jpg`, `.jpeg`, `.avif` (`catalogImageResolver.ts`).
+
 The output dimension is explicit and validated. Image bytes and vectors remain
 in memory and are never logged. The persisted image identity is a SHA-256 hash
 of the downloaded bytes.
