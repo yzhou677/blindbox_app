@@ -49,8 +49,13 @@ node tools/official_feed/fetch_product_images.mjs <url>
 4. If there is no product page:
    - `officialUrl` and `instagramUrl` are both the Instagram post URL.
    - Do not invent a `productId`.
-   - Use the image the user attached only when it is already an https URL. Current limit: `upload_official_feed_image.mjs` can fetch an https URL only. It cannot upload a local file. The object path is `official_feed/<sourceId>/<file>`. It prints the download URL. Wait for approval before you run it.
-   - If the user gave a local image, stop and tell them. Wait for a later PR that teaches the script to upload a local file. Do not upload that image to any public image host. Do not pass a local path. Do not substitute another image.
+   - If the user pasted an image in chat, save it outside the repo first, under `%TEMP%\shelfy_official_feed\`. Do not commit it. Wait for the user to approve, then upload that local path. An https URL is still a valid first argument. `http:` is not accepted. Do not send the file to another image host.
+
+```text
+node tools/official_feed/upload_official_feed_image.mjs <httpsImageUrl-or-localFile> official_feed/<sourceId>/<file>
+```
+
+   The command writes production Storage and prints the download URL. Use that URL as `imageUrl`. It checks the PNG, JPEG, or WebP file header. It does not detect every corrupt image.
 5. If you are not sure the page is the same product, list the candidates and ask. Do not guess.
 
 Copy the id shape already used in that brand's seed. A product row uses `releaseType` `product`. An Instagram-only row uses `releaseType` `announcement`. Do not add deck tags.

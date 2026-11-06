@@ -71,8 +71,13 @@ announcement times. Before every push:
 
 **Prefer skipping an item** over publishing a wrong product ID or invented date.
 
-Optional image mirror:
-`node tools/official_feed/upload_official_feed_image.mjs <httpsImageUrl> official_feed/<sourceId>/<file>`.
+Optional image mirror. The first argument is an https URL or a local file path. `http:` is rejected. The object path and the printed download URL stay the same. Wait for the user to approve before you run it. The command writes production Storage. It checks the PNG, JPEG, or WebP file header. It does not detect every corrupt image.
+
+Save a chat image outside this repo first, for example `%TEMP%\shelfy_official_feed\<file>`. Do not commit it. Then pass that local path:
+
+```text
+node tools/official_feed/upload_official_feed_image.mjs <httpsImageUrl-or-localFile> official_feed/<sourceId>/<file>
+```
 
 ## publishedAt policy
 
