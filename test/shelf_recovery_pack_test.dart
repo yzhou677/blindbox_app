@@ -393,7 +393,7 @@ void main() {
     expect(second.mediaIds, first.mediaIds);
   });
 
-  test('Android backup XML only includes recovery and excludes sharedpref', () async {
+  test('Android backup XML includes only recovery/', () async {
     final backupRules = File('android/app/src/main/res/xml/backup_rules.xml');
     final extraction = File(
       'android/app/src/main/res/xml/data_extraction_rules.xml',
@@ -409,14 +409,7 @@ void main() {
             .having((r) => r.path, 'path', 'recovery/'),
       ],
     );
-    expect(
-      backupParsed.where((r) => r.kind == 'exclude').toList(),
-      [
-        isA<_BackupRule>()
-            .having((r) => r.domain, 'domain', 'sharedpref')
-            .having((r) => r.path, 'path', '.'),
-      ],
-    );
+    expect(backupParsed.where((r) => r.kind == 'exclude'), isEmpty);
     expect(backupParsed.any((r) => r.domain == 'root'), isFalse);
 
     final extractionText = await extraction.readAsString();
@@ -437,14 +430,7 @@ void main() {
               .having((r) => r.path, 'path', 'recovery/'),
         ],
       );
-      expect(
-        rules.where((r) => r.kind == 'exclude').toList(),
-        [
-          isA<_BackupRule>()
-              .having((r) => r.domain, 'domain', 'sharedpref')
-              .having((r) => r.path, 'path', '.'),
-        ],
-      );
+      expect(rules.where((r) => r.kind == 'exclude'), isEmpty);
       expect(rules.any((r) => r.domain == 'root'), isFalse);
     }
 

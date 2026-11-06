@@ -1,15 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  Android 12+ data extraction: cloud-backup and device-transfer both restore
-  only files/recovery/. Exclude shared_prefs so shelf prefs never auto-hydrate.
--->
+<!-- Only files/recovery/ is included; any <include> makes everything else (incl. shared_prefs) excluded. -->
 <data-extraction-rules>
     <cloud-backup>
         <include domain="file" path="recovery/" />
-        <exclude domain="sharedpref" path="." />
     </cloud-backup>
     <device-transfer>
         <include domain="file" path="recovery/" />
-        <exclude domain="sharedpref" path="." />
     </device-transfer>
 </data-extraction-rules>
