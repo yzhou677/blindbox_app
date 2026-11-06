@@ -22,12 +22,12 @@ Paths are **deterministic** — constructed at runtime from `imageKey` only.
 
 **Supported `<ext>` (probe in this order until one exists):** `.webp`, `.png`, `.jpg`, `.jpeg`, `.avif`
 
-Catalog art uses mixed formats in the bucket (mostly png / webp / jpg, some avif). Upload any supported extension; the app does not assume png-only.
+The app still probes those extensions so **legacy** objects keep resolving. **New** series covers and figure files written through catalog ingest should be **`.webp` only** (one file per `imageKey`). See [tools/seed/CATALOG_FIGURE_ART_REEXPORT_GUIDE.md](../../../tools/seed/CATALOG_FIGURE_ART_REEXPORT_GUIDE.md).
 
 **Upload rule:** `imageKey` on the Firestore doc must equal the Storage filename stem (no path, no extension). Examples:
 
-- Series cover: `imageKey` `baby_molly_and_baby_tabby_series` → `catalog/series/baby_molly_and_baby_tabby_series.png`
-- Figure: `imageKey` `aespa_…_giselle_ver` → `catalog/figures/aespa_…_giselle_ver.png`
+- Series cover: `imageKey` `baby_molly_and_baby_tabby_series` → `catalog/series/baby_molly_and_baby_tabby_series.webp`
+- Figure: `imageKey` `aespa_…_giselle_ver` → `catalog/figures/aespa_…_giselle_ver.webp`
 
 The resolver does not rewrite keys (no `_series` suffix injection, no series+figure path concatenation).
 

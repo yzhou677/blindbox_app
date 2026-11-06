@@ -12,6 +12,8 @@ description: >-
 
 Start only when `D:\blindbox-catalog` already has the `add-series-local` changes and the user has said they can go live.
 
+New series and figure art must be `.webp` under `assets/catalog/series/` and `assets/catalog/figures/`. Run `catalog-image-qa` first. **Failures** block this publish. **Warnings** (`LOW_RES`, `NON_WEBP`, and any other warning codes in the guide) do not. Do not treat suggested long edge ≥ 1200px or on-image SECRET text as a publish blocker. Spec: [tools/seed/CATALOG_FIGURE_ART_REEXPORT_GUIDE.md](../../../tools/seed/CATALOG_FIGURE_ART_REEXPORT_GUIDE.md).
+
 Scripts stay in that repo. Before you run `npm run upload:storage`, `npm run upload`, or any path such as `assets/catalog/`, read `D:\blindbox-catalog\package.json`, its README, and the script. If they disagree with this skill, stop. Then read the Usage comment at the top of the script, or run it with `--help`. Pass only flags printed there. Do not pass `--prune-remote`. That flag deletes remote objects that are missing locally.
 
 ## Order

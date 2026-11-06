@@ -3,9 +3,11 @@
 > **Not runtime metadata.** APK-bundled `tools/seed/*.json` was removed; catalog metadata at runtime comes from Firestore + persisted cache only ([`docs/CATALOG_ARCHITECTURE.md`](../../docs/CATALOG_ARCHITECTURE.md)). This guide applies to **catalog development** — Firestore ingestion, Storage uploads, and external export JSON — not to app startup.
 
 **Audience:** Cursor agent working in the **external catalog repo** or admin tooling (Firestore export, Storage uploads, `D:\blindbox-catalog\data\*.json`).  
-**Consumer app:** `blindbox_app` — gallery, search thumbs, series browse. Frontend can blur letterbox and adapt fit, but **cannot fix baked-in promo graphics or wrong asset types**.
+**Consumer app:** `blindbox_app` — gallery, search thumbs, series browse. Frontend can blur letterbox and adapt fit, but **cannot fix a full-poster composite used as a figure**, wrong aspect, or a missing Storage object.
 
 Use this doc to **audit existing `figures` + Storage objects** and output a **re-download / re-export checklist** for the human.
+
+QA findings split into **failures** (block `publish-series`) and **warnings** (list only). See [`.cursor/skills/catalog-image-qa/SKILL.md`](../../.cursor/skills/catalog-image-qa/SKILL.md).
 
 ---
 
@@ -13,8 +15,8 @@ Use this doc to **audit existing `figures` + Storage objects** and output a **re
 
 | Problem | Why UX breaks | Replace? |
 |--------|----------------|----------|
-| **Marketing / poster composite** | Series title, logos, hand-drawn borders, multiple products in one frame baked into pixels | **Yes — priority** |
-| **Landscape promo in portrait UI** | Even with blur-backdrop gallery, text/logos stay tiny or cropped awkwardly | **Yes** |
+| **Full marketing poster or collage as the figure file** | Several products, a campaign layout, or a lineup in one frame — not a single figure | **Yes — priority** (`PROMO_COMPOSITE`) |
+| **Landscape promo in portrait UI** | Even with blur-backdrop gallery, the crop feels wrong | **Yes** |
 | **Light/beige solid page background** (esp. Secret) | Clashes with dark premium UI; looks like a PDF slide, not product art | **Yes** |
 | **Heavy lifestyle scene** (moss, flowers, props) as only figure asset | Inconsistent vs cutout figures; thumb/gallery compete with background | **Yes — prefer cutout** |
 | **Wrong aspect “poster” not product** | User expects one figure; image is a 16:9 campaign banner | **Yes** |
@@ -22,13 +24,16 @@ Use this doc to **audit existing `figures` + Storage objects** and output a **re
 | **imageKey ≠ filename stem** | Resolver 404; same as missing | **Fix upload or key** |
 | **Tiny subject in large canvas** | Huge empty margins; figure feels like a stamp | **Yes** |
 
+Printed titles, logos, rarity labels, or the word SECRET on an otherwise single-figure shot are **allowed**. Do not flag those as `PROMO_COMPOSITE`.
+
 ## What the app can tolerate (optional improvement)
 
 | Problem | Mitigation in app | Replace? |
 |--------|-------------------|----------|
 | Mild letterboxing on square cutout | Blur backdrop + contain in gallery; `AppImageFrame` on thumbs | Optional |
-| Slightly soft JPEG | Higher-res re-export helps; not blocking | Optional |
-| Transparent PNG with extra padding | `transparentFigure` contain + inset | Optional trim in export |
+| Slightly soft JPEG source converted to WebP | Higher-res re-export helps; not blocking | Optional |
+| Transparent WebP with extra padding | `transparentFigure` contain + inset | Optional trim in export |
+| Long edge under 1200px | App still shows the art | **Warning only** (`LOW_RES` if &lt; 800) |
 | Series cover editorial crop | Cover fill is intentional for **series** covers only | N/A for figures |
 
 ---
@@ -37,22 +42,23 @@ Use this doc to **audit existing `figures` + Storage objects** and output a **re
 
 Produce **one primary file per figure** at:
 
-`catalog/figures/<imageKey>.<ext>`  
+`catalog/figures/<imageKey>.webp`  
 (`imageKey` = Firestore `figures/{id}` stem; see [FIREBASE_STORAGE_CATALOG.md](../../lib/features/catalog/firestore/FIREBASE_STORAGE_CATALOG.md))
+
+New catalog writes use **`.webp` only**. Keep alpha when the source has transparency. After writing, each `imageKey` must have **one** file — delete same-stem `.png` / `.jpg` / `.jpeg` / `.avif` leftovers. The app may still probe other extensions for **legacy** Storage objects.
 
 ### Required traits (“good” figure art)
 
-1. **Subject:** Single figure (or single secret silhouette), centered,占画面 **~70–85%** 高度.
-2. **Background:** Transparent PNG/WebP **preferred**; else very soft neutral gradient (not cream poster page).
+1. **Subject:** Single figure, centered, about **70–85%** of the frame height. A Secret may still show the figure (including on-image SECRET labels).
+2. **Background:** Transparent WebP **preferred**; else a very soft neutral gradient (not a cream poster page).
 3. **Aspect:** **1:1** (preferred) or **4:5** portrait — not 16:9 landscape.
-4. **No baked UI:** No series name, brand logo, “Baby Three”, rarity text, decorative frame, collage of全系列.
-5. **Resolution:** Long edge **≥ 1200px** (app decodes up to ~1536px in gallery).
-6. **Format:** `.webp` or `.png` (keep alpha for plush/cutout).
-7. **Secret (`isSecret: true`):** App-themed **silhouette / mystery** on **transparent or dark-friendly** background — not beige card mockup.
+4. **Resolution:** Suggested long edge **≥ 1200px** (app decodes up to ~1536px in gallery). Long edge under 800px is `LOW_RES` — **warning only**, not a publish blocker.
+5. **Format:** `.webp` only for new files. Preserve alpha for cutouts.
 
-### Series cover (`catalog/series/<imageKey>`) — different rules
+### Series cover (`catalog/series/<imageKey>.webp`) — different rules
 
 - Cover **may** be editorial collage / lifestyle.
+- Format is `.webp` only for new files.
 - Do **not** reuse series cover as figure art.
 
 ---
@@ -63,15 +69,16 @@ Scan every `figures/*.json` row (and Storage `catalog/figures/*`). Flag **`REEXP
 
 ### A. Visual / content (manual review or vision)
 
-- [ ] Image is clearly a **promotional poster** (text overlays, logos, ornate border).
+- [ ] Image is a **full promotional poster or collage** (several products / lineup), not a single figure. On-image text alone is not enough.
 - [ ] **Multiple figures** visible as main content (lineup poster).
 - [ ] **Landscape** width > height by ~20%+.
 - [ ] **Solid light** background (#F5F0E8-style) especially for `isSecret`.
-- [ ] Figure occupies **< 50%** of frame area (excess empty margin).
+- [ ] Figure occupies **&lt; 50%** of frame area (excess empty margin).
 
 ### B. Technical (scriptable)
 
-- [ ] No object at `catalog/figures/<imageKey>.{avif,webp,png,jpg,jpeg}`.
+- [ ] No `.webp` at `catalog/figures/<imageKey>.webp` (and no acceptable legacy object if you are only auditing Storage).
+- [ ] A non-`.webp` file shares the same stem — report as warning `NON_WEBP`; do not block publish for that alone.
 - [ ] `imageKey` empty or ≠ document `id` stem.
 - [ ] Only `thumbnailAsset` legacy path in seed without Storage upload (app may 404).
 
@@ -79,9 +86,9 @@ Scan every `figures/*.json` row (and Storage `catalog/figures/*`). Flag **`REEXP
 
 Series **`baby_three_the_fairytale_world_series`** (`The Fairytale World Series Plush Blind Box`):
 
-- All regular figures observed as **square promo composites** (“My Woodland Story”, “Baby Three” script, doodle borders, lifestyle photo).
-- **`baby_three_the_fairytale_world_series_secret`** — silhouette on **light beige** card; breaks dark gallery.
-- **Action:** Re-export **entire series lineup** as transparent/clean cutouts; Secret as dark-theme mystery asset.
+- Many regular figures observed as **full promo composites** (lineup / bordered lifestyle posters), not single-figure product art.
+- **`baby_three_the_fairytale_world_series_secret`** — silhouette on **light beige** card; breaks dark gallery (`LIGHT_SOLID_BG`).
+- **Action:** Prefer single-figure cutouts on transparent or dark-friendly backgrounds where possible.
 
 Use this series as the **reference example** when explaining “bad vs good” to stakeholders.
 
@@ -89,37 +96,43 @@ Use this series as the **reference example** when explaining “bad vs good” t
 
 ## Output format for the catalog agent
 
-Deliver a table the human can work from:
+Deliver two lists. **Failures** block `publish-series`. **Warnings** do not.
 
 ```text
+## Failures
 | Priority | seriesId | figureId | imageKey | isSecret | Reason code | Notes |
 |----------|----------|----------|----------|----------|-------------|-------|
-| P0 | baby_three_the_fairytale_world_series | ..._secret | ..._secret | true | SECRET_LIGHT_BG | beige poster card |
-| P0 | baby_three_the_fairytale_world_series | ..._kitty_belle_pink | ... | false | PROMO_COMPOSITE | title + border baked in |
-| P1 | ... | ... | ... | false | LANDSCAPE_POSTER | 16:9 promo |
-| P2 | ... | ... | ... | false | MISSING_STORAGE | 404 |
+| P0 | baby_three_the_fairytale_world_series | ..._kitty_belle_pink | ... | false | PROMO_COMPOSITE | full lineup poster, not one figure |
+| P2 | ... | ... | ... | false | MISSING_WEBP | no .webp on disk |
+
+## Warnings
+| Priority | seriesId | figureId | imageKey | isSecret | Reason code | Notes |
+|----------|----------|----------|----------|----------|-------------|-------|
+| P2 | ... | ... | ... | false | LOW_RES | long edge 400 |
+| P2 | ... | ... | ... | false | NON_WEBP | leftover .png beside .webp |
 ```
 
 **Reason codes** (use exactly):
 
-- `PROMO_COMPOSITE` — marketing poster, not product
-- `LANDSCAPE_POSTER` — aspect ratio wrong for figure slot
-- `LIGHT_SOLID_BG` — off-brand background (incl. Secret cards)
-- `MULTI_SUBJECT` — multiple figures in one asset
-- `SMALL_SUBJECT` — tiny figure in large canvas
-- `MISSING_STORAGE` — no file at canonical path
-- `IMAGEKEY_MISMATCH` — key/path mismatch
-- `SERIES_COVER_USED` — figure slot uses series poster art
-- `LOW_RES` — long edge < 800px (if checked)
+- `PROMO_COMPOSITE` — **failure** — full marketing poster or collage, not a single figure. Do not use for on-image title, logo, rarity, or SECRET text on a single figure.
+- `LANDSCAPE_POSTER` — **failure** — aspect ratio wrong for figure slot
+- `LIGHT_SOLID_BG` — **failure** — off-brand solid light background (incl. Secret cards)
+- `MULTI_SUBJECT` — **failure** — multiple figures in one asset
+- `SMALL_SUBJECT` — **failure** — tiny figure in large canvas
+- `MISSING_WEBP` — **failure** — no `.webp` at the canonical path for a required key
+- `IMAGEKEY_MISMATCH` — **failure** — key/path mismatch
+- `SERIES_COVER_USED` — **failure** — figure slot uses series poster art
+- `LOW_RES` — **warning** — long edge &lt; 800px
+- `NON_WEBP` — **warning** — a non-`.webp` file exists for that stem (report; do not block publish)
 
-Sort: **P0** = gallery/search embarrassment, **P1** = inconsistent but usable, **P2** = nice to have.
+Sort within each list: **P0** = gallery/search embarrassment, **P1** = inconsistent but usable, **P2** = nice to have.
 
 ---
 
 ## Do not change (unless fixing above)
 
 - Firestore schema: still **`imageKey` only**, no URLs on docs.
-- Storage paths: `catalog/figures/<imageKey>.<ext>`.
+- Storage paths: `catalog/figures/<imageKey>.webp` for new writes (app may still probe other extensions for legacy objects).
 - Document ids / `imageKey` stems (renaming forces app + shelf migration).
 
 Replace **binaries only**, keep ids stable.
@@ -133,9 +146,9 @@ If the catalog pipeline supports it later:
 | Role | Use in app | Notes |
 |------|------------|-------|
 | `figure_cutout` | thumbs, gallery, add-series | transparent, 1:1 |
-| `figure_promo` | marketing web only | current posters OK here |
+| `figure_promo` | marketing web only | campaign posters OK here |
 
-Not implemented in app yet — until then, **cutout must live at the canonical `imageKey` path**.
+Not implemented in app yet — until then, the single-figure product file must live at the canonical `imageKey` path.
 
 ---
 
@@ -145,3 +158,4 @@ Not implemented in app yet — until then, **cutout must live at the canonical `
 - Resolver: `lib/features/catalog/catalog_image_resolver.dart`
 - Display rules: `lib/features/catalog/presentation/catalog_image_display.dart`
 - Gallery stage (blur backdrop): `lib/features/catalog/presentation/figure_gallery/catalog_gallery_stage.dart`
+- Skills: `.cursor/skills/catalog-image-qa/SKILL.md`, `.cursor/skills/add-series-local/SKILL.md`, `.cursor/skills/publish-series/SKILL.md`
