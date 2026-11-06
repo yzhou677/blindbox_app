@@ -246,7 +246,7 @@ jobs:
       - name: Reject machine-local Gradle JDK paths
         run: |
           set -euo pipefail
-          if grep -E -q '^(org\.gradle\.java\.home|org\.gradle\.java\.installations\.paths)=' android/gradle.properties; then
+          if grep -E -q '^[[:space:]]*(org\.gradle\.java\.home|org\.gradle\.java\.installations\.paths)[[:space:]]*[=:[:space:]]' android/gradle.properties; then
             echo "::error::android/gradle.properties must not set org.gradle.java.home or org.gradle.java.installations.paths. Those paths are machine-local and break Linux release builds. Put them in the user Gradle properties file, or set JAVA_HOME."
             exit 1
           fi

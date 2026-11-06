@@ -81,7 +81,8 @@ does not start a second release: GitHub does not re-fire workflows from
 5. `flutter build appbundle --release` with the tag versionName and the CI
    versionCode.
 
-Do not commit `org.gradle.java.home` or `org.gradle.java.installations.paths` in `android/gradle.properties`; those machine-local JDK paths break the Linux release build.
+    Do not commit `org.gradle.java.home` or `org.gradle.java.installations.paths` in `android/gradle.properties`; those machine-local JDK paths break the Linux release build.
+
 6. Upload the AAB to the Play **internal** track only. Status is **draft**
    unless a manual run chooses `completed`.
 7. Create a GitHub Release on that tag, attach the AAB, and generate notes
