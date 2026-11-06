@@ -2,9 +2,9 @@
 name: add-official-series
 description: >-
   Adds a catalog series, its figures, and their images to production Storage
-  and Firestore. Use when the user adds an official series, pastes figure
-  images in chat, or runs catalog delta sync. Stop and wait for approval
-  before every write.
+  and Firestore. Use when the user adds an official series from a product
+  URL and pasted images, or runs catalog delta sync. Stop and wait for
+  approval before every write.
 ---
 
 # Add an official series
@@ -17,26 +17,29 @@ Upload scripts stay in `D:\blindbox-catalog`. Do not copy them into this repo. T
 
 ## Input: pasted images
 
-This is the default input. Do not download images from the official site. Do not guess a picture. Use only images the user pasted.
+This is the default input. The user gives one official product URL and pastes images in chat. They do not write names or other facts. The pasted images have no captions.
 
-1. The user gives an official URL. Use that page only to check the series name, the figure count, and the release date.
-2. The user pastes images in chat. The line before each image is the figure name, or `Series cover`.
-3. Save each pasted image as a file in `%TEMP%\shelfy_new_series\<seriesId>\`. That folder is outside this repo. Do not add the files to the repo. Do not commit them.
-4. If you cannot save a pasted image as a file, stop. Tell the user to drop the files into that folder. Do not use a different image.
-5. Show this table and wait for the user to confirm it:
+Read the page for the series name, brand, IP, release date, whether it is a blind box, every figure name, and which figure is Secret. If a name is only inside a page image, such as a Figure Styles image, read that image. Do not skip it.
+
+Do not download a page image and use it as the catalog file. The catalog file is only a pasted image.
+
+1. Match brand and IP to rows that already exist in `D:\blindbox-catalog\data\brands.json` and `ips.json`. Use that row's `id`. Do not invent a brand id or an IP id. Series and figure ids follow the shape already used in `series.json` and `figures.json`: `imageKey` equals the document id.
+2. Save each pasted image, in paste order, under `%TEMP%\shelfy_new_series\<seriesId>\`. That folder is outside this repo. Do not add the files to the repo. Do not commit them.
+3. If you cannot save a pasted image as a file, stop. Tell the user to drop the files into that folder. Do not use a different image.
+4. Match each saved image to a figure by looking at the picture and the styles on the page. Mark confidence `high` or `low`. Do not use any other scale.
+5. Show one table and wait. Ask every uncertain field in that same message. Do not guess. Do not ask one field at a time.
 
 ```text
-figure name → figureId → imageKey → filename → pixel size → Secret?
+image number → figure name → figureId → imageKey → pixel size → Secret → confidence
 ```
 
-Open each saved file and record its width and height. Do not invent a size. Leave Secret blank unless the user or the official lineup says so.
-6. If the count does not match the page, a name does not match, an image has no name, or a name has no image, list that row and ask. Do not guess.
-7. After the user confirms the table, rename each file so the stem equals the confirmed `imageKey`. Keep the original extension. Then run `catalog-image-qa`.
+Open each saved file and record its width and height. Do not invent a size. If the pasted count does not match the figure count on the page, say so in that message.
+6. After the user confirms the table, rename each file so the stem equals the confirmed `imageKey`. Keep the original extension. Then run `catalog-image-qa`.
 
 ## Manual steps
 
-1. Discover the drop from an official source. Say what you found.
-2. Follow "Input: pasted images". Run `catalog-image-qa` only after the user confirms the table. Fix failures before upload.
+1. Follow "Input: pasted images". Do not ask the user to name the series, the brand, or the figures.
+2. Run `catalog-image-qa` only after the user confirms the table. Fix failures before upload.
 3. Show the canonical ids, `imageKey` values, and which docs will change. Wait for approval.
 
 ## Write order
