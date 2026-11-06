@@ -1,0 +1,29 @@
+---
+name: publish-series
+description: >-
+  Uploads a local catalog series to production Storage and Firestore, then
+  embeds the new figures. Use only after add-series-local, when the user says
+  the D:\blindbox-catalog changes can go live. Stop before every write.
+---
+
+# Publish a series
+
+> **WARNING:** A write here is production. Catalog documents are never deleted. A wrong write cannot be undone. Confirm every id, `imageKey`, and payload, then wait for the user to approve before any write.
+
+Start only when `D:\blindbox-catalog` already has the `add-series-local` changes and the user has said they can go live.
+
+Scripts stay in that repo. Before you run one, read the Usage comment at the top of the file, or run it with `--help`. Pass only flags printed there. Do not pass `--prune-remote`. That flag deletes remote objects that are missing locally.
+
+## Order
+
+1. From `D:\blindbox-catalog`, upload with `npm run upload:storage` (`scripts/upload_storage.js`). After a real upload the script also sets `imageVersion` to the Storage `md5Hash` and `updatedAt` on the matching series, figure, or `alternativeImages` entry. A hash skip does not write. If it wrote an `imageVersion`, it sets `meta/catalog.lastUpdatedAt`. Wait for approval before you run it.
+2. Then `npm run upload` (`scripts/upload_firestore.js`). It writes a catalog doc only when the payload changed, sets `updatedAt`, and does not send `imageVersion`. If it wrote a catalog doc, it sets `meta/catalog.lastUpdatedAt`. `ip_profiles` does not bump `meta/catalog`. There is no separate meta command. Wait for approval before you run it.
+3. Embed each new figure, including Secret figures. From this app's `functions/` directory, with `GOOGLE_CLOUD_PROJECT` and `FIREBASE_STORAGE_BUCKET` set (see [docs/FIGURE_RECOGNITION_M2.md](../../../docs/FIGURE_RECOGNITION_M2.md)):
+
+```text
+npm run embed:catalog-figures -- --figure-id <figureId>
+```
+
+One command per new `figureId`. The same command embeds that figure's `alternativeImages`. Do not pass an alternative `imageKey` as `--figure-id`. The script prints a plan and waits for `y`. Any other answer writes nothing. Do not run it with no `--figure-id`. Do not pass `--prune-stale-alternatives`. Wait for approval before the first figure, then run the rest of the approved ids.
+
+4. Read back what the scripts printed. Check each new id against that output. List every `figureId` that was embedded. Do not invent a verify script.
