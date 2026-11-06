@@ -25,7 +25,7 @@ npm run evaluate:figure-retrieval -- --manifest "<manifest.json>" --output-dir "
 
 Script: `functions/package.json` → `tools/evaluate-figure-retrieval.mjs`.
 
-5. Optional flags that exist: `--top-k` (1–20, default 5), `--overwrite`, `--continue-on-error` (default), `--preview-dir`, `--overwrite-preview`, `--case-id`, `--case-ids`, `--debug-top-candidates`, `--debug-top-k`.
+5. Optional flags are defined in [functions/src/figureRecognition/figureRetrievalEvaluationCli.ts](../../../functions/src/figureRecognition/figureRetrievalEvaluationCli.ts). Defaults come from that file. Do not assume a default that is not written there.
 
 ## What to read
 

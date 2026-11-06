@@ -8,7 +8,7 @@ description: >-
 
 # Publish an Official feed
 
-> **WARNING:** Push writes production immediately. There is no dry-run. Home reads `official_feed_items` from Firestore, not the JSON file. Confirm every id, link, image, and `publishedAt`, then wait for the user to approve before `push_official_feed.mjs`.
+> **WARNING:** Push writes production immediately. There is no dry-run. Home reads `official_feed_items` from Firestore, not the JSON file. `upload_official_feed_image.mjs` writes production Storage. Confirm every id, link, image, and `publishedAt`, then wait for the user to approve before `push_official_feed.mjs` or `upload_official_feed_image.mjs`.
 
 Feed posts are not catalog series. Follow [tools/official_feed/README.md](../../../tools/official_feed/README.md).
 
@@ -47,5 +47,3 @@ The seed is the full active set for that `sourceId`. Push writes those items, th
 To change an `id`, add the old id to `retiredItemIds`. Push sets that doc to `status: archived`. It does not delete the document.
 
 `productIdConfirmed` and `curationOverride` stay in the seed. They are not written to Firestore.
-
-`upload_official_feed_image.mjs` writes Storage. Do not run it until the user approves that path.
