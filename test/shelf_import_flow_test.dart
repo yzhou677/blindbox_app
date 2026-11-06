@@ -90,6 +90,26 @@ CollectionSnapshot _snap({
   );
 }
 
+final List<Directory> _ownedStagingDirs = [];
+
+Directory _ownedStagingDir() {
+  final dir = Directory.systemTemp.createTempSync('shelfy_staging_');
+  _ownedStagingDirs.add(dir);
+  return dir;
+}
+
+void _deleteOwnedStagingDirs() {
+  for (final dir in _ownedStagingDirs) {
+    if (!dir.existsSync()) continue;
+    try {
+      dir.deleteSync(recursive: true);
+    } on Object {
+      // ignore
+    }
+  }
+  _ownedStagingDirs.clear();
+}
+
 void main() {
   late Directory tempSupport;
   late Directory tempCache;
@@ -119,6 +139,7 @@ void main() {
     } on Object {
       // ignore
     }
+    _deleteOwnedStagingDirs();
   });
 
   test('pick cancel leaves shelf unchanged', () async {
@@ -409,7 +430,7 @@ void main() {
       figureStates: const {},
     );
     final staging = ShelfExportStaging(
-      stagingDir: Directory.systemTemp,
+      stagingDir: _ownedStagingDir(),
       manifest: ShelfExportManifest(
         kind: ShelfExportArchive.kind,
         schemaVersion: 1,
@@ -1357,7 +1378,7 @@ class _CancelStaging extends ShelfExportStaging {
     required super.snapshot,
     required DateTime createdAt,
   }) : super(
-          stagingDir: Directory.systemTemp,
+          stagingDir: _ownedStagingDir(),
           manifest: ShelfExportManifest(
             kind: ShelfExportArchive.kind,
             schemaVersion: 1,

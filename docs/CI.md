@@ -25,7 +25,7 @@ Concurrency: one active run per PR; newer pushes cancel older runs.
 
 Permissions stay minimal: workflow default is `contents: read`. Only the coverage job adds `pull-requests: write`.
 
-If the CI test step hangs, the last test name in the log is the one that stalled.
+If CI tests hang, check the last few log lines and errors marked [E]. The last test name is not always the one that stalled.
 
 ---
 

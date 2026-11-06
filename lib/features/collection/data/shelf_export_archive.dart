@@ -1193,9 +1193,30 @@ class ShelfExportStaging {
   final int extractedBytes;
 
   Future<void> delete() async {
+    // Release builds strip asserts. This must still refuse the temp root.
+    if (_isSystemTempRoot(stagingDir)) {
+      throw StateError(
+        'Refusing to delete the system temporary directory.',
+      );
+    }
     if (await stagingDir.exists()) {
       await stagingDir.delete(recursive: true);
     }
+  }
+
+  static bool _isSystemTempRoot(Directory dir) {
+    return _absoluteDirKey(dir) == _absoluteDirKey(Directory.systemTemp);
+  }
+
+  static String _absoluteDirKey(Directory dir) {
+    var path = dir.absolute.path;
+    while (path.length > 1 && (path.endsWith('/') || path.endsWith('\\'))) {
+      path = path.substring(0, path.length - 1);
+    }
+    if (Platform.isWindows) {
+      path = path.toLowerCase();
+    }
+    return path;
   }
 }
 

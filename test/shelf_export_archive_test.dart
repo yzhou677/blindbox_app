@@ -196,6 +196,36 @@ void main() {
     await _deleteQuietly(tempCache);
   });
 
+  test('delete refuses the system temp directory itself', () async {
+    final marker = File(
+      '${Directory.systemTemp.path}${Platform.pathSeparator}'
+      'shelfy_system_temp_guard_${DateTime.now().microsecondsSinceEpoch}',
+    );
+    await marker.writeAsString('keep', flush: true);
+    try {
+      final root = _guardStaging(Directory(Directory.systemTemp.absolute.path));
+      final trailing = _guardStaging(
+        Directory('${Directory.systemTemp.path}${Platform.pathSeparator}'),
+      );
+
+      await expectLater(root.delete(), throwsA(_refusesSystemTemp));
+      await expectLater(trailing.delete(), throwsA(_refusesSystemTemp));
+
+      expect(marker.existsSync(), isTrue);
+      expect(Directory.systemTemp.existsSync(), isTrue);
+
+      final child = Directory.systemTemp.createTempSync('shelfy_staging_');
+      final childFile = File('${child.path}${Platform.pathSeparator}keep.txt');
+      await childFile.writeAsString('child', flush: true);
+      await _guardStaging(child).delete();
+      expect(child.existsSync(), isFalse);
+    } finally {
+      if (marker.existsSync()) {
+        marker.deleteSync();
+      }
+    }
+  });
+
   test('empty shelf exports a valid zip', () async {
     final result = await ShelfExportArchive.exportToZip(
       snapshot: CollectionSnapshot.emptyTest(),
@@ -1108,6 +1138,35 @@ int _u16le(Uint8List b, int i) => b[i] | (b[i + 1] << 8);
 
 int _u32le(Uint8List b, int i) =>
     b[i] | (b[i + 1] << 8) | (b[i + 2] << 16) | (b[i + 3] << 24);
+
+final _refusesSystemTemp = isA<StateError>().having(
+  (StateError e) => e.message,
+  'message',
+  'Refusing to delete the system temporary directory.',
+);
+
+ShelfExportStaging _guardStaging(Directory dir) {
+  return ShelfExportStaging(
+    stagingDir: dir,
+    manifest: ShelfExportManifest(
+      kind: ShelfExportArchive.kind,
+      schemaVersion: 1,
+      createdAt: DateTime.utc(2026, 1, 1),
+      appVersion: '1',
+      seriesCount: 0,
+      figureCount: 0,
+      originalCount: 0,
+      thumbCount: 0,
+      mediaIncomplete: false,
+    ),
+    snapshot: CollectionSnapshot.emptyTest(),
+    memoryJson: '{}',
+    uiPrefsJson: '{}',
+    originalFiles: const {},
+    thumbFiles: const {},
+    extractedBytes: 0,
+  );
+}
 
 void _setU32le(Uint8List b, int i, int v) {
   b[i] = v & 0xff;
