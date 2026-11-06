@@ -109,7 +109,7 @@ From a local `flutter test --coverage` run that still wrote lcov despite failure
 
 ### Linux CI notes
 
-- `android/gradle.properties` may contain Windows-only `org.gradle.java.home` / `org.gradle.java.installations.paths`. The workflow strips those lines in the runner workspace before `flutter build apk --debug`.
+- Do not commit `org.gradle.java.home` or `org.gradle.java.installations.paths`; the release workflow fails if either is present.
 - CI installs **Temurin JDK 17** (`actions/setup-java`) because the app targets Java 17 and newer runner default JDKs (e.g. 25.x on ubuntu-26.04) break AGP `assembleDebug`.
 
 ### Golden baselines
