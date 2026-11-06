@@ -10,6 +10,8 @@ description: >-
 
 This is a human checklist. This repo has no script that checks pixel size, background, or filename. Do not invent one.
 
+Check the files the user confirmed in `add-official-series` ("Input: pasted images"). Do not download a replacement from the web.
+
 Spec: [tools/seed/CATALOG_FIGURE_ART_REEXPORT_GUIDE.md](../../../tools/seed/CATALOG_FIGURE_ART_REEXPORT_GUIDE.md). Ids: [`.cursor/rules/firebase-catalog.mdc`](../../rules/firebase-catalog.mdc). Paths: [lib/features/catalog/firestore/FIREBASE_STORAGE_CATALOG.md](../../../lib/features/catalog/firestore/FIREBASE_STORAGE_CATALOG.md).
 
 ## Figure file

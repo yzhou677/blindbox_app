@@ -17,8 +17,8 @@ Do catalog first. Publish the feed second. Stop between them.
 
 1. Discover the drop with the user. Name the brand, the series, and the official link. Do not write.
 2. Verify the link and, if a feed post is planned, the Instagram `publishedAt`. Stop.
-3. Select the images and run the `catalog-image-qa` skill. Stop until the user accepts the files.
-4. After approval, follow `add-official-series`. That skill stops before each Storage, Firestore, `meta/catalog`, and embedding write. Do not start the feed yet.
+3. Follow "Input: pasted images" in `add-official-series`. Do not download art from the official page. Stop until the user confirms the table, then run `catalog-image-qa`. Stop until the user accepts the files.
+4. After approval, continue `add-official-series` at "Write order". That skill stops before each Storage, Firestore, `meta/catalog`, and embedding write. Do not start the feed yet.
 5. Stop. Ask whether to publish the Home Official feed.
 6. After approval, follow `publish-official-feed`. Do not run `push_official_feed.mjs` until the user approves that push.
 
