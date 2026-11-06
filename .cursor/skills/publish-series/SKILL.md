@@ -10,11 +10,11 @@ description: >-
 
 > **WARNING:** A write here is production. Catalog documents are never deleted. A wrong write cannot be undone. Confirm every id, `imageKey`, and payload, then wait for the user to approve before any write.
 
-Start only when `D:\blindbox-catalog` already has the `add-series-local` changes and the user has said they can go live.
+Start only when `D:\blindbox-catalog` already has the `add-series-local` changes (`raw/` edited, normalize run, `data/` checked) and the user has said they can go live. Do not hand-edit `data/` here. `raw/` is the source of truth; see that catalog repo's `uploader.mdc` and README.
 
-Prefer `.webp` under `assets/catalog/series/` and `assets/catalog/figures/`. `.png` / `.jpg` / `.jpeg` remain allowed. Run `catalog-image-qa` first. **Failures** block this publish. **Warnings** (`LOW_RES`, `NON_WEBP`, and any other warning codes in the guide) do not. Do not treat suggested long edge ≥ 1200px, non-WebP format, or on-image SECRET text as a publish blocker. Spec: [tools/seed/CATALOG_FIGURE_ART_REEXPORT_GUIDE.md](../../../tools/seed/CATALOG_FIGURE_ART_REEXPORT_GUIDE.md).
+Prefer `.webp` under `assets/catalog/series/` and `assets/catalog/figures/`. `.png` / `.jpg` / `.jpeg` remain allowed. `.avif` is supported but not recommended. Run `catalog-image-qa` first. **Failures** block this publish. **Warnings** (`LOW_RES`, `NON_WEBP`, and any other warning codes in the guide) do not. Do not treat a soft “under 1200px” note, non-WebP format, or on-image SECRET text as a publish blocker. Spec: [tools/seed/CATALOG_FIGURE_ART_REEXPORT_GUIDE.md](../../../tools/seed/CATALOG_FIGURE_ART_REEXPORT_GUIDE.md).
 
-Scripts stay in that repo. Before you run `npm run upload:storage`, `npm run upload`, or any path such as `assets/catalog/`, read `D:\blindbox-catalog\package.json`, its README, and the script. If they disagree with this skill, stop. Then read the Usage comment at the top of the script, or run it with `--help`. Pass only flags printed there. Do not pass `--prune-remote`. That flag deletes remote objects that are missing locally.
+Scripts stay in that repo. Before you run `npm run upload:storage`, `npm run upload`, or any path such as `assets/catalog/`, read `D:\blindbox-catalog\package.json`, its README, and the script. If they disagree with this skill, stop. Then read the Usage comment at the top of the script. Pass only flags printed there. Do not invent `--help` behavior. Do not pass `--prune-remote`. That flag deletes remote objects that are missing locally.
 
 ## Order
 

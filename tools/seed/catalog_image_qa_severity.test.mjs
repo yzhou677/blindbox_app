@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   catalogImageQaSeverity,
+  isCatalogNonWebpExtension,
   isPromoCompositeFinding,
 } from './catalog_image_qa_severity.mjs';
 
@@ -20,6 +21,15 @@ describe('catalogImageQaSeverity', () => {
 
   it('rejects unknown codes', () => {
     assert.throws(() => catalogImageQaSeverity('SECRET_TEXT'), /Unknown catalog image QA reason code/);
+  });
+});
+
+describe('isCatalogNonWebpExtension', () => {
+  it('treats png jpg jpeg and avif as non-WebP', () => {
+    assert.equal(isCatalogNonWebpExtension('.png'), true);
+    assert.equal(isCatalogNonWebpExtension('figure.JPG'), true);
+    assert.equal(isCatalogNonWebpExtension('.avif'), true);
+    assert.equal(isCatalogNonWebpExtension('.webp'), false);
   });
 });
 

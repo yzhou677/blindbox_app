@@ -23,8 +23,25 @@ export const CATALOG_IMAGE_QA_FAILURE_CODES = Object.freeze(
 
 /** @type {ReadonlySet<string>} */
 export const CATALOG_IMAGE_QA_WARNING_CODES = Object.freeze(
+  // NON_WEBP covers png/jpg/jpeg/avif. AVIF is allowed but not recommended.
   new Set(['LOW_RES', 'NON_WEBP']),
 );
+
+/** Extensions that are valid catalog art but not the preferred WebP. */
+export const CATALOG_NON_WEBP_EXTENSIONS = Object.freeze(
+  new Set(['.png', '.jpg', '.jpeg', '.avif']),
+);
+
+/**
+ * @param {string} fileNameOrExt
+ * @returns {boolean}
+ */
+export function isCatalogNonWebpExtension(fileNameOrExt) {
+  const raw = fileNameOrExt?.trim().toLowerCase() ?? '';
+  const ext = raw.includes('.') ? raw.slice(raw.lastIndexOf('.')) : raw;
+  const withDot = ext.startsWith('.') ? ext : `.${ext}`;
+  return CATALOG_NON_WEBP_EXTENSIONS.has(withDot);
+}
 
 /**
  * @param {string} reasonCode

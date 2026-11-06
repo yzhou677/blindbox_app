@@ -2,7 +2,7 @@
 
 > **Not runtime metadata.** APK-bundled `tools/seed/*.json` was removed; catalog metadata at runtime comes from Firestore + persisted cache only ([`docs/CATALOG_ARCHITECTURE.md`](../../docs/CATALOG_ARCHITECTURE.md)). This guide applies to **catalog development** — Firestore ingestion, Storage uploads, and external export JSON — not to app startup.
 
-**Audience:** Cursor agent working in the **external catalog repo** or admin tooling (Firestore export, Storage uploads, `D:\blindbox-catalog\data\*.json`).  
+**Audience:** Cursor agent working in the **external catalog repo** or admin tooling (Firestore export, Storage uploads, `D:\blindbox-catalog\raw\*.json` → normalize → `data/`).  
 **Consumer app:** `blindbox_app` — gallery, search thumbs, series browse. Frontend can blur letterbox and adapt fit, but **cannot fix a full-poster composite used as a figure**, wrong aspect, or a missing Storage object.
 
 Use this doc to **audit existing `figures` + Storage objects** and output a **re-download / re-export checklist** for the human.
@@ -33,7 +33,8 @@ Printed titles, logos, rarity labels, or the word SECRET on an otherwise single-
 | Mild letterboxing on square cutout | Blur backdrop + contain in gallery; `AppImageFrame` on thumbs | Optional |
 | Slightly soft JPEG source converted to WebP | Higher-res re-export helps; not blocking | Optional |
 | Transparent WebP with extra padding | `transparentFigure` contain + inset | Optional trim in export |
-| Long edge under 1200px | App still shows the art | **Warning only** (`LOW_RES` if &lt; 800) |
+| Long edge under 1200px but ≥ 800px | App still shows the art | Optional improvement note only — **not** `LOW_RES` |
+| Long edge under 800px | App still shows the art | **Warning** `LOW_RES` (does not block publish) |
 | Series cover editorial crop | Cover fill is intentional for **series** covers only | N/A for figures |
 
 ---
@@ -45,20 +46,20 @@ Produce **one primary file per figure** at:
 `catalog/figures/<imageKey>.<ext>`  
 (`imageKey` = Firestore `figures/{id}` stem; see [FIREBASE_STORAGE_CATALOG.md](../../lib/features/catalog/firestore/FIREBASE_STORAGE_CATALOG.md))
 
-**Prefer `.webp`.** Keep alpha when converting from a transparent source. `.png` / `.jpg` / `.jpeg` remain supported when conversion fails or is a poor fit — report `NON_WEBP` as a **warning**, do not block publish. After writing, each `imageKey` should have **one** file (remove duplicate same-stem leftovers). The app probes `.webp`, `.png`, `.jpg`, `.jpeg`, `.avif` for Storage.
+**Prefer `.webp`.** Keep alpha when converting from a transparent source. Write the WebP to a temp file first; only after success replace the catalog path and delete other same-stem leftovers. `.png` / `.jpg` / `.jpeg` remain supported when conversion fails or is a poor fit — report `NON_WEBP` as a **warning**, do not block publish. `.avif` is supported but **not recommended** (large files hurt app performance); treat it as `NON_WEBP` and convert away when you can. Each `imageKey` should have **one** file. The app probes `.webp`, `.png`, `.jpg`, `.jpeg`, `.avif` for Storage.
 
 ### Required traits (“good” figure art)
 
 1. **Subject:** Single figure, centered, about **70–85%** of the frame height. A Secret may still show the figure (including on-image SECRET labels).
 2. **Background:** Transparent cutout **preferred**; else a very soft neutral gradient (not a cream poster page).
 3. **Aspect:** **1:1** (preferred) or **4:5** portrait — not 16:9 landscape.
-4. **Resolution:** Suggested long edge **≥ 1200px** (app decodes up to ~1536px in gallery). Long edge under 800px is `LOW_RES` — **warning only**, not a publish blocker.
-5. **Format:** Prefer `.webp`. `.png` / `.jpg` / `.jpeg` are allowed. Preserve alpha on cutouts when the format supports it.
+4. **Resolution:** Prefer long edge **≥ 1200px** (app decodes up to ~1536px in gallery). Under 1200px may be suggested as an improvement. Emit `LOW_RES` **only** when the long edge is under 800px — **warning only**, not a publish blocker.
+5. **Format:** Prefer `.webp`. `.png` / `.jpg` / `.jpeg` are allowed. `.avif` is allowed but not recommended. Preserve alpha on cutouts when the format supports it.
 
 ### Series cover (`catalog/series/<imageKey>.<ext>`) — different rules
 
 - Cover **may** be editorial collage / lifestyle.
-- Prefer `.webp`; other supported extensions are allowed.
+- Prefer `.webp`; `.png` / `.jpg` / `.jpeg` allowed; `.avif` allowed but not recommended.
 - Do **not** reuse series cover as figure art.
 
 ---
@@ -109,7 +110,7 @@ Deliver two lists. **Failures** block `publish-series`. **Warnings** do not.
 | Priority | seriesId | figureId | imageKey | isSecret | Reason code | Notes |
 |----------|----------|----------|----------|----------|-------------|-------|
 | P2 | ... | ... | ... | false | LOW_RES | long edge 400 |
-| P2 | ... | ... | ... | false | NON_WEBP | kept as .png after convert skipped |
+| P2 | ... | ... | ... | false | NON_WEBP | kept as .png or .avif after convert skipped |
 ```
 
 **Reason codes** (use exactly):
@@ -123,7 +124,7 @@ Deliver two lists. **Failures** block `publish-series`. **Warnings** do not.
 - `IMAGEKEY_MISMATCH` — **failure** — key/path mismatch
 - `SERIES_COVER_USED` — **failure** — figure slot uses series poster art
 - `LOW_RES` — **warning** — long edge &lt; 800px
-- `NON_WEBP` — **warning** — file is not `.webp` (png/jpg/jpeg/avif still allowed; do not block publish)
+- `NON_WEBP` — **warning** — file is not `.webp` (png/jpg/jpeg allowed; avif allowed but not recommended; do not block publish)
 
 Sort within each list: **P0** = gallery/search embarrassment, **P1** = inconsistent but usable, **P2** = nice to have.
 
@@ -132,7 +133,8 @@ Sort within each list: **P0** = gallery/search embarrassment, **P1** = inconsist
 ## Do not change (unless fixing above)
 
 - Firestore schema: still **`imageKey` only**, no URLs on docs.
-- Storage paths: `catalog/figures/<imageKey>.<ext>` with preferred `.webp`; app probes supported extensions.
+- Storage paths: `catalog/figures/<imageKey>.<ext>` with preferred `.webp`; app probes supported extensions (avif supported but not recommended).
+- Catalog metadata edits: change `raw/`, then normalize — do not hand-edit generated `data/`.
 - Document ids / `imageKey` stems (renaming forces app + shelf migration).
 
 Replace **binaries only**, keep ids stable.

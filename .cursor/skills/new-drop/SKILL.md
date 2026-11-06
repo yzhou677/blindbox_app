@@ -8,12 +8,12 @@ description: >-
 
 # New drop
 
-> **WARNING:** `publish-series` and `publish-official-feed` write production. Catalog documents are never deleted. A feed push has no dry-run. `add-series-local` only edits files in `D:\blindbox-catalog`. Wait for the user to approve each step.
+> **WARNING:** `publish-series` and `publish-official-feed` write production. Catalog documents are never deleted. A feed push has no dry-run. `add-series-local` only edits files in `D:\blindbox-catalog` (`raw/` + assets, then normalize). Wait for the user to approve each step.
 
 ## Steps
 
-1. Follow `add-series-local`. It does not upload. It stops with a git diff of `D:\blindbox-catalog`.
-2. Stop. Wait until the user has checked that diff and says it can go live.
+1. Follow `add-series-local`. It does not upload. It edits `raw/`, runs normalize to refresh `data/`, and stops with a before/after summary (and git diff when that tree is a repo).
+2. Stop. Wait until the user has checked that summary and says it can go live.
 3. Follow `publish-series`. It stops before each Storage, Firestore, and embedding write.
 4. Stop. Ask whether to publish the Home Official feed. If yes, verify the Instagram `publishedAt` before the push.
 5. After approval, follow `publish-official-feed`. Do not run `push_official_feed.mjs` until the user approves that push.
