@@ -24,6 +24,13 @@ node tools/official_feed/_ig_shortcode_date.mjs <shortcode>
 
 Use the `utc` field. Do not truncate it to midnight. Do not use the sale start time.
 4. Pick one product image (`imageUrl`). https, and png, jpg, jpeg, or webp. No `A_` / `B_` / `C_` carousel names. No reseller host unless `curationOverride` is `reseller_image_ok`.
+   When the user pastes an image in chat, save it outside the repo first, under `%TEMP%\shelfy_official_feed\`. Do not commit it. Wait for the user to approve, then upload that local path. An https URL is still a valid first argument.
+
+```text
+node tools/official_feed/upload_official_feed_image.mjs <httpsImageUrl-or-localFile> official_feed/<sourceId>/<file>
+```
+
+   The command writes production Storage and prints the download URL. Use that URL as `imageUrl`.
 5. Show the seed diff. Wait for approval.
 
 ## Commands
