@@ -38,8 +38,11 @@ and override the value before approving a run.
 ### Image MIME types for embedding
 
 This job sends Storage bytes through `@google/genai` `embedContent` with
-`vertexai: true` (see `googleImageEmbeddingClient.ts`). Official docs disagree
-on which image formats `gemini-embedding-2` accepts:
+`vertexai: true` (see `googleImageEmbeddingClient.ts`). Shelfy embeds on
+**Vertex**, not the consumer Gemini API path. Default practice: send the
+stored catalog bytes as-is, including **WebP**, with **no conversion**.
+
+Notes (docs and reports still disagree; keep for context only):
 
 | Source | Image formats listed |
 | --- | --- |
@@ -47,10 +50,9 @@ on which image formats `gemini-embedding-2` accepts:
 | [Vertex Gemini Embedding 2 model card](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/gemini/embedding-2) | `image/png`, `image/jpeg`, `image/webp`, `image/bmp`, `image/heic`, `image/heif`, `image/avif` |
 | [Community report](https://discuss.ai.google.dev/t/embedcontent-with-gemini-embedding-2-preview-does-not-support-webp-images/134957) | `image/webp` rejected on `gemini-embedding-2-preview` |
 
-Do **not** assume WebP or AVIF will embed successfully. Before embedding a
-non-PNG/JPEG catalog object, stop and ask the operator whether to convert a
-temporary PNG/JPEG for the API call, try the stored bytes as-is, or skip.
-Do not invent a conversion path without approval.
+Do **not** stop to ask about format before an embed call. If the API returns a
+real format / MIME rejection, stop, show the operator the raw error text, and
+wait for direction. Do not invent a conversion path without approval.
 
 Catalog Storage probe order for embeddings matches the app:
 `.webp`, `.png`, `.jpg`, `.jpeg`, `.avif` (`catalogImageResolver.ts`).

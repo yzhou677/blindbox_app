@@ -2,9 +2,10 @@
 name: publish-series
 description: >-
   Uploads a local catalog series to production Storage and Firestore, then
-  embeds figures whose art was uploaded. Use only after add-series-local, when
-  the user says the D:\blindbox-catalog changes can go live. Stop before every
-  write.
+  embeds figures whose art was uploaded (and re-embeds when an embedding is
+  missing or imageObjectPath does not match). Use only after add-series-local,
+  when the user says the D:\blindbox-catalog changes can go live. Stop before
+  every write.
 ---
 
 # Publish a series
@@ -63,12 +64,12 @@ npm run embed:catalog-figures -- --figure-id <figureId>
 
    One command per confirmed `figureId`. The same command embeds that figure's `alternativeImages`. Do not pass an alternative `imageKey` as `--figure-id`. The script prints a plan and waits for `y`. Any other answer writes nothing. Do not run it with no `--figure-id`. Do not pass `--prune-stale-alternatives`. Wait for approval before the first figure, then run the rest of the approved ids.
 
-**Embedding MIME types:** Official docs disagree on whether `gemini-embedding-2` accepts WebP/AVIF (Gemini API embeddings list PNG/JPEG only; some Vertex Embedding 2 pages list WebP/AVIF). Links are in [docs/FIGURE_RECOGNITION_M2.md](../../../docs/FIGURE_RECOGNITION_M2.md). If the Storage object you are about to embed is `.webp` or `.avif` (or any type other than PNG/JPEG), **stop and ask** the user whether to convert a temporary PNG/JPEG for the API call, try the stored bytes as-is, or skip. Do not convert, skip, or invent a workaround without approval.
+**Embedding MIME types:** This app embeds through Vertex (`vertexai: true`). Send stored catalog bytes as-is, including **WebP**, with no pre-conversion and no pre-flight format question. Details and source links: [docs/FIGURE_RECOGNITION_M2.md](../../../docs/FIGURE_RECOGNITION_M2.md). Only if the API returns a real format / MIME error: **stop**, show the user the raw error text, and wait. Do not invent a conversion path without approval.
 
 4. Script logs are not the check. This repo has no read-only verify command for this publish. Do not invent a verify flag. Ask the user to open Firebase Console for project `blindbox-collection` and check:
 
 - the series and figure docs touched by this publish, `imageVersion`, `updatedAt`, `meta/catalog.lastUpdatedAt`
 - `catalogFigureEmbeddings/<figureId>` (plus each `…__alt__<imageKey>` the embed run created)
-- that each embedding doc's `imageObjectPath` is exactly the Storage object uploaded for that `imageKey` (same stem **and** extension / format)
+- that each embedding doc's `imageObjectPath` is exactly the current confirmed Storage object for that `imageKey` (same stem **and** extension / format)
 
 List every `figureId` you passed to embed. If that Console check was not done, say "not verified".
