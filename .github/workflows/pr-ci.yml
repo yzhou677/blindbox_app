@@ -105,19 +105,26 @@ jobs:
       # ---- Tests + coverage -------------------------------------------------
       # Produce lcov.info even when some tests fail, so the coverage reporter
       # still has something to post. Failures are recorded and re-surfaced.
+      #
+      # expanded prints every test name. A hang is not always that last
+      # name: also read the last few lines and any [E] errors.
+      # --timeout=120s fails that one test instead of waiting for the job
+      # cap. The only in-repo override is 45s (market_search_anr_repro_test),
+      # and a full local run peaked at about 3.3s per test.
+      #
+      # timeout-minutes is only this step. The job stays at 60 minutes.
+      # continue-on-error stays: a failed or timed-out test step must not
+      # skip lcov upload or the coverage-report job. A 120s test failure is
+      # a normal non-zero exit, not a job cancellation.
       - name: Flutter test with coverage
         id: flutter_test
         continue-on-error: true
+        timeout-minutes: 20
         run: |
           set +e
-          flutter test --coverage --reporter=compact
+          flutter test --coverage --reporter=expanded --timeout=120s
           code=$?
           set -e
-          if [ -f coverage/lcov.info ]; then
-            echo "lcov_present=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "lcov_present=false" >> "$GITHUB_OUTPUT"
-          fi
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit $code
 
