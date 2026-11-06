@@ -316,6 +316,26 @@ jobs:
         run: echo "No functions/** changes in this PR — skipping Cloud Functions CI."
 
   # ---------------------------------------------------------------------------
+  # Official feed image upload. Not gated on functions/**.
+  # A PR that only changes tools/official_feed/ still runs this test.
+  # ---------------------------------------------------------------------------
+  official-feed-tools:
+    name: Official feed image upload
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Test official feed image upload
+        run: node --test tools/official_feed/upload_official_feed_image.test.mjs
+
+  # ---------------------------------------------------------------------------
   # Optional — regenerate goldens on Linux when the request marker is present.
   # Create `.github/ci/REQUEST_GOLDEN_UPDATE` on the PR branch, push, download the
   # `linux-goldens` artifact, commit PNGs under test/goldens/, delete the marker.

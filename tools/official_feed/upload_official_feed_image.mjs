@@ -6,6 +6,8 @@
  *   node tools/official_feed/upload_official_feed_image.mjs <httpsImageUrl-or-localFile> <objectPath>
  *
  * Prints the public Firebase download URL.
+ * Accepts https or a local file path. Rejects http.
+ * Checks the PNG, JPEG, or WebP file header. It does not detect every corrupt image.
  */
 import { createRequire } from 'node:module';
 import { randomUUID } from 'node:crypto';
@@ -40,12 +42,11 @@ export function officialFeedDownloadUrl(bucketName, objectPath, token) {
   );
 }
 
-function isRemoteUrl(src) {
+function urlProtocol(src) {
   try {
-    const protocol = new URL(src).protocol;
-    return protocol === 'https:' || protocol === 'http:';
+    return new URL(src).protocol;
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -61,7 +62,9 @@ export async function loadOfficialFeedImageBytes(src, options = {}) {
   const trimmed = src?.trim();
   if (!trimmed) throw new Error('Image source is required.');
 
-  if (isRemoteUrl(trimmed)) {
+  const protocol = urlProtocol(trimmed);
+  if (protocol === 'http:') throw new Error(`Only https URLs are accepted: ${trimmed}`);
+  if (protocol === 'https:') {
     const imgRes = await fetchImpl(trimmed, { headers: { 'User-Agent': 'Mozilla/5.0' } });
     if (!imgRes.ok) throw new Error(`download failed ${imgRes.status}`);
     const buf = Buffer.from(await imgRes.arrayBuffer());

@@ -3,7 +3,10 @@ import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, it } from 'node:test';
-import { loadOfficialFeedImageBytes } from './upload_official_feed_image.mjs';
+import {
+  loadOfficialFeedImageBytes,
+  officialFeedDownloadUrl,
+} from './upload_official_feed_image.mjs';
 
 const PNG = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
@@ -90,6 +93,53 @@ describe('loadOfficialFeedImageBytes', () => {
             }),
         }),
       /Not an image: https:\/\/example.com\/page/,
+    );
+  });
+
+  it('reads a local jpeg and a local webp', async () => {
+    const dir = tempDir();
+    const jpeg = Buffer.alloc(12, 0);
+    jpeg[0] = 0xff;
+    jpeg[1] = 0xd8;
+    jpeg[2] = 0xff;
+    const webp = Buffer.alloc(12, 0);
+    webp.write('RIFF', 0);
+    webp.write('WEBP', 8);
+    const jpegFile = join(dir, 'figure.jpg');
+    const webpFile = join(dir, 'figure.webp');
+    writeFileSync(jpegFile, jpeg);
+    writeFileSync(webpFile, webp);
+
+    const jpegLoaded = await loadOfficialFeedImageBytes(jpegFile);
+    const webpLoaded = await loadOfficialFeedImageBytes(webpFile);
+    assert.equal(jpegLoaded.contentType, 'image/jpeg');
+    assert.equal(webpLoaded.contentType, 'image/webp');
+  });
+
+  it('rejects an http URL', async () => {
+    let fetched = false;
+    await assert.rejects(
+      () =>
+        loadOfficialFeedImageBytes('http://example.com/figure.png', {
+          fetchImpl: async () => {
+            fetched = true;
+            throw new Error('fetch should not run for http');
+          },
+        }),
+      /Only https URLs are accepted: http:\/\/example.com\/figure.png/,
+    );
+    assert.equal(fetched, false);
+  });
+
+  it('builds the Firebase download URL', () => {
+    assert.equal(
+      officialFeedDownloadUrl(
+        'blindbox-collection.firebasestorage.app',
+        'official_feed/popmart_us/ig_abc.jpg',
+        'token-1',
+      ),
+      'https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/' +
+        'official_feed%2Fpopmart_us%2Fig_abc.jpg?alt=media&token=token-1',
     );
   });
 

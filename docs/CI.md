@@ -22,6 +22,7 @@ Concurrency: one active run per PR; newer pushes cancel older runs.
 | **Flutter analyze / test / APK** | `flutter analyze`, `flutter test --coverage` (lcov), debug APK artifact |
 | **PR coverage comment block** | Replaces the PR description coverage region (report-only) |
 | **Cloud Functions** | Only if the PR touches `functions/**` — Node 22, `npm ci`, lint, build, test |
+| **Official feed image upload** | Always. `node --test tools/official_feed/upload_official_feed_image.test.mjs`. Not skipped when `functions/**` is untouched |
 
 Permissions stay minimal: workflow default is `contents: read`. Only the coverage job adds `pull-requests: write`.
 
