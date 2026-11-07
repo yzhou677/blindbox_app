@@ -26,9 +26,12 @@ import 'package:flutter/foundation.dart';
 ///
 /// Offline skips Storage immediately. A probe [TimeoutException] while still
 /// online continues to the next extension (missing `.avif` must not block
-/// `.webp`). After a full miss that included timeouts, further Storage probes
-/// pause until connectivity recovers. Transient transport misses are **not**
-/// written to the session missing-key cache.
+/// `.webp`), then retries the whole probe up to [maxStorageFetchRetries] times
+/// with short backoff. A single-key timeout does **not** gate other keys.
+/// The session transport gate trips only when offline, or after
+/// [consecutiveTransportFailuresToTripGate] distinct keys exhaust retries;
+/// it auto-clears after [transportGateTtl] or when connectivity returns.
+/// Transient transport misses are **not** written to the session missing-key cache.
 ///
 /// Download URLs are not written back to Firestore or shelf [imageKey].
 abstract final class CatalogImageResolver {
@@ -79,9 +82,16 @@ abstract final class CatalogImageResolver {
   @visibleForTesting
   static int get queuedStaleRefreshCount => _staleRefreshQueue.length;
 
-  /// True after a Storage timeout / transport failure until connectivity recovers.
+  /// True after offline / multi-key transport failures until TTL or online again.
   @visibleForTesting
   static bool get storageTransportUnavailable => _storageTransportUnavailable;
+
+  @visibleForTesting
+  static int get consecutiveTransportFailureCount =>
+      _consecutiveTransportFailures;
+
+  @visibleForTesting
+  static int get activeStorageFetchCount => _activeStorageFetches;
 
   @visibleForTesting
   static void resetSessionCachesForTest() {
@@ -92,17 +102,65 @@ abstract final class CatalogImageResolver {
     _staleRefreshQueue.clear();
     _staleRefreshQueuedKeys.clear();
     _activeStaleRefreshCount = 0;
+    _activeStorageFetches = 0;
+    _storageFetchWaiters.clear();
     _debugLoggedMissingKeys.clear();
-    _storageTransportUnavailable = false;
+    _clearTransportGate();
     storageExtensionProbeCount = 0;
     backgroundRefreshCount = 0;
     maxConcurrentStaleRefreshesOverride = null;
+    maxConcurrentStorageFetchesOverride = null;
+    maxStorageFetchRetriesOverride = null;
+    storageRetryDelaysOverride = null;
+    delayOverride = null;
+    nowOverride = null;
     firebaseStorageReadyOverride = null;
     getDownloadUrlOverride = null;
     isOnlineOverride = null;
   }
 
   static const Duration storageUrlTimeout = Duration(seconds: 8);
+
+  /// Retries after a full extension-probe timeout / transport failure (not 404).
+  static const int maxStorageFetchRetries = 2;
+
+  @visibleForTesting
+  static int? maxStorageFetchRetriesOverride;
+
+  static int get _storageFetchRetryLimit =>
+      maxStorageFetchRetriesOverride ?? maxStorageFetchRetries;
+
+  /// Backoff before retry attempts 1 and 2 (plus small jitter).
+  static const List<Duration> storageRetryDelays = [
+    Duration(milliseconds: 300),
+    Duration(milliseconds: 800),
+  ];
+
+  @visibleForTesting
+  static List<Duration>? storageRetryDelaysOverride;
+
+  /// Cap simultaneous Storage fetch+retry pipelines (retries hold the slot).
+  static const int maxConcurrentStorageFetches = 6;
+
+  @visibleForTesting
+  static int? maxConcurrentStorageFetchesOverride;
+
+  static int get _storageFetchConcurrencyCap =>
+      maxConcurrentStorageFetchesOverride ?? maxConcurrentStorageFetches;
+
+  /// Distinct keys that must exhaust retries before the session gate trips.
+  static const int consecutiveTransportFailuresToTripGate = 3;
+
+  /// How long a consecutive-failure gate stays closed while still "online".
+  static const Duration transportGateTtl = Duration(seconds: 5);
+
+  /// Test seam for retry backoff sleeps.
+  @visibleForTesting
+  static Future<void> Function(Duration duration)? delayOverride;
+
+  /// Test seam for gate TTL.
+  @visibleForTesting
+  static DateTime Function()? nowOverride;
 
   /// Probe order for Storage (`catalog/series|figures/<imageKey><ext>`).
   ///
@@ -125,11 +183,15 @@ abstract final class CatalogImageResolver {
   static final List<_StaleRefreshJob> _staleRefreshQueue = [];
   static final Set<String> _staleRefreshQueuedKeys = <String>{};
   static int _activeStaleRefreshCount = 0;
+  static int _activeStorageFetches = 0;
+  static final List<Completer<void>> _storageFetchWaiters = <Completer<void>>[];
   static final Set<String> _debugLoggedMissingKeys = <String>{};
 
-  /// Session gate: skip further Storage probes after timeout / transport failure
-  /// until [isOnlineOverride] / connectivity reports online again.
+  /// Session gate: offline, or several distinct keys exhausted transport retries.
   static bool _storageTransportUnavailable = false;
+  static _TransportGateReason _transportGateReason = _TransportGateReason.none;
+  static DateTime? _transportGateUntil;
+  static int _consecutiveTransportFailures = 0;
 
   static int get _staleRefreshConcurrencyCap =>
       maxConcurrentStaleRefreshesOverride ?? maxConcurrentStaleRefreshes;
@@ -438,11 +500,105 @@ abstract final class CatalogImageResolver {
     required String primaryCacheKey,
     required bool recordMissingOnFailure,
     String? imageVersion,
+  }) {
+    return _withStorageFetchSlot(
+      () => _fetchAndPersistFromStorageWithRetries(
+        kind: kind,
+        imageKey: imageKey,
+        primaryCacheKey: primaryCacheKey,
+        recordMissingOnFailure: recordMissingOnFailure,
+        imageVersion: imageVersion,
+      ),
+    );
+  }
+
+  static Future<T> _withStorageFetchSlot<T>(Future<T> Function() run) async {
+    while (_activeStorageFetches >= _storageFetchConcurrencyCap) {
+      final waiter = Completer<void>();
+      _storageFetchWaiters.add(waiter);
+      await waiter.future;
+    }
+    _activeStorageFetches++;
+    try {
+      return await run();
+    } finally {
+      _activeStorageFetches--;
+      if (_storageFetchWaiters.isNotEmpty) {
+        _storageFetchWaiters.removeAt(0).complete();
+      }
+    }
+  }
+
+  static Future<String?> _fetchAndPersistFromStorageWithRetries({
+    required CatalogImageKind kind,
+    required String imageKey,
+    required String primaryCacheKey,
+    required bool recordMissingOnFailure,
+    String? imageVersion,
+  }) async {
+    final retryLimit = _storageFetchRetryLimit;
+    _ProbeOutcome? last;
+
+    for (var attempt = 0; attempt <= retryLimit; attempt++) {
+      if (attempt > 0) {
+        await _delay(_retryDelayForAttempt(attempt));
+      }
+      last = await _probeStorageExtensions(
+        kind: kind,
+        imageKey: imageKey,
+        primaryCacheKey: primaryCacheKey,
+        imageVersion: imageVersion,
+      );
+      if (last.displayRef != null) {
+        _noteTransportSuccess();
+        return last.displayRef;
+      }
+      if (last.wentOffline) {
+        _tripOfflineGate();
+        return null;
+      }
+      if (last.onlyObjectNotFound) {
+        break;
+      }
+      if (!last.sawRetryableTransport) {
+        break;
+      }
+      // Retryable timeout / transport — continue until retry budget exhausted.
+    }
+
+    final outcome = last;
+    if (outcome == null) return null;
+
+    if (outcome.sawRetryableTransport) {
+      _noteTransportFailureForKey();
+    }
+
+    if (outcome.onlyObjectNotFound && recordMissingOnFailure) {
+      _storageMissingCache.add(primaryCacheKey);
+      _debugLogMissingKeyOnce(kind: kind, imageKey: imageKey);
+    }
+    _traceResolution(
+      imageKey: imageKey,
+      kind: kind,
+      phase: 'storage',
+      storageSkipped: false,
+      outcome: 'storage_miss',
+    );
+    return null;
+  }
+
+  static Future<_ProbeOutcome> _probeStorageExtensions({
+    required CatalogImageKind kind,
+    required String imageKey,
+    required String primaryCacheKey,
+    String? imageVersion,
   }) async {
     var sawOnlyObjectNotFound = true;
-    var sawTimeout = false;
+    var sawRetryableTransport = false;
+    var wentOffline = false;
     final useOverride = getDownloadUrlOverride != null;
     Reference? storageRoot;
+
     for (final ext in assetExtensions) {
       final path = storageObjectPath(
         kind: kind,
@@ -473,11 +629,9 @@ abstract final class CatalogImageResolver {
           downloadUrl: rawUrl,
           extension: ext,
         );
-        // Prefer disk path; network fallback already carries `v=` for CDN bust.
         final displayRef = localPath ?? url;
         _storageDisplayRefCache[primaryCacheKey] = displayRef;
         _storageMissingCache.remove(primaryCacheKey);
-        _storageTransportUnavailable = false;
         _traceResolution(
           imageKey: imageKey,
           kind: kind,
@@ -487,10 +641,10 @@ abstract final class CatalogImageResolver {
           storageSkipped: false,
           outcome: localPath != null ? 'disk_cache_persisted' : 'storage_url',
         );
-        return displayRef;
+        return _ProbeOutcome(displayRef: displayRef);
       } on TimeoutException {
         sawOnlyObjectNotFound = false;
-        sawTimeout = true;
+        sawRetryableTransport = true;
         _traceResolution(
           imageKey: imageKey,
           kind: kind,
@@ -500,18 +654,22 @@ abstract final class CatalogImageResolver {
           storageSkipped: false,
           outcome: 'storage_timeout',
         );
-        // Truly offline → stop. Still online → try next extension (e.g. .avif
-        // timed out / missing must not block an existing .webp).
         if (!await _isLikelyOnline()) {
-          _markStorageTransportUnavailable();
-          return null;
+          wentOffline = true;
+          return _ProbeOutcome(
+            wentOffline: true,
+            sawRetryableTransport: true,
+          );
         }
         continue;
       } on FirebaseException catch (e) {
         if (_isObjectNotFound(e)) continue;
-        if (e.code == 'no-app') return null;
+        if (e.code == 'no-app') {
+          return const _ProbeOutcome(onlyObjectNotFound: false);
+        }
         if (_isTransportFailure(e)) {
-          _markStorageTransportUnavailable();
+          sawOnlyObjectNotFound = false;
+          sawRetryableTransport = true;
           _traceResolution(
             imageKey: imageKey,
             kind: kind,
@@ -521,34 +679,28 @@ abstract final class CatalogImageResolver {
             storageSkipped: false,
             outcome: 'storage_transport_error',
           );
-          return null;
+          if (!await _isLikelyOnline()) {
+            return _ProbeOutcome(
+              wentOffline: true,
+              sawRetryableTransport: true,
+            );
+          }
+          // Abort remaining extensions for this attempt; outer loop may retry.
+          return _ProbeOutcome(sawRetryableTransport: true);
         }
         sawOnlyObjectNotFound = false;
-        return null;
+        return const _ProbeOutcome(onlyObjectNotFound: false);
       } on Object {
         sawOnlyObjectNotFound = false;
-        return null;
+        return const _ProbeOutcome(onlyObjectNotFound: false);
       }
     }
-    if (sawTimeout) {
-      // Avoid 5×timeout on every subsequent tile when the link is dead but
-      // connectivity still looked online for the first key.
-      _markStorageTransportUnavailable();
-    }
-    if (sawOnlyObjectNotFound && recordMissingOnFailure) {
-      // Missing object for all known extensions: cache as absent so repeated
-      // UI rebuilds do not keep probing Storage and spamming 404 logs.
-      _storageMissingCache.add(primaryCacheKey);
-      _debugLogMissingKeyOnce(kind: kind, imageKey: imageKey);
-    }
-    _traceResolution(
-      imageKey: imageKey,
-      kind: kind,
-      phase: 'storage',
-      storageSkipped: false,
-      outcome: 'storage_miss',
+
+    return _ProbeOutcome(
+      onlyObjectNotFound: sawOnlyObjectNotFound,
+      sawRetryableTransport: sawRetryableTransport,
+      wentOffline: wentOffline,
     );
-    return null;
   }
 
   /// Returns false when Storage probes should be skipped (offline / paused).
@@ -557,19 +709,42 @@ abstract final class CatalogImageResolver {
     required String imageKey,
   }) async {
     if (_storageTransportUnavailable) {
-      if (!await _isLikelyOnline()) {
-        _traceResolution(
-          imageKey: imageKey,
-          kind: kind,
-          phase: 'storage',
-          storageSkipped: true,
-          outcome: 'skipped_transport_unavailable',
-        );
-        return false;
+      final online = await _isLikelyOnline();
+      if (_transportGateReason == _TransportGateReason.offline) {
+        if (!online) {
+          _traceResolution(
+            imageKey: imageKey,
+            kind: kind,
+            phase: 'storage',
+            storageSkipped: true,
+            outcome: 'skipped_transport_unavailable',
+          );
+          return false;
+        }
+        _clearTransportGate();
+      } else if (_transportGateReason ==
+          _TransportGateReason.consecutiveFailures) {
+        final until = _transportGateUntil;
+        final expired = until == null || !_now().isBefore(until);
+        if (!expired) {
+          _traceResolution(
+            imageKey: imageKey,
+            kind: kind,
+            phase: 'storage',
+            storageSkipped: true,
+            outcome: 'skipped_transport_unavailable',
+          );
+          return false;
+        }
+        // TTL elapsed — reopen; offline check below may re-trip if needed.
+        _clearTransportGate();
+      } else {
+        _clearTransportGate();
       }
-      _storageTransportUnavailable = false;
-    } else if (!await _isLikelyOnline()) {
-      _markStorageTransportUnavailable();
+    }
+
+    if (!await _isLikelyOnline()) {
+      _tripOfflineGate();
       _traceResolution(
         imageKey: imageKey,
         kind: kind,
@@ -582,8 +757,55 @@ abstract final class CatalogImageResolver {
     return true;
   }
 
-  static void _markStorageTransportUnavailable() {
+  static void _noteTransportSuccess() {
+    _consecutiveTransportFailures = 0;
+    if (_transportGateReason != _TransportGateReason.offline) {
+      _clearTransportGate();
+    }
+  }
+
+  static void _noteTransportFailureForKey() {
+    _consecutiveTransportFailures++;
+    if (_consecutiveTransportFailures >=
+        consecutiveTransportFailuresToTripGate) {
+      _tripConsecutiveFailureGate();
+    }
+  }
+
+  static void _tripOfflineGate() {
     _storageTransportUnavailable = true;
+    _transportGateReason = _TransportGateReason.offline;
+    _transportGateUntil = null;
+  }
+
+  static void _tripConsecutiveFailureGate() {
+    _storageTransportUnavailable = true;
+    _transportGateReason = _TransportGateReason.consecutiveFailures;
+    _transportGateUntil = _now().add(transportGateTtl);
+  }
+
+  static void _clearTransportGate() {
+    _storageTransportUnavailable = false;
+    _transportGateReason = _TransportGateReason.none;
+    _transportGateUntil = null;
+    _consecutiveTransportFailures = 0;
+  }
+
+  static DateTime _now() => nowOverride?.call() ?? DateTime.now();
+
+  static Future<void> _delay(Duration duration) {
+    final override = delayOverride;
+    if (override != null) return override(duration);
+    return Future<void>.delayed(duration);
+  }
+
+  static Duration _retryDelayForAttempt(int attempt) {
+    final delays = storageRetryDelaysOverride ?? storageRetryDelays;
+    final index = (attempt - 1).clamp(0, delays.length - 1);
+    final base = delays[index];
+    // Small deterministic-ish jitter from probe count so retries do not sync.
+    final jitterMs = (storageExtensionProbeCount * 37) % 120;
+    return base + Duration(milliseconds: jitterMs);
   }
 
   static Future<bool> _isLikelyOnline() async {
@@ -736,6 +958,22 @@ final class _StaleRefreshJob {
   final String? imageVersion;
   final String primaryCacheKey;
 }
+
+final class _ProbeOutcome {
+  const _ProbeOutcome({
+    this.displayRef,
+    this.onlyObjectNotFound = false,
+    this.sawRetryableTransport = false,
+    this.wentOffline = false,
+  });
+
+  final String? displayRef;
+  final bool onlyObjectNotFound;
+  final bool sawRetryableTransport;
+  final bool wentOffline;
+}
+
+enum _TransportGateReason { none, offline, consecutiveFailures }
 
 /// Catalog art subtree — maps to `catalog/series/` or `catalog/figures/` in Storage.
 enum CatalogImageKind { series, figure }

@@ -197,10 +197,15 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
         oldWidget.displayMode != widget.displayMode ||
         oldWidget.deferInitialResolve != widget.deferInitialResolve ||
         oldWidget.resolveStaggerBatch != widget.resolveStaggerBatch) {
+      final clearDisplayed = oldWidget.imageKey != widget.imageKey;
       if (widget.deferInitialResolve) {
-        _scheduleInitialResolve();
+        scheduleCatalogImageResolveAfterFrames(
+          staggerBatch: widget.resolveStaggerBatch,
+          isMounted: () => mounted,
+          onReady: () => _startResolve(clearDisplayedImage: clearDisplayed),
+        );
       } else {
-        _startResolve();
+        _startResolve(clearDisplayedImage: clearDisplayed);
       }
     }
   }
@@ -231,10 +236,11 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
     if (widget.imageVersion != null) return;
     final next = _effectiveImageVersion();
     if (next == _boundImageVersion) return;
-    _startResolve();
+    // Keep painted art while the new version resolves (stale-while-revalidate).
+    _startResolve(clearDisplayedImage: false);
   }
 
-  void _startResolve() {
+  void _startResolve({bool clearDisplayedImage = false}) {
     final generation = _resolveCoordinator.begin();
     final key = widget.imageKey.trim();
     catalogImageFromKeyDebugOnResolveStart?.call(
@@ -252,11 +258,15 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
       return;
     }
 
-    // Drop stale art immediately so recycled list cells never flash the prior series.
     if (mounted) {
       setState(() {
-        _loading = true;
-        _imageRef = null;
+        if (clearDisplayedImage) {
+          // Identity changed — never flash the previous series/figure.
+          _imageRef = null;
+          _boundImageVersion = null;
+        }
+        // Shimmer only when there is nothing to show; keep stale art otherwise.
+        _loading = _imageRef == null || _imageRef!.isEmpty;
       });
     }
 
@@ -268,6 +278,7 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
     required String imageKey,
   }) async {
     final imageVersion = _effectiveImageVersion();
+    final previousRef = _imageRef;
 
     String? ref;
     if (CatalogImageResolver.storageFallbackEnabled) {
@@ -285,7 +296,13 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
     if (!_resolveCoordinator.shouldApply(generation) || !mounted) return;
 
     if (kDebugMode) {
-      final provider = ref == null || ref.isEmpty
+      final keptStale =
+          (ref == null || ref.isEmpty) &&
+          previousRef != null &&
+          previousRef.isNotEmpty;
+      final provider = keptStale
+          ? 'stale'
+          : ref == null || ref.isEmpty
           ? 'placeholder'
           : DeviceLocalImageRef.looksLikeDevicePath(ref)
           ? 'disk_cache'
@@ -297,8 +314,17 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
     }
 
     setState(() {
-      _imageRef = ref;
-      _boundImageVersion = imageVersion;
+      if (ref != null && ref.isNotEmpty) {
+        _imageRef = ref;
+        _boundImageVersion = imageVersion;
+      } else if (previousRef == null || previousRef.isEmpty) {
+        _imageRef = null;
+        _boundImageVersion = imageVersion;
+      } else {
+        // Resolve failed — keep showing the previous image, but advance the
+        // bound version so identical bundle notifies do not loop forever.
+        _boundImageVersion = imageVersion;
+      }
       _loading = false;
     });
   }

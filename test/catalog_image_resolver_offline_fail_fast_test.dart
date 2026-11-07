@@ -86,8 +86,9 @@ void main() {
     );
 
     test(
-      'all-extension timeouts while online mark transport unavailable',
+      'all-extension timeouts while online do not trip the global gate',
       () async {
+        CatalogImageResolver.delayOverride = (_) async {};
         CatalogImageResolver.getDownloadUrlOverride = (_) async {
           throw TimeoutException('simulated storage timeout');
         };
@@ -97,11 +98,14 @@ void main() {
         );
 
         expect(ref, isNull);
+        // One probe walk + 2 retries.
         expect(
           CatalogImageResolver.storageExtensionProbeCount,
-          CatalogImageResolver.assetExtensions.length,
+          CatalogImageResolver.assetExtensions.length *
+              (1 + CatalogImageResolver.maxStorageFetchRetries),
         );
-        expect(CatalogImageResolver.storageTransportUnavailable, isTrue);
+        expect(CatalogImageResolver.storageTransportUnavailable, isFalse);
+        expect(CatalogImageResolver.consecutiveTransportFailureCount, 1);
       },
     );
 
@@ -128,6 +132,7 @@ void main() {
     test(
       'timeout miss does not negative-cache; later online can probe again',
       () async {
+        CatalogImageResolver.delayOverride = (_) async {};
         CatalogImageResolver.getDownloadUrlOverride = (_) async {
           throw TimeoutException('down');
         };
@@ -138,10 +143,11 @@ void main() {
         );
         expect(
           CatalogImageResolver.storageExtensionProbeCount,
-          CatalogImageResolver.assetExtensions.length,
+          CatalogImageResolver.assetExtensions.length *
+              (1 + CatalogImageResolver.maxStorageFetchRetries),
         );
 
-        // Gate stays closed while offline.
+        // Offline gate blocks siblings.
         CatalogImageResolver.isOnlineOverride = () async => false;
         CatalogImageResolver.storageExtensionProbeCount = 0;
         expect(
@@ -170,28 +176,28 @@ void main() {
     );
 
     test(
-      'after all-timeout miss, sibling keys skip probes while gate held',
+      'after timeout miss, sibling keys still probe while online',
       () async {
-        CatalogImageResolver.getDownloadUrlOverride = (_) async {
+        CatalogImageResolver.delayOverride = (_) async {};
+        var calls = 0;
+        CatalogImageResolver.getDownloadUrlOverride = (path) async {
+          calls++;
+          if (path.contains('second_key') && path.endsWith('.webp')) {
+            return 'https://example.test/$path';
+          }
           throw TimeoutException('down');
         };
 
         await CatalogImageResolver.resolveSeriesStorageRef('first_miss');
-        expect(
-          CatalogImageResolver.storageExtensionProbeCount,
-          CatalogImageResolver.assetExtensions.length,
-        );
+        expect(CatalogImageResolver.storageTransportUnavailable, isFalse);
 
-        CatalogImageResolver.isOnlineOverride = () async => false;
         CatalogImageResolver.storageExtensionProbeCount = 0;
-
-        for (final key in ['feed_a', 'feed_b', 'feed_c']) {
-          expect(
-            await CatalogImageResolver.resolveSeriesStorageRef(key),
-            isNull,
-          );
-        }
-        expect(CatalogImageResolver.storageExtensionProbeCount, 0);
+        final second = await CatalogImageResolver.resolveSeriesStorageRef(
+          'second_key',
+        );
+        expect(second, isNotNull);
+        expect(CatalogImageResolver.storageExtensionProbeCount, greaterThan(0));
+        expect(calls, greaterThan(CatalogImageResolver.assetExtensions.length));
       },
     );
 
@@ -243,8 +249,9 @@ void main() {
     });
 
     test(
-      'Firebase transport error fails fast without walking extensions',
+      'Firebase transport error aborts the attempt then retries, no global gate',
       () async {
+        CatalogImageResolver.delayOverride = (_) async {};
         CatalogImageResolver.getDownloadUrlOverride = (_) async {
           throw FirebaseException(
             plugin: 'firebase_storage',
@@ -258,8 +265,13 @@ void main() {
         );
 
         expect(ref, isNull);
-        expect(CatalogImageResolver.storageExtensionProbeCount, 1);
-        expect(CatalogImageResolver.storageTransportUnavailable, isTrue);
+        // One probe per attempt × (1 + retries); does not walk all extensions.
+        expect(
+          CatalogImageResolver.storageExtensionProbeCount,
+          1 + CatalogImageResolver.maxStorageFetchRetries,
+        );
+        expect(CatalogImageResolver.storageTransportUnavailable, isFalse);
+        expect(CatalogImageResolver.consecutiveTransportFailureCount, 1);
       },
     );
 
