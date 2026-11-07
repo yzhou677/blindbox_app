@@ -22,20 +22,48 @@ class ReleaseLineupStrip extends StatelessWidget {
   static const double cellExtent = 84;
   static const double gap = 14;
 
+  /// Gap under the art tile before the one-line name.
+  static const double labelGap = 8;
+
+  /// Top/bottom padding inside the horizontal [ListView].
+  static const double listVerticalPadding = 4;
+
+  /// [CollectibleTypography.figureMeta] one-line box at text scale 1.0.
+  static const double labelLineExtent = 16;
+
+  /// Subpixel / font-metric headroom — the old `cellExtent + 32` budget was
+  /// exactly tight and overflowed by 1px on series detail.
+  static const double packSlack = 2;
+
   /// Secret slots with a catalog [imageKey] show real art; blur tile only when art is unknown.
   static bool slotUsesSecretPlaceholder(ReleaseLineupSlot slot) {
     return slot.isSecret && slot.imageKey.trim().isEmpty;
+  }
+
+  /// Strip viewport height: fixed art + scaled one-line label + slack.
+  @visibleForTesting
+  static double stripHeightFor([
+    TextScaler textScaler = TextScaler.noScaling,
+  ]) {
+    return cellExtent +
+        labelGap +
+        (listVerticalPadding * 2) +
+        textScaler.scale(labelLineExtent) +
+        packSlack;
   }
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return SizedBox(
-      height: cellExtent + 32,
+      height: stripHeightFor(MediaQuery.textScalerOf(context)),
       child: ListView.separated(
         clipBehavior: Clip.none,
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 2,
+          vertical: listVerticalPadding,
+        ),
         physics: const BouncingScrollPhysics(),
         itemCount: slots.length,
         separatorBuilder: (context, index) => const SizedBox(width: gap),
@@ -104,7 +132,7 @@ class _LineupCell extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: ReleaseLineupStrip.labelGap),
           Text(
             slot.isSecret ? 'Secret' : slot.name,
             maxLines: 1,
