@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:blindbox_app/core/media/device_local_ref.dart';
 import 'package:blindbox_app/features/catalog/catalog_image_resolver.dart';
 import 'package:blindbox_app/features/catalog/data/catalog_image_cache_policy.dart';
 import 'package:blindbox_app/features/catalog/data/catalog_image_version.dart';
@@ -301,6 +302,46 @@ abstract final class CatalogImageDiskCache {
     }
   }
 
+  /// True when [ref] is a device path whose file exists and is non-empty.
+  static Future<bool> isPresentLocalFile(String ref) async {
+    if (kIsWeb) return false;
+    if (!DeviceLocalImageRef.looksLikeDevicePath(ref)) return false;
+    try {
+      final file = File(DeviceLocalImageRef.normalizeToFilePath(ref));
+      return await file.exists() && await file.length() > 0;
+    } on Object {
+      return false;
+    }
+  }
+
+  /// Drops one index entry (and its file when present) without purging siblings.
+  static Future<void> evictEntry({
+    required CatalogImageKind kind,
+    required String imageKey,
+    String? imageVersion,
+  }) async {
+    if (kIsWeb) return;
+    try {
+      final key = entryKey(
+        kind: kind,
+        imageKey: imageKey,
+        imageVersion: imageVersion,
+      );
+      final index = await _ensureIndex();
+      final entry = index.entries[key];
+      if (entry != null) {
+        final file = File(entry.path);
+        if (await file.exists()) {
+          await file.delete();
+        }
+        index.remove(key);
+        await _flushIndex();
+      }
+    } on Object {
+      // Best-effort recovery path.
+    }
+  }
+
   /// Deletes index entries + files for [imageKey] under [kind], except [keepKey].
   static Future<void> _purgeOtherVersions({
     required CatalogImageKind kind,
@@ -334,6 +375,11 @@ abstract final class CatalogImageDiskCache {
     final safe = _safeStem(imageKey);
     if (safe.isEmpty) {
       await _flushIndex();
+      CatalogImageResolver.clearSessionDisplayRefsForImageKey(
+        kind: kind,
+        imageKey: imageKey,
+        keepEntryKey: keepKey,
+      );
       return;
     }
     final dir = await _kindDirectory(kind);
@@ -360,6 +406,13 @@ abstract final class CatalogImageDiskCache {
       index.remove(key);
     }
     await _flushIndex();
+    // Session may still hold purged paths — drop them so resolve cannot paint
+    // a deleted file (versioned ↔ unversioned persist of the same imageKey).
+    CatalogImageResolver.clearSessionDisplayRefsForImageKey(
+      kind: kind,
+      imageKey: imageKey,
+      keepEntryKey: keepKey,
+    );
   }
 
   static Future<void> _registerEntry({
@@ -399,6 +452,7 @@ abstract final class CatalogImageDiskCache {
     if (total <= _maxCacheBytes) return;
 
     final victims = index.entriesByOldestAccess();
+    final removedKeys = <String>[];
     for (final entry in victims) {
       if (total <= _maxCacheBytes) break;
       final file = File(entry.value.path);
@@ -406,9 +460,13 @@ abstract final class CatalogImageDiskCache {
         await file.delete();
       }
       index.remove(entry.key);
+      removedKeys.add(entry.key);
       total -= entry.value.sizeBytes;
     }
     await _flushIndex();
+    for (final key in removedKeys) {
+      CatalogImageResolver.clearSessionDisplayRef(key);
+    }
   }
 
   static Future<void> _flushIndex() async {

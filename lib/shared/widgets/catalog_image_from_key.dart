@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:blindbox_app/core/media/device_local_ref.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
 import 'package:blindbox_app/features/catalog/catalog_image_resolver.dart';
@@ -167,6 +169,9 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
   /// the displayed cache identity on failure.
   String? _resolveTargetVersion;
 
+  /// Caps PathNotFound recovery at one re-resolve per painted identity.
+  var _localPathRecoveryAttempted = false;
+
   void Function()? _removeBundleListener;
 
   CatalogImageDisplaySpec get _spec => CatalogImageDisplaySpec.forMode(
@@ -214,6 +219,9 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
         oldWidget.deferInitialResolve != widget.deferInitialResolve ||
         oldWidget.resolveStaggerBatch != widget.resolveStaggerBatch) {
       final clearDisplayed = oldWidget.imageKey != widget.imageKey;
+      if (clearDisplayed) {
+        _localPathRecoveryAttempted = false;
+      }
       if (widget.deferInitialResolve) {
         scheduleCatalogImageResolveAfterFrames(
           staggerBatch: widget.resolveStaggerBatch,
@@ -224,6 +232,26 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
         _startResolve(clearDisplayedImage: clearDisplayed);
       }
     }
+  }
+
+  void _onLocalPathMissing() {
+    if (_localPathRecoveryAttempted || !mounted) return;
+    _localPathRecoveryAttempted = true;
+    final key = widget.imageKey.trim();
+    final version = _displayedImageVersion;
+    final kind = _isSeriesMode
+        ? CatalogImageKind.series
+        : CatalogImageKind.figure;
+    unawaited(() async {
+      await CatalogImageResolver.invalidateBrokenLocalDisplayRef(
+        kind: kind,
+        imageKey: key,
+        imageVersion: version,
+      );
+      if (!mounted) return;
+      // Drop the dead path so we shimmer while Storage re-resolves once.
+      _startResolve(clearDisplayedImage: true);
+    }());
   }
 
   bool get _isSeriesMode => switch (widget.displayMode) {
@@ -432,6 +460,7 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
       height: widget.height,
       immersiveGalleryStage:
           widget.displayMode == CatalogImageDisplayMode.figureGallery,
+      onLocalPathMissing: _onLocalPathMissing,
     );
   }
 }

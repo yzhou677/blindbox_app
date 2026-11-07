@@ -13,7 +13,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 /// Renders a resolved catalog asset path or Storage URL with adaptive presentation rules.
-class CatalogResolvedImage extends StatelessWidget {
+class CatalogResolvedImage extends StatefulWidget {
   const CatalogResolvedImage({
     super.key,
     required this.imageRef,
@@ -27,6 +27,7 @@ class CatalogResolvedImage extends StatelessWidget {
     this.width,
     this.height,
     this.immersiveGalleryStage = false,
+    this.onLocalPathMissing,
   });
 
   final String imageRef;
@@ -45,24 +46,73 @@ class CatalogResolvedImage extends StatelessWidget {
   /// Blurred cover backdrop + contain foreground (fullscreen gallery).
   final bool immersiveGalleryStage;
 
+  /// Invoked at most once per mount when a local disk ref fails with
+  /// [PathNotFoundException] (or equivalent missing-file [FileSystemException]).
+  /// Parent should clear cache and re-resolve — capped at one recovery.
+  final VoidCallback? onLocalPathMissing;
+
   static const Duration _immersiveLayerFadeIn = Duration.zero;
   static const Duration _immersiveLayerFadeOut = Duration.zero;
 
   @override
+  State<CatalogResolvedImage> createState() => _CatalogResolvedImageState();
+}
+
+class _CatalogResolvedImageState extends State<CatalogResolvedImage> {
+  var _localMissingNotified = false;
+
+  @override
+  void didUpdateWidget(CatalogResolvedImage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.imageRef != widget.imageRef) {
+      _localMissingNotified = false;
+    }
+  }
+
+  void _notifyLocalPathMissing(Object error) {
+    if (_localMissingNotified) return;
+    if (widget.onLocalPathMissing == null) return;
+    if (!DeviceLocalImageRef.looksLikeDevicePath(widget.imageRef)) return;
+    if (!_isMissingLocalFileError(error)) return;
+    _localMissingNotified = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      widget.onLocalPathMissing?.call();
+    });
+  }
+
+  static bool _isMissingLocalFileError(Object error) {
+    if (error is PathNotFoundException) return true;
+    if (error is FileSystemException) {
+      final message = error.message.toLowerCase();
+      if (message.contains('no such file') ||
+          message.contains('cannot find') ||
+          message.contains('path not found')) {
+        return true;
+      }
+      final os = error.osError?.message.toLowerCase() ?? '';
+      return os.contains('no such file') ||
+          os.contains('cannot find the file') ||
+          os.contains('path not found');
+    }
+    return false;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final ref = imageRef.trim();
+    final ref = widget.imageRef.trim();
     if (ref.isEmpty) {
-      return _placeholder(borderRadius ?? BorderRadius.zero);
+      return _placeholder(widget.borderRadius ?? BorderRadius.zero);
     }
 
-    final radius = borderRadius ?? BorderRadius.zero;
+    final radius = widget.borderRadius ?? BorderRadius.zero;
 
     Widget content = LayoutBuilder(
       builder: (context, constraints) {
         final scheme = Theme.of(context).colorScheme;
         final dpr = MediaQuery.devicePixelRatioOf(context);
         final mat = _matColor(scheme);
-        final immersive = immersiveGalleryStage && !spec.fillsFrame;
+        final immersive = widget.immersiveGalleryStage && !widget.spec.fillsFrame;
 
         final framed = immersive
             ? _buildImmersiveStage(
@@ -76,7 +126,7 @@ class CatalogResolvedImage extends StatelessWidget {
                 borderRadius: radius,
                 child: ColoredBox(
                   color: mat,
-                  child: spec.fillsFrame
+                  child: widget.spec.fillsFrame
                       ? _coverFrame(
                           constraints: constraints,
                           image: _buildImage(
@@ -104,8 +154,12 @@ class CatalogResolvedImage extends StatelessWidget {
       },
     );
 
-    if (width != null || height != null) {
-      content = SizedBox(width: width, height: height, child: content);
+    if (widget.width != null || widget.height != null) {
+      content = SizedBox(
+        width: widget.width,
+        height: widget.height,
+        child: content,
+      );
     }
     return content;
   }
@@ -134,7 +188,7 @@ class CatalogResolvedImage extends StatelessWidget {
     return ClipRect(
       child: CatalogImmersiveFigureStage.subjectContainLayer(
         constraints: constraints,
-        spec: spec,
+        spec: widget.spec,
         child: image,
       ),
     );
@@ -149,16 +203,16 @@ class CatalogResolvedImage extends StatelessWidget {
   }) {
     final slot = CatalogImmersiveFigureStage.innerSlotSize(
       constraints: constraints,
-      spec: spec,
+      spec: widget.spec,
     );
     final slotW = slot.width ?? constraints.maxWidth;
     final slotH = slot.height ?? constraints.maxHeight;
-    final decodeExtent = spec.memCacheDecodeExtent(constraints, dpr);
+    final decodeExtent = widget.spec.memCacheDecodeExtent(constraints, dpr);
 
     return CatalogImmersiveFigureStage(
       constraints: constraints,
       borderRadius: radius,
-      spec: spec,
+      spec: widget.spec,
       backdrop: _buildImage(
         ref: ref,
         constraints: constraints,
@@ -167,27 +221,30 @@ class CatalogResolvedImage extends StatelessWidget {
         fillBounds: true,
         placeholder: () => _loadingMat(scheme),
         onError: () => _placeholder(radius),
-        fadeInDuration: _immersiveLayerFadeIn,
-        fadeOutDuration: _immersiveLayerFadeOut,
+        fadeInDuration: CatalogResolvedImage._immersiveLayerFadeIn,
+        fadeOutDuration: CatalogResolvedImage._immersiveLayerFadeOut,
       ),
       foregroundSubject: CatalogImmersiveFeatheredSubject(
         imageProvider: CatalogImmersiveImageProviders.fromDisplayRef(
           ref,
-          imageVersion: imageVersion,
+          imageVersion: widget.imageVersion,
         ),
         slotWidth: slotW,
         slotHeight: slotH,
-        filterQuality: spec.filterQuality,
+        filterQuality: widget.spec.filterQuality,
         decodeExtent: decodeExtent,
         placeholder: (context) => _loadingMat(scheme),
-        errorBuilder: (context, error, stackTrace) => _placeholder(radius),
+        errorBuilder: (context, error, stackTrace) {
+          _notifyLocalPathMissing(error);
+          return _placeholder(radius);
+        },
       ),
     );
   }
 
   Color _matColor(ColorScheme scheme) {
     return Color.alphaBlend(
-      scheme.surface.withValues(alpha: spec.matOpacity),
+      scheme.surface.withValues(alpha: widget.spec.matOpacity),
       scheme.surfaceContainerHighest.withValues(alpha: 0.12),
     );
   }
@@ -203,20 +260,20 @@ class CatalogResolvedImage extends StatelessWidget {
     Duration? fadeInDuration,
     Duration? fadeOutDuration,
   }) {
-    final resolvedFit = fit ?? spec.fit;
+    final resolvedFit = fit ?? widget.spec.fit;
     CatalogAspectImage.assertAspectPreservingFit(resolvedFit);
-    final decodeExtent = spec.memCacheDecodeExtent(constraints, dpr);
-    final expansive = fillBounds ?? spec.fillsFrame;
-    final fadeIn = fadeInDuration ?? spec.fadeInDuration;
-    final fadeOut = fadeOutDuration ?? spec.fadeOutDuration;
+    final decodeExtent = widget.spec.memCacheDecodeExtent(constraints, dpr);
+    final expansive = fillBounds ?? widget.spec.fillsFrame;
+    final fadeIn = fadeInDuration ?? widget.spec.fadeInDuration;
+    final fadeOut = fadeOutDuration ?? widget.spec.fadeOutDuration;
 
     if (CollectibleThumbImage.isAssetPath(ref)) {
       return CatalogAspectImage.presentAsset(
         asset: ref,
         key: ValueKey<String>('catalog-asset:$ref'),
         fit: resolvedFit,
-        alignment: spec.alignment,
-        filterQuality: spec.filterQuality,
+        alignment: widget.spec.alignment,
+        filterQuality: widget.spec.filterQuality,
         fillBounds: expansive,
         decodeExtent: decodeExtent,
         errorBuilder: (context, error, stackTrace) {
@@ -231,25 +288,29 @@ class CatalogResolvedImage extends StatelessWidget {
       return CatalogAspectImage.coverFile(
         file: File(path),
         fit: resolvedFit,
-        alignment: spec.alignment,
-        filterQuality: spec.filterQuality,
+        alignment: widget.spec.alignment,
+        filterQuality: widget.spec.filterQuality,
         fillBounds: expansive,
         decodeExtent: decodeExtent,
         errorBuilder: (context, error, stackTrace) {
           debugPrint('CatalogResolvedImage: disk cache "$ref" failed: $error');
+          _notifyLocalPathMissing(error);
           return onError();
         },
       );
     }
 
-    final cacheKey = CatalogImageVersion.networkCacheKey(ref, imageVersion);
+    final cacheKey = CatalogImageVersion.networkCacheKey(
+      ref,
+      widget.imageVersion,
+    );
     return CatalogAspectImage.presentNetwork(
       key: ValueKey<String>('catalog-cached:$cacheKey'),
       imageUrl: ref,
       cacheKey: cacheKey,
       fit: resolvedFit,
-      alignment: spec.alignment,
-      filterQuality: spec.filterQuality,
+      alignment: widget.spec.alignment,
+      filterQuality: widget.spec.filterQuality,
       decodeExtent: decodeExtent,
       fillBounds: expansive,
       fadeInDuration: fadeIn,
@@ -260,17 +321,19 @@ class CatalogResolvedImage extends StatelessWidget {
   }
 
   Widget _loadingMat(ColorScheme scheme) {
-    return AppImageShimmer(borderRadius: borderRadius ?? BorderRadius.zero);
+    return AppImageShimmer(
+      borderRadius: widget.borderRadius ?? BorderRadius.zero,
+    );
   }
 
   Widget _placeholder(BorderRadius radius) {
     return ClipRRect(
       borderRadius: radius,
       child: CollectibleFigurePlaceholder(
-        name: name,
-        seedKey: seedKey,
-        isSecret: isSecret,
-        compact: compact,
+        name: widget.name,
+        seedKey: widget.seedKey,
+        isSecret: widget.isSecret,
+        compact: widget.compact,
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:blindbox_app/core/media/device_local_ref.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
 import 'package:blindbox_app/features/catalog/data/catalog_image_disk_cache.dart';
 import 'package:blindbox_app/features/catalog/data/catalog_image_version.dart';
@@ -131,6 +132,78 @@ abstract final class CatalogImageResolver {
     firebaseStorageReadyOverride = null;
     getDownloadUrlOverride = null;
     isOnlineOverride = null;
+  }
+
+  /// Drops one session display ref by disk/session entry key.
+  static void clearSessionDisplayRef(String entryKey) {
+    _storageDisplayRefCache.remove(entryKey);
+  }
+
+  /// Test seam: seed a session display ref without going through resolve.
+  @visibleForTesting
+  static void seedSessionDisplayRefForTest(String entryKey, String displayRef) {
+    _storageDisplayRefCache[entryKey] = displayRef;
+  }
+
+  /// Test seam: read a session display ref.
+  @visibleForTesting
+  static String? sessionDisplayRefForTest(String entryKey) =>
+      _storageDisplayRefCache[entryKey];
+
+  /// Drops session display refs for [imageKey] under [kind], optionally keeping
+  /// one entry (the version just persisted).
+  ///
+  /// Called after disk [CatalogImageDiskCache] purges other versions so the
+  /// session map cannot keep pointing at deleted files.
+  static void clearSessionDisplayRefsForImageKey({
+    required CatalogImageKind kind,
+    required String imageKey,
+    String? keepEntryKey,
+  }) {
+    final toRemove = <String>[];
+    for (final key in _storageDisplayRefCache.keys) {
+      if (!CatalogImageVersion.entryKeyMatchesImageKey(
+        entryKey: key,
+        kind: kind,
+        imageKey: imageKey,
+      )) {
+        continue;
+      }
+      if (keepEntryKey != null && key == keepEntryKey) continue;
+      toRemove.add(key);
+    }
+    for (final key in toRemove) {
+      _storageDisplayRefCache.remove(key);
+    }
+  }
+
+  /// Removes one session/disk entry so the next resolve re-fetches Storage.
+  static Future<void> invalidateBrokenLocalDisplayRef({
+    required CatalogImageKind kind,
+    required String imageKey,
+    String? imageVersion,
+  }) async {
+    final k = imageKey.trim();
+    if (k.isEmpty) return;
+    final version = CatalogImageVersion.normalize(imageVersion);
+    final primaryCacheKey = CatalogImageVersion.diskEntryKey(
+      kind: kind,
+      imageKey: k,
+      imageVersion: version,
+    );
+    _storageDisplayRefCache.remove(primaryCacheKey);
+    _storageMissingCache.remove(primaryCacheKey);
+    await CatalogImageDiskCache.evictEntry(
+      kind: kind,
+      imageKey: k,
+      imageVersion: version,
+    );
+  }
+
+  /// Session/network URL refs are trusted; local paths need a single exists().
+  static Future<bool> _isUsableCachedDisplayRef(String ref) async {
+    if (!DeviceLocalImageRef.looksLikeDevicePath(ref)) return true;
+    return CatalogImageDiskCache.isPresentLocalFile(ref);
   }
 
   static const Duration storageUrlTimeout = Duration(seconds: 8);
@@ -376,7 +449,20 @@ abstract final class CatalogImageResolver {
     );
 
     final sessionCached = _storageDisplayRefCache[primaryCacheKey];
-    if (sessionCached != null) return sessionCached;
+    if (sessionCached != null) {
+      // One exists() on local-path session hits — never in build().
+      if (await _isUsableCachedDisplayRef(sessionCached)) {
+        return sessionCached;
+      }
+      _storageDisplayRefCache.remove(primaryCacheKey);
+      _traceResolution(
+        imageKey: k,
+        kind: kind,
+        phase: 'session_cache',
+        hit: false,
+        outcome: 'session_path_missing',
+      );
+    }
 
     final diskHit = await CatalogImageDiskCache.lookup(
       kind: kind,
