@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:blindbox_app/core/media/device_local_ref.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
 import 'package:blindbox_app/features/catalog/catalog_image_resolver.dart';
-import 'package:blindbox_app/features/catalog/data/catalog_image_disk_cache.dart';
 import 'package:blindbox_app/features/catalog/data/catalog_image_version.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/collection/widgets/collectible_figure_placeholder.dart';
@@ -263,14 +262,17 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
         ? CatalogImageKind.series
         : CatalogImageKind.figure;
     unawaited(() async {
+      // Drop the dead session/index pointer only — do not delete siblings or
+      // force-clear painted art (that was blanking Series Card / wishlist thumbs).
       await CatalogImageResolver.invalidateBrokenLocalDisplayRef(
         kind: kind,
         imageKey: key,
         imageVersion: version,
+        deleteFile: false,
       );
       if (!mounted) return;
       if (widget.imageKey.trim() != key) return;
-      _startResolve(clearDisplayedImage: true);
+      _startResolve(clearDisplayedImage: false);
     }());
   }
 
@@ -370,22 +372,9 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
       _loading = false;
     });
     catalogImageFromKeyDebugOnResolveApplied?.call(imageKey, nextVersion);
-
-    // Purge sibling versions only after the new file is painted.
-    if (nextRef != null &&
-        nextRef.isNotEmpty &&
-        nextRef != previousRef &&
-        DeviceLocalImageRef.looksLikeDevicePath(nextRef)) {
-      unawaited(
-        CatalogImageDiskCache.purgeOtherVersionsKeeping(
-          kind: _isSeriesMode
-              ? CatalogImageKind.series
-              : CatalogImageKind.figure,
-          imageKey: imageKey,
-          imageVersion: nextVersion,
-        ),
-      );
-    }
+    // Intentionally do not purge sibling disk versions from the widget.
+    // Eager purge after first successful paint was deleting files still needed
+    // by Series Card / wishlist / shelf thumbs on the next visit.
   }
 
   @override

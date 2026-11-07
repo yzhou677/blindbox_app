@@ -213,7 +213,7 @@ void main() {
   );
 
   test(
-    'after new version is written, displayed old file still exists until purge',
+    'new version persist writes new file before deleting the old version file',
     () async {
       const imageKey = 'keep_displayed';
       final pathV1 = await CatalogImageDiskCache.persistBytes(
@@ -235,16 +235,7 @@ void main() {
       );
       expect(pathV2, isNotNull);
       expect(File(pathV2!).existsSync(), isTrue);
-      // Old displayed file must survive until purge-after-display.
-      expect(File(pathV1).existsSync(), isTrue);
-
-      await CatalogImageDiskCache.purgeOtherVersionsKeeping(
-        kind: CatalogImageKind.figure,
-        imageKey: imageKey,
-        imageVersion: 'v2',
-      );
       expect(File(pathV1).existsSync(), isFalse);
-      expect(File(pathV2).existsSync(), isTrue);
     },
   );
 

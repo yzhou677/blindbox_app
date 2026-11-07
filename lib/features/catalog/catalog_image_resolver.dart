@@ -108,10 +108,15 @@ abstract final class CatalogImageResolver {
   }
 
   /// Clears a broken local path so the next resolve hits Storage once.
+  ///
+  /// When [deleteFile] is false (default for UI PathNotFound recovery), only
+  /// the session/index pointer is dropped — the bytes are left alone in case
+  /// another tile still needs them.
   static Future<void> invalidateBrokenLocalDisplayRef({
     required CatalogImageKind kind,
     required String imageKey,
     String? imageVersion,
+    bool deleteFile = false,
   }) async {
     final k = imageKey.trim();
     if (k.isEmpty) return;
@@ -127,6 +132,7 @@ abstract final class CatalogImageResolver {
       kind: kind,
       imageKey: k,
       imageVersion: version,
+      deleteFile: deleteFile,
     );
   }
 

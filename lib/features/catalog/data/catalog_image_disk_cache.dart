@@ -15,9 +15,9 @@ import 'package:path_provider/path_provider.dart';
 /// refresh orchestrated by [CatalogImageResolver]. Not used on web.
 ///
 /// Cache identity is [CatalogImageVersion.diskEntryKey]: when `imageVersion`
-/// changes under the same `imageKey`, the prior entry is a miss. Old files are
-/// purged via [purgeOtherVersionsKeeping] only after the new version is written
-/// and the UI is painting it.
+/// changes under the same `imageKey`, the prior entry is a miss. After the new
+/// version file is written and registered, sibling files for that `imageKey`
+/// are purged ([_purgeOtherVersions]).
 abstract final class CatalogImageDiskCache {
   CatalogImageDiskCache._();
 
@@ -395,7 +395,12 @@ abstract final class CatalogImageDiskCache {
       imageKey: imageKey.trim(),
       imageVersion: CatalogImageVersion.normalize(imageVersion),
     );
-    // Sibling versions stay until [purgeOtherVersionsKeeping] after display.
+    // New file is already on disk — only now drop sibling versions.
+    await _purgeOtherVersions(
+      kind: kind,
+      imageKey: imageKey,
+      keepKey: key,
+    );
     await _evictIfNeeded();
     await _flushIndex();
   }
@@ -412,11 +417,12 @@ abstract final class CatalogImageDiskCache {
     }
   }
 
-  /// Drops one index entry (and file when present).
+  /// Drops one index entry. Optionally deletes the file bytes.
   static Future<void> evictEntry({
     required CatalogImageKind kind,
     required String imageKey,
     String? imageVersion,
+    bool deleteFile = true,
   }) async {
     if (kIsWeb) return;
     try {
@@ -428,9 +434,11 @@ abstract final class CatalogImageDiskCache {
       final index = await _ensureIndex();
       final entry = index.entries[key];
       if (entry == null) return;
-      final file = File(entry.path);
-      if (await file.exists()) {
-        await file.delete();
+      if (deleteFile) {
+        final file = File(entry.path);
+        if (await file.exists()) {
+          await file.delete();
+        }
       }
       index.remove(key);
       await _flushIndex();
@@ -556,6 +564,11 @@ abstract final class CatalogImageDiskCache {
       lastAccessedAt: at,
       imageKey: imageKey.trim(),
       imageVersion: CatalogImageVersion.normalize(imageVersion),
+    );
+    await _purgeOtherVersions(
+      kind: kind,
+      imageKey: imageKey,
+      keepKey: key,
     );
     await _evictIfNeeded();
     await _flushIndex();

@@ -146,17 +146,9 @@ void main() {
       );
       expect(pathV2, isNotNull);
       expect(pathV2, isNot(pathV1));
-      // New file is written before any purge — old file still exists.
-      expect(File(pathV1).existsSync(), isTrue);
-      expect(File(pathV2!).existsSync(), isTrue);
-
-      await CatalogImageDiskCache.purgeOtherVersionsKeeping(
-        kind: CatalogImageKind.series,
-        imageKey: imageKey,
-        imageVersion: _md5V2,
-      );
+      // Persist writes the new file first, then purges the old version.
       expect(File(pathV1).existsSync(), isFalse);
-      expect(File(pathV2).existsSync(), isTrue);
+      expect(File(pathV2!).existsSync(), isTrue);
       expect(await CatalogImageDiskCache.entryCount(), 1);
       expect(
         await CatalogImageDiskCache.entryKeysForTest(),
@@ -251,17 +243,8 @@ void main() {
       expect(third, isNotNull);
       expect(third, isNot(first));
       expect(downloads, 2);
-      // Old version file remains until UI confirms display + purge.
-      expect(File(first!).existsSync(), isTrue);
+      expect(File(first!).existsSync(), isFalse);
       expect(File(third!).existsSync(), isTrue);
-
-      await CatalogImageDiskCache.purgeOtherVersionsKeeping(
-        kind: CatalogImageKind.series,
-        imageKey: imageKey,
-        imageVersion: _md5V2,
-      );
-      expect(File(first).existsSync(), isFalse);
-      expect(File(third).existsSync(), isTrue);
     });
 
     test('lookupImageVersion finds figure alternativeImages', () {
