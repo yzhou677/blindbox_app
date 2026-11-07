@@ -141,6 +141,17 @@ class CatalogImageFromKey extends StatefulWidget {
 void Function(String imageKey, String? imageVersion)?
 catalogImageFromKeyDebugOnResolveStart;
 
+/// Test hook: invoked when a resolve result is applied to state.
+@visibleForTesting
+void Function(String imageKey, String? imageVersion)?
+catalogImageFromKeyDebugOnResolveApplied;
+
+/// Test hook: invoked when an in-flight resolve is discarded (stale generation
+/// or bundle rolled back to the already-displayed version).
+@visibleForTesting
+void Function(String imageKey, String? imageVersion)?
+catalogImageFromKeyDebugOnResolveDiscarded;
+
 class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
   final CatalogImageResolveCoordinator _resolveCoordinator =
       CatalogImageResolveCoordinator();
@@ -240,8 +251,18 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
     // Parent-supplied version is authoritative for this mount.
     if (widget.imageVersion != null) return;
     final next = _effectiveImageVersion();
-    // Skip when already displaying or already attempting this version.
-    if (next == _displayedImageVersion || next == _resolveTargetVersion) {
+    if (next == _resolveTargetVersion) return;
+    if (next == _displayedImageVersion) {
+      // Bundle rolled back to what is already painted — drop any newer
+      // in-flight resolve so it cannot overwrite when it completes.
+      if (_resolveTargetVersion != _displayedImageVersion) {
+        _resolveCoordinator.begin();
+        _resolveTargetVersion = _displayedImageVersion;
+        catalogImageFromKeyDebugOnResolveDiscarded?.call(
+          widget.imageKey.trim(),
+          next,
+        );
+      }
       return;
     }
     // Keep painted art while the new version resolves (stale-while-revalidate).
@@ -257,18 +278,26 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
 
     if (key.isEmpty) {
       if (!mounted) return;
-      setState(() {
-        _imageRef = null;
-        _loading = false;
-        _displayedImageVersion = null;
-        _resolveTargetVersion = null;
-      });
+      if (_imageRef != null ||
+          _loading ||
+          _displayedImageVersion != null ||
+          _resolveTargetVersion != null) {
+        setState(() {
+          _imageRef = null;
+          _loading = false;
+          _displayedImageVersion = null;
+          _resolveTargetVersion = null;
+        });
+      }
       return;
     }
 
-    if (mounted) {
+    final nextLoading = _imageRef == null || _imageRef!.isEmpty;
+    final clearing = clearDisplayedImage;
+    if (mounted &&
+        (clearing || nextLoading != _loading || (clearing && _imageRef != null))) {
       setState(() {
-        if (clearDisplayedImage) {
+        if (clearing) {
           // Identity changed — never flash the previous series/figure.
           _imageRef = null;
           _displayedImageVersion = null;
@@ -306,7 +335,10 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
             );
     }
 
-    if (!_resolveCoordinator.shouldApply(generation) || !mounted) return;
+    if (!_resolveCoordinator.shouldApply(generation) || !mounted) {
+      catalogImageFromKeyDebugOnResolveDiscarded?.call(imageKey, imageVersion);
+      return;
+    }
 
     if (kDebugMode) {
       final keptStale =
@@ -326,24 +358,39 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
       );
     }
 
+    final String? nextRef;
+    final String? nextDisplayed;
+    final String? nextTarget;
+    if (ref != null && ref.isNotEmpty) {
+      nextRef = ref;
+      nextDisplayed = imageVersion;
+      nextTarget = imageVersion;
+    } else if (previousRef == null || previousRef.isEmpty) {
+      nextRef = null;
+      nextDisplayed = null;
+      nextTarget = imageVersion;
+    } else {
+      // Resolve failed — keep previous art and its version / cache identity.
+      nextRef = previousRef;
+      nextDisplayed = previousDisplayedVersion;
+      nextTarget = _resolveTargetVersion;
+    }
+
+    if (nextRef == _imageRef &&
+        nextDisplayed == _displayedImageVersion &&
+        nextTarget == _resolveTargetVersion &&
+        !_loading) {
+      catalogImageFromKeyDebugOnResolveApplied?.call(imageKey, nextDisplayed);
+      return;
+    }
+
     setState(() {
-      if (ref != null && ref.isNotEmpty) {
-        _imageRef = ref;
-        _displayedImageVersion = imageVersion;
-        _resolveTargetVersion = imageVersion;
-      } else if (previousRef == null || previousRef.isEmpty) {
-        _imageRef = null;
-        _displayedImageVersion = null;
-        _resolveTargetVersion = imageVersion;
-      } else {
-        // Resolve failed — keep previous art and its version / cache identity.
-        // [_resolveTargetVersion] already records the attempt so identical
-        // bundle notifies do not loop.
-        _imageRef = previousRef;
-        _displayedImageVersion = previousDisplayedVersion;
-      }
+      _imageRef = nextRef;
+      _displayedImageVersion = nextDisplayed;
+      _resolveTargetVersion = nextTarget;
       _loading = false;
     });
+    catalogImageFromKeyDebugOnResolveApplied?.call(imageKey, nextDisplayed);
   }
 
   @override

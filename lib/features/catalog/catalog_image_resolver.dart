@@ -98,6 +98,13 @@ abstract final class CatalogImageResolver {
   static int get activeStorageFetchCount => _activeStorageFetches;
 
   @visibleForTesting
+  static int get activeBackgroundStorageFetchCount =>
+      _activeBackgroundStorageFetches;
+
+  @visibleForTesting
+  static int get storageFetchWaiterCount => _storageFetchWaiters.length;
+
+  @visibleForTesting
   static void resetSessionCachesForTest() {
     _storageDisplayRefCache.clear();
     _storageMissingCache.clear();
@@ -107,6 +114,7 @@ abstract final class CatalogImageResolver {
     _staleRefreshQueuedKeys.clear();
     _activeStaleRefreshCount = 0;
     _activeStorageFetches = 0;
+    _activeBackgroundStorageFetches = 0;
     _storageFetchWaiters.clear();
     _debugLoggedMissingKeys.clear();
     _clearTransportGate();
@@ -114,6 +122,7 @@ abstract final class CatalogImageResolver {
     backgroundRefreshCount = 0;
     maxConcurrentStaleRefreshesOverride = null;
     maxConcurrentStorageFetchesOverride = null;
+    maxConcurrentBackgroundStorageFetchesOverride = null;
     maxStorageFetchRetriesOverride = null;
     storageRetryDelaysOverride = null;
     storageResolveBudgetOverride = null;
@@ -156,11 +165,22 @@ abstract final class CatalogImageResolver {
   /// Cap simultaneous Storage fetch+retry pipelines (retries hold the slot).
   static const int maxConcurrentStorageFetches = 6;
 
+  /// Background stale refreshes may occupy at most this many of the total slots
+  /// so visible-tile resolves are not starved.
+  static const int maxConcurrentBackgroundStorageFetches = 2;
+
   @visibleForTesting
   static int? maxConcurrentStorageFetchesOverride;
 
+  @visibleForTesting
+  static int? maxConcurrentBackgroundStorageFetchesOverride;
+
   static int get _storageFetchConcurrencyCap =>
       maxConcurrentStorageFetchesOverride ?? maxConcurrentStorageFetches;
+
+  static int get _backgroundStorageFetchCap =>
+      maxConcurrentBackgroundStorageFetchesOverride ??
+      maxConcurrentBackgroundStorageFetches;
 
   /// Distinct `(kind, imageKey)` pairs that must exhaust retries before the
   /// session gate trips. Repeating the same key does not count again.
@@ -199,6 +219,7 @@ abstract final class CatalogImageResolver {
   static final Set<String> _staleRefreshQueuedKeys = <String>{};
   static int _activeStaleRefreshCount = 0;
   static int _activeStorageFetches = 0;
+  static int _activeBackgroundStorageFetches = 0;
   static final List<Completer<void>> _storageFetchWaiters = <Completer<void>>[];
   static final Set<String> _debugLoggedMissingKeys = <String>{};
 
@@ -512,6 +533,7 @@ abstract final class CatalogImageResolver {
       imageVersion: imageVersion,
       primaryCacheKey: primaryCacheKey,
       recordMissingOnFailure: false,
+      background: true,
     );
     if (updated != null) {
       _storageDisplayRefCache[primaryCacheKey] = updated;
@@ -524,6 +546,7 @@ abstract final class CatalogImageResolver {
     required String primaryCacheKey,
     required bool recordMissingOnFailure,
     String? imageVersion,
+    bool background = false,
   }) {
     return _withStorageFetchSlot(
       () => _fetchAndPersistFromStorageWithRetries(
@@ -533,19 +556,31 @@ abstract final class CatalogImageResolver {
         recordMissingOnFailure: recordMissingOnFailure,
         imageVersion: imageVersion,
       ),
+      background: background,
     );
   }
 
-  static Future<T> _withStorageFetchSlot<T>(Future<T> Function() run) async {
-    while (_activeStorageFetches >= _storageFetchConcurrencyCap) {
+  static Future<T> _withStorageFetchSlot<T>(
+    Future<T> Function() run, {
+    bool background = false,
+  }) async {
+    while (true) {
+      final totalBlocked =
+          _activeStorageFetches >= _storageFetchConcurrencyCap;
+      final backgroundBlocked =
+          background &&
+          _activeBackgroundStorageFetches >= _backgroundStorageFetchCap;
+      if (!totalBlocked && !backgroundBlocked) break;
       final waiter = Completer<void>();
       _storageFetchWaiters.add(waiter);
       await waiter.future;
     }
     _activeStorageFetches++;
+    if (background) _activeBackgroundStorageFetches++;
     try {
       return await run();
     } finally {
+      if (background) _activeBackgroundStorageFetches--;
       _activeStorageFetches--;
       if (_storageFetchWaiters.isNotEmpty) {
         _storageFetchWaiters.removeAt(0).complete();
@@ -698,12 +733,21 @@ abstract final class CatalogImageResolver {
               .timeout(probeTimeout);
         }
         final url = CatalogImageVersion.appendQueryParam(rawUrl, imageVersion);
+        // Re-check remaining budget after getDownloadURL; persist (HTTP + disk
+        // write) must finish inside the same per-key ceiling.
+        final persistTimeout = _probeTimeoutWithinBudget(deadline);
+        if (persistTimeout <= Duration.zero) {
+          sawOnlyObjectNotFound = false;
+          sawRetryableTransport = true;
+          break;
+        }
         final localPath = await CatalogImageDiskCache.persistFromUrl(
           kind: kind,
           imageKey: imageKey,
           imageVersion: imageVersion,
           downloadUrl: rawUrl,
           extension: ext,
+          timeout: persistTimeout,
         );
         final displayRef = localPath ?? url;
         _storageDisplayRefCache[primaryCacheKey] = displayRef;

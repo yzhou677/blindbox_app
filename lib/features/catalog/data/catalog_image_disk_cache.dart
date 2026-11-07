@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -418,40 +419,51 @@ abstract final class CatalogImageDiskCache {
   }
 
   /// Downloads [downloadUrl] and stores bytes under [imageKey] (+ optional version).
+  ///
+  /// [timeout] caps download + write write (defaults to
+  /// [CatalogImageResolver.storageUrlTimeout]). Callers that share a per-key
+  /// resolve budget should pass the remaining time.
   static Future<String?> persistFromUrl({
     required CatalogImageKind kind,
     required String imageKey,
     required String downloadUrl,
     required String extension,
     String? imageVersion,
+    Duration? timeout,
   }) async {
     if (kIsWeb) return null;
     final stem = _fileStem(imageKey, imageVersion);
     if (stem.isEmpty) return null;
+    final budget = timeout ?? CatalogImageResolver.storageUrlTimeout;
+    if (budget <= Duration.zero) {
+      throw TimeoutException('persist budget exhausted');
+    }
     final ext = extension.startsWith('.') ? extension : '.$extension';
     final dir = await _kindDirectory(kind);
     final file = File('${dir.path}/$stem$ext');
     try {
-      final client = httpClientOverride ?? http.Client();
-      final busted = CatalogImageVersion.appendQueryParam(
-        downloadUrl,
-        imageVersion,
-      );
-      final response = await client
-          .get(Uri.parse(busted))
-          .timeout(CatalogImageResolver.storageUrlTimeout);
-      if (response.statusCode != 200 || response.bodyBytes.isEmpty) {
-        return null;
-      }
-      await file.writeAsBytes(response.bodyBytes, flush: true);
-      await _registerEntry(
-        kind: kind,
-        imageKey: imageKey,
-        imageVersion: imageVersion,
-        path: file.path,
-        sizeBytes: response.bodyBytes.length,
-      );
-      return file.path;
+      return await () async {
+        final client = httpClientOverride ?? http.Client();
+        final busted = CatalogImageVersion.appendQueryParam(
+          downloadUrl,
+          imageVersion,
+        );
+        final response = await client.get(Uri.parse(busted)).timeout(budget);
+        if (response.statusCode != 200 || response.bodyBytes.isEmpty) {
+          return null;
+        }
+        await file.writeAsBytes(response.bodyBytes, flush: true);
+        await _registerEntry(
+          kind: kind,
+          imageKey: imageKey,
+          imageVersion: imageVersion,
+          path: file.path,
+          sizeBytes: response.bodyBytes.length,
+        );
+        return file.path;
+      }().timeout(budget);
+    } on TimeoutException {
+      rethrow;
     } on Object {
       return null;
     }
