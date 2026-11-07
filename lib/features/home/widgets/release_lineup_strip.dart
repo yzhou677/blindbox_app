@@ -21,21 +21,49 @@ class ReleaseLineupStrip extends StatelessWidget {
 
   static const double cellExtent = 84;
   static const double gap = 14;
+  static const double labelGap = 8;
+  static const double listVerticalPadding = 4;
 
   /// Secret slots with a catalog [imageKey] show real art; blur tile only when art is unknown.
   static bool slotUsesSecretPlaceholder(ReleaseLineupSlot slot) {
     return slot.isSecret && slot.imageKey.trim().isEmpty;
   }
 
+  /// Viewport height for the horizontal strip: fixed art + live one-line label metrics.
+  ///
+  /// Must grow with [MediaQuery.textScalerOf] so system font scaling does not
+  /// overflow the [ListView] (the old `cellExtent + 32` budget was 1px short).
+  @visibleForTesting
+  static double stripHeightFor(BuildContext context) {
+    final theme = Theme.of(context);
+    final style = CollectibleTypography.figureMeta(
+      theme.textTheme,
+      theme.colorScheme,
+    );
+    final painter = TextPainter(
+      text: TextSpan(text: 'Ag', style: style),
+      textDirection: Directionality.maybeOf(context) ?? TextDirection.ltr,
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: 1,
+    )..layout();
+    return cellExtent +
+        labelGap +
+        painter.height +
+        (listVerticalPadding * 2);
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return SizedBox(
-      height: cellExtent + 32,
+      height: stripHeightFor(context),
       child: ListView.separated(
         clipBehavior: Clip.none,
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 2,
+          vertical: listVerticalPadding,
+        ),
         physics: const BouncingScrollPhysics(),
         itemCount: slots.length,
         separatorBuilder: (context, index) => const SizedBox(width: gap),
@@ -79,6 +107,7 @@ class _LineupCell extends StatelessWidget {
     return SizedBox(
       width: ReleaseLineupStrip.cellExtent,
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Material(
@@ -104,7 +133,7 @@ class _LineupCell extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: ReleaseLineupStrip.labelGap),
           Text(
             slot.isSecret ? 'Secret' : slot.name,
             maxLines: 1,
