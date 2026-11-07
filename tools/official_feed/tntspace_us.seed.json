@@ -33,21 +33,10 @@
     "tntspace_us_zoraa_shushu_cheese_figurine_ig_DdqxK3yG3s5",
     "tntspace_us_zoraa_my_little_blankie_mili_series_C1187A",
     "tntspace_us_rayan_steampunk_mage_figurine_GMQ_C8761",
-    "tntspace_us_dora_high_school_sweetheart_figure_GMQ_C88101"
+    "tntspace_us_dora_high_school_sweetheart_figure_GMQ_C88101",
+    "tntspace_us_rayan_ootd_mini_series_C1230A"
   ],
   "items": [
-    {
-      "id": "tntspace_us_rayan_ootd_mini_series_C1230A",
-      "releaseType": "product",
-      "title": "Rayan \"OOTD\" Mini Series Figure",
-      "summary": "Rayan \"OOTD\" mini series figure. Release October 14, 2026, 10:00 AM GMT+8.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/blindbox-collection.firebasestorage.app/o/official_feed%2Ftntspace_us%2Fig_DeZF6ddFnwl.jpg?alt=media&token=5f8f0e03-97ee-417b-84c1-cf1bca4bee0b",
-      "officialUrl": "https://tntspace.com/us/collections/new-arrivals/products/C1230A",
-      "publishedAt": "2026-10-12T11:09:12.723Z",
-      "status": "active",
-      "instagramUrl": "https://www.instagram.com/p/DeZF6ddFnwl/",
-      "productId": "C1230A"
-    },
     {
       "id": "tntspace_us_rayan_room_in_my_heart_series_C777A",
       "releaseType": "product",
@@ -119,6 +108,18 @@
       "publishedAt": "2026-10-15T02:08:10.506Z",
       "status": "active",
       "instagramUrl": "https://www.instagram.com/p/Def2YaYlvz3/"
+    },
+    {
+      "id": "tntspace_us_dora_alley_stranger_series_plush_pendant_C763A",
+      "releaseType": "product",
+      "productId": "C763A",
+      "title": "DORA Alley Stranger Series Plush Pendant",
+      "summary": "DORA Alley Stranger plush pendant. Release November 3, 2026, 10:00 AM GMT+8.",
+      "imageUrl": "https://hotcache.willapps.com/shareData/20261103001944_20261027173411_9.jpg",
+      "officialUrl": "https://tntspace.com/us/collections/new-arrivals/products/C763A",
+      "publishedAt": "2026-11-02T06:38:57.493Z",
+      "status": "active",
+      "instagramUrl": "https://www.instagram.com/p/DfOrrb-G3q6/"
     }
   ]
 }
