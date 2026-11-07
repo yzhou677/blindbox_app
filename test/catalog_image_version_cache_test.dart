@@ -225,6 +225,7 @@ void main() {
       );
       expect(pathV1, isNotNull);
       expect(File(pathV1!).existsSync(), isTrue);
+      expect(CatalogImageDiskCache.purgeOtherVersionsInvocations, 0);
 
       final pathV2 = await CatalogImageDiskCache.persistBytes(
         kind: CatalogImageKind.figure,
@@ -236,6 +237,7 @@ void main() {
       expect(pathV2, isNotNull);
       expect(File(pathV2!).existsSync(), isTrue);
       expect(File(pathV1).existsSync(), isFalse);
+      expect(CatalogImageDiskCache.purgeOtherVersionsInvocations, 1);
     },
   );
 
