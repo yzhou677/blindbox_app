@@ -3,21 +3,17 @@ name: new-drop
 description: >-
   Runs a new official drop in order: local catalog files, production catalog
   upload, then the Home Official feed. Use when the user says a new drop or
-  asks to add a series and publish the feed. Stop and wait between steps.
+  asks to add a series and publish the feed.
 ---
 
 # New drop
 
-> **WARNING:** `publish-series` and `publish-official-feed` write production. Catalog documents are never deleted. A feed push has no dry-run. `add-series-local` only edits files in `D:\blindbox-catalog`. Wait for the user to approve each step.
+> **WARNING:** `publish-series` and `publish-official-feed` write production. Catalog documents are never deleted. A feed push has no dry-run. `add-series-local` only edits files in `D:\blindbox-catalog`.
 
 ## Steps
 
-1. Follow `add-series-local`. It does not upload.
-   - **Metadata + art** (new series or metadata change): edits `raw/`, runs normalize to refresh `data/`, writes catalog art, converts non-WebP with that repo's `npm run convert:webp` (read Usage each time), runs `catalog-image-qa`, then stops with a before/after summary (and git diff when that tree is a repo).
-   - **Art only** (metadata already in catalog and unchanged): replaces catalog art only, converts non-WebP the same way, runs `catalog-image-qa`. Does **not** edit `raw/` or `data/`, and does **not** run normalize.
-2. Stop. Wait until the user has checked that summary and says it can go live.
-3. Follow `publish-series`. It stops before each Storage, Firestore, and embedding write. After `upload:storage`, embed every `figureId` whose art (primary or `alternativeImages`) actually uploaded — new figures and replaced-art figures. Do not Console-hunt hash-skipped figures for missing embeddings. Add extra ids only when a prior embed failed or the user asks to re-run, then list them for confirmation. If local or upload logs show two formats for one `imageKey`, mention it in the report; do not stop, delete, or run `--prune-remote`. Embed stored bytes as-is on Vertex, including WebP, with no pre-conversion ask; stop only if the API returns a real format / MIME error, and show the raw error text.
-4. Stop. Ask whether to publish the Home Official feed. If yes, verify the Instagram `publishedAt` before the push.
-5. After approval, follow `publish-official-feed`. Do not run `push_official_feed.mjs` until the user approves that push.
+1. Follow `add-series-local` (matching-table confirmation only; no upload).
+2. When the user says it can go live, follow `publish-series` (one approval for Storage + Firestore + embed list, then run).
+3. Ask whether to publish the Home Official feed. If yes, follow `publish-official-feed` (approve before image upload when needed; approve before push; verify Instagram `publishedAt` in that confirm list).
 
-Catalog series and Official feed posts stay different records. Skipping step 5 is valid when the user only wanted the catalog.
+Catalog series and Official feed posts stay different records. Skipping step 3 is valid when the user only wanted the catalog.

@@ -10,7 +10,9 @@ description: >-
 
 This skill writes files only. Do not upload Storage. Do not write Firestore. Do not run embeddings.
 
-Before you use `D:\blindbox-catalog` paths such as `assets/catalog/` or `raw/`, or any npm script in that repo, read `D:\blindbox-catalog\.cursor\rules\uploader.mdc`, its `package.json`, README, and the script header / documented Usage. If they disagree with this skill, stop. Do not copy flags or defaults into this skill — read them from that repo each time.
+`D:\blindbox-catalog` is **not** a git repo. Do not run `git status` / `git diff` there. Do not invent git reports.
+
+Catalog scripts and flags live in that repo (`package.json`, README, script Usage, `uploader.mdc`). Prefer those over inventing flags. Do not copy default flags into this skill.
 
 ## Input
 
@@ -32,7 +34,15 @@ image number → figure name → figureId → imageKey → pixel size → Secret
 
 Open each saved file and record its width and height. Do not invent a size. If the pasted count does not match the figure count on the page, say so in that message.
 
-After the table, also ask whether this run is **metadata + art** (new series or changed metadata) or **art only** (series and figures already in catalog; metadata unchanged). Do not guess.
+This matching-table confirmation is the only production-safety stop in this skill. Do not add other waits.
+
+After the table, decide the run mode yourself:
+
+- **New series** (ids not already in catalog) → **metadata + art**. Do not ask.
+- **Existing series, art replace only** → **art only**. Do not ask.
+- **Ambiguous** (existing ids but metadata may also change) → ask once: metadata + art, or art only.
+
+Do not ask the user to pick a mode when the case is already clear.
 
 ## After confirmation
 
@@ -46,8 +56,8 @@ Write into the folders `scripts/upload_storage.js` actually reads:
 **Prefer `.webp`.** `.png` / `.jpg` / `.jpeg` are allowed. `.avif` is allowed but not recommended (large files hurt app performance).
 
 1. Copy each confirmed paste into the matching catalog path (stem = `imageKey` = id). If the paste is already `.webp`, copy it as `.webp`.
-2. After the files are under `assets/catalog/`, convert every non-WebP paste (`.png`, `.jpg`, `.jpeg`, `.avif`) with that catalog repo's `npm run convert:webp`. Read its README section and `npm run convert:webp -- --help` (or the script Usage) each time. Pass only flags and arguments documented there. Do not invent a `sharp`, `cwebp`, or ImageMagick one-liner. Do not copy flags or defaults into this skill.
-3. If conversion fails for a file, keep that original on disk, list it as `NON_WEBP` in the summary, and continue. Do not stop the drop for conversion failure alone. Do not delete the original until a `.webp` replacement for that stem is confirmed on disk.
+2. Convert every non-WebP paste with `npm run convert:webp` from that catalog repo. Pass only documented file arguments. Do not invent a `sharp` / `cwebp` / ImageMagick one-liner.
+3. If conversion fails for a file, keep that original on disk, note it as `NON_WEBP` in the summary, and continue. Do not delete the original until a `.webp` replacement for that stem is confirmed on disk.
 4. After a successful convert for a stem, remove other same-stem leftovers (`.png`, `.jpg`, `.jpeg`, `.avif`) if the convert command did not already remove the source.
 
 The filename stem equals `imageKey`, which equals the id. An `alternativeImages` file uses the same figures folder and its own `imageKey`. Do not use `images/series` or `images/figures`. Those folders are not uploaded.
@@ -58,19 +68,18 @@ The filename stem equals `imageKey`, which equals the id. An `alternativeImages`
 
 **Art only** (series and figures already in catalog; metadata unchanged):
 
-1. Do **not** edit `raw/`.
+1. Do **not** edit `raw/`. Do **not** create a `*.bak`.
 2. Do **not** edit `data/`.
 3. Do **not** run normalize.
-4. Still write / convert catalog art as above.
-5. Run `catalog-image-qa` on the art files. Print **Failures** and **Warnings**. Failures stop this flow before you call the drop ready. Warnings (including `LOW_RES` and `NON_WEBP`, including AVIF) do not. Spec: [tools/seed/CATALOG_FIGURE_ART_REEXPORT_GUIDE.md](../../../tools/seed/CATALOG_FIGURE_ART_REEXPORT_GUIDE.md).
-6. Show a short summary of which art files changed, conversion outcomes (including any kept as non-WebP with why), and the QA lists. If that catalog tree is a git repo, also show `git status` / `git diff` for the art paths. Do not commit. Tell the user the next step is `publish-series`.
+4. Write / convert catalog art as above.
+5. Optionally run `npm run qa:images` in that catalog repo (or a quick eye check for missing stems / wrong stem / obvious collage). Do not block on warnings.
+6. Short summary of changed art (and any kept non-WebP). Tell the user the next step is `publish-series`.
 
 **Metadata + art** (new series, or any metadata change):
 
-1. Before editing any `raw/*.json`, copy each file you will change to a sibling `*.bak` (for example `starter_catalog.json.bak`).
-2. Add or update the series in `raw/` using the bundle shape documented in that catalog README / `uploader.mdc`. Copy keys from an existing bundle in `raw/`. Do not invent a parallel schema.
-3. Run normalize with the command documented there (see README Normalization / `package.json`). Do not invent flags. Do not paste default flags into this skill.
-4. After normalize, check that `data/` contains the expected series and figure rows and ids. If it does not, stop and show the normalize output.
-5. Write / convert catalog art as above (same WebP rules).
-6. Run `catalog-image-qa` on the art files. Print **Failures** and **Warnings**. Failures stop this flow before you call the drop ready. Warnings (including `LOW_RES` and `NON_WEBP`, including AVIF) do not. Spec: [tools/seed/CATALOG_FIGURE_ART_REEXPORT_GUIDE.md](../../../tools/seed/CATALOG_FIGURE_ART_REEXPORT_GUIDE.md).
-7. Show a short before/after summary for the `raw/` files you touched and the matching `data/` rows, plus any files kept as non-WebP with why. If that catalog tree is a git repo, also show `git status` / `git diff`. Do not commit. Tell the user the next step is `publish-series`.
+1. Before editing any `raw/*.json`, copy each file you will change to a sibling `*.bak` once (for example `starter_catalog.json.bak`). Do not backup when you are not editing `raw/`.
+2. Add or update the series in `raw/` using the bundle shape from that catalog README / `uploader.mdc`. Copy keys from an existing bundle. Do not invent a parallel schema.
+3. Run `npm run normalize`. If it fails or expected series/figure ids are missing from `data/`, stop and show the normalize output.
+4. Write / convert catalog art as above.
+5. Optionally run `npm run qa:images` (same as art-only). Do not block on warnings.
+6. Short summary of the series/figure ids written and art outcomes. Tell the user the next step is `publish-series`.

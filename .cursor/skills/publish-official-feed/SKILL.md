@@ -3,13 +3,18 @@ name: publish-official-feed
 description: >-
   Publishes one Official feed post from an Instagram URL into a brand seed,
   then pushes that seed. Use when the user pastes an Instagram post, edits
-  tools/official_feed seeds, or asks to push official_feed_items. Stop before
-  every production write. Push has no dry-run.
+  tools/official_feed seeds, or asks to push official_feed_items. Push has
+  no dry-run.
 ---
 
 # Publish an Official feed
 
-> **WARNING:** Push writes production immediately. There is no dry-run. Home reads `official_feed_items` from Firestore, not the JSON file. One push puts the post on Home. `upload_official_feed_image.mjs` writes production Storage. The seed must be that brand's full active list. Push archives every active doc for that `sourceId` that is not in the seed. Confirm the new fields, `publishedAt`, and the retire list, then wait for the user to approve before `upload_official_feed_image.mjs` or `push_official_feed.mjs`.
+> **WARNING:** Push writes production immediately. There is no dry-run. Home reads `official_feed_items` from Firestore, not the JSON file. One push puts the post on Home. `upload_official_feed_image.mjs` writes production Storage. The seed must be that brand's full active list. Push archives every active doc for that `sourceId` that is not in the seed.
+
+Production stops in this skill (only these):
+
+1. Approve before `upload_official_feed_image.mjs` when you need that upload.
+2. Approve before `push_official_feed.mjs` (confirm new fields, `publishedAt`, retire list).
 
 Feed posts are not catalog series. Field rules: [tools/official_feed/README.md](../../../tools/official_feed/README.md) and [lib/features/official_feed/FIRESTORE_OFFICIAL_FEED_SCHEMA.md](../../../lib/features/official_feed/FIRESTORE_OFFICIAL_FEED_SCHEMA.md).
 
@@ -90,6 +95,4 @@ Only after the user approves:
 node tools/official_feed/push_official_feed.mjs tools/official_feed/<seed>.json
 ```
 
-## Read back
-
-There is no read script in `tools/official_feed/`. Open `official_feed_items/<id>` in project `blindbox-collection`. Check that each new id is `active` and each retired id is `archived`. Other kept items keep the same business fields and stay `active`. `ingestedAt` may change, because every written item sets it (`push_official_feed.mjs`). Confirm there is no unexpected archive. The push log is not this check. Do not add a script.
+Summarize from the push log. Do not ask for a Firebase Console read-back.
