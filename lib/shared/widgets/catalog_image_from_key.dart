@@ -148,8 +148,13 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
   String? _imageRef;
   bool _loading = true;
 
-  /// Version used for the last applied resolve (explicit prop or bundle lookup).
-  String? _boundImageVersion;
+  /// Version of the art currently painted (drives [CatalogResolvedImage] identity).
+  String? _displayedImageVersion;
+
+  /// Version currently resolving, or last attempted after a failed refresh.
+  /// Prevents identical bundle notifies from looping forever without mutating
+  /// the displayed cache identity on failure.
+  String? _resolveTargetVersion;
 
   void Function()? _removeBundleListener;
 
@@ -235,7 +240,10 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
     // Parent-supplied version is authoritative for this mount.
     if (widget.imageVersion != null) return;
     final next = _effectiveImageVersion();
-    if (next == _boundImageVersion) return;
+    // Skip when already displaying or already attempting this version.
+    if (next == _displayedImageVersion || next == _resolveTargetVersion) {
+      return;
+    }
     // Keep painted art while the new version resolves (stale-while-revalidate).
     _startResolve(clearDisplayedImage: false);
   }
@@ -243,17 +251,17 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
   void _startResolve({bool clearDisplayedImage = false}) {
     final generation = _resolveCoordinator.begin();
     final key = widget.imageKey.trim();
-    catalogImageFromKeyDebugOnResolveStart?.call(
-      key,
-      _effectiveImageVersion(),
-    );
+    final targetVersion = _effectiveImageVersion();
+    _resolveTargetVersion = targetVersion;
+    catalogImageFromKeyDebugOnResolveStart?.call(key, targetVersion);
 
     if (key.isEmpty) {
       if (!mounted) return;
       setState(() {
         _imageRef = null;
         _loading = false;
-        _boundImageVersion = null;
+        _displayedImageVersion = null;
+        _resolveTargetVersion = null;
       });
       return;
     }
@@ -263,22 +271,27 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
         if (clearDisplayedImage) {
           // Identity changed — never flash the previous series/figure.
           _imageRef = null;
-          _boundImageVersion = null;
+          _displayedImageVersion = null;
         }
         // Shimmer only when there is nothing to show; keep stale art otherwise.
         _loading = _imageRef == null || _imageRef!.isEmpty;
       });
     }
 
-    _resolve(generation: generation, imageKey: key);
+    _resolve(
+      generation: generation,
+      imageKey: key,
+      imageVersion: targetVersion,
+    );
   }
 
   Future<void> _resolve({
     required int generation,
     required String imageKey,
+    required String? imageVersion,
   }) async {
-    final imageVersion = _effectiveImageVersion();
     final previousRef = _imageRef;
+    final previousDisplayedVersion = _displayedImageVersion;
 
     String? ref;
     if (CatalogImageResolver.storageFallbackEnabled) {
@@ -316,14 +329,18 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
     setState(() {
       if (ref != null && ref.isNotEmpty) {
         _imageRef = ref;
-        _boundImageVersion = imageVersion;
+        _displayedImageVersion = imageVersion;
+        _resolveTargetVersion = imageVersion;
       } else if (previousRef == null || previousRef.isEmpty) {
         _imageRef = null;
-        _boundImageVersion = imageVersion;
+        _displayedImageVersion = null;
+        _resolveTargetVersion = imageVersion;
       } else {
-        // Resolve failed — keep showing the previous image, but advance the
-        // bound version so identical bundle notifies do not loop forever.
-        _boundImageVersion = imageVersion;
+        // Resolve failed — keep previous art and its version / cache identity.
+        // [_resolveTargetVersion] already records the attempt so identical
+        // bundle notifies do not loop.
+        _imageRef = previousRef;
+        _displayedImageVersion = previousDisplayedVersion;
       }
       _loading = false;
     });
@@ -349,7 +366,8 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
         ),
       );
     }
-    final resolvedVersion = _boundImageVersion ?? _effectiveImageVersion();
+    // Paint with the displayed version only — never the in-flight target.
+    final resolvedVersion = _displayedImageVersion;
     return CatalogResolvedImage(
       key: ValueKey<String>(
         'catalog-resolved:${widget.imageKey.trim()}:'

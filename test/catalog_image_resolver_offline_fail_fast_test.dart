@@ -98,11 +98,10 @@ void main() {
         );
 
         expect(ref, isNull);
-        // One probe walk + 2 retries.
+        // Timed-out extensions are skipped on later attempts — one walk only.
         expect(
           CatalogImageResolver.storageExtensionProbeCount,
-          CatalogImageResolver.assetExtensions.length *
-              (1 + CatalogImageResolver.maxStorageFetchRetries),
+          CatalogImageResolver.assetExtensions.length,
         );
         expect(CatalogImageResolver.storageTransportUnavailable, isFalse);
         expect(CatalogImageResolver.consecutiveTransportFailureCount, 1);
@@ -143,8 +142,7 @@ void main() {
         );
         expect(
           CatalogImageResolver.storageExtensionProbeCount,
-          CatalogImageResolver.assetExtensions.length *
-              (1 + CatalogImageResolver.maxStorageFetchRetries),
+          CatalogImageResolver.assetExtensions.length,
         );
 
         // Offline gate blocks siblings.

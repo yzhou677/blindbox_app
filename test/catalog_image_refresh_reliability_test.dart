@@ -13,6 +13,7 @@ import 'package:blindbox_app/features/collection/widgets/collectible_figure_plac
 import 'package:blindbox_app/shared/widgets/app_image_shimmer.dart';
 import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
 import 'package:blindbox_app/shared/widgets/catalog_resolved_image.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -38,6 +39,12 @@ CatalogFigure _figure({
     sortOrder: 1,
     imageKey: imageKey,
     imageVersion: imageVersion,
+  );
+}
+
+CatalogResolvedImage _resolved(WidgetTester tester) {
+  return tester.widget<CatalogResolvedImage>(
+    find.byType(CatalogResolvedImage),
   );
 }
 
@@ -79,44 +86,95 @@ void main() {
   });
 
   group('Storage retry + gate isolation', () {
-    test('first timeout then success on retry shows a resolved ref', () async {
-      var attempts = 0;
+    test(
+      'transport error then success on retry shows a resolved ref',
+      () async {
+        var attempts = 0;
+        CatalogImageResolver.getDownloadUrlOverride = (path) async {
+          if (!path.endsWith('.webp')) return null;
+          attempts++;
+          if (attempts == 1) {
+            throw FirebaseException(
+              plugin: 'firebase_storage',
+              code: 'unavailable',
+              message: 'transient',
+            );
+          }
+          return 'https://example.test/$path';
+        };
+
+        final ref = await CatalogImageResolver.resolveFigureStorageRef(
+          'retry_then_ok',
+          imageVersion: 'v2',
+        );
+
+        expect(ref, isNotNull);
+        expect(attempts, 2);
+        expect(CatalogImageResolver.storageTransportUnavailable, isFalse);
+      },
+    );
+
+    test('webp timeout then png hit within same attempt', () async {
       CatalogImageResolver.getDownloadUrlOverride = (path) async {
-        if (!path.endsWith('.webp')) return null;
-        attempts++;
-        if (attempts == 1) {
-          throw TimeoutException('first attempt');
+        if (path.endsWith('.webp')) {
+          throw TimeoutException('webp slow');
         }
-        return 'https://example.test/$path';
+        if (path.endsWith('.png')) {
+          return 'https://example.test/$path';
+        }
+        return null;
       };
 
       final ref = await CatalogImageResolver.resolveFigureStorageRef(
-        'retry_then_ok',
-        imageVersion: 'v2',
+        'webp_then_png',
       );
-
       expect(ref, isNotNull);
-      expect(attempts, 2);
       expect(CatalogImageResolver.storageTransportUnavailable, isFalse);
-      expect(CatalogImageResolver.consecutiveTransportFailureCount, 0);
     });
 
-    test('retry budget is capped; all failures yield null', () async {
-      CatalogImageResolver.getDownloadUrlOverride = (_) async {
-        throw TimeoutException('always');
+    test(
+      'timed-out extensions are not re-probed on later attempts',
+      () async {
+        final probed = <String>[];
+        CatalogImageResolver.getDownloadUrlOverride = (path) async {
+          probed.add(path);
+          throw TimeoutException('always');
+        };
+
+        final ref = await CatalogImageResolver.resolveFigureStorageRef(
+          'no_reprobe_timeouts',
+        );
+
+        expect(ref, isNull);
+        // One pass over all extensions; retries skip already-timed-out exts.
+        expect(
+          probed.length,
+          CatalogImageResolver.assetExtensions.length,
+        );
+        expect(CatalogImageResolver.storageTransportUnavailable, isFalse);
+      },
+    );
+
+    test('resolve budget stops further probes', () async {
+      var clock = DateTime.utc(2026, 1, 1, 12);
+      CatalogImageResolver.nowOverride = () => clock;
+      CatalogImageResolver.storageResolveBudgetOverride = const Duration(
+        seconds: 20,
+      );
+      CatalogImageResolver.getDownloadUrlOverride = (path) async {
+        // Each probe "costs" 9s of wall clock for budget accounting.
+        clock = clock.add(const Duration(seconds: 9));
+        throw TimeoutException('slow');
       };
 
       final ref = await CatalogImageResolver.resolveFigureStorageRef(
-        'always_timeout',
+        'budget_key',
       );
 
       expect(ref, isNull);
-      expect(
-        CatalogImageResolver.storageExtensionProbeCount,
-        CatalogImageResolver.assetExtensions.length *
-            (1 + CatalogImageResolver.maxStorageFetchRetries),
-      );
-      expect(CatalogImageResolver.storageTransportUnavailable, isFalse);
+      // 20s budget / 9s per probe ⇒ at most 3 probes, not 5×3.
+      expect(CatalogImageResolver.storageExtensionProbeCount, lessThanOrEqualTo(3));
+      expect(CatalogImageResolver.storageExtensionProbeCount, greaterThanOrEqualTo(2));
     });
 
     test('one key timeout does not skip a different key', () async {
@@ -142,6 +200,21 @@ void main() {
       expect(CatalogImageResolver.storageExtensionProbeCount, 1);
     });
 
+    test('same key failing repeatedly does not trip the global gate', () async {
+      CatalogImageResolver.getDownloadUrlOverride = (_) async {
+        throw TimeoutException('same key');
+      };
+
+      for (var i = 0; i < 5; i++) {
+        expect(
+          await CatalogImageResolver.resolveFigureStorageRef('same_key'),
+          isNull,
+        );
+      }
+      expect(CatalogImageResolver.consecutiveTransportFailureCount, 1);
+      expect(CatalogImageResolver.storageTransportUnavailable, isFalse);
+    });
+
     test(
       'consecutive distinct key failures trip the gate; TTL clears it',
       () async {
@@ -160,6 +233,10 @@ void main() {
           );
         }
         expect(CatalogImageResolver.storageTransportUnavailable, isTrue);
+        expect(
+          CatalogImageResolver.consecutiveTransportFailureCount,
+          CatalogImageResolver.consecutiveTransportFailuresToTripGate,
+        );
 
         CatalogImageResolver.storageExtensionProbeCount = 0;
         CatalogImageResolver.getDownloadUrlOverride = (_) async {
@@ -185,11 +262,45 @@ void main() {
         expect(CatalogImageResolver.storageTransportUnavailable, isFalse);
       },
     );
+
+    test('concurrency slot releases after a failed resolve', () async {
+      CatalogImageResolver.maxConcurrentStorageFetchesOverride = 1;
+      final firstEntered = Completer<void>();
+      final releaseFirst = Completer<void>();
+      var secondStarted = false;
+
+      CatalogImageResolver.getDownloadUrlOverride = (path) async {
+        if (path.contains('first_slot')) {
+          if (!firstEntered.isCompleted) firstEntered.complete();
+          await releaseFirst.future;
+          throw TimeoutException('first failed');
+        }
+        if (path.contains('second_slot') && path.endsWith('.webp')) {
+          secondStarted = true;
+          return 'https://example.test/$path';
+        }
+        return null;
+      };
+
+      final first = CatalogImageResolver.resolveFigureStorageRef('first_slot');
+      await firstEntered.future;
+      expect(CatalogImageResolver.activeStorageFetchCount, 1);
+
+      final second = CatalogImageResolver.resolveFigureStorageRef('second_slot');
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      expect(secondStarted, isFalse);
+      expect(CatalogImageResolver.activeStorageFetchCount, 1);
+
+      releaseFirst.complete();
+      expect(await first, isNull);
+      expect(await second, isNotNull);
+      expect(secondStarted, isTrue);
+      expect(CatalogImageResolver.activeStorageFetchCount, 0);
+    });
   });
 
   group('CatalogImageFromKey stale-while-revalidate', () {
     /// Disk/Storage futures run outside FakeAsync; shimmer also animates.
-    /// Drain real IO then pump until FromKey leaves the loading shimmer.
     Future<void> waitForFromKeyIdle(WidgetTester tester) async {
       for (var i = 0; i < 80; i++) {
         await tester.runAsync(
@@ -201,6 +312,22 @@ void main() {
         }
       }
       fail('CatalogImageFromKey stayed on shimmer');
+    }
+
+    /// SWR refresh keeps prior art (no shimmer) — wait until version lands.
+    Future<void> waitForDisplayedVersion(
+      WidgetTester tester,
+      String version,
+    ) async {
+      for (var i = 0; i < 80; i++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 10)),
+        );
+        await tester.pump();
+        if (find.byType(CatalogResolvedImage).evaluate().isEmpty) continue;
+        if (_resolved(tester).imageVersion == version) return;
+      }
+      fail('CatalogImageFromKey never displayed version=$version');
     }
 
     Future<void> pumpFromKey(WidgetTester tester, {Key? key}) async {
@@ -232,7 +359,7 @@ void main() {
     }
 
     testWidgets(
-      'bundle replace keeps old art until the new version resolves',
+      'bundle replace keeps old art and version until new resolve succeeds',
       (tester) async {
         final resolveVersions = <String?>[];
         catalogImageFromKeyDebugOnResolveStart = (key, version) {
@@ -257,8 +384,9 @@ void main() {
 
         await pumpFromKey(tester);
         expect(resolveVersions, ['v1']);
-        expect(find.byType(CatalogResolvedImage), findsOneWidget);
-        expect(find.byType(CollectibleFigurePlaceholder), findsNothing);
+        final first = _resolved(tester);
+        final firstRef = first.imageRef;
+        expect(first.imageVersion, 'v1');
         expect(find.byType(AppImageShimmer), findsNothing);
 
         final pending = Completer<String?>();
@@ -276,29 +404,29 @@ void main() {
           ),
         );
         CatalogBundleCache.triggerBundleReplacedForTest();
-        // One frame to start the refresh; do not settle while Completer is open.
         await tester.pump();
 
-        // Still showing previous art — no shimmer / placeholder flash.
         expect(resolveVersions, ['v1', 'v2']);
-        expect(find.byType(CatalogResolvedImage), findsOneWidget);
-        expect(find.byType(CollectibleFigurePlaceholder), findsNothing);
+        final mid = _resolved(tester);
+        expect(mid.imageRef, firstRef);
+        expect(mid.imageVersion, 'v1');
         expect(find.byType(AppImageShimmer), findsNothing);
 
         pending.complete(
           'https://example.test/catalog/figures/swr_fig.webp?v=2',
         );
-        await waitForFromKeyIdle(tester);
+        await waitForDisplayedVersion(tester, 'v2');
 
-        expect(find.byType(CatalogResolvedImage), findsOneWidget);
-        expect(find.byType(CollectibleFigurePlaceholder), findsNothing);
+        final after = _resolved(tester);
+        expect(after.imageVersion, 'v2');
+        expect(after.imageRef, isNot(firstRef));
 
         await tester.pumpWidget(const SizedBox.shrink());
       },
     );
 
     testWidgets(
-      'failed refresh after bundle replace keeps the previous image',
+      'failed refresh keeps previous imageRef and displayed version',
       (tester) async {
         CatalogImageResolver.getDownloadUrlOverride = (path) async {
           if (path.endsWith('.webp')) {
@@ -316,9 +444,12 @@ void main() {
           ),
         );
         await pumpFromKey(tester);
-        expect(find.byType(CatalogResolvedImage), findsOneWidget);
+        final before = _resolved(tester);
+        expect(before.imageVersion, 'v1');
 
+        var failProbes = 0;
         CatalogImageResolver.getDownloadUrlOverride = (_) async {
+          failProbes++;
           throw TimeoutException('refresh failed');
         };
 
@@ -331,9 +462,30 @@ void main() {
           ),
         );
         CatalogBundleCache.triggerBundleReplacedForTest();
-        await waitForFromKeyIdle(tester);
+        await tester.pump();
 
-        expect(find.byType(CatalogResolvedImage), findsOneWidget);
+        for (var i = 0; i < 80; i++) {
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 10)),
+          );
+          await tester.pump();
+          if (failProbes >= CatalogImageResolver.assetExtensions.length) {
+            break;
+          }
+        }
+        expect(
+          failProbes,
+          greaterThanOrEqualTo(CatalogImageResolver.assetExtensions.length),
+        );
+        // Let FromKey apply the failed result while keeping stale art.
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 20)),
+        );
+        await tester.pump();
+
+        final after = _resolved(tester);
+        expect(after.imageRef, before.imageRef);
+        expect(after.imageVersion, 'v1');
         expect(find.byType(CollectibleFigurePlaceholder), findsNothing);
 
         await tester.pumpWidget(const SizedBox.shrink());
@@ -341,16 +493,16 @@ void main() {
     );
 
     testWidgets(
-      'first timeout then retry success updates the displayed image',
+      'out-of-order resolves keep the newer generation',
       (tester) async {
-        var webpAttempts = 0;
+        final v1Gate = Completer<String?>();
+        final v2Gate = Completer<String?>();
+        var stage = 'v1';
+
         CatalogImageResolver.getDownloadUrlOverride = (path) async {
           if (!path.endsWith('.webp')) return null;
-          webpAttempts++;
-          if (webpAttempts == 1) {
-            throw TimeoutException('transient');
-          }
-          return 'https://example.test/$path';
+          if (stage == 'v1') return v1Gate.future;
+          return v2Gate.future;
         };
 
         CatalogBundleCache.prime(
@@ -361,15 +513,107 @@ void main() {
             figures: [_figure(imageKey: 'swr_fig', imageVersion: 'v1')],
           ),
         );
-        await pumpFromKey(tester);
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              relationshipHintForCatalogSeriesProvider.overrideWith(
+                (ref, _) => null,
+              ),
+            ],
+            child: const MaterialApp(
+              home: Scaffold(
+                body: SizedBox(
+                  width: 120,
+                  height: 120,
+                  child: CatalogImageFromKey(
+                    imageKey: 'swr_fig',
+                    name: 'Fig',
+                    seedKey: 'swr_fig',
+                    displayMode: CatalogImageDisplayMode.figureThumb,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
 
-        expect(webpAttempts, 2);
-        expect(find.byType(CatalogResolvedImage), findsOneWidget);
-        expect(find.byType(CollectibleFigurePlaceholder), findsNothing);
+        stage = 'v2';
+        CatalogBundleCache.prime(
+          CatalogSeedBundle(
+            brands: const [],
+            ips: const [],
+            series: const [],
+            figures: [_figure(imageKey: 'swr_fig', imageVersion: 'v2')],
+          ),
+        );
+        CatalogBundleCache.triggerBundleReplacedForTest();
+        await tester.pump();
+
+        // Newer generation finishes first.
+        v2Gate.complete('https://example.test/catalog/figures/swr_fig.webp?v2');
+        await waitForDisplayedVersion(tester, 'v2');
+        expect(_resolved(tester).imageVersion, 'v2');
+
+        // Stale v1 completion must not overwrite.
+        v1Gate.complete('https://example.test/catalog/figures/swr_fig.webp?v1');
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 20)),
+        );
+        await tester.pump();
+        expect(_resolved(tester).imageVersion, 'v2');
 
         await tester.pumpWidget(const SizedBox.shrink());
       },
     );
+
+    testWidgets('dispose during resolve does not throw', (tester) async {
+      final pending = Completer<String?>();
+      CatalogImageResolver.getDownloadUrlOverride = (path) async {
+        if (!path.endsWith('.webp')) return null;
+        return pending.future;
+      };
+
+      CatalogBundleCache.prime(
+        CatalogSeedBundle(
+          brands: const [],
+          ips: const [],
+          series: const [],
+          figures: [_figure(imageKey: 'swr_fig', imageVersion: 'v1')],
+        ),
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            relationshipHintForCatalogSeriesProvider.overrideWith(
+              (ref, _) => null,
+            ),
+          ],
+          child: const MaterialApp(
+            home: Scaffold(
+              body: SizedBox(
+                width: 120,
+                height: 120,
+                child: CatalogImageFromKey(
+                  imageKey: 'swr_fig',
+                  name: 'Fig',
+                  seedKey: 'swr_fig',
+                  displayMode: CatalogImageDisplayMode.figureThumb,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      pending.complete('https://example.test/catalog/figures/swr_fig.webp');
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 20)),
+      );
+      await tester.pump();
+    });
 
     testWidgets(
       'exhausted retries with no prior art show placeholder',
