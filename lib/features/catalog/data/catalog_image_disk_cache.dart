@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:blindbox_app/core/media/device_local_ref.dart';
 import 'package:blindbox_app/features/catalog/catalog_image_resolver.dart';
 import 'package:blindbox_app/features/catalog/data/catalog_image_cache_policy.dart';
 import 'package:blindbox_app/features/catalog/data/catalog_image_version.dart';
@@ -14,8 +15,9 @@ import 'package:path_provider/path_provider.dart';
 /// refresh orchestrated by [CatalogImageResolver]. Not used on web.
 ///
 /// Cache identity is [CatalogImageVersion.diskEntryKey]: when `imageVersion`
-/// changes under the same `imageKey`, the prior entry is a miss and old files
-/// for that `imageKey` are purged on persist.
+/// changes under the same `imageKey`, the prior entry is a miss. Old files are
+/// purged via [purgeOtherVersionsKeeping] only after the new version is written
+/// and the UI is painting it.
 abstract final class CatalogImageDiskCache {
   CatalogImageDiskCache._();
 
@@ -333,6 +335,11 @@ abstract final class CatalogImageDiskCache {
     final safe = _safeStem(imageKey);
     if (safe.isEmpty) {
       await _flushIndex();
+      CatalogImageResolver.clearSessionDisplayRefsForImageKey(
+        kind: kind,
+        imageKey: imageKey,
+        keepEntryKey: keepKey,
+      );
       return;
     }
     final dir = await _kindDirectory(kind);
@@ -359,6 +366,11 @@ abstract final class CatalogImageDiskCache {
       index.remove(key);
     }
     await _flushIndex();
+    CatalogImageResolver.clearSessionDisplayRefsForImageKey(
+      kind: kind,
+      imageKey: imageKey,
+      keepEntryKey: keepKey,
+    );
   }
 
   static Future<void> _registerEntry({
@@ -383,13 +395,67 @@ abstract final class CatalogImageDiskCache {
       imageKey: imageKey.trim(),
       imageVersion: CatalogImageVersion.normalize(imageVersion),
     );
+    // Sibling versions stay until [purgeOtherVersionsKeeping] after display.
+    await _evictIfNeeded();
+    await _flushIndex();
+  }
+
+  /// True when [ref] is a device path whose file exists and is non-empty.
+  static Future<bool> isPresentLocalFile(String ref) async {
+    if (kIsWeb) return false;
+    if (!DeviceLocalImageRef.looksLikeDevicePath(ref)) return false;
+    try {
+      final file = File(DeviceLocalImageRef.normalizeToFilePath(ref));
+      return await file.exists() && await file.length() > 0;
+    } on Object {
+      return false;
+    }
+  }
+
+  /// Drops one index entry (and file when present).
+  static Future<void> evictEntry({
+    required CatalogImageKind kind,
+    required String imageKey,
+    String? imageVersion,
+  }) async {
+    if (kIsWeb) return;
+    try {
+      final key = entryKey(
+        kind: kind,
+        imageKey: imageKey,
+        imageVersion: imageVersion,
+      );
+      final index = await _ensureIndex();
+      final entry = index.entries[key];
+      if (entry == null) return;
+      final file = File(entry.path);
+      if (await file.exists()) {
+        await file.delete();
+      }
+      index.remove(key);
+      await _flushIndex();
+    } on Object {
+      // Best-effort recovery.
+    }
+  }
+
+  /// Deletes other on-disk versions after the kept version is written + shown.
+  static Future<void> purgeOtherVersionsKeeping({
+    required CatalogImageKind kind,
+    required String imageKey,
+    String? imageVersion,
+  }) async {
+    if (kIsWeb) return;
+    final keepKey = entryKey(
+      kind: kind,
+      imageKey: imageKey,
+      imageVersion: imageVersion,
+    );
     await _purgeOtherVersions(
       kind: kind,
       imageKey: imageKey,
-      keepKey: key,
+      keepKey: keepKey,
     );
-    await _evictIfNeeded();
-    await _flushIndex();
   }
 
   static Future<void> _evictIfNeeded() async {
@@ -490,11 +556,6 @@ abstract final class CatalogImageDiskCache {
       lastAccessedAt: at,
       imageKey: imageKey.trim(),
       imageVersion: CatalogImageVersion.normalize(imageVersion),
-    );
-    await _purgeOtherVersions(
-      kind: kind,
-      imageKey: imageKey,
-      keepKey: key,
     );
     await _evictIfNeeded();
     await _flushIndex();
