@@ -1,5 +1,7 @@
 import 'package:blindbox_app/core/media/device_local_ref.dart';
+import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
 import 'package:blindbox_app/features/catalog/catalog_image_resolver.dart';
+import 'package:blindbox_app/features/catalog/data/catalog_image_version.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/collection/widgets/collectible_figure_placeholder.dart';
 import 'package:blindbox_app/shared/widgets/app_image_shimmer.dart';
@@ -134,12 +136,22 @@ class CatalogImageFromKey extends StatefulWidget {
   State<CatalogImageFromKey> createState() => _CatalogImageFromKeyState();
 }
 
+/// Test hook: invoked at the start of each resolve cycle.
+@visibleForTesting
+void Function(String imageKey, String? imageVersion)?
+catalogImageFromKeyDebugOnResolveStart;
+
 class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
   final CatalogImageResolveCoordinator _resolveCoordinator =
       CatalogImageResolveCoordinator();
 
   String? _imageRef;
   bool _loading = true;
+
+  /// Version used for the last applied resolve (explicit prop or bundle lookup).
+  String? _boundImageVersion;
+
+  void Function()? _removeBundleListener;
 
   CatalogImageDisplaySpec get _spec => CatalogImageDisplaySpec.forMode(
     widget.displayMode,
@@ -149,7 +161,20 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
   @override
   void initState() {
     super.initState();
+    // Catalog sync can bump [imageVersion] while this State stays mounted.
+    // Re-resolve so cache keys / download URLs pick up the new hash without
+    // requiring an app kill.
+    _removeBundleListener = CatalogBundleCache.addBundleReplacedListener(
+      _onCatalogBundleReplaced,
+    );
     _scheduleInitialResolve();
+  }
+
+  @override
+  void dispose() {
+    _removeBundleListener?.call();
+    _removeBundleListener = null;
+    super.dispose();
   }
 
   void _scheduleInitialResolve() {
@@ -187,15 +212,42 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
     _ => false,
   };
 
+  String? _effectiveImageVersion() {
+    if (widget.imageVersion != null) {
+      return CatalogImageVersion.normalize(widget.imageVersion);
+    }
+    final kind = _isSeriesMode
+        ? CatalogImageKind.series
+        : CatalogImageKind.figure;
+    return CatalogImageResolver.lookupImageVersion(
+      kind: kind,
+      imageKey: widget.imageKey,
+    );
+  }
+
+  void _onCatalogBundleReplaced() {
+    if (!mounted) return;
+    // Parent-supplied version is authoritative for this mount.
+    if (widget.imageVersion != null) return;
+    final next = _effectiveImageVersion();
+    if (next == _boundImageVersion) return;
+    _startResolve();
+  }
+
   void _startResolve() {
     final generation = _resolveCoordinator.begin();
     final key = widget.imageKey.trim();
+    catalogImageFromKeyDebugOnResolveStart?.call(
+      key,
+      _effectiveImageVersion(),
+    );
 
     if (key.isEmpty) {
       if (!mounted) return;
       setState(() {
         _imageRef = null;
         _loading = false;
+        _boundImageVersion = null;
       });
       return;
     }
@@ -215,12 +267,7 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
     required int generation,
     required String imageKey,
   }) async {
-    final kind = _isSeriesMode
-        ? CatalogImageKind.series
-        : CatalogImageKind.figure;
-    final imageVersion =
-        widget.imageVersion ??
-        CatalogImageResolver.lookupImageVersion(kind: kind, imageKey: imageKey);
+    final imageVersion = _effectiveImageVersion();
 
     String? ref;
     if (CatalogImageResolver.storageFallbackEnabled) {
@@ -251,6 +298,7 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
 
     setState(() {
       _imageRef = ref;
+      _boundImageVersion = imageVersion;
       _loading = false;
     });
   }
@@ -275,14 +323,7 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
         ),
       );
     }
-    final resolvedVersion =
-        widget.imageVersion ??
-        CatalogImageResolver.lookupImageVersion(
-          kind: _isSeriesMode
-              ? CatalogImageKind.series
-              : CatalogImageKind.figure,
-          imageKey: widget.imageKey,
-        );
+    final resolvedVersion = _boundImageVersion ?? _effectiveImageVersion();
     return CatalogResolvedImage(
       key: ValueKey<String>(
         'catalog-resolved:${widget.imageKey.trim()}:'
