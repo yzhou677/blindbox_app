@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:blindbox_app/core/media/device_local_ref.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
 import 'package:blindbox_app/features/catalog/catalog_image_resolver.dart';
@@ -141,6 +143,11 @@ class CatalogImageFromKey extends StatefulWidget {
 void Function(String imageKey, String? imageVersion)?
 catalogImageFromKeyDebugOnResolveStart;
 
+/// Test hook: invoked when a resolve result is applied to painted state.
+@visibleForTesting
+void Function(String imageKey, String? imageVersion)?
+catalogImageFromKeyDebugOnResolveApplied;
+
 class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
   final CatalogImageResolveCoordinator _resolveCoordinator =
       CatalogImageResolveCoordinator();
@@ -148,8 +155,11 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
   String? _imageRef;
   bool _loading = true;
 
-  /// Version used for the last applied resolve (explicit prop or bundle lookup).
+  /// Version of the art currently painted.
   String? _boundImageVersion;
+
+  /// Caps PathNotFound recovery at one re-resolve per imageKey mount.
+  var _localPathRecoveryAttempted = false;
 
   void Function()? _removeBundleListener;
 
@@ -197,10 +207,18 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
         oldWidget.displayMode != widget.displayMode ||
         oldWidget.deferInitialResolve != widget.deferInitialResolve ||
         oldWidget.resolveStaggerBatch != widget.resolveStaggerBatch) {
+      final clearDisplayed = oldWidget.imageKey != widget.imageKey;
+      if (clearDisplayed) {
+        _localPathRecoveryAttempted = false;
+      }
       if (widget.deferInitialResolve) {
-        _scheduleInitialResolve();
+        scheduleCatalogImageResolveAfterFrames(
+          staggerBatch: widget.resolveStaggerBatch,
+          isMounted: () => mounted,
+          onReady: () => _startResolve(clearDisplayedImage: clearDisplayed),
+        );
       } else {
-        _startResolve();
+        _startResolve(clearDisplayedImage: clearDisplayed);
       }
     }
   }
@@ -231,16 +249,38 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
     if (widget.imageVersion != null) return;
     final next = _effectiveImageVersion();
     if (next == _boundImageVersion) return;
-    _startResolve();
+    // Keep painted art while the new version resolves.
+    _startResolve(clearDisplayedImage: false);
   }
 
-  void _startResolve() {
+  void _onLocalPathMissing() {
+    if (_localPathRecoveryAttempted || !mounted) return;
+    _localPathRecoveryAttempted = true;
+    final key = widget.imageKey.trim();
+    final version = _boundImageVersion;
+    final kind = _isSeriesMode
+        ? CatalogImageKind.series
+        : CatalogImageKind.figure;
+    unawaited(() async {
+      // Drop the dead session/index pointer only — do not delete siblings or
+      // force-clear painted art (that was blanking Series Card / wishlist thumbs).
+      await CatalogImageResolver.invalidateBrokenLocalDisplayRef(
+        kind: kind,
+        imageKey: key,
+        imageVersion: version,
+        deleteFile: false,
+      );
+      if (!mounted) return;
+      if (widget.imageKey.trim() != key) return;
+      _startResolve(clearDisplayedImage: false);
+    }());
+  }
+
+  void _startResolve({bool clearDisplayedImage = false}) {
     final generation = _resolveCoordinator.begin();
     final key = widget.imageKey.trim();
-    catalogImageFromKeyDebugOnResolveStart?.call(
-      key,
-      _effectiveImageVersion(),
-    );
+    final targetVersion = _effectiveImageVersion();
+    catalogImageFromKeyDebugOnResolveStart?.call(key, targetVersion);
 
     if (key.isEmpty) {
       if (!mounted) return;
@@ -252,22 +292,32 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
       return;
     }
 
-    // Drop stale art immediately so recycled list cells never flash the prior series.
     if (mounted) {
       setState(() {
-        _loading = true;
-        _imageRef = null;
+        if (clearDisplayedImage) {
+          // Identity changed — never flash the previous series/figure.
+          _imageRef = null;
+          _boundImageVersion = null;
+        }
+        // Shimmer only when there is nothing to show; keep stale art otherwise.
+        _loading = _imageRef == null || _imageRef!.isEmpty;
       });
     }
 
-    _resolve(generation: generation, imageKey: key);
+    _resolve(
+      generation: generation,
+      imageKey: key,
+      imageVersion: targetVersion,
+    );
   }
 
   Future<void> _resolve({
     required int generation,
     required String imageKey,
+    required String? imageVersion,
   }) async {
-    final imageVersion = _effectiveImageVersion();
+    final previousRef = _imageRef;
+    final previousVersion = _boundImageVersion;
 
     String? ref;
     if (CatalogImageResolver.storageFallbackEnabled) {
@@ -285,7 +335,13 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
     if (!_resolveCoordinator.shouldApply(generation) || !mounted) return;
 
     if (kDebugMode) {
-      final provider = ref == null || ref.isEmpty
+      final keptStale =
+          (ref == null || ref.isEmpty) &&
+          previousRef != null &&
+          previousRef.isNotEmpty;
+      final provider = keptStale
+          ? 'stale'
+          : ref == null || ref.isEmpty
           ? 'placeholder'
           : DeviceLocalImageRef.looksLikeDevicePath(ref)
           ? 'disk_cache'
@@ -296,11 +352,29 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
       );
     }
 
+    final String? nextRef;
+    final String? nextVersion;
+    if (ref != null && ref.isNotEmpty) {
+      nextRef = ref;
+      nextVersion = imageVersion;
+    } else if (previousRef != null && previousRef.isNotEmpty) {
+      // New version unavailable — keep painted art.
+      nextRef = previousRef;
+      nextVersion = previousVersion;
+    } else {
+      nextRef = null;
+      nextVersion = imageVersion;
+    }
+
     setState(() {
-      _imageRef = ref;
-      _boundImageVersion = imageVersion;
+      _imageRef = nextRef;
+      _boundImageVersion = nextVersion;
       _loading = false;
     });
+    catalogImageFromKeyDebugOnResolveApplied?.call(imageKey, nextVersion);
+    // Intentionally do not purge sibling disk versions from the widget.
+    // Eager purge after first successful paint was deleting files still needed
+    // by Series Card / wishlist / shelf thumbs on the next visit.
   }
 
   @override
@@ -341,6 +415,7 @@ class _CatalogImageFromKeyState extends State<CatalogImageFromKey> {
       height: widget.height,
       immersiveGalleryStage:
           widget.displayMode == CatalogImageDisplayMode.figureGallery,
+      onLocalPathMissing: _onLocalPathMissing,
     );
   }
 }

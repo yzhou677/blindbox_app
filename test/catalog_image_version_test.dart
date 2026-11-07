@@ -107,6 +107,40 @@ void main() {
       }
     });
 
+    test('first download writes only — no sibling purge', () async {
+      const imageKey = 'brand_new_key';
+      final otherPath = await CatalogImageDiskCache.persistBytes(
+        kind: CatalogImageKind.series,
+        imageKey: 'unrelated_key',
+        extension: '.png',
+        bytes: _pngBytes,
+        imageVersion: _md5V1,
+      );
+      expect(otherPath, isNotNull);
+      expect(CatalogImageDiskCache.purgeOtherVersionsInvocations, 0);
+
+      final path = await CatalogImageDiskCache.persistBytes(
+        kind: CatalogImageKind.series,
+        imageKey: imageKey,
+        extension: '.png',
+        bytes: _pngBytes,
+        imageVersion: _md5V1,
+      );
+      expect(path, isNotNull);
+      expect(File(path!).existsSync(), isTrue);
+      expect(File(otherPath!).existsSync(), isTrue);
+      // First time this imageKey lands — must not run purge.
+      expect(CatalogImageDiskCache.purgeOtherVersionsInvocations, 0);
+      expect(await CatalogImageDiskCache.entryCount(), 2);
+      expect(
+        await CatalogImageDiskCache.entryKeysForTest(),
+        [
+          'catalog/series/$imageKey#$_md5V1',
+          'catalog/series/unrelated_key#$_md5V1',
+        ],
+      );
+    });
+
     test('same imageKey new imageVersion misses and purges old file', () async {
       const imageKey = 'series_cover_a';
       final pathV1 = await CatalogImageDiskCache.persistBytes(
@@ -119,6 +153,7 @@ void main() {
       expect(pathV1, isNotNull);
       expect(File(pathV1!).existsSync(), isTrue);
       expect(await CatalogImageDiskCache.entryCount(), 1);
+      expect(CatalogImageDiskCache.purgeOtherVersionsInvocations, 0);
 
       final hitV1 = await CatalogImageDiskCache.lookup(
         kind: CatalogImageKind.series,
@@ -146,14 +181,121 @@ void main() {
       );
       expect(pathV2, isNotNull);
       expect(pathV2, isNot(pathV1));
+      // Persist writes the new file first, then purges the old version.
       expect(File(pathV1).existsSync(), isFalse);
       expect(File(pathV2!).existsSync(), isTrue);
+      expect(CatalogImageDiskCache.purgeOtherVersionsInvocations, 1);
       expect(await CatalogImageDiskCache.entryCount(), 1);
       expect(
         await CatalogImageDiskCache.entryKeysForTest(),
         ['catalog/series/$imageKey#$_md5V2'],
       );
     });
+
+    test(
+      'version update deletes only same imageKey old versions; keeps new + others',
+      () async {
+        const keyA = 'figure_a';
+        const keyB = 'figure_b';
+        final pathA1 = await CatalogImageDiskCache.persistBytes(
+          kind: CatalogImageKind.figure,
+          imageKey: keyA,
+          extension: '.png',
+          bytes: _pngBytes,
+          imageVersion: _md5V1,
+        );
+        final pathB1 = await CatalogImageDiskCache.persistBytes(
+          kind: CatalogImageKind.figure,
+          imageKey: keyB,
+          extension: '.png',
+          bytes: _pngBytes,
+          imageVersion: _md5V1,
+        );
+        expect(CatalogImageDiskCache.purgeOtherVersionsInvocations, 0);
+
+        final pathA2 = await CatalogImageDiskCache.persistBytes(
+          kind: CatalogImageKind.figure,
+          imageKey: keyA,
+          extension: '.png',
+          bytes: List<int>.from(_pngBytes)..add(1),
+          imageVersion: _md5V2,
+        );
+
+        expect(pathA2, isNotNull);
+        expect(File(pathA1!).existsSync(), isFalse);
+        expect(File(pathA2!).existsSync(), isTrue);
+        expect(File(pathB1!).existsSync(), isTrue);
+        expect(CatalogImageDiskCache.purgeOtherVersionsInvocations, 1);
+        expect(
+          await CatalogImageDiskCache.entryKeysForTest(),
+          [
+            'catalog/figures/$keyA#$_md5V2',
+            'catalog/figures/$keyB#$_md5V1',
+          ],
+        );
+      },
+    );
+
+    test('purgeOtherVersionsKeeping never deletes the keepKey file', () async {
+      const imageKey = 'keep_me';
+      final pathV1 = await CatalogImageDiskCache.persistBytes(
+        kind: CatalogImageKind.figure,
+        imageKey: imageKey,
+        extension: '.png',
+        bytes: _pngBytes,
+        imageVersion: _md5V1,
+      );
+      final pathV2 = await CatalogImageDiskCache.persistBytes(
+        kind: CatalogImageKind.figure,
+        imageKey: imageKey,
+        extension: '.png',
+        bytes: List<int>.from(_pngBytes)..add(1),
+        imageVersion: _md5V2,
+      );
+      expect(File(pathV1!).existsSync(), isFalse);
+      expect(File(pathV2!).existsSync(), isTrue);
+
+      await CatalogImageDiskCache.purgeOtherVersionsKeeping(
+        kind: CatalogImageKind.figure,
+        imageKey: imageKey,
+        imageVersion: _md5V2,
+      );
+      expect(File(pathV2).existsSync(), isTrue);
+      expect(
+        await CatalogImageDiskCache.entryKeysForTest(),
+        ['catalog/figures/$imageKey#$_md5V2'],
+      );
+    });
+
+    test(
+      'invalidateBrokenLocalDisplayRef deleteFile:false drops index only',
+      () async {
+        const imageKey = 'soft_evict';
+        final path = await CatalogImageDiskCache.persistBytes(
+          kind: CatalogImageKind.figure,
+          imageKey: imageKey,
+          extension: '.png',
+          bytes: _pngBytes,
+          imageVersion: _md5V1,
+        );
+        expect(path, isNotNull);
+        expect(File(path!).existsSync(), isTrue);
+
+        await CatalogImageResolver.invalidateBrokenLocalDisplayRef(
+          kind: CatalogImageKind.figure,
+          imageKey: imageKey,
+          imageVersion: _md5V1,
+          deleteFile: false,
+        );
+
+        // Bytes stay — UI PathNotFound recovery must not wipe a live file.
+        expect(File(path).existsSync(), isTrue);
+        expect(
+          await CatalogImageDiskCache.entryKeysForTest(),
+          isNot(contains('catalog/figures/$imageKey#$_md5V1')),
+        );
+      },
+    );
 
     test('persistFromUrl requests URL with encoded v= param', () async {
       const imageKey = 'fig_a';
@@ -243,6 +385,7 @@ void main() {
       expect(third, isNot(first));
       expect(downloads, 2);
       expect(File(first!).existsSync(), isFalse);
+      expect(File(third!).existsSync(), isTrue);
     });
 
     test('lookupImageVersion finds figure alternativeImages', () {

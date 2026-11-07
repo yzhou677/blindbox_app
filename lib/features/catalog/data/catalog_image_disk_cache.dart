@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:blindbox_app/core/media/device_local_ref.dart';
 import 'package:blindbox_app/features/catalog/catalog_image_resolver.dart';
 import 'package:blindbox_app/features/catalog/data/catalog_image_cache_policy.dart';
 import 'package:blindbox_app/features/catalog/data/catalog_image_version.dart';
@@ -14,8 +15,10 @@ import 'package:path_provider/path_provider.dart';
 /// refresh orchestrated by [CatalogImageResolver]. Not used on web.
 ///
 /// Cache identity is [CatalogImageVersion.diskEntryKey]: when `imageVersion`
-/// changes under the same `imageKey`, the prior entry is a miss and old files
-/// for that `imageKey` are purged on persist.
+/// changes under the same `imageKey`, the prior entry is a miss. After the new
+/// version file is written and registered, sibling files for that `imageKey`
+/// are purged ([_purgeOtherVersions]) — only when the index already has another
+/// version for the same `imageKey`. First download of a key never purges.
 abstract final class CatalogImageDiskCache {
   CatalogImageDiskCache._();
 
@@ -35,12 +38,17 @@ abstract final class CatalogImageDiskCache {
   @visibleForTesting
   static DateTime? testNowOverride;
 
+  /// How many times sibling purge ran (not counting skipped first-download).
+  @visibleForTesting
+  static int purgeOtherVersionsInvocations = 0;
+
   @visibleForTesting
   static void resetForTest() {
     testRootOverride = null;
     httpClientOverride = null;
     testMaxCacheBytesOverride = null;
     testNowOverride = null;
+    purgeOtherVersionsInvocations = 0;
     _rootFuture = null;
     _index = null;
   }
@@ -300,12 +308,57 @@ abstract final class CatalogImageDiskCache {
     }
   }
 
+  /// True when index already holds another version of [imageKey] besides [keepKey].
+  static bool _indexHasSiblingVersions({
+    required _CacheIndex index,
+    required CatalogImageKind kind,
+    required String imageKey,
+    required String keepKey,
+  }) {
+    for (final key in index.entries.keys) {
+      if (key == keepKey) continue;
+      if (CatalogImageVersion.entryKeyMatchesImageKey(
+        entryKey: key,
+        kind: kind,
+        imageKey: imageKey,
+      )) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// After a new version is on disk: purge siblings only when they exist.
+  ///
+  /// First download of an `imageKey` has no siblings → no purge, no dir scrub.
+  static Future<void> _purgeSiblingsAfterNewWrite({
+    required CatalogImageKind kind,
+    required String imageKey,
+    required String keepKey,
+  }) async {
+    final index = await _ensureIndex();
+    if (!_indexHasSiblingVersions(
+      index: index,
+      kind: kind,
+      imageKey: imageKey,
+      keepKey: keepKey,
+    )) {
+      return;
+    }
+    await _purgeOtherVersions(
+      kind: kind,
+      imageKey: imageKey,
+      keepKey: keepKey,
+    );
+  }
+
   /// Deletes index entries + files for [imageKey] under [kind], except [keepKey].
   static Future<void> _purgeOtherVersions({
     required CatalogImageKind kind,
     required String imageKey,
     required String keepKey,
   }) async {
+    purgeOtherVersionsInvocations++;
     final index = await _ensureIndex();
     final victims = <String>[];
     for (final key in index.entries.keys) {
@@ -333,6 +386,11 @@ abstract final class CatalogImageDiskCache {
     final safe = _safeStem(imageKey);
     if (safe.isEmpty) {
       await _flushIndex();
+      CatalogImageResolver.clearSessionDisplayRefsForImageKey(
+        kind: kind,
+        imageKey: imageKey,
+        keepEntryKey: keepKey,
+      );
       return;
     }
     final dir = await _kindDirectory(kind);
@@ -359,6 +417,11 @@ abstract final class CatalogImageDiskCache {
       index.remove(key);
     }
     await _flushIndex();
+    CatalogImageResolver.clearSessionDisplayRefsForImageKey(
+      kind: kind,
+      imageKey: imageKey,
+      keepEntryKey: keepKey,
+    );
   }
 
   static Future<void> _registerEntry({
@@ -383,13 +446,75 @@ abstract final class CatalogImageDiskCache {
       imageKey: imageKey.trim(),
       imageVersion: CatalogImageVersion.normalize(imageVersion),
     );
-    await _purgeOtherVersions(
+    // New file is already on disk — drop older versions only if they exist.
+    await _purgeSiblingsAfterNewWrite(
       kind: kind,
       imageKey: imageKey,
       keepKey: key,
     );
     await _evictIfNeeded();
     await _flushIndex();
+  }
+
+  /// True when [ref] is a device path whose file exists and is non-empty.
+  static Future<bool> isPresentLocalFile(String ref) async {
+    if (kIsWeb) return false;
+    if (!DeviceLocalImageRef.looksLikeDevicePath(ref)) return false;
+    try {
+      final file = File(DeviceLocalImageRef.normalizeToFilePath(ref));
+      return await file.exists() && await file.length() > 0;
+    } on Object {
+      return false;
+    }
+  }
+
+  /// Drops one index entry. Optionally deletes the file bytes.
+  static Future<void> evictEntry({
+    required CatalogImageKind kind,
+    required String imageKey,
+    String? imageVersion,
+    bool deleteFile = true,
+  }) async {
+    if (kIsWeb) return;
+    try {
+      final key = entryKey(
+        kind: kind,
+        imageKey: imageKey,
+        imageVersion: imageVersion,
+      );
+      final index = await _ensureIndex();
+      final entry = index.entries[key];
+      if (entry == null) return;
+      if (deleteFile) {
+        final file = File(entry.path);
+        if (await file.exists()) {
+          await file.delete();
+        }
+      }
+      index.remove(key);
+      await _flushIndex();
+    } on Object {
+      // Best-effort recovery.
+    }
+  }
+
+  /// Deletes other on-disk versions after the kept version is written + shown.
+  static Future<void> purgeOtherVersionsKeeping({
+    required CatalogImageKind kind,
+    required String imageKey,
+    String? imageVersion,
+  }) async {
+    if (kIsWeb) return;
+    final keepKey = entryKey(
+      kind: kind,
+      imageKey: imageKey,
+      imageVersion: imageVersion,
+    );
+    await _purgeOtherVersions(
+      kind: kind,
+      imageKey: imageKey,
+      keepKey: keepKey,
+    );
   }
 
   static Future<void> _evictIfNeeded() async {
@@ -491,7 +616,7 @@ abstract final class CatalogImageDiskCache {
       imageKey: imageKey.trim(),
       imageVersion: CatalogImageVersion.normalize(imageVersion),
     );
-    await _purgeOtherVersions(
+    await _purgeSiblingsAfterNewWrite(
       kind: kind,
       imageKey: imageKey,
       keepKey: key,

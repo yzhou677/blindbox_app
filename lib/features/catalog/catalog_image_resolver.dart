@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:blindbox_app/core/media/device_local_ref.dart';
 import 'package:blindbox_app/features/catalog/application/catalog_bundle_cache.dart';
 import 'package:blindbox_app/features/catalog/data/catalog_image_disk_cache.dart';
 import 'package:blindbox_app/features/catalog/data/catalog_image_version.dart';
@@ -82,6 +83,58 @@ abstract final class CatalogImageResolver {
   /// True after a Storage timeout / transport failure until connectivity recovers.
   @visibleForTesting
   static bool get storageTransportUnavailable => _storageTransportUnavailable;
+
+  /// Drops session display refs for [imageKey], optionally keeping one entry.
+  static void clearSessionDisplayRefsForImageKey({
+    required CatalogImageKind kind,
+    required String imageKey,
+    String? keepEntryKey,
+  }) {
+    final toRemove = <String>[];
+    for (final key in _storageDisplayRefCache.keys) {
+      if (!CatalogImageVersion.entryKeyMatchesImageKey(
+        entryKey: key,
+        kind: kind,
+        imageKey: imageKey,
+      )) {
+        continue;
+      }
+      if (keepEntryKey != null && key == keepEntryKey) continue;
+      toRemove.add(key);
+    }
+    for (final key in toRemove) {
+      _storageDisplayRefCache.remove(key);
+    }
+  }
+
+  /// Clears a broken local path so the next resolve hits Storage once.
+  ///
+  /// When [deleteFile] is false (default for UI PathNotFound recovery), only
+  /// the session/index pointer is dropped — the bytes are left alone in case
+  /// another tile still needs them.
+  static Future<void> invalidateBrokenLocalDisplayRef({
+    required CatalogImageKind kind,
+    required String imageKey,
+    String? imageVersion,
+    bool deleteFile = false,
+  }) async {
+    final k = imageKey.trim();
+    if (k.isEmpty) return;
+    final version = CatalogImageVersion.normalize(imageVersion);
+    final primaryCacheKey = CatalogImageVersion.diskEntryKey(
+      kind: kind,
+      imageKey: k,
+      imageVersion: version,
+    );
+    _storageDisplayRefCache.remove(primaryCacheKey);
+    _storageMissingCache.remove(primaryCacheKey);
+    await CatalogImageDiskCache.evictEntry(
+      kind: kind,
+      imageKey: k,
+      imageVersion: version,
+      deleteFile: deleteFile,
+    );
+  }
 
   @visibleForTesting
   static void resetSessionCachesForTest() {
@@ -276,7 +329,13 @@ abstract final class CatalogImageResolver {
     );
 
     final sessionCached = _storageDisplayRefCache[primaryCacheKey];
-    if (sessionCached != null) return sessionCached;
+    if (sessionCached != null) {
+      if (!DeviceLocalImageRef.looksLikeDevicePath(sessionCached) ||
+          await CatalogImageDiskCache.isPresentLocalFile(sessionCached)) {
+        return sessionCached;
+      }
+      _storageDisplayRefCache.remove(primaryCacheKey);
+    }
 
     final diskHit = await CatalogImageDiskCache.lookup(
       kind: kind,
