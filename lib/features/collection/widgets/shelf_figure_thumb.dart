@@ -1,5 +1,6 @@
 import 'package:blindbox_app/core/media/device_local_ref.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
+import 'package:blindbox_app/features/collection/data/shelf_media_vault.dart';
 import 'package:blindbox_app/features/collection/domain/collection_domain.dart';
 import 'package:blindbox_app/features/collection/presentation/shelf_figure_media.dart';
 import 'package:blindbox_app/features/collection/widgets/collectible_figure_placeholder.dart';
@@ -33,7 +34,9 @@ class ShelfFigureThumb extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final localRef = ShelfFigureMedia.figureDisplayRef(figure, series);
-    if (localRef != null && DeviceLocalImageRef.looksLikeDevicePath(localRef)) {
+    if (localRef != null &&
+        (ShelfMediaVault.isVaultRef(localRef) ||
+            DeviceLocalImageRef.looksLikeDevicePath(localRef))) {
       return CollectibleThumbImage(
         imageRef: localRef,
         name: name,

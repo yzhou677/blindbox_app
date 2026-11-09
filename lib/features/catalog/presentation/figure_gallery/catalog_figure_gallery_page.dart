@@ -7,6 +7,7 @@ import 'package:blindbox_app/core/theme/app_spacing.dart';
 import 'package:blindbox_app/features/catalog/presentation/catalog_image_display.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_figure_gallery_item.dart';
 import 'package:blindbox_app/features/catalog/presentation/figure_gallery/catalog_gallery_stage.dart';
+import 'package:blindbox_app/features/collection/data/shelf_media_vault.dart';
 import 'package:blindbox_app/features/collection/widgets/collectible_figure_placeholder.dart';
 import 'package:blindbox_app/shared/widgets/catalog_image_from_key.dart';
 import 'package:flutter/material.dart';
@@ -141,7 +142,9 @@ class _GalleryArt extends StatelessWidget {
     required double width,
     required double height,
   }) {
-    final path = uri.startsWith('file:') ? Uri.parse(uri).toFilePath() : uri;
+    final path =
+        ShelfMediaVault.resolveToFilePathSync(uri) ??
+        (uri.startsWith('file:') ? Uri.parse(uri).toFilePath() : uri);
     return CatalogGalleryStage(
       width: width,
       height: height,
