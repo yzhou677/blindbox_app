@@ -53,7 +53,7 @@ abstract final class ShelfExportArchive {
   static const unpackStagingPrefix = 'shelf_export_unpack_';
 
   /// Keep in sync with pubspec `version` (no package_info dependency).
-  static const defaultAppVersion = '1.0.14+27';
+  static const defaultAppVersion = '1.0.15+28';
 
   @visibleForTesting
   static Directory? testCacheOverride;

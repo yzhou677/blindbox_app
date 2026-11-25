@@ -55,7 +55,7 @@ abstract final class ShelfRecoveryPack {
   static const writeDebounce = Duration(milliseconds: 350);
 
   /// Keep in sync with pubspec `version` (no package_info dependency).
-  static const defaultAppVersion = '1.0.14+27';
+  static const defaultAppVersion = '1.0.15+28';
 
   @visibleForTesting
   static Directory? testSupportOverride;
