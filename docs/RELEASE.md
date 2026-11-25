@@ -16,7 +16,7 @@ still builds a debug APK with the CI stub `google-services.json`.
 | versionName | The tag, with the leading `v` removed | tag `v1.2.3` → `1.2.3` |
 | versionCode | `100000 + github.run_number` | run 1 → `100001` |
 
-`pubspec.yaml` is `version: 1.0.14+27` today. Flutter maps the name to
+`pubspec.yaml` is `version: 1.0.15+28` today. Flutter maps the name to
 Android `versionName` and the number after `+` to `versionCode`. That `27` is
 the last **manual** build number. The release workflow does not read it and
 does not edit `pubspec.yaml`. It passes `--build-name` and `--build-number`
